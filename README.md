@@ -4,8 +4,8 @@ A Quickshell desktop shell for **Fedora 44 + niri**, written in QML/Qt Quick
 with a small Python standard-library backend. All interface text, code, and
 documentation are in English.
 
-The layout combines a compact top bar, an auto-hiding bottom dock, and a control
-sidebar on the right. Its Liquid-inspired surfaces use a dark Dracula Pro-style
+The layout combines a compact top bar and a control sidebar on the right.
+Its Liquid-inspired surfaces use a dark Dracula Pro-style
 palette, rounded glass panels, subtle highlights, and short animations suitable
 for an integrated Radeon GPU.
 
@@ -20,14 +20,14 @@ commands or Arch installation scripts.
 
 - Per-output top bar with niri workspaces, active window information, clock,
   battery, and status shortcuts.
-- Bottom dock with application launch and running-window focus.
+- System tray dropdown with compact icons, application labels, and native menus.
 - Keyboard-searchable application launcher using installed `.desktop` entries.
 - Control center for sound, backlight, Wi-Fi, Bluetooth, and power profiles,
   with live CPU, memory, temperature, and battery information.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native desktop notifications, notification history during the shell session,
   and Do Not Disturb.
-- Settings for motion, transparency, accent color, dock behavior, and wallpaper.
+- Settings for motion, transparency, accent color, and wallpaper.
 - Lock, suspend, logout, restart, and shutdown actions with confirmation for
   destructive actions.
 - Optional original wallpaper, package requirements, installation scripts,

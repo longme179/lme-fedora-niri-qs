@@ -118,7 +118,6 @@ Item {
                 }
             }
             SettingSwitch { title: "Gentle motion"; detail: "Short transitions for a calmer desktop"; preference: "animations" }
-            SettingSwitch { title: "Auto-hide dock"; detail: "Reveal the dock at the bottom edge"; preference: "dockAutoHide" }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 7

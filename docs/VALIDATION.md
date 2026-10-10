@@ -52,9 +52,10 @@ The following checks passed:
 | Notification lifecycle | Action and clear-all dismiss with reason 2; expiry sends reason 1; app closure sends reason 3 and removes history |
 | Do Not Disturb | Actual UI switch suppresses popups and retains session history |
 | Media | Actual native MPRIS UI Play/Pause/Next/Previous callbacks and metadata updates against a mock application |
-| System tray | Actual native tray UI invokes the mock application's Activate callback |
+| Top bar geometry | 42 px bar with 8 px top margin; a borderless test app starts at y=50 under Sway, with no bottom reservation |
+| System tray | Dropdown renders 18 px icons; native Activate and D-Bus menu action callbacks; outside click and Escape dismiss, including after a native menu |
+| Power profile menu | All three labels readable on a dark popup; right edge stays onscreen; pointer and Down/Enter selection work with simulated backend state |
 | Launcher keyboard | Typing `kitty` returns one matching demo app; arrow/Enter launches through the simulated backend; Escape closes |
-| Dock | Bottom-edge reveal, direct exit hides after 600 ms, prolonged hover stays visible, leaving hides again |
 | Demo isolation | Native media/tray actions and notification ownership disabled in demo/preview; normal native mode remains functional |
 | Reusable cloud setup | Signed package installation and pinned Quickshell build repeated successfully; startup instructions use a private headless Wayland session |
 
@@ -73,8 +74,7 @@ Use the target laptop for those checks below.
 | `scripts/doctor.sh` in niri | Required tools and session connections are available |
 | `niri validate` | Existing config plus shell bindings parses successfully |
 | Launcher | Search, arrow navigation, Enter launch, Escape close |
-| Dock | Appears at the bottom edge, hides as configured, launches/focuses apps |
-| Top bar | Workspace focus and active-window information follow niri events |
+| Top bar | Workspace/title updates, aligned pills, compact tray dropdown, and application spacing follow the configured niri gap |
 | Control center | Volume/mute, backlight, radios, supported power profiles work |
 | Notifications | `notify-send` popup, notification center, DND work |
 | Media | Compatible MPRIS player metadata and controls update |

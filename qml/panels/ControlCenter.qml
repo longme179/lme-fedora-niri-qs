@@ -184,23 +184,14 @@ Item {
                 Layout.fillWidth: true
                 Text { text: "Power profile"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 13 }
                 Item { Layout.fillWidth: true }
-                ComboBox {
+                LiquidComboBox {
                     id: profile
-                    implicitHeight: 36
                     model: ["Power saver", "Balanced", "Performance"]
                     property var values: ["power-saver", "balanced", "performance"]
                     currentIndex: Math.max(0, values.indexOf(ShellState.system.powerProfile || "balanced"))
                     enabled: !!ShellState.system.powerProfile
                     onActivated: ShellState.run("powerProfile", { value: values[currentIndex] })
                     Accessible.name: "Power profile"
-                    palette.button: Theme.surface
-                    palette.buttonText: Theme.text
-                    palette.text: Theme.text
-                    palette.base: Theme.panel
-                    palette.highlight: Theme.purple
-                    background: Rectangle { radius: Theme.smallRadius; color: Theme.surface; border.width: profile.visualFocus ? 2 : 0; border.color: Theme.accent }
-                    contentItem: Text { text: profile.displayText; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 12; verticalAlignment: Text.AlignVCenter; leftPadding: 10; rightPadding: 24 }
-                    indicator: Text { x: profile.width - width - 10; y: (profile.height - height) / 2; text: "⌄"; color: Theme.muted; font.pixelSize: 16 }
                 }
             }
 
@@ -238,9 +229,8 @@ Item {
                         LiquidButton { text: root.player && root.player.isPlaying ? "Pause" : "Play"; enabled: !!root.player && root.player.canTogglePlaying; onClicked: root.player.togglePlaying(); palette.button: Theme.purple; palette.buttonText: Theme.background }
                         LiquidButton { text: "Next"; enabled: !!root.player && root.player.canGoNext; onClicked: root.player.next(); palette.button: Theme.panel; palette.buttonText: Theme.text }
                     }
-                    ComboBox {
+                    LiquidComboBox {
                         id: playerSelector
-                        implicitHeight: 36
                         visible: root.players.length > 1
                         Layout.fillWidth: true
                         model: root.players.map(item => item.identity)
@@ -248,13 +238,6 @@ Item {
                         Accessible.name: "Media player"
                         onActivated: root.selectedPlayerName = root.players[currentIndex].dbusName
                         palette.button: Theme.panel
-                        palette.buttonText: Theme.text
-                        palette.text: Theme.text
-                        palette.base: Theme.panel
-                        palette.highlight: Theme.accent
-                        background: Rectangle { radius: Theme.smallRadius; color: Theme.panel; border.width: playerSelector.visualFocus ? 2 : 0; border.color: Theme.accent }
-                        contentItem: Text { text: playerSelector.displayText; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 12; verticalAlignment: Text.AlignVCenter; leftPadding: 10; rightPadding: 24; elide: Text.ElideRight }
-                        indicator: Text { x: playerSelector.width - width - 10; y: (playerSelector.height - height) / 2; text: "⌄"; color: Theme.muted; font.pixelSize: 16 }
                     }
                 }
             }

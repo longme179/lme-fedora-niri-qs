@@ -30,15 +30,14 @@ ShellRoot {
                 id: barWindow
                 screen: screenScope.modelData
                 anchors { top: true; left: true; right: true }
-                margins { left: 12; right: 12; top: 10 }
-                implicitHeight: 46
-                exclusiveZone: 66
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barTopMargin }
+                implicitHeight: Theme.barHeight
+                exclusiveZone: implicitHeight
                 color: "transparent"
                 WlrLayershell.namespace: "lme-bar"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 Bar { anchors.fill: parent; screenInfo: screenScope.modelData; windowInfo: barWindow }
             }
-            DockWindow { screenInfo: screenScope.modelData }
         }
     }
     PanelWindow {
@@ -51,7 +50,7 @@ ShellRoot {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.launcherOpen || ShellState.powerOpen ? 0.40 : 0.13) }
+        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen ? 0.40 : 0.13) }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
             anchors.fill: parent
@@ -61,11 +60,13 @@ ShellRoot {
                 id: panelLoader
                 active: ShellState.panelOpen
                 sourceComponent: ShellState.launcherOpen ? launcherComponent : ShellState.controlOpen ? controlComponent
-                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : powerComponent
+                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
-                height: item ? Math.min(item.implicitHeight, overlay.height - 94) : 500
-                x: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.width - width) / 2 : overlay.width - width - 14
-                y: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.height - height) / 2 : 70
+                height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
+                x: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.width - width) / 2
+                   : ShellState.trayOpen && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(overlay.width - width - 14, ShellState.trayAnchorX - width))
+                   : overlay.width - width - 14
+                y: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.height - height) / 2 : Theme.panelTopMargin
                 onLoaded: {
                     item.forceActiveFocus();
                     enterAnimation.restart();
@@ -84,11 +85,12 @@ ShellRoot {
     Component { id: notificationsComponent; NotificationCenter {} }
     Component { id: settingsComponent; SettingsPanel {} }
     Component { id: powerComponent; PowerMenu {} }
+    Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen
         anchors { top: true; right: true }
-        margins { top: 70; right: 14 }
+        margins { top: Theme.panelTopMargin; right: 14 }
         implicitWidth: 360
         implicitHeight: toastColumn.implicitHeight
         color: "transparent"
@@ -131,7 +133,7 @@ ShellRoot {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && (ShellState.osdOpen || ShellState.statusMessage.length > 0)
         anchors.bottom: true
-        margins.bottom: 98
+        margins.bottom: 24
         implicitWidth: ShellState.statusMessage.length > 0 ? 460 : 240
         implicitHeight: ShellState.statusMessage.length > 0 ? 76 : 64
         color: "transparent"; exclusionMode: ExclusionMode.Ignore

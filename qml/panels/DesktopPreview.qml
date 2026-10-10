@@ -10,7 +10,7 @@ Item {
     property string initialPanel: Quickshell.env("LME_SHELL_PREVIEW_PANEL") || "control"
     Component.onCompleted: ShellState.togglePanel(initialPanel)
     Image { anchors.fill: parent; source: "../../assets/wallpapers/liquid-dracula.png"; fillMode: Image.PreserveAspectCrop }
-    Bar { x: 12; y: 10; width: parent.width - 24; height: 46 }
+    Bar { x: Theme.barSideMargin; y: Theme.barTopMargin; width: parent.width - Theme.barSideMargin * 2; height: Theme.barHeight }
     Column {
         x: 110; y: 240
         spacing: 18
@@ -28,15 +28,14 @@ Item {
             LabelText { text: "The panels shown here are the actual QML components."; font.pixelSize: 12; color: Theme.muted }
         }
     }
-    Dock { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 14 }
     Loader {
         id: panelLoader
         active: ShellState.panelOpen
         sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control
-                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : power
+                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : power
         width: item ? item.implicitWidth : 400; height: item ? item.implicitHeight : 600
         x: ShellState.launcherOpen || ShellState.powerOpen ? (root.width - width) / 2 : root.width - width - 14
-        y: ShellState.launcherOpen || ShellState.powerOpen ? (root.height - height) / 2 : 70
+        y: ShellState.launcherOpen || ShellState.powerOpen ? (root.height - height) / 2 : Theme.panelTopMargin
         onLoaded: item.forceActiveFocus()
     }
     Component { id: launcher; Launcher {} }
@@ -44,4 +43,5 @@ Item {
     Component { id: notifications; NotificationCenter {} }
     Component { id: settings; SettingsPanel {} }
     Component { id: power; PowerMenu {} }
+    Component { id: tray; TrayMenu {} }
 }

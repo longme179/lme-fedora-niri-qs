@@ -27,7 +27,7 @@ from typing import Any
 
 DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
-    "accent": "#9580ff", "wallpaper": "", "dockAutoHide": True,
+    "accent": "#9580ff", "wallpaper": "",
     "terminal": "kitty",
 }
 TOOLS = (
@@ -220,7 +220,7 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
-    if key in {"animations", "dockAutoHide"} and type(value) is bool:
+    if key == "animations" and type(value) is bool:
         return value
     if key == "opacity" and type(value) in {int, float} and math.isfinite(value) and 0.60 <= value <= 1:
         return float(value)

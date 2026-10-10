@@ -5,11 +5,15 @@ import "../theme"
 AbstractButton {
     id: root
     property string glyph: ""
+    property string iconName: ""
+    property int iconSize: 18
+    property int glyphSize: 17
     property string tooltip: text
     property bool active: false
     property color accentColor: Theme.accent
     implicitWidth: 36
     implicitHeight: 36
+    padding: 0
     hoverEnabled: true
     Accessible.name: tooltip || text || glyph
     Accessible.role: Accessible.Button
@@ -22,12 +26,23 @@ AbstractButton {
         border.color: Theme.accent
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
     }
-    contentItem: LabelText {
-        text: root.glyph || root.text
-        color: root.active ? root.accentColor : Theme.text
-        font.pixelSize: 17
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
+    contentItem: Item {
+        ShellIcon {
+            anchors.centerIn: parent
+            width: root.iconSize; height: root.iconSize
+            visible: root.iconName.length > 0
+            name: root.iconName
+            color: root.active ? root.accentColor : Theme.text
+        }
+        LabelText {
+            anchors.fill: parent
+            visible: root.iconName.length === 0
+            text: root.glyph || root.text
+            color: root.active ? root.accentColor : Theme.text
+            font.pixelSize: root.glyphSize
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
     }
     ToolTip.visible: hovered && tooltip.length > 0
     ToolTip.text: tooltip

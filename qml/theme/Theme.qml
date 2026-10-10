@@ -23,6 +23,10 @@ QtObject {
     readonly property real panelOpacity: ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
     readonly property int radius: 22
     readonly property int smallRadius: 12
+    readonly property int barHeight: 42
+    readonly property int barTopMargin: 8
+    readonly property int barSideMargin: 12
+    readonly property int panelTopMargin: barTopMargin + barHeight + 8
     readonly property string fontFamily: "Inter"
     readonly property string monoFamily: "JetBrains Mono"
     readonly property bool animations: ShellState.preferences.animations !== false

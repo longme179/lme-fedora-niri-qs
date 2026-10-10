@@ -9,7 +9,7 @@ QtObject {
     // Development fixtures can simulate hardware while testing native services
     // on a private bus. The public demo/preview modes isolate both pathways.
     readonly property bool backendDemo: demo || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
-    property var snapshot: ({apps: [], niri: {available: false, windows: [], workspaces: []}, system: {}, preferences: {language: "en", animations: true, opacity: 0.90, dockAutoHide: true, accent: "#9580ff"}})
+    property var snapshot: ({apps: [], niri: {available: false, windows: [], workspaces: []}, system: {}, preferences: {language: "en", animations: true, opacity: 0.90, accent: "#9580ff"}})
     readonly property var apps: snapshot.apps || []
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
     readonly property var system: snapshot.system || {}
@@ -19,7 +19,9 @@ QtObject {
     property bool notificationsOpen: false
     property bool powerOpen: false
     property bool settingsOpen: false
-    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen
+    property bool trayOpen: false
+    property real trayAnchorX: -1
+    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -37,11 +39,11 @@ QtObject {
 
     function closePanels() {
         launcherOpen = false; controlOpen = false; notificationsOpen = false;
-        powerOpen = false; settingsOpen = false;
+        powerOpen = false; settingsOpen = false; trayOpen = false;
     }
     function togglePanel(name, screen) {
         const key = name + "Open";
-        if (!["launcher", "control", "notifications", "power", "settings"].includes(name)) return;
+        if (!["launcher", "control", "notifications", "power", "settings", "tray"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;

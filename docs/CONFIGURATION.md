@@ -15,7 +15,6 @@ Use the Settings panel to change preferences. A typical `settings.json` is:
   "opacity": 0.9,
   "accent": "#9580ff",
   "wallpaper": "",
-  "dockAutoHide": true,
   "terminal": "kitty"
 }
 ```
@@ -83,6 +82,18 @@ The default appearance uses translucent fills, layered highlights, rounded
 corners, and brief animations. It does not depend on background blur, expensive
 full-screen effects, or NVIDIA offloading. This makes the default practical for
 the laptop's integrated Radeon GPU.
+
+The top bar is 42 px tall with an 8 px top margin. It reserves its own height
+and margin, leaving the gap to application windows to niri's `layout.gaps`
+setting. The shared geometry lives in `qml/theme/Theme.qml`. Side panels and
+notification popups start 8 px below the bar.
+
+The system tray button appears when applications register tray items. Click it
+to open the dropdown; left-click an application to activate it, right-click for
+its native menu, and scroll over its row to send the application's tray scroll
+action. Applications that expose only a menu open that menu on left-click.
+Click outside the dropdown or press Escape to close it. The notification button
+uses a bell, with a diagonal stroke while Do Not Disturb is enabled.
 
 Some newer niri builds expose compositor background effects for layer surfaces.
 If your version documents that feature, you can experiment in your own niri

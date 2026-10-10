@@ -1,0 +1,23 @@
+// LME Shell integration fragment. Do not replace your niri configuration.
+// include requires niri >= 25.11. See docs/INSTALL.md for older versions.
+// Remove existing binds with these same keys before merging this fragment.
+
+spawn-at-startup "quickshell" "-c" "lme-shell"
+
+binds {
+    Mod+Space hotkey-overlay-title="Open application launcher" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "launcher";
+    }
+    Mod+A hotkey-overlay-title="Open control center" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "control";
+    }
+    Mod+N hotkey-overlay-title="Open notifications" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "notifications";
+    }
+    Mod+Comma hotkey-overlay-title="Open shell settings" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "settings";
+    }
+    Mod+Shift+E hotkey-overlay-title="Open power menu" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "power";
+    }
+}

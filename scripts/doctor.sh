@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -uo pipefail
+
+required_failures=0
+optional_missing=0
+required() {
+    if command -v "$1" >/dev/null 2>&1; then
+        printf 'OK       %-22s %s\n' "$1" "$(command -v "$1")"
+    else
+        printf 'MISSING  %-22s install %s\n' "$1" "$2"
+        required_failures=$((required_failures + 1))
+    fi
+}
+optional() {
+    if command -v "$1" >/dev/null 2>&1; then
+        printf 'OK       %-22s %s\n' "$1" "$(command -v "$1")"
+    else
+        printf 'OPTIONAL %-22s %s\n' "$1" "$2"
+        optional_missing=$((optional_missing + 1))
+    fi
+}
+
+printf 'LME Shell: read-only runtime checks\n\n'
+required quickshell quickshell
+required python3 python3
+required niri niri
+required nmcli NetworkManager
+required wpctl wireplumber
+required brightnessctl brightnessctl
+required bluetoothctl bluez
+required busctl systemd
+optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
+optional swaylock 'lock screen'
+optional swayidle 'idle locking; configure explicitly'
+optional lxqt-policykit-agent 'authentication agent; an existing alternative is fine'
+optional swww 'wallpaper selection and restoration'
+optional swww-daemon 'wallpaper daemon'
+optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'
+optional blueman-manager 'Bluetooth pairing: blueman'
+optional pavucontrol 'advanced audio setup: pavucontrol'
+optional notify-send 'notification smoke test: libnotify'
+optional kitty 'default terminal; configurable'
+optional wl-copy 'clipboard utilities: wl-clipboard'
+
+printf '\nSession checks\n'
+if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+    printf 'OK       WAYLAND_DISPLAY is present\n'
+else
+    printf 'MISSING  WAYLAND_DISPLAY; run the shell inside a niri Wayland session\n'
+    required_failures=$((required_failures + 1))
+fi
+if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    printf 'OK       session D-Bus address is present\n'
+else
+    printf 'MISSING  session D-Bus address; notifications and MPRIS need session D-Bus\n'
+    required_failures=$((required_failures + 1))
+fi
+if command -v niri >/dev/null 2>&1; then
+    if niri msg --json outputs >/dev/null 2>&1; then
+        printf 'OK       niri IPC responds\n'
+    else
+        printf 'MISSING  niri IPC; run this check inside the target niri session\n'
+        required_failures=$((required_failures + 1))
+    fi
+fi
+if command -v quickshell >/dev/null 2>&1; then
+    quickshell --version 2>&1 || true
+fi
+if command -v busctl >/dev/null 2>&1; then
+    if busctl --system get-property org.freedesktop.UPower.PowerProfiles \
+            /org/freedesktop/UPower/PowerProfiles org.freedesktop.UPower.PowerProfiles \
+            ActiveProfile >/dev/null 2>&1 ||
+        busctl --system get-property net.hadess.PowerProfiles /net/hadess/PowerProfiles \
+            net.hadess.PowerProfiles ActiveProfile >/dev/null 2>&1; then
+        printf 'OK       a compatible power-profile provider responds\n'
+    else
+        printf 'OPTIONAL no power-profile provider responds; keep one working tuned-ppd or PPD service\n'
+        optional_missing=$((optional_missing + 1))
+    fi
+fi
+
+config_base="${XDG_CONFIG_HOME:-$HOME/.config}"
+if [[ -f "$config_base/quickshell/lme-shell/shell.qml" ]]; then
+    printf 'OK       installed Quickshell entry point\n'
+else
+    printf 'MISSING  installed config; run scripts/install.sh\n'
+    required_failures=$((required_failures + 1))
+fi
+printf '\n%d required checks missing; %d optional tools unavailable.\n' "$required_failures" "$optional_missing"
+printf 'No settings, services, radios, or power state were changed.\n'
+if ((required_failures > 0)); then exit 1; fi

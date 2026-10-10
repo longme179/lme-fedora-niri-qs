@@ -1,0 +1,138 @@
+# LME Shell
+
+A Quickshell desktop shell for **Fedora 44 + niri**, written in QML/Qt Quick
+with a small Python standard-library backend. All interface text, code, and
+documentation are in English.
+
+The layout combines a compact top bar, an auto-hiding bottom dock, and a control
+sidebar on the right. Its Liquid-inspired surfaces use a dark Dracula Pro-style
+palette, rounded glass panels, subtle highlights, and short animations suitable
+for an integrated Radeon GPU.
+
+The interaction design takes inspiration from
+[end-4/dots-hyprland](https://github.com/end-4/dots-hyprland). This is a separate
+niri implementation; it uses niri IPC and Fedora utilities rather than Hyprland
+commands or Arch installation scripts.
+
+![LME launcher preview rendered from QML with sample data](docs/previews/launcher.png)
+
+## Included
+
+- Per-output top bar with niri workspaces, active window information, clock,
+  battery, and status shortcuts.
+- Bottom dock with application launch and running-window focus.
+- Keyboard-searchable application launcher using installed `.desktop` entries.
+- Control center for sound, backlight, Wi-Fi, Bluetooth, and power profiles,
+  with live CPU, memory, temperature, and battery information.
+- MPRIS media controls for compatible players and an English date/time display.
+- Native desktop notifications, notification history during the shell session,
+  and Do Not Disturb.
+- Settings for motion, transparency, accent color, dock behavior, and wallpaper.
+- Lock, suspend, logout, restart, and shutdown actions with confirmation for
+  destructive actions.
+- Optional original wallpaper, package requirements, installation scripts,
+  niri bindings, and troubleshooting documentation.
+
+Network pairing and advanced audio configuration open the existing Fedora
+tools (`nm-connection-editor`, `blueman-manager`, and `pavucontrol`). The shell
+does not implement a password manager or replace NetworkManager.
+
+## Install
+
+The target machine already has niri installed. Check the package requirements
+and installation details in [docs/INSTALL.md](docs/INSTALL.md).
+
+```bash
+git clone https://github.com/longme179/lme-fedora-niri-qs.git
+cd lme-fedora-niri-qs
+
+# Show packages first. This command changes nothing.
+./scripts/install-fedora.sh --optional
+
+# On Fedora: install packages from enabled repositories.
+./scripts/install-fedora.sh --install --optional
+
+# Link this checkout into the current user's Quickshell config.
+./scripts/install.sh
+
+# Run inside a niri Wayland session.
+./scripts/start.sh
+```
+
+If Quickshell is absent from enabled repositories, the installer stops and
+explains the upstream-documented COPR option. It never adds a repository silently.
+Keep the checkout in place: the installation is a symlink to this directory.
+
+Merge [config/niri/lme-shell.kdl](config/niri/lme-shell.kdl) into your existing
+niri configuration after checking for duplicate bindings. The installer never
+overwrites `~/.config/niri/config.kdl`.
+
+| Shortcut | Action |
+| --- | --- |
+| `Mod+Space` | Application launcher |
+| `Mod+A` | Control center |
+| `Mod+N` | Notifications |
+| `Mod+Comma` | Shell settings |
+| `Mod+Shift+E` | Power menu |
+| `Escape` | Close an open panel |
+
+`Mod` is normally Super/Windows in a normal niri session. `Mod+Comma` and
+`Mod+Shift+E` have other meanings in niri's sample configuration; remove or
+rebind the existing entries before adding these bindings.
+
+## Configuration and validation
+
+User preferences live in `~/.config/lme-shell/settings.json`, separate from the
+checkout. Palette overrides live in `~/.config/lme-shell/palette.json`. See
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+
+```bash
+# Check tools and session connectivity without changing system state.
+./scripts/doctor.sh
+
+# Preview with sample data; desktop actions and saved settings are disabled.
+./scripts/start.sh --preview
+
+# A read-only snapshot of real integration state.
+python3 scripts/desktop_backend.py --once
+```
+
+The implementation is designed for the Lenovo IdeaPad Gaming 3 15ARH7 with
+Ryzen 5 7535HS, integrated Radeon graphics, RTX 4050 Laptop, 16 GB RAM, and a
+1920×1080 120 Hz panel. Real hardware validation still belongs on that laptop;
+cloud tests cannot establish graphics, backlight, radio, or suspend behavior.
+The shell does not install graphics drivers or change disk partitions.
+
+The default glass effect is transparency with highlights. Background blur
+depends on compositor support and is not required to run this shell. No
+continuous GPU blur shader or discrete-GPU requirement is introduced.
+
+Run `./scripts/check.sh` for the backend test suite and shell-script checks.
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for session issues and
+[docs/VALIDATION.md](docs/VALIDATION.md) for what can be checked in cloud and
+what needs a real Fedora desktop session.
+
+Preview images are stored in [docs/previews](docs/previews). They were rendered
+from the actual QML with sample state or native-service test fixtures. Their
+captions identify the inputs; they are not screenshots from the user's Fedora
+laptop.
+
+## Project layout
+
+```text
+shell.qml                   Quickshell entry point and panel IPC
+qml/                        Components, panels, and shared services
+scripts/desktop_backend.py  Desktop commands and live state; Python stdlib only
+scripts/install-fedora.sh   Preview/install Fedora packages
+scripts/install.sh          Safe user-config symlink installation
+scripts/start.sh            Startup and optional wallpaper restoration
+scripts/doctor.sh           Read-only environment checks
+config/niri/                Configuration fragment; never applied automatically
+assets/wallpapers/          Original wallpaper source and raster image
+docs/                       Installation, settings, troubleshooting, validation
+requirements-fedora.txt     Required and optional DNF packages
+```
+
+Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) and
+[THIRD_PARTY.md](THIRD_PARTY.md) for upstream attribution and asset provenance.

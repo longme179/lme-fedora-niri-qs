@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#191821"/><stop offset=".55" stop-color="#292337"/><stop offset="1" stop-color="#22212c"/></linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2=".5" y2="1"><stop stop-color="#9580ff"/><stop offset=".5" stop-color="#5b436f"/><stop offset="1" stop-color="#302736"/></linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e0b1ff" stop-opacity=".6"/><stop offset=".5" stop-color="#9580ff" stop-opacity=".08"/><stop offset="1" stop-color="#ff80bf" stop-opacity=".4"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#9580ff" stop-opacity=".2"/><stop offset="1" stop-color="#9580ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="pink"><stop stop-color="#ff80bf" stop-opacity=".12"/><stop offset="1" stop-color="#ff80bf" stop-opacity="0"/></radialGradient>
+  </defs>
+  <path fill="url(#base)" d="M0 0h1920v1080H0z"/>
+  <ellipse cx="1160" cy="450" rx="770" ry="660" fill="url(#glow)"/>
+  <ellipse cx="300" cy="1050" rx="900" ry="400" fill="url(#pink)"/>
+  <path d="M1160-170C1700-320 1990-30 1790 340c-102 188-437 189-515 388-117 298-302 501-526 579 498 30 1146-87 1298-446 143-337 187-722-27-952-206-222-502-233-860-79Z" fill="url(#wave)" opacity=".77"/>
+  <path d="M1190-160C1670-291 1870-19 1711 323c-109 235-488 237-600 448-105 195-209 378-386 468" fill="none" stroke="url(#shine)" stroke-width="2"/>
+  <path d="M1282-162C1689-255 1799 41 1640 339c-138 257-437 215-582 447-87 139-168 317-308 423" fill="none" stroke="#b7a0e5" stroke-opacity=".09"/>
+  <path d="M1357-160C1749-107 1711 165 1560 371c-169 230-388 251-495 426" fill="none" stroke="#e7c9ff" stroke-opacity=".07"/>
+  <path d="M1432 1080c60-273 211-378 385-363 116 10 171 80 210 171v192Z" fill="#9580ff" fill-opacity=".035"/>
+</svg>

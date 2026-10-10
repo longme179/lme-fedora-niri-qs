@@ -1,0 +1,59 @@
+# LME Shell runtime requirements for Fedora 44, x86_64.
+# This is a human-readable DNF package list, not a pip requirements file.
+# Quickshell needs version 0.2 or newer. The shell uses the release API.
+# Availability of quickshell in Fedora 44 enabled repositories must be checked
+# locally. Upstream also documents the errornointernet/quickshell COPR fallback.
+
+[required-shell]
+quickshell
+python3
+qt6-qtbase
+qt6-qtdeclarative
+qt6-qtwayland
+qt6-qtsvg
+google-noto-sans-fonts
+google-noto-color-emoji-fonts
+adwaita-icon-theme
+
+[required-desktop-integration]
+# niri is already installed on the target machine.
+niri
+NetworkManager
+pipewire
+pipewire-pulseaudio
+wireplumber
+brightnessctl
+bluez
+systemd
+
+[power-profile-provider-choose-one]
+# Fedora's existing tuned-ppd is suitable. Do not install both providers.
+tuned-ppd
+# Alternative only if you deliberately use it instead of tuned-ppd:
+power-profiles-daemon
+
+[optional-tools]
+# Existing preferred alternatives can be configured in the shell settings.
+kitty
+nautilus
+firefox
+pavucontrol
+network-manager-applet
+blueman
+swaylock
+swayidle
+lxqt-policykit
+wl-clipboard
+libnotify
+playerctl
+qt6-qtimageformats
+xdg-utils
+xdg-desktop-portal
+xdg-desktop-portal-gnome
+xdg-desktop-portal-gtk
+gnome-keyring
+# Optional wallpaper daemon. Check repository availability before installing.
+swww
+# Optional screenshot utilities. niri's native screenshot bindings need neither.
+grim
+slurp

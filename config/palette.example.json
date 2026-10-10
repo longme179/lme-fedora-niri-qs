@@ -1,0 +1,14 @@
+{
+  "background": "#22212c",
+  "panel": "#2d293d",
+  "surface": "#393447",
+  "text": "#f8f8f2",
+  "muted": "#aaa6c0",
+  "purple": "#9580ff",
+  "pink": "#ff80bf",
+  "cyan": "#80ffea",
+  "green": "#8aff80",
+  "yellow": "#ffff80",
+  "red": "#ff9580",
+  "border": "#605975"
+}

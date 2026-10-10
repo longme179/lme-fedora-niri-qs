@@ -112,7 +112,7 @@ Singleton {
     }
 
     LazyLoader {
-        active: !ShellState.demo
+        active: !ShellState.demo && !ShellState.settingsApp
         component: NotificationServer {
             keepOnReload: true
             persistenceSupported: true

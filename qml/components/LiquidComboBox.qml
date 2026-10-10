@@ -7,15 +7,15 @@ import "../theme"
 ComboBox {
     id: root
     implicitWidth: Math.max(132, implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: 36
+    implicitHeight: 40
     leftPadding: 10
     rightPadding: 30
     topPadding: 8
     bottomPadding: 8
     hoverEnabled: true
     font.family: Theme.fontFamily
-    font.pixelSize: 12
-    palette.button: Theme.surface
+    font.pixelSize: 13
+    palette.button: Theme.surfaceContainerHigh
     palette.buttonText: Theme.text
     palette.text: Theme.text
     palette.base: Theme.panel

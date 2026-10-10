@@ -52,6 +52,15 @@ optional notify-send 'notification smoke test: libnotify'
 optional kitty 'default terminal; configurable'
 optional wl-copy 'clipboard utilities: wl-clipboard'
 
+if command -v fc-match >/dev/null 2>&1; then
+    if [[ "$(fc-match -f '%{family}' Roboto)" == *Roboto* ]]; then
+        printf 'OK       Roboto typography available\n'
+    else
+        printf 'OPTIONAL Roboto font missing; install google-roboto-fonts\n'
+        optional_missing=$((optional_missing + 1))
+    fi
+fi
+
 printf '\nSession checks\n'
 if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
     printf 'OK       WAYLAND_DISPLAY is present\n'

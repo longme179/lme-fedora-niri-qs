@@ -5,22 +5,26 @@ with a small Python standard-library backend. All interface text, code, and
 documentation are in English.
 
 The layout combines a compact top bar and a control sidebar on the right.
-Its Liquid-inspired surfaces use a dark Dracula Pro-style
-palette, pill-shaped bars, subtle highlights, and eased slide animations suitable
+Its Material 3 Expressive inspired controls sit on Liquid glass surfaces, with a
+dark Dracula Pro-style palette, flat tonal fills, Roboto typography, rounded
+shapes, and eased slide animations suitable
 for an integrated Radeon GPU.
 
 The interaction design takes inspiration from
-[end-4/dots-hyprland](https://github.com/end-4/dots-hyprland). This is a separate
+[end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) and
+[snowarch/iNiR](https://github.com/snowarch/iNiR). This is a separate
 niri implementation; it uses niri IPC and Fedora utilities rather than Hyprland
 commands or Arch installation scripts.
 
-![LME launcher preview rendered from QML with sample data](docs/previews/launcher.png)
+![Material glass desktop rendered from QML with sample data](docs/previews/control.png)
 
 ## Included
 
-- Per-output top bar with niri workspaces, active window information, clock,
-  battery, and status shortcuts. Workspaces follow their numeric order on each
-  output; every bar label uses the same font and size.
+- Modular per-output top bar: 13 modules, three configurable zones, drag/drop
+  and keyboard ordering, optional media/resources, and live layout changes.
+  The default is one connected glass pill; three islands are also available.
+  Workspaces follow their numeric order per output. Bar labels use consistent
+  Roboto Medium, adjustable from 12 to 16 px.
 - Overview button for niri's live window previews and drag/drop. Right-click it
   for a themed workspace board with app icons, titles, drag/drop and a keyboard
   workspace selector for each window.
@@ -36,7 +40,12 @@ commands or Arch installation scripts.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native desktop notifications, notification history during the shell session,
   and Do Not Disturb.
-- Settings for motion, transparency, accent color, and wallpaper.
+- Independent Settings application with searchable Appearance, Top bar,
+  Wallpaper, Behavior and About pages. Open it without starting the shell.
+  Changes synchronize with the running shell; preferences are merged under a
+  file lock so another client’s task updates are preserved.
+- Material tonal surfaces, expressive switches/sliders and shape transitions,
+  bold Roboto headings, and translucent glass without UI gradients.
 - Lock, suspend, logout, restart, and shutdown actions with confirmation for
   destructive actions.
 - Optional original wallpaper, package requirements, installation scripts,
@@ -64,6 +73,9 @@ cd lme-fedora-niri-qs
 # Link this checkout into the current user's Quickshell config.
 ./scripts/install.sh
 
+# Register the separate settings app in the application launcher.
+./scripts/install-settings.sh
+
 # Run inside a niri Wayland session.
 ./scripts/start.sh
 ```
@@ -83,7 +95,7 @@ overwrites `~/.config/niri/config.kdl`.
 | `Mod+Space` | Application launcher |
 | `Mod+A` | Control center |
 | `Mod+N` | Notifications |
-| `Mod+Comma` | Shell settings |
+| `Mod+Comma` | Separate Settings app |
 | `Mod+Shift+E` | Power menu |
 | `Escape` | Close an open panel |
 
@@ -152,3 +164,25 @@ requirements-fedora.txt     Required and optional DNF packages
 
 Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) and
 [THIRD_PARTY.md](THIRD_PARTY.md) for upstream attribution and asset provenance.
+
+## Personalize
+
+Open **LME Shell Settings** from your launcher or run:
+
+```bash
+./scripts/settings.sh
+./scripts/settings.sh --page topbar
+./scripts/settings.sh --demo
+```
+
+Settings uses its own window and can run while the desktop shell is stopped.
+The demo uses a separate entry point and never saves preferences or applies a
+wallpaper. **Top bar** lets you move modules between Left, Center and Right,
+reorder with a drag grip or arrow buttons, add/remove modules, change the shape,
+and adjust text size. Restore default layout resets the module arrangement only.
+
+![Standalone Settings application with sample data](docs/previews/settings.png)
+
+See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the iNiR feature mapping and the
+Material/glass design choices. The required Fedora font package is
+`google-roboto-fonts`; no fonts or upstream artwork are bundled.

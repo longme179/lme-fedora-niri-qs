@@ -38,5 +38,5 @@ ColumnLayout {
         LiquidButton { text: "Reset"; onClicked: { if (root.stopwatch) FocusTimer.resetStopwatch(); else FocusTimer.reset(); } }
     }
     Item { Layout.fillHeight: true }
-    LabelText { text: "The timer keeps running when the panel closes. It resets when the shell restarts."; wrapMode: Text.Wrap; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 11 }
+    LabelText { text: "The timer keeps running when the panel closes. It resets when the shell restarts."; wrapMode: Text.Wrap; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 12 }
 }

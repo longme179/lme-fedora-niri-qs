@@ -6,7 +6,9 @@ file only when a preference is saved; missing configuration uses defaults.
 
 ## Settings
 
-Use the Settings panel to change preferences. A typical `settings.json` is:
+Use the standalone Settings app to change preferences. Open it with
+`./scripts/settings.sh`, the application launcher or Super+Comma. A typical
+`settings.json` is:
 
 ```json
 {
@@ -17,7 +19,14 @@ Use the Settings panel to change preferences. A typical `settings.json` is:
   "wallpaper": "",
   "terminal": "kitty",
   "bluetoothAdapter": "",
-  "tasks": []
+  "tasks": [],
+  "barStyle": "connected",
+  "barFontSize": 13,
+  "barLayout": {
+    "left": ["launcher", "overview", "workspaces"],
+    "center": ["windowTitle"],
+    "right": ["tray", "notifications", "audio", "network", "battery", "clock", "settings"]
+  }
 }
 ```
 
@@ -34,11 +43,28 @@ are private local entries with `id`, `text` and `done` fields. Up to 100 tasks
 of 240 characters each are supported. The Agenda tab edits them without needing
 a separate application or network account.
 
-Changes made through the Settings panel apply to the running session. If you
-edit `settings.json` outside the shell, restart the shell to reload that file.
+The Settings app and shell reload changes to `settings.json` on their next
+backend poll (normally within two seconds). No restart is needed. Writes use an
+advisory lock, merge the latest saved preferences, and atomically replace the
+JSON file. Invalid JSON preserves the last valid running configuration.
+
+`barStyle` accepts `connected` (default) or `islands`. `barFontSize` is an integer
+from 12 through 16. `barLayout` requires exactly `left`, `center` and `right`
+arrays. Each module may appear only once across all zones; unknown module IDs
+are rejected. Empty zones are allowed. Supported IDs are `launcher`, `overview`,
+`workspaces`, `windowTitle`, `media`, `resources`, `tray`, `notifications`,
+`audio`, `network`, `battery`, `clock` and `settings`.
+
+Use **Top bar** to add/remove modules, drag them within/across zones, use the
+up/down buttons, or choose a position menu. Drop on a row to insert before it,
+or on a zone's append target to place it last. Crowded zones scroll horizontally;
+workspace lists also scroll. The center receives the space between the side
+zones so groups do not overlap. Below 1200 px, the clock uses a shorter format.
+Unavailable tray, media and battery modules automatically hide. Removing the
+Settings module does not remove access through Super+Comma or the app launcher.
 
 Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper from the shell's
-Settings panel. Changing a wallpaper requires a running `swww-daemon`:
+Settings app. Changing a wallpaper requires a running `swww-daemon`:
 
 ```bash
 swww-daemon
@@ -79,14 +105,18 @@ credentials out of these files.
 
 The primary accent is also saved in `settings.json`; changing the palette's
 `purple` token does not replace an explicitly saved accent. Use the Settings
-accent field to change it. The theme prefers Inter and JetBrains Mono when
-installed, with the system's available fonts as fallback; the supplied Noto
-packages provide a usable baseline without bundling fonts.
+accent field to change it. Roboto is the primary family, with bold section
+headings and a 14 px body size.
+Install `google-roboto-fonts` for the intended appearance. JetBrains Mono is
+used for existing telemetry/terminal fields when installed. The supplied Noto
+packages provide fallback coverage; no fonts are bundled.
 
 ## Surface effects
 
-The default appearance uses translucent fills, layered highlights, rounded
-corners, and brief animations. It does not depend on background blur, expensive
+The default appearance combines Material 3 Expressive inspired rounded controls,
+flat tonal surface roles, translucent glass fills, subtle edge highlights and
+brief shape animations. Bar and panel surfaces have no gradients. It does not
+depend on background blur, expensive
 full-screen effects, or NVIDIA offloading. This makes the default practical for
 the laptop's integrated Radeon GPU.
 
@@ -95,7 +125,8 @@ and margin, leaving the gap to application windows to niri's `layout.gaps`
 setting. The shared geometry lives in `qml/theme/Theme.qml`. Side panels and
 notification popups start 8 px below the bar.
 The outer bar and its buttons use half-height corner radii for a pill shape.
-All labels use the shared 12 px medium-weight bar font. Workspaces are sorted
+All bar labels use shared Roboto Medium at 13 px by default (12–16 px in
+Settings). Workspaces are sorted
 by output and numeric index instead of relying on niri's JSON array order.
 
 Panels slide in with `OutExpo` easing over 360 ms: sidebars arrive from the

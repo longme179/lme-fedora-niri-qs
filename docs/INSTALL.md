@@ -110,6 +110,8 @@ git clone https://github.com/longme179/lme-fedora-niri-qs.git ~/src/lme-fedora-n
 cd ~/src/lme-fedora-niri-qs
 ./scripts/install.sh --dry-run
 ./scripts/install.sh
+./scripts/install-settings.sh --dry-run
+./scripts/install-settings.sh
 ```
 
 This creates a symlink from `~/.config/quickshell/lme-shell` to the checkout.
@@ -120,7 +122,14 @@ exists at that target, the installer stops. To back it up and then replace it:
 ./scripts/install.sh --replace
 ```
 
-The old target is moved to a timestamped sibling backup. Existing niri settings
+The Settings installer adds `lme-shell-settings.desktop` under
+`${XDG_DATA_HOME:-~/.local/share}/applications`. It is repeatable, supports
+`--dry-run` and `--target`, and refuses to overwrite a different entry unless
+`--replace` is provided. Keep the checkout at its permanent path. The topbar
+Settings button works even before installing the launcher entry.
+
+The old configuration target is moved to a timestamped sibling backup.
+Existing niri settings
 and `~/.config/lme-shell` preferences are preserved.
 
 ## 3. Run and validate
@@ -188,6 +197,10 @@ restoration on login, replace its one startup line with the wrapper:
 spawn-sh-at-startup "$HOME/.config/quickshell/lme-shell/scripts/start.sh"
 ```
 
+The fragment also opens **LME Shell Settings** as a floating window. Settings
+can be started independently with `./scripts/settings.sh --page topbar`. It
+does not start a bar or register a notification server.
+
 Use only one shell startup command. If you previously ran a bar such as Waybar
 or another Quickshell config, remove its startup entry when you switch to LME
 Shell so that screen reservations and notification ownership are predictable.
@@ -248,7 +261,10 @@ niri --version
 ```
 
 Then restart the existing shell instance. Review the updated niri fragment to
-add the two overview bindings and run `niri validate`. Existing preferences and
+add the overview bindings and the Settings floating-window rule, then run
+`niri validate`. Install the new `google-roboto-fonts` requirement and run
+`./scripts/install-settings.sh` to register the independent app. Existing
+preferences and
 the installation symlink are retained; never start a second shell alongside
 the first to update it.
 
@@ -294,3 +310,12 @@ test -L ~/.config/quickshell/lme-shell && unlink ~/.config/quickshell/lme-shell
 
 Move a previous timestamped backup back to that location if needed. User
 preferences and installed packages are not removed automatically.
+
+To remove the Settings launcher, verify and remove only the generated entry:
+
+```bash
+cat ~/.local/share/applications/lme-shell-settings.desktop
+rm ~/.local/share/applications/lme-shell-settings.desktop
+```
+
+Restore an installer-created `.backup-*` entry if you previously replaced one.

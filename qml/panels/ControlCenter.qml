@@ -28,11 +28,11 @@ GlassPanel {
             Layout.fillWidth: true; Layout.margins: 8
             ColumnLayout {
                 spacing: 3
-                LabelText { text: "Control center"; font.pixelSize: 23; font.weight: Font.DemiBold }
-                LabelText { text: "Your desktop, within reach."; color: Theme.muted; font.pixelSize: 11 }
+                LabelText { text: "Control center"; font.pixelSize: 23; font.weight: Font.Bold }
+                LabelText { text: "Your desktop, within reach."; color: Theme.muted; font.pixelSize: 12 }
             }
             Item { Layout.fillWidth: true }
-            IconButton { glyph: "⚙"; tooltip: "Shell settings"; onClicked: ShellState.togglePanel("settings") }
+            IconButton { iconName: "settings"; tooltip: "Shell settings"; onClicked: ShellState.togglePanel("settings") }
             IconButton { glyph: "×"; tooltip: "Close control center"; onClicked: ShellState.closePanels() }
         }
         RowLayout {

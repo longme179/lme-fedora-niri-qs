@@ -12,6 +12,7 @@ qt6-qtdeclarative
 qt6-qtwayland
 qt6-qtsvg
 google-noto-sans-fonts
+google-roboto-fonts
 google-noto-color-emoji-fonts
 adwaita-icon-theme
 

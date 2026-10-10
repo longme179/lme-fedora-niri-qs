@@ -1,0 +1,3 @@
+singleton BarRegistry 1.0 BarRegistry.qml
+BarModule 1.0 BarModule.qml
+BarGroup 1.0 BarGroup.qml

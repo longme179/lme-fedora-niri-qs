@@ -1,0 +1,10 @@
+singleton SettingsRegistry 1.0 SettingsRegistry.qml
+SettingsView 1.0 SettingsView.qml
+SettingsCard 1.0 SettingsCard.qml
+PreferenceSwitch 1.0 PreferenceSwitch.qml
+AppearancePage 1.0 AppearancePage.qml
+TopBarPage 1.0 TopBarPage.qml
+WallpaperPage 1.0 WallpaperPage.qml
+BehaviorPage 1.0 BehaviorPage.qml
+AboutPage 1.0 AboutPage.qml
+SettingsApplication 1.0 SettingsApplication.qml

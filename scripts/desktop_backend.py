@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import copy
+import fcntl
 import json
 import math
 import os
@@ -30,7 +32,12 @@ DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
+    "barStyle": "connected", "barFontSize": 13,
+    "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["windowTitle"],
+                  "right": ["tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
+BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
+               "notifications", "audio", "network", "battery", "clock", "settings"}
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
@@ -221,6 +228,22 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
+        return value
+    if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
+        return value
+    if key == "barLayout" and isinstance(value, dict) and set(value) == {"left", "center", "right"}:
+        seen, normalized = set(), {}
+        for zone in ("left", "center", "right"):
+            modules = value[zone]
+            if not isinstance(modules, list) or len(modules) > len(BAR_MODULES):
+                raise ValueError("Invalid bar zone")
+            for module in modules:
+                if not isinstance(module, str) or module not in BAR_MODULES or module in seen:
+                    raise ValueError("Unknown or duplicate bar module")
+                seen.add(module)
+            normalized[zone] = list(modules)
+        return normalized
     if key == "animations" and type(value) is bool:
         return value
     if key == "opacity" and type(value) in {int, float} and math.isfinite(value) and 0.60 <= value <= 1:
@@ -254,22 +277,46 @@ class Preferences:
     def __init__(self, path: Path | None = None) -> None:
         config = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
         self.path = path or config / "lme-shell/settings.json"
-        self.values = dict(DEFAULT_PREFERENCES)
+        self.values = copy.deepcopy(DEFAULT_PREFERENCES)
+        self._stamp: tuple[int, int, int] | None = None
+        self.reload()
+
+    def reload(self, force: bool = False) -> None:
+        """Observe atomic writes from the standalone settings app or shell."""
         try:
+            stat = self.path.stat()
+            stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+            if not force and stamp == self._stamp:
+                return
             saved = json.loads(self.path.read_text(encoding="utf-8"))
             if isinstance(saved, dict):
+                values = copy.deepcopy(DEFAULT_PREFERENCES)
                 for key, value in saved.items():
                     try:
-                        self.values[key] = validate_preference(key, value)
+                        values[key] = validate_preference(key, value)
                     except ValueError:
                         pass
+                self.values = values
+                self._stamp = stamp
+        except FileNotFoundError:
+            if self._stamp is not None:
+                self.values = copy.deepcopy(DEFAULT_PREFERENCES)
+                self._stamp = None
         except (OSError, UnicodeError, json.JSONDecodeError):
+            # Retain the last valid snapshot while an external editor is writing.
             pass
 
     def set(self, key: str, value: Any) -> None:
         value = validate_preference(key, value)
-        updated = {**self.values, key: value}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Serialize the app and shell's writers, including task updates.
+        lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
+        with os.fdopen(lock_fd, "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.reload(force=True)
+            self._write({**self.values, key: value})
+
+    def _write(self, updated: dict[str, Any]) -> None:
         temporary: str | None = None
         try:
             with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
@@ -282,6 +329,8 @@ class Preferences:
                 os.fsync(handle.fileno())
             os.replace(temporary, self.path)
             self.values = updated
+            stat = self.path.stat()
+            self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         finally:
             if temporary and os.path.exists(temporary):
                 os.unlink(temporary)
@@ -307,13 +356,14 @@ def split_nmcli(line: str) -> list[str]:
 class DesktopBackend:
     def __init__(self, runner: CommandRunner | None = None, preferences: Preferences | None = None,
                  apps: Applications | None = None, proc: Path = Path("/proc"), sysfs: Path = Path("/sys"),
-                 demo: bool = False) -> None:
+                 demo: bool = False, settings_only: bool = False) -> None:
         self.demo = demo
+        self.settings_only = settings_only
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
         self.applications = apps or Applications()
         self.proc, self.sysfs = proc, sysfs
-        self.apps = [] if demo else self.applications.scan()
+        self.apps = [] if demo or settings_only else self.applications.scan()
         self.last_app_scan = time.monotonic()
         self.last_cpu: tuple[int, int] | None = None
         self.system_cache: dict[str, Any] | None = None
@@ -609,6 +659,10 @@ class DesktopBackend:
     def snapshot(self) -> dict[str, Any]:
         if self.demo:
             return self.demo_snapshot()
+        self.preferences.reload()
+        if self.settings_only:
+            return {"apps": [], "niri": self.niri, "system": {}, "preferences": dict(self.preferences.values),
+                    "lastResult": dict(self.last_result)}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
@@ -670,6 +724,8 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
+            if self.settings_only and action not in {"setting", "wallpaper", "refresh"}:
+                raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
                 self.last_result = {"ok": True, "action": action, "message": "Demo preview: no system command executed",
@@ -757,6 +813,9 @@ class DesktopBackend:
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
         if action == "refresh":
+            if self.settings_only:
+                self.preferences.reload(force=True)
+                return "Preferences refreshed"
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
             return "State refreshed"
@@ -919,11 +978,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--once", action="store_true", help="Print one read-only state snapshot and exit")
     parser.add_argument("--demo", action="store_true", help="Use sample state; never mutate system or saved preferences")
+    parser.add_argument("--settings", action="store_true", help="Preferences and wallpaper only; no desktop probes")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
-    backend = DesktopBackend(demo=args.demo)
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings)
     emit(backend)
     if args.once:
         return 0

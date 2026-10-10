@@ -62,23 +62,24 @@ Item {
         Layout.preferredHeight: 77
         Accessible.name: label + ": " + detail
         background: Rectangle {
-            radius: Theme.smallRadius
-            color: tile.active ? Theme.alpha(tile.accent, tile.hovered ? 0.28 : 0.18) : Theme.surface
+            radius: tile.active ? 24 : 16
+            color: tile.active ? Theme.mix(Theme.panel, tile.accent, tile.hovered ? 0.38 : 0.28) : Theme.surfaceContainerHigh
             border.color: tile.activeFocus ? tile.accent : tile.active ? Theme.alpha(tile.accent, 0.48) : Theme.border
             border.width: 1
             opacity: tile.enabled ? 1 : 0.5
+            Behavior on radius { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
         }
         contentItem: ColumnLayout {
             spacing: 6
-            Text { text: tile.label; color: tile.active ? tile.accent : Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.DemiBold }
-            Text { Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 11 }
+            Text { text: tile.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
+            Text { Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
         }
     }
 
     component Caption: Text {
         color: Theme.muted
         font.family: Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: 12
     }
 
     Flickable {
@@ -98,7 +99,7 @@ Item {
                 Layout.fillWidth: true
                 ColumnLayout {
                     spacing: 4
-                    Text { text: Qt.formatDateTime(root.now, "hh:mm"); color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 32; font.weight: Font.DemiBold }
+                    Text { text: Qt.formatDateTime(root.now, "hh:mm"); color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 32; font.weight: Font.Bold }
                     Caption { text: Qt.locale("en_US").toString(root.now, "dddd, MMMM d") }
                 }
                 Item { Layout.fillWidth: true }
@@ -247,7 +248,7 @@ Item {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 4
-                            Text { Layout.fillWidth: true; text: root.player ? root.player.trackTitle || root.player.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.DemiBold }
+                            Text { Layout.fillWidth: true; text: root.player ? root.player.trackTitle || root.player.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
                             Caption { Layout.fillWidth: true; text: root.player ? root.player.trackArtist || root.player.identity : "Play media in your favorite app"; textFormat: Text.PlainText; elide: Text.ElideRight }
                         }
                     }

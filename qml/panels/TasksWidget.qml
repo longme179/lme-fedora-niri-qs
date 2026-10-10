@@ -17,7 +17,7 @@ ColumnLayout {
         save([...tasks, {id: Date.now() + "-" + Math.floor(Math.random() * 1000000), text: value, done: false}]);
         entry.clear();
     }
-    LabelText { text: "A little progress every day."; font.pixelSize: 19; font.weight: Font.DemiBold }
+    LabelText { text: "A little progress every day."; font.pixelSize: 19; font.weight: Font.Bold }
     RowLayout {
         Layout.fillWidth: true
         TextField {
@@ -32,7 +32,7 @@ ColumnLayout {
         }
         LiquidButton { text: "Add"; enabled: entry.text.trim().length > 0 && root.tasks.length < 100 && !ShellState.pendingActions.setting; onClicked: root.add() }
     }
-    LabelText { text: root.tasks.filter(task => !task.done).length + " remaining"; color: Theme.muted; font.pixelSize: 11 }
+    LabelText { text: root.tasks.filter(task => !task.done).length + " remaining"; color: Theme.muted; font.pixelSize: 12 }
     ListView {
         Layout.fillWidth: true; Layout.fillHeight: true
         model: root.tasks; clip: true; spacing: 8
@@ -65,5 +65,5 @@ ColumnLayout {
         }
     }
     LiquidButton { text: "Clear completed"; enabled: root.tasks.some(task => task.done) && !ShellState.pendingActions.setting; onClicked: root.save(root.tasks.filter(task => !task.done)) }
-    LabelText { text: ShellState.demo ? "Tasks are kept only in this demo session." : "Tasks are saved with your shell preferences."; color: Theme.muted; font.pixelSize: 11 }
+    LabelText { text: ShellState.demo ? "Tasks are kept only in this demo session." : "Tasks are saved with your shell preferences."; color: Theme.muted; font.pixelSize: 12 }
 }

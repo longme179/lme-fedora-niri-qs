@@ -56,7 +56,7 @@ Item {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 3
-                Text { text: "Applications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.DemiBold }
+                Text { text: "Applications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold }
                 Text { text: "Your next task starts here."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
             Item { Layout.fillWidth: true }
@@ -194,7 +194,7 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width - 60
                 spacing: 10
-                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.query ? "No matching applications" : "No applications found"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 18; font.weight: Font.DemiBold }
+                Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.query ? "No matching applications" : "No applications found"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 18; font.weight: Font.Bold }
                 Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; text: root.query ? "Try a shorter name or a different keyword." : "Install an application with a desktop entry, then reopen the launcher."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
         }

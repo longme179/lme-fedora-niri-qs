@@ -16,7 +16,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         IconButton { glyph: "‹"; tooltip: "Previous month"; onClicked: root.month = new Date(root.month.getFullYear(), root.month.getMonth() - 1, 1) }
-        LabelText { text: root.months[root.month.getMonth()] + " " + root.month.getFullYear(); font.pixelSize: 21; font.weight: Font.DemiBold; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+        LabelText { text: root.months[root.month.getMonth()] + " " + root.month.getFullYear(); font.pixelSize: 21; font.weight: Font.Bold; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
         IconButton { glyph: "›"; tooltip: "Next month"; onClicked: root.month = new Date(root.month.getFullYear(), root.month.getMonth() + 1, 1) }
     }
     GridLayout {
@@ -24,7 +24,7 @@ ColumnLayout {
         columns: 7; columnSpacing: 6; rowSpacing: 8
         Repeater {
             model: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            delegate: LabelText { required property string modelData; text: modelData; color: Theme.muted; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; Layout.preferredWidth: 1 }
+            delegate: LabelText { required property string modelData; text: modelData; color: Theme.muted; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true; Layout.preferredWidth: 1 }
         }
         Repeater {
             model: 42

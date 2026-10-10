@@ -35,7 +35,7 @@ while (($#)); do
 done
 
 packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
-    qt6-qtsvg google-noto-sans-fonts google-noto-color-emoji-fonts
+    qt6-qtsvg google-roboto-fonts google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-pulseaudio
     wireplumber brightnessctl bluez systemd util-linux)
 if "$optional"; then

@@ -39,7 +39,7 @@ GlassPanel {
             LabelText {
                 text: "System tray"
                 color: Theme.muted
-                font.pixelSize: 11
+                font.pixelSize: 12
                 Layout.fillWidth: true
                 Layout.bottomMargin: 4
             }

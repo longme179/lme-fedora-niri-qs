@@ -6,6 +6,7 @@ import Quickshell.Io
 QtObject {
     id: root
     readonly property bool demo: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
+    readonly property bool settingsApp: Quickshell.env("LME_SHELL_SETTINGS") === "1"
     // Development fixtures can simulate hardware while testing native services
     // on a private bus. The public demo/preview modes isolate both pathways.
     readonly property bool backendDemo: demo || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
@@ -46,6 +47,11 @@ QtObject {
         powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false;
     }
     function togglePanel(name, screen) {
+        if (name === "settings" && !demo && !settingsApp) {
+            closePanels();
+            if (!settingsProcess.running) settingsProcess.running = true;
+            return;
+        }
         const key = name + "Open";
         if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview"].includes(name)) return;
         const wasOpen = root[key];
@@ -111,7 +117,7 @@ QtObject {
                 delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && (!next.lastResult.ok || !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }
@@ -119,8 +125,8 @@ QtObject {
         } catch (error) { console.warn("Invalid desktop backend message:", error); }
     }
     property Process backend: Process {
-        command: root.backendDemo ? ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py"), "--demo"]
-                           : ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]
+        command: ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]
+            .concat(root.backendDemo ? ["--demo"] : []).concat(root.settingsApp ? ["--settings"] : [])
         stdinEnabled: true
         running: true
         stdout: SplitParser { onRead: data => root.accept(data) }
@@ -134,6 +140,16 @@ QtObject {
         }
     }
     property Timer restartTimer: Timer { interval: 2000; onTriggered: root.backend.running = true }
+    property Process settingsProcess: Process {
+        command: ["bash", Quickshell.shellPath("scripts/settings.sh"), "--daemonize"]
+        stderr: SplitParser { onRead: data => console.warn("Settings:", data) }
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                root.statusMessage = "Settings could not be opened. Check the shell log.";
+                root.statusError = true; root.statusTimer.restart();
+            }
+        }
+    }
     property Timer statusTimer: Timer { interval: 4500; onTriggered: root.statusMessage = "" }
     property Timer osdTimer: Timer { interval: 1600; onTriggered: root.osdOpen = false }
     property Timer nativeOverviewDelay: Timer { interval: 80; onTriggered: root.run("nativeOverview") }

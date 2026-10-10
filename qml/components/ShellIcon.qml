@@ -52,6 +52,38 @@ Item {
                 ctx.beginPath();
                 ctx.moveTo(8, 17); ctx.lineTo(12, 21); ctx.lineTo(16, 17);
                 ctx.stroke();
+            } else if (root.name === "settings") {
+                ctx.beginPath();
+                for (let i = 0; i < 24; i++) {
+                    const angle = i * Math.PI / 12;
+                    const radius = i % 4 === 0 || i % 4 === 3 ? 9 : 7;
+                    const x = 12 + Math.cos(angle) * radius, y = 12 + Math.sin(angle) * radius;
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.closePath(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(12, 12, 3, 0, Math.PI * 2); ctx.stroke();
+            } else if (root.name === "clock") {
+                ctx.beginPath(); ctx.arc(12, 12, 9, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12, 6); ctx.lineTo(12, 12); ctx.lineTo(16, 14); ctx.stroke();
+            } else if (root.name === "wifi") {
+                for (const r of [5, 9, 13]) {
+                    ctx.beginPath(); ctx.arc(12, 19, r, Math.PI * 1.25, Math.PI * 1.75); ctx.stroke();
+                }
+                ctx.beginPath(); ctx.arc(12, 19, 1, 0, Math.PI * 2); ctx.fill();
+            } else if (root.name === "audio") {
+                ctx.beginPath(); ctx.moveTo(3, 9); ctx.lineTo(7, 9); ctx.lineTo(12, 5); ctx.lineTo(12, 19); ctx.lineTo(7, 15); ctx.lineTo(3, 15); ctx.closePath(); ctx.stroke();
+                for (const r of [5, 9]) { ctx.beginPath(); ctx.arc(12, 12, r, -0.8, 0.8); ctx.stroke(); }
+            } else if (root.name === "battery") {
+                ctx.beginPath(); ctx.roundedRect(3, 7, 17, 10, 2, 2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(22, 10); ctx.lineTo(22, 14); ctx.stroke();
+                ctx.fillRect(6, 10, 10, 4);
+            } else if (root.name === "media") {
+                ctx.beginPath(); ctx.moveTo(9, 17); ctx.lineTo(9, 5); ctx.lineTo(20, 3); ctx.lineTo(20, 15); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(2, 14, 7, 5); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(13, 12, 7, 5); ctx.fill();
+            } else if (root.name === "resources") {
+                ctx.beginPath(); ctx.roundedRect(6, 6, 12, 12, 2, 2); ctx.stroke();
+                for (const n of [8, 12, 16]) { ctx.beginPath(); ctx.moveTo(n, 3); ctx.lineTo(n, 6); ctx.moveTo(n, 18); ctx.lineTo(n, 21); ctx.moveTo(3, n); ctx.lineTo(6, n); ctx.moveTo(18, n); ctx.lineTo(21, n); ctx.stroke(); }
             } else {
                 ctx.beginPath();
                 ctx.moveTo(5, 17);

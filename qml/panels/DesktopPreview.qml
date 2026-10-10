@@ -24,13 +24,13 @@ Item {
         ColumnLayout {
             anchors.fill: parent; anchors.margins: 24; spacing: 9
             LabelText { text: "DEMO SESSION"; color: Theme.cyan; font.pixelSize: 10; font.letterSpacing: 2 }
-            LabelText { text: "Sample data · System actions disabled"; font.pixelSize: 16; font.weight: Font.DemiBold }
+            LabelText { text: "Sample data · System actions disabled"; font.pixelSize: 16; font.weight: Font.Bold }
             LabelText { text: "The panels shown here are the actual QML components."; font.pixelSize: 12; color: Theme.muted }
         }
     }
     SlideLoader {
         id: panelLoader
-        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen
+        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.settingsOpen
         direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
         active: ShellState.panelOpen
         sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control

@@ -8,7 +8,7 @@ AbstractButton {
     property string iconName: ""
     property int iconSize: 18
     property int glyphSize: 17
-    property real cornerRadius: Theme.smallRadius
+    property real cornerRadius: height / 2
     property string tooltip: text
     property bool active: false
     property color accentColor: Theme.accent
@@ -21,9 +21,9 @@ AbstractButton {
     opacity: enabled ? 1 : 0.4
     background: Rectangle {
         radius: root.cornerRadius
-        color: root.active ? Theme.alpha(root.accentColor, 0.20)
+        color: root.active ? Theme.primaryContainer
                            : root.hovered ? Theme.alpha(Theme.text, 0.09) : "transparent"
-        border.width: root.visualFocus ? 2 : root.active ? 1 : 0
+        border.width: root.visualFocus ? 2 : 0
         border.color: Theme.accent
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
     }

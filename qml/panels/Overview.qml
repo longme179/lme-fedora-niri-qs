@@ -28,7 +28,7 @@ GlassPanel {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 5
-                LabelText { text: "Workspace overview"; font.pixelSize: 24; font.weight: Font.DemiBold }
+                LabelText { text: "Workspace overview"; font.pixelSize: 24; font.weight: Font.Bold }
                 LabelText { text: "Drag a window to another workspace, or select it to focus."; color: Theme.muted }
             }
             Item { Layout.fillWidth: true }
@@ -82,7 +82,7 @@ GlassPanel {
                                 padding: 0; hoverEnabled: true
                                 Accessible.name: "Focus workspace " + (workspaceCard.modelData.name || workspaceCard.modelData.idx)
                                 contentItem: RowLayout {
-                                    LabelText { text: (workspaceCard.modelData.name || "Workspace " + workspaceCard.modelData.idx); font.weight: Font.DemiBold; color: workspaceCard.modelData.is_focused ? Theme.accent : Theme.text }
+                                    LabelText { text: (workspaceCard.modelData.name || "Workspace " + workspaceCard.modelData.idx); font.weight: Font.Bold; color: workspaceCard.modelData.is_focused ? Theme.accent : Theme.text }
                                     Item { Layout.fillWidth: true }
                                     LabelText { text: workspaceCard.modelData.output || "Detached"; font.pixelSize: 10; color: Theme.muted }
                                 }
@@ -154,7 +154,7 @@ GlassPanel {
                 }
             }
         }
-        LabelText { text: "Left-click the topbar overview button for niri's live window previews. Right-click for this board."; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.Wrap }
+        LabelText { text: "Left-click the topbar overview button for niri's live window previews. Right-click for this board."; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
     }
     Rectangle {
         id: dragProxy

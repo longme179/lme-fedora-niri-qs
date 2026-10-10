@@ -18,3 +18,14 @@ enter their own color values. The project is unaffiliated with Dracula Pro.
 
 The included wallpaper and UI shapes are original vector artwork. Application
 icons are resolved from the user's installed icon theme, and are not bundled.
+
+The modular bar, searchable settings registry and Material design direction also
+reference [snowarch/iNiR](https://github.com/snowarch/iNiR), inspected at commit
+`48cdcecb0f6089cfbb7019054602eab28e154b3b` (root license: GNU GPL version 3).
+These interaction patterns have been implemented independently for LME Shell.
+No iNiR source files, shaders, bundled fonts, wallpapers or installation scripts
+are redistributed. See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the mapping.
+
+Roboto is installed through Fedora's `google-roboto-fonts` package. The project
+references it by family name and does not distribute the font files. Small shell
+icons are original Canvas drawings; Material Symbols font assets are not bundled.

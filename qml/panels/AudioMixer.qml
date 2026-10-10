@@ -26,7 +26,7 @@ Flickable {
             anchors.fill: parent; anchors.margins: 12; spacing: 6
             RowLayout {
                 LabelText { Layout.fillWidth: true; text: row.node.ready && row.node.properties["application.name"] || root.label(row.node); elide: Text.ElideRight }
-                LabelText { text: row.node.ready ? Math.round(row.node.audio.volume * 100) + "%" : "Connecting…"; color: Theme.muted; font.pixelSize: 11 }
+                LabelText { text: row.node.ready ? Math.round(row.node.audio.volume * 100) + "%" : "Connecting…"; color: Theme.muted; font.pixelSize: 12 }
                 LiquidButton { text: row.node.audio.muted ? "Unmute" : "Mute"; enabled: row.node.ready; onClicked: row.node.audio.muted = !row.node.audio.muted }
             }
             LiquidSlider {
@@ -42,7 +42,7 @@ Flickable {
     ColumnLayout {
         id: content
         width: parent.width; spacing: 14
-        LabelText { text: "Audio devices & mixer"; font.pixelSize: 18; font.weight: Font.DemiBold; Layout.topMargin: 8 }
+        LabelText { text: "Audio devices & mixer"; font.pixelSize: 18; font.weight: Font.Bold; Layout.topMargin: 8 }
         LabelText { Layout.fillWidth: true; text: "Choose default devices and adjust each app independently."; color: Theme.muted; wrapMode: Text.Wrap }
         LabelText { text: "Output device"; color: Theme.cyan }
         LiquidComboBox {

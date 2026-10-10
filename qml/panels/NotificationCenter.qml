@@ -37,7 +37,7 @@ Item {
         spacing: 16
         RowLayout {
             Layout.fillWidth: true
-            Text { text: "Notifications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 23; font.weight: Font.DemiBold }
+            Text { text: "Notifications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 23; font.weight: Font.Bold }
             Item { Layout.fillWidth: true }
             LiquidButton { text: "×"; Accessible.name: "Close notifications"; onClicked: ShellState.closePanels(); palette.button: Theme.surface; palette.buttonText: Theme.text }
         }
@@ -51,8 +51,8 @@ Item {
                 anchors.margins: 14
                 ColumnLayout {
                     spacing: 3
-                    Text { text: "Do not disturb"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.DemiBold }
-                    Text { text: "Keep notifications in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 11 }
+                    Text { text: "Do not disturb"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
+                    Text { text: "Keep notifications in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
                 }
                 Item { Layout.fillWidth: true }
                 Switch {
@@ -98,7 +98,7 @@ Item {
                         spacing: 8
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: entry.modelData.appName; textFormat: Text.PlainText; color: Theme.purple; font.family: Theme.fontFamily; font.pixelSize: 11; font.weight: Font.DemiBold; elide: Text.ElideRight }
+                            Text { Layout.fillWidth: true; text: entry.modelData.appName; textFormat: Text.PlainText; color: Theme.purple; font.family: Theme.fontFamily; font.pixelSize: 12; font.weight: Font.Bold; elide: Text.ElideRight }
                             Text { text: root.timeText(entry.modelData.timestamp); color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 10 }
                             LiquidButton {
                                 text: "×"
@@ -110,7 +110,7 @@ Item {
                                 palette.buttonText: Theme.muted
                             }
                         }
-                        Text { Layout.fillWidth: true; text: entry.modelData.summary; textFormat: Text.PlainText; wrapMode: Text.WordWrap; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.DemiBold }
+                        Text { Layout.fillWidth: true; text: entry.modelData.summary; textFormat: Text.PlainText; wrapMode: Text.WordWrap; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
                         Text { Layout.fillWidth: true; visible: text.length > 0; text: entry.modelData.body; textFormat: Text.PlainText; wrapMode: Text.WordWrap; maximumLineCount: 8; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
                         Flow {
                             Layout.fillWidth: true
@@ -134,7 +134,7 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width - 30
                 spacing: 12
-                Text { width: parent.width; text: "All caught up"; horizontalAlignment: Text.AlignHCenter; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 20; font.weight: Font.DemiBold }
+                Text { width: parent.width; text: "All caught up"; horizontalAlignment: Text.AlignHCenter; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 20; font.weight: Font.Bold }
                 Text { width: parent.width; text: "New notifications will appear here."; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
         }

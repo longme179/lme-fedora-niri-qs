@@ -9,7 +9,8 @@ from the target Lenovo/Fedora installation. Open `scripts/start.sh --preview`
 in a running Wayland session for an interactive preview without desktop mutations.
 
 The workspace board, wider control center, Devices and Agenda images show the
-expanded shell. `audio-mixer.png` uses an isolated PipeWire/WirePlumber session
+expanded shell. `audio-mixer.png` now shows the Material layout with sample data.
+`native-audio-mixer.png` preserves the earlier isolated PipeWire/WirePlumber session
 with virtual devices and a real `pw-play` stream. `bluez-adapter.png` uses a
 private D-Bus BlueZ adapter fixture, with the actual Python backend and widget.
 The older native media/tray and profile-dropdown captures document the first
@@ -23,10 +24,12 @@ the new tabs. No image represents physical laptop hardware testing.
 | Workspace board with sample windows | [overview.png](overview.png) |
 | Devices with sample Bluetooth/Wi-Fi state | [devices.png](devices.png) |
 | Agenda calendar with sample desktop state | [agenda.png](agenda.png) |
-| Native audio mixer with isolated virtual devices/stream | [audio-mixer.png](audio-mixer.png) |
+| Material audio mixer with sample state | [audio-mixer.png](audio-mixer.png) |
+| Native audio mixer with isolated virtual devices/stream | [native-audio-mixer.png](native-audio-mixer.png) |
 | Native Bluetooth widget with private BlueZ adapter fixture | [bluez-adapter.png](bluez-adapter.png) |
 | Notifications | [notifications.png](notifications.png) |
-| Shell settings | [settings.png](settings.png) |
+| Standalone Settings app with sample state | [settings.png](settings.png) |
+| Modular topbar editor with sample state | [topbar-editor.png](topbar-editor.png) |
 | Power menu | [power.png](power.png) |
 | Native notification toast with test content | [notification-toast.png](notification-toast.png) |
 | Native media/tray controls with mock applications | [native-control-center.png](native-control-center.png) |

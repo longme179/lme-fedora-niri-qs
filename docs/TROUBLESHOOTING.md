@@ -184,3 +184,22 @@ look different with different wallpapers and panel opacity settings. True
 background blur is compositor-dependent. Increase panel opacity for legibility
 and disable animations in Settings if you prefer reduced motion or lower GPU
 work. Avoid selecting the RTX GPU just to intensify visual effects.
+
+## Settings app or typography
+
+Run `./scripts/settings.sh` from the permanent checkout in your Wayland session.
+It uses `settings.qml`, independently of the shell. The bar and Super+Comma open
+the same application; `--page topbar` navigates an existing instance rather than
+starting another. Register the launcher with `./scripts/install-settings.sh`.
+If you moved the checkout, rerun it with `--replace` to back up the old entry.
+
+Install `google-roboto-fonts` and check `fc-match Roboto` if text uses a fallback.
+After installing fonts, restart the existing Quickshell applications so Qt can
+resolve the new family. Bar text size can be changed in Settings → Top bar.
+
+A preference error appears inside Settings. Layouts accept only the documented
+module IDs and unique modules across the three zones. External JSON edits reload
+within the normal two-second poll; malformed JSON retains the previous running
+state. If the app is tiled, review the floating-window rule in the niri fragment.
+Stock niri is not assumed to blur the background: translucent flat fills remain
+visible without a blur protocol.

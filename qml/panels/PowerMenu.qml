@@ -65,7 +65,7 @@ Item {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 3
-                Text { text: root.pendingAction ? root.pendingLabel + "?" : "Take a break"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.DemiBold }
+                Text { text: root.pendingAction ? root.pendingLabel + "?" : "Take a break"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold }
                 Text { text: root.pendingAction ? "Confirm to continue." : "Your session, your pace."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
             Item { Layout.fillWidth: true }

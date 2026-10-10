@@ -52,7 +52,7 @@ The following checks passed:
 
 | Area | Verification |
 | --- | --- |
-| Backend | All 43 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
+| Backend | All 51 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
 | Installation | Dry run, repeated install, overwrite refusal, backup preservation, broken symlinks, unsafe-target rejection |
 | Startup | Demo/preview avoids desktop mutations; argument quoting and saved-wallpaper restoration |
 | Shell scripts | Bash syntax and Fedora package preview; non-Fedora installation refused |
@@ -71,6 +71,20 @@ The following checks passed:
 | Native audio mixer | Device/stream discovery, output preference metadata, and per-stream volume/mute confirmed in the private PipeWire session |
 | Agenda | Calendar rendering, keyboard task add, checkbox completion, and focus timer/stopwatch state retained across panel closure |
 | Expanded QML | New components pass `qmllint`; rendered panels and native fixture runs load without QML errors or warnings |
+
+The Material/settings update passed eight additional tests covering layout
+validation, nested-default isolation, stale-writer merging, external reload,
+settings-only backend restrictions, demo isolation, desktop-entry installation and symlink-target protection.
+All 51 tests passed. The six main panel previews, five standalone settings pages
+and three alternate control-center tabs rendered without QML warnings/errors.
+Roboto was resolved through fontconfig rather than replaced by a fallback.
+
+The actual Settings window was exercised under the private Wayland compositor:
+row reorder and cross-zone drag wrote the expected module arrays; changing the
+shape was reflected by the separate running shell; repeated launch selected the
+requested page through IPC. Its 800×600 minimum size remained usable with page
+scrolling. Notification ownership stayed with the original shell while Settings
+was open. These are cloud UI checks, not physical-device tests.
 
 Package installation commands for Fedora 44 were not executed on the Debian
 cloud machine. Niri configuration snippets were checked against upstream source
@@ -96,7 +110,8 @@ Use the target laptop for those checks below.
 | Motion and idle | Panels slide smoothly; disabled motion is immediate; Stay awake inhibits idle and resets on shell restart |
 | Notifications | `notify-send` popup, notification center, DND work |
 | Media | Compatible MPRIS player metadata and controls update |
-| Settings | Preferences survive restart; chosen raster wallpaper restores |
+| Settings | Independent window opens from launcher/bar/Super+Comma; changes reach the shell without restart; search, keyboard navigation and selected states work; wallpaper applies |
+| Modular bar | Add/remove modules, reorder arrows, position menus and cross-zone drag/drop persist; connected pill is the default; crowded groups remain usable |
 | Displays | Correct placement on internal panel and any external output |
 | Laptop graphics | Integrated GPU is suitable; idle shell stays responsive |
 | Lock and suspend | Lock authentication, suspend/resume, radios after resume |

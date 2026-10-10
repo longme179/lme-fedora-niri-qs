@@ -8,6 +8,10 @@ applications. None were captured
 from the target Lenovo/Fedora installation. Open `scripts/start.sh --preview`
 in a running Wayland session for an interactive preview without desktop mutations.
 
+The current Control Center image includes sample weather and numerical charge
+controls. Weather settings also uses sample data; it does not reveal the cloud
+IP location or establish the laptop’s firmware capability.
+
 The workspace board, wider control center, Devices and Agenda images show the
 expanded shell. `audio-mixer.png` now shows the Material layout with sample data.
 `native-audio-mixer.png` preserves the earlier isolated PipeWire/WirePlumber session
@@ -29,6 +33,7 @@ the new tabs. No image represents physical laptop hardware testing.
 | Native Bluetooth widget with private BlueZ adapter fixture | [bluez-adapter.png](bluez-adapter.png) |
 | Notifications | [notifications.png](notifications.png) |
 | Standalone Settings app with sample state | [settings.png](settings.png) |
+| Weather settings with sample location/forecast | [weather-settings.png](weather-settings.png) |
 | Modular topbar editor with sample state | [topbar-editor.png](topbar-editor.png) |
 | Power menu | [power.png](power.png) |
 | Native notification toast with test content | [notification-toast.png](notification-toast.png) |

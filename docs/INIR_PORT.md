@@ -16,8 +16,9 @@ backend; it does not vendor the upstream dependency graph or Arch scripts.
 
 Appearance changes accent, opacity and motion. Top bar configures modules,
 shape and text size. Wallpaper selects a local image through Qt's file dialog.
+Weather controls automatic location, city search and temperature units.
 Behavior sets the default terminal. About links to the project and credits.
-The app opens without the shell and uses a preference/wallpaper-only backend.
+The app opens without the shell and uses a preference/wallpaper backend with explicit location lookup actions.
 It does not scan installed apps, poll desktop hardware, or own notifications.
 
 Both clients reload preferences and serialize atomic writes with a shared file

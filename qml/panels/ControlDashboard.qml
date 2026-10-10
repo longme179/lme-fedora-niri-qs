@@ -106,6 +106,9 @@ Item {
                 LiquidButton { text: "Lock"; onClicked: { ShellState.closePanels(); ShellState.run("lock"); } }
             }
 
+            WeatherWidget { Layout.fillWidth: true }
+            ChargingWidget { Layout.fillWidth: true }
+
             GridLayout {
                 Layout.fillWidth: true
                 columns: width < 460 ? 2 : 3

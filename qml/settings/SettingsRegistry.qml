@@ -5,6 +5,7 @@ QtObject {
         {key: "appearance", title: "Appearance", icon: "settings", description: "Material shapes, glass and Dracula colors", keywords: "accent opacity animations motion theme font roboto"},
         {key: "topbar", title: "Top bar", icon: "overview", description: "Your modules, in your order", keywords: "modules layout islands pill clock workspaces tray size"},
         {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "background image picture"},
+        {key: "weather", title: "Weather", icon: "weather-sun", description: "Local conditions, wherever you are", keywords: "location city automatic ip forecast celsius fahrenheit temperature"},
         {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "terminal applications preferences"},
         {key: "about", title: "About", icon: "bell", description: "LME Shell for Fedora and niri", keywords: "version license requirements credits inir"}
     ]

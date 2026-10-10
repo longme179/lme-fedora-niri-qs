@@ -46,6 +46,7 @@ blueman
 swaylock
 swayidle
 lxqt-policykit
+polkit
 wl-clipboard
 libnotify
 playerctl
@@ -56,7 +57,8 @@ xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
 gnome-keyring
 # Optional wallpaper daemon. Check repository availability before installing.
-swww
+# Upstream: https://codeberg.org/LGFae/awww.git (client and awww-daemon).
+awww
 # Optional screenshot utilities. niri's native screenshot bindings need neither.
 grim
 slurp

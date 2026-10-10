@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Quickshell.Services.SystemTray
@@ -20,7 +21,7 @@ Loader {
                                    : moduleId === "media" ? player !== null : true
     active: available
     visible: available
-    width: available && item ? item.implicitWidth : 0
+    width: available && item ? (item as Item).implicitWidth : 0
     height: 30
     sourceComponent: moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launcher", "overview", "tray", "notifications", "settings"].includes(moduleId) ? actionComponent : statusComponent
@@ -30,7 +31,8 @@ Loader {
             id: button
             implicitWidth: 30; implicitHeight: 30
             iconName: root.moduleId === "notifications" ? (Notifications.dnd ? "bell-off" : "bell") : BarRegistry.info(root.moduleId).icon
-            tooltip: root.moduleId === "overview" ? "Overview · right-click for workspace board" : BarRegistry.info(root.moduleId).title
+            tooltip: ["overview", "launcher"].includes(root.moduleId) ? "" : BarRegistry.info(root.moduleId).title
+            Accessible.name: BarRegistry.info(root.moduleId).title
             active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : false
             onClicked: {
                 if (root.moduleId === "overview") ShellState.nativeOverview();
@@ -109,18 +111,20 @@ Loader {
                 : root.moduleId === "battery" ? (root.battery.charging ? "+" : "") + Math.round(root.battery.percent || 0) + "%"
                 : root.moduleId === "resources" ? Math.round(ShellState.system.cpu || 0) + "% CPU · " + Math.round(ShellState.system.memoryPercent || 0) + "% RAM"
                 : root.player ? root.player.trackTitle || root.player.identity : "Media"
-            implicitWidth: Math.min(statusMetrics.width + (root.moduleId === "clock" ? 20 : 42), root.moduleId === "media" ? 220 : 300)
+            // Measure an unconstrained label with the exact rendered font. A
+            // separately configured TextMetrics can undercount hinted glyphs.
+            implicitWidth: Math.min(Math.ceil(captionMeasure.implicitWidth) + 2 + (root.moduleId === "clock" ? 24 : 48), root.moduleId === "media" ? 220 : 300)
             implicitHeight: 30; padding: 0; hoverEnabled: true
             Accessible.name: BarRegistry.info(root.moduleId).title + ": " + caption
             onClicked: ShellState.togglePanel("control", root.screenInfo)
             background: Rectangle { radius: 15; color: button.hovered || ShellState.controlOpen ? Theme.primaryContainer : "transparent"; border.width: button.visualFocus ? 2 : 0; border.color: Theme.accent }
-            TextMetrics { id: statusMetrics; text: button.caption; font.family: Theme.fontFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
+            LabelText { id: captionMeasure; visible: false; text: button.caption; font: statusText.font }
             contentItem: Item {
                 Row {
                     id: content
                     anchors.centerIn: parent; spacing: 6
                     ShellIcon { visible: root.moduleId !== "clock"; name: BarRegistry.info(root.moduleId).icon; color: root.moduleId === "battery" && root.battery.percent < 20 ? Theme.red : Theme.muted; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
-                    LabelText { id: statusText; text: button.caption; width: Math.min(statusMetrics.width, button.width - (root.moduleId === "clock" ? 20 : 42)); elide: Text.ElideRight; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
+                    LabelText { id: statusText; text: button.caption; width: Math.max(0, button.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
             Timer { interval: 1000; running: root.moduleId === "clock"; repeat: true; onTriggered: button.now = new Date() }

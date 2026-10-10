@@ -2,7 +2,7 @@
 // Requires niri >= 25.11 for overview and stable-ID window movement.
 // Remove existing binds with these same keys before merging this fragment.
 
-spawn-at-startup "quickshell" "-c" "lme-shell"
+spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-shell/scripts/start.sh\""
 
 // Keep the independent settings application at its requested window size.
 window-rule {

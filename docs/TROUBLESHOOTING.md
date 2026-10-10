@@ -149,9 +149,11 @@ with sudo or make `/sys` writable globally.
 
 ## Wallpaper changes fail
 
-Verify that `swww` and `swww-daemon` are installed and that `swww query` responds
+Verify that both `awww` and `awww-daemon` are installed and that `awww query` responds
 in the current Wayland session. Select an existing raster image. The bundled
-SVG is artwork source, not an input format for `swww`; use the PNG.
+SVG is artwork source, not an input format for `awww`; use the PNG.
+Settings starts the daemon when needed and waits for readiness. An apply error
+appears in the UI and does not replace your saved path.
 The start wrapper restores an existing saved image and continues starting the
 shell if the optional wallpaper tool is unavailable.
 
@@ -203,3 +205,30 @@ within the normal two-second poll; malformed JSON retains the previous running
 state. If the app is tiled, review the floating-window rule in the niri fragment.
 Stock niri is not assumed to blur the background: translucent flat fills remain
 visible without a blur protocol.
+
+
+## Weather does not load or shows the wrong city
+
+Automatic location uses your public IP, so a VPN or network gateway may place
+it in a nearby or different city. Use Settings → Weather → Detect now, or search
+and select a city to switch to a fixed location. The refresh button updates both
+location and forecast in automatic mode. No GPS permission or API key is needed.
+Allow HTTPS to `ipwho.is`, `api.open-meteo.com` and
+`geocoding-api.open-meteo.com`. Offline/service errors are shown in the widget;
+the last good forecast is retained and retries occur after two minutes.
+Settings does not automatically poll location/forecast services while open.
+
+## Charge controls are disabled or do not show 85%
+
+Run `python3 scripts/charge_control.py status` to inspect capability without
+changing anything. No interface means the current kernel/BIOS does not expose
+supported control. An available interface with a setup message needs the
+root-owned helper and `pkexec`; follow [CHARGING.md](CHARGING.md).
+Ensure your existing Polkit agent is running if an authentication prompt does
+not appear. Cancelling or rejecting the prompt leaves the read-back mode visible
+and reports an error.
+
+If the UI says “Conservation” without “85%”, the kernel exposes the firmware's
+fixed conservation setting. This interface cannot choose a numerical threshold;
+installing the helper does not change that hardware limitation. A limit below
+the current battery charge also does not discharge the battery automatically.

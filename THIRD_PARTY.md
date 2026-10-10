@@ -29,3 +29,15 @@ are redistributed. See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the mapping.
 Roboto is installed through Fedora's `google-roboto-fonts` package. The project
 references it by family name and does not distribute the font files. Small shell
 icons are original Canvas drawings; Material Symbols font assets are not bundled.
+
+
+Wallpaper rendering uses the external [awww](https://codeberg.org/LGFae/awww.git)
+client and daemon. No upstream binary or source is bundled. The CLI integration
+was checked against release 0.12.1 at
+`f66e12a76dbc4c669b2f1375f78bce49f5b19d66` (GNU GPL version 3).
+
+Weather and city search are provided by [Open-Meteo](https://open-meteo.com/),
+whose weather data requires attribution under CC BY 4.0. The widget displays
+that attribution. Approximate automatic location uses [IPwho.is](https://ipwho.is/).
+These are external network services; no provider dataset or assets are bundled.
+The implementation uses the providers' public endpoints without an API key.

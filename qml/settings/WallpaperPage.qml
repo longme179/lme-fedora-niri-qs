@@ -18,7 +18,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Your backdrop"
-        description: "Choose an image. The shell applies it with swww."
+        description: "Choose an image. The shell starts awww-daemon when needed and applies your image with awww."
         Rectangle {
             Layout.fillWidth: true; Layout.preferredHeight: 260; radius: 20; color: Theme.surfaceContainer; clip: true
             Image { anchors.fill: parent; source: ShellState.preferences.wallpaper ? "file://" + ShellState.preferences.wallpaper : "../../assets/wallpapers/liquid-dracula.png"; fillMode: Image.PreserveAspectCrop }

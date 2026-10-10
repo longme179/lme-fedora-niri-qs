@@ -36,12 +36,17 @@ commands or Arch installation scripts.
 - Native PipeWire device selection and individual device/application sliders;
   Bluetooth adapter selection, paired-device connect/disconnect and rfkill
   diagnostics, plus cached Wi-Fi network information.
+- Automatic local weather by approximate IP location, current conditions and
+  a three-day forecast; city search, manual location and °C/°F in Settings.
+- Lenovo charging controls: verified 85%/100% thresholds when exposed, with
+  firmware conservation mode as the fallback. See [charging setup](docs/CHARGING.md).
+- Wallpaper selection/restoration through `awww`, with automatic daemon startup.
 - English calendar, saved to-do list, focus timer and stopwatch.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native desktop notifications, notification history during the shell session,
   and Do Not Disturb.
 - Independent Settings application with searchable Appearance, Top bar,
-  Wallpaper, Behavior and About pages. Open it without starting the shell.
+  Wallpaper, Weather, Behavior and About pages. Open it without starting the shell.
   Changes synchronize with the running shell; preferences are merged under a
   file lock so another client’s task updates are preserved.
 - Material tonal surfaces, expressive switches/sliders and shape transitions,
@@ -83,6 +88,17 @@ cd lme-fedora-niri-qs
 If Quickshell is absent from enabled repositories, the installer stops and
 explains the upstream-documented COPR option. It never adds a repository silently.
 Keep the checkout in place: the installation is a symlink to this directory.
+Install both `awww` and `awww-daemon` for wallpaper support; see
+[the upstream and Fedora instructions](docs/INSTALL.md#wallpaper-and-charging).
+Charging needs a one-time local helper installation:
+
+```bash
+sudo ./scripts/install-charge-helper.sh --install
+```
+
+The shell stays unprivileged; Polkit requests administrator authentication when
+needed. A fixed firmware conservation limit cannot be changed to exactly 85%.
+Weather uses HTTPS services with no API key or extra Python packages.
 
 Merge [config/niri/lme-shell.kdl](config/niri/lme-shell.kdl) into your existing
 niri configuration after checking for duplicate bindings. The installer never
@@ -177,7 +193,8 @@ Open **LME Shell Settings** from your launcher or run:
 
 Settings uses its own window and can run while the desktop shell is stopped.
 The demo uses a separate entry point and never saves preferences or applies a
-wallpaper. **Top bar** lets you move modules between Left, Center and Right,
+wallpaper. **Weather** controls automatic location, city search and units.
+**Top bar** lets you move modules between Left, Center and Right,
 reorder with a drag grip or arrow buttons, add/remove modules, change the shape,
 and adjust text size. Restore default layout resets the module arrangement only.
 

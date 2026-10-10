@@ -52,7 +52,7 @@ The following checks passed:
 
 | Area | Verification |
 | --- | --- |
-| Backend | All 51 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
+| Backend | All 74 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
 | Installation | Dry run, repeated install, overwrite refusal, backup preservation, broken symlinks, unsafe-target rejection |
 | Startup | Demo/preview avoids desktop mutations; argument quoting and saved-wallpaper restoration |
 | Shell scripts | Bash syntax and Fedora package preview; non-Fedora installation refused |
@@ -94,6 +94,49 @@ A nested compositor does not establish real niri positioning, laptop graphics
 acceleration, output refresh rates, device control, or power-management behavior.
 Use the target laptop for those checks below.
 
+## Wallpaper, weather and charging update
+
+On 2026-10-11 (Asia/Saigon), `scripts/check.sh` passed **74 tests**. The new
+contracts cover awww daemon startup/readiness, missing/failed commands, safe
+path arguments, restoration without preference changes, numerical charge
+thresholds, fixed IdeaPad conservation, modern `charge_types` enums, rollback,
+readback rejection, asynchronous charge acknowledgements, weather geolocation,
+forecast/search parsing, units, refresh/backoff/stale state, atomic manual
+location selection and demo isolation.
+
+Native `awww` **0.12.1**, pinned to
+`f66e12a76dbc4c669b2f1375f78bce49f5b19d66`, was built with Rust 1.89.0 and
+Cargo.lock. Its real daemon started automatically on the private Sway output.
+The restoration CLI applied the bundled PNG; `awww query` confirmed the image
+path and 1920×1080 output. The Settings backend action applied a fade and saved
+its temporary preference file only after success. The upstream build emitted
+three unnecessary-unsafe warnings; it completed successfully.
+
+Live HTTPS requests successfully detected approximate IP location, parsed
+current weather and a three-day forecast, and returned city-search results.
+The native Settings UI searched for Da Nang and selecting a result saved its
+normalized coordinates with automatic mode disabled. All preference writes
+for that check used an isolated temporary config directory. No cloud location
+is included in published preview images.
+
+Control Center and Weather settings rendered under Qt 6.8.2 / Quickshell 0.3.2.
+Weather remained usable at the Settings window's 800×600 minimum size with
+scrolling. Clicking the demo charging button changed the displayed limit from
+85% to 100%. Topbar labels were readable at 13 and 16 px, and Overview and
+Applications opened after a one-second hover with no tooltip. New weather and
+charging QML and the updated bar passed `qmllint`. ShellState retains two known
+Quickshell metadata warnings about `QProcess::ExitStatus`; native/preview
+runtime logs contain no QML errors or warnings.
+
+Charge writes were tested against synthetic sysfs files only. The privileged
+helper was previewed, never installed on the cloud host. Fedora package
+availability, Polkit authentication and the Lenovo's physical charging cutoff
+still need target-machine validation. The niri startup fragment was updated to
+use the wallpaper wrapper but was not parsed by a niri binary in this cloud.
+Reusable cloud install/start instructions now include pinned awww activation
+and the Codeberg/Open-Meteo/IPwho.is network destinations. Saving that draft
+does not prove publication or restoration into a fresh task.
+
 ## Target machine checklist
 
 | Check | Expected result |
@@ -110,6 +153,8 @@ Use the target laptop for those checks below.
 | Motion and idle | Panels slide smoothly; disabled motion is immediate; Stay awake inhibits idle and resets on shell restart |
 | Notifications | `notify-send` popup, notification center, DND work |
 | Media | Compatible MPRIS player metadata and controls update |
+| Charging | Supported thresholds or firmware conservation mode are detected; both choices are read back after authentication; verify physical cutoff on AC |
+| Weather | Automatic IP location resolves, forecasts load, manual city and units update, offline errors preserve stale data |
 | Settings | Independent window opens from launcher/bar/Super+Comma; changes reach the shell without restart; search, keyboard navigation and selected states work; wallpaper applies |
 | Modular bar | Add/remove modules, reorder arrows, position menus and cross-zone drag/drop persist; connected pill is the default; crowded groups remain usable |
 | Displays | Correct placement on internal panel and any external output |

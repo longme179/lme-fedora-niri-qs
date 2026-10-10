@@ -5,10 +5,13 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 SPEC = importlib.util.spec_from_file_location("desktop_backend", Path(__file__).resolve().parents[1] / "scripts/desktop_backend.py")
 backend = importlib.util.module_from_spec(SPEC)
@@ -53,7 +56,7 @@ class Fixture:
     def make_backend(self, runner=None, demo=False):
         return backend.DesktopBackend(runner=runner or FakeRunner(), preferences=self.preferences,
                                       apps=backend.Applications([]), proc=self.root / "proc",
-                                      sysfs=self.root / "sys", demo=demo)
+                                      sysfs=self.root / "sys", demo=demo, weather_fetch=False)
 
     def put(self, relative, text):
         path = self.root / relative
@@ -307,7 +310,7 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertNotIn(legacy_query, runner.calls)
 
     def test_wallpaper_path_remains_one_argument(self):
-        runner = FakeRunner(available={"swww"})
+        runner = FakeRunner(available={"awww"})
         live = self.make_backend(runner)
         path = self.put("images/picture $(touch unsafe);.png", "image fixture")
         self.assertTrue(live.handle({"action": "wallpaper", "path": str(path)})["ok"])

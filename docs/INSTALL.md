@@ -74,8 +74,8 @@ unrelated Qt build with the distribution's Quickshell binary.
 
 Optional helpers include `swaylock` for locking, `pavucontrol` for advanced
 sound routing, `network-manager-applet` for connection editing, `blueman` for
-pairing, `libnotify` for notification tests, and `swww` for wallpaper changes.
-Check `dnf repoquery --available swww` before installing the optional wallpaper
+pairing, `libnotify` for notification tests, and `awww` for wallpaper changes.
+Check `dnf repoquery --available awww` before installing the optional wallpaper
 daemon. It is excluded from the automated package transaction because availability
 may depend on your enabled repositories. `playerctl` is useful for media keys;
 the shell's media panel uses Quickshell's native MPRIS support.
@@ -143,7 +143,7 @@ Inside the running niri session:
 
 The Quickshell configuration name is `lme-shell`. Running
 `quickshell -c lme-shell` directly is also supported. The wrapper restores a
-previously selected wallpaper through `swww`, if that tool is available.
+previously selected wallpaper through `awww`, if that tool is available.
 It preserves the current wallpaper when no wallpaper preference exists.
 
 If another notification daemon owns `org.freedesktop.Notifications`, stop that
@@ -190,11 +190,12 @@ Validate the resulting configuration:
 niri validate
 ```
 
-The default fragment launches `quickshell` directly. If you want saved wallpaper
-restoration on login, replace its one startup line with the wrapper:
+The default fragment uses `scripts/start.sh` to restore a saved wallpaper through
+awww before starting Quickshell. When updating an older installed fragment,
+replace its direct Quickshell startup line with:
 
 ```kdl
-spawn-sh-at-startup "$HOME/.config/quickshell/lme-shell/scripts/start.sh"
+spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-shell/scripts/start.sh\""
 ```
 
 The fragment also opens **LME Shell Settings** as a floating window. Settings
@@ -319,3 +320,45 @@ rm ~/.local/share/applications/lme-shell-settings.desktop
 ```
 
 Restore an installer-created `.backup-*` entry if you previously replaced one.
+
+
+## Wallpaper and charging
+
+For wallpaper selection, install **both `awww` and `awww-daemon`** from
+[LGFae/awww](https://codeberg.org/LGFae/awww.git). On Fedora, first check:
+
+```bash
+dnf repoquery --available awww
+```
+
+If your enabled repositories provide it, use `sudo dnf install awww` and verify
+`command -v awww awww-daemon`. Otherwise follow upstream's source build
+instructions. At release 0.12.1 (`f66e12a76dbc4c669b2f1375f78bce49f5b19d66`),
+Cargo declares Rust **1.89.0 or newer**; the README's older 1.87 minimum is stale.
+Build requirements include Rust/Cargo, `pkgconf-pkg-config`, `lz4-devel`,
+`wayland-devel` and `wayland-protocols-devel`. `libxkbcommon-devel` may also be
+needed by the Wayland development environment. `scdoc` is optional for man pages.
+Build with `cargo build --locked --release`, then install both binaries on PATH.
+The automated Fedora package installer excludes awww because repository
+availability varies. No extra package repository is enabled automatically.
+
+Settings starts the daemon when applying an image. The startup wrapper does the
+same when restoring one on login. Do not run a second wallpaper daemon for the
+same output. After migration, remove any old wallpaper-daemon startup entry
+from your own niri configuration.
+
+For Lenovo charge controls, install `polkit` if `pkexec` is missing and keep your
+existing authentication agent running. On the **target laptop**, run:
+
+```bash
+./scripts/install-charge-helper.sh --dry-run
+sudo ./scripts/install-charge-helper.sh --install
+```
+
+Then open Control Center → Controls → Battery charging. The shell detects the
+helper on its next hardware poll. Read [CHARGING.md](CHARGING.md) before assuming
+your firmware supports an exact 85% limit.
+
+Weather needs no new packages or API key. Allow outbound HTTPS to `ipwho.is`,
+`api.open-meteo.com` and `geocoding-api.open-meteo.com`. The widget detects an
+approximate location by default; Settings → Weather also supports a fixed city.

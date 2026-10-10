@@ -14,12 +14,14 @@ QtObject {
     readonly property var apps: snapshot.apps || []
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
     readonly property var system: snapshot.system || {}
+    readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool notificationsOpen: false
     property bool powerOpen: false
     property bool settingsOpen: false
+    property string settingsPage: "appearance"
     property bool trayOpen: false
     property bool overviewOpen: false
     property bool stayAwake: false
@@ -48,8 +50,7 @@ QtObject {
     }
     function togglePanel(name, screen) {
         if (name === "settings" && !demo && !settingsApp) {
-            closePanels();
-            if (!settingsProcess.running) settingsProcess.running = true;
+            openSettingsPage("appearance");
             return;
         }
         const key = name + "Open";
@@ -59,6 +60,12 @@ QtObject {
         if (screen) panelScreen = screen;
         root[key] = !wasOpen;
         if (notificationsOpen) Notifications.markRead();
+    }
+    function openSettingsPage(page) {
+        if (!["appearance", "topbar", "wallpaper", "weather", "behavior", "about"].includes(page)) return;
+        closePanels(); settingsPage = page;
+        if (demo) settingsOpen = true;
+        else if (!settingsProcess.running) settingsProcess.running = true;
     }
     function appIcon(icon) {
         if (!icon) return "";
@@ -114,10 +121,10 @@ QtObject {
             if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
                 lastResult = next.lastResult;
                 const pending = Object.assign({}, pendingActions);
-                delete pending[next.lastResult.action];
+                if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }
@@ -141,7 +148,7 @@ QtObject {
     }
     property Timer restartTimer: Timer { interval: 2000; onTriggered: root.backend.running = true }
     property Process settingsProcess: Process {
-        command: ["bash", Quickshell.shellPath("scripts/settings.sh"), "--daemonize"]
+        command: ["bash", Quickshell.shellPath("scripts/settings.sh"), "--daemonize", "--page", root.settingsPage]
         stderr: SplitParser { onRead: data => console.warn("Settings:", data) }
         onExited: exitCode => {
             if (exitCode !== 0) {

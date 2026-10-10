@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
+repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 usage() {
     cat <<'EOF'
 Usage: scripts/start.sh [--demo] [--preview] [--config NAME] [--wallpaper FILE] [--no-wallpaper]
 
 Start the installed LME Quickshell configuration. If a wallpaper was saved in
-the shell settings, start swww-daemon when necessary and restore that wallpaper.
+the shell settings, start awww-daemon when necessary and restore that wallpaper.
 
   --demo          Use sample data; skip wallpaper and all desktop mutations.
   --preview       Show an ordinary preview window with sample data; implies demo.
@@ -69,17 +70,10 @@ PY
     if [[ -n "$wallpaper" ]]; then
         if [[ ! -f "$wallpaper" ]]; then
             printf 'Warning: saved wallpaper is unavailable: %s\n' "$wallpaper" >&2
-        elif ! command -v swww >/dev/null || ! command -v swww-daemon >/dev/null; then
-            printf 'Warning: swww is unavailable; the existing wallpaper is preserved.\n' >&2
+        elif ! command -v python3 >/dev/null; then
+            printf 'Warning: Python is unavailable; wallpaper restoration was skipped.\n' >&2
         else
-            if ! swww query >/dev/null 2>&1; then
-                swww-daemon >/dev/null 2>&1 &
-            fi
-            for attempt in {1..20}; do
-                if swww query >/dev/null 2>&1; then break; fi
-                sleep 0.1
-            done
-            if ! swww img "$wallpaper" --transition-type none; then
+            if ! python3 "$repo_dir/scripts/desktop_backend.py" --restore-wallpaper "$wallpaper"; then
                 printf 'Warning: wallpaper restoration failed; starting the shell anyway.\n' >&2
             fi
         fi

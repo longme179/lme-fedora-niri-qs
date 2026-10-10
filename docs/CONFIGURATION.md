@@ -20,6 +20,9 @@ Use the standalone Settings app to change preferences. Open it with
   "terminal": "kitty",
   "bluetoothAdapter": "",
   "tasks": [],
+  "weatherAutoLocation": true,
+  "weatherLocation": {},
+  "weatherUnit": "celsius",
   "barStyle": "connected",
   "barFontSize": 13,
   "barLayout": {
@@ -63,17 +66,52 @@ zones so groups do not overlap. Below 1200 px, the clock uses a shorter format.
 Unavailable tray, media and battery modules automatically hide. Removing the
 Settings module does not remove access through Super+Comma or the app launcher.
 
-Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper from the shell's
-Settings app. Changing a wallpaper requires a running `swww-daemon`:
+Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper in Settings.
+Both Settings and the startup wrapper probe `awww query`, start `awww-daemon`
+if necessary, wait for readiness, then call `awww img`. The selected path is
+saved only after a successful apply. Restoration preserves the saved path and
+uses an instant transition. Settings uses a fade when Motion is enabled.
+Use the bundled PNG or your own raster image; the SVG is editable artwork.
+Install both binaries from [awww upstream](https://codeberg.org/LGFae/awww.git).
 
-```bash
-swww-daemon
-```
+## Weather
 
-Run that daemon once per session, not once per wallpaper change. The startup
-wrapper starts it if necessary when restoring a saved wallpaper. The original
-SVG in `assets/wallpapers` is editable source artwork; use the PNG version or
-another raster image with `swww`.
+The Control Center automatically detects an approximate city through
+`https://ipwho.is/` and retrieves current conditions and three forecast days
+from `https://api.open-meteo.com/`. Celsius is the default. IP geolocation can
+follow your VPN or provider's gateway; it is not GPS. No location history is
+stored. The public IP is visible to the geolocation service, and approximate
+coordinates are sent to Open-Meteo over HTTPS.
+
+In **Settings → Weather**, use Detect now, turn automatic location off, search
+for a city and select a result, or switch units. Search uses
+`https://geocoding-api.open-meteo.com/`. Selecting a city atomically saves its
+name, country, latitude and longitude together with `weatherAutoLocation: false`.
+Turn automatic location back on to follow your current connection.
+`weatherUnit` accepts `celsius` or `fahrenheit`; `weatherLocation` is `{}` or
+an object with `name`, `latitude`, `longitude` and optional `country`.
+
+Requests run on a background worker with a seven-second timeout and bounded
+response size. Forecasts refresh every 15 minutes and automatic location hourly.
+Failures retry after two minutes, retain the last forecast and mark it stale.
+Changing location or units hides old data until the replacement arrives. The
+refresh button requests a new forecast and, in automatic mode, a new location.
+The independent Settings app only contacts location services on explicit
+Detect/Search actions; it does not start forecast polling.
+Demo weather is sample data and makes no network requests.
+
+## Battery charging
+
+Controls reads the kernel's charge interface. If numeric thresholds exist, the
+buttons select 85% and 100%; an incompatible start threshold is lowered before
+setting the stop threshold. Otherwise newer IdeaPad `charge_types` or legacy
+`conservation_mode` switches use the firmware's fixed limit. The conservation
+button omits “85%” in that case. Unsupported systems show disabled controls.
+
+See [CHARGING.md](CHARGING.md) for the one-time administrator helper setup and
+firmware limits. The shell verifies actual kernel state after each write and
+reports rejection instead of storing a cosmetic preference. Authentication runs
+in a worker so other shell actions continue during the prompt.
 
 ## Palette
 
@@ -132,7 +170,7 @@ by output and numeric index instead of relying on niri's JSON array order.
 Panels slide in with `OutExpo` easing over 360 ms: sidebars arrive from the
 right, centered panels from below, and the tray dropdown from above. They do
 not fade in. Turn off Motion or disable animations in Settings for immediate
-placement. Wallpaper transitions are controlled separately by `swww`.
+placement. Wallpaper transitions are controlled separately by `awww`.
 
 The system tray button appears when applications register tray items. Click it
 to open the dropdown; left-click an application to activate it, right-click for
@@ -169,7 +207,7 @@ to close. Scroll the Controls and Devices tabs for lower actions.
 
 | Tab | Controls |
 | --- | --- |
-| Controls | Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, motion, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, full-screen/area screenshot, lock, settings, power menu and workspace board |
+| Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, motion, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, full-screen/area screenshot, lock, settings, power menu and workspace board |
 | Audio | Default output/input selection, each device's volume/mute, application stream volume/mute and advanced audio settings |
 | Devices | Bluetooth adapter selection, paired-device connect/disconnect, block/error information, pairing settings, cached Wi-Fi networks and connection editor |
 | Agenda | English calendar, local to-do list, 25-minute focus/5-minute short break/15-minute long break, and stopwatch |

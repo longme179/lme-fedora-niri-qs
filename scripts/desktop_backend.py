@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+from concurrent.futures import ThreadPoolExecutor
 import copy
 import fcntl
 import json
@@ -27,11 +28,15 @@ import tempfile
 import time
 from typing import Any
 
+from charge_control import ChargeControl, HELPER_PATH, trusted_helper
+from weather import WeatherClient, location
+
 
 DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
+    "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "barStyle": "connected", "barFontSize": 13,
     "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["windowTitle"],
                   "right": ["tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
@@ -41,7 +46,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "swww", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -244,7 +249,11 @@ def validate_preference(key: str, value: Any) -> Any:
                 seen.add(module)
             normalized[zone] = list(modules)
         return normalized
-    if key == "animations" and type(value) is bool:
+    if key in {"animations", "weatherAutoLocation"} and type(value) is bool:
+        return value
+    if key == "weatherLocation":
+        return location(value)
+    if key == "weatherUnit" and isinstance(value, str) and value in {"celsius", "fahrenheit"}:
         return value
     if key == "opacity" and type(value) in {int, float} and math.isfinite(value) and 0.60 <= value <= 1:
         return float(value)
@@ -307,14 +316,17 @@ class Preferences:
             pass
 
     def set(self, key: str, value: Any) -> None:
-        value = validate_preference(key, value)
+        self.update({key: value})
+
+    def update(self, values: dict[str, Any]) -> None:
+        values = {key: validate_preference(key, value) for key, value in values.items()}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         # Serialize the app and shell's writers, including task updates.
         lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
         with os.fdopen(lock_fd, "w") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             self.reload(force=True)
-            self._write({**self.values, key: value})
+            self._write({**self.values, **values})
 
     def _write(self, updated: dict[str, Any]) -> None:
         temporary: str | None = None
@@ -356,13 +368,19 @@ def split_nmcli(line: str) -> list[str]:
 class DesktopBackend:
     def __init__(self, runner: CommandRunner | None = None, preferences: Preferences | None = None,
                  apps: Applications | None = None, proc: Path = Path("/proc"), sysfs: Path = Path("/sys"),
-                 demo: bool = False, settings_only: bool = False) -> None:
+                 demo: bool = False, settings_only: bool = False, weather: WeatherClient | None = None,
+                 weather_fetch: bool = True) -> None:
         self.demo = demo
         self.settings_only = settings_only
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
         self.applications = apps or Applications()
         self.proc, self.sysfs = proc, sysfs
+        self.weather = weather or WeatherClient()
+        self.weather_fetch = weather_fetch
+        self.charger = ChargeControl(sysfs)
+        self.charge_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="lme-charge")
+        self.charge_job = None
         self.apps = [] if demo or settings_only else self.applications.scan()
         self.last_app_scan = time.monotonic()
         self.last_cpu: tuple[int, int] | None = None
@@ -370,6 +388,7 @@ class DesktopBackend:
         self.last_system_sample = 0.0
         self.power_profile_provider: tuple[str, ...] | None = None
         self.result_sequence = 0
+        self.result_unemitted = False
         self.last_result = {"ok": True, "action": "ready", "message": "Backend ready", "sequence": 0}
         self.niri = {"available": False, "workspaces": [], "windows": []}
 
@@ -660,8 +679,15 @@ class DesktopBackend:
         if self.demo:
             return self.demo_snapshot()
         self.preferences.reload()
+        # Emit each input acknowledgement before a completed background job
+        # replaces lastResult. Otherwise a fast charge job could hide another
+        # action's acknowledgement and leave its QML button pending forever.
+        if not self.result_unemitted:
+            self.finish_charge()
+        self.result_unemitted = False
+        weather = self.weather.snapshot(self.preferences.values, allow_fetch=self.weather_fetch and not self.settings_only)
         if self.settings_only:
-            return {"apps": [], "niri": self.niri, "system": {}, "preferences": dict(self.preferences.values),
+            return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
                     "lastResult": dict(self.last_result)}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -672,16 +698,28 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile())
+                          powerProfile=self.power_profile(), charging=self.charging())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
-        return {"apps": self.apps, "niri": self.niri, "system": self.system_cache,
+        return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result)}
 
     def demo_snapshot(self) -> dict[str, Any]:
         if hasattr(self, "_demo_state"):
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
+            unit = self.preferences.values["weatherUnit"]
+            self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
+                unit="°F" if unit == "fahrenheit" else "°C", temperature=84 if unit == "fahrenheit" else 29,
+                feelsLike=90 if unit == "fahrenheit" else 32,
+                wind=6 if unit == "fahrenheit" else 10, windUnit="mph" if unit == "fahrenheit" else "km/h",
+                daily=[{"date": date, "min": low if unit == "celsius" else round(low * 1.8 + 32),
+                        "max": high if unit == "celsius" else round(high * 1.8 + 32), "rainChance": rain}
+                       for date, low, high, rain in [("2026-10-11", 25, 31, 30), ("2026-10-12", 24, 30, 65), ("2026-10-13", 25, 32, 20)]])
+            if not self.preferences.values["weatherAutoLocation"]:
+                self._demo_state["weather"]["location"] = self.preferences.values["weatherLocation"]
+            else:
+                self._demo_state["weather"]["location"] = {"name": "Ho Chi Minh City", "country": "Vietnam", "latitude": 10.82, "longitude": 106.63}
             return self._demo_state
         self._demo_state = {
             "apps": [{"id": "org.mozilla.firefox.desktop", "name": "Firefox", "icon": "firefox", "path": "", "terminal": False},
@@ -701,10 +739,79 @@ class DesktopBackend:
                                      "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": True}],
                                      "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "name": "Headphones", "connected": True}]},
                        "audio": {"available": True, "volume": 42, "muted": False}, "microphone": {"available": True, "volume": 60, "muted": False},
-                       "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced"},
+                       "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced",
+                       "charging": {"available": True, "canSet": True, "kind": "threshold", "mode": "conservation",
+                                    "limitPercent": 85, "supports85": True, "reason": "", "busy": False}},
+            "weather": {"available": True, "configured": True, "automatic": True, "loading": False, "stale": False, "error": "",
+                        "location": {"name": "Ho Chi Minh City", "country": "Vietnam", "latitude": 10.82, "longitude": 106.63},
+                        "temperature": 29, "feelsLike": 32, "humidity": 76, "wind": 10, "windUnit": "km/h", "unit": "°C",
+                        "condition": "Partly cloudy", "icon": "weather-cloud", "updatedAt": time.time(),
+                        "daily": [{"date": "2026-10-11", "min": 25, "max": 31, "rainChance": 30},
+                                  {"date": "2026-10-12", "min": 24, "max": 30, "rainChance": 65},
+                                  {"date": "2026-10-13", "min": 25, "max": 32, "rainChance": 20}],
+                        "search": {"query": "", "loading": False, "results": [], "error": ""}},
             "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
         }
-        return self._demo_state
+        return self.demo_snapshot()
+
+    def charging(self) -> dict[str, Any]:
+        state = self.charger.state()
+        state["canSet"] = state["available"] and (state["writable"] or (self.runner.available("pkexec") and trusted_helper()))
+        state["busy"] = self.charge_job is not None
+        if state["available"] and not state["canSet"]:
+            state["reason"] = "Install the administrator charge helper. See docs/CHARGING.md."
+        return state
+
+    def set_charge(self, limit: int) -> str:
+        if self.charger.state()["writable"]:
+            self.charger.set_mode(limit)
+        else:
+            self.runner.run("pkexec", "/usr/bin/python3", "-I", str(HELPER_PATH), str(limit), timeout=90)
+        state = self.charger.state()
+        desired = "conservation" if limit == 85 else "max"
+        if not state["available"] or state["mode"] != desired or (state["supports85"] and state["limitPercent"] != limit):
+            raise ValueError("The kernel did not confirm the requested charge mode.")
+        return "Charge mode updated" + (f" · {limit}%" if state["supports85"] else " · firmware limit")
+
+    def finish_charge(self) -> None:
+        if self.charge_job is None or not self.charge_job.done():
+            return
+        self.result_sequence += 1
+        try:
+            self.last_result = {"ok": True, "action": "chargeMode", "message": self.charge_job.result()}
+        except (CommandError, ValueError, OSError) as error:
+            self.last_result = {"ok": False, "action": "chargeMode", "message": str(error)[:400]}
+        self.last_result["sequence"] = self.result_sequence
+        self.charge_job = None
+        self.system_cache = None
+
+    def apply_wallpaper(self, raw: Any, save: bool = True, animate: bool = True) -> str:
+        if self.demo:
+            raise ValueError("Wallpaper commands are disabled in demo mode")
+        if not isinstance(raw, str):
+            raise ValueError("A wallpaper file path is required")
+        path = Path(raw).expanduser().resolve()
+        if not path.is_file() or path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}:
+            raise ValueError("Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper")
+        self.runner.executable("awww")
+        try:
+            self.runner.run("awww", "query", timeout=1)
+        except CommandError:
+            self.runner.spawn([self.runner.executable("awww-daemon")])
+            deadline = time.monotonic() + 4
+            while True:
+                try:
+                    self.runner.run("awww", "query", timeout=1)
+                    break
+                except CommandError:
+                    if time.monotonic() >= deadline:
+                        raise CommandError("awww-daemon did not become ready. Check your Wayland session.")
+                    time.sleep(0.1)
+        self.runner.run("awww", "img", str(path), "--transition-type",
+                        "fade" if animate and self.preferences.values["animations"] else "none", timeout=15)
+        if save:
+            self.preferences.set("wallpaper", str(path))
+        return "Wallpaper updated"
 
     @staticmethod
     def percentage(value: Any, minimum: int = 0) -> int:
@@ -720,11 +827,12 @@ class DesktopBackend:
 
     def handle(self, request: Any) -> dict[str, Any]:
         self.result_sequence += 1
+        self.result_unemitted = True
         action = request.get("action", "") if isinstance(request, dict) else ""
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"setting", "wallpaper", "refresh"}:
+            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -732,6 +840,9 @@ class DesktopBackend:
                                     "sequence": self.result_sequence}
                 return dict(self.last_result)
             message = self.perform(action, request)
+            if action == "chargeMode":
+                self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
+                return dict(self.last_result)
             if action in {"refresh", "volume", "mute", "micVolume", "micMute", "brightness", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
                 self.system_cache = None
             self.last_result = {"ok": True, "action": action, "message": message}
@@ -776,6 +887,24 @@ class DesktopBackend:
             if value not in POWER_PROFILES:
                 raise ValueError("Invalid power profile")
             system["powerProfile"] = value
+        elif action == "chargeMode":
+            value = request.get("value")
+            if type(value) is not int or value not in (85, 100):
+                raise ValueError("Choose conservation (85) or maximum charge (100).")
+            system["charging"].update(mode="conservation" if value == 85 else "max", limitPercent=value)
+        elif action == "weatherSearch":
+            query = request.get("query")
+            if not isinstance(query, str) or not 2 <= len(query.strip()) <= 100:
+                raise ValueError("Enter a city name of 2–100 characters.")
+            state["weather"]["search"] = {"query": query, "loading": False, "error": "",
+                "results": [{"name": query.strip(), "country": "Demo", "latitude": 10.82, "longitude": 106.63}]}
+        elif action == "weatherSelect":
+            place = location(request.get("location"))
+            if not place:
+                raise ValueError("Select a city first.")
+            self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
+        elif action in {"weatherRefresh", "weatherDetect"}:
+            pass
         elif action == "workspace":
             workspace_id = self.identifier(request.get("id"))
             if not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
@@ -812,6 +941,33 @@ class DesktopBackend:
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action == "chargeMode":
+            value = request.get("value")
+            if type(value) is not int or value not in (85, 100):
+                raise ValueError("Choose conservation (85) or maximum charge (100).")
+            state = self.charging()
+            if not state["canSet"]:
+                raise ValueError(state["reason"])
+            if self.charge_job is not None:
+                raise ValueError("A charge-mode change is already running.")
+            self.charge_job = self.charge_executor.submit(self.set_charge, value)
+            self.system_cache = None
+            return "Changing charge mode; administrator authentication may be required"
+        if action == "weatherSearch":
+            self.weather.search(request.get("query"))
+            return "Searching locations"
+        if action == "weatherDetect":
+            self.weather.detect()
+            return "Detecting approximate location"
+        if action == "weatherRefresh":
+            self.weather.refresh(self.preferences.values["weatherAutoLocation"])
+            return "Refreshing weather"
+        if action == "weatherSelect":
+            place = location(request.get("location"))
+            if not place:
+                raise ValueError("Select a city first.")
+            self.preferences.update({"weatherLocation": place, "weatherAutoLocation": False})
+            return "Weather location updated"
         if action == "refresh":
             if self.settings_only:
                 self.preferences.reload(force=True)
@@ -926,15 +1082,7 @@ class DesktopBackend:
             run("systemctl", action)
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
-            raw = request.get("path")
-            if not isinstance(raw, str):
-                raise ValueError("A wallpaper file path is required")
-            path = Path(raw).expanduser().resolve()
-            if not path.is_file() or path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}:
-                raise ValueError("Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper")
-            run("swww", "img", str(path), "--transition-type", "fade" if self.preferences.values["animations"] else "none")
-            self.preferences.set("wallpaper", str(path))
-            return "Wallpaper updated"
+            return self.apply_wallpaper(request.get("path"))
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
@@ -979,11 +1127,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--once", action="store_true", help="Print one read-only state snapshot and exit")
     parser.add_argument("--demo", action="store_true", help="Use sample state; never mutate system or saved preferences")
     parser.add_argument("--settings", action="store_true", help="Preferences and wallpaper only; no desktop probes")
+    parser.add_argument("--restore-wallpaper", metavar="FILE", help="Restore with awww, without changing saved preferences")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings)
+    if args.demo and args.restore_wallpaper:
+        parser.error("Wallpaper restoration is disabled in demo mode")
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper), weather_fetch=not args.once)
+    if args.restore_wallpaper:
+        try:
+            backend.apply_wallpaper(args.restore_wallpaper, save=False, animate=False)
+            return 0
+        except (CommandError, ValueError, OSError) as error:
+            print(f"Wallpaper: {error}", file=sys.stderr)
+            return 1
     emit(backend)
     if args.once:
         return 0
@@ -1049,6 +1207,8 @@ def main(argv: list[str] | None = None) -> int:
     except (KeyboardInterrupt, BrokenPipeError):
         return 0
     finally:
+        backend.weather.close()
+        backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         selector.close()
         if event_process and event_process.poll() is None:
             event_process.terminate()

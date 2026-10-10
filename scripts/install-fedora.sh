@@ -40,7 +40,7 @@ packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     wireplumber brightnessctl bluez systemd util-linux)
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
-        blueman swaylock swayidle lxqt-policykit wl-clipboard libnotify playerctl qt6-qtimageformats
+        blueman swaylock swayidle polkit lxqt-policykit wl-clipboard libnotify playerctl qt6-qtimageformats
         xdg-utils xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
         gnome-keyring)
 fi

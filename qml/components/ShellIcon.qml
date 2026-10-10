@@ -62,6 +62,9 @@ Item {
                 }
                 ctx.closePath(); ctx.stroke();
                 ctx.beginPath(); ctx.arc(12, 12, 3, 0, Math.PI * 2); ctx.stroke();
+            } else if (root.name === "refresh") {
+                ctx.beginPath(); ctx.arc(12, 12, 8, 0.6, Math.PI * 1.8); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(15, 3); ctx.lineTo(20, 6); ctx.lineTo(15, 8); ctx.stroke();
             } else if (root.name === "clock") {
                 ctx.beginPath(); ctx.arc(12, 12, 9, 0, Math.PI * 2); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(12, 6); ctx.lineTo(12, 12); ctx.lineTo(16, 14); ctx.stroke();
@@ -81,6 +84,26 @@ Item {
                 ctx.beginPath(); ctx.moveTo(9, 17); ctx.lineTo(9, 5); ctx.lineTo(20, 3); ctx.lineTo(20, 15); ctx.stroke();
                 ctx.beginPath(); ctx.ellipse(2, 14, 7, 5); ctx.fill();
                 ctx.beginPath(); ctx.ellipse(13, 12, 7, 5); ctx.fill();
+            } else if (root.name === "weather-sun") {
+                ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.stroke();
+                for (let i = 0; i < 8; i++) {
+                    const a = i * Math.PI / 4;
+                    ctx.beginPath(); ctx.moveTo(12 + 7 * Math.cos(a), 12 + 7 * Math.sin(a));
+                    ctx.lineTo(12 + 10 * Math.cos(a), 12 + 10 * Math.sin(a)); ctx.stroke();
+                }
+            } else if (root.name.startsWith("weather-")) {
+                ctx.beginPath(); ctx.moveTo(6, 16);
+                ctx.bezierCurveTo(-1, 16, 0, 8, 6, 8);
+                ctx.bezierCurveTo(8, 1, 17, 2, 18, 9);
+                ctx.bezierCurveTo(25, 9, 24, 16, 18, 16);
+                ctx.closePath(); ctx.stroke();
+                if (root.name === "weather-rain") {
+                    for (const x of [6, 12, 18]) { ctx.beginPath(); ctx.moveTo(x, 19); ctx.lineTo(x - 1, 22); ctx.stroke(); }
+                } else if (root.name === "weather-snow") {
+                    for (const x of [6, 12, 18]) { ctx.beginPath(); ctx.arc(x, 21, 0.8, 0, Math.PI * 2); ctx.fill(); }
+                } else if (root.name === "weather-storm") {
+                    ctx.beginPath(); ctx.moveTo(13, 17); ctx.lineTo(10, 20); ctx.lineTo(14, 20); ctx.lineTo(11, 23); ctx.stroke();
+                }
             } else if (root.name === "resources") {
                 ctx.beginPath(); ctx.roundedRect(6, 6, 12, 12, 2, 2); ctx.stroke();
                 for (const n of [8, 12, 16]) { ctx.beginPath(); ctx.moveTo(n, 3); ctx.lineTo(n, 6); ctx.moveTo(n, 18); ctx.lineTo(n, 21); ctx.moveTo(3, n); ctx.lineTo(6, n); ctx.moveTo(18, n); ctx.lineTo(21, n); ctx.stroke(); }

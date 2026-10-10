@@ -94,7 +94,7 @@ Item {
                     id: pageLoader
                     width: pageScroll.width - 12
                     sourceComponent: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
-                                   : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
+                                   : root.page === "weather" ? weatherPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
         }
@@ -102,6 +102,7 @@ Item {
     Component { id: appearancePage; AppearancePage {} }
     Component { id: barPage; TopBarPage {} }
     Component { id: wallpaperPage; WallpaperPage {} }
+    Component { id: weatherPage; WeatherPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }
 }

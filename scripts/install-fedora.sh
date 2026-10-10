@@ -37,7 +37,7 @@ done
 packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     qt6-qtsvg google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-pulseaudio
-    wireplumber brightnessctl bluez systemd)
+    wireplumber brightnessctl bluez systemd util-linux)
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
         blueman swaylock swayidle lxqt-policykit wl-clipboard libnotify playerctl qt6-qtimageformats
@@ -45,7 +45,7 @@ if "$optional"; then
         gnome-keyring)
 fi
 
-printf 'Required Quickshell version: 0.2 or newer.\n'
+printf 'Required Quickshell version: 0.3.2 or newer, with PipeWire support.\n'
 printf 'Keep the existing power-profile provider (Fedora tuned-ppd or power-profiles-daemon).\n'
 printf 'Proposed command:'
 printf ' %q' sudo dnf install "${packages[@]}"

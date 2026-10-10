@@ -85,6 +85,19 @@ Singleton {
         unreadCount = 0;
         history = history.map(entry => Object.assign({}, entry, { popup: false }));
     }
+    function local(summary, body) {
+        const timestamp = Date.now();
+        history = [{id: "local-" + timestamp, appName: "LME Shell", appIcon: "", summary: summary, body: body,
+                    timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !dnd && !ShellState.notificationsOpen,
+                    transient: false, local: true}, ...history].slice(0, 80);
+        if (!ShellState.notificationsOpen) unreadCount++;
+    }
+    Timer {
+        interval: 1000; repeat: true
+        running: root.history.some(entry => entry.local && entry.active)
+        onTriggered: root.history = root.history.map(entry => entry.local && Date.now() - entry.timestamp >= 7000
+                                                     ? Object.assign({}, entry, {active: false, popup: false}) : entry)
+    }
 
     function invokeAction(id, identifier) {
         const wrapper = live[id];

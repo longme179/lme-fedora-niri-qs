@@ -13,7 +13,7 @@ Quickshell and the installer must use the same config home.
 
 ## A QML type or module is unavailable
 
-Check `quickshell --version` and use Quickshell 0.2 or newer. Install Fedora's
+Check `quickshell --version` and use Quickshell 0.3.2 or newer. Install Fedora's
 `qt6-qtdeclarative`, `qt6-qtwayland`, and `qt6-qtsvg` packages with a Quickshell
 binary built for the same distribution Qt version. A QML import failure after a
 Qt update can indicate an incompatible custom or development Quickshell build;
@@ -23,6 +23,10 @@ random libraries.
 The supported command is `quickshell`; some packages also supply the `qs` alias.
 If your custom build only provides `qs`, adapt your local command or install a
 package with the standard binary name.
+
+The expanded shell also needs Quickshell's PipeWire service and Wayland idle
+inhibitor modules. Distribution builds normally include them; enable
+`SERVICE_PIPEWIRE` and Wayland support when building a custom Quickshell binary.
 
 ## The shell starts but has no desktop state
 
@@ -82,7 +86,55 @@ missing backlight device cannot be solved by a QML refresh.
 
 Use `nm-connection-editor` for Wi-Fi connection authentication and
 `blueman-manager` for pairing. The sidebar toggles radios and opens those
-tools; it does not manage secrets or perform first-time pairing itself.
+tools. The Devices tab also connects/disconnects already paired devices and
+selects a Bluetooth adapter; it does not manage secrets or perform first-time
+pairing itself.
+
+### BlueZ fails to power on
+
+The shell enumerates BlueZ adapters, writes the selected adapter's `Powered`
+property and verifies the resulting state. It no longer treats a zero
+`bluetoothctl` exit code as success if BlueZ reports an error. If Bluetooth is
+software-blocked, it retries after unblocking only Bluetooth rfkill entries;
+hardware blocks require the laptop's radio switch or airplane-mode controls.
+It never runs sudo or changes service configuration.
+
+Read these diagnostics inside the niri desktop session:
+
+```bash
+bluetoothctl show
+rfkill list bluetooth
+systemctl status bluetooth --no-pager
+journalctl -b -u bluetooth --no-pager
+journalctl -b -k --no-pager | grep -Ei 'bluetooth|btusb|mt7921|firmware'
+```
+
+Choose the correct adapter in Control center → Devices if more than one is
+listed. Install `util-linux` if `rfkill` is absent. A soft block can also be
+cleared deliberately with `rfkill unblock bluetooth`; permission failures need
+Fedora's existing device/session policy. Keep a working polkit agent running.
+If BlueZ still reports `org.bluez.Error.Failed`, the service or MediaTek firmware
+may be responsible; keep the command output when reporting the issue. A shell
+update cannot establish the cause without the laptop's logs.
+
+### Audio devices or app sliders are missing
+
+The Audio tab uses Quickshell's native PipeWire service. `wpctl status` should
+show the same hardware and streams; check that PipeWire and WirePlumber are
+running in this user's session. An application appears when it has an audio
+stream, even if its window is open before playback starts. Selecting a default
+device requests WirePlumber's configured default; final routing follows the
+audio session's policy. In public demo/preview mode the native mixer is disabled.
+
+### Overview or window movement is unavailable
+
+Use niri 25.11+ and launch the shell inside that session so `NIRI_SOCKET` is
+inherited. Left-click the overview button for actual window previews rendered
+by niri. Right-click for the QML board, which uses app icons and titles. A failed
+native overview request opens that board and shows the error. Drag a window
+card onto a workspace or use its selector; menus include output names when
+workspaces on separate monitors have the same number. A closed window or
+removed workspace is rejected rather than moving another window.
 
 Recent Fedora installations use TuneD/`tuned-ppd`; `power-profiles-daemon` is
 an alternative. Both expose compatible power-profile D-Bus APIs. Do not run
@@ -120,9 +172,9 @@ does not modify driver or power policy.
 
 ## Niri rejects the integration fragment
 
-`include` needs niri 25.11 or newer. On older versions, merge the startup line
-and bindings into your existing file instead. Check for duplicate keys, especially
-`Mod+Comma` and `Mod+Shift+E`, then run `niri validate` again. Optional effects
+The expanded shell requires niri 25.11 or newer. Check for duplicate keys,
+especially `Mod+Tab`, `Mod+Comma` and `Mod+Shift+E`, then run `niri validate`
+again. Optional effects
 from newer niri documentation may be unsupported by older installed versions.
 
 ## The glass appearance is subtle

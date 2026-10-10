@@ -6,7 +6,7 @@ documentation are in English.
 
 The layout combines a compact top bar and a control sidebar on the right.
 Its Liquid-inspired surfaces use a dark Dracula Pro-style
-palette, rounded glass panels, subtle highlights, and short animations suitable
+palette, pill-shaped bars, subtle highlights, and eased slide animations suitable
 for an integrated Radeon GPU.
 
 The interaction design takes inspiration from
@@ -19,11 +19,20 @@ commands or Arch installation scripts.
 ## Included
 
 - Per-output top bar with niri workspaces, active window information, clock,
-  battery, and status shortcuts.
+  battery, and status shortcuts. Workspaces follow their numeric order on each
+  output; every bar label uses the same font and size.
+- Overview button for niri's live window previews and drag/drop. Right-click it
+  for a themed workspace board with app icons, titles, drag/drop and a keyboard
+  workspace selector for each window.
 - System tray dropdown with compact icons, application labels, and native menus.
 - Keyboard-searchable application launcher using installed `.desktop` entries.
-- Control center for sound, backlight, Wi-Fi, Bluetooth, and power profiles,
-  with live CPU, memory, temperature, and battery information.
+- Wider control center with Controls, Audio, Devices, Agenda and Notifications
+  tabs: speaker/microphone volume and mute, backlight, radios, power profiles,
+  idle inhibition, motion, screenshots and system information.
+- Native PipeWire device selection and individual device/application sliders;
+  Bluetooth adapter selection, paired-device connect/disconnect and rfkill
+  diagnostics, plus cached Wi-Fi network information.
+- English calendar, saved to-do list, focus timer and stopwatch.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native desktop notifications, notification history during the shell session,
   and Do Not Disturb.
@@ -33,7 +42,7 @@ commands or Arch installation scripts.
 - Optional original wallpaper, package requirements, installation scripts,
   niri bindings, and troubleshooting documentation.
 
-Network pairing and advanced audio configuration open the existing Fedora
+First-time Bluetooth pairing, Wi-Fi authentication and advanced audio configuration open the existing Fedora
 tools (`nm-connection-editor`, `blueman-manager`, and `pavucontrol`). The shell
 does not implement a password manager or replace NetworkManager.
 
@@ -69,6 +78,8 @@ overwrites `~/.config/niri/config.kdl`.
 
 | Shortcut | Action |
 | --- | --- |
+| `Mod+Tab` | niri live overview |
+| `Mod+Shift+Tab` | Shell workspace board |
 | `Mod+Space` | Application launcher |
 | `Mod+A` | Control center |
 | `Mod+N` | Notifications |
@@ -79,6 +90,11 @@ overwrites `~/.config/niri/config.kdl`.
 `Mod` is normally Super/Windows in a normal niri session. `Mod+Comma` and
 `Mod+Shift+E` have other meanings in niri's sample configuration; remove or
 rebind the existing entries before adding these bindings.
+
+The expanded shell requires **Quickshell 0.3.2+** with PipeWire and Wayland
+support, and **niri 25.11+**. The overview's live thumbnails are rendered by niri;
+the QML board lists windows with their titles and icons. See
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md) for all control-center features.
 
 ## Configuration and validation
 

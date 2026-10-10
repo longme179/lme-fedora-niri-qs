@@ -1,6 +1,6 @@
 # LME Shell runtime requirements for Fedora 44, x86_64.
 # This is a human-readable DNF package list, not a pip requirements file.
-# Quickshell needs version 0.2 or newer. The shell uses the release API.
+# Quickshell needs version 0.3.2 or newer with PipeWire and Wayland idle-inhibitor support.
 # Availability of quickshell in Fedora 44 enabled repositories must be checked
 # locally. Upstream also documents the errornointernet/quickshell COPR fallback.
 
@@ -16,7 +16,7 @@ google-noto-color-emoji-fonts
 adwaita-icon-theme
 
 [required-desktop-integration]
-# niri is already installed on the target machine.
+# niri >= 25.11 is already installed on the target machine.
 niri
 NetworkManager
 pipewire
@@ -25,6 +25,8 @@ wireplumber
 brightnessctl
 bluez
 systemd
+util-linux
+# util-linux supplies rfkill for scoped Bluetooth software-block recovery.
 
 [power-profile-provider-choose-one]
 # Fedora's existing tuned-ppd is suitable. Do not install both providers.

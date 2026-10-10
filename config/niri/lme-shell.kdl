@@ -1,10 +1,14 @@
 // LME Shell integration fragment. Do not replace your niri configuration.
-// include requires niri >= 25.11. See docs/INSTALL.md for older versions.
+// Requires niri >= 25.11 for overview and stable-ID window movement.
 // Remove existing binds with these same keys before merging this fragment.
 
 spawn-at-startup "quickshell" "-c" "lme-shell"
 
 binds {
+    Mod+Tab hotkey-overlay-title="Window overview" { toggle-overview; }
+    Mod+Shift+Tab hotkey-overlay-title="Workspace board" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "overview";
+    }
     Mod+Space hotkey-overlay-title="Open application launcher" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "launcher";
     }

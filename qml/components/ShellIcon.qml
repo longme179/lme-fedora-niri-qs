@@ -36,6 +36,11 @@ Item {
                         ctx.stroke();
                     }
                 }
+            } else if (root.name === "overview") {
+                for (const x of [3, 13]) {
+                    ctx.beginPath(); ctx.roundedRect(x, 4, 8, 16, 2, 2); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x + 2, 9); ctx.lineTo(x + 6, 9); ctx.stroke();
+                }
             } else if (root.name === "tray") {
                 for (const x of [5, 11, 17]) {
                     for (const y of [5, 11]) {

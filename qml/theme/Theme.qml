@@ -24,6 +24,8 @@ QtObject {
     readonly property int radius: 22
     readonly property int smallRadius: 12
     readonly property int barHeight: 42
+    readonly property int barFontSize: 12
+    readonly property int barFontWeight: Font.Medium
     readonly property int barTopMargin: 8
     readonly property int barSideMargin: 12
     readonly property int panelTopMargin: barTopMargin + barHeight + 8
@@ -31,6 +33,7 @@ QtObject {
     readonly property string monoFamily: "JetBrains Mono"
     readonly property bool animations: ShellState.preferences.animations !== false
     readonly property int animationDuration: animations ? 170 : 0
+    readonly property int slideDuration: animations ? 360 : 0
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity); }
     function loadPalette() {
         try {

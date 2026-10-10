@@ -1,6 +1,6 @@
 # Fedora 44 installation
 
-The supported target is an existing niri Wayland session on Fedora 44. Install
+The supported target is an existing niri 25.11+ Wayland session on Fedora 44. Install
 and run the shell as your normal desktop user. Use `sudo` only for package
 installation; running Quickshell as root breaks access to the user's session.
 
@@ -12,15 +12,19 @@ library and needs no `pip install`.
 
 | Package | Purpose |
 | --- | --- |
-| `quickshell` ≥ 0.2 | QML shell host, Wayland layers, notification server, MPRIS |
+| `quickshell` ≥ 0.3.2 | QML shell host, Wayland layers/idle inhibitor, notification server, MPRIS, PipeWire mixer |
 | `python3` | Application discovery and desktop integration backend |
 | `qt6-qtbase`, `qt6-qtdeclarative`, `qt6-qtwayland`, `qt6-qtsvg` | Qt Quick runtime and image support |
 | `NetworkManager` | Wi-Fi state and radio controls via `nmcli` |
 | `pipewire`, `pipewire-pulseaudio`, `wireplumber` | Audio session and `wpctl` |
 | `brightnessctl` | Backlight state and brightness controls |
-| `bluez` | Bluetooth state and radio controls via `bluetoothctl` |
+| `bluez`, `systemd`, `util-linux` | Adapter/device controls through BlueZ D-Bus, `busctl`, `rfkill`; `bluetoothctl` fallback |
 | `systemd` + existing `tuned-ppd` or `power-profiles-daemon` | Power profile controls through the common system D-Bus API |
 | Noto Sans, Noto Color Emoji, Adwaita icon theme | Text and installed application icons |
+
+Use a Quickshell build with `Quickshell.Services.Pipewire` and Wayland idle
+inhibitor support. Older 0.2.x builds cannot run the expanded control center.
+The backend still uses only Python's standard library.
 
 Preview the package transaction:
 
@@ -167,9 +171,9 @@ That path assumes the default neighboring `niri` and `quickshell` directories
 inside your config home. It avoids home-directory expansion, which only newer
 niri versions support. Adjust it if you installed to a custom target.
 
-For **older niri**, copy the `spawn-at-startup` line and individual bindings
-into the appropriate places in your existing config. Do not copy a second
-`binds` block blindly or replace the full file.
+Upgrade older niri installations before enabling this fragment. The overview
+uses `toggle-overview`; cross-output window movement uses stable workspace IDs
+through the niri socket. Both are supported by the 25.11 baseline.
 
 Validate the resulting configuration:
 
@@ -222,9 +226,31 @@ quickshell -c lme-shell ipc call shell toggle control
 quickshell -c lme-shell ipc call shell toggle notifications
 quickshell -c lme-shell ipc call shell toggle settings
 quickshell -c lme-shell ipc call shell toggle power
+quickshell -c lme-shell ipc call shell toggle overview
 quickshell -c lme-shell ipc call shell close
 quickshell -c lme-shell ipc call shell refresh
 ```
+
+`Mod+Tab` opens niri's live overview. `Mod+Shift+Tab` opens the shell's workspace
+board. The topbar overview button provides the same actions with left- and
+right-click respectively. Check existing `Mod+Tab` bindings too.
+
+## Updating an existing installation
+
+From the checkout linked to your Quickshell configuration:
+
+```bash
+git pull --ff-only
+quickshell --version
+niri --version
+./scripts/install-fedora.sh --install --optional
+./scripts/doctor.sh
+```
+
+Then restart the existing shell instance. Review the updated niri fragment to
+add the two overview bindings and run `niri validate`. Existing preferences and
+the installation symlink are retained; never start a second shell alongside
+the first to update it.
 
 ## 5. Lenovo display and graphics
 

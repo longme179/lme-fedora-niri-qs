@@ -33,18 +33,26 @@ for a compositor. A nested, headless Sway compositor with software rendering
 can exercise the shell without controlling the host desktop. On a real Wayland
 desktop, `scripts/start.sh --preview` opens a sample-data window safely.
 
-During cloud development, all five panels were rendered both as previews and
+During cloud development, the original five panels were rendered both as previews and
 in the normal layer-shell layout at 1920×1080 under headless Sway 1.10.1,
 Qt 6.8.2, and Quickshell 0.3.2. The final normal runtime log contained no QML
 errors or warnings. The images in [previews](previews) show the actual QML;
 their captions distinguish sample desktop state from native-service captures
 with test notifications and mock applications.
 
+The expanded control center and workspace board were also rendered at
+1920×1080 with the same Qt/Quickshell toolchain, with its PipeWire module enabled.
+Native Bluetooth tests use a private BlueZ D-Bus adapter fixture. Native mixer
+checks use a private PipeWire 1.4.2 / WirePlumber 0.5.8 session, virtual devices
+and a `pw-play` stream; they do not control physical audio hardware. Workspace
+drag/drop in QML was exercised with virtual pointer input and simulated niri
+state; the backend's stable-ID request was checked on a temporary Unix socket.
+
 The following checks passed:
 
 | Area | Verification |
 | --- | --- |
-| Backend | All 30 Python tests, including modern and legacy TuneD/PPD interfaces, terminal selection, and application keyword metadata |
+| Backend | All 43 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
 | Installation | Dry run, repeated install, overwrite refusal, backup preservation, broken symlinks, unsafe-target rejection |
 | Startup | Demo/preview avoids desktop mutations; argument quoting and saved-wallpaper restoration |
 | Shell scripts | Bash syntax and Fedora package preview; non-Fedora installation refused |
@@ -58,6 +66,11 @@ The following checks passed:
 | Launcher keyboard | Typing `kitty` returns one matching demo app; arrow/Enter launches through the simulated backend; Escape closes |
 | Demo isolation | Native media/tray actions and notification ownership disabled in demo/preview; normal native mode remains functional |
 | Reusable cloud setup | Signed package installation and pinned Quickshell build repeated successfully; startup instructions use a private headless Wayland session |
+| Bluetooth power | Real widget turns a private BlueZ adapter fixture on/off, verified with D-Bus property reads; no physical radio writes |
+| Workspace board | Pointer drag moves a simulated window from workspace 1 to 3; selectors use stable IDs and show output names |
+| Native audio mixer | Device/stream discovery, output preference metadata, and per-stream volume/mute confirmed in the private PipeWire session |
+| Agenda | Calendar rendering, keyboard task add, checkbox completion, and focus timer/stopwatch state retained across panel closure |
+| Expanded QML | New components pass `qmllint`; rendered panels and native fixture runs load without QML errors or warnings |
 
 Package installation commands for Fedora 44 were not executed on the Debian
 cloud machine. Niri configuration snippets were checked against upstream source
@@ -76,6 +89,11 @@ Use the target laptop for those checks below.
 | Launcher | Search, arrow navigation, Enter launch, Escape close |
 | Top bar | Workspace/title updates, aligned pills, compact tray dropdown, and application spacing follow the configured niri gap |
 | Control center | Volume/mute, backlight, radios, supported power profiles work |
+| Audio mixer | Output/input selection and per-device/app sliders change the intended PipeWire nodes |
+| Bluetooth | Correct adapter; power and known-device connection work; failures show service/rfkill details |
+| Overview | Native live previews and drag/drop; board focus/movement on each output, including cross-output moves |
+| Agenda | Tasks survive shell restart; focus timer/stopwatch persist across panel closure; timer completion respects DND |
+| Motion and idle | Panels slide smoothly; disabled motion is immediate; Stay awake inhibits idle and resets on shell restart |
 | Notifications | `notify-send` popup, notification center, DND work |
 | Media | Compatible MPRIS player metadata and controls update |
 | Settings | Preferences survive restart; chosen raster wallpaper restores |

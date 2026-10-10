@@ -28,15 +28,17 @@ Item {
             LabelText { text: "The panels shown here are the actual QML components."; font.pixelSize: 12; color: Theme.muted }
         }
     }
-    Loader {
+    SlideLoader {
         id: panelLoader
+        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen
+        direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
         active: ShellState.panelOpen
         sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control
-                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : power
-        width: item ? item.implicitWidth : 400; height: item ? item.implicitHeight : 600
-        x: ShellState.launcherOpen || ShellState.powerOpen ? (root.width - width) / 2 : root.width - width - 14
-        y: ShellState.launcherOpen || ShellState.powerOpen ? (root.height - height) / 2 : Theme.panelTopMargin
-        onLoaded: item.forceActiveFocus()
+                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : power
+        width: item ? Math.min(item.implicitWidth, root.width - 32) : 400
+        height: item ? Math.min(item.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
+        x: centered ? (root.width - width) / 2 : root.width - width - 14
+        y: centered ? (root.height - height) / 2 : Theme.panelTopMargin
     }
     Component { id: launcher; Launcher {} }
     Component { id: control; ControlCenter {} }
@@ -44,4 +46,5 @@ Item {
     Component { id: settings; SettingsPanel {} }
     Component { id: power; PowerMenu {} }
     Component { id: tray; TrayMenu {} }
+    Component { id: overview; Overview {} }
 }

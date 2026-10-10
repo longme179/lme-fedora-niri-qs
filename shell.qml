@@ -14,6 +14,7 @@ import "qml/panels"
 
 ShellRoot {
     id: root
+    readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
     readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1"
     IpcHandler {
         target: "shell"
@@ -37,6 +38,7 @@ ShellRoot {
                 WlrLayershell.namespace: "lme-bar"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 Bar { anchors.fill: parent; screenInfo: screenScope.modelData; windowInfo: barWindow }
+                IdleInhibitor { window: barWindow; enabled: ShellState.stayAwake && !ShellState.demo }
             }
         }
     }
@@ -50,32 +52,25 @@ ShellRoot {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen ? 0.40 : 0.13) }
+        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen ? 0.40 : 0.13) }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
             anchors.fill: parent
             focus: true
             Keys.onEscapePressed: ShellState.closePanels()
-            Loader {
+            SlideLoader {
                 id: panelLoader
+                readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen
+                direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
                 active: ShellState.panelOpen
                 sourceComponent: ShellState.launcherOpen ? launcherComponent : ShellState.controlOpen ? controlComponent
-                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : powerComponent
+                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
-                x: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.width - width) / 2
+                x: centered ? (overlay.width - width) / 2
                    : ShellState.trayOpen && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(overlay.width - width - 14, ShellState.trayAnchorX - width))
                    : overlay.width - width - 14
-                y: ShellState.launcherOpen || ShellState.powerOpen ? (overlay.height - height) / 2 : Theme.panelTopMargin
-                onLoaded: {
-                    item.forceActiveFocus();
-                    enterAnimation.restart();
-                }
-                ParallelAnimation {
-                    id: enterAnimation
-                    NumberAnimation { target: panelLoader; property: "opacity"; from: 0; to: 1; duration: Theme.animationDuration }
-                    NumberAnimation { target: panelLoader; property: "scale"; from: 0.975; to: 1; duration: Theme.animationDuration; easing.type: Easing.OutCubic }
-                }
+                y: centered ? (overlay.height - height) / 2 : Theme.panelTopMargin
                 MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
             }
         }
@@ -86,6 +81,7 @@ ShellRoot {
     Component { id: settingsComponent; SettingsPanel {} }
     Component { id: powerComponent; PowerMenu {} }
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
+    Component { id: overviewComponent; Overview {} }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen
@@ -164,16 +160,16 @@ ShellRoot {
             id: previewWindow
             implicitWidth: 1920; implicitHeight: 1080
             title: "LME Shell · Demo"
-            fullscreen: Quickshell.env("LME_SHELL_SCREENSHOT") !== ""
+            fullscreen: root.screenshotPath !== ""
             color: Theme.background
             DesktopPreview { id: previewContent; anchors.fill: parent }
             Timer {
-                interval: 1200; repeat: true; running: Quickshell.env("LME_SHELL_SCREENSHOT") !== ""
+                interval: 1200; repeat: true; running: root.screenshotPath !== ""
                 onTriggered: {
                     if (!ShellState.backendReady) return;
                     stop();
                     previewContent.grabToImage(result => {
-                        if (!result.saveToFile(Quickshell.env("LME_SHELL_SCREENSHOT"))) console.error("Screenshot could not be saved");
+                        if (!result.saveToFile(root.screenshotPath)) console.error("Screenshot could not be saved");
                         else console.log("Preview screenshot saved");
                         Qt.quit();
                     });

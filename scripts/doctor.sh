@@ -30,6 +30,15 @@ required wpctl wireplumber
 required brightnessctl brightnessctl
 required bluetoothctl bluez
 required busctl systemd
+optional rfkill 'Bluetooth software-block recovery: util-linux'
+if command -v quickshell >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+    if quickshell --version | python3 -c 'import re, sys; match = re.search(r"(\d+)\.(\d+)\.(\d+)", sys.stdin.read()); sys.exit(0 if match and tuple(map(int, match.groups())) >= (0, 3, 2) else 1)'; then
+        printf 'OK       Quickshell version is at least 0.3.2\n'
+    else
+        printf 'MISSING  Quickshell 0.3.2 or newer with PipeWire and Wayland support\n'
+        required_failures=$((required_failures + 1))
+    fi
+fi
 optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
 optional swaylock 'lock screen'
 optional swayidle 'idle locking; configure explicitly'

@@ -12,6 +12,7 @@ Item {
     implicitWidth: 392
     implicitHeight: 630
     focus: true
+    property bool embedded: false
     property date now: new Date()
     Timer { interval: 60000; running: root.visible; repeat: true; onTriggered: root.now = new Date() }
 
@@ -28,7 +29,7 @@ Item {
     }
     Keys.onEscapePressed: ShellState.closePanels()
 
-    GlassPanel { anchors.fill: parent }
+    GlassPanel { anchors.fill: parent; visible: !root.embedded }
 
     ColumnLayout {
         anchors.fill: parent

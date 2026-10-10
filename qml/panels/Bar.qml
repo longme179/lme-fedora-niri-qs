@@ -11,7 +11,7 @@ GlassPanel {
     property var screenInfo: null
     property var windowInfo: null
     implicitHeight: Theme.barHeight
-    radius: 15
+    radius: height / 2
     property date now: new Date()
     Timer { interval: 1000; running: true; repeat: true; onTriggered: root.now = new Date() }
     RowLayout {
@@ -22,15 +22,25 @@ GlassPanel {
             iconName: "applications"; tooltip: "Applications · Super+Space"
             Layout.preferredWidth: 30; Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
+            cornerRadius: height / 2
             active: ShellState.launcherOpen
             onClicked: ShellState.togglePanel("launcher", root.screenInfo)
+        }
+        IconButton {
+            iconName: "overview"; tooltip: "Window overview · Super+Tab (right-click for workspace board)"
+            Layout.preferredWidth: 30; Layout.preferredHeight: 30
+            Layout.alignment: Qt.AlignVCenter
+            cornerRadius: height / 2
+            active: ShellState.overviewOpen
+            onClicked: ShellState.nativeOverview()
+            TapHandler { acceptedButtons: Qt.RightButton; onTapped: ShellState.togglePanel("overview", root.screenInfo) }
         }
         Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 18; color: Theme.border }
         Row {
             Layout.alignment: Qt.AlignVCenter
             spacing: 4
             Repeater {
-                model: (ShellState.niri.workspaces || []).filter(w => !root.screenInfo || !w.output || w.output === root.screenInfo.name)
+                model: ShellState.workspacesFor(root.screenInfo)
                 delegate: AbstractButton {
                     id: workspace
                     required property var modelData
@@ -39,7 +49,7 @@ GlassPanel {
                     hoverEnabled: true
                     Accessible.name: "Workspace " + (modelData.name || modelData.idx)
                     background: Rectangle {
-                        radius: 10
+                        radius: height / 2
                         color: workspace.modelData.is_focused ? Theme.accent
                               : workspace.hovered ? Theme.alpha(Theme.accent, 0.22) : Theme.alpha(Theme.surface, 0.65)
                         border.width: workspace.visualFocus ? 2 : 0; border.color: Theme.text
@@ -47,7 +57,7 @@ GlassPanel {
                     contentItem: LabelText {
                         text: workspace.modelData.name || workspace.modelData.idx
                         color: workspace.modelData.is_focused ? Theme.background : Theme.muted
-                        font.pixelSize: 12; font.weight: Font.DemiBold
+                        font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                         horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                     }
@@ -63,7 +73,7 @@ GlassPanel {
             Layout.alignment: Qt.AlignVCenter
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
-            font.pixelSize: 12
+            font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
         }
         Item { Layout.fillWidth: true }
         IconButton {
@@ -71,6 +81,7 @@ GlassPanel {
             visible: !ShellState.demo && SystemTray.items.values.length > 0
             Layout.preferredWidth: 30; Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
+            cornerRadius: height / 2
             iconName: "tray"
             tooltip: "System tray"
             active: ShellState.trayOpen && ShellState.panelScreen === root.screenInfo
@@ -84,6 +95,7 @@ GlassPanel {
             iconName: Notifications.dnd ? "bell-off" : "bell"
             Layout.preferredWidth: 30; Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
+            cornerRadius: height / 2
             tooltip: "Notifications · " + Notifications.unreadCount + " unread"
             active: ShellState.notificationsOpen
             onClicked: ShellState.togglePanel("notifications", root.screenInfo)
@@ -101,46 +113,46 @@ GlassPanel {
             hoverEnabled: true
             Accessible.name: "Open control center"
             onClicked: ShellState.togglePanel("control", root.screenInfo)
-            background: Rectangle { radius: 10; color: status.hovered || ShellState.controlOpen ? Theme.alpha(Theme.accent, 0.18) : Theme.alpha(Theme.surface, 0.5) }
+            background: Rectangle { radius: height / 2; color: status.hovered || ShellState.controlOpen ? Theme.alpha(Theme.accent, 0.18) : Theme.alpha(Theme.surface, 0.5) }
             contentItem: Item {
                 Row {
                     id: statusRow
                     spacing: 10
                     anchors.centerIn: parent
-                    LabelText { text: ShellState.system.network && ShellState.system.network.connected ? "Wi-Fi" : "Offline"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                    LabelText { text: ShellState.system.network && ShellState.system.network.connected ? "Wi-Fi" : "Offline"; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
                     LabelText {
                         text: ShellState.system.audio && ShellState.system.audio.available ? ShellState.system.audio.muted ? "Mute" : Math.round(ShellState.system.audio.volume) + "%" : "Audio —"
-                        font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                        font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter
                     }
                     LabelText {
                         readonly property var battery: ShellState.system.battery || {}
                         visible: battery.available === true
                         text: battery.available ? (battery.charging ? "+ " : "") + Math.round(battery.percent) + "%" : ""
                         color: battery.available && battery.percent < 20 ? Theme.red : Theme.green
-                        font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                        font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
         }
         AbstractButton {
             id: clock
-            Layout.preferredWidth: 100; Layout.preferredHeight: 30
+            Layout.preferredWidth: clockText.implicitWidth + 24; Layout.preferredHeight: 30
             Layout.alignment: Qt.AlignVCenter
             padding: 0
             hoverEnabled: true
             Accessible.name: "Clock and control center"
             onClicked: ShellState.togglePanel("control", root.screenInfo)
             background: Rectangle {
-                radius: 10
+                radius: height / 2
                 color: clock.hovered || ShellState.controlOpen ? Theme.alpha(Theme.accent, 0.18) : Theme.alpha(Theme.surface, 0.5)
                 border.width: clock.visualFocus ? 2 : 0; border.color: Theme.accent
             }
             contentItem: Item {
-                Column {
+                LabelText {
+                    id: clockText
                     anchors.centerIn: parent
-                    spacing: 1
-                    LabelText { text: Qt.formatDateTime(root.now, "ddd, MMM d"); color: Theme.muted; font.pixelSize: 10; anchors.horizontalCenter: parent.horizontalCenter }
-                    LabelText { text: Qt.formatDateTime(root.now, "HH:mm"); font.pixelSize: 12; font.weight: Font.DemiBold; anchors.horizontalCenter: parent.horizontalCenter }
+                    text: Qt.locale("en_US").toString(root.now, "ddd, MMM d  ·  HH:mm")
+                    font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                 }
             }
         }

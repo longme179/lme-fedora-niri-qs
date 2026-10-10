@@ -20,8 +20,12 @@ QtObject {
     property bool powerOpen: false
     property bool settingsOpen: false
     property bool trayOpen: false
+    property bool overviewOpen: false
+    property bool stayAwake: false
+    property bool draggingWindow: false
+    property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen
+    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -39,11 +43,11 @@ QtObject {
 
     function closePanels() {
         launcherOpen = false; controlOpen = false; notificationsOpen = false;
-        powerOpen = false; settingsOpen = false; trayOpen = false;
+        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false;
     }
     function togglePanel(name, screen) {
         const key = name + "Open";
-        if (!["launcher", "control", "notifications", "power", "settings", "tray"].includes(name)) return;
+        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
@@ -55,12 +59,28 @@ QtObject {
         if (icon.startsWith("/")) return "file://" + icon;
         return Quickshell.iconPath(icon, true);
     }
+    function workspacesFor(screen) {
+        return (niri.workspaces || []).filter(w => !screen || !w.output || w.output === screen.name)
+            .slice().sort((a, b) => String(a.output || "").localeCompare(String(b.output || "")) || Number(a.idx) - Number(b.idx) || Number(a.id) - Number(b.id));
+    }
+    function windowIcon(window) {
+        const appId = String(window.app_id || "").toLowerCase();
+        const app = apps.find(item => item.id.replace(/\.desktop$/, "").toLowerCase() === appId)
+                 || apps.find(item => item.id.toLowerCase().includes(appId) && appId.length > 0);
+        return appIcon(app ? app.icon : window.app_id);
+    }
+    function nativeOverview() {
+        if (demo) { togglePanel("overview"); return; }
+        closePanels();
+        nativeOverviewDelay.restart();
+    }
     function run(action, payload) {
         if (!backend.running || !backendReady) {
             statusMessage = "Desktop backend is unavailable. Check the shell log.";
             statusError = true; statusTimer.restart(); return;
         }
         const request = Object.assign({}, payload || {}, {action: action});
+        pendingActions = Object.assign({}, pendingActions, {[action]: true});
         backend.write(JSON.stringify(request) + "\n");
     }
     function accept(data) {
@@ -69,6 +89,10 @@ QtObject {
             if (!next.apps || !next.system || !next.niri) return;
             const oldAudio = system.audio;
             const oldBrightness = system.brightness;
+            // Keep delegate identities stable between polls, especially during a drag.
+            if (draggingWindow || JSON.stringify(next.niri) === JSON.stringify(niri)) next.niri = niri;
+            if (JSON.stringify(next.apps) === JSON.stringify(apps)) next.apps = apps;
+            if (JSON.stringify(next.preferences) === JSON.stringify(preferences)) next.preferences = preferences;
             snapshot = next;
             backendReady = true; restartAttempts = 0;
             if (oldAudio && next.system.audio && oldAudio.available && next.system.audio.available
@@ -83,7 +107,11 @@ QtObject {
             }
             if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
                 lastResult = next.lastResult;
-                if (next.lastResult.message && (!next.lastResult.ok || !["ready", "volume", "mute", "brightness", "focusWindow", "workspace"].includes(next.lastResult.action))) {
+                const pending = Object.assign({}, pendingActions);
+                delete pending[next.lastResult.action];
+                pendingActions = pending;
+                if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
+                if (next.lastResult.message && (!next.lastResult.ok || !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }
@@ -99,6 +127,7 @@ QtObject {
         stderr: SplitParser { onRead: data => console.warn("Desktop backend:", data) }
         onExited: exitCode => {
             root.backendReady = false;
+            root.pendingActions = ({});
             root.statusMessage = "Desktop backend stopped (" + exitCode + ").";
             root.statusError = true;
             if (root.restartAttempts < 3) { root.restartAttempts++; root.restartTimer.restart(); }
@@ -107,4 +136,5 @@ QtObject {
     property Timer restartTimer: Timer { interval: 2000; onTriggered: root.backend.running = true }
     property Timer statusTimer: Timer { interval: 4500; onTriggered: root.statusMessage = "" }
     property Timer osdTimer: Timer { interval: 1600; onTriggered: root.osdOpen = false }
+    property Timer nativeOverviewDelay: Timer { interval: 80; onTriggered: root.run("nativeOverview") }
 }

@@ -18,6 +18,7 @@ import re
 import selectors
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -28,12 +29,12 @@ from typing import Any
 DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
-    "terminal": "kitty",
+    "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
 }
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "swww", "nm-connection-editor", "blueman-manager", "pavucontrol",
+    "swww", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -230,6 +231,20 @@ def validate_preference(key: str, value: Any) -> Any:
         return value
     if key == "terminal" and isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.+-]{1,80}", value):
         return value
+    if key == "bluetoothAdapter" and isinstance(value, str) and (value == "" or re.fullmatch(r"/org/bluez/hci[0-9]+", value)):
+        return value
+    if key == "tasks" and isinstance(value, list) and len(value) <= 100:
+        tasks, ids = [], set()
+        for item in value:
+            if not isinstance(item, dict):
+                raise ValueError("Invalid task")
+            ident, text, done = item.get("id"), item.get("text"), item.get("done")
+            if (not isinstance(ident, str) or not re.fullmatch(r"[A-Za-z0-9-]{1,64}", ident)
+                    or ident in ids or not isinstance(text, str) or not 1 <= len(text.strip()) <= 240 or type(done) is not bool):
+                raise ValueError("Invalid task")
+            ids.add(ident)
+            tasks.append({"id": ident, "text": text.strip(), "done": done})
+        return tasks
     if key == "wallpaper" and isinstance(value, str) and (value == "" or (Path(value).is_absolute() and Path(value).is_file())):
         return value
     raise ValueError(f"Invalid preference: {key}")
@@ -397,7 +412,7 @@ class DesktopBackend:
                 "charging": charging}
 
     def network(self) -> dict[str, Any]:
-        result = {"available": False, "enabled": False, "connected": False, "ssid": "", "strength": None}
+        result = {"available": False, "enabled": False, "connected": False, "ssid": "", "strength": None, "networks": []}
         radio = self.try_run("nmcli", "radio", "wifi")
         if radio is None:
             return result
@@ -412,23 +427,117 @@ class DesktopBackend:
         wireless = self.try_run("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "device", "wifi", "list", "--rescan", "no")
         for line in (wireless or "").splitlines():
             fields = split_nmcli(line)
+            if len(fields) >= 3 and fields[1] and fields[1] not in {item["ssid"] for item in result["networks"]}:
+                try:
+                    strength = max(0, min(100, int(fields[2])))
+                except ValueError:
+                    strength = 0
+                result["networks"].append({"ssid": fields[1], "strength": strength, "connected": fields[0] == "yes"})
             if len(fields) >= 3 and fields[0] == "yes":
                 result.update(connected=True, ssid=fields[1])
                 try:
                     result["strength"] = max(0, min(100, int(fields[2])))
                 except ValueError:
                     pass
-                break
+        result["networks"] = sorted(result["networks"], key=lambda item: (not item["connected"], -item["strength"]))[:12]
         return result
 
-    def bluetooth(self) -> dict[str, Any]:
-        output = self.try_run("bluetoothctl", "show")
-        if output is None or not re.search(r"^\s*Controller\s", output, re.MULTILINE):
-            return {"available": False, "enabled": False}
-        return {"available": True, "enabled": bool(re.search(r"Powered:\s+yes", output))}
+    def bluez_objects(self) -> dict[str, Any] | None:
+        output = self.try_run("busctl", "--system", "--json=short", "call", "org.bluez", "/",
+                              "org.freedesktop.DBus.ObjectManager", "GetManagedObjects")
+        try:
+            data = json.loads(output or "null")["data"]
+            if isinstance(data, list) and len(data) == 1:
+                data = data[0]
+            return data if isinstance(data, dict) else None
+        except (ValueError, TypeError, KeyError):
+            return None
 
-    def audio(self) -> dict[str, Any]:
-        output = self.try_run("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
+    def bluetooth_blocks(self) -> list[dict[str, Any]]:
+        blocks = []
+        for path in sorted((self.sysfs / "class/rfkill").glob("rfkill*")):
+            if self.read(path / "type") == "bluetooth":
+                blocks.append({"id": path.name.removeprefix("rfkill"),
+                               "soft": self.read(path / "soft") == "1", "hard": self.read(path / "hard") == "1"})
+        return blocks
+
+    def bluetooth(self) -> dict[str, Any]:
+        blocks = self.bluetooth_blocks()
+        result = {"available": False, "enabled": False, "adapters": [], "devices": [], "adapter": "",
+                  "softBlocked": any(item["soft"] for item in blocks), "hardBlocked": any(item["hard"] for item in blocks)}
+        objects = self.bluez_objects()
+        if objects is not None:
+            for path, interfaces in sorted(objects.items()):
+                if not isinstance(interfaces, dict) or not re.fullmatch(r"/org/bluez/hci[0-9]+", path):
+                    continue
+                adapter = interfaces.get("org.bluez.Adapter1")
+                if isinstance(adapter, dict):
+                    result["adapters"].append({"path": path, "name": self.bluez_value(adapter, "Alias", path.rsplit("/", 1)[-1]),
+                                               "enabled": self.bluez_value(adapter, "Powered", False) is True})
+            preferred = self.preferences.values["bluetoothAdapter"]
+            selected = next((item for item in result["adapters"] if item["path"] == preferred), None)
+            selected = selected or next(iter(result["adapters"]), None)
+            if selected:
+                result.update(available=True, enabled=selected["enabled"], adapter=selected["path"])
+                for path, interfaces in sorted(objects.items()):
+                    device = interfaces.get("org.bluez.Device1") if isinstance(interfaces, dict) else None
+                    if not isinstance(device, dict) or not path.startswith(selected["path"] + "/dev_"):
+                        continue
+                    if self.bluez_value(device, "Paired", False) or self.bluez_value(device, "Connected", False):
+                        result["devices"].append({"path": path, "name": self.bluez_value(device, "Alias", "Bluetooth device"),
+                                                  "connected": self.bluez_value(device, "Connected", False) is True})
+            return result
+        output = self.try_run("bluetoothctl", "show")
+        if output is not None and re.search(r"^\s*Controller\s", output, re.MULTILINE):
+            result.update(available=True, enabled=bool(re.search(r"Powered:\s+yes", output)))
+        return result
+
+    @staticmethod
+    def bluez_value(properties: dict[str, Any], key: str, default: Any) -> Any:
+        value = properties.get(key, default)
+        return value.get("data", default) if isinstance(value, dict) else value
+
+    def set_bluetooth(self, enabled: bool) -> str:
+        state = self.bluetooth()
+        if not state["available"]:
+            raise CommandError("No Bluetooth adapter is available. Check bluetooth.service and the adapter firmware.")
+        if enabled and state["hardBlocked"]:
+            raise CommandError("Bluetooth is hardware-blocked. Disable airplane mode or use the laptop's radio switch.")
+
+        def write_power() -> None:
+            if state["adapter"]:
+                self.runner.run("busctl", "--system", "set-property", "org.bluez", state["adapter"],
+                                "org.bluez.Adapter1", "Powered", "b", "true" if enabled else "false", timeout=12.0)
+            else:
+                output = self.runner.run("bluetoothctl", "--timeout", "10", "power", "on" if enabled else "off", timeout=12.0)
+                # bluetoothctl can return exit code zero while BlueZ reports a failure.
+                if re.search(r"failed|not available|not authorized|blocked|error", output, re.IGNORECASE):
+                    raise CommandError(output.strip()[:240])
+
+        try:
+            write_power()
+        except CommandError as exc:
+            if enabled and state["softBlocked"]:
+                if not self.runner.available("rfkill"):
+                    raise CommandError("Bluetooth is software-blocked. Install rfkill and unblock Bluetooth.") from exc
+                try:
+                    for block in self.bluetooth_blocks():
+                        if block["soft"] and not block["hard"] and block["id"].isdigit():
+                            self.runner.run("rfkill", "unblock", block["id"])
+                    write_power()
+                except CommandError as unblock_error:
+                    raise CommandError("Bluetooth is software-blocked; unblock it in Fedora's radio settings or run rfkill unblock bluetooth. " + str(unblock_error)) from exc
+            else:
+                raise CommandError("BlueZ could not change Bluetooth power. Check the Bluetooth service, firmware and session authorization. " + str(exc)) from exc
+        for attempt in range(3):
+            if self.bluetooth()["enabled"] == enabled:
+                return "Bluetooth turned " + ("on" if enabled else "off")
+            if attempt < 2:
+                time.sleep(0.12)
+        raise CommandError("BlueZ did not confirm the requested power state. Check journalctl -b -u bluetooth and rfkill list bluetooth.")
+
+    def audio(self, source: str = "@DEFAULT_AUDIO_SINK@") -> dict[str, Any]:
+        output = self.try_run("wpctl", "get-volume", source)
         match = re.search(r"Volume:\s+([0-9.]+)", output or "")
         if not match:
             return {"available": False, "volume": None, "muted": False}
@@ -492,6 +601,7 @@ class DesktopBackend:
                 raise ValueError("No niri session")
             if not all(isinstance(item, dict) for item in workspaces_data + windows_data):
                 raise ValueError("Invalid niri response")
+            workspaces_data.sort(key=lambda item: (str(item.get("output") or ""), item.get("idx") or 0, item.get("id") or 0))
             return {"available": True, "workspaces": workspaces_data, "windows": windows_data}
         except (ValueError, TypeError):
             return {"available": False, "workspaces": [], "windows": []}
@@ -507,7 +617,7 @@ class DesktopBackend:
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
-                          bluetooth=self.bluetooth(), audio=self.audio(), brightness=self.brightness(),
+                          bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
                           powerProfile=self.power_profile())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
@@ -525,11 +635,18 @@ class DesktopBackend:
                      {"id": "org.gnome.Nautilus.desktop", "name": "Files", "icon": "org.gnome.Nautilus", "path": "", "terminal": False}],
             "niri": {"available": True, "workspaces": [
                 {"id": i, "idx": i, "name": None, "output": "eDP-1", "is_focused": i == 1, "is_active": i == 1}
-                for i in range(1, 5)], "windows": [{"id": 1, "title": "LME Shell — Preview", "app_id": "firefox", "workspace_id": 1, "is_focused": True}]},
+                for i in range(1, 5)], "windows": [
+                    {"id": 1, "title": "LME Shell — Preview", "app_id": "firefox", "workspace_id": 1, "is_focused": True},
+                    {"id": 2, "title": "Terminal · project", "app_id": "kitty", "workspace_id": 1, "is_focused": False},
+                    {"id": 3, "title": "Documents", "app_id": "org.gnome.Nautilus", "workspace_id": 2, "is_focused": False}]},
             "system": {"cpu": 12.4, "memoryPercent": 34.2, "memoryUsedGiB": 5.47, "memoryTotalGiB": 16,
                        "tempC": 47, "battery": {"available": True, "percent": 82, "charging": False},
-                       "network": {"available": True, "enabled": True, "connected": True, "ssid": "Home Wi-Fi", "strength": 88},
-                       "bluetooth": {"available": True, "enabled": True}, "audio": {"available": True, "volume": 42, "muted": False},
+                       "network": {"available": True, "enabled": True, "connected": True, "ssid": "Home Wi-Fi", "strength": 88,
+                                   "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": True}, {"ssid": "Guest", "strength": 62, "connected": False}]},
+                       "bluetooth": {"available": True, "enabled": True, "softBlocked": False, "hardBlocked": False, "adapter": "/org/bluez/hci0",
+                                     "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": True}],
+                                     "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "name": "Headphones", "connected": True}]},
+                       "audio": {"available": True, "volume": 42, "muted": False}, "microphone": {"available": True, "volume": 60, "muted": False},
                        "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced"},
             "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
         }
@@ -559,11 +676,13 @@ class DesktopBackend:
                                     "sequence": self.result_sequence}
                 return dict(self.last_result)
             message = self.perform(action, request)
-            if action in {"refresh", "volume", "mute", "brightness", "wifiToggle", "bluetoothToggle", "powerProfile"}:
+            if action in {"refresh", "volume", "mute", "micVolume", "micMute", "brightness", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
                 self.system_cache = None
             self.last_result = {"ok": True, "action": action, "message": message}
         except (CommandError, ValueError, TypeError, KeyError, OSError) as exc:
             self.last_result = {"ok": False, "action": action if isinstance(action, str) else "", "message": str(exc)[:400]}
+            if action in {"bluetoothToggle", "bluetoothDevice"}:
+                self.system_cache = None
         self.last_result["sequence"] = self.result_sequence
         return dict(self.last_result)
 
@@ -579,6 +698,10 @@ class DesktopBackend:
             system["audio"]["volume"] = self.percentage(request.get("value"))
         elif action == "mute":
             system["audio"]["muted"] = not system["audio"]["muted"]
+        elif action == "micVolume":
+            system["microphone"]["volume"] = self.percentage(request.get("value"))
+        elif action == "micMute":
+            system["microphone"]["muted"] = not system["microphone"]["muted"]
         elif action == "brightness":
             system["brightness"]["percent"] = self.percentage(request.get("value"), 1)
         elif action == "wifiToggle":
@@ -587,6 +710,11 @@ class DesktopBackend:
             network["connected"] = network["enabled"]
         elif action == "bluetoothToggle":
             system["bluetooth"]["enabled"] = not system["bluetooth"]["enabled"]
+        elif action == "bluetoothDevice":
+            device = next((item for item in system["bluetooth"]["devices"] if item["path"] == request.get("path")), None)
+            if not device or type(request.get("connected")) is not bool:
+                raise ValueError("Unknown Bluetooth device or state")
+            device["connected"] = request["connected"]
         elif action == "powerProfile":
             value = request.get("value")
             if value not in POWER_PROFILES:
@@ -602,6 +730,15 @@ class DesktopBackend:
             window_id = self.identifier(request.get("id"))
             if not any(str(item["id"]) == window_id for item in state["niri"]["windows"]):
                 raise ValueError("Window is no longer available")
+            for window in state["niri"]["windows"]:
+                window["is_focused"] = str(window["id"]) == window_id
+        elif action == "moveWindow":
+            window_id = self.identifier(request.get("id"))
+            workspace_id = self.identifier(request.get("workspaceId"))
+            window = next((item for item in state["niri"]["windows"] if str(item["id"]) == window_id), None)
+            if window is None or not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
+                raise ValueError("Window or workspace is no longer available")
+            window["workspace_id"] = int(workspace_id)
         elif action == "launch":
             if not any(item["id"] == request.get("id") for item in state["apps"]):
                 raise ValueError("Application is no longer available")
@@ -614,7 +751,7 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action not in {"refresh", "lock", "screenshot", "logout", "suspend", "reboot", "poweroff"}:
+        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
@@ -643,6 +780,18 @@ class DesktopBackend:
         if action == "focusWindow":
             run("niri", "msg", "action", "focus-window", "--id", self.identifier(request.get("id")))
             return "Window focused"
+        if action == "moveWindow":
+            window_id = int(self.identifier(request.get("id")))
+            workspace_id = int(self.identifier(request.get("workspaceId")))
+            self.niri = self.niri_state()
+            if (not any(item.get("id") == window_id for item in self.niri["windows"])
+                    or not any(item.get("id") == workspace_id for item in self.niri["workspaces"])):
+                raise ValueError("Window or workspace is no longer available")
+            self.niri_action({"MoveWindowToWorkspace": {"window_id": window_id, "reference": {"Id": workspace_id}, "focus": False}})
+            return "Window moved to workspace"
+        if action == "nativeOverview":
+            run("niri", "msg", "action", "toggle-overview")
+            return "Native overview toggled"
         if action == "workspace":
             workspace_id = self.identifier(request.get("id"))
             workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
@@ -662,6 +811,13 @@ class DesktopBackend:
         if action == "mute":
             run("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
             return "Mute toggled"
+        if action == "micVolume":
+            value = self.percentage(request.get("value"))
+            run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SOURCE@", f"{value}%")
+            return f"Microphone {value}%"
+        if action == "micMute":
+            run("wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle")
+            return "Microphone mute toggled"
         if action == "brightness":
             value = self.percentage(request.get("value"), 1)
             run("brightnessctl", "--class=backlight", "set", f"{value}%")
@@ -671,11 +827,15 @@ class DesktopBackend:
             run("nmcli", "radio", "wifi", "off" if status.strip() == "enabled" else "on")
             return "Wi-Fi toggled"
         if action == "bluetoothToggle":
-            status = run("bluetoothctl", "show")
-            if not re.search(r"^\s*Controller\s", status, re.MULTILINE):
-                raise CommandError("No Bluetooth adapter is available")
-            run("bluetoothctl", "power", "off" if re.search(r"Powered:\s+yes", status) else "on")
-            return "Bluetooth toggled"
+            return self.set_bluetooth(not self.bluetooth()["enabled"])
+        if action == "bluetoothDevice":
+            path, connected = request.get("path"), request.get("connected")
+            state = self.bluetooth()
+            if (not isinstance(path, str) or not re.fullmatch(r"/org/bluez/hci[0-9]+/dev_(?:[A-Fa-f0-9]{2}_){5}[A-Fa-f0-9]{2}", path)
+                    or type(connected) is not bool or not any(item["path"] == path for item in state["devices"])):
+                raise ValueError("Unknown Bluetooth device or state")
+            run("busctl", "--system", "call", "org.bluez", path, "org.bluez.Device1", "Connect" if connected else "Disconnect", timeout=15.0)
+            return "Bluetooth device " + ("connected" if connected else "disconnected")
         if action == "powerProfile":
             value = request.get("value")
             if value not in POWER_PROFILES:
@@ -693,12 +853,12 @@ class DesktopBackend:
         if action == "lock":
             self.runner.spawn([self.runner.executable("swaylock"), "--color", "22212c"])
             return "Lock requested"
-        if action == "screenshot":
+        if action in {"screenshot", "screenshotArea"}:
             # niri owns capture and clipboard integration. Traditional grim uses
             # wlr-screencopy, which is not the portable screenshot path on niri.
             # Let a just-dismissed control panel finish its surface teardown.
             time.sleep(0.2)
-            run("niri", "msg", "action", "screenshot-screen")
+            run("niri", "msg", "action", "screenshot-screen" if action == "screenshot" else "screenshot")
             return "Screenshot requested; output follows niri's screenshot-path setting"
         if action == "logout":
             run("niri", "msg", "action", "quit", "--skip-confirmation")
@@ -730,6 +890,26 @@ class DesktopBackend:
             self.runner.spawn([self.runner.executable(commands[target])])
             return f"Opened {target} settings"
         raise ValueError(f"Unknown action: {action}")
+
+    @staticmethod
+    def niri_action(action: dict[str, Any]) -> None:
+        path = os.environ.get("NIRI_SOCKET")
+        if not path:
+            raise CommandError("NIRI_SOCKET is unavailable. Run the shell inside the niri session.")
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(3.0)
+            client.connect(path)
+            client.sendall(json.dumps({"Action": action}, separators=(",", ":")).encode() + b"\n")
+            with client.makefile("rb") as stream:
+                line = stream.readline(1024 * 1024 + 1)
+            if len(line) > 1024 * 1024:
+                raise CommandError("The niri reply was too large")
+            try:
+                reply = json.loads(line)
+            except (ValueError, UnicodeError) as exc:
+                raise CommandError("Invalid niri reply") from exc
+            if not isinstance(reply, dict) or "Ok" not in reply:
+                raise CommandError(str(reply.get("Err", "The niri action failed")) if isinstance(reply, dict) else "Invalid niri reply")
 
 def emit(backend: DesktopBackend) -> None:
     print(json.dumps(backend.snapshot(), ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)

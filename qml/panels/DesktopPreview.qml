@@ -10,7 +10,7 @@ Item {
     property string initialPanel: Quickshell.env("LME_SHELL_PREVIEW_PANEL") || "control"
     Component.onCompleted: ShellState.togglePanel(initialPanel)
     Image { anchors.fill: parent; source: "../../assets/wallpapers/liquid-dracula.png"; fillMode: Image.PreserveAspectCrop }
-    Bar { x: Theme.barSideMargin; y: Theme.barTopMargin; width: parent.width - Theme.barSideMargin * 2; height: Theme.barHeight }
+    Bar { objectName: "desktopBar"; x: Theme.barSideMargin; y: Theme.barBottom ? parent.height - Theme.barTopMargin - height : Theme.barTopMargin; width: parent.width - Theme.barSideMargin * 2; height: Theme.barHeight }
     Column {
         x: 110; y: 240
         spacing: 18
@@ -31,15 +31,17 @@ Item {
     ActivityIsland { z: 2 }
     SlideLoader {
         id: panelLoader
-        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.settingsOpen || ShellState.clipboardOpen
-        direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
-        active: ShellState.panelOpen && !ShellState.activityOpen
-        sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control
-                         : ShellState.notificationsOpen ? notifications : ShellState.wifiOpen ? wifi : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : ShellState.clipboardOpen ? clipboard : power
-        width: item ? Math.min(item.implicitWidth, root.width - 32) : 400
-        height: item ? Math.min(item.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
+        objectName: "desktopPanel"
+        readonly property Item panel: item as Item
+        readonly property bool centered: ["launcher", "power", "overview", "settings", "clipboard"].includes(ShellState.panelKind)
+        direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
+        shown: ShellState.panelOpen && !ShellState.activityOpen
+        content: ShellState.panelKind === "launcher" ? launcher : ShellState.panelKind === "control" ? control
+                         : ShellState.panelKind === "notifications" ? notifications : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : ShellState.panelKind === "clipboard" ? clipboard : power
+        width: panel ? Math.min(panel.implicitWidth, root.width - 32) : 400
+        height: panel ? Math.min(panel.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
-        y: centered ? (root.height - height) / 2 : Theme.panelTopMargin
+        y: centered ? (root.height - height) / 2 : Theme.barBottom ? root.height - height - Theme.panelTopMargin : Theme.panelTopMargin
     }
     Component { id: launcher; Launcher {} }
     Component { id: control; ControlCenter {} }

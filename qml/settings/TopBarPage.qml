@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import "../bar"
 import "../components"
@@ -47,7 +46,7 @@ ColumnLayout {
         }
         RowLayout {
             Layout.fillWidth: true
-            LabelText { text: "Roboto text size"; Layout.fillWidth: true }
+            LabelText { text: "Bar text size"; Layout.fillWidth: true }
             LabelText { text: Math.round(fontSize.value) + " px"; color: Theme.accent; font.weight: Font.Bold }
         }
         LiquidSlider {
@@ -59,6 +58,29 @@ ColumnLayout {
             onMoved: if (!pressed) ShellState.run("setting", {key: "barFontSize", value: Math.round(value)})
         }
         Binding { target: fontSize; property: "value"; value: ShellState.preferences.barFontSize || 13; when: !fontSize.pressed; restoreMode: Binding.RestoreNone }
+    }
+    SettingsCard {
+        title: "Make room at the edge"
+        description: "Move the horizontal bar to either edge. Popups, tray and the Activity island follow it. Space reserved for applications updates with the bar."
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Screen edge"; Layout.fillWidth: true }
+            LiquidComboBox { objectName: "barEdge"; model: ["Top", "Bottom"]; currentIndex: Theme.barBottom ? 1 : 0; Accessible.name: "Bar screen edge"; onActivated: ShellState.run("setting", {key: "barEdge", value: currentIndex ? "bottom" : "top"}) }
+        }
+        Repeater {
+            model: [{key: "barEdgeMargin", title: "Distance from edge", min: 0, max: 64}, {key: "barSideMargin", title: "Side margins", min: 0, max: 160}, {key: "barHeight", title: "Bar height", min: 36, max: 64}]
+            delegate: ColumnLayout {
+                id: dimension; required property var modelData; Layout.fillWidth: true; spacing: 8
+                LabelText { text: dimension.modelData.title + " · " + Math.round(distance.value) + " px"; font.weight: Font.Bold }
+                LiquidSlider {
+                    id: distance; objectName: dimension.modelData.key; Layout.fillWidth: true; from: dimension.modelData.min; to: dimension.modelData.max; stepSize: 1
+                    Accessible.name: dimension.modelData.title
+                    onMoved: if (!pressed) ShellState.run("setting", {key: dimension.modelData.key, value: Math.round(value)})
+                    onPressedChanged: if (!pressed) ShellState.run("setting", {key: dimension.modelData.key, value: Math.round(value)})
+                }
+                Binding { target: distance; property: "value"; value: ShellState.preferences[dimension.modelData.key] === undefined ? ({barEdgeMargin: 8, barSideMargin: 12, barHeight: 42})[dimension.modelData.key] : ShellState.preferences[dimension.modelData.key]; when: !distance.pressed; restoreMode: Binding.RestoreNone }
+            }
+        }
     }
     Repeater {
         model: BarRegistry.zones
@@ -79,7 +101,7 @@ ColumnLayout {
                     DropArea {
                         id: rowDrop
                         anchors.fill: parent; keys: ["bar-module"]
-                        onDropped: drop => { root.move(drop.source.moduleId, zoneCard.modelData, moduleRow.index); drop.acceptProposedAction(); }
+                        onDropped: drop => { if (drop.source === proxy) { root.move(proxy.moduleId, zoneCard.modelData, moduleRow.index); drop.acceptProposedAction(); } }
                     }
                     RowLayout {
                         anchors.fill: parent; anchors.margins: 8; spacing: 8
@@ -123,7 +145,7 @@ ColumnLayout {
                 DropArea {
                     id: appendDrop
                     anchors.fill: parent; keys: ["bar-module"]
-                    onDropped: drop => { root.move(drop.source.moduleId, zoneCard.modelData, root.layout[zoneCard.modelData].length); drop.acceptProposedAction(); }
+                    onDropped: drop => { if (drop.source === proxy) { root.move(proxy.moduleId, zoneCard.modelData, root.layout[zoneCard.modelData].length); drop.acceptProposedAction(); } }
                 }
             }
         }
@@ -134,14 +156,15 @@ ColumnLayout {
         Repeater {
             model: BarRegistry.modules.filter(m => !BarRegistry.zones.some(z => root.layout[z].includes(m.id)))
             delegate: RowLayout {
+                id: availableRow
                 required property var modelData
                 Layout.fillWidth: true; spacing: 16
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 4
-                    LabelText { text: parent.parent.modelData.title; font.weight: Font.Bold }
-                    LabelText { text: parent.parent.modelData.detail; color: Theme.muted; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                    LabelText { text: availableRow.modelData.title; font.weight: Font.Bold }
+                    LabelText { text: availableRow.modelData.detail; color: Theme.muted; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
                 }
-                LiquidButton { text: "Add"; enabled: root.ready; Accessible.name: "Add " + parent.modelData.title; onClicked: root.move(parent.modelData.id, "right", root.layout.right.length) }
+                LiquidButton { text: "Add"; enabled: root.ready; Accessible.name: "Add " + availableRow.modelData.title; onClicked: root.move(availableRow.modelData.id, "right", root.layout.right.length) }
             }
         }
         LiquidButton { text: "Restore default layout"; enabled: root.ready; onClicked: root.save(BarRegistry.clone(BarRegistry.defaults)) }

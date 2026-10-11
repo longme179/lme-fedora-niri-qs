@@ -31,8 +31,8 @@ from typing import Any
 
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
-from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS,
-                              appearance_profile, control_layout, wallpaper_library, calculate)
+from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS,
+                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
@@ -49,7 +49,8 @@ DEFAULT_PREFERENCES = {
     "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
-    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS,
+    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS,
+    "barEdge": "top", "barEdgeMargin": 8, "barSideMargin": 12, "barHeight": 42,
     "nightLightEnabled": False, "nightLightMode": "manual", "nightLightTemperature": 4500,
     "nightLightStart": "20:00", "nightLightEnd": "07:00",
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
@@ -81,6 +82,7 @@ class CommandRunner:
     def __init__(self) -> None:
         # Cache capability discovery once, including known missing commands.
         self.commands = {name: shutil.which(name) for name in TOOLS}
+        self.commands['quickshell'] = shutil.which(os.environ.get('LME_QS_BINARY', 'quickshell')) or self.commands['quickshell'] or shutil.which('qs')
 
     def available(self, name: str) -> bool:
         return bool(self.commands.get(name))
@@ -254,6 +256,12 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in {'themeOverrides', 'fontOverrides'}: return theme_overrides(value, fonts=key == 'fontOverrides')
+    if key == 'fontSize' and type(value) is int and 12 <= value <= 20: return value
+    if key == 'barEdge' and value in ('top', 'bottom'): return value
+    if key in {'barEdgeMargin', 'barSideMargin', 'barHeight'} and type(value) is int:
+        low, high = {'barEdgeMargin': (0, 64), 'barSideMargin': (0, 160), 'barHeight': (36, 64)}[key]
+        if low <= value <= high: return value
     if key == "nightLightEnabled" and type(value) is bool: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
@@ -368,10 +376,10 @@ class Preferences:
             # Retain the last valid snapshot while an external editor is writing.
             pass
 
-    def set(self, key: str, value: Any) -> None:
-        self.update({key: value})
+    def set(self, key: str, value: Any, token: str | None = None) -> None:
+        self.update({key: theme_token(key, token, value) if token is not None else value}, token=token)
 
-    def update(self, values: dict[str, Any]) -> None:
+    def update(self, values: dict[str, Any], token: str | None = None) -> None:
         values = {key: validate_preference(key, value) for key, value in values.items()}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         # Serialize the app and shell's writers, including task updates.
@@ -379,6 +387,10 @@ class Preferences:
         with os.fdopen(lock_fd, "w") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             self.reload(force=True)
+            if token is not None:
+                key = next(iter(values))
+                merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
+                values[key] = merged
             self._write({**self.values, **values})
 
     def _write(self, updated: dict[str, Any]) -> None:
@@ -425,6 +437,7 @@ class DesktopBackend:
                  weather_fetch: bool = True, manage_idle: bool = False) -> None:
         self.demo = demo
         self.settings_only = settings_only
+        self.shell_entry = os.environ.get('LME_SHELL_ENTRY') or str(Path(__file__).resolve().parents[1] / 'shell.qml')
         self.manage_idle = manage_idle
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
@@ -1090,7 +1103,11 @@ class DesktopBackend:
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
-            self.preferences.values[key] = validate_preference(key, request.get("value"))
+            if 'token' in request:
+                delta = theme_token(key, request['token'], request.get('value'))
+                current = dict(self.preferences.values[key]); current.pop(request['token'], None); current.update(delta)
+                self.preferences.values[key] = current
+            else: self.preferences.values[key] = validate_preference(key, request.get("value"))
         elif action == "volume":
             system["audio"]["volume"] = self.percentage(request.get("value"))
         elif action == "mute":
@@ -1177,8 +1194,8 @@ class DesktopBackend:
                 self.night_state = {'available': self.runner.available('wlsunset'), 'active': False,
                                     'error': 'Start LME Shell to control Night Light.'}
                 if request.get('retry'):
-                    run('quickshell', '-p', str(Path(__file__).resolve().parents[1]/'shell.qml'), 'ipc', 'call', 'shell', 'retryNightLight')
-                reply = self.try_run('quickshell', '-p', str(Path(__file__).resolve().parents[1]/'shell.qml'), 'ipc', 'call', 'shell', 'nightLightStatus')
+                    run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'retryNightLight')
+                reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'nightLightStatus')
                 try:
                     state = json.loads(reply or '{}')
                     if isinstance(state, dict) and 'active' in state: self.night_state = state
@@ -1212,7 +1229,7 @@ class DesktopBackend:
         if action == "idleRefresh":
             self.idle_state = {"source": "ac" if self.ac_online() else "battery", "available": all(self.runner.available(n) for n in ("swayidle", "swaylock", "niri")), "error": ""}
             if self.settings_only:
-                reply = self.try_run("quickshell", "-p", str(Path(__file__).resolve().parents[1]/"shell.qml"), "ipc", "call", "shell", "idleStatus")
+                reply = self.try_run("quickshell", "-p", self.shell_entry, "ipc", "call", "shell", "idleStatus")
                 try:
                     state = json.loads(reply or "{}")
                     if isinstance(state, dict) and state.get("source") in {"ac", "battery"}: self.idle_state = state
@@ -1400,7 +1417,8 @@ class DesktopBackend:
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
-            self.preferences.set(key, request.get("value"))
+            if 'token' in request and not isinstance(request['token'], str): raise ValueError('Invalid theme token')
+            self.preferences.set(key, request.get("value"), token=request.get('token'))
             return "Preferences saved"
         if action == "openSettings":
             target = request.get("target")

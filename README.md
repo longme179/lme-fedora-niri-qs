@@ -41,7 +41,8 @@ commands or Arch installation scripts.
 - Night Light with manual, local-time and sunset schedules using `wlsunset`.
 - Screenshot studio: native niri capture, Pen/Highlight/Rectangle/Arrow/Redact,
   undo/redo, zoom, original-resolution PNG export, image copy and local OCR.
-- Smooth/Expressive/Jelly motion presets, adjustable speed/bounce, reduced motion
+- Liquid hover/press shape feedback and ripples, retained panel exit transitions,
+  animated Settings pages, Smooth/Expressive/Jelly presets, adjustable speed/bounce, reduced motion
   and Appearance profile integration. See [setup and usage](docs/CAPTURE_NIGHT_MOTION.md).
 - Native PipeWire device selection and individual device/application sliders;
   Bluetooth adapter selection, paired-device connect/disconnect and rfkill
@@ -56,10 +57,13 @@ commands or Arch installation scripts.
 - English calendar, saved to-do list, focus timer and stopwatch.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native notifications with persistent, searchable app groups, per-app popup rules and timed Do Not Disturb.
-- Independent Settings application with searchable Appearance, Top bar,
+- Independent Settings application with searchable Appearance, Elements and fonts, Top bar,
   Control center, Displays, Wallpaper, Weather, Clipboard, Idle and sleep, Keyboard shortcuts, Behavior and About pages. Open it without starting the shell.
   Changes synchronize with the running shell; preferences are merged under a
   file lock so another client’s task updates are preserved.
+- Live hex editing for 44 UI color roles, five font roles and body size, included
+  in Appearance profiles. Top/bottom bar placement, edge/side margins and height
+  update the bar and associated popups. See [personalization](docs/PERSONALIZATION.md).
 - On-demand system monitor: CPU/RAM charts, CPU thread loads/temperature, network rates and sortable searchable processes without GPU probes.
 - Separate AC/battery idle profiles, display wake on input and a confirmed session lock before suspend; searchable niri keybindings with include support.
 - Optional full-screen popup blur on niri 26.04+, including the expanded Activity Island; see [laptop features and blur setup](docs/LAPTOP_FEATURES.md).

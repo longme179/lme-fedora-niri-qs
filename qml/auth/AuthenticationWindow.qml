@@ -27,12 +27,12 @@ PanelWindow {
     SlideLoader {
         id: dialog
         readonly property AuthenticationDialog contentDialog: item as AuthenticationDialog
-        active: root.visible
+        shown: root.visible
         direction: "up"
         width: Math.min(480, root.width - 32)
         height: contentDialog ? contentDialog.implicitHeight : 0
         x: (root.width - width) / 2
         y: Math.max(16, (root.height - height) / 2)
-        sourceComponent: AuthenticationDialog { flow: root.flow }
+        content: AuthenticationDialog { flow: root.flow }
     }
 }

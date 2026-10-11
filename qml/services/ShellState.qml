@@ -17,6 +17,7 @@ QtObject {
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
     readonly property bool popupBlurEnabled: !demo && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    property string panelKind: "control"
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool notificationsOpen: false
@@ -69,13 +70,14 @@ QtObject {
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
+        if (name !== "activity") panelKind = name;
         root[key] = !wasOpen;
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["appearance", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
+        if (!["appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
-        if (demo) settingsOpen = true;
+        if (demo) { panelKind = "settings"; settingsOpen = true; }
         else if (!settingsProcess.running) settingsProcess.running = true;
     }
     function appIcon(icon) {
@@ -175,7 +177,9 @@ QtObject {
     }
     property Timer restartTimer: Timer { interval: 2000; onTriggered: root.backend.running = true }
     property Process settingsProcess: Process {
-        command: ["bash", Quickshell.shellPath("scripts/settings.sh"), "--daemonize", "--page", root.settingsPage]
+        command: ["env", "LME_SHELL_ENTRY=" + Quickshell.shellPath("shell.qml"),
+                  "bash", Quickshell.shellPath("scripts/settings.sh"), "--daemonize", "--page", root.settingsPage]
+        stdout: SplitParser { onRead: data => console.log("Settings:", data) }
         stderr: SplitParser { onRead: data => console.warn("Settings:", data) }
         onExited: exitCode => {
             if (exitCode !== 0) {

@@ -1,0 +1,17 @@
+{
+  "colors": [
+    {"title": "Palette", "tokens": ["background", "panel", "surface", "text", "muted", "border", "purple", "pink", "cyan", "green", "yellow", "red"]},
+    {"title": "Material surfaces", "tokens": ["primaryContainer", "secondaryContainer", "tertiaryContainer", "surfaceContainer", "surfaceContainerHigh", "onPrimary"]},
+    {"title": "Buttons and icons", "tokens": ["buttonFill", "buttonHover", "buttonPressed", "buttonSelected", "buttonText", "iconColor", "iconHover"]},
+    {"title": "Inputs", "tokens": ["fieldFill", "fieldText", "switchTrack", "switchThumb", "sliderTrack", "sliderFill"]},
+    {"title": "Bar and workspaces", "tokens": ["barFill", "barText", "barMuted", "barHover", "workspaceActive", "workspaceText"]},
+    {"title": "Panels and cards", "tokens": ["panelFill", "cardFill", "controlFill", "launcherFill", "notificationFill", "islandFill", "settingsFill"]}
+  ],
+  "fonts": [
+    {"key": "body", "title": "Body text", "default": "Roboto"},
+    {"key": "heading", "title": "Headings", "default": "Roboto"},
+    {"key": "button", "title": "Buttons and inputs", "default": "Roboto"},
+    {"key": "bar", "title": "Bar text", "default": "Roboto"},
+    {"key": "mono", "title": "Monospace", "default": "JetBrains Mono"}
+  ]
+}

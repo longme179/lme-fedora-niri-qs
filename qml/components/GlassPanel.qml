@@ -3,8 +3,9 @@ import "../theme"
 
 Rectangle {
     id: root
+    property string role: "panelFill"
     radius: Theme.radius
-    color: Theme.alpha(Theme.surfaceContainer, Theme.panelOpacity)
+    color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
     border.width: 1
     border.color: Theme.outlineVariant
     Rectangle {

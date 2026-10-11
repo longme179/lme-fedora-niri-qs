@@ -22,7 +22,12 @@ optional() {
 }
 
 printf 'LME Shell: read-only runtime checks\n\n'
-required quickshell quickshell
+qs_binary="$(command -v quickshell || command -v qs || true)"
+if [[ -n "$qs_binary" ]]; then
+    printf 'OK       %-22s %s\n' Quickshell "$qs_binary"
+else
+    required quickshell quickshell
+fi
 required python3 python3
 required niri niri
 required nmcli NetworkManager
@@ -32,8 +37,8 @@ required bluetoothctl bluez
 required busctl systemd
 required pkexec polkit
 optional rfkill 'Bluetooth software-block recovery: util-linux'
-if command -v quickshell >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-    if quickshell --version | python3 -c 'import re, sys; match = re.search(r"(\d+)\.(\d+)\.(\d+)", sys.stdin.read()); sys.exit(0 if match and tuple(map(int, match.groups())) >= (0, 3, 2) else 1)'; then
+if [[ -n "$qs_binary" ]] && command -v python3 >/dev/null 2>&1; then
+    if "$qs_binary" --version | python3 -c 'import re, sys; match = re.search(r"(\d+)\.(\d+)\.(\d+)", sys.stdin.read()); sys.exit(0 if match and tuple(map(int, match.groups())) >= (0, 3, 2) else 1)'; then
         printf 'OK       Quickshell version is at least 0.3.2\n'
     else
         printf 'MISSING  Quickshell 0.3.2 or newer with PipeWire, Polkit and Wayland support\n'
@@ -85,8 +90,8 @@ if command -v niri >/dev/null 2>&1; then
         required_failures=$((required_failures + 1))
     fi
 fi
-if command -v quickshell >/dev/null 2>&1; then
-    quickshell --version 2>&1 || true
+if [[ -n "$qs_binary" ]]; then
+    "$qs_binary" --version 2>&1 || true
     printf 'INFO     Built-in authentication: run quickshell -c lme-shell ipc call shell authenticationStatus\n'
     printf 'INFO     Custom Quickshell builds need SERVICE_POLKIT=ON; see docs/AUTHENTICATION.md\n'
 fi

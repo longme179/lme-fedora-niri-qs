@@ -45,7 +45,8 @@ while (($#)); do
     esac
     shift
 done
-if ! command -v quickshell >/dev/null; then
+qs_binary="$(command -v quickshell || command -v qs || true)"
+if [[ -z "$qs_binary" ]]; then
     printf 'Error: Quickshell is missing. See docs/INSTALL.md.\n' >&2
     exit 1
 fi
@@ -85,4 +86,4 @@ if ! "$demo" && command -v python3 >/dev/null; then
         printf 'Warning: confirmed display restoration failed; starting the shell anyway.\n' >&2
     fi
 fi
-exec quickshell -c "$config_name"
+exec "$qs_binary" -c "$config_name"

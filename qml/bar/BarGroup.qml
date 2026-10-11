@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import "../components"
 import "../theme"
@@ -13,10 +14,11 @@ Item {
     implicitWidth: Math.min(budget, row.implicitWidth > 0 ? row.implicitWidth + 20 : 0)
     implicitHeight: Theme.barHeight
     visible: implicitWidth > 0
-    GlassPanel { anchors.fill: parent; radius: height / 2; visible: root.island }
+    GlassPanel { role: "barFill"; anchors.fill: parent; radius: height / 2; visible: root.island }
     Flickable {
         id: scroller
-        anchors.fill: parent; anchors.margins: 6; anchors.leftMargin: 10; anchors.rightMargin: 10
+        objectName: "barModuleViewport"
+        anchors.fill: parent; anchors.margins: Math.max(1, (root.height - 34) / 2); anchors.leftMargin: 10; anchors.rightMargin: 10
         contentWidth: row.implicitWidth; contentHeight: height
         clip: true; boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
         Row {
@@ -32,7 +34,8 @@ Item {
                     Connections {
                         target: barModule.item
                         function onActiveFocusChanged() {
-                            if (barModule.item && barModule.item.activeFocus) {
+                            const item = barModule.item as Item;
+                            if (item && item.activeFocus) {
                                 if (barModule.x < scroller.contentX) scroller.contentX = barModule.x;
                                 else if (barModule.x + barModule.width > scroller.contentX + scroller.width)
                                     scroller.contentX = Math.max(0, barModule.x + barModule.width - scroller.width);

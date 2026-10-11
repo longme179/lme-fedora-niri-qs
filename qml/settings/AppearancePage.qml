@@ -101,11 +101,11 @@ ColumnLayout {
         Rectangle {
             Layout.fillWidth: true; Layout.preferredHeight: 118; radius: 20; color: Theme.surfaceContainer
             SlideLoader {
-                id: motionPreview; objectName: "motionPreview"; anchors.centerIn: parent; width: Math.min(260, parent.width - 32); height: 70; active: true; direction: "up"
-                sourceComponent: GlassPanel { radius: 28; LabelText { anchors.centerIn: parent; text: "Move with your desktop"; font.weight: Font.Bold } }
+                id: motionPreview; objectName: "motionPreview"; anchors.centerIn: parent; width: Math.min(260, parent.width - 32); height: 70; direction: "up"
+                content: GlassPanel { radius: 28; LabelText { anchors.centerIn: parent; text: "Move with your desktop"; font.weight: Font.Bold } }
             }
         }
-        LiquidButton { text: "Replay preview"; onClicked: { motionPreview.active = false; Qt.callLater(() => motionPreview.active = true); } }
+        LiquidButton { text: "Replay preview"; onClicked: { motionPreview.replay(); } }
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Panel opacity"; Layout.fillWidth: true }

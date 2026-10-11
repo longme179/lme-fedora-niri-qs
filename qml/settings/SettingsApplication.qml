@@ -2,7 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "../services"
-import "../theme"
 
 ShellRoot {
     id: root
@@ -20,6 +19,8 @@ ShellRoot {
         implicitWidth: 1100; implicitHeight: 780
         minimumSize: Qt.size(800, 600)
         color: "transparent"
+        // Keep native window-manager close consistent with Escape and the close button.
+        onClosed: Qt.quit()
         SettingsView { id: view; anchors.fill: parent; page: SettingsRegistry.page(Quickshell.env("LME_SETTINGS_PAGE") || "appearance").key; onCloseRequested: Qt.quit() }
         Timer {
             interval: 1400; repeat: true; running: root.screenshotPath.length > 0

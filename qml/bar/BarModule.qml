@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import "../components"
@@ -23,6 +22,7 @@ Loader {
     visible: available
     width: available && item ? (item as Item).implicitWidth : 0
     height: 30
+    y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launcher", "overview", "tray", "notifications", "settings", "clipboard"].includes(moduleId) ? actionComponent : statusComponent
     Component {
@@ -64,20 +64,24 @@ Loader {
                 height: 30; spacing: 4
                 Repeater {
                     model: ShellState.workspacesFor(root.screenInfo)
-                    delegate: AbstractButton {
+                    delegate: LiquidButton {
                         id: workspace
                         required property var modelData
-                        width: 34; height: 30; padding: 0; hoverEnabled: true
+                        width: modelData.is_focused ? 42 : 34; height: 30; implicitHeight: 30
+                        leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
+                        Behavior on width { MotionAnimation {} }
                         Accessible.name: "Workspace " + (modelData.name || modelData.idx)
                         background: Rectangle {
                             radius: workspace.modelData.is_focused ? 12 : 15
-                            color: workspace.modelData.is_focused ? Theme.accent : workspace.hovered ? Theme.primaryContainer : "transparent"
+                            color: workspace.modelData.is_focused ? Theme.workspaceActive : workspace.hovered ? Theme.barHover : "transparent"
                             border.width: workspace.visualFocus ? 2 : 0; border.color: Theme.text
+                            Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
+                            Behavior on radius { MotionAnimation {} }
                         }
                         contentItem: LabelText {
                             text: workspace.modelData.name || workspace.modelData.idx
-                            color: workspace.modelData.is_focused ? Theme.onPrimary : Theme.muted
-                            font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
+                            color: workspace.modelData.is_focused ? Theme.workspaceText : Theme.barMuted
+                            font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                         }
                         onClicked: ShellState.run("workspace", {id: modelData.id})
@@ -91,20 +95,20 @@ Loader {
         id: titleComponent
         Item {
             implicitWidth: Math.min(titleMetrics.width + 16, Math.max(0, root.titleBudget))
-            TextMetrics { id: titleMetrics; text: titleText.text; font.family: Theme.fontFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
+            TextMetrics { id: titleMetrics; text: titleText.text; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
             LabelText {
                 id: titleText
                 anchors.fill: parent; leftPadding: 8; rightPadding: 8
                 text: ShellState.niri.available ? ShellState.focusedTitle : ShellState.demo ? "LME / Liquid Desktop" : "niri unavailable"
-                color: Theme.muted; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter
-                font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
+                color: Theme.barMuted; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter
+                font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
             }
         }
     }
 
     Component {
         id: statusComponent
-        AbstractButton {
+        LiquidButton {
             id: button
             property date now: new Date()
             readonly property var audio: ShellState.system.audio || {}
@@ -118,17 +122,17 @@ Loader {
             // Measure an unconstrained label with the exact rendered font. A
             // separately configured TextMetrics can undercount hinted glyphs.
             implicitWidth: Math.min(Math.ceil(captionMeasure.implicitWidth) + 2 + (root.moduleId === "clock" ? 24 : 48), root.moduleId === "media" ? 220 : 300)
-            implicitHeight: 30; padding: 0; hoverEnabled: true
+            implicitHeight: 30; leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
             Accessible.name: BarRegistry.info(root.moduleId).title + ": " + caption
             onClicked: ShellState.togglePanel(root.moduleId === "network" ? "wifi" : "control", root.screenInfo)
-            background: Rectangle { radius: 15; color: button.hovered || ShellState.controlOpen ? Theme.primaryContainer : "transparent"; border.width: button.visualFocus ? 2 : 0; border.color: Theme.accent }
+            background: Rectangle { radius: 15; color: button.hovered || ShellState.controlOpen ? Theme.barHover : "transparent"; border.width: button.visualFocus ? 2 : 0; border.color: Theme.accent }
             LabelText { id: captionMeasure; visible: false; text: button.caption; font: statusText.font }
             contentItem: Item {
                 Row {
                     id: content
                     anchors.centerIn: parent; spacing: 6
-                    ShellIcon { visible: root.moduleId !== "clock"; name: BarRegistry.info(root.moduleId).icon; color: root.moduleId === "battery" && root.battery.percent < 20 ? Theme.red : Theme.muted; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
-                    LabelText { id: statusText; text: button.caption; width: Math.max(0, button.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
+                    ShellIcon { visible: root.moduleId !== "clock"; name: BarRegistry.info(root.moduleId).icon; color: root.moduleId === "battery" && root.battery.percent < 20 ? Theme.red : Theme.barMuted; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
+                    LabelText { id: statusText; text: button.caption; color: Theme.barText; width: Math.max(0, button.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
             Timer { interval: 1000; running: root.moduleId === "clock"; repeat: true; onTriggered: button.now = new Date() }

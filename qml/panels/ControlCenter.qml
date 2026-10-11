@@ -8,6 +8,7 @@ import "../theme"
 
 GlassPanel {
     id: root
+    role: "controlFill"
     implicitWidth: ShellState.preferences.controlWidth || 600
     implicitHeight: 900
     focus: true

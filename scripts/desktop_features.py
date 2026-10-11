@@ -2,14 +2,18 @@
 from __future__ import annotations
 
 import ast
+import json
 import math
 import operator
 from pathlib import Path
+import re
 
 MOTION_DEFAULTS = {"motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
-APPEARANCE_KEYS = ("accent", "opacity", "density", "animations", *MOTION_DEFAULTS)
+THEME_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / 'config/theme-tokens.json').read_text())
+THEME_DEFAULTS = {"themeOverrides": {}, "fontOverrides": {}, "fontSize": 14}
+APPEARANCE_KEYS = ("accent", "opacity", "density", "animations", *MOTION_DEFAULTS, *THEME_DEFAULTS)
 DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,
-                   "density": "comfortable", "animations": True, **MOTION_DEFAULTS}
+                   "density": "comfortable", "animations": True, **MOTION_DEFAULTS, **THEME_DEFAULTS}
 CONTROL_MODULES = ("weather", "charging", "wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "sliders", "powerProfile", "media", "resources", "capture", "overview")
 DEFAULT_CONTROL_LAYOUT = [{"id": key, "enabled": True, "size": "half" if key in {"wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight"} else "full"} for key in CONTROL_MODULES]
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
@@ -21,7 +25,30 @@ def appearance_profile(value, validate):
     name = value["name"]
     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 40 or any(ord(c) < 32 for c in name):
         raise ValueError("Use a profile name between 1 and 40 characters")
-    return {"name": name.strip(), **{key: validate(key, value.get(key, MOTION_DEFAULTS.get(key))) for key in APPEARANCE_KEYS}}
+    defaults = {**MOTION_DEFAULTS, **THEME_DEFAULTS}
+    return {"name": name.strip(), **{key: validate(key, value.get(key, defaults.get(key))) for key in APPEARANCE_KEYS}}
+
+
+def theme_overrides(value, fonts=False):
+    keys = {item['key'] for item in THEME_SCHEMA['fonts']} if fonts else {key for group in THEME_SCHEMA['colors'] for key in group['tokens']}
+    if not isinstance(value, dict) or set(value) - keys: raise ValueError('Unknown theme element')
+    result = {}
+    for key, item in value.items():
+        if not isinstance(item, str): raise ValueError('Theme values must be text')
+        if fonts:
+            if not 1 <= len(item.strip()) <= 80 or not item.isprintable(): raise ValueError('Use a font family name between 1 and 80 characters')
+            result[key] = item.strip()
+        else:
+            if not re.fullmatch(r'#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})', item): raise ValueError('Use #RRGGBB or #AARRGGBB')
+            result[key] = item.lower()
+    return result
+
+
+def theme_token(key, token, value):
+    if key not in ('themeOverrides', 'fontOverrides') or not isinstance(token, str) or not isinstance(value, str):
+        raise ValueError('Invalid theme token update')
+    validated = theme_overrides({token: value or ('Roboto' if key == 'fontOverrides' else '#000000')}, fonts=key == 'fontOverrides')
+    return validated if value else {}
 
 
 def control_layout(value):

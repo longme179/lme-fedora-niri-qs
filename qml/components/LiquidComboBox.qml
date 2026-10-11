@@ -13,11 +13,11 @@ ComboBox {
     topPadding: 8
     bottomPadding: 8
     hoverEnabled: true
-    font.family: Theme.fontFamily
-    font.pixelSize: 13
-    palette.button: Theme.surfaceContainerHigh
-    palette.buttonText: Theme.text
-    palette.text: Theme.text
+    font.family: Theme.buttonFamily
+    font.pixelSize: Theme.bodySize - 1
+    palette.button: Theme.fieldFill
+    palette.buttonText: Theme.fieldText
+    palette.text: Theme.fieldText
     palette.base: Theme.panel
     palette.window: Theme.panel
     palette.windowText: Theme.text
@@ -25,17 +25,19 @@ ComboBox {
     palette.highlightedText: Theme.background
 
     background: Rectangle {
-        radius: Theme.smallRadius
+        radius: root.hovered && Theme.animations ? 12 : Theme.smallRadius
         color: root.down ? Qt.lighter(root.palette.button, 1.18) : root.hovered && root.enabled ? Qt.lighter(root.palette.button, 1.1) : root.palette.button
         border.width: root.visualFocus ? 2 : 1
         border.color: root.visualFocus ? Theme.accent : Theme.alpha(Theme.border, root.enabled ? 0.65 : 0.35)
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
+        Behavior on radius { MotionAnimation {} }
+        LiquidFeedback { hovered: root.hovered; pressed: root.down; radius: parent.radius }
     }
 
     contentItem: Text {
         text: root.displayText
         textFormat: Text.PlainText
-        color: root.enabled ? Theme.text : Theme.muted
+        color: root.enabled ? Theme.fieldText : Theme.muted
         font: root.font
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 QtObject {
     readonly property var pages: [
+        {key: "elements", title: "Elements and fonts", icon: "settings", description: "Your colors, down to the element", keywords: "theme hex color class token typography font family buttons inputs surfaces palette"},
         {key: "appearance", title: "Appearance", icon: "settings", description: "Material shapes, glass and Dracula colors", keywords: "accent opacity animations motion theme font roboto profiles density popup blur overlay compositor"},
         {key: "topbar", title: "Top bar", icon: "overview", description: "Your modules, in your order", keywords: "modules layout islands activity timer media pill clock workspaces tray size"},
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},

@@ -20,9 +20,8 @@ Qt update can indicate an incompatible custom or development Quickshell build;
 update or rebuild that package rather than disabling checks or substituting
 random libraries.
 
-The supported command is `quickshell`; some packages also supply the `qs` alias.
-If your custom build only provides `qs`, adapt your local command or install a
-package with the standard binary name.
+The wrappers and backend support both `quickshell` and `qs`. Settings launched
+from the shell uses the running shell's executable, including custom builds.
 
 The expanded shell also needs Quickshell's PipeWire, Polkit and Wayland idle
 inhibitor modules. Distribution builds normally include them; enable
@@ -202,9 +201,24 @@ the same application; `--page topbar` navigates an existing instance rather than
 starting another. Register the launcher with `./scripts/install-settings.sh`.
 If you moved the checkout, rerun it with `--replace` to back up the old entry.
 
+For a config installed as `gpt`, run
+`bash ~/.config/quickshell/gpt/scripts/settings.sh --page appearance` in a
+terminal to see that application's own startup log. The main shell also logs
+errors from its Settings launcher. Check the terminal environment matches your
+niri session and uses Quickshell 0.3.2 or newer. Closing the native Settings
+window now ends its instance, allowing a fresh open instead of reusing a hidden
+native window. The independent app also supports `--page elements`.
+
+Warnings about an existing `org.freedesktop.Notifications` service or Polkit
+agent describe another process owning that service. They do not by themselves
+identify a Settings load failure. Keep one notification server and one Polkit
+agent in your session; use their own diagnostics when those services fail.
+
 Install `google-roboto-fonts` and check `fc-match Roboto` if text uses a fallback.
 After installing fonts, restart the existing Quickshell applications so Qt can
 resolve the new family. Bar text size can be changed in Settings → Top bar.
+Per-class color and font overrides are in Elements and fonts; Reset restores
+their inherited values. See [Personalization](PERSONALIZATION.md).
 
 A preference error appears inside Settings. Layouts accept only the documented
 module IDs and unique modules across the three zones. External JSON edits reload

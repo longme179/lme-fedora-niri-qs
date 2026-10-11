@@ -115,6 +115,8 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 self.fail('Motion / Night Light state timed out')
             def click(name):
                 p=json.loads(ipc('position',name));self.assertTrue(p,name)
+                time.sleep(.06)
+                p=json.loads(ipc('position',name))
                 subprocess.run([pointer,str(p['x']),str(p['y'])],check=True,timeout=5)
             try:
                 wait(lambda s:s['ready']);ipc('navigate','settings','appearance')
@@ -130,9 +132,9 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 ipc('navigate','settings','nightLight');wait(lambda s:s.get('nightLight',{}).get('available'))
                 click('nightLightMode');subprocess.run(['wtype','-s','150','-k','Down','-k','Return'],check=True,env=env)
                 wait(lambda s:s['preferences']['nightLightMode']=='schedule')
-                click('nightLightStart');subprocess.run(['wtype','-M','ctrl','-k','a','-m','ctrl','21:30','-k','Return'],check=True,env=env)
+                click('nightLightStart');subprocess.run(['wtype','-s','150','-M','ctrl','-k','a','-m','ctrl','21:30','-k','Return'],check=True,env=env)
                 wait(lambda s:s['preferences']['nightLightStart']=='21:30')
-                click('nightLightEnd');subprocess.run(['wtype','-M','ctrl','-k','a','-m','ctrl','06:45','-k','Return'],check=True,env=env)
+                click('nightLightEnd');subprocess.run(['wtype','-s','150','-M','ctrl','-k','a','-m','ctrl','06:45','-k','Return'],check=True,env=env)
                 wait(lambda s:s['preferences']['nightLightEnd']=='06:45')
                 run('setting',key='nightLightStart',value='25:00');wait(lambda s:not s['lastResult']['ok'])
                 self.assertEqual(json.loads(ipc('state'))['preferences']['nightLightStart'],'21:30')

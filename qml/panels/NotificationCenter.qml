@@ -40,7 +40,7 @@ Item {
     }
     Keys.onEscapePressed: ShellState.closePanels()
 
-    GlassPanel { anchors.fill: parent; visible: !root.embedded }
+    GlassPanel { role: "notificationFill"; anchors.fill: parent; visible: !root.embedded }
 
     ColumnLayout {
         anchors.fill: parent

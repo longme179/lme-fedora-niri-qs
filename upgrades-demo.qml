@@ -22,9 +22,9 @@ ShellRoot {
         Loader {
             id: view
             anchors.centerIn: parent
-            width: root.mode === "settings" ? Math.min(1160, window.width - 32) : root.mode === "control" ? Math.min(ShellState.preferences.controlWidth || 600, window.width - 32) : root.mode === "wifi" ? 560 : 700
-            height: Math.min(window.height - 32, root.mode === "settings" ? 900 : 800)
-            sourceComponent: root.mode === "settings" ? settingsView : root.mode === "launcher" ? launcher : root.mode === "wifi" ? wifi : root.mode === "notifications" ? notifications : control
+            width: root.mode === "desktop" ? window.width : root.mode === "settings" ? Math.min(1160, window.width - 32) : root.mode === "control" ? Math.min(ShellState.preferences.controlWidth || 600, window.width - 32) : root.mode === "wifi" ? 560 : 700
+            height: root.mode === "desktop" ? window.height : Math.min(window.height - 32, root.mode === "settings" ? 900 : 800)
+            sourceComponent: root.mode === "desktop" ? desktop : root.mode === "settings" ? settingsView : root.mode === "launcher" ? launcher : root.mode === "wifi" ? wifi : root.mode === "notifications" ? notifications : control
         }
     }
     Component { id: settingsView; SettingsView { page: root.page; onCloseRequested: Qt.quit() } }
@@ -32,6 +32,7 @@ ShellRoot {
     Component { id: control; ControlCenter {} }
     Component { id: wifi; WifiPanel {} }
     Component { id: notifications; NotificationCenter {} }
+    Component { id: desktop; DesktopPreview {} }
     function find(item, name) {
         if (!item) return null;
         if (item.objectName === name || item.text === name) return item;
@@ -43,6 +44,12 @@ ShellRoot {
         target: "upgradesFixture"
         function navigate(mode: string, page: string): void { root.page = page; root.mode = mode; }
         function run(request: string): void { const data = JSON.parse(request); ShellState.run(data.action, data); }
+        function panel(name: string): void { if (name) ShellState.togglePanel(name); else ShellState.closePanels(); }
+        function confirmPower(): void {
+            const loader = root.find(window.contentItem, "desktopPanel");
+            const menu = loader ? loader.item as PowerMenu : null;
+            if (menu) { menu.pendingAction = "shutdown"; menu.pendingLabel = "Shut down"; }
+        }
         function state(): string {
             return JSON.stringify({ready: ShellState.backendReady, preferences: ShellState.preferences, lastResult: ShellState.lastResult,
                 mode: root.mode, query: root.mode === "launcher" && view.item ? view.item.query : "", results: root.mode === "launcher" && view.item ? view.item.results : [],
@@ -55,6 +62,23 @@ ShellRoot {
                 processMatches: root.find(window.contentItem, "systemMonitor") ? root.find(window.contentItem, "systemMonitor").processes.length : -1,
                 keybindMatches: root.find(window.contentItem, "keybindPage") ? root.find(window.contentItem, "keybindPage").matches.length : -1,
                 wifiPopup: root.mode === "wifi" && view.item ? view.item.connectionPopup.visible : false});
+        }
+        function themeState(): string {
+            const button = root.find(window.contentItem, "elementPreviewButton"), feedback = button ? root.find(button, "liquidFeedback") : null;
+            const bar = root.find(window.contentItem, "desktopBar");
+            const barViewport = bar ? root.find(bar, "barModuleViewport") : null;
+            const panel = root.find(window.contentItem, "desktopPanel");
+            const field = root.find(window.contentItem, "element-buttonFill"), group = root.find(window.contentItem, "elementGroup");
+            const confirm = root.find(window.contentItem, "Confirm shut down");
+            return JSON.stringify({ready: ShellState.backendReady, colors: Theme.catalog.colors.length,
+                buttonFill: Theme.buttonFill.toString(), barFill: Theme.barFill.toString(), bodyFont: Theme.fontFamily, barFont: Theme.barFamily,
+                bodySize: Theme.bodySize, animations: Theme.animations, status: ShellState.statusMessage, hover: button ? button.hovered : false, scale: button ? button.scale : 1, radius: button ? button.background.radius : 0,
+                ripple: feedback ? feedback.rippleProgress : 0, rippleOpacity: feedback ? feedback.rippleOpacity : 0,
+                feedbackRunning: feedback ? feedback.animating : false,
+                field: field ? {text:field.text,focus:field.activeFocus,width:field.width,height:field.height} : {}, colorGroup: group ? group.currentIndex : -1,
+                panel: panel ? {active:panel.active,shown:panel.shown,progress:panel.progress,x:panel.x,y:panel.y,kind:ShellState.panelKind} : {},
+                power: confirm ? {hover:confirm.hovered,color:confirm.background.color.toString()} : {},
+                bar: bar ? {x:bar.x,y:bar.y,width:bar.width,height:bar.height,viewportHeight:barViewport ? barViewport.height : 0,screenHeight:view.height} : {}});
         }
         function position(name: string): string {
             const popup = root.mode === "wifi" && view.item ? view.item.connectionPopup : null;

@@ -16,12 +16,12 @@ Item {
     width: compactWidth + (expandedWidth - compactWidth) * expansion
     height: 30 + (expandedHeight - 30) * expansion
     x: Math.max(14, Math.min((parent ? parent.width : width) - width - 14, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
-    y: Theme.barTopMargin + 6
+    y: Theme.barBottom && parent ? parent.height - Theme.barTopMargin - 6 - height : Theme.barTopMargin + 6
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
     onExpandedChanged: if (expanded) Qt.callLater(() => closeButton.forceActiveFocus());
     Behavior on expansion { MotionAnimation { id: morph; large: true; easing.bezierCurve: root.expanded ? Theme.spatialCurve : [.3, 0, .8, 1, 1, 1] } }
-    GlassPanel {
+    GlassPanel { role: "islandFill";
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true
         MouseArea { anchors.fill: parent }
         Row {

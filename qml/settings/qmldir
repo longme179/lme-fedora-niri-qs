@@ -15,3 +15,4 @@ SettingsApplication 1.0 SettingsApplication.qml
 IdlePage 1.0 IdlePage.qml
 KeybindsPage 1.0 KeybindsPage.qml
 NightLightPage 1.0 NightLightPage.qml
+ElementsPage 1.0 ElementsPage.qml

@@ -25,7 +25,7 @@ Item {
     Shortcut { sequence: "Ctrl+F"; onActivated: search.forceActiveFocus() }
     Shortcut { sequence: "Alt+Left"; onActivated: root.goBack() }
     Shortcut { sequence: "Escape"; onActivated: { if (search.text) search.clear(); else root.closeRequested(); } }
-    GlassPanel { anchors.fill: parent; radius: 28 }
+    GlassPanel { anchors.fill: parent; radius: 28; role: "settingsFill" }
     RowLayout {
         anchors.fill: parent; anchors.margins: 20; spacing: 24
         Rectangle {
@@ -60,7 +60,7 @@ Item {
                             delegate: LiquidButton {
                                 id: nav
                                 required property var modelData
-                                Layout.fillWidth: true; Layout.preferredHeight: 48
+                                Layout.fillWidth: true; Layout.preferredHeight: Math.max(48, contentItem.implicitHeight + 14)
                                 text: modelData.title; selected: root.page === modelData.key
                                 checkable: false
                                 Accessible.name: modelData.title + " settings"
@@ -73,7 +73,7 @@ Item {
                                 contentItem: RowLayout {
                                     spacing: 12
                                     ShellIcon { name: nav.modelData.icon; color: nav.selected ? Theme.accent : Theme.muted; width: 20; height: 20 }
-                                    LabelText { text: nav.text; Layout.fillWidth: true; font.weight: nav.selected ? Font.Bold : Font.Medium }
+                                    LabelText { text: nav.text; Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.WordWrap; font.pixelSize: Math.min(Theme.bodySize, 16); font.weight: nav.selected ? Font.Bold : Font.Medium }
                                 }
                             }
                         }
@@ -116,12 +116,13 @@ Item {
                 contentWidth: width; contentHeight: pageLoader.item ? (pageLoader.item as Item).implicitHeight + 12 : 0
                 clip: true; boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: ScrollBar {}
-                Loader {
+                SlideLoader {
                     id: pageLoader
+                    direction: "up"
                     width: pageScroll.width - 12
-                    sourceComponent: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
+                    content: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage
-                                   : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage
+                                   : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage : root.page === "elements" ? elementsPage
                                    : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
@@ -137,6 +138,7 @@ Item {
     Component { id: idlePage; IdlePage {} }
     Component { id: keybindsPage; KeybindsPage {} }
     Component { id: nightPage; NightLightPage {} }
+    Component { id: elementsPage; ElementsPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }
 }

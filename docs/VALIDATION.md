@@ -378,3 +378,43 @@ The saved cloud configuration draft retains signed `wlsunset` and Tesseract
 language packages, selects the live Sway socket instead of stale sockets, and
 documents the complete private validation command. Saving the draft does not
 publish the environment configuration.
+
+## Settings, element theming and liquid feedback — 2026-10-11
+
+The full private Wayland command completed **147 tests with no skips or
+failures**, plus Bash syntax checks and the demo backend snapshot. Enable the
+earlier native flags and `LME_TEST_PERSONALIZATION_UI=1`; see the saved cloud
+start instructions. After the bar height boundary and semantic hover adjustments,
+all six focused personalization checks were rerun, including both native cases.
+
+- The actual root shell starts as `quickshell -c gpt` through an installed
+  symlink. It opens Settings, reuses its instance, accepts Elements navigation,
+  closes it through the window manager and opens it again. This uses private
+  config/runtime paths and a fake niri executable without hardware mutations.
+  A separate check covers a PATH with only the `qs` binary name.
+- Real pointer/keyboard input exercises hover scale, press/hold/release ripple,
+  Motion off/on, valid/invalid hex edits, body/bar font inheritance, bottom-edge
+  geometry and the 36/64 px bar height boundaries. Panels retain their position
+  during exit, can reopen mid-exit, unload after exit and close immediately with
+  Motion disabled. These checks also inspect runtime logs for QML errors.
+  A danger confirmation retains its red palette during hover after ordinary
+  button colors are customized; the fixture does not activate that action.
+- Backend checks reject malformed/unknown tokens, preserve different edits from
+  stale clients under the existing file lock, reset individual overrides,
+  migrate older profiles and preserve demo isolation.
+- All shared controls, Settings pages/application, bar components, Theme and
+  changed Activity/DesktopPreview components pass qmllint without warnings.
+  Actual Settings was also inspected at 800 × 600 with 20 px body text; sidebar
+  labels wrap without cutting words. The three new previews render project sample
+  state and contain no user application pixels, credentials or location data.
+- Caelestia/iNiR motion patterns and the ported DMS curves are attributed in
+  `THIRD_PARTY.md`; the DMS MIT notice is retained. The private pointer tools can
+  now be recreated by the saved cloud setup script. The setup update is a draft
+  for review and is not automatically published.
+
+These checks use Qt 6.8.2 / Quickshell 0.3.2 on private Sway with software
+rendering. **Real Fedora/niri bar reservation, Lenovo gamma/capture and Radeon
+120 Hz animation performance remain untested here.** Existing owner-confirmed
+niri 26.04 blur behavior is preserved. The supplied main-shell log alone does
+not establish the exact original Settings failure on the owner's installation;
+the binary alias and native close/reopen paths are now covered directly.

@@ -29,6 +29,13 @@ Use the standalone Settings app to change preferences. Open it with
   "activityEnabled": true,
   "barStyle": "connected",
   "barFontSize": 13,
+  "barEdge": "top",
+  "barEdgeMargin": 8,
+  "barSideMargin": 12,
+  "barHeight": 42,
+  "fontSize": 14,
+  "fontOverrides": {},
+  "themeOverrides": {},
   "barLayout": {
     "left": ["launcher", "overview", "workspaces"],
     "center": ["activity"],
@@ -162,7 +169,8 @@ depend on background blur, expensive
 full-screen effects, or NVIDIA offloading. This makes the default practical for
 the laptop's integrated Radeon GPU.
 
-The top bar is 42 px tall with an 8 px top margin. It reserves its own height
+The bar defaults to 42 px tall with an 8 px top margin. Settings can move it
+to the bottom and change its edge/side margins and height. It reserves its own height
 and margin, leaving the gap to application windows to niri's `layout.gaps`
 setting. The shared geometry lives in `qml/theme/Theme.qml`. Side panels and
 notification popups start 8 px below the bar.
@@ -171,10 +179,11 @@ All bar labels use shared Roboto Medium at 13 px by default (12–16 px in
 Settings). Workspaces are sorted
 by output and numeric index instead of relying on niri's JSON array order.
 
-Panels slide in with `OutExpo` easing over 360 ms: sidebars arrive from the
-right, centered panels from below, and the tray dropdown from above. They do
-not fade in. Turn off Motion or disable animations in Settings for immediate
-placement. Wallpaper transitions are controlled separately by `awww`.
+Panels slide in with the shared Smooth/Expressive/Jelly curves: sidebars arrive
+from the right, centered panels from below, and the tray from the bar's edge.
+They retain content while sliding out. Turn off Motion for immediate placement.
+Wallpaper transitions are controlled separately by `awww`. See
+[Personalization](PERSONALIZATION.md) for element colors, fonts and geometry.
 
 The system tray button appears when applications register tray items. Click it
 to open the dropdown; left-click an application to activate it, right-click for

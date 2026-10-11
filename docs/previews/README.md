@@ -40,6 +40,9 @@ the new tabs. No image represents physical laptop hardware testing.
 | Native Bluetooth widget with private BlueZ adapter fixture | [bluez-adapter.png](bluez-adapter.png) |
 | Notifications | [notifications.png](notifications.png) |
 | Standalone Settings app with sample state | [settings.png](settings.png) |
+| Live class color editing with sample theme | [element-colors.png](element-colors.png) |
+| Font roles and body sizing | [element-fonts.png](element-fonts.png) |
+| Bottom bar and associated panel placement, sample desktop | [bottom-bar.png](bottom-bar.png) |
 | Weather settings with sample location/forecast | [weather-settings.png](weather-settings.png) |
 | Modular topbar editor with sample state | [topbar-editor.png](topbar-editor.png) |
 | Power menu | [power.png](power.png) |

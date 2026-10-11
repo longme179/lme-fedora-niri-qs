@@ -61,7 +61,7 @@ Item {
             root.calculating = false; root.calculation = result.ok ? result.message : ""; root.calculationError = result.ok ? "" : result.message;
         }
     }
-    GlassPanel { anchors.fill: parent }
+    GlassPanel { role: "launcherFill"; anchors.fill: parent }
     ColumnLayout {
         anchors.fill: parent; anchors.margins: 24; spacing: 16
         RowLayout {

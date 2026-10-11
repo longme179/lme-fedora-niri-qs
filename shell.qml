@@ -44,8 +44,8 @@ ShellRoot {
             PanelWindow {
                 id: barWindow
                 screen: screenScope.modelData
-                anchors { top: true; left: true; right: true }
-                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barTopMargin }
+                anchors { top: !Theme.barBottom; bottom: Theme.barBottom; left: true; right: true }
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
                 implicitHeight: Theme.barHeight
                 exclusiveZone: implicitHeight
                 color: "transparent"
@@ -59,7 +59,7 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible) && !ShellState.authenticationActive
+        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible || panelLoader.active) && !ShellState.authenticationActive
         anchors { top: true; bottom: true; left: true; right: true }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -77,17 +77,17 @@ ShellRoot {
             ActivityIsland { id: activityIsland; z: 2 }
             SlideLoader {
                 id: panelLoader
-                readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.clipboardOpen
-                direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
-                active: ShellState.panelOpen && !ShellState.activityOpen
-                sourceComponent: ShellState.launcherOpen ? launcherComponent : ShellState.controlOpen ? controlComponent
-                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.wifiOpen ? wifiComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : ShellState.clipboardOpen ? clipboardComponent : powerComponent
+                readonly property bool centered: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind)
+                direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
+                shown: ShellState.panelOpen && !ShellState.activityOpen
+                content: ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
+                               : ShellState.panelKind === "notifications" ? notificationsComponent : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : ShellState.panelKind === "clipboard" ? clipboardComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
                 x: centered ? (overlay.width - width) / 2
-                   : ShellState.trayOpen && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(overlay.width - width - 14, ShellState.trayAnchorX - width))
+                   : ShellState.panelKind === "tray" && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(overlay.width - width - 14, ShellState.trayAnchorX - width))
                    : overlay.width - width - 14
-                y: centered ? (overlay.height - height) / 2 : Theme.panelTopMargin
+                y: centered ? (overlay.height - height) / 2 : Theme.barBottom ? overlay.height - height - Theme.panelTopMargin : Theme.panelTopMargin
                 MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
             }
         }
@@ -118,8 +118,8 @@ ShellRoot {
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive
-        anchors { top: true; right: true }
-        margins { top: Theme.panelTopMargin; right: 14 }
+        anchors { top: !Theme.barBottom; bottom: Theme.barBottom; right: true }
+        margins { top: Theme.barBottom ? 0 : Theme.panelTopMargin; bottom: Theme.barBottom ? Theme.panelTopMargin : 0; right: 14 }
         implicitWidth: 360
         implicitHeight: toastColumn.implicitHeight
         color: "transparent"
@@ -134,6 +134,7 @@ ShellRoot {
                 model: Notifications.popups
                 delegate: GlassPanel {
                     id: toastCard
+                    role: "notificationFill"
                     required property var modelData
                     width: toastColumn.width
                     height: toastContent.implicitHeight + 32

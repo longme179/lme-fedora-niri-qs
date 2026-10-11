@@ -75,27 +75,6 @@ Flickable {
             LiquidButton { text: "Refresh"; onClicked: ShellState.run("refresh") }
         }
         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.border; Layout.topMargin: 8; Layout.bottomMargin: 8 }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Network"; font.pixelSize: 20; font.weight: Font.Bold }
-            Item { Layout.fillWidth: true }
-            LiquidButton { text: root.network.enabled ? "Wi-Fi off" : "Wi-Fi on"; enabled: !!root.network.available; onClicked: ShellState.run("wifiToggle") }
-        }
-        LabelText { text: root.network.connected ? "Connected to " + root.network.ssid : "Not connected"; color: root.network.connected ? Theme.cyan : Theme.muted; Layout.fillWidth: true; elide: Text.ElideRight }
-        Repeater {
-            model: root.network.networks || []
-            delegate: Rectangle {
-                id: networkEntry
-                required property var modelData
-                Layout.fillWidth: true; Layout.preferredHeight: 52; radius: 12; color: Theme.surface
-                RowLayout {
-                    anchors.fill: parent; anchors.margins: 12
-                    LabelText { text: networkEntry.modelData.ssid; Layout.fillWidth: true; elide: Text.ElideRight }
-                    LabelText { text: networkEntry.modelData.connected ? "Connected" : networkEntry.modelData.strength + "%"; color: networkEntry.modelData.connected ? Theme.cyan : Theme.muted; font.pixelSize: 12 }
-                }
-            }
-        }
-        LabelText { text: "Networks use NetworkManager's cached scan. Manage connections and passwords in Fedora's network settings."; color: Theme.muted; font.pixelSize: 12; wrapMode: Text.Wrap; Layout.fillWidth: true }
-        LiquidButton { text: "Network settings"; onClicked: ShellState.run("openSettings", {target: "network"}); Layout.fillWidth: true }
+        WifiWidget { Layout.fillWidth: true }
     }
 }

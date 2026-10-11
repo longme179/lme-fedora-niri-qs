@@ -75,7 +75,7 @@ ShellRoot {
                 direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
                 active: ShellState.panelOpen && !ShellState.activityOpen
                 sourceComponent: ShellState.launcherOpen ? launcherComponent : ShellState.controlOpen ? controlComponent
-                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : ShellState.clipboardOpen ? clipboardComponent : powerComponent
+                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.wifiOpen ? wifiComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : ShellState.clipboardOpen ? clipboardComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
                 x: centered ? (overlay.width - width) / 2
@@ -94,6 +94,7 @@ ShellRoot {
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
     Component { id: overviewComponent; Overview {} }
     Component { id: clipboardComponent; ClipboardPanel {} }
+    Component { id: wifiComponent; WifiPanel {} }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive

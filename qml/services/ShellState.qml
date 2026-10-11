@@ -26,6 +26,7 @@ QtObject {
     property bool overviewOpen: false
     property bool clipboardOpen: false
     property bool activityOpen: false
+    property bool wifiOpen: false
     property real activityAnchorX: -1
     property real activityAnchorWidth: 180
     property bool stayAwake: false
@@ -33,13 +34,14 @@ QtObject {
     property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen
+    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
     property bool backendReady: false
     property int restartAttempts: 0
     property var lastResult: null
+    property var wifiResult: null
     property string osdLabel: ""
     property real osdValue: 0
     property bool osdOpen: false
@@ -51,7 +53,7 @@ QtObject {
 
     function closePanels() {
         launcherOpen = false; controlOpen = false; notificationsOpen = false;
-        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false;
+        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false; wifiOpen = false;
     }
     function togglePanel(name, screen) {
         if (authenticationActive) return;
@@ -60,7 +62,7 @@ QtObject {
             return;
         }
         const key = name + "Open";
-        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity"].includes(name)) return;
+        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
@@ -68,7 +70,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["appearance", "topbar", "wallpaper", "weather", "clipboard", "behavior", "about"].includes(page)) return;
+        if (!["appearance", "topbar", "controlLayout", "display", "wallpaper", "weather", "clipboard", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
         if (demo) settingsOpen = true;
         else if (!settingsProcess.running) settingsProcess.running = true;
@@ -129,11 +131,12 @@ QtObject {
             }
             if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
                 lastResult = next.lastResult;
+                if (String(next.lastResult.action).startsWith("wifi")) wifiResult = next.lastResult;
                 const pending = Object.assign({}, pendingActions);
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }
@@ -149,6 +152,7 @@ QtObject {
         stderr: SplitParser { onRead: data => console.warn("Desktop backend:", data) }
         onExited: exitCode => {
             root.backendReady = false;
+            if (root.wifiResult && root.wifiResult.pending) root.wifiResult = {ok: false, message: "Desktop backend stopped during the Wi-Fi operation. Retry after it reconnects."};
             root.pendingActions = ({});
             root.statusMessage = "Desktop backend stopped (" + exitCode + ").";
             root.statusError = true;

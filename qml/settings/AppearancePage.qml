@@ -7,6 +7,26 @@ ColumnLayout {
     id: root
     spacing: 20
     SettingsCard {
+        title: "Appearance profiles"
+        description: "Save accent, opacity, density and motion together. Dracula is your built-in default."
+        RowLayout {
+            Layout.fillWidth: true
+            LiquidComboBox { id: profiles; Layout.fillWidth: true; model: (ShellState.preferences.appearanceProfiles || []).map(p => p.name); Accessible.name: "Appearance profile" }
+            LiquidButton { text: "Apply"; enabled: profiles.currentIndex >= 0 && ShellState.backendReady; onClicked: ShellState.run("appearanceApply", {name: profiles.currentText}) }
+            LiquidButton { text: "Delete"; enabled: profiles.currentText !== "Dracula" && profiles.currentIndex >= 0; onClicked: ShellState.run("appearanceDelete", {name: profiles.currentText}) }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            ExpressiveField { id: profileName; objectName: "appearanceProfileName"; Layout.fillWidth: true; placeholderText: "New profile name"; maximumLength: 40; Accessible.name: "Profile name"; onAccepted: if (text.trim()) ShellState.run("appearanceSave", {name: text.trim()}) }
+            LiquidButton { text: "Save current"; enabled: profileName.text.trim().length > 0 && ShellState.backendReady; onClicked: ShellState.run("appearanceSave", {name: profileName.text.trim()}) }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Interface density"; Layout.fillWidth: true }
+            LiquidComboBox { model: ["Comfortable", "Compact"]; currentIndex: Theme.compact ? 1 : 0; Accessible.name: "Interface density"; onActivated: ShellState.run("setting", {key: "density", value: currentIndex ? "compact" : "comfortable"}) }
+        }
+    }
+    SettingsCard {
         title: "Material, through glass"
         description: "Expressive shapes and flat tonal surfaces, with the transparency of your Liquid desktop."
         RowLayout {
@@ -30,13 +50,14 @@ ColumnLayout {
             Repeater {
                 model: [Theme.purple, Theme.pink, Theme.cyan, Theme.green, Theme.yellow]
                 delegate: LiquidButton {
+                    id: accentChoice
                     required property var modelData
                     Layout.preferredWidth: 48; Layout.preferredHeight: 48
                     Accessible.name: "Set accent " + modelData
                     enabled: ShellState.backendReady && !ShellState.pendingActions.setting
                     onClicked: ShellState.run("setting", {key: "accent", value: modelData.toString()})
                     background: Rectangle {
-                        radius: 18; color: parent.modelData
+                        radius: 18; color: accentChoice.modelData
                         border.width: Theme.accent.toString().toLowerCase() === color.toString().toLowerCase() ? 3 : 0
                         border.color: Theme.text
                     }

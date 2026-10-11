@@ -15,7 +15,7 @@ library and needs no `pip install`.
 | `quickshell` ≥ 0.3.2 | QML shell host, Wayland layers/idle inhibitor, notification server, MPRIS, PipeWire mixer, Polkit agent |
 | `python3` | Application discovery and desktop integration backend |
 | `qt6-qtbase`, `qt6-qtdeclarative`, `qt6-qtwayland`, `qt6-qtsvg` | Qt Quick runtime and image support |
-| `NetworkManager` | Wi-Fi state and radio controls via `nmcli` |
+| `NetworkManager` | Wi-Fi scans, password entry and saved-profile controls via `nmcli` |
 | `pipewire`, `pipewire-pulseaudio`, `wireplumber` | Audio session and `wpctl` |
 | `brightnessctl` | Backlight state and brightness controls |
 | `bluez`, `systemd`, `util-linux` | Adapter/device controls through BlueZ D-Bus, `busctl`, `rfkill`; `bluetoothctl` fallback |
@@ -362,3 +362,8 @@ Install `wl-clipboard` for text/image history; it is now included in the core
 Fedora package list. No `cliphist`, Python package or new service is required.
 See [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) for bindings, settings and
 the upgrade path for existing modular layouts.
+
+The desktop upgrade package list includes `qt6-qtimageformats` as required.
+Confirmed display layouts restore alongside the saved wallpaper through the
+startup wrapper. See [Desktop upgrades](DESKTOP_UPGRADES.md) for controls and
+physical-laptop validation limits.

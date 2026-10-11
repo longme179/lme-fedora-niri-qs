@@ -41,6 +41,9 @@ QtObject {
     readonly property int bodySize: 14
     readonly property int labelSize: 12
     readonly property int headingWeight: Font.Bold
+    readonly property bool compact: ShellState.preferences.density === "compact"
+    readonly property int cardPadding: compact ? 14 : 20
+    readonly property int cardSpacing: compact ? 10 : 16
     readonly property string monoFamily: "JetBrains Mono"
     readonly property bool animations: ShellState.preferences.animations !== false
     readonly property int animationDuration: animations ? 170 : 0

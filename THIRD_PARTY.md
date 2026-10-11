@@ -48,3 +48,10 @@ inspected at `f372777829212f0db41dc623e7e495e63c8e4341` (MIT), and iNiR at the
 revision above. All delivered history, storage, Activity and protocol-test code
 is original. No upstream source, assets or binaries are redistributed.
 `wl-clipboard` is an external GPL-3.0-or-later runtime dependency.
+
+The desktop upgrade workflows were reviewed against iNiR notification grouping
+and persistence, and DankMaterialShell launcher, network and niri display APIs.
+Their implementation source was not vendored. The bundled emoji/symbol names
+are generated with Python standard-library `unicodedata`; search aliases are
+written for this project. The repository also includes the owner-supplied MIT
+Ponytail skill, with its original license declaration preserved.

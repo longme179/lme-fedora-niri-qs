@@ -108,8 +108,8 @@ class BackendCase(Fixture, unittest.TestCase):
     def test_nmcli_escaped_ssid_and_no_rescan(self):
         runner = FakeRunner({
             ("nmcli", "radio", "wifi"): "enabled",
-            ("nmcli", "-t", "-f", "TYPE,STATE,CONNECTION", "device", "status"): "wifi:connected:Home\\:5G",
-            ("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "device", "wifi", "list", "--rescan", "no"): "yes:Home\\:5G:84",
+            ("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"): "wlp1s0:wifi:connected:Home\\:5G",
+            ("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY,BSSID,DEVICE", "device", "wifi", "list", "--rescan", "no"): "yes:Home\\:5G:84:WPA2:AA\\:BB\\:CC\\:DD\\:EE\\:FF:wlp1s0",
         })
         network = self.make_backend(runner).network()
         self.assertEqual(network["ssid"], "Home:5G")
@@ -117,6 +117,16 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertTrue(network["connected"])
         self.assertIn("--rescan", runner.calls[-1])
         self.assertEqual(runner.calls[-1][-1], "no")
+
+    def test_wired_connection_does_not_claim_wifi_is_connected(self):
+        runner = FakeRunner({
+            ("nmcli", "radio", "wifi"): "disabled",
+            ("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"): "enp1s0:ethernet:connected:Wired\nwlp1s0:wifi:unavailable:",
+        })
+        state = self.make_backend(runner).network()
+        self.assertTrue(state["connected"])
+        self.assertFalse(state["wifiConnected"])
+        self.assertEqual(state["ssid"], "Ethernet")
 
     def test_backlight_does_not_target_keyboard_led(self):
         runner = FakeRunner({("brightnessctl", "--class=backlight", "-m"): "amdgpu_bl1,backlight,128,50%,255"})

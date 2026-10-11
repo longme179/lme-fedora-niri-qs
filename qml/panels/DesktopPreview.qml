@@ -35,7 +35,7 @@ Item {
         direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
         active: ShellState.panelOpen && !ShellState.activityOpen
         sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control
-                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : ShellState.clipboardOpen ? clipboard : power
+                         : ShellState.notificationsOpen ? notifications : ShellState.wifiOpen ? wifi : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : ShellState.clipboardOpen ? clipboard : power
         width: item ? Math.min(item.implicitWidth, root.width - 32) : 400
         height: item ? Math.min(item.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
@@ -49,4 +49,5 @@ Item {
     Component { id: tray; TrayMenu {} }
     Component { id: overview; Overview {} }
     Component { id: clipboard; ClipboardPanel {} }
+    Component { id: wifi; WifiPanel {} }
 }

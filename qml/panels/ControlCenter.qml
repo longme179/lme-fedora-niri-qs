@@ -8,7 +8,7 @@ import "../theme"
 
 GlassPanel {
     id: root
-    implicitWidth: 600
+    implicitWidth: ShellState.preferences.controlWidth || 600
     implicitHeight: 900
     focus: true
     property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications"]
@@ -36,7 +36,21 @@ GlassPanel {
             IconButton { glyph: "×"; tooltip: "Close control center"; onClicked: ShellState.closePanels() }
         }
         RowLayout {
-            Layout.fillWidth: true; spacing: 5
+            Layout.fillWidth: true
+            LiquidComboBox {
+                Layout.fillWidth: true
+                property var profiles: ShellState.preferences.appearanceProfiles || []
+                model: profiles.map(p => p.name)
+                currentIndex: profiles.findIndex(p => ["accent", "opacity", "density", "animations"].every(k => p[k] === ShellState.preferences[k]))
+                displayText: currentIndex >= 0 ? currentText : "Custom appearance"
+                Accessible.name: "Quick appearance profile"
+                onActivated: ShellState.run("appearanceApply", {name: currentText})
+            }
+            LiquidButton { text: "Edit layout"; onClicked: ShellState.openSettingsPage("controlLayout") }
+        }
+        GridLayout {
+            Layout.fillWidth: true; columnSpacing: 5; rowSpacing: 5
+            columns: width < 540 ? 3 : 5
             Repeater {
                 model: root.tabs
                 delegate: LiquidButton {

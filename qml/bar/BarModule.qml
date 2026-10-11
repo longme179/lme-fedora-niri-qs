@@ -111,7 +111,7 @@ Loader {
             readonly property var network: ShellState.system.network || {}
             readonly property string caption: root.moduleId === "clock" ? Qt.locale("en_US").toString(now, root.compact ? "HH:mm" : "ddd, MMM d  ·  HH:mm")
                 : root.moduleId === "audio" ? audio.available ? audio.muted ? "Mute" : Math.round(audio.volume) + "%" : "—"
-                : root.moduleId === "network" ? network.connected ? "Wi-Fi" : "Offline"
+                : root.moduleId === "network" ? network.connected ? network.ssid === "Ethernet" ? "Ethernet" : "Wi-Fi" : "Offline"
                 : root.moduleId === "battery" ? (root.battery.charging ? "+" : "") + Math.round(root.battery.percent || 0) + "%"
                 : root.moduleId === "resources" ? Math.round(ShellState.system.cpu || 0) + "% CPU · " + Math.round(ShellState.system.memoryPercent || 0) + "% RAM"
                 : root.player ? root.player.trackTitle || root.player.identity : "Media"
@@ -120,7 +120,7 @@ Loader {
             implicitWidth: Math.min(Math.ceil(captionMeasure.implicitWidth) + 2 + (root.moduleId === "clock" ? 24 : 48), root.moduleId === "media" ? 220 : 300)
             implicitHeight: 30; padding: 0; hoverEnabled: true
             Accessible.name: BarRegistry.info(root.moduleId).title + ": " + caption
-            onClicked: ShellState.togglePanel("control", root.screenInfo)
+            onClicked: ShellState.togglePanel(root.moduleId === "network" ? "wifi" : "control", root.screenInfo)
             background: Rectangle { radius: 15; color: button.hovered || ShellState.controlOpen ? Theme.primaryContainer : "transparent"; border.width: button.visualFocus ? 2 : 0; border.color: Theme.accent }
             LabelText { id: captionMeasure; visible: false; text: button.caption; font: statusText.font }
             contentItem: Item {

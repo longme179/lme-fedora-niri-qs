@@ -252,3 +252,35 @@ panels or automatic screenshots during GUI checks.
 Target Fedora/niri still needs validation with the user's actual clipboard
 sources, MPRIS players, multiple outputs and supported recording application.
 See [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) for the update checklist.
+
+
+## Seven desktop upgrades (October 11, 2026)
+
+The complete existing/new suite passed **114 tests without skips**, including
+11 private-session integrations. Subsequent clock-adjustment and wired-versus-Wi-Fi regression checks
+also passed, bringing the validated total to **116 tests**. The native upgrade
+flow was rerun successfully with actual display-mode selection and monitor drag
+before Apply and Keep. Backend contracts
+cover appearance save/apply/delete, modular layout validation, private persistent
+notification snapshots, bounded wallpaper scanning, arithmetic restrictions,
+Wi-Fi identity/password handling and asynchronous acknowledgements.
+
+Native QML pointer/keyboard checks cover profile saving, display confirmation,
+wallpaper loading, module dragging, 480 px controls, fuzzy/typo app matching,
+calculator errors/results, emoji/window search, Wi-Fi password popup cancellation,
+notification groups/rules and DND expiry. The independent display integration
+used a fake niri executable and verified a real 20-second rollback after the
+initiating process exited. The safety timeout also uses a monotonic clock so
+wall-clock changes cannot postpone recovery.
+
+All changed feature components passed qmllint without warnings. Seven refreshed
+QML previews rendered without runtime warnings. Settings was inspected in its
+actual native window at the 800 × 600 minimum size, and every Control Center
+card was inspected at half width. Icon-only controls use IconButton to avoid
+padding clipping. Required Fedora package command generation and Bash syntax
+checks passed. Preview/sample data never changed host settings or hardware.
+
+Physical Lenovo MT7921 connectivity, actual panel/external-monitor commits and
+Fedora package installation remain local verification steps. The runtime
+watchdog and UI protocol tests cannot prove driver/display compatibility.
+See [Desktop upgrades](DESKTOP_UPGRADES.md) for feature use and limits.

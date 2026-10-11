@@ -11,6 +11,7 @@ qt6-qtbase
 qt6-qtdeclarative
 qt6-qtwayland
 qt6-qtsvg
+qt6-qtimageformats
 google-noto-sans-fonts
 google-roboto-fonts
 google-noto-color-emoji-fonts
@@ -50,7 +51,6 @@ swaylock
 swayidle
 libnotify
 playerctl
-qt6-qtimageformats
 xdg-utils
 xdg-desktop-portal
 xdg-desktop-portal-gnome

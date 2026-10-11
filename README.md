@@ -34,28 +34,28 @@ commands or Arch installation scripts.
 - Expanding Activity island with MPRIS controls, shared focus timer/stopwatch and
   supported recorder status; eased resizing with flat glass surfaces. See
   [clipboard and Activity setup](docs/CLIPBOARD_ACTIVITY.md).
-- Keyboard-searchable application launcher using installed `.desktop` entries.
+- Smart launcher with fuzzy app search, favorites, arithmetic, emoji and open-window search.
 - Wider control center with Controls, Audio, Devices, Agenda and Notifications
-  tabs: speaker/microphone volume and mute, backlight, radios, power profiles,
+  tabs, saved draggable tiles/cards and full/half sizes: speaker/microphone volume and mute, backlight, radios, power profiles,
   idle inhibition, motion, screenshots and system information.
 - Native PipeWire device selection and individual device/application sliders;
   Bluetooth adapter selection, paired-device connect/disconnect and rfkill
-  diagnostics, plus cached Wi-Fi network information.
+  diagnostics, plus Wi-Fi scanning, password entry and saved-network management.
 - Automatic local weather by approximate IP location, current conditions and
   a three-day forecast; city search, manual location and °C/°F in Settings.
 - Lenovo charging controls: verified 85%/100% thresholds when exposed, with
   firmware conservation mode as the fallback. See [charging setup](docs/CHARGING.md).
 - Built-in Polkit authentication popup: password entry, retry and cancellation
   work when the shell starts from niri without a terminal. See [authentication](docs/AUTHENTICATION.md).
-- Wallpaper selection/restoration through `awww`, with automatic daemon startup.
+- Wallpaper folder library, thumbnails, search and favorites through `awww`, with automatic daemon startup.
 - English calendar, saved to-do list, focus timer and stopwatch.
 - MPRIS media controls for compatible players and an English date/time display.
-- Native desktop notifications, notification history during the shell session,
-  and Do Not Disturb.
+- Native notifications with persistent, searchable app groups, per-app popup rules and timed Do Not Disturb.
 - Independent Settings application with searchable Appearance, Top bar,
-  Wallpaper, Weather, Clipboard, Behavior and About pages. Open it without starting the shell.
+  Control center, Displays, Wallpaper, Weather, Clipboard, Behavior and About pages. Open it without starting the shell.
   Changes synchronize with the running shell; preferences are merged under a
   file lock so another client’s task updates are preserved.
+- Saved appearance profiles and safe niri display previews with independent automatic revert.
 - Material tonal surfaces, expressive switches/sliders and shape transitions,
   bold Roboto headings, and translucent glass without UI gradients.
 - Lock, suspend, logout, restart, and shutdown actions with confirmation for
@@ -63,7 +63,7 @@ commands or Arch installation scripts.
 - Optional original wallpaper, package requirements, installation scripts,
   niri bindings, and troubleshooting documentation.
 
-First-time Bluetooth pairing, Wi-Fi authentication and advanced audio configuration open the existing Fedora
+First-time Bluetooth pairing, enterprise Wi-Fi setup and advanced audio configuration open the existing Fedora
 tools (`nm-connection-editor`, `blueman-manager`, and `pavucontrol`). The shell
 does not implement a password manager or replace NetworkManager.
 
@@ -212,3 +212,11 @@ and adjust text size. Restore default layout resets the module arrangement only.
 See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the iNiR feature mapping and the
 Material/glass design choices. The required Fedora font package is
 `google-roboto-fonts`; no fonts or upstream artwork are bundled.
+
+The seven desktop upgrades—appearance profiles, display previews with automatic
+revert, persistent grouped notifications, wallpaper browsing, modular controls,
+smart launcher and in-shell Wi-Fi—are documented in
+[Desktop upgrades](docs/DESKTOP_UPGRADES.md). Screenshots: [profiles](docs/previews/appearance-profiles.png),
+[displays](docs/previews/display-settings.png), [wallpaper library](docs/previews/wallpaper-library.png),
+[modular controls](docs/previews/control-layout.png), [notifications](docs/previews/notifications-grouped.png)
+[Wi-Fi](docs/previews/wifi-connections.png) and [launcher](docs/previews/smart-launcher.png).

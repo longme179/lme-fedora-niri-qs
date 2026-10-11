@@ -5,6 +5,8 @@ PreferenceSwitch 1.0 PreferenceSwitch.qml
 AppearancePage 1.0 AppearancePage.qml
 TopBarPage 1.0 TopBarPage.qml
 WallpaperPage 1.0 WallpaperPage.qml
+DisplayPage 1.0 DisplayPage.qml
+ControlLayoutPage 1.0 ControlLayoutPage.qml
 WeatherPage 1.0 WeatherPage.qml
 ClipboardPage 1.0 ClipboardPage.qml
 BehaviorPage 1.0 BehaviorPage.qml

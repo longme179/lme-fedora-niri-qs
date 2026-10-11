@@ -30,11 +30,18 @@ from typing import Any
 
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
+from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT,
+                              appearance_profile, control_layout, wallpaper_library, calculate)
+from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 
 
 DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
+    "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
+    "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
+    "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
+    "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
@@ -47,7 +54,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -74,20 +81,23 @@ class CommandRunner:
             raise CommandError(f"Required command is unavailable: {name}")
         return path
 
-    def run(self, name: str, *args: str, timeout: float = 3.0) -> str:
+    def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None) -> str:
         argv = [self.executable(name), *map(str, args)]
         try:
             result = subprocess.run(
                 argv, capture_output=True, text=True, timeout=timeout,
                 check=False, encoding="utf-8", errors="replace",
                 env={**os.environ, "LC_ALL": "C"},
+                input=input,
             )
         except subprocess.TimeoutExpired as exc:
             raise CommandError(f"{name} timed out") from exc
         except OSError as exc:
             raise CommandError(f"Unable to run {name}: {exc.strerror}") from exc
         if result.returncode:
-            detail = (result.stderr.strip() or result.stdout.strip())[:350]
+            detail = result.stderr.strip() or result.stdout.strip()
+            if input and input.strip(): detail = detail.replace(input.strip(), "[redacted]")
+            detail = detail[:350]
             raise CommandError(f"{name} failed ({result.returncode})" + (f": {detail}" if detail else ""))
         return result.stdout.strip()
 
@@ -234,6 +244,25 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key == "density" and value in ("compact", "comfortable"): return value
+    if key == "appearanceProfiles" and isinstance(value, list) and 1 <= len(value) <= 20:
+        profiles = [appearance_profile(item, validate_preference) for item in value]
+        if len({p["name"].casefold() for p in profiles}) != len(profiles): raise ValueError("Duplicate profile names")
+        normalized = [dict(DRACULA_PROFILE), *[p for p in profiles if p["name"].casefold() != "dracula"]]
+        if len(normalized) > 20: raise ValueError("Keep at most 19 custom profiles plus Dracula")
+        return normalized
+    if key == "controlLayout": return control_layout(value)
+    if key == "controlWidth" and type(value) is int and 480 <= value <= 900: return value
+    if key == "displayLayout" and value == []: return []
+    if key == "displayLayout": return validate_layout(value)
+    if key == "dndUntil" and type(value) is int and -1 <= value <= 4102444800000: return value
+    if key in {"wallpaperFolder"} and isinstance(value, str) and len(value) <= 4096 and "\x00" not in value:
+        return str(Path(value).expanduser().resolve()) if value else ""
+    if key in {"wallpaperFavorites", "favoriteApps", "notificationMutedApps"} and isinstance(value, list) and len(value) <= 100:
+        if all(isinstance(item, str) and 0 < len(item) <= (4096 if key == "wallpaperFavorites" else 256)
+               and not any(ord(c) < 32 for c in item) for item in value):
+            return list(dict.fromkeys(value))
+        raise ValueError("Invalid favorite or notification rule")
     if key in {"activityEnabled", "clipboardEnabled", "clipboardImages"} and type(value) is bool: return value
     if key == "clipboardLimit" and type(value) is int and 20 <= value <= 500: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
@@ -384,6 +413,13 @@ class DesktopBackend:
         self.charger = ChargeControl(sysfs)
         self.charge_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="lme-charge")
         self.charge_job = None
+        self.feature_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="lme-feature")
+        self.feature_jobs = {}
+        self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
+        self.displays = {"outputs": [], "preview": {}}
+        self.display_control = DisplayControl(self.runner)
+        self.notification_path = self.preferences.path.parent / "notification-history.json"
+        self.notification_history = self.valid_notifications(read_json(self.notification_path, [])) if not demo and not settings_only else []
         self.apps = [] if demo or settings_only else self.applications.scan()
         self.last_app_scan = time.monotonic()
         self.last_cpu: tuple[int, int] | None = None
@@ -484,34 +520,47 @@ class DesktopBackend:
                 "charging": charging}
 
     def network(self) -> dict[str, Any]:
-        result = {"available": False, "enabled": False, "connected": False, "ssid": "", "strength": None, "networks": []}
+        result = {"available": False, "enabled": False, "connected": False, "wifiConnected": False, "ssid": "", "strength": None, "networks": [], "saved": [], "device": ""}
         radio = self.try_run("nmcli", "radio", "wifi")
         if radio is None:
             return result
         result.update(available=True, enabled=radio.strip() == "enabled")
-        devices = self.try_run("nmcli", "-t", "-f", "TYPE,STATE,CONNECTION", "device", "status")
+        devices = self.try_run("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status")
         for line in (devices or "").splitlines():
             fields = split_nmcli(line)
-            if len(fields) >= 3 and fields[1] == "connected":
+            if len(fields) < 4: continue
+            if fields[1] == "wifi" and (not result["device"] or fields[2] == "connected"):
+                result["device"] = fields[0]
+            if fields[2] == "connected":
                 result["connected"] = True
-                if fields[0] == "ethernet":
+                if fields[1] == "ethernet":
                     result["ssid"] = "Ethernet"
-        wireless = self.try_run("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "device", "wifi", "list", "--rescan", "no")
+        connections = self.try_run("nmcli", "-t", "-f", "UUID,TYPE,NAME", "connection", "show")
+        for line in (connections or "").splitlines():
+            fields = split_nmcli(line)
+            if len(fields) == 3 and fields[1] in {"wifi", "802-11-wireless"}:
+                result["saved"].append({"uuid": fields[0], "name": fields[2]})
+        wireless = self.try_run("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY,BSSID,DEVICE", "device", "wifi", "list", "--rescan", "no")
+        seen = set()
         for line in (wireless or "").splitlines():
             fields = split_nmcli(line)
-            if len(fields) >= 3 and fields[1] and fields[1] not in {item["ssid"] for item in result["networks"]}:
+            if len(fields) < 6 or fields[5] != result["device"]: continue
+            if fields[1] and fields[1] not in seen:
+                seen.add(fields[1])
                 try:
                     strength = max(0, min(100, int(fields[2])))
                 except ValueError:
                     strength = 0
-                result["networks"].append({"ssid": fields[1], "strength": strength, "connected": fields[0] == "yes"})
+                result["networks"].append({"ssid": fields[1], "strength": strength, "connected": fields[0] == "yes",
+                                          "security": fields[3], "secured": fields[3] not in {"", "--"},
+                                          "enterprise": "802.1X" in fields[3] or "EAP" in fields[3], "bssid": fields[4]})
             if len(fields) >= 3 and fields[0] == "yes":
-                result.update(connected=True, ssid=fields[1])
+                result.update(connected=True, wifiConnected=True, ssid=fields[1])
                 try:
                     result["strength"] = max(0, min(100, int(fields[2])))
                 except ValueError:
                     pass
-        result["networks"] = sorted(result["networks"], key=lambda item: (not item["connected"], -item["strength"]))[:12]
+        result["networks"] = sorted(result["networks"], key=lambda item: (not item["connected"], -item["strength"]))[:60]
         return result
 
     def bluez_objects(self) -> dict[str, Any] | None:
@@ -686,12 +735,13 @@ class DesktopBackend:
         # replaces lastResult. Otherwise a fast charge job could hide another
         # action's acknowledgement and leave its QML button pending forever.
         if not self.result_unemitted:
-            self.finish_charge()
+            if self.charge_job is not None and self.charge_job.done(): self.finish_charge()
+            else: self.finish_features()
         self.result_unemitted = False
         weather = self.weather.snapshot(self.preferences.values, allow_fetch=self.weather_fetch and not self.settings_only)
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result)}
+                    "lastResult": dict(self.last_result), "wallpaperLibrary": self.wallpaper_library, "displays": self.displays}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
@@ -705,7 +755,45 @@ class DesktopBackend:
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
-                "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result)}
+                "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+                "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history}
+
+    @staticmethod
+    def valid_notifications(value):
+        if not isinstance(value, list): return []
+        result = []
+        for item in value[:200]:
+            if not isinstance(item, dict) or item.get("transient"): continue
+            if (not all(isinstance(item.get(k), str) for k in ("id", "appName", "summary", "body"))
+                    or type(item.get("timestamp")) not in (int, float) or not math.isfinite(item["timestamp"])
+                    or type(item.get("urgency")) is not int): continue
+            result.append({"id": item["id"][:128], "appName": item["appName"][:256], "summary": item["summary"][:512],
+                           "body": item["body"][:4096], "appIcon": str(item.get("appIcon") or "")[:512],
+                           "timestamp": item["timestamp"], "urgency": max(0, min(2, item["urgency"])),
+                           "actions": [], "active": False, "popup": False, "transient": False})
+        return result
+
+    def start_feature(self, action, operation):
+        if action in self.feature_jobs: raise ValueError("This operation is already running")
+        self.feature_jobs[action] = self.feature_executor.submit(operation)
+        return "Working…"
+
+    def finish_features(self):
+        for action, job in list(self.feature_jobs.items()):
+            if not job.done(): continue
+            self.result_sequence += 1
+            try:
+                value = job.result()
+                if action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
+                else: message = value
+                self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
+            except (CommandError, ValueError, OSError) as error:
+                self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}
+                if action == "wallpaperScan": self.wallpaper_library = {**self.wallpaper_library, "error": str(error)[:400]}
+            del self.feature_jobs[action]
+            self.system_cache = None
+            # Deliver each completion separately so every pending QML action clears.
+            break
 
     def recording(self) -> dict[str, Any]:
         """Read supported recorder processes belonging to this session's user."""
@@ -732,6 +820,7 @@ class DesktopBackend:
         if hasattr(self, "_demo_state"):
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
+            self._demo_state.update(wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[])
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
                 unit="°F" if unit == "fahrenheit" else "°C", temperature=84 if unit == "fahrenheit" else 29,
@@ -758,7 +847,8 @@ class DesktopBackend:
             "system": {"cpu": 12.4, "memoryPercent": 34.2, "memoryUsedGiB": 5.47, "memoryTotalGiB": 16,
                        "tempC": 47, "battery": {"available": True, "percent": 82, "charging": False},
                        "network": {"available": True, "enabled": True, "connected": True, "ssid": "Home Wi-Fi", "strength": 88,
-                                   "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": True}, {"ssid": "Guest", "strength": 62, "connected": False}]},
+                                   "device": "wlp1s0", "saved": [{"uuid": "demo-home", "name": "Home Wi-Fi"}],
+                                   "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": True, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:01"}, {"ssid": "Guest", "strength": 62, "connected": False, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:02"}]},
                        "bluetooth": {"available": True, "enabled": True, "softBlocked": False, "hardBlocked": False, "adapter": "/org/bluez/hci0",
                                      "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": True}],
                                      "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "name": "Headphones", "connected": True}]},
@@ -856,15 +946,16 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect"}:
+            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
                 self.last_result = {"ok": True, "action": action, "message": "Demo preview: no system command executed",
                                     "sequence": self.result_sequence}
+                if action == "calculate": self.last_result.update(query=request.get("query"), message=calculate(request.get("query")))
                 return dict(self.last_result)
             message = self.perform(action, request)
-            if action == "chargeMode":
+            if action == "chargeMode" or action in self.feature_jobs:
                 self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
                 return dict(self.last_result)
             if action in {"refresh", "volume", "mute", "micVolume", "micMute", "brightness", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
@@ -875,12 +966,41 @@ class DesktopBackend:
             if action in {"bluetoothToggle", "bluetoothDevice"}:
                 self.system_cache = None
         self.last_result["sequence"] = self.result_sequence
+        if action == "calculate": self.last_result["query"] = request.get("query")
         return dict(self.last_result)
 
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
         system = state["system"]
-        if action == "setting":
+        if action.startswith("appearance"):
+            self.appearance_action(action, request)
+        elif action == "displayRefresh":
+            if not self.displays["outputs"]:
+                self.displays = {"outputs": [{"name": "eDP-1", "description": "Lenovo laptop display", "enabled": True,
+                    "modes": [{"width": 1920, "height": 1080, "refresh": hz * 1000, "label": f"1920 × 1080 · {hz} Hz"} for hz in (60, 120)],
+                    "current": {"width": 1920, "height": 1080, "refresh": 120000}, "scale": 1, "x": 0, "y": 0, "width": 1920, "height": 1080}], "preview": {}}
+            if self.displays["preview"].get("status") == "pending" and time.time() >= self.displays["preview"]["deadline"]:
+                self.displays["preview"]["status"] = "reverted"
+        elif action == "displayApply":
+            layout = validate_layout(request.get("layout"), self.displays["outputs"])
+            self.displays["preview"] = {"token": "demo", "status": "pending", "deadline": time.time() + 20, "layout": layout}
+        elif action in {"displayConfirm", "displayRevert"}:
+            if self.displays["preview"].get("status") != "pending": raise ValueError("No display preview")
+            if action == "displayConfirm": self.preferences.values["displayLayout"] = self.displays["preview"]["layout"]
+            self.displays["preview"]["status"] = "confirmed" if action == "displayConfirm" else "reverted"
+        elif action == "wallpaperScan":
+            bundled = Path(__file__).resolve().parents[1] / "assets/wallpapers"
+            self.wallpaper_library = wallpaper_library(str(bundled))
+        elif action == "calculate":
+            state["calculator"] = {"query": request.get("query"), "result": calculate(request.get("query")), "error": ""}
+        elif action == "copyText":
+            if not isinstance(request.get("text"), str): raise ValueError("Text is required")
+        elif action == "notificationSave": pass
+        elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
+            if action in {"wifiConnect", "wifiSaved"}:
+                system["network"].update(connected=True, ssid=request.get("ssid", "Home Wi-Fi"))
+            elif action == "wifiDisconnect": system["network"].update(connected=False, ssid="")
+        elif action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
@@ -965,6 +1085,36 @@ class DesktopBackend:
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action.startswith("appearance"): return self.appearance_action(action, request)
+        if action == "wallpaperScan":
+            return self.start_feature(action, lambda: wallpaper_library(request.get("folder")))
+        if action == "displayRefresh":
+            self.displays = self.display_control.snapshot()
+            return "Displays refreshed"
+        if action == "displayApply":
+            self.display_control.start(request.get("layout"))
+            self.displays = self.display_control.snapshot()
+            return "Display preview requested; confirm within 20 seconds"
+        if action in {"displayConfirm", "displayRevert"}:
+            layout = self.display_control.decide(request.get("token"), action == "displayConfirm")
+            if action == "displayConfirm": self.preferences.set("displayLayout", layout)
+            self.displays = self.display_control.snapshot()
+            return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
+        if action == "notificationSave":
+            if not isinstance(request.get("entries"), list): raise ValueError("Invalid notification history")
+            self.notification_history = self.valid_notifications(request["entries"])
+            write_json(self.notification_path, self.notification_history)
+            return ""
+        if action == "calculate":
+            # Query/result travel in the acknowledgement so stale queries can be ignored.
+            return calculate(request.get("query"))
+        if action == "copyText":
+            text = request.get("text")
+            if not isinstance(text, str) or len(text.encode()) > 65536: raise ValueError("Invalid copy text")
+            run("wl-copy", "--type", "text/plain;charset=utf-8", input=text)
+            return "Copied"
+        if action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
+            return self.start_feature(action, lambda: self.wifi_action(action, request))
         if action == "chargeMode":
             value = request.get("value")
             if type(value) is not int or value not in (85, 100):
@@ -1122,6 +1272,59 @@ class DesktopBackend:
             return f"Opened {target} settings"
         raise ValueError(f"Unknown action: {action}")
 
+    def appearance_action(self, action, request):
+        if not self.demo: self.preferences.reload(force=True)
+        profiles = copy.deepcopy(self.preferences.values["appearanceProfiles"])
+        name = request.get("name")
+        if not isinstance(name, str): raise ValueError("Choose a profile name")
+        found = next((p for p in profiles if p["name"].casefold() == name.strip().casefold()), None)
+        if action == "appearanceSave":
+            if name.strip().casefold() == "dracula": raise ValueError("Dracula is the built-in profile; choose another name")
+            profile = appearance_profile({"name": name, **{k: self.preferences.values[k] for k in APPEARANCE_KEYS}}, validate_preference)
+            profiles = [p for p in profiles if p["name"].casefold() != profile["name"].casefold()] + [profile]
+            changes = {"appearanceProfiles": validate_preference("appearanceProfiles", profiles)}
+        elif action == "appearanceApply" and found:
+            changes = {k: found[k] for k in APPEARANCE_KEYS}
+        elif action == "appearanceDelete" and found and found["name"].casefold() != "dracula":
+            changes = {"appearanceProfiles": [p for p in profiles if p != found]}
+        else: raise ValueError("Unknown profile, or the built-in Dracula profile cannot be deleted")
+        if self.demo: self.preferences.values.update(changes)
+        else: self.preferences.update(changes)
+        return "Appearance profile " + {"appearanceSave": "saved", "appearanceApply": "applied", "appearanceDelete": "deleted"}[action]
+
+    def wifi_action(self, action, request):
+        state = self.network()
+        if not state["available"]: raise CommandError("NetworkManager is unavailable")
+        interface = request.get("device") or state.get("device")
+        if not isinstance(interface, str) or interface != state.get("device") or not interface:
+            raise ValueError("No Wi-Fi adapter is available")
+        run = self.runner.run
+        if action == "wifiScan":
+            run("nmcli", "--wait", "15", "device", "wifi", "rescan", "ifname", interface, timeout=18)
+            return "Wi-Fi scan completed"
+        if action == "wifiDisconnect":
+            run("nmcli", "--wait", "15", "device", "disconnect", interface, timeout=18)
+            return "Wi-Fi disconnected"
+        if action in {"wifiSaved", "wifiForget"}:
+            ident = request.get("uuid")
+            if not isinstance(ident, str) or not any(n["uuid"] == ident for n in state.get("saved", [])):
+                raise ValueError("Saved network is no longer available")
+            if action == "wifiForget":
+                run("nmcli", "connection", "delete", "uuid", ident)
+                return "Saved network removed"
+            args = ("connection", "up", "uuid", ident, "ifname", interface)
+        else:
+            network = next((n for n in state["networks"] if n.get("bssid") == request.get("bssid")), None)
+            if not network: raise ValueError("Network is no longer visible; scan again")
+            if network.get("enterprise"): raise ValueError("Enterprise Wi-Fi needs a certificate or account. Use Advanced network settings.")
+            args = ("device", "wifi", "connect", network["bssid"], "ifname", interface)
+        password = request.get("password", "")
+        if not isinstance(password, str) or len(password) > 128 or any(c in password for c in "\r\n\x00"):
+            raise ValueError("Invalid Wi-Fi password")
+        # nmcli's secret agent reads stdin; the password never appears in argv, state or logs.
+        run("nmcli", "--wait", "45", "--ask", *args, input=password + "\n", timeout=50)
+        return "Wi-Fi connected"
+
     @staticmethod
     def niri_action(action: dict[str, Any]) -> None:
         path = os.environ.get("NIRI_SOCKET")
@@ -1152,13 +1355,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--demo", action="store_true", help="Use sample state; never mutate system or saved preferences")
     parser.add_argument("--settings", action="store_true", help="Preferences and wallpaper only; no desktop probes")
     parser.add_argument("--restore-wallpaper", metavar="FILE", help="Restore with awww, without changing saved preferences")
+    parser.add_argument("--restore-displays", action="store_true", help="Restore confirmed modes on currently attached displays")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
-    if args.demo and args.restore_wallpaper:
+    if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper), weather_fetch=not args.once)
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once)
+    if args.restore_displays:
+        saved = backend.preferences.values["displayLayout"]
+        if not saved: return 0
+        outputs = backend.display_control.outputs()
+        original = current_layout(outputs)
+        compatible = []
+        for item in saved:
+            try: compatible.extend(validate_layout([item], outputs))
+            except ValueError: continue
+        if not compatible: return 0
+        try: apply_layout(compatible, backend.runner.run)
+        except (CommandError, ValueError, OSError) as error:
+            if original: apply_layout(original, backend.runner.run, best_effort=True)
+            print("Displays: " + str(error), file=sys.stderr)
+            return 1
+        return 0
     if args.restore_wallpaper:
         try:
             backend.apply_wallpaper(args.restore_wallpaper, save=False, animate=False)
@@ -1207,8 +1427,8 @@ def main(argv: list[str] | None = None) -> int:
                         event_refresh_due = time.monotonic() + 0.1
                     continue
                 input_buffer += data
-                if len(input_buffer) > 65536:
-                    backend.last_result = {"ok": False, "action": "", "message": "Input exceeds 64 KiB limit"}
+                if len(input_buffer) > 8 * 1024 * 1024:
+                    backend.last_result = {"ok": False, "action": "", "message": "Input exceeds 8 MiB limit"}
                     input_buffer = b""
                     changed = True
                 while b"\n" in input_buffer:
@@ -1233,6 +1453,7 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
+        backend.feature_executor.shutdown(wait=False, cancel_futures=True)
         selector.close()
         if event_process and event_process.poll() is None:
             event_process.terminate()

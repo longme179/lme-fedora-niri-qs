@@ -213,9 +213,9 @@ to close. Scroll the Controls and Devices tabs for lower actions.
 | --- | --- |
 | Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, motion, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, full-screen/area screenshot, lock, settings, power menu and workspace board |
 | Audio | Default output/input selection, each device's volume/mute, application stream volume/mute and advanced audio settings |
-| Devices | Bluetooth adapter selection, paired-device connect/disconnect, block/error information, pairing settings, cached Wi-Fi networks and connection editor |
+| Devices | Bluetooth adapter selection, paired-device connect/disconnect, block/error information, pairing settings, Wi-Fi scanning/password entry and saved profiles |
 | Agenda | English calendar, local to-do list, 25-minute focus/5-minute short break/15-minute long break, and stopwatch |
-| Notifications | Session history, DND and clearing notifications |
+| Notifications | Persistent grouped/searchable history, per-app popup rules, timed DND and clearing notifications |
 
 Stay awake inhibits idle while enabled in this shell session. It does not
 disable manual locking or explicit suspend and resets when the shell restarts.
@@ -227,7 +227,7 @@ because they are saved in `settings.json`.
 The native mixer tracks devices only while its tab is loaded. Radio and
 hardware probes remain cached between backend refreshes; the Wi-Fi list uses
 NetworkManager's existing scan cache. The shell does not continuously scan for
-Bluetooth devices or Wi-Fi networks. Pairing and credential entry open Fedora's
+Bluetooth devices or Wi-Fi networks. Bluetooth pairing and enterprise setup open Fedora's
 existing tools.
 
 ## Preferences and permissions
@@ -238,9 +238,10 @@ device permissions, service state, and polkit policy. The project does not add
 passwordless sudo rules, run privileged background code, or install new polkit
 rules. Errors are shown in the shell instead of being treated as success.
 
-Notifications are kept for the running shell session; restarting the shell
-clears that history. Do Not Disturb affects shell popups and is not a system-wide
-notification policy.
+Non-transient notification history survives shell restart in the private local
+notification-history.json file. Restored entries have no live actions or popups.
+Timed Do Not Disturb and per-app rules affect shell popups; they do not change
+other applications' notification policies.
 
 ## Clipboard and Activity
 
@@ -249,3 +250,11 @@ defaults to 100 and accepts 20–500. `activityEnabled` defaults to `true`.
 The `clipboard` and `activity` bar modules can occupy any zone. Settings exposes
 these options; [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) explains storage,
 shortcuts and behavior when upgrading an existing layout.
+
+## Appearance, displays and desktop libraries
+
+See [Desktop upgrades](DESKTOP_UPGRADES.md) for appearance profile fields, display
+preview/recovery, modular control layout, notification persistence, Wi-Fi
+credentials and launcher prefixes. The additional Settings page keys are
+`controlLayout` and `display`. `qt6-qtimageformats` is required for image-format
+support in the wallpaper library.

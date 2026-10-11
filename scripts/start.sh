@@ -9,6 +9,7 @@ Usage: scripts/start.sh [--demo] [--preview] [--config NAME] [--wallpaper FILE] 
 
 Start the installed LME Quickshell configuration. If a wallpaper was saved in
 the shell settings, start awww-daemon when necessary and restore that wallpaper.
+Also restore confirmed settings for supported, currently attached niri displays.
 
   --demo          Use sample data; skip wallpaper and all desktop mutations.
   --preview       Show an ordinary preview window with sample data; implies demo.
@@ -77,6 +78,11 @@ PY
                 printf 'Warning: wallpaper restoration failed; starting the shell anyway.\n' >&2
             fi
         fi
+    fi
+fi
+if ! "$demo" && command -v python3 >/dev/null; then
+    if ! python3 "$repo_dir/scripts/desktop_backend.py" --restore-displays; then
+        printf 'Warning: confirmed display restoration failed; starting the shell anyway.\n' >&2
     fi
 fi
 exec quickshell -c "$config_name"

@@ -17,11 +17,12 @@ Rectangle {
         RowLayout {
             Layout.fillWidth: true
             ShellIcon { name: "battery"; width: 18; height: 18; color: Theme.green }
-            LabelText { text: "Battery charging"; font.weight: Font.Bold; font.pixelSize: 16; Layout.fillWidth: true }
+            LabelText { text: "Battery charging"; font.weight: Font.Bold; font.pixelSize: root.width < 340 ? 14 : 16; Layout.fillWidth: true; wrapMode: Text.Wrap }
             LabelText { text: root.busy ? "Changing…" : root.charging.limitPercent !== undefined && root.charging.limitPercent !== null ? root.charging.limitPercent + "% limit" : root.charging.mode === "conservation" ? "Conservation" : root.charging.mode === "max" ? "Max charge" : "Unavailable"; font.pixelSize: 12; color: Theme.muted }
         }
-        RowLayout {
-            Layout.fillWidth: true; spacing: 8
+        GridLayout {
+            Layout.fillWidth: true; columnSpacing: 8; rowSpacing: 8
+            columns: root.width < 340 ? 1 : 2
             LiquidButton {
                 text: root.charging.supports85 ? "Conservation · 85%" : "Conservation"
                 selected: root.charging.mode === "conservation" && (!root.charging.supports85 || root.charging.limitPercent === 85)

@@ -20,7 +20,8 @@ Weather controls automatic location, city search and temperature units.
 Clipboard controls capture, images and retention; Top bar also enables Activity.
 Behavior sets the default terminal. About links to the project and credits.
 The app opens without the shell and uses a preference/wallpaper backend with explicit location lookup actions.
-It does not scan installed apps, poll desktop hardware, or own notifications.
+It does not scan installed apps or own notifications. Display Settings reads
+niri output information only when its page or a display preview is active.
 
 Both clients reload preferences and serialize atomic writes with a shared file
 lock. Updating an accent in Settings preserves the shell's saved tasks. Public
@@ -45,7 +46,7 @@ in memory and wallpaper/system commands remain disabled.
 
 ## Other candidates
 
-A richer wallpaper browser, dynamic wallpaper colors,
+Dynamic wallpaper colors,
 per-application audio shortcuts and more settings pages are suitable follow-up
 features. iNiR's AI integrations, lock screen, shader effects and complete theme
 engine are outside this change. Copying those wholesale would introduce unrelated
@@ -56,3 +57,7 @@ controls, audio mixer and agenda remain available. Upstream and dependency
 licensing is documented in [THIRD_PARTY.md](../THIRD_PARTY.md).
 
 Clipboard and the Activity island are now implemented; see [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md).
+
+The wallpaper browser, appearance profiles, modular controls and related desktop
+features are now implemented; see [Desktop upgrades](DESKTOP_UPGRADES.md). Display
+Settings reads niri outputs on demand and while its page/preview is active.

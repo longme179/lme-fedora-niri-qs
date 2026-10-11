@@ -13,9 +13,31 @@ Singleton {
     property var history: []
     property var live: ({})
     property int unreadCount: 0
-    property bool dnd: false
-    readonly property var popups: dnd ? [] : history.filter(entry => entry.popup && entry.active).slice(0, 3)
+    property real now: Date.now()
+    readonly property real dndUntil: ShellState.preferences.dndUntil || 0
+    readonly property bool dnd: dndUntil === -1 || dndUntil > now
+    property bool historyLoaded: false
+    readonly property var mutedApps: ShellState.preferences.notificationMutedApps || []
+    readonly property var popups: dnd ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
     readonly property int count: history.length
+    function setDnd(minutes) { ShellState.run("setting", {key: "dndUntil", value: minutes < 0 ? -1 : minutes === 0 ? 0 : Math.round(Date.now() + minutes * 60000)}); }
+    function muteApp(name, mute) { ShellState.run("setting", {key: "notificationMutedApps", value: mute ? [...new Set([...mutedApps, name])] : mutedApps.filter(n => n !== name)}); }
+    Timer { interval: 1000; running: root.dnd && root.dndUntil > 0; repeat: true; onTriggered: root.now = Date.now() }
+    Connections {
+        target: ShellState
+        function onBackendReadyChanged() { if (ShellState.backendReady && root.historyLoaded && !ShellState.demo) persistDelay.restart(); }
+        function onSnapshotChanged() {
+            if (root.historyLoaded || !ShellState.backendReady) return;
+            root.historyLoaded = true;
+            const restored = (ShellState.snapshot.notificationHistory || []).filter(e => !root.history.some(liveEntry => String(liveEntry.id) === String(e.id))).map(e => Object.assign({}, e, {id: String(e.id).startsWith("saved-") ? e.id : "saved-" + e.timestamp + "-" + e.id, active: false, popup: false, actions: []}));
+            root.history = [...root.history, ...restored].slice(0, 200);
+        }
+    }
+    onHistoryChanged: if (historyLoaded && !ShellState.demo && !ShellState.settingsApp) persistDelay.restart()
+    Timer {
+        id: persistDelay; interval: 500
+        onTriggered: if (ShellState.backendReady) ShellState.run("notificationSave", {entries: root.history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))})
+    }
 
     function snapshot(notification, timestamp, popup) {
         return {
@@ -39,7 +61,7 @@ Singleton {
         const next = Object.assign({}, live);
         next[notification.id] = wrapper;
         live = next;
-        history = [snapshot(notification, Date.now(), !dnd && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 80);
+        history = [snapshot(notification, Date.now(), !dnd && !mutedApps.includes(notification.appName) && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 200);
         if (!notification.lastGeneration && !ShellState.notificationsOpen) unreadCount++;
     }
 
@@ -89,7 +111,7 @@ Singleton {
         const timestamp = Date.now();
         history = [{id: "local-" + timestamp, appName: "LME Shell", appIcon: "", summary: summary, body: body,
                     timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !dnd && !ShellState.notificationsOpen,
-                    transient: false, local: true}, ...history].slice(0, 80);
+                    transient: false, local: true}, ...history].slice(0, 200);
         if (!ShellState.notificationsOpen) unreadCount++;
     }
     Timer {

@@ -1,0 +1,13 @@
+// Optional Screenshot studio bindings. Remove duplicate Print bindings first.
+// Replace lme-shell with your Quickshell configuration name, e.g. gpt.
+binds {
+    Print hotkey-overlay-title="Screenshot studio: area" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "area";
+    }
+    Ctrl+Print hotkey-overlay-title="Screenshot studio: screen" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "screen";
+    }
+    Alt+Print hotkey-overlay-title="Screenshot studio: window" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "window";
+    }
+}

@@ -34,6 +34,6 @@ Slider {
         color: root.palette.highlight
         border.width: root.visualFocus ? 2 : 0
         border.color: Theme.text
-        Behavior on width { NumberAnimation { duration: Theme.animationDuration } }
+        Behavior on width { MotionAnimation {} }
     }
 }

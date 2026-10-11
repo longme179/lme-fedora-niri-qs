@@ -73,7 +73,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["appearance", "topbar", "controlLayout", "display", "wallpaper", "weather", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
+        if (!["appearance", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
         if (demo) settingsOpen = true;
         else if (!settingsProcess.running) settingsProcess.running = true;
@@ -97,6 +97,15 @@ QtObject {
         if (demo) { togglePanel("overview"); return; }
         closePanels();
         nativeOverviewDelay.restart();
+    }
+    property string captureMode: "screen"
+    function takeScreenshot(mode) {
+        if (!['screen', 'area', 'window'].includes(mode) || demo || authenticationActive) return;
+        closePanels(); captureMode = mode; captureDelay.restart();
+    }
+    property Timer captureDelay: Timer {
+        interval: 250
+        onTriggered: root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode])
     }
     function run(action, payload) {
         if (!backend.running || !backendReady) {
@@ -141,7 +150,7 @@ QtObject {
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

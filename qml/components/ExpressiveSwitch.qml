@@ -20,8 +20,8 @@ Switch {
             y: (parent.height - height) / 2
             color: root.checked ? Theme.onPrimary : Theme.muted
             Text { anchors.centerIn: parent; text: "✓"; visible: root.checked; color: Theme.accent; font.pixelSize: 15; font.family: Theme.fontFamily; font.bold: true }
-            Behavior on x { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
-            Behavior on width { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
+            Behavior on x { MotionAnimation {} }
+            Behavior on width { MotionAnimation {} }
         }
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
     }

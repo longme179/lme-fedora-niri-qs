@@ -37,7 +37,12 @@ commands or Arch installation scripts.
 - Smart launcher with fuzzy app search, favorites, arithmetic, emoji and open-window search.
 - Wider control center with Controls, Audio, Devices, Agenda and Notifications
   tabs, saved draggable tiles/cards and full/half sizes: speaker/microphone volume and mute, backlight, radios, power profiles,
-  idle inhibition, motion, screenshots and system information.
+  idle inhibition, Night Light, motion, Screenshot studio and system information.
+- Night Light with manual, local-time and sunset schedules using `wlsunset`.
+- Screenshot studio: native niri capture, Pen/Highlight/Rectangle/Arrow/Redact,
+  undo/redo, zoom, original-resolution PNG export, image copy and local OCR.
+- Smooth/Expressive/Jelly motion presets, adjustable speed/bounce, reduced motion
+  and Appearance profile integration. See [setup and usage](docs/CAPTURE_NIGHT_MOTION.md).
 - Native PipeWire device selection and individual device/application sliders;
   Bluetooth adapter selection, paired-device connect/disconnect and rfkill
   diagnostics, plus Wi-Fi scanning, password entry and saved-network management.
@@ -225,3 +230,8 @@ smart launcher and in-shell Wi-Fi—are documented in
 [Wi-Fi](docs/previews/wifi-connections.png) and [launcher](docs/previews/smart-launcher.png).
 
 Latest laptop previews: [system monitor](docs/previews/system-monitor.png), [idle profiles](docs/previews/idle-profiles.png), [keybindings](docs/previews/keybind-viewer.png). Setup and limits: [docs/LAPTOP_FEATURES.md](docs/LAPTOP_FEATURES.md).
+
+Night Light, Screenshot studio and customizable motion are documented in
+[Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md). Actual QML previews:
+[Night Light](docs/previews/night-light.png), [motion presets](docs/previews/motion-presets.png)
+and [Screenshot studio](docs/previews/screenshot-studio.png).

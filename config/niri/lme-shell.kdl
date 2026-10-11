@@ -8,7 +8,7 @@ spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-she
 
 // Keep the independent settings application at its requested window size.
 window-rule {
-    match title="^LME Shell Settings( - Demo)?$"
+    match title="^(LME Shell Settings( - Demo)?|LME Screenshot)$"
     open-floating true
 }
 

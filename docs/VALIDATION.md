@@ -314,3 +314,67 @@ Final coverage:
 The cloud compositor is Sway/software rendering, not niri on Radeon. **Native full-screen blur remains unverified on the target Lenovo**; its niri 26.04+ protocol/config requirements are documented in LAPTOP_FEATURES.md. Fedora PAM/logind suspend, physical AC switching and the actual AMD temperature sensors still need target-machine checks. No GPU telemetry, privileged charging write, real suspend/lock, or Fedora DNF transaction was performed in cloud validation.
 
 Setup now retains signed swayidle 1.8.0 and swaylock 1.8.2 packages in the private toolchain and saves their installation/start instructions in the cloud configuration draft. The native tests run sequentially and clean up only their own processes.
+
+## Night Light, Screenshot studio and motion — 2026-10-11
+
+The final full suite passed **141 tests without skips** in 90.928 seconds,
+including the private Wayland integrations. Bash syntax checks and the demo
+backend contract also passed.
+
+```bash
+source /workspace/.lme-dev/wayland-env.sh
+LME_TEST_AUTHENTICATION_UI=1 LME_TEST_CLIPBOARD_NATIVE=1 \
+LME_TEST_CLIPBOARD_UI=1 LME_TEST_ACTIVITY_UI=1 LME_TEST_UPGRADE_UI=1 \
+LME_TEST_DISPLAY_WATCHDOG=1 LME_TEST_IDLE_NATIVE=1 LME_TEST_CAPTURE_UI=1 \
+LME_TEST_POINTER=/workspace/.lme-dev/pointer-click \
+LME_TEST_DRAG=/workspace/.lme-dev/pointer-drag ./scripts/check.sh
+```
+
+- Night Light checks cover local-time boundaries, midnight schedules, disabled
+  and manual modes, approximate sunrise/sunset, polar/location failures,
+  temperature validation, owned worker cleanup and gamma failures. Standalone
+  Settings never starts a second controller and clears stale active status
+  when the desktop shell stops.
+- Private native QML checks select the motion preset, edit Night Light times,
+  reject invalid input, and measure Jelly overshoot followed by settling.
+  Disabling animations removes both the transition and deformation. Old
+  appearance profiles and Control Center layouts preserve saved values and
+  receive the new defaults/module.
+- Screenshot checks cover the three niri command forms, private paths,
+  cancellation timeout, PNG limits, stale sessions, language validation,
+  exclusive saves, rapid repeated saves and removal of partial failed writes.
+  Late OCR completions cannot leak into the next screenshot.
+- Actual pointer/keyboard input exercises Pen, Highlight, Rectangle, Arrow,
+  Redact, Undo/Redo, Save PNG, Copy image and local OCR. The exported PNG keeps
+  its 960 × 540 dimensions; covered pixels are opaque black, other pixels retain
+  the source image, and copied/saved bytes match the flattened export.
+  Text-field shortcuts still copy text. The native editor also works at its
+  850 × 700 minimum size.
+- The real shell opens its independent editor and can close/reopen it twice.
+  This integration uses a controlled fake niri executable, not a real desktop
+  capture. Real Tesseract recognizes the sample image; English and Vietnamese
+  models were also exercised together for the published sample preview.
+- Production feature views and motion components pass qmllint without warnings.
+  The reused upgrades fixture has two existing dynamic-QObject metadata warnings;
+  shell.qml and ShellState.qml retain the earlier attached-type/ExitStatus
+  metadata warnings. Real runtime entry points show no corresponding errors.
+  Three new preview images contain only project-generated sample content.
+
+The owner confirmed that native popup blur works as expected on **niri 26.04**
+after including `config/niri/popup-blur.kdl`: applications and the bar remain
+visible behind the blur and the popup stays sharp. This supersedes the target
+blur limitation in the earlier laptop validation section.
+
+The private cloud session uses Sway and software rendering. Real `wlsunset`
+0.3.0 reports gamma rejection on its virtual output; this is correctly surfaced
+as a failure, not an active filter. **Gamma on the Lenovo panel and actual niri
+screen/area/window capture still need target-machine verification.** The niri
+`--path` API was checked against official IPC source, including v25.11. Fedora
+DNF installation and 120 Hz hardware motion smoothness were not measured here.
+Niri also copies the original screenshot; redaction does not erase that earlier
+clipboard/history item. See [setup and usage](CAPTURE_NIGHT_MOTION.md).
+
+The saved cloud configuration draft retains signed `wlsunset` and Tesseract
+language packages, selects the live Sway socket instead of stale sockets, and
+documents the complete private validation command. Saving the draft does not
+publish the environment configuration.

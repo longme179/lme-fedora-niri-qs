@@ -68,7 +68,7 @@ Item {
             border.color: tile.activeFocus ? tile.accent : tile.active ? Theme.alpha(tile.accent, 0.48) : Theme.border
             border.width: 1
             opacity: tile.enabled ? 1 : 0.5
-            Behavior on radius { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
+            Behavior on radius { MotionAnimation {} }
         }
         contentItem: ColumnLayout {
             spacing: 6
@@ -123,7 +123,7 @@ Item {
         }
     }
     function moduleComponent(id) {
-        return ({weather: weatherModule, charging: chargingModule, wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule, stayAwake: stayAwakeModule, motion: motionModule, sliders: slidersModule, powerProfile: powerProfileModule, media: mediaModule, resources: resourcesModule, capture: captureModule, overview: overviewModule})[id] || null;
+        return ({weather: weatherModule, charging: chargingModule, wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule, stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, sliders: slidersModule, powerProfile: powerProfileModule, media: mediaModule, resources: resourcesModule, capture: captureModule, overview: overviewModule})[id] || null;
     }
     Component {
         id: weatherModule
@@ -172,7 +172,17 @@ Item {
     }
     Component {
         id: motionModule
-        Tile { label: "Motion"; detail: Theme.animations ? "Smooth slide transitions" : "Reduced motion"; active: Theme.animations; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
+        Tile { label: "Motion"; detail: Theme.animations ? Theme.motionPreset[0].toUpperCase() + Theme.motionPreset.slice(1) + " · " + Theme.motionSpeed.toFixed(1) + "×" : "Reduced motion"; active: Theme.animations; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
+    }
+    Component {
+        id: nightLightModule
+        Tile {
+            label: "Night Light"; accent: Theme.yellow
+            readonly property var night: ShellState.snapshot.nightLight || {}
+            active: !!night.active
+            detail: night.error ? "Needs attention · Settings" : night.active ? (night.temperature || 4500) + " K" : ShellState.preferences.nightLightEnabled ? "Scheduled" : "Turned off"
+            onClicked: if (night.error || night.available === false) ShellState.openSettingsPage("nightLight"); else ShellState.run("setting", {key: "nightLightEnabled", value: !ShellState.preferences.nightLightEnabled})
+        }
     }
     Component {
         id: slidersModule
@@ -372,8 +382,11 @@ Item {
             columns: width < 420 ? 2 : 4
             columnSpacing: 8; rowSpacing: 8
             Layout.fillWidth: true
-            LiquidButton { text: "Screen capture"; Layout.fillWidth: true; onClicked: { ShellState.closePanels(); ShellState.run("screenshot"); } palette.button: Theme.surface; palette.buttonText: Theme.text }
-            LiquidButton { text: "Select area"; Layout.fillWidth: true; onClicked: { ShellState.closePanels(); ShellState.run("screenshotArea"); } palette.button: Theme.surface; palette.buttonText: Theme.text }
+            LiquidButton { text: "Screen capture"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("screen"); palette.button: Theme.surface; palette.buttonText: Theme.text }
+            LiquidButton { text: "Select area"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("area"); palette.button: Theme.surface; palette.buttonText: Theme.text }
+            LiquidButton { text: "Focused window"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("window"); palette.button: Theme.surface; palette.buttonText: Theme.text }
+            LabelText { visible: (ShellState.snapshot.capture || {}).status === "pending"; text: "A capture is pending. Escape cancels niri's selector; use Cancel capture to start again."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
+            LiquidButton { text: "Cancel capture"; visible: (ShellState.snapshot.capture || {}).status === "pending"; onClicked: ShellState.run("captureClose") }
             LiquidButton { text: "Settings"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("settings"); palette.button: Theme.surface; palette.buttonText: Theme.purple }
             LiquidButton { text: "Power"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("power"); palette.button: Theme.surface; palette.buttonText: Theme.pink }
         }

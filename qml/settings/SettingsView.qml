@@ -121,7 +121,7 @@ Item {
                     width: pageScroll.width - 12
                     sourceComponent: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage
-                                   : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage
+                                   : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage
                                    : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
@@ -136,6 +136,7 @@ Item {
     Component { id: clipboardPage; ClipboardPage {} }
     Component { id: idlePage; IdlePage {} }
     Component { id: keybindsPage; KeybindsPage {} }
+    Component { id: nightPage; NightLightPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }
 }

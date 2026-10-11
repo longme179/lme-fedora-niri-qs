@@ -49,7 +49,9 @@ ShellRoot {
                 calculationError: root.mode === "launcher" && view.item ? view.item.calculationError : "", displays: ShellState.snapshot.displays || {},
                 groups: root.mode === "notifications" && view.item ? view.item.grouped.length : 0, dnd: Notifications.dnd, popups: Notifications.popups.length,
                 history: Notifications.history.length, library: ShellState.snapshot.wallpaperLibrary || {},
-                monitor: ShellState.snapshot.monitor || {}, idle: ShellState.snapshot.idle || {},
+                monitor: ShellState.snapshot.monitor || {}, idle: ShellState.snapshot.idle || {}, nightLight: ShellState.snapshot.nightLight || {},
+                motionProgress: root.find(window.contentItem, "motionPreview") ? root.find(window.contentItem, "motionPreview").progress : -1,
+                deformation: Theme.deformation,
                 processMatches: root.find(window.contentItem, "systemMonitor") ? root.find(window.contentItem, "systemMonitor").processes.length : -1,
                 keybindMatches: root.find(window.contentItem, "keybindPage") ? root.find(window.contentItem, "keybindPage").matches.length : -1,
                 wifiPopup: root.mode === "wifi" && view.item ? view.item.connectionPopup.visible : false});

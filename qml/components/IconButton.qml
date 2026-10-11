@@ -18,6 +18,8 @@ AbstractButton {
     hoverEnabled: true
     Accessible.name: tooltip || text || glyph
     Accessible.role: Accessible.Button
+    scale: down ? 1 - Theme.deformation : 1
+    Behavior on scale { MotionAnimation {} }
     opacity: enabled ? 1 : 0.4
     background: Rectangle {
         radius: root.cornerRadius

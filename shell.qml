@@ -28,6 +28,9 @@ ShellRoot {
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function close(): void { ShellState.closePanels(); }
         function idleStatus(): string { return JSON.stringify(ShellState.snapshot.idle || {}); }
+        function nightLightStatus(): string { return JSON.stringify(ShellState.snapshot.nightLight || {}); }
+        function retryNightLight(): void { ShellState.run("nightLightRefresh"); }
+        function capture(mode: string): void { ShellState.takeScreenshot(mode); }
         function refresh(): void { ShellState.run("refresh"); }
         function authenticationStatus(): string {
             return ShellState.demo ? "disabled in demo" : authentication.item && authentication.item.registered ? "registered" : "not registered; check the shell log and other session agents";
@@ -98,6 +101,20 @@ ShellRoot {
     Component { id: overviewComponent; Overview {} }
     Component { id: clipboardComponent; ClipboardPanel {} }
     Component { id: wifiComponent; WifiPanel {} }
+    LazyLoader {
+        active: !ShellState.demo && (ShellState.snapshot.capture || {}).status === "ready"
+        component: FloatingWindow {
+            id: captureWindow
+            title: "LME Screenshot"; implicitWidth: 1180; implicitHeight: 860; minimumSize: Qt.size(850, 700)
+            color: Theme.background
+            onClosed: ShellState.run("captureClose")
+            ScreenshotEditor {
+                anchors.fill: parent
+                session: ShellState.snapshot.capture || {}
+                onCloseRequested: if (!busy) ShellState.run("captureClose")
+            }
+        }
+    }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive

@@ -31,12 +31,14 @@ from typing import Any
 
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
-from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT,
+from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS,
                               appearance_profile, control_layout, wallpaper_library, calculate)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
 from niri_keybinds import read_keybinds
+from night_light import NightLight, clock_minutes
+from screen_capture import ScreenCapture
 
 
 DEFAULT_PREFERENCES = {
@@ -47,7 +49,9 @@ DEFAULT_PREFERENCES = {
     "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
-    "niriConfigPath": "", "popupBlur": True,
+    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS,
+    "nightLightEnabled": False, "nightLightMode": "manual", "nightLightTemperature": 4500,
+    "nightLightStart": "20:00", "nightLightEnd": "07:00",
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
@@ -60,7 +64,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -250,6 +254,13 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key == "nightLightEnabled" and type(value) is bool: return value
+    if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
+    if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
+    if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
+    if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
+    if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
+    if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
     if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur"} and type(value) is bool: return value
     if key == "idleProfiles": return validate_profiles(value)
     if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
@@ -433,6 +444,9 @@ class DesktopBackend:
         self.idle_control = IdleControl(self.runner)
         self.idle_state = {}
         self.keybinds = {"path": "", "bindings": [], "errors": []}
+        self.night_light = NightLight(self.runner)
+        self.night_state = {}
+        self.capture = ScreenCapture(self.runner)
         self.platform = {"niriVersion": "Demo" if demo else "Not checked", "popupBlurSupported": demo}
         if manage_idle and not demo and not settings_only: self.platform = self.compositor_features()
         self.display_control = DisplayControl(self.runner)
@@ -769,10 +783,14 @@ class DesktopBackend:
             else: self.finish_features()
         self.result_unemitted = False
         weather = self.weather.snapshot(self.preferences.values, allow_fetch=self.weather_fetch and not self.settings_only)
+        if self.manage_idle and not self.settings_only:
+            place = self.weather.auto_location if self.preferences.values['weatherAutoLocation'] else self.preferences.values['weatherLocation']
+            self.night_state = self.night_light.sync(self.preferences.values, place)
+        self.capture.refresh()
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
                     "lastResult": dict(self.last_result), "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
-                    "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform}
+                    "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
@@ -791,7 +809,7 @@ class DesktopBackend:
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
-                "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform}
+                "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
     def valid_notifications(value):
@@ -818,8 +836,16 @@ class DesktopBackend:
             if not job.done(): continue
             self.result_sequence += 1
             try:
+                if getattr(job, 'capture_token', self.capture.state.get('token')) != self.capture.state.get('token'):
+                    self.last_result = {'ok': True, 'action': action, 'message': '', 'sequence': self.result_sequence}
+                    del self.feature_jobs[action]
+                    break
                 value = job.result()
                 if action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
+                elif action == "captureOcr":
+                    token, content = value
+                    if self.capture.state.get('token') == token: self.capture.state['ocrText'] = content
+                    message = "Text recognized" if content else "No text found. Try a tighter capture or another OCR language."
                 else: message = value
                 self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
             except (CommandError, ValueError, OSError) as error:
@@ -856,7 +882,7 @@ class DesktopBackend:
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
             self._demo_state.update(wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
-                monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform)
+                monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
                 unit="°F" if unit == "fahrenheit" else "°C", temperature=84 if unit == "fahrenheit" else 29,
@@ -982,7 +1008,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh"}:
+            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1019,6 +1045,14 @@ class DesktopBackend:
         elif action == "keybindRefresh":
             self.keybinds = read_keybinds(str(Path(__file__).resolve().parents[1]/"config/niri/lme-shell.kdl"))
         elif action == "platformRefresh": pass
+        elif action == "nightLightRefresh":
+            self.night_state = {'available': True, 'enabled': self.preferences.values['nightLightEnabled'], 'active': self.preferences.values['nightLightEnabled'], 'temperature': self.preferences.values['nightLightTemperature'], 'mode': self.preferences.values['nightLightMode'], 'start': self.preferences.values['nightLightStart'], 'end': self.preferences.values['nightLightEnd'], 'error': ''}
+        elif action in {"captureClose", "captureLanguages"}:
+            if action == 'captureClose': self.capture.close()
+            else: self.capture.state['languages'] = ['eng', 'vie']
+        elif action == "captureExport":
+            if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
+        elif action == "captureOcr": self.capture.state['ocrText'] = 'LME Shell\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
         elif action == "idleInhibit":
@@ -1132,11 +1166,38 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
+        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action == 'nightLightRefresh':
+            if type(request.get('retry', False)) is not bool: raise ValueError('Night Light retry must be boolean')
+            if self.settings_only:
+                self.night_state = {'available': self.runner.available('wlsunset'), 'active': False,
+                                    'error': 'Start LME Shell to control Night Light.'}
+                if request.get('retry'):
+                    run('quickshell', '-p', str(Path(__file__).resolve().parents[1]/'shell.qml'), 'ipc', 'call', 'shell', 'retryNightLight')
+                reply = self.try_run('quickshell', '-p', str(Path(__file__).resolve().parents[1]/'shell.qml'), 'ipc', 'call', 'shell', 'nightLightStatus')
+                try:
+                    state = json.loads(reply or '{}')
+                    if isinstance(state, dict) and 'active' in state: self.night_state = state
+                except ValueError: pass
+            else: self.night_light.signature = None
+            return 'Night Light refreshed'
+        if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
+        if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
+        if action == 'captureExport':
+            if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')
+            message = self.start_feature(action, lambda: self.capture.export(request['token'], request.get('operation'), request.get('folder')))
+            self.feature_jobs[action].capture_token = request['token']
+            return message
+        if action == 'captureOcr':
+            token, language = request.get('token'), request.get('language')
+            if type(token) is not str: raise ValueError('Missing screenshot session')
+            message = self.start_feature(action, lambda: (token, self.capture.ocr(token, language)))
+            self.feature_jobs[action].capture_token = token
+            return message
         if action == "monitor":
             if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
             self.monitor_enabled = request["enabled"]
@@ -1318,13 +1379,12 @@ class DesktopBackend:
         if action == "lock":
             self.runner.executable("swaylock")
             return self.start_feature(action, self.lock_session)
-        if action in {"screenshot", "screenshotArea"}:
+        if action in {"screenshot", "screenshotArea", "screenshotWindow"}:
             # niri owns capture and clipboard integration. Traditional grim uses
             # wlr-screencopy, which is not the portable screenshot path on niri.
             # Let a just-dismissed control panel finish its surface teardown.
             time.sleep(0.2)
-            run("niri", "msg", "action", "screenshot-screen" if action == "screenshot" else "screenshot")
-            return "Screenshot requested; output follows niri's screenshot-path setting"
+            return self.capture.start({'screenshot': 'screen', 'screenshotArea': 'area', 'screenshotWindow': 'window'}[action])
         if action == "logout":
             run("niri", "msg", "action", "quit", "--skip-confirmation")
             return "Logout requested"
@@ -1503,6 +1563,7 @@ def main(argv: list[str] | None = None) -> int:
         while True:
             changed = False
             deadline = min(next_poll, event_refresh_due) if event_refresh_due is not None else next_poll
+            if backend.capture.state['status'] == 'pending' or backend.feature_jobs: deadline = min(deadline, time.monotonic() + .2)
             for key, _mask in selector.select(max(0, deadline - time.monotonic())):
                 data = os.read(key.fd, 65536)
                 if not data:
@@ -1532,7 +1593,10 @@ def main(argv: list[str] | None = None) -> int:
                     next_poll = time.monotonic() + args.interval
                     event_refresh_due = None
             now = time.monotonic()
-            if changed or now >= next_poll or (event_refresh_due is not None and now >= event_refresh_due):
+            capture_status = backend.capture.state['status']
+            backend.capture.refresh()
+            changed = changed or capture_status != backend.capture.state['status']
+            if changed or now >= next_poll or any(job.done() for job in backend.feature_jobs.values()) or (event_refresh_due is not None and now >= event_refresh_due):
                 emit(backend)
                 next_poll = time.monotonic() + args.interval
                 event_refresh_due = None
@@ -1540,6 +1604,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     finally:
         backend.idle_control.close()
+        backend.night_light.close()
+        backend.capture.close()
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)

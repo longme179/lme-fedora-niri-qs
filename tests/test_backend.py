@@ -257,7 +257,10 @@ class BackendCase(Fixture, unittest.TestCase):
         with patch.object(backend.time, "sleep") as delay:
             self.assertTrue(live.handle({"action": "screenshot"})["ok"])
             delay.assert_called_once_with(0.2)
-        self.assertEqual(runner.calls, [("niri", "msg", "action", "screenshot-screen")])
+        self.assertEqual(runner.calls[0][:4], ("niri", "msg", "action", "screenshot-screen"))
+        self.assertEqual(runner.calls[0][4:], ('--path', live.capture.state['path']))
+        self.assertEqual(live.capture.state['status'], 'pending')
+        live.capture.close()
 
     def test_fedora_tuned_profile_uses_modern_standard_dbus_api(self):
         service = backend.POWER_PROFILE_SERVICES[0]

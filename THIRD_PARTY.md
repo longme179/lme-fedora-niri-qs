@@ -55,3 +55,16 @@ Their implementation source was not vendored. The bundled emoji/symbol names
 are generated with Python standard-library `unicodedata`; search aliases are
 written for this project. The repository also includes the owner-supplied MIT
 Ponytail skill, with its original license declaration preserved.
+
+Motion was reviewed against [caelestia-dots/shell](https://github.com/caelestia-dots/shell)
+at `21a75375bb33123e481e796a74965038847c503d` (GPL-3.0), especially shared
+spatial/effects tokens and reusable animation components. The delivered preset
+configuration and QML are original; no Caelestia source, plugin or assets are
+vendored.
+
+Night Light also references iNiR's niri/wlsunset workflow. `wlsunset` and
+`tesseract` are external runtime tools, not bundled binaries. Sunrise/sunset
+calculation uses the approximate algorithm from *Almanac for Computers* (1990),
+described in Ed Williams' [Sunrise/Sunset Algorithm](https://edwilliams.org/sunrise_sunset_algorithm.htm).
+The Python implementation is original; it is not an astronomical ephemeris or
+display calibration system.

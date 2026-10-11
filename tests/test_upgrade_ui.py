@@ -94,3 +94,50 @@ class UpgradeInterfaceCase(unittest.TestCase):
             content = log.read()
             for error in ['ReferenceError', 'TypeError', 'QML error', 'Failed to load configuration', 'Unable to assign', 'binding loop']:
                 self.assertNotIn(error, content)
+
+    def test_motion_overshoot_reduced_motion_and_night_light_controls(self):
+        ENTRY = Path(__file__).resolve().parents[1] / 'upgrades-demo.qml'
+        env = os.environ.copy(); env.update(LME_TEST_UPGRADES='1', LME_SHELL_DEMO='1')
+        pointer = os.environ.get('LME_TEST_POINTER'); self.assertTrue(pointer)
+        with tempfile.TemporaryDirectory() as temp, tempfile.TemporaryFile(mode='w+') as log:
+            env['XDG_CONFIG_HOME'] = temp
+            shell = subprocess.Popen(['quickshell', '-p', str(ENTRY)], env=env, stdout=log, stderr=subprocess.STDOUT)
+            def ipc(*args): return subprocess.check_output(['quickshell','-p',str(ENTRY),'ipc','call','upgradesFixture',*args],text=True,env=env,timeout=5).strip()
+            def run(action, **values): ipc('run', json.dumps({'action':action,**values}))
+            def wait(predicate, timeout=6):
+                end=time.monotonic()+timeout
+                while time.monotonic()<end:
+                    try:
+                        state=json.loads(ipc('state'))
+                        if predicate(state):return state
+                    except (ValueError,subprocess.CalledProcessError):pass
+                    time.sleep(.05)
+                self.fail('Motion / Night Light state timed out')
+            def click(name):
+                p=json.loads(ipc('position',name));self.assertTrue(p,name)
+                subprocess.run([pointer,str(p['x']),str(p['y'])],check=True,timeout=5)
+            try:
+                wait(lambda s:s['ready']);ipc('navigate','settings','appearance')
+                run('setting',key='motionPreset',value='jelly');run('setting',key='motionBounce',value=.8);run('setting',key='motionSpeed',value=.5)
+                wait(lambda s:s['preferences']['motionPreset']=='jelly' and s['deformation']>.05)
+                click('Replay preview');samples=[];end=time.monotonic()+1.6
+                while time.monotonic()<end:
+                    samples.append(json.loads(ipc('state'))['motionProgress']);time.sleep(.035)
+                self.assertGreater(max(samples),1.02);self.assertAlmostEqual(samples[-1],1,places=3)
+                run('setting',key='animations',value=False);wait(lambda s:not s['preferences']['animations'])
+                click('Replay preview');self.assertEqual(json.loads(ipc('state'))['motionProgress'],1)
+                self.assertEqual(json.loads(ipc('state'))['deformation'],0)
+                ipc('navigate','settings','nightLight');wait(lambda s:s.get('nightLight',{}).get('available'))
+                click('nightLightMode');subprocess.run(['wtype','-s','150','-k','Down','-k','Return'],check=True,env=env)
+                wait(lambda s:s['preferences']['nightLightMode']=='schedule')
+                click('nightLightStart');subprocess.run(['wtype','-M','ctrl','-k','a','-m','ctrl','21:30','-k','Return'],check=True,env=env)
+                wait(lambda s:s['preferences']['nightLightStart']=='21:30')
+                click('nightLightEnd');subprocess.run(['wtype','-M','ctrl','-k','a','-m','ctrl','06:45','-k','Return'],check=True,env=env)
+                wait(lambda s:s['preferences']['nightLightEnd']=='06:45')
+                run('setting',key='nightLightStart',value='25:00');wait(lambda s:not s['lastResult']['ok'])
+                self.assertEqual(json.loads(ipc('state'))['preferences']['nightLightStart'],'21:30')
+                ipc('navigate','settings','controlLayout');click('Restore default layout')
+                wait(lambda s:any(m['id']=='nightLight' and m['enabled'] for m in s['preferences']['controlLayout']))
+            finally:shell.terminate();shell.wait(timeout=6)
+            log.seek(0);content=log.read()
+            for error in ('ReferenceError','TypeError','binding loop','Unable to assign'):self.assertNotIn(error,content)

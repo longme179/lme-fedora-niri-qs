@@ -46,8 +46,16 @@ QtObject {
     readonly property int cardSpacing: compact ? 10 : 16
     readonly property string monoFamily: "JetBrains Mono"
     readonly property bool animations: ShellState.preferences.animations !== false
-    readonly property int animationDuration: animations ? 170 : 0
-    readonly property int slideDuration: animations ? 360 : 0
+    readonly property string motionPreset: ShellState.preferences.motionPreset || "expressive"
+    readonly property real motionSpeed: ShellState.preferences.motionSpeed || 1
+    readonly property real motionBounce: ShellState.preferences.motionBounce === undefined ? .35 : ShellState.preferences.motionBounce
+    readonly property int animationDuration: animations ? Math.round(190 / motionSpeed) : 0
+    readonly property int slideDuration: animations ? Math.round((motionPreset === "jelly" ? 600 : motionPreset === "smooth" ? 360 : 460) / motionSpeed) : 0
+    // Spatial curves may overshoot; colors/opacity use monotonic effects easing.
+    readonly property var spatialCurve: motionPreset === "smooth" ? [.18, .8, .22, 1, 1, 1]
+        : motionPreset === "jelly" ? [.32, 1 + .9 * motionBounce, .18, 1, 1, 1]
+        : [.38, 1 + .6 * motionBounce, .22, 1, 1, 1]
+    readonly property real deformation: animations && motionPreset === "jelly" ? .09 * motionBounce : 0
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity); }
     function mix(a, b, amount) { return Qt.rgba(a.r * (1 - amount) + b.r * amount, a.g * (1 - amount) + b.g * amount, a.b * (1 - amount) + b.b * amount, 1); }
     function loadPalette() {

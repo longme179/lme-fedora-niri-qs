@@ -14,7 +14,7 @@ AbstractButton {
     padding: 0; hoverEnabled: true
     visible: !(ShellState.activityOpen && (!ShellState.panelScreen || ShellState.panelScreen === screenInfo))
     Accessible.name: "Activity: " + ActivityState.title + ". Expand media and timers."
-    Behavior on implicitWidth { NumberAnimation { duration: Theme.slideDuration; easing.type: Easing.OutExpo } }
+    Behavior on implicitWidth { MotionAnimation { large: true } }
     background: Rectangle { radius: height / 2; color: root.hovered || ShellState.activityOpen ? Theme.primaryContainer : "transparent"; border.width: root.visualFocus ? 2 : 0; border.color: Theme.accent }
     LabelText { id: measure; visible: false; text: ActivityState.title; font.family: Theme.fontFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
     contentItem: Item {

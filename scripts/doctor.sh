@@ -43,6 +43,8 @@ fi
 optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
 optional swaylock 'lock screen'
 optional swayidle 'laptop idle profiles; enable in Settings > Idle and sleep'
+optional wlsunset 'Night Light gamma control; Settings > Night Light'
+optional tesseract 'Screenshot studio OCR; install tesseract-langpack-eng (and optionally -vie)'
 optional awww 'wallpaper selection and restoration'
 optional awww-daemon 'wallpaper daemon'
 optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'

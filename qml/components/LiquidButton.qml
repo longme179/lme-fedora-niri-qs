@@ -19,13 +19,15 @@ Button {
     font.pixelSize: 13
     font.weight: Font.Medium
     Accessible.name: text
+    scale: down ? 1 - Theme.deformation * .6 : 1
+    Behavior on scale { MotionAnimation {} }
     background: Rectangle {
         radius: root.down ? 12 : height / 2
         color: root.selected ? Theme.primaryContainer : root.down ? Theme.mix(root.palette.button, Theme.text, 0.14) : root.hovered ? Theme.mix(root.palette.button, Theme.text, 0.08) : root.palette.button
         border.width: root.visualFocus ? 2 : 0
         border.color: Theme.accent
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
-        Behavior on radius { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
+        Behavior on radius { MotionAnimation {} }
     }
     contentItem: Text {
         text: root.text

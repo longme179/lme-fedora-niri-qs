@@ -71,7 +71,41 @@ ColumnLayout {
         title: "Glass and motion"
         PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
         LabelText { text: "Compositor: "+((ShellState.snapshot.platform || {}).niriVersion || "Checking…"); color: Theme.muted; font.pixelSize: 12 }
-        PreferenceSwitch { title: "Gentle motion"; detail: "Smooth slide transitions and subtle shape changes"; preference: "animations" }
+        PreferenceSwitch { title: "Animations"; detail: "Disable to remove spatial motion and press deformation"; preference: "animations" }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Motion preset"; Layout.fillWidth: true }
+            LiquidComboBox {
+                objectName: "motionPreset"; model: ["Smooth", "Expressive", "Jelly"]
+                currentIndex: ["smooth", "expressive", "jelly"].indexOf(Theme.motionPreset)
+                Accessible.name: "Motion preset"
+                onActivated: ShellState.run("setting", {key: "motionPreset", value: ["smooth", "expressive", "jelly"][currentIndex]})
+            }
+        }
+        LabelText { text: "Speed · " + Theme.motionSpeed.toFixed(1) + "×"; font.weight: Font.Bold }
+        LiquidSlider {
+            id: speed; objectName: "motionSpeed"; Layout.fillWidth: true; from: .5; to: 2; stepSize: .1
+            Accessible.name: "Animation speed"
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "motionSpeed", value: Math.round(value * 10) / 10})
+            onMoved: if (!pressed) ShellState.run("setting", {key: "motionSpeed", value: Math.round(value * 10) / 10})
+        }
+        Binding { target: speed; property: "value"; value: Theme.motionSpeed; when: !speed.pressed; restoreMode: Binding.RestoreNone }
+        LabelText { text: "Bounce · " + Math.round(Theme.motionBounce * 100) + "%"; font.weight: Font.Bold }
+        LiquidSlider {
+            id: bounce; objectName: "motionBounce"; Layout.fillWidth: true; from: 0; to: 1; stepSize: .05; enabled: Theme.motionPreset !== "smooth"
+            Accessible.name: "Animation bounce"
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "motionBounce", value: Math.round(value * 100) / 100})
+            onMoved: if (!pressed) ShellState.run("setting", {key: "motionBounce", value: Math.round(value * 100) / 100})
+        }
+        Binding { target: bounce; property: "value"; value: Theme.motionBounce; when: !bounce.pressed; restoreMode: Binding.RestoreNone }
+        Rectangle {
+            Layout.fillWidth: true; Layout.preferredHeight: 118; radius: 20; color: Theme.surfaceContainer
+            SlideLoader {
+                id: motionPreview; objectName: "motionPreview"; anchors.centerIn: parent; width: Math.min(260, parent.width - 32); height: 70; active: true; direction: "up"
+                sourceComponent: GlassPanel { radius: 28; LabelText { anchors.centerIn: parent; text: "Move with your desktop"; font.weight: Font.Bold } }
+            }
+        }
+        LiquidButton { text: "Replay preview"; onClicked: { motionPreview.active = false; Qt.callLater(() => motionPreview.active = true); } }
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Panel opacity"; Layout.fillWidth: true }

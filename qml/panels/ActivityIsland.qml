@@ -20,7 +20,7 @@ Item {
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
     onExpandedChanged: if (expanded) Qt.callLater(() => closeButton.forceActiveFocus());
-    Behavior on expansion { NumberAnimation { id: morph; duration: Theme.slideDuration; easing.type: Easing.OutExpo } }
+    Behavior on expansion { MotionAnimation { id: morph; large: true; easing.bezierCurve: root.expanded ? Theme.spatialCurve : [.3, 0, .8, 1, 1, 1] } }
     GlassPanel {
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true
         MouseArea { anchors.fill: parent }

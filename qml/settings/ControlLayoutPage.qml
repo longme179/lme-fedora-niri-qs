@@ -7,7 +7,7 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
-    readonly property var titles: ({weather: "Weather", charging: "Battery charging", wifi: "Wi-Fi", bluetooth: "Bluetooth", microphone: "Microphone", dnd: "Do not disturb", stayAwake: "Stay awake", motion: "Motion", sliders: "Volume & brightness", powerProfile: "Power profile", media: "Media player", resources: "System resources", capture: "Capture & actions", overview: "Workspace overview"})
+    readonly property var titles: ({weather: "Weather", charging: "Battery charging", wifi: "Wi-Fi", bluetooth: "Bluetooth", microphone: "Microphone", dnd: "Do not disturb", stayAwake: "Stay awake", motion: "Motion", nightLight: "Night Light", sliders: "Volume & brightness", powerProfile: "Power profile", media: "Media player", resources: "System resources", capture: "Capture & actions", overview: "Workspace overview"})
     readonly property var layout: ShellState.preferences.controlLayout || []
     readonly property bool ready: ShellState.backendReady && !ShellState.pendingActions.setting
     function save(next) { if (ready) ShellState.run("setting", {key: "controlLayout", value: next}); }
@@ -68,7 +68,7 @@ ColumnLayout {
             LabelText { anchors.centerIn: parent; text: "Drop here to move to the end"; color: Theme.muted; font.pixelSize: 12 }
             DropArea { id: append; anchors.fill: parent; keys: ["control-module"]; onDropped: drop => { if (drop.source === proxy) { root.move(proxy.moduleId, root.layout.length); drop.acceptProposedAction(); } } }
         }
-        LiquidButton { text: "Restore default layout"; enabled: root.ready; onClicked: root.save(Object.keys(root.titles).map(id => ({id: id, enabled: true, size: ["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion"].includes(id) ? "half" : "full"}))) }
+        LiquidButton { text: "Restore default layout"; enabled: root.ready; onClicked: root.save(Object.keys(root.titles).map(id => ({id: id, enabled: true, size: ["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight"].includes(id) ? "half" : "full"}))) }
     }
     Rectangle {
         id: proxy; parent: root.parent; property string moduleId: ""

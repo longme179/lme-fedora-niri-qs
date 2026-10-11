@@ -46,12 +46,16 @@ The shell checks ownership and permissions before requesting privileges.
 The helper accepts only `85`, `100` or read-only `status`, discovers paths under
 `/sys` itself, and accepts no caller-supplied file path or shell command.
 
-Install `polkit` if `pkexec` is unavailable and keep one working Polkit
-authentication agent in your niri session, such as `lxqt-policykit-agent`.
+Install `polkit` if `pkexec` is unavailable. LME Shell includes its own
+authentication agent: selecting a charge mode opens a centered password popup,
+even when started by niri without a terminal. Enter the displayed account's
+password and press Enter or **Authenticate**; an incorrect response can be
+retried. **Cancel** or Escape dismisses the request. See
+[AUTHENTICATION.md](AUTHENTICATION.md) if the popup does not appear.
 The shell invokes:
 
 ```bash
-pkexec /usr/bin/python3 -I /usr/local/libexec/lme-shell-charge 85
+pkexec --disable-internal-agent /usr/bin/python3 -I /usr/local/libexec/lme-shell-charge 85
 ```
 
 The system's normal administrator prompt authorizes that individual change.

@@ -24,9 +24,9 @@ The supported command is `quickshell`; some packages also supply the `qs` alias.
 If your custom build only provides `qs`, adapt your local command or install a
 package with the standard binary name.
 
-The expanded shell also needs Quickshell's PipeWire service and Wayland idle
+The expanded shell also needs Quickshell's PipeWire, Polkit and Wayland idle
 inhibitor modules. Distribution builds normally include them; enable
-`SERVICE_PIPEWIRE` and Wayland support when building a custom Quickshell binary.
+`SERVICE_PIPEWIRE`, `SERVICE_POLKIT` and Wayland support for a custom build.
 
 ## The shell starts but has no desktop state
 
@@ -112,7 +112,8 @@ journalctl -b -k --no-pager | grep -Ei 'bluetooth|btusb|mt7921|firmware'
 Choose the correct adapter in Control center → Devices if more than one is
 listed. Install `util-linux` if `rfkill` is absent. A soft block can also be
 cleared deliberately with `rfkill unblock bluetooth`; permission failures need
-Fedora's existing device/session policy. Keep a working polkit agent running.
+Fedora's existing device/session policy. The shell includes a Polkit agent;
+see [authentication setup](AUTHENTICATION.md) if it is not registered.
 If BlueZ still reports `org.bluez.Error.Failed`, the service or MediaTek firmware
 may be responsible; keep the command output when reporting the issue. A shell
 update cannot establish the cause without the laptop's logs.
@@ -224,8 +225,8 @@ Run `python3 scripts/charge_control.py status` to inspect capability without
 changing anything. No interface means the current kernel/BIOS does not expose
 supported control. An available interface with a setup message needs the
 root-owned helper and `pkexec`; follow [CHARGING.md](CHARGING.md).
-Ensure your existing Polkit agent is running if an authentication prompt does
-not appear. Cancelling or rejecting the prompt leaves the read-back mode visible
+Check the shell's [built-in Polkit agent](AUTHENTICATION.md) if its password popup
+does not appear. Cancelling or rejecting the prompt leaves the read-back mode visible
 and reports an error.
 
 If the UI says “Conservation” without “85%”, the kernel exposes the firmware's

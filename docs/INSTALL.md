@@ -12,7 +12,7 @@ library and needs no `pip install`.
 
 | Package | Purpose |
 | --- | --- |
-| `quickshell` ≥ 0.3.2 | QML shell host, Wayland layers/idle inhibitor, notification server, MPRIS, PipeWire mixer |
+| `quickshell` ≥ 0.3.2 | QML shell host, Wayland layers/idle inhibitor, notification server, MPRIS, PipeWire mixer, Polkit agent |
 | `python3` | Application discovery and desktop integration backend |
 | `qt6-qtbase`, `qt6-qtdeclarative`, `qt6-qtwayland`, `qt6-qtsvg` | Qt Quick runtime and image support |
 | `NetworkManager` | Wi-Fi state and radio controls via `nmcli` |
@@ -20,9 +20,11 @@ library and needs no `pip install`.
 | `brightnessctl` | Backlight state and brightness controls |
 | `bluez`, `systemd`, `util-linux` | Adapter/device controls through BlueZ D-Bus, `busctl`, `rfkill`; `bluetoothctl` fallback |
 | `systemd` + existing `tuned-ppd` or `power-profiles-daemon` | Power profile controls through the common system D-Bus API |
+| `polkit` | System authorization service and `pkexec` for administrator actions |
 | Noto Sans, Noto Color Emoji, Adwaita icon theme | Text and installed application icons |
 
-Use a Quickshell build with `Quickshell.Services.Pipewire` and Wayland idle
+Use a Quickshell build with `Quickshell.Services.Pipewire`,
+`Quickshell.Services.Polkit` and Wayland idle
 inhibitor support. Older 0.2.x builds cannot run the expanded control center.
 The backend still uses only Python's standard library.
 
@@ -80,22 +82,13 @@ daemon. It is excluded from the automated package transaction because availabili
 may depend on your enabled repositories. `playerctl` is useful for media keys;
 the shell's media panel uses Quickshell's native MPRIS support.
 
-For a complete bare niri session, also keep a **polkit authentication agent**
-running so that apps can request authorized operations. The optional package
-list includes `lxqt-policykit`, whose agent is `lxqt-policykit-agent`; an existing
-working agent is equally suitable. Check the installed executable before adding
-one startup entry:
-
-```bash
-command -v lxqt-policykit-agent
-```
-
-```kdl
-spawn-at-startup "lxqt-policykit-agent"
-```
-
-Use one authentication agent per session. LME Shell delegates authentication to
-Fedora's existing policy; it does not implement a privileged authentication UI.
+LME Shell now starts its own **Polkit authentication agent** and glass password
+popup automatically, including when launched by niri. No terminal or separate
+agent startup command is needed. Keep one agent per session: remove an old
+`lxqt-policykit-agent`/other agent autostart entry if switching to this popup,
+then log out and back into niri. Quickshell's build must include
+`Quickshell.Services.Polkit` (`SERVICE_POLKIT=ON` for source builds).
+See [AUTHENTICATION.md](AUTHENTICATION.md) for status checks and troubleshooting.
 For Flatpak file pickers and screen sharing, keep niri's session setup and portal
 configuration intact. The optional list includes the GTK and GNOME portal
 backends and `gnome-keyring`; see niri's
@@ -347,8 +340,8 @@ same when restoring one on login. Do not run a second wallpaper daemon for the
 same output. After migration, remove any old wallpaper-daemon startup entry
 from your own niri configuration.
 
-For Lenovo charge controls, install `polkit` if `pkexec` is missing and keep your
-existing authentication agent running. On the **target laptop**, run:
+For Lenovo charge controls, install `polkit` if `pkexec` is missing. The shell's
+built-in popup handles authentication. On the **target laptop**, run:
 
 ```bash
 ./scripts/install-charge-helper.sh --dry-run

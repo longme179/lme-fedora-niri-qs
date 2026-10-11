@@ -28,7 +28,11 @@ Item {
             ctx.lineWidth = 1.8;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            if (root.name === "applications") {
+            if (root.name === "lock") {
+                ctx.beginPath(); ctx.roundedRect(5, 10, 14, 11, 2, 2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(8, 10); ctx.lineTo(8, 7); ctx.arc(12, 7, 4, Math.PI, 0); ctx.lineTo(16, 10); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12, 14); ctx.lineTo(12, 17); ctx.stroke();
+            } else if (root.name === "applications") {
                 for (const x of [4, 14]) {
                     for (const y of [4, 14]) {
                         ctx.beginPath();

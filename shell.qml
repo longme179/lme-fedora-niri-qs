@@ -11,16 +11,25 @@ import "qml/services"
 import "qml/theme"
 import "qml/components"
 import "qml/panels"
+import "qml/auth"
 
 ShellRoot {
     id: root
     readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
     readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1"
+    LazyLoader {
+        id: authentication
+        active: !ShellState.demo
+        component: AuthenticationAgent {}
+    }
     IpcHandler {
         target: "shell"
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function close(): void { ShellState.closePanels(); }
         function refresh(): void { ShellState.run("refresh"); }
+        function authenticationStatus(): string {
+            return ShellState.demo ? "disabled in demo" : authentication.item && authentication.item.registered ? "registered" : "not registered; check the shell log and other session agents";
+        }
     }
     Variants {
         model: root.preview ? [] : Quickshell.screens
@@ -45,7 +54,7 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && ShellState.panelOpen
+        visible: !root.preview && ShellState.panelOpen && !ShellState.authenticationActive
         anchors { top: true; bottom: true; left: true; right: true }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -84,7 +93,7 @@ ShellRoot {
     Component { id: overviewComponent; Overview {} }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen
+        visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive
         anchors { top: true; right: true }
         margins { top: Theme.panelTopMargin; right: 14 }
         implicitWidth: 360
@@ -127,7 +136,7 @@ ShellRoot {
     }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && (ShellState.osdOpen || ShellState.statusMessage.length > 0)
+        visible: !root.preview && !ShellState.authenticationActive && (ShellState.osdOpen || ShellState.statusMessage.length > 0)
         anchors.bottom: true
         margins.bottom: 24
         implicitWidth: ShellState.statusMessage.length > 0 ? 460 : 240

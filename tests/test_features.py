@@ -162,7 +162,7 @@ class ChargingCase(Fixture, unittest.TestCase):
         with patch.object(backend.os, 'access', return_value=False), patch.object(backend, 'trusted_helper', return_value=True):
             with self.assertRaisesRegex(ValueError, 'did not confirm'):
                 live.set_charge(85)
-        self.assertEqual(runner.calls, [('pkexec', '/usr/bin/python3', '-I', '/usr/local/libexec/lme-shell-charge', '85')])
+        self.assertEqual(runner.calls, [('pkexec', '--disable-internal-agent', '/usr/bin/python3', '-I', '/usr/local/libexec/lme-shell-charge', '85')])
 
     def test_helper_unavailable_and_invalid_modes_never_request_privileges(self):
         self.battery(100)

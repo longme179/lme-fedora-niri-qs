@@ -26,6 +26,7 @@ QtObject {
     property bool overviewOpen: false
     property bool stayAwake: false
     property bool draggingWindow: false
+    property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
     readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen
@@ -49,6 +50,7 @@ QtObject {
         powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false;
     }
     function togglePanel(name, screen) {
+        if (authenticationActive) return;
         if (name === "settings" && !demo && !settingsApp) {
             openSettingsPage("appearance");
             return;
@@ -93,6 +95,9 @@ QtObject {
             statusError = true; statusTimer.restart(); return;
         }
         const request = Object.assign({}, payload || {}, {action: action});
+        // Release the layer-shell keyboard grab before any external agent opens.
+        // The built-in Polkit agent also closes panels for requests from apps.
+        if (action === "chargeMode" && !demo) closePanels();
         pendingActions = Object.assign({}, pendingActions, {[action]: true});
         backend.write(JSON.stringify(request) + "\n");
     }

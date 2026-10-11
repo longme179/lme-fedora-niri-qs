@@ -766,7 +766,7 @@ class DesktopBackend:
         if self.charger.state()["writable"]:
             self.charger.set_mode(limit)
         else:
-            self.runner.run("pkexec", "/usr/bin/python3", "-I", str(HELPER_PATH), str(limit), timeout=90)
+            self.runner.run("pkexec", "--disable-internal-agent", "/usr/bin/python3", "-I", str(HELPER_PATH), str(limit), timeout=90)
         state = self.charger.state()
         desired = "conservation" if limit == 85 else "max"
         if not state["available"] or state["mode"] != desired or (state["supports85"] and state["limitPercent"] != limit):

@@ -3,6 +3,8 @@
 // Remove existing binds with these same keys before merging this fragment.
 
 spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-shell/scripts/start.sh\""
+// The shell includes a Polkit password popup. Keep only one session agent;
+// remove a previous authentication-agent autostart entry when switching.
 
 // Keep the independent settings application at its requested window size.
 window-rule {

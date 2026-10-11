@@ -40,6 +40,8 @@ commands or Arch installation scripts.
   a three-day forecast; city search, manual location and °C/°F in Settings.
 - Lenovo charging controls: verified 85%/100% thresholds when exposed, with
   firmware conservation mode as the fallback. See [charging setup](docs/CHARGING.md).
+- Built-in Polkit authentication popup: password entry, retry and cancellation
+  work when the shell starts from niri without a terminal. See [authentication](docs/AUTHENTICATION.md).
 - Wallpaper selection/restoration through `awww`, with automatic daemon startup.
 - English calendar, saved to-do list, focus timer and stopwatch.
 - MPRIS media controls for compatible players and an English date/time display.

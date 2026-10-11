@@ -52,7 +52,7 @@ The following checks passed:
 
 | Area | Verification |
 | --- | --- |
-| Backend | All 74 Python tests, including BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
+| Backend | All 75 Python backend tests, including authentication cancellation, BlueZ failures/confirmation/rfkill, stable workspace ordering/movement, task validation, modern and legacy TuneD/PPD interfaces, and application metadata |
 | Installation | Dry run, repeated install, overwrite refusal, backup preservation, broken symlinks, unsafe-target rejection |
 | Startup | Demo/preview avoids desktop mutations; argument quoting and saved-wallpaper restoration |
 | Shell scripts | Bash syntax and Fedora package preview; non-Fedora installation refused |
@@ -93,6 +93,39 @@ and documentation, but were not parsed by a running niri binary.
 A nested compositor does not establish real niri positioning, laptop graphics
 acceleration, output refresh rates, device control, or power-management behavior.
 Use the target laptop for those checks below.
+
+## Authentication popup validation
+
+The native Polkit agent registered successfully when the real shell was started
+without a controlling terminal on a private D-Bus authority fixture. The test
+used a process-local login-session lookup fixture because the headless cloud
+process is not in a real logind desktop session. It did not use the host Polkit
+service, run PAM, submit a real password or grant privileges.
+
+Six additional dialog tests exercise the actual QML window under headless
+Wayland using virtual keyboard input: masked entry, failure/retry and Enter
+success, Escape cancellation, Tab/Space on Cancel, account changes, a new
+conversation clearing old input, and visible (non-password) challenges.
+These use a simulated conversation in `authentication-demo.qml` and verify
+that response text does not appear in its logs. The backend cancellation test
+confirms that pending charging clears and the actual threshold remains unchanged.
+
+To repeat all checks inside a **private Wayland test session** with `wtype` and
+Quickshell installed:
+
+```bash
+LME_TEST_AUTHENTICATION_UI=1 ./scripts/check.sh
+```
+
+Without that environment variable, the six GUI tests are skipped; ordinary
+backend checks remain usable without a compositor. For a manual isolated dialog
+preview, run `quickshell -p authentication-demo.qml`. It accepts only the dummy
+response `test-only`; do not enter a real password into a demo. It never starts
+an authentication agent or performs a privileged operation.
+
+The target laptop still needs verification of actual Polkit/PAM authentication,
+successful helper execution, and its firmware's charging read-back. Check
+[AUTHENTICATION.md](AUTHENTICATION.md) for the real-session setup.
 
 ## Wallpaper, weather and charging update
 

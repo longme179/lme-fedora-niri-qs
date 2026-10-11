@@ -30,20 +30,19 @@ required wpctl wireplumber
 required brightnessctl brightnessctl
 required bluetoothctl bluez
 required busctl systemd
+required pkexec polkit
 optional rfkill 'Bluetooth software-block recovery: util-linux'
 if command -v quickshell >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
     if quickshell --version | python3 -c 'import re, sys; match = re.search(r"(\d+)\.(\d+)\.(\d+)", sys.stdin.read()); sys.exit(0 if match and tuple(map(int, match.groups())) >= (0, 3, 2) else 1)'; then
         printf 'OK       Quickshell version is at least 0.3.2\n'
     else
-        printf 'MISSING  Quickshell 0.3.2 or newer with PipeWire and Wayland support\n'
+        printf 'MISSING  Quickshell 0.3.2 or newer with PipeWire, Polkit and Wayland support\n'
         required_failures=$((required_failures + 1))
     fi
 fi
 optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
 optional swaylock 'lock screen'
 optional swayidle 'idle locking; configure explicitly'
-optional pkexec 'administrator charge control: polkit'
-optional lxqt-policykit-agent 'authentication agent; an existing alternative is fine'
 optional awww 'wallpaper selection and restoration'
 optional awww-daemon 'wallpaper daemon'
 optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'
@@ -85,6 +84,8 @@ if command -v niri >/dev/null 2>&1; then
 fi
 if command -v quickshell >/dev/null 2>&1; then
     quickshell --version 2>&1 || true
+    printf 'INFO     Built-in authentication: run quickshell -c lme-shell ipc call shell authenticationStatus\n'
+    printf 'INFO     Custom Quickshell builds need SERVICE_POLKIT=ON; see docs/AUTHENTICATION.md\n'
 fi
 if command -v busctl >/dev/null 2>&1; then
     if busctl --system get-property org.freedesktop.UPower.PowerProfiles \

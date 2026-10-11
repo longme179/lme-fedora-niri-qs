@@ -12,6 +12,10 @@ The current Control Center image includes sample weather and numerical charge
 controls. Weather settings also uses sample data; it does not reveal the cloud
 IP location or establish the laptop’s firmware capability.
 
+`authentication.png` shows the actual authentication popup with a simulated
+conversation and account. No real password or Polkit/PAM session was used for
+the screenshot.
+
 The workspace board, wider control center, Devices and Agenda images show the
 expanded shell. `audio-mixer.png` now shows the Material layout with sample data.
 `native-audio-mixer.png` preserves the earlier isolated PipeWire/WirePlumber session
@@ -36,6 +40,7 @@ the new tabs. No image represents physical laptop hardware testing.
 | Weather settings with sample location/forecast | [weather-settings.png](weather-settings.png) |
 | Modular topbar editor with sample state | [topbar-editor.png](topbar-editor.png) |
 | Power menu | [power.png](power.png) |
+| Authentication popup with a simulated conversation | [authentication.png](authentication.png) |
 | Native notification toast with test content | [notification-toast.png](notification-toast.png) |
 | Native media/tray controls with mock applications | [native-control-center.png](native-control-center.png) |
 | Power profile dropdown with sample hardware state | [power-profile-dropdown.png](power-profile-dropdown.png) |

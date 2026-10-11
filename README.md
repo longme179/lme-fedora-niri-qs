@@ -1,241 +1,364 @@
 # LME Shell
 
-A Quickshell desktop shell for **Fedora 44 + niri**, written in QML/Qt Quick
-with a small Python standard-library backend. All interface text, code, and
-documentation are in English.
+A desktop shell for **Fedora + niri**, built with **Quickshell and QML/Qt Quick**.
+LME combines Material 3 Expressive controls, translucent glass, a Dracula-inspired
+palette and Roboto typography. Its bar, panels, colors, fonts and motion are
+customizable through a separate Settings app.
 
-The layout combines a compact top bar and a control sidebar on the right.
-Its Material 3 Expressive inspired controls sit on Liquid glass surfaces, with a
-dark Dracula Pro-style palette, flat tonal fills, Roboto typography, rounded
-shapes, and eased slide animations suitable
-for an integrated Radeon GPU.
+The default layout has one rounded top bar, an Activity island in the center and
+a Control Center on the right. The interface and documentation are in English.
 
-The interaction design takes inspiration from
-[end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) and
-[snowarch/iNiR](https://github.com/snowarch/iNiR). This is a separate
-niri implementation; it uses niri IPC and Fedora utilities rather than Hyprland
-commands or Arch installation scripts.
+[Get started](#get-started) · [Personalize](#personalize) ·
+[Shortcuts](#shortcuts) · [Update](#update) · [Help](#help)
 
-![Material glass desktop rendered from QML with sample data](docs/previews/control.png)
+## What you get
 
-## Included
+| Area | Features |
+| --- | --- |
+| Desktop | Modular bar, ordered workspaces, niri overview, workspace board with window drag/drop, tray dropdown |
+| Launcher | Fuzzy app search, favorites, calculator, emoji and open-window search |
+| Control Center | Rearrangeable cards, Wi-Fi connections, Bluetooth devices, audio mixer, brightness and power profiles |
+| Everyday tools | Clipboard history with images and pins, grouped notifications, timed Do Not Disturb, calendar, tasks and media controls |
+| Activity island | Expandable media controls, focus timer, stopwatch and supported recording status |
+| Laptop | Weather, charge controls, AC/battery idle profiles, CPU/RAM/network monitoring and display previews with automatic revert |
+| Capture and comfort | Screenshot annotations, redaction, local OCR, Night Light and optional blur behind popups |
+| Appearance | Hex color editing, per-element colors and fonts, saved profiles, bar placement, Smooth/Expressive/Jelly motion presets |
 
-- Modular per-output top bar: 15 modules, three configurable zones, drag/drop
-  and keyboard ordering, optional media/resources, and live layout changes.
-  The default is one connected glass pill; three islands are also available.
-  Workspaces follow their numeric order per output. Bar labels use consistent
-  Roboto Medium, adjustable from 12 to 16 px.
-- Overview button for niri's live window previews and drag/drop. Right-click it
-  for a themed workspace board with app icons, titles, drag/drop and a keyboard
-  workspace selector for each window.
-- System tray dropdown with compact icons, application labels, and native menus.
-- Local text/image clipboard history: search, previews, pins, pause and confirmed
-  clearing. Open with Super+V; requires `wl-clipboard`.
-- Expanding Activity island with MPRIS controls, shared focus timer/stopwatch and
-  supported recorder status; eased resizing with flat glass surfaces. See
-  [clipboard and Activity setup](docs/CLIPBOARD_ACTIVITY.md).
-- Smart launcher with fuzzy app search, favorites, arithmetic, emoji and open-window search.
-- Wider control center with Controls, Audio, Devices, Agenda and Notifications
-  tabs, saved draggable tiles/cards and full/half sizes: speaker/microphone volume and mute, backlight, radios, power profiles,
-  idle inhibition, Night Light, motion, Screenshot studio and system information.
-- Night Light with manual, local-time and sunset schedules using `wlsunset`.
-- Screenshot studio: native niri capture, Pen/Highlight/Rectangle/Arrow/Redact,
-  undo/redo, zoom, original-resolution PNG export, image copy and local OCR.
-- Liquid hover/press shape feedback and ripples, retained panel exit transitions,
-  animated Settings pages, Smooth/Expressive/Jelly presets, adjustable speed/bounce, reduced motion
-  and Appearance profile integration. See [setup and usage](docs/CAPTURE_NIGHT_MOTION.md).
-- Native PipeWire device selection and individual device/application sliders;
-  Bluetooth adapter selection, paired-device connect/disconnect and rfkill
-  diagnostics, plus Wi-Fi scanning, password entry and saved-network management.
-- Automatic local weather by approximate IP location, current conditions and
-  a three-day forecast; city search, manual location and °C/°F in Settings.
-- Lenovo charging controls: verified 85%/100% thresholds when exposed, with
-  firmware conservation mode as the fallback. See [charging setup](docs/CHARGING.md).
-- Built-in Polkit authentication popup: password entry, retry and cancellation
-  work when the shell starts from niri without a terminal. See [authentication](docs/AUTHENTICATION.md).
-- Wallpaper folder library, thumbnails, search and favorites through `awww`, with automatic daemon startup.
-- English calendar, saved to-do list, focus timer and stopwatch.
-- MPRIS media controls for compatible players and an English date/time display.
-- Native notifications with persistent, searchable app groups, per-app popup rules and timed Do Not Disturb.
-- Independent Settings application with searchable Appearance, Elements and fonts, Top bar,
-  Control center, Displays, Wallpaper, Weather, Clipboard, Idle and sleep, Keyboard shortcuts, Behavior and About pages. Open it without starting the shell.
-  Changes synchronize with the running shell; preferences are merged under a
-  file lock so another client’s task updates are preserved.
-- Live hex editing for 44 UI color roles, five font roles and body size, included
-  in Appearance profiles. Top/bottom bar placement, edge/side margins and height
-  update the bar and associated popups. See [personalization](docs/PERSONALIZATION.md).
-- On-demand system monitor: CPU/RAM charts, CPU thread loads/temperature, network rates and sortable searchable processes without GPU probes.
-- Separate AC/battery idle profiles, display wake on input and a confirmed session lock before suspend; searchable niri keybindings with include support.
-- Optional full-screen popup blur on niri 26.04+, including the expanded Activity Island; see [laptop features and blur setup](docs/LAPTOP_FEATURES.md).
-- Saved appearance profiles and safe niri display previews with independent automatic revert.
-- Material tonal surfaces, expressive switches/sliders and shape transitions,
-  bold Roboto headings, and translucent glass without UI gradients.
-- Lock, suspend, logout, restart, and shutdown actions with confirmation for
-  destructive actions.
-- Optional original wallpaper, package requirements, installation scripts,
-  niri bindings, and troubleshooting documentation.
+For detailed behavior and feature requirements, use the [guides](#guides).
 
-First-time Bluetooth pairing, enterprise Wi-Fi setup and advanced audio configuration open the existing Fedora
-tools (`nm-connection-editor`, `blueman-manager`, and `pavucontrol`). The shell
-does not implement a password manager or replace NetworkManager.
+## Before you install
 
-## Install
+The supported target is **Fedora 44 with an existing niri Wayland session**.
+The package helper assumes niri is already installed.
 
-The target machine already has niri installed. Check the package requirements
-and installation details in [docs/INSTALL.md](docs/INSTALL.md).
+| Requirement | Why it is needed |
+| --- | --- |
+| niri **25.11+** | Workspaces, live overview, window movement and screen capture |
+| niri **26.04+** for popup blur | Blurs the desktop and applications behind an open shell panel |
+| Quickshell **0.3.2+** | Runs the QML interface; its build needs PipeWire, Polkit and Wayland/BackgroundEffect support |
+| Matching Qt 6 runtime | Qt Quick, Wayland, SVG and image support |
+| Python 3 | Desktop integration; only the standard library is used |
+| Roboto and Noto fonts | UI text, fallback characters and emoji |
+
+[requirements-fedora.txt](requirements-fedora.txt) lists the Fedora packages by
+purpose. It is a **DNF package list**, not a pip requirements file.
+
+Run the commands below as your normal desktop user. The package installer asks
+for administrator access when needed.
+
+## Get started
+
+### 1. Download the repository
+
+Keep the repository in a permanent directory: the installed shell will link to it.
+Install Git with `sudo dnf install git` if the `git` command is unavailable.
 
 ```bash
-git clone https://github.com/longme179/lme-fedora-niri-qs.git
-cd lme-fedora-niri-qs
+mkdir -p ~/src
+git clone https://github.com/longme179/lme-fedora-niri-qs.git ~/src/lme-fedora-niri-qs
+cd ~/src/lme-fedora-niri-qs
+```
 
-# Show packages first. This command changes nothing.
+Run the remaining `./scripts/…` commands from this repository directory.
+
+### 2. Install the packages
+
+First, print the proposed package command. This changes nothing:
+
+```bash
 ./scripts/install-fedora.sh --optional
+```
 
-# On Fedora: install packages from enabled repositories.
+Then install the packages on Fedora:
+
+```bash
 ./scripts/install-fedora.sh --install --optional
+```
 
-# Link this checkout into the current user's Quickshell config.
+`--install` runs DNF and leaves its transaction confirmation enabled.
+`--optional` adds recommended tools for locking, idle management, Night Light,
+OCR and advanced desktop settings, plus applications such as Kitty and Firefox.
+The installer preserves your current power-profile provider.
+
+<details>
+<summary>Quickshell is unavailable from my enabled repositories</summary>
+
+Review the [errornointernet/quickshell COPR](https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/)
+and check that it offers a Fedora 44 build. To allow this additional package source:
+
+```bash
+./scripts/install-fedora.sh --install --optional --copr
+```
+
+The script enables that COPR only when Quickshell is unavailable and you supply
+`--copr`. See the [installation guide](docs/INSTALL.md#quickshell-repository-availability)
+for the repository checks.
+
+</details>
+
+### 3. Install the shell and Settings launcher
+
+```bash
 ./scripts/install.sh
-
-# Register the separate settings app in the application launcher.
 ./scripts/install-settings.sh
+```
 
-# Run inside a niri Wayland session.
+- `install.sh` links `~/.config/quickshell/lme-shell` to this checkout.
+- `install-settings.sh` adds **LME Shell Settings** to your application launcher.
+
+Both commands support `--dry-run` to show their planned changes. If a different
+config or launcher entry already exists, they stop. Use the corresponding
+command with `--replace` to preserve the old entry in a backup before replacing it.
+Your niri config and saved shell preferences are kept intact.
+
+### 4. Try it in your niri session
+
+Check the available tools and session connections, then start the shell:
+
+```bash
+./scripts/doctor.sh
 ./scripts/start.sh
 ```
 
-If Quickshell is absent from enabled repositories, the installer stops and
-explains the upstream-documented COPR option. It never adds a repository silently.
-Keep the checkout in place: the installation is a symlink to this directory.
-Install both `awww` and `awww-daemon` for wallpaper support; see
-[the upstream and Fedora instructions](docs/INSTALL.md#wallpaper-and-charging).
-Charging needs a one-time local helper installation:
+`doctor.sh` reports integration problems without changing system state.
+`start.sh` restores a previously selected wallpaper and confirmed display settings,
+then starts Quickshell. Keep this terminal open while testing; **Ctrl+C** stops
+this shell instance.
+
+To inspect the interface with sample data instead:
+
+```bash
+./scripts/start.sh --preview
+```
+
+Preview opens an ordinary window inside Wayland. It does not save preferences or
+apply desktop actions.
+
+### 5. Start automatically with niri
+
+Review [config/niri/lme-shell.kdl](config/niri/lme-shell.kdl), then add this include
+to `~/.config/niri/config.kdl` for the default installation:
+
+```kdl
+include "~/.config/quickshell/lme-shell/config/niri/lme-shell.kdl"
+```
+
+The fragment starts the shell at login, supplies the shortcuts below and opens
+Settings and Screenshot studio as floating windows. Remove or rebind existing
+shortcuts with the same keys before adding it, especially `Mod+Comma` and
+`Mod+Shift+E` from niri's sample config.
+
+Check the result before your next login:
+
+```bash
+niri validate
+```
+
+Keep one shell startup entry. If you are replacing another bar, notification
+daemon or Polkit agent, remove its previous autostart entry to avoid conflicting
+screen reservations or service ownership. The shell includes its own notification
+server and password popup.
+
+Custom config names and XDG paths are covered in the [installation guide](docs/INSTALL.md).
+
+## Enable optional features
+
+### Blur behind popups
+
+On **niri 26.04+**, add this second include to your niri config:
+
+```kdl
+include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
+```
+
+Enable **Settings → Appearance → Blur behind popups**, then run `niri validate`.
+The fragment uses `xray false`, so both application windows and the desktop blur
+while the popup stays sharp. If your config already has a `blur` block, merge the
+settings instead of adding a second block. Older niri versions can still run the
+shell with its translucent and dimmed backdrop.
+
+### Wallpaper
+
+Install both **`awww` and `awww-daemon`**, then open **Settings → Wallpaper** to
+choose a folder and image. These tools are not installed by the package helper;
+availability depends on your enabled repositories. See
+[wallpaper installation](docs/INSTALL.md#wallpaper-and-charging) and
+[awww upstream](https://codeberg.org/LGFae/awww).
+
+### Laptop charging
+
+For supported Lenovo charging controls, install the helper once from this checkout:
 
 ```bash
 sudo ./scripts/install-charge-helper.sh --install
 ```
 
-The shell stays unprivileged; Polkit requests administrator authentication when
-needed. A fixed firmware conservation limit cannot be changed to exactly 85%.
-Weather uses HTTPS services with no API key or extra Python packages.
+This installs the charge helper and its Polkit policy. Later changes from Control
+Center use the shell's authentication popup when authorization is required.
+Some firmware exposes only a fixed conservation mode; an exact **85%** limit is
+available only when the hardware supports adjustable thresholds. See
+[charging setup](docs/CHARGING.md).
 
-Merge [config/niri/lme-shell.kdl](config/niri/lme-shell.kdl) into your existing
-niri configuration after checking for duplicate bindings. The installer never
-overwrites `~/.config/niri/config.kdl`.
+### Other feature requirements
 
-| Shortcut | Action |
+| Feature | Tools or service |
 | --- | --- |
-| `Mod+Tab` | niri live overview |
-| `Mod+Shift+Tab` | Shell workspace board |
-| `Mod+Space` | Application launcher |
-| `Mod+A` | Control center |
-| `Mod+N` | Notifications |
-| `Mod+V` | Clipboard history |
-| `Mod+Shift+A` | Activity island |
-| `Mod+Comma` | Separate Settings app |
-| `Mod+Shift+E` | Power menu |
-| `Escape` | Close an open panel |
-
-`Mod` is normally Super/Windows in a normal niri session. `Mod+Comma` and
-`Mod+Shift+E` have other meanings in niri's sample configuration; remove or
-rebind the existing entries before adding these bindings.
-
-The expanded shell requires **Quickshell 0.3.2+** with PipeWire and Wayland
-support, and **niri 25.11+**. The overview's live thumbnails are rendered by niri;
-the QML board lists windows with their titles and icons. See
-[docs/CONFIGURATION.md](docs/CONFIGURATION.md) for all control-center features.
-
-## Configuration and validation
-
-User preferences live in `~/.config/lme-shell/settings.json`, separate from the
-checkout. Palette overrides live in `~/.config/lme-shell/palette.json`. See
-[docs/CONFIGURATION.md](docs/CONFIGURATION.md).
-
-```bash
-# Check tools and session connectivity without changing system state.
-./scripts/doctor.sh
-
-# Preview with sample data; desktop actions and saved settings are disabled.
-./scripts/start.sh --preview
-
-# A read-only snapshot of real integration state.
-python3 scripts/desktop_backend.py --once
-```
-
-The implementation is designed for the Lenovo IdeaPad Gaming 3 15ARH7 with
-Ryzen 5 7535HS, integrated Radeon graphics, RTX 4050 Laptop, 16 GB RAM, and a
-1920×1080 120 Hz panel. Real hardware validation still belongs on that laptop;
-cloud tests cannot establish graphics, backlight, radio, or suspend behavior.
-The shell does not install graphics drivers or change disk partitions.
-
-The default glass effect is transparency with highlights. Background blur
-depends on compositor support and is not required to run this shell. No
-continuous GPU blur shader or discrete-GPU requirement is introduced.
-
-Run `./scripts/check.sh` for the backend test suite and shell-script checks.
-
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for session issues and
-[docs/VALIDATION.md](docs/VALIDATION.md) for what can be checked in cloud and
-what needs a real Fedora desktop session.
-
-Preview images are stored in [docs/previews](docs/previews). They were rendered
-from the actual QML with sample state or native-service test fixtures. Their
-captions identify the inputs; they are not screenshots from the user's Fedora
-laptop.
-
-## Project layout
-
-```text
-shell.qml                   Quickshell entry point and panel IPC
-qml/                        Components, panels, and shared services
-scripts/desktop_backend.py  Desktop commands and live state; Python stdlib only
-scripts/install-fedora.sh   Preview/install Fedora packages
-scripts/install.sh          Safe user-config symlink installation
-scripts/start.sh            Startup and optional wallpaper restoration
-scripts/doctor.sh           Read-only environment checks
-config/niri/                Configuration fragment; never applied automatically
-assets/wallpapers/          Original wallpaper source and raster image
-docs/                       Installation, settings, troubleshooting, validation
-requirements-fedora.txt     Required and optional DNF packages
-```
-
-Licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE) and
-[THIRD_PARTY.md](THIRD_PARTY.md) for upstream attribution and asset provenance.
+| Clipboard history and image copy | `wl-clipboard` — included in the required package set |
+| Idle management and session lock | `swayidle`, `swaylock` — included with `--optional`; enable profiles in Settings |
+| Night Light | `wlsunset` — included with `--optional`; requires compositor gamma-control support |
+| Screenshot OCR | `tesseract` and language packs — English/Vietnamese included with `--optional` |
+| Weather | Internet access for Open-Meteo and approximate IP location; no API key needed |
 
 ## Personalize
 
-Open **LME Shell Settings** from your launcher or run:
+Click the gear on the bar or in Control Center, open **LME Shell Settings** from
+the app launcher, or run:
 
 ```bash
 ./scripts/settings.sh
-./scripts/settings.sh --page topbar
-./scripts/settings.sh --demo
 ```
 
-Settings uses its own window and can run while the desktop shell is stopped.
-The demo uses a separate entry point and never saves preferences or applies a
-wallpaper. **Weather** controls automatic location, city search and units.
-**Top bar** lets you move modules between Left, Center and Right,
-reorder with a drag grip or arrow buttons, add/remove modules, change the shape,
-and adjust text size. Restore default layout resets the module arrangement only.
+Settings runs in its own window, even when the shell is stopped. Changes save
+automatically and synchronize with the running shell.
 
-![Standalone Settings application with sample data](docs/previews/settings.png)
+| Settings page | What you can change |
+| --- | --- |
+| Appearance | Accent, opacity, density, appearance profiles, motion and popup blur |
+| Elements and fonts | Hex colors for individual UI roles, font families and body text size |
+| Top bar | Modules, order, connected/island shape, text size, top/bottom placement, height and screen margins |
+| Control center | Card visibility, order, full/half sizes and panel width |
+| Displays | Resolution, refresh rate, scale and output positions, with a confirmation timer |
+| Wallpaper and Weather | Wallpaper folder/favorites, automatic or manual weather location, °C/°F |
+| Idle and sleep | Separate timeouts for AC and battery, locking and suspend |
+| Keyboard shortcuts | Search the bindings from your niri config and its includes |
 
-See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the iNiR feature mapping and the
-Material/glass design choices. The required Fedora font package is
-`google-roboto-fonts`; no fonts or upstream artwork are bundled.
+To jump directly to the bar settings, use `./scripts/settings.sh --page topbar`.
+For a separate Settings demo that does not save changes, use
+`./scripts/settings.sh --demo`.
 
-The seven desktop upgrades—appearance profiles, display previews with automatic
-revert, persistent grouped notifications, wallpaper browsing, modular controls,
-smart launcher and in-shell Wi-Fi—are documented in
-[Desktop upgrades](docs/DESKTOP_UPGRADES.md). Screenshots: [profiles](docs/previews/appearance-profiles.png),
-[displays](docs/previews/display-settings.png), [wallpaper library](docs/previews/wallpaper-library.png),
-[modular controls](docs/previews/control-layout.png), [notifications](docs/previews/notifications-grouped.png)
-[Wi-Fi](docs/previews/wifi-connections.png) and [launcher](docs/previews/smart-launcher.png).
+### Defaults and saved settings
 
-Latest laptop previews: [system monitor](docs/previews/system-monitor.png), [idle profiles](docs/previews/idle-profiles.png), [keybindings](docs/previews/keybind-viewer.png). Setup and limits: [docs/LAPTOP_FEATURES.md](docs/LAPTOP_FEATURES.md).
+First run uses the repository's defaults: a connected top bar, Dracula-inspired
+colors, Roboto text, expressive motion and automatic weather location. Automatic
+idle management and Night Light are initially disabled.
 
-Night Light, Screenshot studio and customizable motion are documented in
-[Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md). Actual QML previews:
-[Night Light](docs/previews/night-light.png), [motion presets](docs/previews/motion-presets.png)
-and [Screenshot studio](docs/previews/screenshot-studio.png).
+Saved preferences live in `~/.config/lme-shell/settings.json`; optional base
+palette overrides live in `~/.config/lme-shell/palette.json`. These are separate
+from the Quickshell config directory and are preserved when you update the repo.
+Existing saved values take precedence over the repository's defaults.
+If you set `XDG_CONFIG_HOME`, replace `~/.config` with that directory.
+
+To share a preferred factory preset with the maintainer, provide a copy of
+`settings.json`, plus `palette.json` if you use it. Appearance and layout values
+can become defaults for new users; personal tasks, locations, device IDs and
+machine-specific paths should stay out of a distributed preset. See
+[configuration details](docs/CONFIGURATION.md).
+
+## Shortcuts
+
+These bindings are active after including the niri fragment. `Mod` normally means
+the **Super/Windows** key.
+
+| Shortcut | Action |
+| --- | --- |
+| `Mod+Space` | Application launcher |
+| `Mod+A` | Control Center |
+| `Mod+Comma` | Settings |
+| `Mod+Tab` | niri live overview |
+| `Mod+Shift+Tab` | Shell workspace board |
+| `Mod+N` | Notification history |
+| `Mod+V` | Clipboard history |
+| `Mod+Shift+A` | Activity island |
+| `Mod+Shift+E` | Power menu |
+| `Escape` | Close an open shell panel |
+
+The bar's **Overview** button opens niri's live overview. Right-click it to open
+the themed workspace board.
+
+## Update
+
+From your permanent repository directory:
+
+```bash
+git pull --ff-only
+```
+
+The installed symlink points to this checkout, so the source updates in place.
+Saved settings stay in the separate `lme-shell` preferences directory. If an
+update changes dependencies, rerun the package preview and install commands.
+
+To restart the default shell instance after updating:
+
+```bash
+quickshell -c lme-shell kill
+./scripts/start.sh
+```
+
+<details>
+<summary>I already use a Quickshell config named gpt</summary>
+
+Keep the permanent checkout outside `~/.config/quickshell/gpt`. After pulling
+updates, link that name to the current source:
+
+```bash
+./scripts/install.sh --replace --target "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/gpt"
+./scripts/start.sh --config gpt
+```
+
+`--replace` backs up an old copied config before creating the symlink. An existing
+symlink to this checkout is left intact. Use `gpt` in your niri startup and IPC
+commands, including `--config gpt` when starting through `start.sh`. Change the
+include paths to `quickshell/gpt/…` as well. The supplied integration fragment
+targets `lme-shell` by default; adapt it before including it with a custom name.
+Your preferences still live in the same `lme-shell/settings.json` file.
+
+</details>
+
+## Help
+
+Start with `./scripts/doctor.sh` and the
+[troubleshooting guide](docs/TROUBLESHOOTING.md).
+
+- **Settings does not open:** run `./scripts/settings.sh --page appearance` in a
+  terminal to see its startup log. Update the installed config, not just a
+  separate copy of the repo. The launcher recovers stale Settings instances.
+- **Only the wallpaper blurs:** check the popup blur include and its `xray false`
+  setting, then run `niri validate`.
+- **Wi-Fi, Bluetooth or audio needs advanced setup:** use the Control Center's
+  links to Fedora's network editor, Blueman or pavucontrol. First-time Bluetooth
+  pairing and enterprise Wi-Fi use those existing tools.
+
+When reporting a problem, include what you clicked, what happened, the relevant
+terminal log, `niri --version`, `qs --version` and the doctor output.
+
+### Guides
+
+| Guide | Read it for |
+| --- | --- |
+| [Installation](docs/INSTALL.md) | Package sources, niri integration, custom paths and services |
+| [Configuration](docs/CONFIGURATION.md) | Preferences, palette overrides and feature behavior |
+| [Personalization](docs/PERSONALIZATION.md) | Element colors, fonts, bar geometry and liquid feedback |
+| [Laptop features](docs/LAPTOP_FEATURES.md) | Monitor, idle profiles, keybindings and native blur |
+| [Night Light, capture and motion](docs/CAPTURE_NIGHT_MOTION.md) | Schedules, annotation, OCR and animation presets |
+| [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
+| [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Lenovo firmware support, helper setup and password prompts |
+| [Validation](docs/VALIDATION.md) | Development checks and the limits of cloud testing |
+
+### Development
+
+Run `./scripts/check.sh` for backend tests, script syntax checks and a demo state
+check. Native UI tests need a private Wayland session; see the validation guide.
+Cloud checks do not establish real GPU, backlight, radio or suspend behavior on
+every laptop.
+
+## Credits and license
+
+Inspired by [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland),
+[iNiR](https://github.com/snowarch/iNiR),
+[DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) and
+[Caelestia](https://github.com/caelestia-dots/shell).
+
+Licensed under **GPL-3.0-or-later**, with the motion adaptation's retained
+GPL-3.0-only terms. See [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md)
+for source, dependency and asset attribution. Purchased Dracula Pro assets and
+fonts are not bundled.

@@ -16,6 +16,7 @@ QtObject {
     readonly property var system: snapshot.system || {}
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
+    readonly property bool popupBlurEnabled: !demo && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool notificationsOpen: false
@@ -29,7 +30,9 @@ QtObject {
     property bool wifiOpen: false
     property real activityAnchorX: -1
     property real activityAnchorWidth: 180
+    property int controlTab: 0
     property bool stayAwake: false
+    onStayAwakeChanged: if (backendReady && !settingsApp) run("idleInhibit", {value: stayAwake})
     property bool draggingWindow: false
     property bool authenticationActive: false
     property var pendingActions: ({})
@@ -70,7 +73,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["appearance", "topbar", "controlLayout", "display", "wallpaper", "weather", "clipboard", "behavior", "about"].includes(page)) return;
+        if (!["appearance", "topbar", "controlLayout", "display", "wallpaper", "weather", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
         if (demo) settingsOpen = true;
         else if (!settingsProcess.running) settingsProcess.running = true;
@@ -118,7 +121,9 @@ QtObject {
             if (JSON.stringify(next.apps) === JSON.stringify(apps)) next.apps = apps;
             if (JSON.stringify(next.preferences) === JSON.stringify(preferences)) next.preferences = preferences;
             snapshot = next;
+            const wasReady = backendReady;
             backendReady = true; restartAttempts = 0;
+            if (!wasReady && stayAwake && !settingsApp) run("idleInhibit", {value: true});
             if (oldAudio && next.system.audio && oldAudio.available && next.system.audio.available
                     && (oldAudio.volume !== next.system.audio.volume || oldAudio.muted !== next.system.audio.muted)) {
                 osdLabel = next.system.audio.muted ? "Muted" : "Volume";
@@ -136,7 +141,7 @@ QtObject {
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

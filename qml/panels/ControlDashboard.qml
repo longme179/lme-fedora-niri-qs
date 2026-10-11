@@ -362,6 +362,7 @@ Item {
                         return details.length ? details.join("  ·  ") : "Hardware details unavailable";
                     }
                 }
+                LiquidButton { text: "System monitor"; Layout.fillWidth: true; onClicked: ShellState.controlTab = 5 }
             }
         }
     }

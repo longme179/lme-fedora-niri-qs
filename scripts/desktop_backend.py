@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import selectors
 import shlex
+import signal
 import shutil
 import socket
 import subprocess
@@ -33,6 +34,9 @@ from weather import WeatherClient, location
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT,
                               appearance_profile, control_layout, wallpaper_library, calculate)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
+from system_monitor import SystemMonitor
+from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
+from niri_keybinds import read_keybinds
 
 
 DEFAULT_PREFERENCES = {
@@ -42,6 +46,8 @@ DEFAULT_PREFERENCES = {
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
     "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
+    "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
+    "niriConfigPath": "", "popupBlur": True,
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
@@ -54,7 +60,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -244,6 +250,10 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur"} and type(value) is bool: return value
+    if key == "idleProfiles": return validate_profiles(value)
+    if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
+        return str(Path(value).expanduser().resolve()) if value else ""
     if key == "density" and value in ("compact", "comfortable"): return value
     if key == "appearanceProfiles" and isinstance(value, list) and 1 <= len(value) <= 20:
         profiles = [appearance_profile(item, validate_preference) for item in value]
@@ -401,9 +411,10 @@ class DesktopBackend:
     def __init__(self, runner: CommandRunner | None = None, preferences: Preferences | None = None,
                  apps: Applications | None = None, proc: Path = Path("/proc"), sysfs: Path = Path("/sys"),
                  demo: bool = False, settings_only: bool = False, weather: WeatherClient | None = None,
-                 weather_fetch: bool = True) -> None:
+                 weather_fetch: bool = True, manage_idle: bool = False) -> None:
         self.demo = demo
         self.settings_only = settings_only
+        self.manage_idle = manage_idle
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
         self.applications = apps or Applications()
@@ -417,6 +428,13 @@ class DesktopBackend:
         self.feature_jobs = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
+        self.monitor_enabled = False
+        self.monitor = SystemMonitor(proc)
+        self.idle_control = IdleControl(self.runner)
+        self.idle_state = {}
+        self.keybinds = {"path": "", "bindings": [], "errors": []}
+        self.platform = {"niriVersion": "Demo" if demo else "Not checked", "popupBlurSupported": demo}
+        if manage_idle and not demo and not settings_only: self.platform = self.compositor_features()
         self.display_control = DisplayControl(self.runner)
         self.notification_path = self.preferences.path.parent / "notification-history.json"
         self.notification_history = self.valid_notifications(read_json(self.notification_path, [])) if not demo and not settings_only else []
@@ -517,7 +535,19 @@ class DesktopBackend:
             status = self.read(battery / "status")
             charging = charging or status == "Charging"
         return {"available": bool(capacities), "percent": round(sum(capacities) / len(capacities)) if capacities else None,
-                "charging": charging}
+                "charging": charging, "acOnline": self.ac_online()}
+
+    def compositor_features(self):
+        version = self.try_run("niri", "--version") or "Unavailable"
+        release = re.search(r"\b(\d{2})\.(\d{2})\b", version)
+        return {"niriVersion": version, "popupBlurSupported": bool(release and tuple(map(int, release.groups())) >= (26, 4))}
+
+    def ac_online(self):
+        supplies = list((self.sysfs / "class/power_supply").glob("*"))
+        online = [self.read(p / "online") for p in supplies if self.read(p / "type") != "Battery"]
+        if any(v in {"0", "1"} for v in online): return "1" in online
+        statuses = [self.read(p / "status") for p in supplies if self.read(p / "type") == "Battery"]
+        return not statuses or "Charging" in statuses or "Full" in statuses
 
     def network(self) -> dict[str, Any]:
         result = {"available": False, "enabled": False, "connected": False, "wifiConnected": False, "ssid": "", "strength": None, "networks": [], "saved": [], "device": ""}
@@ -741,7 +771,8 @@ class DesktopBackend:
         weather = self.weather.snapshot(self.preferences.values, allow_fetch=self.weather_fetch and not self.settings_only)
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "wallpaperLibrary": self.wallpaper_library, "displays": self.displays}
+                    "lastResult": dict(self.last_result), "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                    "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
@@ -754,9 +785,13 @@ class DesktopBackend:
                           powerProfile=self.power_profile(), charging=self.charging(), recording=self.recording())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
+        if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
+        if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
+            self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history}
+                "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
+                "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform}
 
     @staticmethod
     def valid_notifications(value):
@@ -820,7 +855,8 @@ class DesktopBackend:
         if hasattr(self, "_demo_state"):
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
-            self._demo_state.update(wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[])
+            self._demo_state.update(wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
+                monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
                 unit="°F" if unit == "fahrenheit" else "°C", temperature=84 if unit == "fahrenheit" else 29,
@@ -845,7 +881,7 @@ class DesktopBackend:
                     {"id": 2, "title": "Terminal · project", "app_id": "kitty", "workspace_id": 1, "is_focused": False},
                     {"id": 3, "title": "Documents", "app_id": "org.gnome.Nautilus", "workspace_id": 2, "is_focused": False}]},
             "system": {"cpu": 12.4, "memoryPercent": 34.2, "memoryUsedGiB": 5.47, "memoryTotalGiB": 16,
-                       "tempC": 47, "battery": {"available": True, "percent": 82, "charging": False},
+                       "tempC": 47, "battery": {"available": True, "percent": 82, "charging": False, "acOnline": False},
                        "network": {"available": True, "enabled": True, "connected": True, "ssid": "Home Wi-Fi", "strength": 88,
                                    "device": "wlp1s0", "saved": [{"uuid": "demo-home", "name": "Home Wi-Fi"}],
                                    "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": True, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:01"}, {"ssid": "Guest", "strength": 62, "connected": False, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:02"}]},
@@ -946,7 +982,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan"}:
+            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -972,7 +1008,23 @@ class DesktopBackend:
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
         system = state["system"]
-        if action.startswith("appearance"):
+        if action == "monitor":
+            if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
+            self.monitor_enabled = request["enabled"]
+            self.monitor.state = {"history": [{"cpu": 18+12*math.sin(i/4), "memory": 34+i/20, "download": 200000+80000*math.sin(i/3), "upload": 16000} for i in range(60)],
+                "cores": [{"name": "CPU"+str(i), "percent": 12+i*2} for i in range(12)],
+                "interfaces": [{"name": "wlp1s0", "download": 245760, "upload": 18432}],
+                "processes": [{"pid": 1820, "name": "firefox", "user": "user", "cpu": 18.4, "memoryBytes": 943718400}, {"pid": 1142, "name": "niri", "user": "user", "cpu": 3.8, "memoryBytes": 188743680}, {"pid": 1250, "name": "quickshell", "user": "user", "cpu": 1.2, "memoryBytes": 125829120}],
+                "processCount": 3, "sampledAt": 1, "error": ""}
+        elif action == "keybindRefresh":
+            self.keybinds = read_keybinds(str(Path(__file__).resolve().parents[1]/"config/niri/lme-shell.kdl"))
+        elif action == "platformRefresh": pass
+        elif action == "idleRefresh":
+            self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
+        elif action == "idleInhibit":
+            if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
+            self.idle_control.paused = request["value"]
+        elif action.startswith("appearance"):
             self.appearance_action(action, request)
         elif action == "displayRefresh":
             if not self.displays["outputs"]:
@@ -1085,6 +1137,30 @@ class DesktopBackend:
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action == "monitor":
+            if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
+            self.monitor_enabled = request["enabled"]
+            self.monitor = SystemMonitor(self.proc)
+            return "System monitor started" if self.monitor_enabled else "System monitor stopped"
+        if action == "keybindRefresh":
+            self.keybinds = read_keybinds(self.preferences.values["niriConfigPath"])
+            return "Keybindings refreshed"
+        if action == "platformRefresh":
+            self.platform = self.compositor_features()
+            return "Compositor version checked"
+        if action == "idleRefresh":
+            self.idle_state = {"source": "ac" if self.ac_online() else "battery", "available": all(self.runner.available(n) for n in ("swayidle", "swaylock", "niri")), "error": ""}
+            if self.settings_only:
+                reply = self.try_run("quickshell", "-p", str(Path(__file__).resolve().parents[1]/"shell.qml"), "ipc", "call", "shell", "idleStatus")
+                try:
+                    state = json.loads(reply or "{}")
+                    if isinstance(state, dict) and state.get("source") in {"ac", "battery"}: self.idle_state = state
+                except ValueError: pass
+            return "Idle profile refreshed"
+        if action == "idleInhibit":
+            if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
+            self.idle_control.paused = request["value"]
+            return "Idle paused" if request["value"] else "Idle resumed"
         if action.startswith("appearance"): return self.appearance_action(action, request)
         if action == "wallpaperScan":
             return self.start_feature(action, lambda: wallpaper_library(request.get("folder")))
@@ -1240,8 +1316,8 @@ class DesktopBackend:
                 run("powerprofilesctl", "set", value, timeout=30.0)
             return f"Power profile: {value}"
         if action == "lock":
-            self.runner.spawn([self.runner.executable("swaylock"), "--color", "22212c"])
-            return "Lock requested"
+            self.runner.executable("swaylock")
+            return self.start_feature(action, self.lock_session)
         if action in {"screenshot", "screenshotArea"}:
             # niri owns capture and clipboard integration. Traditional grim uses
             # wlr-screencopy, which is not the portable screenshot path on niri.
@@ -1252,6 +1328,9 @@ class DesktopBackend:
         if action == "logout":
             run("niri", "msg", "action", "quit", "--skip-confirmation")
             return "Logout requested"
+        if action == "suspend" and self.preferences.values["idleLockBeforeSleep"]:
+            self.runner.executable("swaylock")
+            return self.start_feature(action, lambda: self.lock_session(suspend=True))
         if action in {"suspend", "reboot", "poweroff"}:
             run("systemctl", action)
             return f"{action.capitalize()} requested"
@@ -1271,6 +1350,12 @@ class DesktopBackend:
             self.runner.spawn([self.runner.executable(commands[target])])
             return f"Opened {target} settings"
         raise ValueError(f"Unknown action: {action}")
+
+    def lock_session(self, suspend=False):
+        try: secure_lock()
+        except RuntimeError as exc: raise CommandError(str(exc)) from exc
+        if suspend: self.runner.run("systemctl", "suspend", timeout=30)
+        return "Session locked" if not suspend else "Suspend requested after locking"
 
     def appearance_action(self, action, request):
         if not self.demo: self.preferences.reload(force=True)
@@ -1362,7 +1447,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--interval must be at least 0.5 seconds")
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once)
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
     if args.restore_displays:
         saved = backend.preferences.values["displayLayout"]
         if not saved: return 0
@@ -1386,15 +1471,18 @@ def main(argv: list[str] | None = None) -> int:
         except (CommandError, ValueError, OSError) as error:
             print(f"Wallpaper: {error}", file=sys.stderr)
             return 1
-    emit(backend)
     if args.once:
+        emit(backend)
         return 0
     selector = selectors.DefaultSelector()
     event_process: subprocess.Popen | None = None
     input_buffer = b""
     next_poll = time.monotonic() + args.interval
     event_refresh_due: float | None = None
+    def stop_backend(_signal, _frame): raise KeyboardInterrupt
     try:
+        signal.signal(signal.SIGTERM, stop_backend)
+        emit(backend)
         try:
             selector.register(sys.stdin, selectors.EVENT_READ, "input")
         except PermissionError:
@@ -1451,6 +1539,7 @@ def main(argv: list[str] | None = None) -> int:
     except (KeyboardInterrupt, BrokenPipeError):
         return 0
     finally:
+        backend.idle_control.close()
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)

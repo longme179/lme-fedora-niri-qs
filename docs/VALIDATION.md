@@ -284,3 +284,33 @@ Physical Lenovo MT7921 connectivity, actual panel/external-monitor commits and
 Fedora package installation remain local verification steps. The runtime
 watchdog and UI protocol tests cannot prove driver/display compatibility.
 See [Desktop upgrades](DESKTOP_UPGRADES.md) for feature use and limits.
+
+
+## Monitor, laptop idle, keybindings and popup blur — 2026-10-11
+
+The full private Wayland suite passed 128 tests without skips. After the final lifecycle fix, all 13 laptop regressions passed (including the additional real Quickshell shutdown test), bringing the verified coverage to **129 distinct tests** across the full run and final targeted reruns. All seven authentication checks also passed after adding blur requests to that overlay.
+
+```bash
+source /workspace/.lme-dev/wayland-env.sh
+LME_TEST_AUTHENTICATION_UI=1 LME_TEST_CLIPBOARD_NATIVE=1 \
+LME_TEST_CLIPBOARD_UI=1 LME_TEST_ACTIVITY_UI=1 LME_TEST_UPGRADE_UI=1 \
+LME_TEST_DISPLAY_WATCHDOG=1 LME_TEST_IDLE_NATIVE=1 \
+LME_TEST_POINTER=/workspace/.lme-dev/pointer-click \
+LME_TEST_DRAG=/workspace/.lme-dev/pointer-drag ./scripts/check.sh
+```
+
+Final coverage:
+
+- CPU/network delta sampling, counter resets, CPU thread loads, process RSS, tricky process names, reused PIDs, bounded history and on-demand sampling. A real read-only `/proc` sample also succeeded.
+- AC adapter online detection despite a full battery, validation and persistence of both idle profiles, profile switching, Stay awake and owned process cleanup.
+- swaylock ready-fd success/failure and reuse with a controlled fake locker. Lock failure prevents both the backend's suspend and the idle CLI's sleep request.
+- Actual swayidle on private Wayland: timeout, pointer-triggered resume and display-resume command on termination. Temporary niri commands log actions; no host display/lock/suspend is performed.
+- Actual Quickshell Process shutdown: its backend can be killed without normal cleanup, so the Linux parent-death signal prevents an orphan idle daemon. Direct backend SIGTERM cleanup also passes.
+- KDL includes/cycles, disabled binds/properties, nested comments, raw strings, Unicode escapes, strings containing braces, source line numbers and partial errors.
+- Actual QML clicks/keyboard entry in System, process search, idle timeout selection and keybinding search, alongside the existing launcher/Wi-Fi/notification/display/layout checks.
+- New feature views, settings pages and chart components passed qmllint. shell.qml has Quickshell attached-type metadata warnings, and ShellState.qml has pre-existing QProcess::ExitStatus metadata warnings in this toolchain; both were validated at runtime. The unsupported-compositor fallback loaded correctly. 480 px Control Center and an 800 px Settings window were inspected; lists and longer content scroll rather than overflowing their cards.
+- Demo actions report success without host commands or saved preference changes. Scripts passed Bash syntax checks and the diff passed whitespace validation.
+
+The cloud compositor is Sway/software rendering, not niri on Radeon. **Native full-screen blur remains unverified on the target Lenovo**; its niri 26.04+ protocol/config requirements are documented in LAPTOP_FEATURES.md. Fedora PAM/logind suspend, physical AC switching and the actual AMD temperature sensors still need target-machine checks. No GPU telemetry, privileged charging write, real suspend/lock, or Fedora DNF transaction was performed in cloud validation.
+
+Setup now retains signed swayidle 1.8.0 and swaylock 1.8.2 packages in the private toolchain and saves their installation/start instructions in the cloud configuration draft. The native tests run sequentially and clean up only their own processes.

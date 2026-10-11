@@ -367,3 +367,7 @@ The desktop upgrade package list includes `qt6-qtimageformats` as required.
 Confirmed display layouts restore alongside the saved wallpaper through the
 startup wrapper. See [Desktop upgrades](DESKTOP_UPGRADES.md) for controls and
 physical-laptop validation limits.
+
+## Laptop idle and native popup blur
+
+Install `swayidle swaylock` and restart the shell before enabling Settings → Idle and sleep. They are included by `scripts/install-fedora.sh --optional`. CPU/process monitoring and the keybinding viewer need no extra packages. Full-screen application blur requires niri 26.04+ and the optional `config/niri/popup-blur.kdl` fragment; do not include this fragment on older niri. Follow [LAPTOP_FEATURES.md](LAPTOP_FEATURES.md) for merging and validation.

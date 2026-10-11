@@ -1,0 +1,17 @@
+// Optional: niri >= 26.04. Merge/include only on a supported niri build.
+// The shell requests the blur region only while its overlay is visible.
+// xray=false includes application windows in the blur, rather than wallpaper only.
+layer-rule {
+    match namespace="^lme-(overlay|authentication)$"
+    background-effect {
+        xray false
+    }
+}
+// Start with a moderate budget for the integrated Radeon.
+// This block affects all compositor blur; merge with an existing blur block.
+blur {
+    passes 2
+    offset 3.0
+    noise 0.02
+    saturation 1.0
+}

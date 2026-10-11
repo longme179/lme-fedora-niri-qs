@@ -1,6 +1,6 @@
 # LME Shell runtime requirements for Fedora 44, x86_64.
 # This is a human-readable DNF package list, not a pip requirements file.
-# Quickshell needs version 0.3.2 or newer with PipeWire, Polkit and Wayland support.
+# Quickshell needs version 0.3.2 or newer with PipeWire, Polkit and Wayland/BackgroundEffect support.
 # Availability of quickshell in Fedora 44 enabled repositories must be checked
 # locally. Upstream also documents the errornointernet/quickshell COPR fallback.
 
@@ -18,7 +18,7 @@ google-noto-color-emoji-fonts
 adwaita-icon-theme
 
 [required-desktop-integration]
-# niri >= 25.11 is already installed on the target machine.
+# niri >= 25.11; full-screen popup blur additionally needs niri >= 26.04.
 niri
 NetworkManager
 pipewire
@@ -47,6 +47,7 @@ firefox
 pavucontrol
 network-manager-applet
 blueman
+# Required for session locking and enabled laptop idle profiles:
 swaylock
 swayidle
 libnotify
@@ -62,3 +63,6 @@ awww
 # Optional screenshot utilities. niri's native screenshot bindings need neither.
 grim
 slurp
+
+# System monitor and keybind viewer use Python stdlib only.
+# Native popup blur uses Quickshell Wayland BackgroundEffect; no capture/shader package.

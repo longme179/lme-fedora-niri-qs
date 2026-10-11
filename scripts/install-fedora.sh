@@ -46,6 +46,7 @@ if "$optional"; then
 fi
 
 printf 'Required Quickshell version: 0.3.2 or newer, with PipeWire, Polkit and Wayland support.\n'
+printf 'Idle profiles need swayidle/swaylock (--optional); full-screen blur needs niri >=26.04.\n'
 printf 'Keep the existing power-profile provider (Fedora tuned-ppd or power-profiles-daemon).\n'
 printf 'Proposed command:'
 printf ' %q' sudo dnf install "${packages[@]}"

@@ -11,12 +11,12 @@ while (($#)); do
         --page)
             if (($# < 2)); then printf 'Error: --page requires a page name.\n' >&2; exit 2; fi
             page="$2"; shift ;;
-        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page appearance|topbar|controlLayout|display|wallpaper|weather|clipboard|behavior|about]\n'; exit 0 ;;
+        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page appearance|topbar|controlLayout|display|wallpaper|weather|clipboard|idle|keybinds|behavior|about]\n'; exit 0 ;;
         *) printf 'Error: unknown argument: %s\n' "$1" >&2; exit 2 ;;
     esac
     shift
 done
-case "$page" in appearance|topbar|controlLayout|display|wallpaper|weather|clipboard|behavior|about) ;; *) printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2 ;; esac
+case "$page" in appearance|topbar|controlLayout|display|wallpaper|weather|clipboard|idle|keybinds|behavior|about) ;; *) printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2 ;; esac
 if ! command -v quickshell >/dev/null 2>&1; then printf 'Error: install Quickshell 0.3.2 or newer.\n' >&2; exit 1; fi
 if [[ "${LME_SHELL_PREVIEW:-}" == 1 ]]; then export LME_SHELL_DEMO=1; fi
 unset LME_SHELL_PREVIEW

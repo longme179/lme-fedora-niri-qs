@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../components"
 import "../theme"
+import "../services"
 
 PanelWindow {
     id: root
@@ -14,6 +15,8 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "lme-authentication"
+    BackgroundEffect.blurRegion: visible && ShellState.popupBlurEnabled ? authBlurRegion : null
+    Region { id: authBlurRegion; item: root.contentItem }
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     onVisibleChanged: {
         if (visible) Qt.callLater(() => { if (dialog.contentDialog) dialog.contentDialog.focusInput(); });

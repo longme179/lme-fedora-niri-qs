@@ -27,6 +27,7 @@ ShellRoot {
         target: "shell"
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function close(): void { ShellState.closePanels(); }
+        function idleStatus(): string { return JSON.stringify(ShellState.snapshot.idle || {}); }
         function refresh(): void { ShellState.run("refresh"); }
         function authenticationStatus(): string {
             return ShellState.demo ? "disabled in demo" : authentication.item && authentication.item.registered ? "registered" : "not registered; check the shell log and other session agents";
@@ -61,6 +62,8 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
+        BackgroundEffect.blurRegion: visible && ShellState.popupBlurEnabled ? popupBlurRegion : null
+        Region { id: popupBlurRegion; item: overlay.contentItem }
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.clipboardOpen ? 0.40 : 0.13) }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }

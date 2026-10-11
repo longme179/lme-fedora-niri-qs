@@ -6,6 +6,8 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
+    Component.onCompleted: if (ShellState.backendReady) ShellState.run("platformRefresh")
+    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
     SettingsCard {
         title: "Appearance profiles"
         description: "Save accent, opacity, density and motion together. Dracula is your built-in default."
@@ -67,6 +69,8 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Glass and motion"
+        PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
+        LabelText { text: "Compositor: "+((ShellState.snapshot.platform || {}).niriVersion || "Checking…"); color: Theme.muted; font.pixelSize: 12 }
         PreferenceSwitch { title: "Gentle motion"; detail: "Smooth slide transitions and subtle shape changes"; preference: "animations" }
         RowLayout {
             Layout.fillWidth: true

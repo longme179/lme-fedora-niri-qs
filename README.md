@@ -52,9 +52,12 @@ commands or Arch installation scripts.
 - MPRIS media controls for compatible players and an English date/time display.
 - Native notifications with persistent, searchable app groups, per-app popup rules and timed Do Not Disturb.
 - Independent Settings application with searchable Appearance, Top bar,
-  Control center, Displays, Wallpaper, Weather, Clipboard, Behavior and About pages. Open it without starting the shell.
+  Control center, Displays, Wallpaper, Weather, Clipboard, Idle and sleep, Keyboard shortcuts, Behavior and About pages. Open it without starting the shell.
   Changes synchronize with the running shell; preferences are merged under a
   file lock so another client’s task updates are preserved.
+- On-demand system monitor: CPU/RAM charts, CPU thread loads/temperature, network rates and sortable searchable processes without GPU probes.
+- Separate AC/battery idle profiles, display wake on input and a confirmed session lock before suspend; searchable niri keybindings with include support.
+- Optional full-screen popup blur on niri 26.04+, including the expanded Activity Island; see [laptop features and blur setup](docs/LAPTOP_FEATURES.md).
 - Saved appearance profiles and safe niri display previews with independent automatic revert.
 - Material tonal surfaces, expressive switches/sliders and shape transitions,
   bold Roboto headings, and translucent glass without UI gradients.
@@ -220,3 +223,5 @@ smart launcher and in-shell Wi-Fi—are documented in
 [displays](docs/previews/display-settings.png), [wallpaper library](docs/previews/wallpaper-library.png),
 [modular controls](docs/previews/control-layout.png), [notifications](docs/previews/notifications-grouped.png)
 [Wi-Fi](docs/previews/wifi-connections.png) and [launcher](docs/previews/smart-launcher.png).
+
+Latest laptop previews: [system monitor](docs/previews/system-monitor.png), [idle profiles](docs/previews/idle-profiles.png), [keybindings](docs/previews/keybind-viewer.png). Setup and limits: [docs/LAPTOP_FEATURES.md](docs/LAPTOP_FEATURES.md).

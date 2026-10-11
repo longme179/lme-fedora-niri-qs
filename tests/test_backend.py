@@ -103,7 +103,7 @@ class BackendCase(Fixture, unittest.TestCase):
         self.put("sys/class/power_supply/BAT0/type", "Battery")
         self.put("sys/class/power_supply/BAT0/capacity", "73")
         self.put("sys/class/power_supply/BAT0/status", "Charging")
-        self.assertEqual(self.make_backend().battery(), {"available": True, "percent": 73, "charging": True})
+        self.assertEqual(self.make_backend().battery(), {"available": True, "percent": 73, "charging": True, "acOnline": True})
 
     def test_nmcli_escaped_ssid_and_no_rescan(self):
         runner = FakeRunner({
@@ -222,6 +222,7 @@ class BackendCase(Fixture, unittest.TestCase):
         live.snapshot()
         self.assertFalse(any(call[0] == "systemctl" for call in runner.calls))
         runner.calls.clear()
+        live.preferences.set("idleLockBeforeSleep", False)
         for action in ("suspend", "reboot", "poweroff"):
             self.assertTrue(live.handle({"action": action})["ok"])
         self.assertEqual(runner.calls, [("systemctl", "suspend"), ("systemctl", "reboot"), ("systemctl", "poweroff")])

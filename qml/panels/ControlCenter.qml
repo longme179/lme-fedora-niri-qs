@@ -11,10 +11,11 @@ GlassPanel {
     implicitWidth: ShellState.preferences.controlWidth || 600
     implicitHeight: 900
     focus: true
-    property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications"]
-    property int currentTab: Math.max(0, ["controls", "audio", "devices", "agenda", "notifications"].indexOf(Quickshell.env("LME_SHELL_CONTROL_TAB") || "controls"))
-    onCurrentTabChanged: if (currentTab === 4) Notifications.markRead()
+    property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications", "System"]
+    property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? Math.max(0, ["controls", "audio", "devices", "agenda", "notifications", "system"].indexOf(Quickshell.env("LME_SHELL_CONTROL_TAB"))) : ShellState.controlTab
+    onCurrentTabChanged: { ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); }
     Component.onCompleted: if (currentTab === 4) Notifications.markRead()
+    Connections { target: ShellState; function onControlTabChanged() { if (root.currentTab !== ShellState.controlTab) root.currentTab = ShellState.controlTab; } }
     Keys.onEscapePressed: ShellState.closePanels()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ControlModifier)) {
@@ -35,6 +36,7 @@ GlassPanel {
             IconButton { iconName: "settings"; tooltip: "Shell settings"; onClicked: ShellState.togglePanel("settings") }
             IconButton { glyph: "×"; tooltip: "Close control center"; onClicked: ShellState.closePanels() }
         }
+        LabelText { visible: !!(ShellState.snapshot.idle || {}).error; text: (ShellState.snapshot.idle || {}).error || ""; textFormat: Text.PlainText; color: Theme.red; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: 12 }
         RowLayout {
             Layout.fillWidth: true
             LiquidComboBox {
@@ -50,7 +52,7 @@ GlassPanel {
         }
         GridLayout {
             Layout.fillWidth: true; columnSpacing: 5; rowSpacing: 5
-            columns: width < 540 ? 3 : 5
+            columns: 3
             Repeater {
                 model: root.tabs
                 delegate: LiquidButton {
@@ -67,9 +69,10 @@ GlassPanel {
         }
         Loader {
             Layout.fillWidth: true; Layout.fillHeight: true
-            sourceComponent: root.currentTab === 0 ? controls : root.currentTab === 1 ? audio : root.currentTab === 2 ? devices : root.currentTab === 3 ? agenda : notices
+            sourceComponent: root.currentTab === 0 ? controls : root.currentTab === 1 ? audio : root.currentTab === 2 ? devices : root.currentTab === 3 ? agenda : root.currentTab === 4 ? notices : monitor
         }
     }
+    Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard {} }
     Component { id: audio; AudioMixer {} }
     Component { id: devices; DeviceControls {} }

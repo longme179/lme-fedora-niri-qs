@@ -258,3 +258,7 @@ preview/recovery, modular control layout, notification persistence, Wi-Fi
 credentials and launcher prefixes. The additional Settings page keys are
 `controlLayout` and `display`. `qt6-qtimageformats` is required for image-format
 support in the wallpaper library.
+
+## Laptop features and popup blur
+
+Control Center → System provides detailed on-demand monitoring. Settings → Idle and sleep controls AC/battery timeouts and locking; Settings → Keyboard shortcuts reads your niri binds/includes. Appearance → Blur behind popups requests native full-screen blur on niri 26.04+ after merging the provided config fragment. See [LAPTOP_FEATURES.md](LAPTOP_FEATURES.md) for requirements, defaults, parser bounds and setup.

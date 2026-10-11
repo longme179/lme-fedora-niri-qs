@@ -42,7 +42,7 @@ if command -v quickshell >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; 
 fi
 optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
 optional swaylock 'lock screen'
-optional swayidle 'idle locking; configure explicitly'
+optional swayidle 'laptop idle profiles; enable in Settings > Idle and sleep'
 optional awww 'wallpaper selection and restoration'
 optional awww-daemon 'wallpaper daemon'
 optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'

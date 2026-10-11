@@ -206,8 +206,17 @@ For a config installed as `gpt`, run
 terminal to see that application's own startup log. The main shell also logs
 errors from its Settings launcher. Check the terminal environment matches your
 niri session and uses Quickshell 0.3.2 or newer. Closing the native Settings
-window now ends its instance, allowing a fresh open instead of reusing a hidden
+window ends its instance, allowing a fresh open instead of reusing a hidden
 native window. The independent app also supports `--page elements`.
+
+Quickshell 0.3.2 can return exit status `0` for an IPC failure such as
+"Target not found" or "Function not found". The Settings launcher requires an
+explicit `true` reply confirming a visible, unminimized window. If an older or
+unhealthy Settings instance cannot confirm this, the launcher reports that it
+is restarting and stops only the matching Settings configuration before opening
+a fresh window. It keeps the main shell and saved preferences running intact.
+This also handles an older hidden Settings process named `quickshell` that
+`killall qs` did not stop.
 
 Warnings about an existing `org.freedesktop.Notifications` service or Polkit
 agent describe another process owning that service. They do not by themselves

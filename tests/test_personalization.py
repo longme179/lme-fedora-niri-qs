@@ -65,9 +65,109 @@ class PersonalizationCase(Fixture, unittest.TestCase):
         with patch('desktop_backend.shutil.which', side_effect=lambda name: str(fake) if name == 'qs' else None), patch.dict(os.environ, LME_QS_BINARY='qs'):
             self.assertEqual(backend.CommandRunner().executable('quickshell'), str(fake))
 
+    def test_settings_launcher_requires_window_confirmation_and_restarts_only_settings(self):
+        repo = Path(__file__).resolve().parents[1]; fake = self.root/'quickshell'; calls = self.root/'calls.jsonl'
+        fake.write_text('''#!/usr/bin/python3
+import json, os, sys
+args = sys.argv[1:]
+with open(os.environ['QS_CALLS'], 'a') as log: log.write(json.dumps(args)+'\\n')
+if 'ipc' in args:
+    reply = os.environ['QS_REPLY']
+    if reply == 'missing': print('Function not found.')
+    elif reply != 'void': print(reply)
+elif 'kill' in args:
+    if os.environ.get('QS_KILL_FAIL') == '1': sys.exit(1)
+else: print(json.dumps(args))
+'''); fake.chmod(0o755)
+        env = {**os.environ, 'LME_QS_BINARY': str(fake), 'LME_SHELL_DEMO': '1', 'QS_CALLS': str(calls)}
+        for reply in ('true', 'false', 'void', 'missing'):
+            with self.subTest(reply=reply):
+                calls.write_text('')
+                result = subprocess.run(['bash', str(repo/'scripts/settings.sh'), '--daemonize', '--page', 'elements'], env={**env, 'QS_REPLY': reply}, capture_output=True, text=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                recorded = [json.loads(line) for line in calls.read_text().splitlines()]
+                self.assertEqual(recorded[0], ['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'openPage', 'elements'])
+                if reply == 'true':
+                    self.assertEqual(len(recorded), 1)
+                else:
+                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'kill'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
+                    self.assertIn('restarting', result.stderr)
+        calls.write_text('')
+        result = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_KILL_FAIL': '1'}, capture_output=True, text=True, timeout=5)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(calls.read_text().splitlines()), 2, 'Do not spawn a duplicate when stopping the stale Settings instance fails')
+
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'opt-in private Wayland personalization and Settings launch')
 class NativePersonalizationCase(unittest.TestCase):
+    def test_launcher_recovers_legacy_hidden_window_and_missing_ipc_handler(self):
+        repo = Path(__file__).resolve().parents[1]
+        for target in ('settings', 'oldSettings'):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary); shutil.copytree(repo/'scripts', root/'scripts')
+                (root/'qml').symlink_to(repo/'qml', target_is_directory=True)
+                entry = root/'settings.qml'
+                entry.write_text('''//@ pragma UseQApplication
+import QtQuick
+import Quickshell
+import Quickshell.Io
+ShellRoot {
+    Component.onCompleted: Quickshell.watchFiles = false
+    IpcHandler {
+        target: "%s"
+        function openPage(page: string): void { window.visible = true; }
+    }
+    FloatingWindow { id: window; title: "Legacy Settings"; implicitWidth: 500; implicitHeight: 400 }
+}
+''' % target)
+                config = root/'config'; (config/'lme-shell').mkdir(parents=True)
+                preferences = config/'lme-shell/settings.json'; saved = {'accent': '#ff80bf', 'themeOverrides': {'buttonFill': '#113355'}}; preferences.write_text(json.dumps(saved))
+                runtime = root/'runtime'; runtime.mkdir(mode=0o700)
+                env = {**os.environ, 'XDG_CONFIG_HOME': str(config), 'XDG_RUNTIME_DIR': str(runtime), 'XDG_STATE_HOME': str(root/'state'), 'XDG_DATA_HOME': str(root/'data'), 'WAYLAND_DISPLAY': str(Path(os.environ['XDG_RUNTIME_DIR'])/os.environ['WAYLAND_DISPLAY']), 'LME_SHELL_DEMO': '0', 'LME_SHELL_BACKEND_DEMO': '1'}
+                for key in ('LME_SHELL_PREVIEW', 'LME_SHELL_SETTINGS', 'LME_QS_BINARY'): env.pop(key, None)
+                with (root/'settings.log').open('w+') as log:
+                    old = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
+                    def windows(title):
+                        tree = json.loads(subprocess.check_output(['swaymsg', '-t', 'get_tree'], env=env, text=True)); found = []
+                        def visit(node):
+                            if node.get('name') == title: found.append(node)
+                            for child in node.get('nodes', [])+node.get('floating_nodes', []): visit(child)
+                        visit(tree); return found
+                    def wait(predicate):
+                        deadline = time.monotonic()+8
+                        while time.monotonic()<deadline:
+                            if predicate(): return
+                            time.sleep(.08)
+                        log.seek(0); self.fail(log.read())
+                    launcher = None
+                    try:
+                        wait(lambda: len(windows('Legacy Settings')) == 1)
+                        subprocess.run(['swaymsg', '[pid='+str(old.pid)+']', 'kill'], env=env, capture_output=True, check=True)
+                        wait(lambda: not windows('Legacy Settings')); self.assertIsNone(old.poll())
+                        result = subprocess.run(['quickshell', '-p', str(entry), 'ipc', 'call', 'settings', 'openPage', 'appearance'], env=env, capture_output=True, text=True, timeout=5)
+                        self.assertEqual(result.returncode, 0)
+                        if target == 'settings': self.assertEqual(result.stdout, '')
+                        else: self.assertIn('Target not found.', result.stdout+result.stderr)
+                        self.assertFalse(windows('Legacy Settings'), 'Quickshell acknowledges IPC without showing the hidden window')
+                        entry.write_text((repo/'settings.qml').read_text())
+                        launcher = subprocess.Popen(['bash', str(root/'scripts/settings.sh'), '--page', 'elements'], env=env, stdout=log, stderr=log)
+                        wait(lambda: len(windows('LME Shell Settings')) == 1)
+                        old.wait(timeout=5)
+                        result = subprocess.run(['quickshell', '-p', str(entry), 'ipc', 'call', 'settings', 'openPage', 'appearance'], env=env, capture_output=True, text=True, timeout=5)
+                        self.assertEqual(result.stdout.strip(), 'true', result.stderr)
+                        pid = windows('LME Shell Settings')[0]['pid']
+                        result = subprocess.run(['bash', str(root/'scripts/settings.sh'), '--page', 'elements'], env=env, capture_output=True, text=True, timeout=5)
+                        self.assertEqual(result.returncode, 0, result.stderr); self.assertEqual([w['pid'] for w in windows('LME Shell Settings')], [pid])
+                        self.assertEqual(json.loads(preferences.read_text()), saved)
+                        log.seek(0); text = log.read(); self.assertIn('restarting', text)
+                        for problem in ('TypeError', 'ReferenceError', 'Unable to assign', 'Failed to load configuration', "can't open file"):
+                            self.assertNotIn(problem, text)
+                    finally:
+                        subprocess.run(['quickshell', '-p', str(entry), 'kill'], env=env, capture_output=True, timeout=5)
+                        if launcher: launcher.wait(timeout=5)
+                        if old.poll() is None: old.terminate()
+                        old.wait(timeout=5)
+
     def test_native_color_font_edit_hover_press_reduced_motion_and_bottom_bar(self):
         repo = Path(__file__).resolve().parents[1]; entry = repo/'upgrades-demo.qml'
         with tempfile.TemporaryDirectory() as config, tempfile.TemporaryFile(mode='w+') as log:
@@ -171,14 +271,22 @@ class NativePersonalizationCase(unittest.TestCase):
                         if predicate():return
                         time.sleep(.1)
                     log.seek(0);raise AssertionError('Settings launch did not settle\n'+log.read())
+                output=json.loads(subprocess.check_output(['swaymsg','-t','get_outputs'],env=env,text=True))[0]['rect']
+                def click(x,y):subprocess.run([os.environ['LME_TEST_POINTER'],str(output['x']+x),str(output['y']+y)],env=env,check=True,timeout=5)
                 try:
-                    wait(lambda:root_ipc('toggle','settings').returncode==0)
+                    wait(lambda:root_ipc('idleStatus').stdout.strip().startswith('{'))
+                    time.sleep(.4)
+                    # Actual gear hit targets at the default private-session geometry.
+                    click(output['width']-37,29)
                     wait(lambda:len(windows())==1);first=windows()[0]['pid']
                     self.assertEqual(settings_ipc('openPage','elements').returncode,0)
-                    self.assertEqual(root_ipc('toggle','settings').returncode,0);time.sleep(.3)
+                    click(output['width']-37,29);time.sleep(.3)
                     self.assertEqual([w['pid'] for w in windows()],[first])
                     subprocess.run(['swaymsg','[pid='+str(first)+']','kill'],env=env,check=True,capture_output=True)
-                    wait(lambda:not windows());self.assertEqual(root_ipc('toggle','settings').returncode,0);wait(lambda:len(windows())==1)
+                    wait(lambda:not windows());self.assertEqual(root_ipc('toggle','control').returncode,0)
+                    time.sleep(.5);click(output['width']-102,102);wait(lambda:len(windows())==1)
+                    self.assertEqual(root_ipc('toggle','settings').returncode,0);time.sleep(.2)
+                    self.assertEqual(len(windows()),1)
                     log.seek(0);text=log.read()
                     for problem in ('TypeError','ReferenceError','Binding loop','Unable to assign','Failed to load configuration','Settings could not be opened'):self.assertNotIn(problem,text)
                 finally:

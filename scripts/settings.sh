@@ -30,10 +30,14 @@ unset LME_SHELL_PREVIEW
 export LME_SETTINGS_PAGE="$page"
 entry="$repo_dir/settings.qml"
 if [[ "${LME_SHELL_DEMO:-}" == 1 ]]; then entry="$repo_dir/settings-demo.qml"; fi
-# Reuse the settings instance, then focus its native niri window when available.
-if "$qs_binary" -p "$entry" ipc call settings openPage "$page" >/dev/null 2>&1; then
-    if [[ "${LME_SHELL_DEMO:-}" != 1 ]] && command -v niri >/dev/null 2>&1; then
-        python3 - <<'PY'
+# Quickshell 0.3.2 can return status 0 for an IPC error; require the window's reply.
+if opened="$("$qs_binary" -p "$entry" ipc call settings openPage "$page" 2>/dev/null)"; then
+    if [[ "$opened" != true ]]; then
+        printf 'Settings did not confirm a visible window; restarting this Settings instance.\n' >&2
+        "$qs_binary" -p "$entry" kill >&2
+    else
+        if [[ "${LME_SHELL_DEMO:-}" != 1 ]] && command -v niri >/dev/null 2>&1; then
+            python3 - <<'PY'
 import json, subprocess
 try:
     result = subprocess.run(['niri', 'msg', '--json', 'windows'], capture_output=True, text=True, timeout=3)
@@ -44,7 +48,8 @@ try:
 except (OSError, ValueError, subprocess.TimeoutExpired):
     pass
 PY
+        fi
+        exit 0
     fi
-    exit 0
 fi
 exec "$qs_binary" --no-duplicate -p "$entry" "${qs_args[@]}"

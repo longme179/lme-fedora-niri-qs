@@ -8,9 +8,10 @@ ShellRoot {
     readonly property string screenshotPath: Quickshell.env("LME_SETTINGS_SCREENSHOT") || ""
     IpcHandler {
         target: "settings"
-        function openPage(page: string): void {
+        function openPage(page: string): bool {
             window.visible = true; window.minimized = false;
             if (page) view.navigate(page);
+            return window.visible && !window.minimized;
         }
     }
     FloatingWindow {

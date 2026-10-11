@@ -418,3 +418,29 @@ rendering. **Real Fedora/niri bar reservation, Lenovo gamma/capture and Radeon
 niri 26.04 blur behavior is preserved. The supplied main-shell log alone does
 not establish the exact original Settings failure on the owner's installation;
 the binary alias and native close/reopen paths are now covered directly.
+
+## Settings IPC false success — 2026-10-11
+
+The owner's Bash trace stopped in the Settings reuse branch after IPC returned
+status `0`, with no window. On Quickshell 0.3.2, a missing IPC target also
+returns `0` and prints "Target not found"; a legacy handler can acknowledge
+`openPage` while its native window remains hidden. Both failures were reproduced
+under private Wayland before the fix, and both regression cases failed with the
+old launcher.
+
+Settings now returns a boolean confirming its window is visible and not
+minimized. The launcher checks this reply rather than the IPC exit status. An
+unconfirmed existing instance is stopped by its exact Settings config path and
+restarted, preserving saved preferences and the main shell.
+
+`scripts/check.sh` passed **149 tests with no skips**, including the three native
+personalization checks. Real virtual-pointer clicks on the root shell's bar gear
+and Control Center gear opened Settings through the `gpt` symlink. Repeated
+launches reused one window; window-manager close followed by reopening worked.
+Recovery tests preserved saved accent/color overrides, and a failed stop did
+not launch a duplicate. QML lint, Bash syntax and diff whitespace checks passed.
+
+These checks use Quickshell 0.3.2 / Qt 6.8.2 on private Sway. The exact stale
+instance on the owner's Fedora/niri session was not inspected; its IPC output
+was suppressed by the old launcher. The target desktop still needs a check
+after updating the installed `gpt` configuration.

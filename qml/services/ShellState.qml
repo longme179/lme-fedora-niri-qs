@@ -24,12 +24,16 @@ QtObject {
     property string settingsPage: "appearance"
     property bool trayOpen: false
     property bool overviewOpen: false
+    property bool clipboardOpen: false
+    property bool activityOpen: false
+    property real activityAnchorX: -1
+    property real activityAnchorWidth: 180
     property bool stayAwake: false
     property bool draggingWindow: false
     property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen
+    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -47,7 +51,7 @@ QtObject {
 
     function closePanels() {
         launcherOpen = false; controlOpen = false; notificationsOpen = false;
-        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false;
+        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false;
     }
     function togglePanel(name, screen) {
         if (authenticationActive) return;
@@ -56,7 +60,7 @@ QtObject {
             return;
         }
         const key = name + "Open";
-        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview"].includes(name)) return;
+        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
@@ -64,7 +68,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["appearance", "topbar", "wallpaper", "weather", "behavior", "about"].includes(page)) return;
+        if (!["appearance", "topbar", "wallpaper", "weather", "clipboard", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
         if (demo) settingsOpen = true;
         else if (!settingsProcess.running) settingsProcess.running = true;

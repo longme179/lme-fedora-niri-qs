@@ -202,3 +202,53 @@ diagnostics. Perform those checks deliberately on the laptop after saving work.
 No cloud result certifies MediaTek MT7921 firmware behavior, NVIDIA driver
 integration, exact 120 Hz output modes, battery consumption, thermal limits, or
 sleep/resume reliability. Those depend on the real Fedora installation.
+
+## Clipboard and Activity update
+
+On 2026-10-11, all **98 checks** passed under the private Sway 1.10.1 session
+with Quickshell 0.3.2, Qt 6.8.2 and wl-clipboard 2.2.1. This includes 89 backend
+checks and nine optional native/dialog checks. The new tests cover Unicode and
+multiline round trips, deduplication, full-text search, filters, image MIME/cache,
+persistence, permissions, pause, pin limits, oldest-first/content-budget cleanup,
+stale IDs, sensitive hints and validated settings. Supported recorder detection
+uses synthetic proc fixtures, including other-user and zombie rejection.
+
+A real `wl-paste --watch` / `wl-copy` integration test captured and restored
+both text and PNG bytes, then exercised pause/resume and clear with/without pins.
+The actual Clipboard QML was driven with virtual keyboard and pointer input:
+search/Enter copied the intended bytes, including Enter before search debounce;
+image preview, pin, confirmed clearing with retained pins and delete worked.
+History for these tests lives in temporary directories. Updating the shared
+Settings preferences also stopped/restarted capture while retaining history.
+
+A private-bus MPRIS player exercised actual Play/Pause, Next and Previous button
+callbacks and metadata updates. The Activity QML test started/paused/reset the
+shared timer, verified stopwatch persistence across panel closure, reached timer
+completion, closed with Escape/Close and disabled motion. A normal layer-shell
+smoke check opened both new panels; expanding Activity left the application's
+compositor geometry unchanged. All GUI checks run sequentially to avoid focus
+conflicts between test windows.
+
+Clipboard and Activity demo previews and the new Settings page rendered without
+QML errors. Clipboard Settings was also inspected at its 800×600 window minimum;
+navigation and page content scroll. New feature QML passed `qmllint` with the
+Quickshell import path; ClipboardState retains the toolchain's existing
+`QProcess::ExitStatus` metadata warning. Public previews use sample content.
+
+Repeat the complete checks **only in a private Wayland session**:
+
+```bash
+LME_TEST_AUTHENTICATION_UI=1 LME_TEST_CLIPBOARD_NATIVE=1 \
+LME_TEST_CLIPBOARD_UI=1 LME_TEST_ACTIVITY_UI=1 \
+LME_TEST_POINTER=/path/to/virtual-pointer-click ./scripts/check.sh
+```
+
+The click driver accepts absolute X/Y coordinates and must match the test
+output size. The MPRIS fixture uses PyGObject, configurable with
+`LME_TEST_GI_PYTHON`; it is a test dependency only. Without native flags, the
+nine integration cases skip. Do not overlap fixture instances, normal shell
+panels or automatic screenshots during GUI checks.
+
+Target Fedora/niri still needs validation with the user's actual clipboard
+sources, MPRIS players, multiple outputs and supported recording application.
+See [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) for the update checklist.

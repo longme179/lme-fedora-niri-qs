@@ -13,6 +13,12 @@ window-rule {
 }
 
 binds {
+    Mod+Shift+A hotkey-overlay-title="Activity island" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "activity";
+    }
+    Mod+V hotkey-overlay-title="Clipboard history" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "clipboard";
+    }
     Mod+Tab hotkey-overlay-title="Window overview" { toggle-overview; }
     Mod+Shift+Tab hotkey-overlay-title="Workspace board" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "overview";

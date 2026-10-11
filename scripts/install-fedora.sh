@@ -37,10 +37,10 @@ done
 packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     qt6-qtsvg google-roboto-fonts google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-pulseaudio
-    wireplumber brightnessctl bluez systemd util-linux polkit)
+    wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard)
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
-        blueman swaylock swayidle wl-clipboard libnotify playerctl qt6-qtimageformats
+        blueman swaylock swayidle libnotify playerctl qt6-qtimageformats
         xdg-utils xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
         gnome-keyring)
 fi

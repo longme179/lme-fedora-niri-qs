@@ -233,3 +233,14 @@ If the UI says “Conservation” without “85%”, the kernel exposes the firm
 fixed conservation setting. This interface cannot choose a numerical threshold;
 installing the helper does not change that hardware limitation. A limit below
 the current battery charge also does not discharge the battery automatically.
+
+## Clipboard capture and Activity
+
+Install `wl-clipboard` and restart the shell if capture/copy is unavailable.
+Run inside niri with Wayland data-control support. Check Settings → Clipboard
+and the panel Pause state; stop duplicate shell instances if capture is owned
+elsewhere. Do not launch a separate cliphist watcher for LME history.
+Activity needs an enabled Activity or Window title module, or its IPC binding;
+media controls require an MPRIS-compatible player on the same session bus.
+Recording status supports only the recorder processes documented in
+[CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md).

@@ -37,12 +37,13 @@ DEFAULT_PREFERENCES = {
     "accent": "#9580ff", "wallpaper": "",
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
+    "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
     "barStyle": "connected", "barFontSize": 13,
-    "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["windowTitle"],
-                  "right": ["tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
+    "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
+                  "right": ["clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity"}
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
@@ -233,6 +234,8 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in {"activityEnabled", "clipboardEnabled", "clipboardImages"} and type(value) is bool: return value
+    if key == "clipboardLimit" and type(value) is int and 20 <= value <= 500: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
         return value
     if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
@@ -698,11 +701,32 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile(), charging=self.charging())
+                          powerProfile=self.power_profile(), charging=self.charging(), recording=self.recording())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result)}
+
+    def recording(self) -> dict[str, Any]:
+        """Read supported recorder processes belonging to this session's user."""
+        supported = {"wf-recorder": "wf-recorder", "gpu-screen-recorder": "GPU Screen Recorder"}
+        try:
+            uptime = float((self.proc / "uptime").read_text().split()[0])
+            ticks = os.sysconf("SC_CLK_TCK")
+            matches = []
+            for entry in self.proc.iterdir():
+                if not entry.name.isdigit(): continue
+                try:
+                    if entry.stat().st_uid != os.getuid(): continue
+                    name = Path(os.readlink(entry / "exe")).name
+                    if name not in supported: continue
+                    fields = (entry / "stat").read_text().rsplit(")", 1)[1].split()
+                    if fields[0] == "Z": continue
+                    elapsed = max(0, int(uptime - int(fields[19]) / ticks))
+                    matches.append({"active": True, "name": supported[name], "elapsed": elapsed})
+                except (OSError, ValueError, IndexError): continue
+            return max(matches, key=lambda item: item["elapsed"]) if matches else {"active": False}
+        except (OSError, ValueError): return {"active": False}
 
     def demo_snapshot(self) -> dict[str, Any]:
         if hasattr(self, "_demo_state"):

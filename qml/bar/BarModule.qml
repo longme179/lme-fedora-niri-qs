@@ -16,15 +16,19 @@ Loader {
     property real titleBudget: 360
     readonly property var battery: ShellState.system.battery || {}
     readonly property var player: ShellState.demo ? null : Mpris.players.values.find(p => p.isPlaying) || Mpris.players.values[0] || null
-    readonly property bool available: moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
+    readonly property bool available: moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
                                    : moduleId === "battery" ? battery.available === true
                                    : moduleId === "media" ? player !== null : true
     active: available
     visible: available
     width: available && item ? (item as Item).implicitWidth : 0
     height: 30
-    sourceComponent: moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
-                   : ["launcher", "overview", "tray", "notifications", "settings"].includes(moduleId) ? actionComponent : statusComponent
+    sourceComponent: (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
+                   : ["launcher", "overview", "tray", "notifications", "settings", "clipboard"].includes(moduleId) ? actionComponent : statusComponent
+    Component {
+        id: activityComponent
+        ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget }
+    }
     Component {
         id: actionComponent
         IconButton {
@@ -33,7 +37,7 @@ Loader {
             iconName: root.moduleId === "notifications" ? (Notifications.dnd ? "bell-off" : "bell") : BarRegistry.info(root.moduleId).icon
             tooltip: ["overview", "launcher"].includes(root.moduleId) ? "" : BarRegistry.info(root.moduleId).title
             Accessible.name: BarRegistry.info(root.moduleId).title
-            active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : false
+            active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : false
             onClicked: {
                 if (root.moduleId === "overview") ShellState.nativeOverview();
                 else {

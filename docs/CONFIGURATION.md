@@ -23,12 +23,16 @@ Use the standalone Settings app to change preferences. Open it with
   "weatherAutoLocation": true,
   "weatherLocation": {},
   "weatherUnit": "celsius",
+  "clipboardEnabled": true,
+  "clipboardImages": true,
+  "clipboardLimit": 100,
+  "activityEnabled": true,
   "barStyle": "connected",
   "barFontSize": 13,
   "barLayout": {
     "left": ["launcher", "overview", "workspaces"],
-    "center": ["windowTitle"],
-    "right": ["tray", "notifications", "audio", "network", "battery", "clock", "settings"]
+    "center": ["activity"],
+    "right": ["clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]
   }
 }
 ```
@@ -56,7 +60,7 @@ from 12 through 16. `barLayout` requires exactly `left`, `center` and `right`
 arrays. Each module may appear only once across all zones; unknown module IDs
 are rejected. Empty zones are allowed. Supported IDs are `launcher`, `overview`,
 `workspaces`, `windowTitle`, `media`, `resources`, `tray`, `notifications`,
-`audio`, `network`, `battery`, `clock` and `settings`.
+`audio`, `network`, `battery`, `clock`, `settings`, `clipboard` and `activity`.
 
 Use **Top bar** to add/remove modules, drag them within/across zones, use the
 up/down buttons, or choose a position menu. Drop on a row to insert before it,
@@ -237,3 +241,11 @@ rules. Errors are shown in the shell instead of being treated as success.
 Notifications are kept for the running shell session; restarting the shell
 clears that history. Do Not Disturb affects shell popups and is not a system-wide
 notification policy.
+
+## Clipboard and Activity
+
+`clipboardEnabled` and `clipboardImages` default to `true`; `clipboardLimit`
+defaults to 100 and accepts 20–500. `activityEnabled` defaults to `true`.
+The `clipboard` and `activity` bar modules can occupy any zone. Settings exposes
+these options; [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) explains storage,
+shortcuts and behavior when upgrading an existing layout.

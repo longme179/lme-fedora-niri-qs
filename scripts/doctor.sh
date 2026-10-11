@@ -50,7 +50,8 @@ optional blueman-manager 'Bluetooth pairing: blueman'
 optional pavucontrol 'advanced audio setup: pavucontrol'
 optional notify-send 'notification smoke test: libnotify'
 optional kitty 'default terminal; configurable'
-optional wl-copy 'clipboard utilities: wl-clipboard'
+required wl-copy wl-clipboard
+required wl-paste wl-clipboard
 
 if command -v fc-match >/dev/null 2>&1; then
     if [[ "$(fc-match -f '%{family}' Roboto)" == *Roboto* ]]; then

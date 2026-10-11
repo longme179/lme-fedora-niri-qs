@@ -20,7 +20,7 @@ commands or Arch installation scripts.
 
 ## Included
 
-- Modular per-output top bar: 13 modules, three configurable zones, drag/drop
+- Modular per-output top bar: 15 modules, three configurable zones, drag/drop
   and keyboard ordering, optional media/resources, and live layout changes.
   The default is one connected glass pill; three islands are also available.
   Workspaces follow their numeric order per output. Bar labels use consistent
@@ -29,6 +29,11 @@ commands or Arch installation scripts.
   for a themed workspace board with app icons, titles, drag/drop and a keyboard
   workspace selector for each window.
 - System tray dropdown with compact icons, application labels, and native menus.
+- Local text/image clipboard history: search, previews, pins, pause and confirmed
+  clearing. Open with Super+V; requires `wl-clipboard`.
+- Expanding Activity island with MPRIS controls, shared focus timer/stopwatch and
+  supported recorder status; eased resizing with flat glass surfaces. See
+  [clipboard and Activity setup](docs/CLIPBOARD_ACTIVITY.md).
 - Keyboard-searchable application launcher using installed `.desktop` entries.
 - Wider control center with Controls, Audio, Devices, Agenda and Notifications
   tabs: speaker/microphone volume and mute, backlight, radios, power profiles,
@@ -48,7 +53,7 @@ commands or Arch installation scripts.
 - Native desktop notifications, notification history during the shell session,
   and Do Not Disturb.
 - Independent Settings application with searchable Appearance, Top bar,
-  Wallpaper, Weather, Behavior and About pages. Open it without starting the shell.
+  Wallpaper, Weather, Clipboard, Behavior and About pages. Open it without starting the shell.
   Changes synchronize with the running shell; preferences are merged under a
   file lock so another client’s task updates are preserved.
 - Material tonal surfaces, expressive switches/sliders and shape transitions,
@@ -113,6 +118,8 @@ overwrites `~/.config/niri/config.kdl`.
 | `Mod+Space` | Application launcher |
 | `Mod+A` | Control center |
 | `Mod+N` | Notifications |
+| `Mod+V` | Clipboard history |
+| `Mod+Shift+A` | Activity island |
 | `Mod+Comma` | Separate Settings app |
 | `Mod+Shift+E` | Power menu |
 | `Escape` | Close an open panel |

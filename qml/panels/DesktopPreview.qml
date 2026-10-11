@@ -28,13 +28,14 @@ Item {
             LabelText { text: "The panels shown here are the actual QML components."; font.pixelSize: 12; color: Theme.muted }
         }
     }
+    ActivityIsland { z: 2 }
     SlideLoader {
         id: panelLoader
-        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.settingsOpen
+        readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.settingsOpen || ShellState.clipboardOpen
         direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
-        active: ShellState.panelOpen
+        active: ShellState.panelOpen && !ShellState.activityOpen
         sourceComponent: ShellState.launcherOpen ? launcher : ShellState.controlOpen ? control
-                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : power
+                         : ShellState.notificationsOpen ? notifications : ShellState.settingsOpen ? settings : ShellState.trayOpen ? tray : ShellState.overviewOpen ? overview : ShellState.clipboardOpen ? clipboard : power
         width: item ? Math.min(item.implicitWidth, root.width - 32) : 400
         height: item ? Math.min(item.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
@@ -47,4 +48,5 @@ Item {
     Component { id: power; PowerMenu {} }
     Component { id: tray; TrayMenu {} }
     Component { id: overview; Overview {} }
+    Component { id: clipboard; ClipboardPanel {} }
 }

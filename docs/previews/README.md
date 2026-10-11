@@ -27,6 +27,9 @@ the new tabs. No image represents physical laptop hardware testing.
 
 | Panel | Image |
 | --- | --- |
+| Clipboard history with sample text/images | [clipboard.png](clipboard.png) |
+| Expanding Activity with sample media and timers | [activity.png](activity.png) |
+| Clipboard Settings with sample preferences | [clipboard-settings.png](clipboard-settings.png) |
 | Application launcher | [launcher.png](launcher.png) |
 | Control center | [control.png](control.png) |
 | Workspace board with sample windows | [overview.png](overview.png) |

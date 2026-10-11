@@ -28,7 +28,14 @@ Item {
             ctx.lineWidth = 1.8;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            if (root.name === "lock") {
+            if (root.name === "record") {
+                ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.fill();
+            } else if (root.name === "clipboard") {
+                ctx.beginPath(); ctx.roundedRect(5, 4, 14, 18, 2, 2); ctx.stroke();
+                ctx.beginPath(); ctx.roundedRect(9, 2, 6, 5, 1, 1); ctx.fill();
+                for (const y of [11, 15, 18]) { ctx.beginPath(); ctx.moveTo(9, y); ctx.lineTo(15, y); ctx.stroke(); }
+            } else if (root.name === "lock") {
                 ctx.beginPath(); ctx.roundedRect(5, 10, 14, 11, 2, 2); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(8, 10); ctx.lineTo(8, 7); ctx.arc(12, 7, 4, Math.PI, 0); ctx.lineTo(16, 10); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(12, 14); ctx.lineTo(12, 17); ctx.stroke();

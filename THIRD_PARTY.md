@@ -41,3 +41,10 @@ whose weather data requires attribution under CC BY 4.0. The widget displays
 that attribution. Approximate automatic location uses [IPwho.is](https://ipwho.is/).
 These are external network services; no provider dataset or assets are bundled.
 The implementation uses the providers' public endpoints without an API key.
+
+Clipboard history and the expandable Activity island also reference
+[AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell),
+inspected at `f372777829212f0db41dc623e7e495e63c8e4341` (MIT), and iNiR at the
+revision above. All delivered history, storage, Activity and protocol-test code
+is original. No upstream source, assets or binaries are redistributed.
+`wl-clipboard` is an external GPL-3.0-or-later runtime dependency.

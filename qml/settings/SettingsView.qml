@@ -42,28 +42,40 @@ Item {
                     Accessible.name: "Search settings"
                     onAccepted: { const results = SettingsRegistry.search(text); if (results.length) root.navigate(results[0].key); }
                 }
-                ColumnLayout {
-                    Layout.fillWidth: true; spacing: 6
-                    Repeater {
-                        model: SettingsRegistry.search(search.text)
-                        delegate: LiquidButton {
-                            id: nav
-                            required property var modelData
-                            Layout.fillWidth: true; Layout.preferredHeight: 48
-                            text: modelData.title; selected: root.page === modelData.key
-                            checkable: false
-                            Accessible.name: modelData.title + " settings"
-                            onClicked: root.navigate(modelData.key)
-                            contentItem: RowLayout {
-                                spacing: 12
-                                ShellIcon { name: nav.modelData.icon; color: nav.selected ? Theme.accent : Theme.muted; width: 20; height: 20 }
-                                LabelText { text: nav.text; Layout.fillWidth: true; font.weight: nav.selected ? Font.Bold : Font.Medium }
+                Flickable {
+                    id: navigationScroll
+                    Layout.fillWidth: true; Layout.fillHeight: true
+                    contentWidth: width; contentHeight: navigationColumn.implicitHeight
+                    clip: true; boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar {}
+                    ColumnLayout {
+                        id: navigationColumn
+                        width: navigationScroll.width - 8; spacing: 6
+                        Repeater {
+                            model: SettingsRegistry.search(search.text)
+                            delegate: LiquidButton {
+                                id: nav
+                                required property var modelData
+                                Layout.fillWidth: true; Layout.preferredHeight: 48
+                                text: modelData.title; selected: root.page === modelData.key
+                                checkable: false
+                                Accessible.name: modelData.title + " settings"
+                                onClicked: root.navigate(modelData.key)
+                                onActiveFocusChanged: if (activeFocus) {
+                                    if (y < navigationScroll.contentY) navigationScroll.contentY = y;
+                                    else if (y + height > navigationScroll.contentY + navigationScroll.height)
+                                        navigationScroll.contentY = Math.max(0, y + height - navigationScroll.height);
+                                }
+                                contentItem: RowLayout {
+                                    spacing: 12
+                                    ShellIcon { name: nav.modelData.icon; color: nav.selected ? Theme.accent : Theme.muted; width: 20; height: 20 }
+                                    LabelText { text: nav.text; Layout.fillWidth: true; font.weight: nav.selected ? Font.Bold : Font.Medium }
+                                }
                             }
                         }
+                        LabelText { visible: SettingsRegistry.search(search.text).length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
                     }
-                    LabelText { visible: SettingsRegistry.search(search.text).length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
                 }
-                Item { Layout.fillHeight: true }
                 LabelText { text: ShellState.demo ? "Demo · changes stay in memory" : !ShellState.backendReady ? "Connecting…" : ShellState.pendingActions.setting ? "Saving changes…" : "Changes save automatically"; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: 12 }
             }
         }
@@ -94,7 +106,7 @@ Item {
                     id: pageLoader
                     width: pageScroll.width - 12
                     sourceComponent: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
-                                   : root.page === "weather" ? weatherPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
+                                   : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
         }
@@ -103,6 +115,7 @@ Item {
     Component { id: barPage; TopBarPage {} }
     Component { id: wallpaperPage; WallpaperPage {} }
     Component { id: weatherPage; WeatherPage {} }
+    Component { id: clipboardPage; ClipboardPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }
 }

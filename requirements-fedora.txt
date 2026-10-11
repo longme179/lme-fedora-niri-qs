@@ -28,6 +28,8 @@ bluez
 systemd
 util-linux
 polkit
+wl-clipboard
+# Clipboard history uses Python stdlib SQLite; cliphist is not needed.
 # util-linux supplies rfkill for scoped Bluetooth software-block recovery.
 
 [power-profile-provider-choose-one]
@@ -46,7 +48,6 @@ network-manager-applet
 blueman
 swaylock
 swayidle
-wl-clipboard
 libnotify
 playerctl
 qt6-qtimageformats

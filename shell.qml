@@ -17,6 +17,7 @@ ShellRoot {
     id: root
     readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
     readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1"
+    Component.onCompleted: ClipboardState.start()
     LazyLoader {
         id: authentication
         active: !ShellState.demo
@@ -54,26 +55,27 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && ShellState.panelOpen && !ShellState.authenticationActive
+        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible) && !ShellState.authenticationActive
         anchors { top: true; bottom: true; left: true; right: true }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen ? 0.40 : 0.13) }
+        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.clipboardOpen ? 0.40 : 0.13) }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
             anchors.fill: parent
             focus: true
             Keys.onEscapePressed: ShellState.closePanels()
+            ActivityIsland { id: activityIsland; z: 2 }
             SlideLoader {
                 id: panelLoader
-                readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen
+                readonly property bool centered: ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.clipboardOpen
                 direction: centered ? "up" : ShellState.trayOpen ? "down" : "right"
-                active: ShellState.panelOpen
+                active: ShellState.panelOpen && !ShellState.activityOpen
                 sourceComponent: ShellState.launcherOpen ? launcherComponent : ShellState.controlOpen ? controlComponent
-                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : powerComponent
+                               : ShellState.notificationsOpen ? notificationsComponent : ShellState.settingsOpen ? settingsComponent : ShellState.trayOpen ? trayComponent : ShellState.overviewOpen ? overviewComponent : ShellState.clipboardOpen ? clipboardComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
                 x: centered ? (overlay.width - width) / 2
@@ -91,6 +93,7 @@ ShellRoot {
     Component { id: powerComponent; PowerMenu {} }
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
     Component { id: overviewComponent; Overview {} }
+    Component { id: clipboardComponent; ClipboardPanel {} }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive

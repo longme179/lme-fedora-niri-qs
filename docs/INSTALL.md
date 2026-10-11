@@ -355,3 +355,10 @@ your firmware supports an exact 85% limit.
 Weather needs no new packages or API key. Allow outbound HTTPS to `ipwho.is`,
 `api.open-meteo.com` and `geocoding-api.open-meteo.com`. The widget detects an
 approximate location by default; Settings → Weather also supports a fixed city.
+
+## Clipboard and Activity update
+
+Install `wl-clipboard` for text/image history; it is now included in the core
+Fedora package list. No `cliphist`, Python package or new service is required.
+See [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) for bindings, settings and
+the upgrade path for existing modular layouts.

@@ -33,6 +33,7 @@ ColumnLayout {
     SettingsCard {
         title: "A bar that fits you"
         description: "Choose connected glass or three islands. Every module can move between Left, Center and Right. Changes apply immediately."
+        PreferenceSwitch { title: "Activity island"; detail: "Expand media and timers from Activity or Window title modules."; preference: "activityEnabled" }
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Shape"; Layout.fillWidth: true }

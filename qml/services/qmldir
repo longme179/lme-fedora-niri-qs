@@ -1,3 +1,5 @@
 singleton ShellState 1.0 ShellState.qml
 singleton Notifications 1.0 Notifications.qml
 singleton FocusTimer 1.0 FocusTimer.qml
+singleton ClipboardState 1.0 ClipboardState.qml
+singleton ActivityState 1.0 ActivityState.qml

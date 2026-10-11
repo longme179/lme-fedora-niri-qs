@@ -7,15 +7,15 @@ import "../services"
 import "../theme"
 ColumnLayout {
     id: root; objectName: "keybindPage"; spacing: 16
-    property string savedPath: ShellState.preferences.niriConfigPath || ""
+    property string savedPath: ""
     readonly property var state: ShellState.snapshot.keybinds || {}
     property string query: ""
     readonly property var matches: (state.bindings || []).filter(b => query.toLowerCase().trim().split(/\s+/).every(word => (b.key+" "+b.title+" "+b.action).toLowerCase().includes(word)))
     function refresh() { if (ShellState.backendReady) ShellState.run("keybindRefresh"); }
-    Component.onCompleted: refresh()
+    Component.onCompleted: { savedPath = ShellState.preferences.niriConfigPath || ""; refresh(); }
     Connections {
         target: ShellState
-        function onBackendReadyChanged() { if (ShellState.backendReady) root.refresh(); }
+        function onBackendReadyChanged() { if (ShellState.backendReady) { root.savedPath = ShellState.preferences.niriConfigPath || ""; root.refresh(); } }
         function onPreferencesChanged() { if (ShellState.backendReady && (ShellState.preferences.niriConfigPath || "") !== root.savedPath) { root.savedPath = ShellState.preferences.niriConfigPath || ""; configPath.text = root.savedPath; root.refresh(); } }
     }
     SettingsCard {

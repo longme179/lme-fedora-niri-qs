@@ -307,7 +307,7 @@ Final coverage:
 - Actual swayidle on private Wayland: timeout, pointer-triggered resume and display-resume command on termination. Temporary niri commands log actions; no host display/lock/suspend is performed.
 - Actual Quickshell Process shutdown: its backend can be killed without normal cleanup, so the Linux parent-death signal prevents an orphan idle daemon. Direct backend SIGTERM cleanup also passes.
 - KDL includes/cycles, disabled binds/properties, nested comments, raw strings, Unicode escapes, strings containing braces, source line numbers and partial errors.
-- Actual QML clicks/keyboard entry in System, process search, idle timeout selection and keybinding search, alongside the existing launcher/Wi-Fi/notification/display/layout checks.
+- Actual QML clicks/keyboard entry in System, process search, idle timeout selection, keybinding search and automatic refetch after Use path, alongside the existing launcher/Wi-Fi/notification/display/layout checks.
 - New feature views, settings pages and chart components passed qmllint. shell.qml has Quickshell attached-type metadata warnings, and ShellState.qml has pre-existing QProcess::ExitStatus metadata warnings in this toolchain; both were validated at runtime. The unsupported-compositor fallback loaded correctly. 480 px Control Center and an 800 px Settings window were inspected; lists and longer content scroll rather than overflowing their cards.
 - Demo actions report success without host commands or saved preference changes. Scripts passed Bash syntax checks and the diff passed whitespace validation.
 

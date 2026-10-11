@@ -73,6 +73,8 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 click('idle-battery-display'); subprocess.run(['wtype', '-s', '200', '-k', 'Up', '-k', 'Return'], check=True, env=env)
                 wait(lambda s: s['preferences']['idleProfiles']['battery']['display'] == 2)
                 show('settings', 'keybinds'); wait(lambda s: s.get('keybindMatches', 0) >= 9)
+                click('keybindConfig'); type_text('/tmp/lme-demo-keybindings.kdl'); click('Use path')
+                wait(lambda s: s['preferences']['niriConfigPath'] == '/tmp/lme-demo-keybindings.kdl' and s['lastResult']['action'] == 'keybindRefresh')
                 click('keybindSearch'); type_text('clipboard'); wait(lambda s: s.get('keybindMatches') == 1)
                 click('keybindSearch'); type_text('not a real binding'); wait(lambda s: s.get('keybindMatches') == 0)
                 show('launcher'); wait(lambda s: len(s.get('results', [])) == 3)

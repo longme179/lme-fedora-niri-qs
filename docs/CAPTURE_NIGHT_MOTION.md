@@ -138,3 +138,12 @@ under a full-screen blur region. The owner confirmed that including this rule
 keeps applications and the bar visible in the blurred background, with the
 popup sharp. Merge the global blur block if one already exists. Native non-xray
 blur remains an experimental compositor feature.
+
+
+Recording audio choices now persist between popup openings and shell restarts.
+System audio is the default; choose No audio explicitly for a silent recording
+or Microphone for the default input. The existing PulseAudio-compatible capture
+path remains, including Bluetooth sink monitors. When audio is requested,
+`ffprobe` (included with the FFmpeg package) checks for a saved audio track. A
+failed check retains the original video and reports an error instead of silently
+saving a successful video-only recording.

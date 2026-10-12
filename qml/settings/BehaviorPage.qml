@@ -70,6 +70,12 @@ ColumnLayout {
             ExpressiveField { id: bitrate; Layout.preferredWidth: 110; text: String(ShellState.preferences.recordingBitrate || 12000); maximumLength: 6; Accessible.name: "Recording bitrate in kbps" }
             LiquidButton { text: "Apply"; enabled: /^\d+$/.test(bitrate.text) && Number(bitrate.text) >= 1000 && Number(bitrate.text) <= 100000; onClicked: ShellState.run("setting",{key:"recordingBitrate",value:Number(bitrate.text)}) }
         }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Default recording audio"; Layout.fillWidth: true }
+            LiquidComboBox { objectName: "recordingAudioDefault"; model: ["No audio", "System audio", "Microphone"]; currentIndex: ["none","system","microphone"].indexOf(ShellState.preferences.recordingAudio || "system"); Accessible.name: "Default recording audio"; onActivated: ShellState.run("setting", {key: "recordingAudio", value: ["none","system","microphone"][currentIndex]}) }
+        }
+        LabelText { text: "Your audio choice is saved. Microphone recording is explicit; System audio captures the default speaker or Bluetooth output. Saved audio recordings are checked with ffprobe."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
         LabelText { text:"Requires wf-recorder and FFmpeg with the chosen codecs. Audio needs pactl (pulseaudio-utils); region selection needs slurp. MP4/MOV use AAC audio; MKV/WebM use Opus. Other recording apps are never stopped. High frame rates and CPU AV1 can be expensive."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
     }
     SettingsCard {

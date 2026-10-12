@@ -78,7 +78,7 @@ class RecordingCase(Fixture, unittest.TestCase):
                 if name=='pactl': return 'speaker'
                 if 'h264_nvenc' in args: raise backend.CommandError('NVENC driver unavailable')
                 return ''
-        runner=Runner(available={'wf-recorder','ffmpeg','pactl'});recorder=Recorder(runner,self.root/'sys')
+        runner=Runner(available={'wf-recorder','ffmpeg','ffprobe','pactl'});recorder=Recorder(runner,self.root/'sys')
         child=Mock();child.poll.return_value=None
         with patch('screen_recording.subprocess.Popen',return_value=child) as spawn, patch('screen_recording.time.sleep'):
             recorder.start(str(self.root/'videos'),'output','eDP-1','system','auto','mp4','h264',60,16000)
@@ -120,6 +120,16 @@ class RecordingCase(Fixture, unittest.TestCase):
         self.preferences.set('recordingEncoder','cpu');self.preferences.reload(force=True)
         self.assertEqual(self.preferences.values['recordingEncoder'],'cpu')
 
+    def test_audio_choice_defaults_to_system_and_survives_restart_and_export(self):
+        from settings_transfer import document
+        self.assertEqual(self.preferences.values['recordingAudio'], 'system')
+        for value in ('microphone', 'none', 'system'):
+            self.preferences.set('recordingAudio', value)
+            restored = backend.Preferences(self.preferences.path)
+            self.assertEqual(restored.values['recordingAudio'], value)
+            self.assertEqual(document(restored.values, 'preset')['settings']['recordingAudio'], value)
+        with self.assertRaises(ValueError): self.preferences.set('recordingAudio', 'unknown')
+
     def stopped_fixture(self, runner, path, target):
         recorder=Recorder(runner,self.root/'sys');child=Mock();child.poll.return_value=None;child.returncode=0
         def wait(**_): child.poll.return_value=0;return 0
@@ -149,3 +159,21 @@ class RecordingCase(Fixture, unittest.TestCase):
         runner.run=Mock(side_effect=backend.CommandError('Bad container'));recorder,_=self.stopped_fixture(runner,source,target)
         with self.assertRaises(ValueError):recorder.stop()
         self.assertTrue(source.exists())
+
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'FFmpeg/ffprobe unavailable')
+    def test_real_audio_track_survives_remux_and_missing_audio_retains_video(self):
+        runner = backend.CommandRunner()
+        source = self.root/'audio.mkv'; target = self.root/'audio.mp4'
+        runner.run('ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=size=128x128:rate=30',
+                   '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000', '-t', '0.3',
+                   '-c:v', 'libx264', '-threads', '1', '-c:a', 'aac', str(source), timeout=15)
+        recorder, _ = self.stopped_fixture(runner, source, target); recorder.info['audio'] = 'system'
+        recorder.stop()
+        self.assertTrue(recorder.state()['audioVerified'])
+        self.assertIn('audio', runner.run('ffprobe', '-v', 'error', '-select_streams', 'a', '-show_entries', 'stream=codec_type', '-of', 'json', str(target)))
+        source = self.root/'silent.mkv'
+        runner.run('ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=size=128x128:rate=30',
+                   '-t', '0.2', '-c:v', 'libx264', '-threads', '1', str(source), timeout=15)
+        recorder, _ = self.stopped_fixture(runner, source, source.with_suffix('.mp4')); recorder.info['audio'] = 'system'
+        with self.assertRaisesRegex(ValueError, 'No audio track'): recorder.stop()
+        self.assertTrue(source.exists()); self.assertFalse(source.with_suffix('.mp4').exists())

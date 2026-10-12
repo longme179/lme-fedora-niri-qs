@@ -58,6 +58,7 @@ fi
 optional wl-mirror 'external display mirroring: wl-mirror'
 optional wf-recorder 'screen recording: wf-recorder'
 optional ffmpeg 'recording encoder checks and container conversion: ffmpeg-free or a compatible full build'
+optional ffprobe 'recorded audio-track validation: ffmpeg-free or a compatible full build'
 optional pactl 'recording audio: pulseaudio-utils'
 optional slurp 'recording region selection: slurp'
 optional awww 'wallpaper selection and restoration'

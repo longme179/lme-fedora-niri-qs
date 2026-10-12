@@ -55,7 +55,7 @@ DEFAULT_PREFERENCES = {
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
-    "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
+    "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
     "fileSearchEnabled": True,
     "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")],
@@ -83,7 +83,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffmpeg", "pactl", "slurp", "satty", "swappy",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffprobe", "ffmpeg", "pactl", "slurp", "satty", "swappy",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -299,6 +299,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "wallpaperPalette": return validate_palette(value)
     if key == "fileSearchRoots": return search_roots(value)
     if key == "recordingEncoder" and value in ("auto","nvidia","cpu","radeon"): return value
+    if key == "recordingAudio" and value in ("none","system","microphone"): return value
     if key == "recordingFormat" and value in ("mkv","mp4","mov","webm"): return value
     if key == "recordingCodec" and value in ("auto","h264","hevc","av1","vp9"): return value
     if key == "recordingFps" and type(value) is int and value in (24,30,60,120): return value
@@ -1370,7 +1371,7 @@ class DesktopBackend:
             output=request.get("output")
             if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
             prefs=dict(self.preferences.values)
-            return self.start_feature(action,lambda:self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio"),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"]))
+            return self.start_feature(action,lambda:self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"]))
         if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")

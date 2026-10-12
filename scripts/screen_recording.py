@@ -6,6 +6,7 @@
 # Retains iNiR's additional GPLv3 section 7 terms in third_party/iNiR-NOTICE.
 from pathlib import Path
 import os
+import json
 import re
 
 FORMATS = {'mkv': {'auto','h264','hevc','av1','vp9'}, 'mp4': {'auto','h264','hevc','av1','vp9'},
@@ -109,6 +110,7 @@ class Recorder:
                 if not re.fullmatch(r'-?\d+,-?\d+ [1-9]\d*x[1-9]\d*',geometry): raise ValueError('Area selection was cancelled or invalid')
             source=None
             if audio!='none':
+                self.runner.executable('ffprobe')
                 source=self.runner.run('pactl','get-default-sink' if audio=='system' else 'get-default-source').strip()
                 if not source or len(source)>512 or any(ord(c)<32 for c in source): raise ValueError('No audio source available')
                 if audio=='system': source+='.monitor'
@@ -140,7 +142,7 @@ class Recorder:
                     try: self.child=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=self.log,start_new_session=True)
                     except OSError:
                         self.log.close();self.log=None;path.unlink(missing_ok=True);raise
-                    self.started=time.monotonic();self.info={'active':True,'owned':True,'name':'wf-recorder','path':str(path),'target':str(target),'format':container,'fps':fps,'bitrate':bitrate,'elapsed':0,'encoder':codec,'gpu':gpu,'audio':audio,'fallback':'; '.join(failures)[-1200:],'error':''}
+                    self.started=time.monotonic();self.info={'active':True,'owned':True,'name':'wf-recorder','path':str(path),'target':str(target),'format':container,'fps':fps,'bitrate':bitrate,'elapsed':0,'encoder':codec,'gpu':gpu,'audio':audio,'audioSource':source or '', 'fallback':'; '.join(failures)[-1200:],'error':''}
                 time.sleep(.35)
                 state=self.state()
                 if state['active']: return 'Recording requested: '+str(target)
@@ -173,6 +175,14 @@ class Recorder:
         except RuntimeError as error:
             with self.lock: self.info['error']='Recording retained but decode check failed: '+str(error)
             raise ValueError(self.info['error']) from error
+        if state.get('audio', 'none')!='none':
+            try:
+                streams=json.loads(self.runner.run('ffprobe','-v','error','-select_streams','a','-show_entries','stream=codec_type','-of','json',state['path'],timeout=12)).get('streams',[])
+                if not streams: raise ValueError('No audio track was captured')
+            except (ValueError,RuntimeError,AttributeError) as error:
+                with self.lock: self.info['error']='Recording retained; audio verification failed: '+str(error)+'. Check the audio source and wf-recorder audio backend.'
+                raise ValueError(self.info['error']) from error
+            with self.lock: self.info['audioVerified']=True
         target=Path(state.get('target',state['path']))
         if str(target)!=state['path']:
             converted=None

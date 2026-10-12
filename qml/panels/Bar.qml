@@ -1,6 +1,5 @@
 import QtQuick
 import "../bar"
-import "../components"
 import "../services"
 import "../theme"
 
@@ -11,7 +10,7 @@ Item {
     readonly property var layout: ShellState.preferences.barLayout || BarRegistry.defaults
     readonly property bool islands: ShellState.preferences.barStyle === "islands"
     implicitHeight: Theme.barHeight
-    GlassPanel { role: "barFill"; anchors.fill: parent; radius: height / 2; visible: !root.islands }
+    BarSurface { anchors.fill: parent; visible: !root.islands }
     BarGroup {
         id: leftGroup
         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter

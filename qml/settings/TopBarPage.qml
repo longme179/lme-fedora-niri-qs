@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import "../bar"
 import "../components"
 import "../services"
@@ -11,6 +12,14 @@ ColumnLayout {
     spacing: 20
     readonly property var layout: ShellState.preferences.barLayout || BarRegistry.defaults
     readonly property bool ready: ShellState.backendReady && !ShellState.pendingActions.setting
+    readonly property var cornerKeys: ["topLeft", "topRight", "bottomLeft", "bottomRight"]
+    readonly property var cornerPresets: [[-1, -1, -1, -1], [0, 0, 0, 0], [0, -1, 0, -1], [-1, 0, -1, 0]]
+    property string borderError: ""
+    ColorPicker {
+        id: borderPicker; parent: Overlay.overlay; anchors.centerIn: parent
+        onChosen: color => ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: color.toString()})
+    }
+    function corner(key, value) { ShellState.run("setting", {key: "barCorners", value: Object.assign({}, Theme.barCorners, {[key]: value})}); }
     property alias dragProxy: proxy
     function save(value) { if (ready) ShellState.run("setting", {key: "barLayout", value: value}); }
     function move(id, zone, index) {
@@ -81,6 +90,88 @@ ColumnLayout {
                 Binding { target: distance; property: "value"; value: ShellState.preferences[dimension.modelData.key] === undefined ? ({barEdgeMargin: 8, barSideMargin: 12, barHeight: 42})[dimension.modelData.key] : ShellState.preferences[dimension.modelData.key]; when: !distance.pressed; restoreMode: Binding.RestoreNone }
             }
         }
+    }
+    SettingsCard {
+        title: "Edges and outline"
+        description: "Style the connected bar or each island. Automatic corners follow the bar height; 0 px makes a square corner. Border colors use #RRGGBB or #AARRGGBB (alpha first)."
+        Item {
+            Layout.fillWidth: true; Layout.preferredHeight: Theme.barHeight + 16
+            BarSurface { anchors.fill: parent; anchors.margins: 8 }
+            LabelText { anchors.centerIn: parent; text: "Live bar preview"; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; color: Theme.barText }
+        }
+        LiquidComboBox {
+            objectName: "barCornerPreset"; Layout.fillWidth: true
+            model: ["Pill", "Square", "Square left end", "Square right end", "Custom corners"]
+            currentIndex: {
+                const found = root.cornerPresets.findIndex(p => root.cornerKeys.every((key, index) => Theme.barCorners[key] === p[index]));
+                return found < 0 ? 4 : found;
+            }
+            enabled: root.ready; Accessible.name: "Bar corner preset"
+            onActivated: {
+                if (currentIndex >= root.cornerPresets.length) return;
+                const next = {};
+                root.cornerKeys.forEach((key, index) => next[key] = root.cornerPresets[currentIndex][index]);
+                ShellState.run("setting", {key: "barCorners", value: next});
+            }
+        }
+        Repeater {
+            model: root.cornerKeys
+            delegate: ColumnLayout {
+                id: cornerRow; required property string modelData
+                Layout.fillWidth: true; spacing: 6
+                readonly property bool automatic: Theme.barCorners[modelData] < 0
+                RowLayout {
+                    Layout.fillWidth: true
+                    LabelText { text: Theme.tokenTitle(cornerRow.modelData); font.weight: Font.Bold; Layout.fillWidth: true }
+                    LabelText { text: cornerRow.automatic ? "Automatic" : Theme.barCorners[cornerRow.modelData] + " px"; color: Theme.muted }
+                    ExpressiveSwitch {
+                        checked: cornerRow.automatic; enabled: root.ready
+                        Accessible.name: "Automatic " + Theme.tokenTitle(cornerRow.modelData) + " corner"
+                        onToggled: root.corner(cornerRow.modelData, checked ? -1 : Math.round(Theme.barHeight / 2))
+                    }
+                }
+                LiquidSlider {
+                    id: cornerRadius; objectName: "barCorner-" + cornerRow.modelData
+                    Layout.fillWidth: true; from: 0; to: 32; stepSize: 1
+                    enabled: root.ready && !cornerRow.automatic
+                    Accessible.name: Theme.tokenTitle(cornerRow.modelData) + " corner radius"
+                    onMoved: if (!pressed) root.corner(cornerRow.modelData, Math.round(value))
+                    onPressedChanged: if (!pressed) root.corner(cornerRow.modelData, Math.round(value))
+                }
+                Binding { target: cornerRadius; property: "value"; value: Theme.barCornerRadius(cornerRow.modelData, Theme.barHeight); when: !cornerRadius.pressed; restoreMode: Binding.RestoreNone }
+            }
+        }
+        LabelText { text: "Outline · " + Math.round(outline.value) + " px (0 hides the border)"; font.weight: Font.Bold }
+        LiquidSlider {
+            id: outline; objectName: "barBorderWidth"; Layout.fillWidth: true; from: 0; to: 4; stepSize: 1
+            enabled: root.ready; Accessible.name: "Bar border thickness"
+            onMoved: if (!pressed) ShellState.run("setting", {key: "barBorderWidth", value: Math.round(value)})
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "barBorderWidth", value: Math.round(value)})
+        }
+        Binding { target: outline; property: "value"; value: Theme.barBorderWidth; when: !outline.pressed; restoreMode: Binding.RestoreNone }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Border color"; Layout.fillWidth: true }
+            IconButton {
+                visible: ShellState.preferences.colorPicker !== false; enabled: root.ready; tooltip: "Choose bar border color"
+                contentItem: Rectangle { color: Theme.barBorder; radius: 8; border.width: 1; border.color: Theme.border }
+                onClicked: { borderPicker.initialColor = Theme.barBorder; borderPicker.open(); }
+            }
+            ExpressiveField {
+                id: borderHex; objectName: "barBorderColor"; Layout.preferredWidth: 126; maximumLength: 9
+                text: (ShellState.preferences.themeOverrides || {}).barBorder || Theme.barBorder.toString()
+                Accessible.name: "Bar border hex color"
+                onEditingFinished: {
+                    const value = text.trim();
+                    if (!/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) { root.borderError = "Use #RRGGBB or #AARRGGBB"; return; }
+                    root.borderError = "";
+                    ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: value});
+                }
+            }
+            LiquidButton { text: "Reset"; enabled: root.ready; onClicked: { root.borderError = ""; ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: ""}); } }
+        }
+        Connections { target: ShellState; function onPreferencesChanged() { if (!borderHex.activeFocus) borderHex.text = (ShellState.preferences.themeOverrides || {}).barBorder || Theme.barBorder.toString(); } }
+        LabelText { visible: !!root.borderError; text: root.borderError; color: Theme.red; Layout.fillWidth: true }
     }
     Repeater {
         model: BarRegistry.zones

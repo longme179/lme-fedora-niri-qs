@@ -73,7 +73,8 @@ DEFAULT_PREFERENCES = {
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
-    "barStyle": "connected", "barFontSize": 13,
+    "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1,
+    "barCorners": {"topLeft": -1, "topRight": -1, "bottomLeft": -1, "bottomRight": -1},
     "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
@@ -334,6 +335,9 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "clipboardLimit" and type(value) is int and 20 <= value <= 500: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
         return value
+    if key == "barBorderWidth" and type(value) is int and 0 <= value <= 4: return value
+    if key == "barCorners" and isinstance(value, dict) and set(value) == {"topLeft", "topRight", "bottomLeft", "bottomRight"}:
+        if all(type(radius) is int and -1 <= radius <= 32 for radius in value.values()): return dict(value)
     if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
         return value
     if key == "barLayout" and isinstance(value, dict) and set(value) == {"left", "center", "right"}:

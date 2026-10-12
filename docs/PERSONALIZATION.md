@@ -18,7 +18,7 @@ Escape or the close button ends that instance so it can be opened again.
 
 Choose a color group, optionally filter its elements, then enter a hex value
 and press Enter or Apply. The live preview uses the desktop's actual controls.
-There are 44 editable color roles across the palette, Material surfaces, buttons
+There are 45 editable color roles across the palette, Material surfaces, buttons
 and icons, inputs, bar and workspaces, and panels/cards. These are shared UI
 classes: changing `buttonFill`, for example, changes ordinary buttons across
 the shell. Purpose-specific selected/error states retain their semantic roles.
@@ -96,3 +96,19 @@ that token. The existing preferences lock reloads and merges the nested map
 before the atomic write, preserving other clients' edits to different tokens.
 Whole-map replacement remains available for Reset all. This reuses the existing
 preferences/profile architecture instead of introducing a second theme store.
+
+
+## Bar corners and border
+
+**Settings → Top bar → Edges and outline** previews the actual bar surface.
+Choose Pill, Square, Square left end or Square right end, then customize each
+corner independently. Automatic roundness follows half the bar height; turn
+Auto off to choose 0–32 px. Radii are capped at half the bar height when drawn.
+The same settings apply to the connected surface or to each of the three islands.
+
+Outline thickness is 0–4 px; 0 removes the outline. Enter `#RRGGBB` or
+`#AARRGGBB` for its color, use the visual picker, or Reset to inherit the palette.
+The `barBorder` element is also available in Elements and fonts. Corner geometry
+and thickness are included in portable presets/backups; the color remains part
+of Appearance profiles through the existing element override system. Existing
+settings retain the automatic pill shape and 1 px inherited outline.

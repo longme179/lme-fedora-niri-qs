@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import "../components"
 import "../theme"
 
 Item {
@@ -14,7 +13,7 @@ Item {
     implicitWidth: Math.min(budget, row.implicitWidth > 0 ? row.implicitWidth + 20 : 0)
     implicitHeight: Theme.barHeight
     visible: implicitWidth > 0
-    GlassPanel { role: "barFill"; anchors.fill: parent; radius: height / 2; visible: root.island }
+    BarSurface { anchors.fill: parent; visible: root.island }
     Flickable {
         id: scroller
         objectName: "barModuleViewport"

@@ -2,3 +2,4 @@ singleton BarRegistry 1.0 BarRegistry.qml
 BarModule 1.0 BarModule.qml
 BarGroup 1.0 BarGroup.qml
 ActivityButton 1.0 ActivityButton.qml
+BarSurface 1.0 BarSurface.qml

@@ -60,6 +60,7 @@ QtObject {
     readonly property color sliderTrack: colorFor("sliderTrack", surfaceContainerHigh)
     readonly property color sliderFill: colorFor("sliderFill", accent)
     readonly property color barFill: colorFor("barFill", surfaceContainer)
+    readonly property color barBorder: colorFor("barBorder", outlineVariant)
     readonly property color barText: colorFor("barText", text)
     readonly property color barMuted: colorFor("barMuted", muted)
     readonly property color barHover: colorFor("barHover", primaryContainer)
@@ -76,6 +77,12 @@ QtObject {
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42
+    readonly property int barBorderWidth: ShellState.preferences.barBorderWidth === undefined ? 1 : ShellState.preferences.barBorderWidth
+    readonly property var barCorners: ShellState.preferences.barCorners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1})
+    function barCornerRadius(corner, height) {
+        const value = barCorners[corner];
+        return value === undefined || value < 0 ? height / 2 : Math.min(value, height / 2);
+    }
     readonly property int barFontSize: ShellState.preferences.barFontSize || 13
     readonly property int barFontWeight: Font.Medium
     readonly property bool barBottom: ShellState.preferences.barEdge === "bottom"

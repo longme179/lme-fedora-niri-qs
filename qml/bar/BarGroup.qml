@@ -18,11 +18,12 @@ Item {
     Flickable {
         id: scroller
         objectName: "barModuleViewport"
-        anchors.fill: parent; anchors.margins: Math.max(1, (root.height - 34) / 2); anchors.leftMargin: 10; anchors.rightMargin: 10
-        contentWidth: row.implicitWidth; contentHeight: height
+        anchors.fill: parent; anchors.margins: 1; anchors.leftMargin: 7; anchors.rightMargin: 7
+        contentWidth: row.implicitWidth + 6; contentHeight: height
         clip: true; boundsBehavior: Flickable.StopAtBounds; flickableDirection: Flickable.HorizontalFlick
         Row {
             id: row
+            x: 3
             height: parent.height; spacing: 4
             Repeater {
                 model: root.modules
@@ -37,8 +38,8 @@ Item {
                             const item = barModule.item as Item;
                             if (item && item.activeFocus) {
                                 if (barModule.x < scroller.contentX) scroller.contentX = barModule.x;
-                                else if (barModule.x + barModule.width > scroller.contentX + scroller.width)
-                                    scroller.contentX = Math.max(0, barModule.x + barModule.width - scroller.width);
+                                else if (barModule.x + barModule.width + 6 > scroller.contentX + scroller.width)
+                                    scroller.contentX = Math.max(0, barModule.x + barModule.width + 6 - scroller.width);
                             }
                         }
                     }

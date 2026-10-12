@@ -21,7 +21,7 @@ PanelWindow {
     onVisibleChanged: {
         if (visible) Qt.callLater(() => { if (dialog.contentDialog) dialog.contentDialog.focusInput(); });
     }
-    Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, 0.48) }
+    PopupBackdrop { anchors.fill: parent; shown: root.visible; strength: .48 }
     // Outside clicks stay on this modal surface; only Cancel/Escape cancels.
     MouseArea { anchors.fill: parent }
     SlideLoader {

@@ -22,7 +22,9 @@ Button {
     font.pixelSize: Theme.bodySize - 1
     font.weight: Font.Medium
     Accessible.name: text
-    scale: !Theme.animations ? 1 : down ? .98 - Theme.deformation * .3 : hovered ? 1.012 + Theme.deformation * .2 : 1
+    // Keep wide rows inside their scroll gutters; animate above neighbouring plates.
+    z: hovered || down ? 1 : 0
+    scale: !Theme.animations ? 1 : down ? .98 - Theme.deformation * .3 : hovered ? 1 + Math.min(.012 + Theme.deformation * .2, 4 / Math.max(1, width, height)) : 1
     Behavior on scale { MotionAnimation {} }
     background: Rectangle {
         radius: root.down ? 12 : root.hovered && Theme.animations ? Math.max(14, height / 2 - 4) : height / 2

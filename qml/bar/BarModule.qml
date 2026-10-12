@@ -69,6 +69,8 @@ Loader {
                         id: workspace
                         required property var modelData
                         width: modelData.is_focused ? 42 : 34; height: 30; implicitHeight: 30
+                        // This nested viewport has no vertical overdraw; retain width/radius motion.
+                        scale: 1
                         leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
                         Behavior on width { MotionAnimation {} }
                         Accessible.name: "Workspace " + (modelData.name || modelData.idx)

@@ -80,16 +80,25 @@ Canvas {
         ctx.save()
         let scaleX = 1
         let scaleY = 1
+        const inset = root.strokeWidth / 2 + 1
         if (root.fitToCanvas) {
-            const bounds = root.roundedPolygon.calculateBounds()
+            // Fit the current silhouette, including overshoot, rather than just its target.
+            const bounds = [Infinity, Infinity, -Infinity, -Infinity]
+            const cubicBounds = [0, 0, 0, 0]
+            for (const cubic of cubics) {
+                cubic.calculateBounds(cubicBounds)
+                bounds[0] = Math.min(bounds[0], cubicBounds[0]); bounds[1] = Math.min(bounds[1], cubicBounds[1])
+                bounds[2] = Math.max(bounds[2], cubicBounds[2]); bounds[3] = Math.max(bounds[3], cubicBounds[3])
+            }
             const boundsWidth = Math.max(0.0001, bounds[2] - bounds[0])
             const boundsHeight = Math.max(0.0001, bounds[3] - bounds[1])
-            scaleX = root.width / boundsWidth
-            scaleY = root.height / boundsHeight
+            scaleX = Math.max(0.0001, root.width - inset * 2) / boundsWidth
+            scaleY = Math.max(0.0001, root.height - inset * 2) / boundsHeight
+            ctx.translate(inset, inset)
             ctx.scale(scaleX, scaleY)
             ctx.translate(-bounds[0], -bounds[1])
         } else {
-            const size = Math.min(root.width, root.height)
+            const size = Math.max(0.0001, Math.min(root.width, root.height) - inset * 2)
             const offsetX = root.width / 2 - size / 2
             const offsetY = root.height / 2 - size / 2
             ctx.translate(offsetX, offsetY)

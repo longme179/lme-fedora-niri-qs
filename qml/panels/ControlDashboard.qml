@@ -86,11 +86,11 @@ Item {
     Flickable {
         id: scroll
         anchors.fill: parent; anchors.margins: 8
-        contentWidth: width; contentHeight: body.implicitHeight
+        contentWidth: width; contentHeight: body.implicitHeight + 8
         clip: true; boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: ScrollBar {}
         ColumnLayout {
-            id: body; width: scroll.width - 8; spacing: Theme.cardSpacing
+            id: body; x: 4; y: 4; width: scroll.width - 16; spacing: Theme.cardSpacing
             RowLayout {
                 Layout.fillWidth: true
                 ColumnLayout {

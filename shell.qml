@@ -68,8 +68,10 @@ ShellRoot {
         WlrLayershell.namespace: "lme-overlay"
         BackgroundEffect.blurRegion: visible && ShellState.popupBlurEnabled ? popupBlurRegion : null
         Region { id: popupBlurRegion; item: overlay.contentItem }
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.background, ShellState.trayOpen ? 0 : ShellState.launcherOpen || ShellState.powerOpen || ShellState.overviewOpen || ShellState.clipboardOpen ? 0.40 : 0.13) }
+        // Closing visuals must not block another bar click or the application beneath.
+        mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
+        WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        PopupBackdrop { anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13 }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
             anchors.fill: parent
@@ -78,6 +80,7 @@ ShellRoot {
             ActivityIsland { id: activityIsland; z: 2 }
             SlideLoader {
                 id: panelLoader
+                exitToEdge: true
                 readonly property bool centered: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind)
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
                 shown: ShellState.panelOpen && !ShellState.activityOpen

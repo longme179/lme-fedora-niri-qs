@@ -27,6 +27,8 @@ PanelWindow {
     Timer { id: timeout; interval: 1600; onTriggered: root.open=false }
     SlideLoader {
         id: transition; anchors.fill: parent; shown: root.open; direction: root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "down" : "up"
+        exitToEdge: true
+        exitEdge: root.position.endsWith("left") ? "left" : root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "top" : "bottom"
         content: GlassPanel {
             anchors.fill: parent; radius: 28
             ColumnLayout {

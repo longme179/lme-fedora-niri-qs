@@ -202,6 +202,12 @@ while the popup stays sharp. If your config already has a `blur` block, merge th
 settings instead of adding a second block. Older niri versions can still run the
 shell with its translucent and dimmed backdrop.
 
+The dim layer fades in/out with your motion settings. Popups slide off the
+nearest edge when closed, release mouse/keyboard input immediately, and remove
+the blur surface once the popup has left the screen. **Blur strength itself is
+not animated**: Quickshell 0.3.2's `ext-background-effect-v1` interface only
+exposes a region to blur, not its intensity. Applications stay live beneath it.
+
 ### Wallpaper
 
 Install both **`awww` and `awww-daemon`**, then open **Settings → Wallpaper** to

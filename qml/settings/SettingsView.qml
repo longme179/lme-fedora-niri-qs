@@ -49,7 +49,7 @@ Item {
                 Flickable {
                     id: navigationScroll
                     Layout.fillWidth: true; Layout.fillHeight: true
-                    contentWidth: width; contentHeight: navigationColumn.implicitHeight
+                    contentWidth: width; contentHeight: navigationColumn.implicitHeight + 8
                     clip: true; boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar {}
                     StretchIndicator {
@@ -57,8 +57,8 @@ Item {
                         targetItem: navRepeater.count ? navRepeater.itemAt(SettingsRegistry.search(search.text).findIndex(p => p.key===root.page)) : null
                     }
                     ColumnLayout {
-                        id: navigationColumn; z: 1
-                        width: navigationScroll.width - 8; spacing: 6
+                        id: navigationColumn; z: 1; x: 4; y: 4
+                        width: navigationScroll.width - 16; spacing: 6
                         Repeater {
                             id: navRepeater; model: SettingsRegistry.search(search.text)
                             delegate: LiquidButton {
@@ -71,9 +71,10 @@ Item {
                                 Accessible.name: modelData.title + " settings"
                                 onClicked: root.navigate(modelData.key)
                                 onActiveFocusChanged: if (activeFocus) {
-                                    if (y < navigationScroll.contentY) navigationScroll.contentY = y;
-                                    else if (y + height > navigationScroll.contentY + navigationScroll.height)
-                                        navigationScroll.contentY = Math.max(0, y + height - navigationScroll.height);
+                                    const top = mapToItem(navigationScroll.contentItem, 0, 0).y - 4;
+                                    if (top < navigationScroll.contentY) navigationScroll.contentY = top;
+                                    else if (top + height + 8 > navigationScroll.contentY + navigationScroll.height)
+                                        navigationScroll.contentY = Math.max(0, top + height + 8 - navigationScroll.height);
                                 }
                                 contentItem: RowLayout {
                                     spacing: 12
@@ -123,6 +124,7 @@ Item {
                 ScrollBar.vertical: ScrollBar {}
                 SlideLoader {
                     id: pageLoader
+                    x: 6; y: 6
                     direction: "up"
                     width: pageScroll.width - 12
                     content: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage

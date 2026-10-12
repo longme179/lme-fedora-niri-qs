@@ -6,6 +6,10 @@ Each feature has its own commit. Settings are optional and keep the existing Dra
 
 Enable **Appearance → Spring motion**. Open and close the Control Center rapidly, then expand the Island while its content changes. The spring keeps velocity when retargeted, instead of replaying easing. Turning **Animations** off snaps to the final state and releases closed panels.
 
+Closing panels and the Island travel beyond the nearest screen edge, without waiting for the spring's sub-pixel settling tail. OSDs exit through their configured side. During exit, the main overlay releases input so another bar click can reverse the animation. The dim backdrop interpolates over 220 ms on entry / 150 ms on exit at motion speed 1. Compositor blur remains region-based (binary intensity), because the Quickshell/niri protocol has no blur-strength property; this does not substitute wallpaper or a captured image for live applications.
+
+Hovering controls render above sibling plates. Bar and Settings scroll viewports reserve drawing gutters while retaining scrolling clips; workspace buttons in their tight nested viewport keep width/radius/ripple motion without scale growth. Morph Canvas fits the current cubic silhouette and reserves stroke/antialiasing space, including during overshoot.
+
 Validated: native QML retarget/velocity/convergence/reduced-motion regression, qmllint, existing native popup retention and Settings launch checks. GPU/120 Hz performance on the owner's laptop remains unmeasured.
 
 ## Geometric morph
@@ -66,7 +70,7 @@ Install `wf-recorder ffmpeg-free`; `pulseaudio-utils` adds audio, `slurp` adds r
 
 ## Validation and remaining limits
 
-The full opt-in private Wayland suite completed **167 tests, all passed, no skips** on Quickshell 0.3.2 / Qt 6.8.2. It covers the existing shell plus spring physics and bound-target retargeting, real frame overshoot/reduced motion, Settings launch/reopen, font search selection, HSV/alpha apply, notes autosave/conflicts, notification protocols, native popup retention, and existing screenshot/OCR flows. Backend fixtures cover transfer safety, battery units, capture classification, search bounds/cancellation, owned recorder signaling and nonblocking preparation/shutdown.
+The full opt-in private Wayland suite completed **168 tests, all passed, no skips** on Quickshell 0.3.2 / Qt 6.8.2. It covers the existing shell plus spring physics and bound-target retargeting, real frame overshoot/reduced motion, Settings launch/reopen, font search selection, HSV/alpha apply, notes autosave/conflicts, notification protocols, nearest-edge popup exits/reversals, immediate input release, backdrop interpolation, Canvas stroke pixels, and existing screenshot/OCR flows. Backend fixtures cover transfer safety, battery units, capture classification, search bounds/cancellation, owned recorder signaling and nonblocking preparation/shutdown.
 
 Integration review also corrected initial tab-indicator placement and fallback contrast, swatch presentation, full-profile matching, bound spring target changes, easing/spring toggles, overlay capture timing, and nonblocking recorder setup. The virtual keyboard remains connected during held-key tests so headless Sway models a real keyboard without resetting Qt focus.
 

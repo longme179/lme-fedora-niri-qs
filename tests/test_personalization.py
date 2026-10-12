@@ -263,7 +263,7 @@ ShellRoot {
         repo=Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);config=root/'config';(config/'quickshell').mkdir(parents=True);(config/'quickshell/gpt').symlink_to(repo,target_is_directory=True)
-            (config/'lme-shell').mkdir();(config/'lme-shell/settings.json').write_text(json.dumps({'weatherAutoLocation':False,'clipboardEnabled':False}))
+            (config/'lme-shell').mkdir();(config/'lme-shell/settings.json').write_text(json.dumps({'weatherAutoLocation':False,'clipboardEnabled':False,'motionSpeed':.5}))
             runtime=root/'runtime';runtime.mkdir(mode=0o700);binaries=root/'bin';binaries.mkdir()
             niri=binaries/'niri';niri.write_text('#!/usr/bin/python3\nimport sys\nprint("niri 26.04" if sys.argv[1:]==["--version"] else "[]")\n');niri.chmod(0o755)
             env={**os.environ,'XDG_CONFIG_HOME':str(config),'XDG_RUNTIME_DIR':str(runtime),'XDG_STATE_HOME':str(root/'state'),'XDG_DATA_HOME':str(root/'data'),'WAYLAND_DISPLAY':str(Path(os.environ['XDG_RUNTIME_DIR'])/os.environ['WAYLAND_DISPLAY']),'PATH':str(binaries)+os.pathsep+os.environ['PATH'],'LME_SHELL_DEMO':'0'}
@@ -300,6 +300,12 @@ ShellRoot {
                     time.sleep(.5);click(output['width']-102,102);wait(lambda:len(windows())==1)
                     self.assertEqual(root_ipc('toggle','settings').returncode,0);time.sleep(.2)
                     self.assertEqual(len(windows()),1)
+                    current=windows()[0]['pid']
+                    subprocess.run(['swaymsg','[pid='+str(current)+']','kill'],env=env,check=True,capture_output=True)
+                    wait(lambda:not windows());self.assertEqual(root_ipc('toggle','control').returncode,0);time.sleep(.6)
+                    self.assertEqual(root_ipc('close').returncode,0)
+                    # This click lands while the slow popup exit still paints above the bar.
+                    click(output['width']-37,29);wait(lambda:len(windows())==1)
                     log.seek(0);text=log.read()
                     for problem in ('TypeError','ReferenceError','Binding loop','Unable to assign','Failed to load configuration','Settings could not be opened'):self.assertNotIn(problem,text)
                 finally:

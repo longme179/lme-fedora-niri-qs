@@ -32,6 +32,7 @@ Item {
     SlideLoader {
         id: panelLoader
         objectName: "desktopPanel"
+        exitToEdge: true
         readonly property Item panel: item as Item
         readonly property bool centered: ["launcher", "power", "overview", "settings", "clipboard"].includes(ShellState.panelKind)
         direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"

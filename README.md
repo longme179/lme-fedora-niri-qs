@@ -18,7 +18,7 @@
 
 The preview comes from the maintainer's recording, with a customized layout.
 Click it to watch the 65-second demo in Dropbox; the original 1080p MP4 is also
-linked from the GitHub release.
+available through the original MP4 link above.
 
 LME is built with **Quickshell and QML/Qt Quick**. A modular bar, an expandable
 Activity island and a standalone Settings app put everyday desktop controls
@@ -47,7 +47,7 @@ without editing QML.
 **Recording:** NVIDIA-first recording with iGPU/CPU fallback, MKV/MP4/MOV/WebM
 and encoding controls, external screenshot annotation, workspace selection
 without a redundant monitor-centering action, and a more responsive audio
-spectrum. See the [changelog](CHANGELOG.md) for the changes since 1.9.
+spectrum. See the [changelog](CHANGELOG.md) for the feature history.
 
 ## Installation
 

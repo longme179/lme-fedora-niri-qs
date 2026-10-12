@@ -37,6 +37,7 @@ ShellRoot {
         if (!item) return null;
         if (item.objectName === name || item.text === name) return item;
         for (const child of item.children || []) { const result = find(child, name); if (result) return result; }
+        for (const key of ["colorMenu"]) if (item[key] && item[key].visible) { const result=find(item[key].contentItem,name); if(result) return result; }
         if (item.contentItem && item.contentItem !== item) return find(item.contentItem, name);
         return null;
     }

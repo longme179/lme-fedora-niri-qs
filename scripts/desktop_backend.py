@@ -42,7 +42,7 @@ from screen_capture import ScreenCapture
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -266,7 +266,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker"} and type(value) is bool: return value
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)

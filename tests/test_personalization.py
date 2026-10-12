@@ -213,6 +213,8 @@ ShellRoot {
                 click('elementGroup');subprocess.run(['wtype','-s','150','-k','Home','-k','Down','-k','Down','-k','Return'],env=env,check=True)
                 time.sleep(.3)  # Qt's combo popup closes before the next pointer target.
                 click('element-buttonFill');type_text('#113355');wait(lambda s:s['buttonFill']=='#113355')
+                click('color-buttonFill');click('pickerHex');type_text('#80113355');click('Apply color');wait(lambda s:s['buttonFill']=='#80113355')
+                click('element-buttonFill');type_text('#113355');wait(lambda s:s['buttonFill']=='#113355')
                 click('element-buttonFill');type_text('#xyz');time.sleep(.2);self.assertEqual(json.loads(ipc('themeState'))['buttonFill'],'#113355')
                 click('font-body');type_text('DejaVu Sans');wait(lambda s:s['bodyFont']=='DejaVu Sans' and s['barFont']=='DejaVu Sans')
                 click('font-body-menu');type_text('Roboto');wait(lambda s:s['bodyFont']=='Roboto')

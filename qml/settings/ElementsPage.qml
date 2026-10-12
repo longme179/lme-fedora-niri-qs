@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import "../components"
 import "../services"
 import "../theme"
@@ -8,6 +9,9 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
+    property alias colorMenu: picker
+    property string pickerToken: ""
+    ColorPicker { id: picker; parent: Overlay.overlay; anchors.centerIn: parent; onChosen: color => root.save(root.pickerToken,color.toString(),false) }
     function save(key, value, fonts) {
         const preference = fonts ? "fontOverrides" : "themeOverrides";
         ShellState.run("setting", {key: preference, token: key, value: value.trim()});
@@ -26,6 +30,7 @@ ColumnLayout {
     SettingsCard {
         title: "Color your elements"
         description: "Change individual UI classes using #RRGGBB or #AARRGGBB (alpha first). Reset returns an element to its inherited palette. Changes apply immediately and save in Appearance profiles."
+        PreferenceSwitch { title: "Visual color picker"; detail: "Choose HSV and opacity, with alpha-first hex input"; preference: "colorPicker" }
         RowLayout {
             Layout.fillWidth: true
             LiquidComboBox { id: group; objectName: "elementGroup"; model: Theme.catalog.colors.map(g => g.title); Accessible.name: "Element color group" }
@@ -45,7 +50,7 @@ ColumnLayout {
                 }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
-                    Rectangle { Layout.preferredWidth: 26; Layout.preferredHeight: 26; radius: 9; color: Theme.tokenColor(row.modelData); border.width: 1; border.color: Theme.border }
+                    IconButton { objectName: "color-" + row.modelData; visible: ShellState.preferences.colorPicker !== false; iconName: "palette"; tooltip: "Choose " + Theme.tokenTitle(row.modelData); accentColor: Theme.tokenColor(row.modelData); active: true; onClicked: { root.pickerToken=row.modelData; picker.initialColor=Theme.tokenColor(row.modelData); picker.open(); } }
                     LabelText { text: Theme.tokenTitle(row.modelData); Layout.fillWidth: true; wrapMode: Text.Wrap; font.weight: Font.Medium }
                     ExpressiveField {
                         id: hex; objectName: "element-" + row.modelData; Layout.preferredWidth: 126; maximumLength: 9

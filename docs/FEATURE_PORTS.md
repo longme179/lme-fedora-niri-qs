@@ -23,3 +23,7 @@ In **Elements → Type that feels like you**, open the arrow menu, search, then 
 ## Pointer-origin ripple
 
 Enable **Appearance → Pointer-origin ripple**. Press near a rounded button corner, hold, then release; ink starts at that point and stays clipped. Keyboard presses use the center. Shader source and compiled QSB are bundled; rebuild with `QSB_BINARY=/usr/lib64/qt6/bin/qsb bash scripts/build-shaders.sh` (Fedora build-only package: `qt6-qtshadertools`). Software rendering uses the same rounded clip in Canvas. The press/hold/release lifecycle remains Caelestia-derived.
+
+## HSV + alpha picker
+
+Enable **Elements → Visual color picker**, click a role swatch, drag saturation/value, and set hue/opacity. Hex is `#RRGGBB` or `#AARRGGBB` (alpha first). Arrow keys edit saturation/value; Shift uses larger steps. Apply commits only that token, Cancel preserves it. Native tests cover popup editing/apply and alpha persistence; original role input/reset/profile behavior remains tested. No screen eyedropper dependency is introduced.

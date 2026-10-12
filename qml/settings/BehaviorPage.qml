@@ -35,6 +35,25 @@ ColumnLayout {
         }
     }
     SettingsCard {
+        title: "Volume and brightness OSD"
+        description: "Spring popups follow the focused niri output, a chosen output, or all connected displays. Each output owns its popup timer."
+        PreferenceSwitch { title: "Show OSD"; detail: "Volume and brightness feedback"; preference: "osdEnabled" }
+        RowLayout {
+            LabelText { text: "Position"; Layout.fillWidth: true }
+            LiquidComboBox { property var positions: ["top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"]; model: positions; currentIndex: positions.indexOf(ShellState.preferences.osdPosition || "bottom-center"); onActivated: ShellState.run("setting",{key:"osdPosition",value:currentText}); Accessible.name: "OSD position" }
+        }
+        RowLayout {
+            LabelText { text: "Layout"; Layout.fillWidth: true }
+            LiquidComboBox { model: ["Horizontal","Vertical"]; currentIndex: ShellState.preferences.osdLayout === "vertical" ? 1 : 0; onActivated: ShellState.run("setting",{key:"osdLayout",value:currentIndex ? "vertical" : "horizontal"}); Accessible.name: "OSD layout" }
+        }
+        RowLayout {
+            LabelText { text: "Output"; Layout.fillWidth: true }
+            LiquidComboBox { property var outputs: ["focused","all",...Quickshell.screens.map(s => s.name)]; model: outputs; currentIndex: outputs.indexOf(ShellState.preferences.osdOutput || "focused"); onActivated: ShellState.run("setting",{key:"osdOutput",value:currentText}); Accessible.name: "OSD output" }
+        }
+        LabelText { text: "Edge distance · " + (ShellState.preferences.osdMargin === undefined ? 24 : ShellState.preferences.osdMargin) + " px" }
+        LiquidSlider { Layout.fillWidth: true; from: 0; to: 96; stepSize: 1; value: ShellState.preferences.osdMargin === undefined ? 24 : ShellState.preferences.osdMargin; onMoved: if(!pressed) ShellState.run("setting",{key:"osdMargin",value:Math.round(value)}); onPressedChanged: if(!pressed) ShellState.run("setting",{key:"osdMargin",value:Math.round(value)}); Accessible.name: "OSD edge distance" }
+    }
+    SettingsCard {
         title: "Settings export and restore"
         description: "Portable presets exclude tasks, location, device IDs and file paths. Private backups include all settings, but not clipboard, notifications or notes. Import validates every field and backs up current settings first."
         ExpressiveField { id: transfer; Layout.fillWidth: true; text: Quickshell.env("HOME") + "/lme-preset.json"; placeholderText: "Absolute JSON file path"; Accessible.name: "Settings transfer path" }

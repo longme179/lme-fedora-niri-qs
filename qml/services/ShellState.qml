@@ -139,11 +139,11 @@ QtObject {
                     && (oldAudio.volume !== next.system.audio.volume || oldAudio.muted !== next.system.audio.muted)) {
                 osdLabel = next.system.audio.muted ? "Muted" : "Volume";
                 osdValue = next.system.audio.muted ? 0 : next.system.audio.volume;
-                osdOpen = true; osdTimer.restart();
+                osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel,osdValue);
             } else if (oldBrightness && next.system.brightness && oldBrightness.available
                     && oldBrightness.percent !== next.system.brightness.percent) {
                 osdLabel = "Brightness"; osdValue = next.system.brightness.percent;
-                osdOpen = true; osdTimer.restart();
+                osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel,osdValue);
             }
             if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
                 lastResult = next.lastResult;

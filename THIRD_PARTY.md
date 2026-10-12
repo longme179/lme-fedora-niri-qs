@@ -106,3 +106,5 @@ Privacy classification references DMS `PrivacyService.qml` (6640a943, MIT) and N
 Settings transfer references DMS backup validation/rollback workflow (`core/internal/backup/backup.go`, 6640a943, MIT). LME uses validated JSON and existing atomic preference writes, not archive extraction or the Go backend.
 
 Battery health/power/ETA presentation references Noctalia `battery_widget.cpp` / `upower_service.cpp` at 8504aff8 (MIT). LME retains its Linux sysfs backend, with original unit-aware calculation and explicit unavailable values.
+
+OSD placement/output lifecycle references DMS `DOSD.qml` / `OSDManager.qml` (6640a943, MIT) and Noctalia `osd_overlay.cpp` (8504aff8, MIT). LME reuses its spring loader, theme and backend events.

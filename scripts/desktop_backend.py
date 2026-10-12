@@ -45,7 +45,7 @@ from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -269,7 +269,11 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled"} and type(value) is bool: return value
+    if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
+    if key == "osdLayout" and value in ("horizontal","vertical"): return value
+    if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
+    if key == "osdOutput" and isinstance(value,str) and 1 <= len(value) <= 128 and not any(ord(c)<32 for c in value): return value
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)

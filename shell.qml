@@ -159,13 +159,14 @@ ShellRoot {
             }
         }
     }
+    Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
     PanelWindow {
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && !ShellState.authenticationActive && (ShellState.osdOpen || ShellState.statusMessage.length > 0)
+        visible: !root.preview && !ShellState.authenticationActive && ShellState.statusMessage.length > 0
         anchors.bottom: true
         margins.bottom: 24
-        implicitWidth: ShellState.statusMessage.length > 0 ? 460 : 240
-        implicitHeight: ShellState.statusMessage.length > 0 ? 76 : 64
+        implicitWidth: 460
+        implicitHeight: 76
         color: "transparent"; exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-osd"

@@ -19,6 +19,7 @@ import "qml/components/shapes/Polygons.js" as Polygons
 import "qml/components/shapes/shapes/morph.js" as Morph
 ShellRoot {
     Component.onCompleted: Quickshell.watchFiles = false
+    OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
     SpringMotion { id: spring; driver.running: false }
     IpcHandler {
         target: "test"
@@ -43,7 +44,12 @@ ShellRoot {
             const sharing=Notifications.sharingDnd && Notifications.dnd;
             PrivacyState.event({CastStopped:{stream_id:4}});
             const privacy=sharing && !Notifications.sharingDnd && Notifications.dnd;
-            return JSON.stringify({preserved,converged,reduced,finite,privacy});
+            OSDManager.show("Volume",42);
+            const first=OSDManager.entries[Quickshell.screens[0].name];
+            OSDManager.show("Brightness",86);
+            const second=OSDManager.entries[Quickshell.screens[0].name];
+            const output=first && second && first.sequence<second.sequence && second.value===86 && osd.open;
+            return JSON.stringify({preserved,converged,reduced,finite,privacy,output});
         }
     }
 }""")
@@ -57,5 +63,5 @@ ShellRoot {
                         except ValueError: time.sleep(.1); continue
                         break
                     log.seek(0)
-                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True},log.read())
+                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True,'output':True},log.read())
                 finally: process.terminate();process.wait(timeout=5)

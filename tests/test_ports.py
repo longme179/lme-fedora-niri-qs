@@ -59,3 +59,10 @@ class BatteryCase(Fixture, unittest.TestCase):
         self.assertIsNone(live.battery()['secondsRemaining'])
         self.put('sys/class/power_supply/BAT0/charge_full_design','NaN')
         self.assertIsNone(live.battery()['health'])
+
+class OsdSettingsCase(unittest.TestCase):
+    def test_positions_and_limits(self):
+        self.assertEqual(backend.validate_preference('osdMargin',0),0)
+        self.assertEqual(backend.validate_preference('osdPosition','center-right'),'center-right')
+        for key,value in [('osdMargin',True),('osdMargin',97),('osdPosition','outside'),('osdLayout','diagonal'),('osdOutput','bad\nname')]:
+            with self.assertRaises(ValueError): backend.validate_preference(key,value)

@@ -39,3 +39,7 @@ Enable **Elements → Visual color picker**, click a role swatch, drag saturatio
 ## Battery health, power and ETA
 
 Enable **Behavior → Battery health details** and inspect the Battery charging card. The backend reads standard power_supply energy/charge/current units; absent or invalid data stays unavailable. ETA is an instantaneous estimate and may vary with load; multiple-pack ETA is omitted. Fixtures cover energy/charge units, charge/discharge, zero power and unknown design capacity. Actual IdeaPad telemetry is not available in cloud.
+
+## Configurable spring OSD
+
+**Behavior → Volume and brightness OSD** sets nine positions, horizontal/vertical layout, edge distance and focused/all/named output. Output popups own their timers and retain the surface through spring exit. Hover pauses autohide. Change volume/brightness to test; disable Animations to test instant hiding. Disconnected outputs are removed; unplugging a selected named output does not silently redirect feedback. Physical multi-monitor behavior still requires testing on niri.

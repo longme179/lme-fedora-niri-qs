@@ -16,9 +16,11 @@ Singleton {
     property real now: Date.now()
     readonly property real dndUntil: ShellState.preferences.dndUntil || 0
     readonly property bool dnd: dndUntil === -1 || dndUntil > now
+    readonly property bool sharingDnd: ShellState.preferences.dndWhileSharing !== false && PrivacyState.sharing
+    readonly property bool effectiveDnd: dnd || sharingDnd
     property bool historyLoaded: false
     readonly property var mutedApps: ShellState.preferences.notificationMutedApps || []
-    readonly property var popups: dnd ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
+    readonly property var popups: effectiveDnd ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
     readonly property int count: history.length
     function setDnd(minutes) { ShellState.run("setting", {key: "dndUntil", value: minutes < 0 ? -1 : minutes === 0 ? 0 : Math.round(Date.now() + minutes * 60000)}); }
     function muteApp(name, mute) { ShellState.run("setting", {key: "notificationMutedApps", value: mute ? [...new Set([...mutedApps, name])] : mutedApps.filter(n => n !== name)}); }
@@ -61,7 +63,7 @@ Singleton {
         const next = Object.assign({}, live);
         next[notification.id] = wrapper;
         live = next;
-        history = [snapshot(notification, Date.now(), !dnd && !mutedApps.includes(notification.appName) && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 200);
+        history = [snapshot(notification, Date.now(), !effectiveDnd && !mutedApps.includes(notification.appName) && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 200);
         if (!notification.lastGeneration && !ShellState.notificationsOpen) unreadCount++;
     }
 
@@ -110,7 +112,7 @@ Singleton {
     function local(summary, body) {
         const timestamp = Date.now();
         history = [{id: "local-" + timestamp, appName: "LME Shell", appIcon: "", summary: summary, body: body,
-                    timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !dnd && !ShellState.notificationsOpen,
+                    timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !effectiveDnd && !ShellState.notificationsOpen,
                     transient: false, local: true}, ...history].slice(0, 200);
         if (!ShellState.notificationsOpen) unreadCount++;
     }
@@ -129,8 +131,8 @@ Singleton {
         hidePopup(id);
     }
 
-    onDndChanged: {
-        if (dnd) history = history.map(entry => Object.assign({}, entry, { popup: false }));
+    onEffectiveDndChanged: {
+        if (effectiveDnd) history = history.map(entry => Object.assign({}, entry, { popup: false }));
     }
 
     LazyLoader {

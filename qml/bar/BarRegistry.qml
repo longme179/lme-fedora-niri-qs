@@ -3,7 +3,7 @@ import QtQuick
 
 QtObject {
     readonly property var zones: ["left", "center", "right"]
-    readonly property var defaults: ({left: ["launcher", "overview", "workspaces"], center: ["activity"], right: ["clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]})
+    readonly property var defaults: ({left: ["launcher", "overview", "workspaces"], center: ["activity"], right: ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]})
     readonly property var modules: [
         {id: "launcher", title: "Applications", detail: "Application launcher", icon: "applications"},
         {id: "overview", title: "Overview", detail: "niri overview and workspace board", icon: "overview"},
@@ -19,6 +19,7 @@ QtObject {
         {id: "battery", title: "Battery", detail: "Charge level when a battery is present", icon: "battery"},
         {id: "clock", title: "Clock", detail: "Date, time and agenda", icon: "clock"},
         {id: "settings", title: "Settings", detail: "Open the separate settings app", icon: "settings"},
+        {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"},
         {id: "clipboard", title: "Clipboard", detail: "Search text and image history", icon: "clipboard"}
     ]
     function info(id) { return modules.find(item => item.id === id) || {id: id, title: id, icon: "applications"}; }

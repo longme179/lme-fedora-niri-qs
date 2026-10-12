@@ -15,7 +15,7 @@ Loader {
     property real titleBudget: 360
     readonly property var battery: ShellState.system.battery || {}
     readonly property var player: ShellState.demo ? null : Mpris.players.values.find(p => p.isPlaying) || Mpris.players.values[0] || null
-    readonly property bool available: moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
+    readonly property bool available: moduleId === "privacy" ? ShellState.preferences.privacyIndicators !== false && PrivacyState.indicators.length > 0 : moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
                                    : moduleId === "battery" ? battery.available === true
                                    : moduleId === "media" ? player !== null : true
     active: available
@@ -23,8 +23,9 @@ Loader {
     width: available && item ? (item as Item).implicitWidth : 0
     height: 30
     y: parent ? (parent.height - height) / 2 : 0
-    sourceComponent: (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
+    sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launcher", "overview", "tray", "notifications", "settings", "clipboard"].includes(moduleId) ? actionComponent : statusComponent
+    Component { id: privacyComponent; PrivacyIndicator {} }
     Component {
         id: activityComponent
         ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget }

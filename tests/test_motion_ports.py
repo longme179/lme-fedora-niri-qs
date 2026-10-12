@@ -14,6 +14,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "qml/components"
+import "qml/services"
 import "qml/components/shapes/Polygons.js" as Polygons
 import "qml/components/shapes/shapes/morph.js" as Morph
 ShellRoot {
@@ -37,7 +38,12 @@ ShellRoot {
                 const cubics=morph.asCubics(progress);
                 finite=finite && cubics.length>0 && cubics.every(c => [c.anchor0X,c.anchor0Y,c.control0X,c.control0Y,c.control1X,c.control1Y,c.anchor1X,c.anchor1Y].every(Number.isFinite));
             }
-            return JSON.stringify({preserved,converged,reduced,finite});
+            ShellState.snapshot=Object.assign({},ShellState.snapshot,{preferences:{dndUntil:-1,dndWhileSharing:true}});
+            PrivacyState.event({CastsChanged:{casts:[{stream_id:4,is_active:true}]}});
+            const sharing=Notifications.sharingDnd && Notifications.dnd;
+            PrivacyState.event({CastStopped:{stream_id:4}});
+            const privacy=sharing && !Notifications.sharingDnd && Notifications.dnd;
+            return JSON.stringify({preserved,converged,reduced,finite,privacy});
         }
     }
 }""")
@@ -51,5 +57,5 @@ ShellRoot {
                         except ValueError: time.sleep(.1); continue
                         break
                     log.seek(0)
-                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True},log.read())
+                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True},log.read())
                 finally: process.terminate();process.wait(timeout=5)

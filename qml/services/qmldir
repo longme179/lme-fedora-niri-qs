@@ -3,3 +3,4 @@ singleton Notifications 1.0 Notifications.qml
 singleton FocusTimer 1.0 FocusTimer.qml
 singleton ClipboardState 1.0 ClipboardState.qml
 singleton ActivityState 1.0 ActivityState.qml
+singleton PrivacyState 1.0 PrivacyState.qml

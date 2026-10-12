@@ -22,6 +22,7 @@ adwaita-icon-theme
 niri
 NetworkManager
 pipewire
+pipewire-utils
 pipewire-pulseaudio
 wireplumber
 brightnessctl

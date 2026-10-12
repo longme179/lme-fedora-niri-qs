@@ -34,6 +34,7 @@ GlassPanel {
                 LabelText { text: "Your desktop, within reach."; color: Theme.muted; font.pixelSize: 12 }
             }
             Item { Layout.fillWidth: true }
+            PrivacyIndicator {}
             IconButton { iconName: "settings"; tooltip: "Shell settings"; onClicked: ShellState.togglePanel("settings") }
             IconButton { glyph: "×"; tooltip: "Close control center"; onClicked: ShellState.closePanels() }
         }

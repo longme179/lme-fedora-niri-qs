@@ -28,7 +28,11 @@ Item {
             ctx.lineWidth = 1.8;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            if (root.name === "record") {
+            if (root.name === "camera") {
+                ctx.beginPath(); ctx.roundedRect(3,5,13,14,2,2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(16,9); ctx.lineTo(22,6); ctx.lineTo(22,18); ctx.lineTo(16,15); ctx.closePath(); ctx.stroke();
+            } else if (root.name === "screen-share") {
+                ctx.beginPath(); ctx.roundedRect(2,3,20,15,2,2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(8,22); ctx.lineTo(16,22); ctx.moveTo(12,18); ctx.lineTo(12,22); ctx.stroke();
+            } else if (root.name === "record") {
                 ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.stroke();
                 ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.fill();
             } else if (root.name === "clipboard") {

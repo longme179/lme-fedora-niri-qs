@@ -27,3 +27,7 @@ Enable **Appearance → Pointer-origin ripple**. Press near a rounded button cor
 ## HSV + alpha picker
 
 Enable **Elements → Visual color picker**, click a role swatch, drag saturation/value, and set hue/opacity. Hex is `#RRGGBB` or `#AARRGGBB` (alpha first). Arrow keys edit saturation/value; Shift uses larger steps. Apply commits only that token, Cancel preserves it. Native tests cover popup editing/apply and alpha persistence; original role input/reset/profile behavior remains tested. No screen eyedropper dependency is introduced.
+
+## Privacy and sharing DND
+
+**Behavior → Capture indicators / Silence popups while sharing**. Add the Privacy module in Top bar settings for older saved bar layouts. Start a microphone/camera PipeWire stream or a niri portal screen share; active icons appear in the bar/Control Center. Share suppression composes with manual DND and retains notification history. Fixtures test muted/virtual streams and native cast/DND transitions. Direct camera access outside PipeWire and applications bypassing niri/PipeWire capture are not detected; real meeting apps need testing on Fedora. `pipewire-utils` supplies `pw-dump`.

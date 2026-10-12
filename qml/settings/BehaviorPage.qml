@@ -6,6 +6,12 @@ import "../theme"
 ColumnLayout {
     spacing: 20
     SettingsCard {
+        title: "Privacy indicators"
+        description: "PipeWire capture activity and niri screen casts. Direct V4L2 camera access outside PipeWire is not detected."
+        PreferenceSwitch { title: "Capture indicators"; detail: "Show active microphone, camera and screen sharing"; preference: "privacyIndicators" }
+        PreferenceSwitch { title: "Silence popups while sharing"; detail: "Automatic suppression preserves your manual DND setting"; preference: "dndWhileSharing" }
+    }
+    SettingsCard {
         title: "Default terminal"
         description: "Executable name only, for example kitty or foot."
         RowLayout {

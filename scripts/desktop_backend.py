@@ -39,10 +39,11 @@ from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, 
 from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
+from privacy import captures
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "privacyIndicators": True, "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -58,14 +59,14 @@ DEFAULT_PREFERENCES = {
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
     "barStyle": "connected", "barFontSize": 13,
     "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
-                  "right": ["clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
+                  "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy"}
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -266,7 +267,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing"} and type(value) is bool: return value
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
@@ -565,6 +566,12 @@ class DesktopBackend:
         return {"available": bool(capacities), "percent": round(sum(capacities) / len(capacities)) if capacities else None,
                 "charging": charging, "acOnline": self.ac_online()}
 
+    def privacy(self):
+        if not (self.preferences.values["privacyIndicators"] or self.preferences.values["dndWhileSharing"]): return {"captures": []}
+        output = self.try_run("pw-dump")
+        try: return {"captures": captures(json.loads(output or "null")), "available": True}
+        except (ValueError, TypeError, AttributeError): return {"captures": [], "available": False}
+
     def compositor_features(self):
         version = self.try_run("niri", "--version") or "Unavailable"
         release = re.search(r"\b(\d{2})\.(\d{2})\b", version)
@@ -814,7 +821,7 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile(), charging=self.charging(), recording=self.recording())
+                          powerProfile=self.power_profile(), charging=self.charging(), recording=self.recording(), privacy=self.privacy())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])

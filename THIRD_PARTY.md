@@ -100,3 +100,5 @@ Based on iNiR by snowarch (https://github.com/snowarch/inir), revision `48cdcecb
 Pointer-origin feedback adapts DCommon `DRipple.qml` and retains `ripple.frag` at `bd90e4b6f2ec36035fc2cb560acdc0e418f669ac` (MIT ©2025-2026 Avenge Media LLC). Full notice: `third_party/DankQmlCommon-LICENSE`. Existing Caelestia GPL press/hold/release attribution is preserved.
 
 The HSV/alpha picker workflow references DMS `ColorPickerContent.qml` and DCommon `DSaturationValuePicker.qml`; the LME implementation uses existing controls and does not vendor DMS screen-picking commands.
+
+Privacy classification references DMS `PrivacyService.qml` (6640a943, MIT) and Noctalia `privacy_capture_classification.cpp` (8504aff8, MIT). LME aggregates active streams without the upstream early-return mute issue and reads niri cast events; implementation is original.

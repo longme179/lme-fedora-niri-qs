@@ -79,6 +79,7 @@ Item {
             ExpressiveField { Layout.fillWidth: true; placeholderText: "Search notification history"; Accessible.name: "Search notifications"; onTextChanged: root.query = text }
             LiquidComboBox { model: ["DND duration…", "15 minutes", "1 hour", "8 hours", "Until turned off", "Turn off DND"]; Accessible.name: "Do not disturb duration"; onActivated: { if (currentIndex) Notifications.setDnd([0, 15, 60, 480, -1, 0][currentIndex]); currentIndex = 0; } }
         }
+        LabelText { visible: Notifications.sharingDnd; text: "Notification popups are paused while sharing your screen"; color: Theme.green; Layout.fillWidth: true; wrapMode: Text.Wrap }
         LabelText { visible: Notifications.dnd; Layout.fillWidth: true; color: Theme.yellow; wrapMode: Text.Wrap; text: Notifications.dndUntil === -1 ? "Popups silenced until turned off" : "Popups resume at " + Qt.formatDateTime(new Date(Notifications.dndUntil), "hh:mm") }
         RowLayout {
             visible: Notifications.mutedApps.length > 0

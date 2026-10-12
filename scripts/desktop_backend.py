@@ -871,9 +871,7 @@ class DesktopBackend:
                 outputs=self.display_control.outputs() if self.mirror.child else None,
                 enabled=self.preferences.values['mirroringEnabled'])
         if self.settings_only:
-            return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
-                    "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
+            return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
@@ -890,9 +888,15 @@ class DesktopBackend:
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
-                "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
-                "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
+                **self.feature_snapshot(), "notificationHistory": self.notification_history,
+                "monitor": self.monitor.state if self.monitor_enabled else {}}
+
+    def feature_snapshot(self):
+        return {"preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+                "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
+                "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
     def valid_notifications(value):

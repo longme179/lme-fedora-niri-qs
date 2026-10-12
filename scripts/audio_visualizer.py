@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import math
-import os
 import shutil
 import signal
 import subprocess
@@ -14,6 +13,9 @@ CONFIG='''[general]
 bars=16
 framerate=25
 sleep_timer=3
+[input]
+method=pulse
+source=auto
 [output]
 method=raw
 raw_target=/dev/stdout

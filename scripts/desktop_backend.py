@@ -40,6 +40,7 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
 from privacy import captures
+from clipboard import MAX_TEXT
 from screen_recording import Recorder
 from file_search import roots as search_roots, search as search_files
 from threading import Event
@@ -49,7 +50,13 @@ from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "cpu", "fileSearchEnabled": True, "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")], "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "animations": True, "opacity": 0.90,
+    "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
+    "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
+    "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "cpu",
+    "fileSearchEnabled": True,
+    "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")],
+    "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused",
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -1294,11 +1301,13 @@ class DesktopBackend:
         if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
+            query=request.get("query")
+            if not isinstance(query,str) or not 2<=len(query.strip())<=160: raise ValueError("File search needs 2–160 characters")
             self.file_search_cancel.set()
             previous=self.feature_jobs.pop(action,None)
             if previous: previous.cancel()
             self.file_search_cancel=Event();cancel=self.file_search_cancel
-            query=request.get("query");folders=list(self.preferences.values["fileSearchRoots"])
+            folders=list(self.preferences.values["fileSearchRoots"])
             self.file_search={"query":query,"entries":[],"truncated":False}
             return self.start_feature(action,lambda: search_files(query,folders,cancel))
         if action == "fileOpen":
@@ -1353,7 +1362,7 @@ class DesktopBackend:
             return calculate(request.get("query"))
         if action == "copyText":
             text = request.get("text")
-            if not isinstance(text, str) or len(text.encode()) > 65536: raise ValueError("Invalid copy text")
+            if not isinstance(text, str) or len(text.encode()) > MAX_TEXT: raise ValueError("Invalid copy text")
             run("wl-copy", "--type", "text/plain;charset=utf-8", input=text)
             return "Copied"
         if action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:

@@ -50,7 +50,7 @@ ColumnLayout {
                 }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
-                    IconButton { objectName: "color-" + row.modelData; visible: ShellState.preferences.colorPicker !== false; iconName: "palette"; tooltip: "Choose " + Theme.tokenTitle(row.modelData); accentColor: Theme.tokenColor(row.modelData); active: true; onClicked: { root.pickerToken=row.modelData; picker.initialColor=Theme.tokenColor(row.modelData); picker.open(); } }
+                    IconButton { objectName: "color-" + row.modelData; visible: ShellState.preferences.colorPicker !== false; tooltip: "Choose " + Theme.tokenTitle(row.modelData); contentItem: Item { Rectangle { anchors.centerIn: parent; width: 24; height: 24; radius: 8; color: Theme.tokenColor(row.modelData); border.width: 1; border.color: Theme.border } } onClicked: { root.pickerToken=row.modelData; picker.initialColor=Theme.tokenColor(row.modelData); picker.open(); } }
                     LabelText { text: Theme.tokenTitle(row.modelData); Layout.fillWidth: true; wrapMode: Text.Wrap; font.weight: Font.Medium }
                     ExpressiveField {
                         id: hex; objectName: "element-" + row.modelData; Layout.preferredWidth: 126; maximumLength: 9

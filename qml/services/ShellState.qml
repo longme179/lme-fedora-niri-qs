@@ -101,17 +101,19 @@ QtObject {
         nativeOverviewDelay.restart();
     }
     property bool overlayVisible: false
+    property real captureDeadline: 0
+    property real recordDeadline: 0
     property var recordingRequest: ({})
-    function startRecording(request) { if(demo || authenticationActive) return; closePanels(); recordingRequest=request; recordDelay.restart(); }
-    property Timer recordDelay: Timer { interval: 80; onTriggered: { if(root.authenticationActive) return; if(root.overlayVisible) { restart(); return; } root.run("recordStart",root.recordingRequest); } }
+    function startRecording(request) { if(demo || authenticationActive) return; closePanels(); captureDelay.stop(); statusMessage=""; recordingRequest=request; recordDeadline=Date.now()+3000; recordDelay.restart(); }
+    property Timer recordDelay: Timer { interval: 80; onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.recordDeadline) restart(); else { root.statusMessage="Recording cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run("recordStart",root.recordingRequest); } }
     property string captureMode: "screen"
     function takeScreenshot(mode) {
         if (!['screen', 'area', 'window'].includes(mode) || demo || authenticationActive) return;
-        closePanels(); captureMode = mode; captureDelay.restart();
+        closePanels(); recordDelay.stop(); statusMessage=""; captureMode = mode; captureDeadline=Date.now()+3000; captureDelay.restart();
     }
     property Timer captureDelay: Timer {
         interval: 250
-        onTriggered: root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode])
+        onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
     }
     function run(action, payload) {
         if (!backend.running || !backendReady) {
@@ -156,7 +158,7 @@ QtObject {
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

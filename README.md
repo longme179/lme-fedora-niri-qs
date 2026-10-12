@@ -8,7 +8,7 @@ customizable through a separate Settings app.
 The default layout has one rounded top bar, an Activity island in the center and
 a Control Center on the right. The interface and documentation are in English.
 
-[Get started](#get-started) · [Personalize](#personalize) ·
+[Get started](#get-started) · [Personalize](#personalize) · [New feature guide](docs/FEATURE_PORTS.md) ·
 [Shortcuts](#shortcuts) · [Update](#update) · [Help](#help)
 
 ## What you get
@@ -162,6 +162,31 @@ server and password popup.
 Custom config names and XDG paths are covered in the [installation guide](docs/INSTALL.md).
 
 ## Enable optional features
+
+Spring popups, geometric hover/press morphs, moving tab indicators, searchable
+font menus and the HSV/alpha picker are configured in **Appearance** and
+**Elements**. **Behavior** adds privacy controls, OSD placement, quick notes,
+launcher file search, recording and settings export/import. The
+[new feature guide](docs/FEATURE_PORTS.md) explains each control and how to test it.
+
+Optional packages for audio spectrum, wallpaper palettes and recording:
+
+```sh
+sudo dnf install cava matugen wf-recorder ffmpeg-free pulseaudio-utils slurp
+```
+
+`cava` supplies real spectrum data; `matugen` previews Material colors;
+`wf-recorder` captures an output/region; `ffmpeg-free` encodes/checks video;
+`pulseaudio-utils` supplies `pactl` for recording audio; `slurp` selects a region.
+Install only the tools for features you use. Restart the shell and reopen Settings
+after installation so their backends discover the new tools. Recording needs niri 26.04+;
+Radeon VAAPI additionally depends on the available driver and codec support.
+
+To share your settings, use **Behavior → Export preset**. It excludes personal
+paths, location and tasks. Import validates the document and backs up current
+settings before applying it. **Export private backup** includes personal settings
+and should be kept private; notes and clipboard/notification history are separate.
+
 
 ### Blur behind popups
 
@@ -342,6 +367,7 @@ terminal log, `niri --version`, `qs --version` and the doctor output.
 | [Night Light, capture and motion](docs/CAPTURE_NIGHT_MOTION.md) | Schedules, annotation, OCR and animation presets |
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Lenovo firmware support, helper setup and password prompts |
+| [Selected feature ports](docs/FEATURE_PORTS.md) | Controls, packages, self-tests and hardware limits |
 | [Validation](docs/VALIDATION.md) | Development checks and the limits of cloud testing |
 
 ### Development
@@ -356,7 +382,8 @@ every laptop.
 Inspired by [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland),
 [iNiR](https://github.com/snowarch/iNiR),
 [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) and
-[Caelestia](https://github.com/caelestia-dots/shell).
+[Caelestia](https://github.com/caelestia-dots/shell) and
+[Noctalia](https://github.com/noctalia-dev/noctalia).
 
 Licensed under **GPL-3.0-or-later**, with the motion adaptation's retained
 GPL-3.0-only terms. See [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md)

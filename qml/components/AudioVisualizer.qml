@@ -4,6 +4,7 @@ import "../services"
 import "../theme"
 Item {
     id: root
+    visible: ShellState.preferences.audioVisualizer === true
     property bool playing: false
     readonly property bool wanted: visible && playing && ShellState.preferences.audioVisualizer === true && !ShellState.demo
     property bool subscribed: false

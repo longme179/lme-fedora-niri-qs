@@ -1,6 +1,5 @@
 """Owned wf-recorder lifecycle. Never scans/kills other recorders or probes NVIDIA."""
 # SPDX-License-Identifier: GPL-3.0-or-later
-import os
 from pathlib import Path
 import re
 import signal
@@ -13,7 +12,7 @@ import time
 class Recorder:
     def __init__(self, runner, sysfs=Path('/sys')):
         self.runner,self.sysfs=runner,sysfs
-        self.child=None;self.selector=None;self.closed=False;self.log=None;self.path=None;self.started=0;self.lock=threading.RLock()
+        self.child=None;self.selector=None;self.closed=False;self.preparing=False;self.log=None;self.path=None;self.started=0;self.lock=threading.RLock()
         self.info={'active':False,'owned':False,'error':''}
 
     def state(self):
@@ -28,12 +27,14 @@ class Recorder:
                     self.info['error']='Recorder produced no video'
                 self.child=None;self.log.close();self.log=None
             if self.child: self.info.update(active=True,owned=True,elapsed=max(0,int(time.monotonic()-self.started)))
-            return dict(self.info)
+            return {**self.info, "preparing": self.preparing}
 
     def start(self, folder, mode, output, audio, encoder):
         with self.lock:
             if self.closed: raise ValueError('Recording service is closing')
-            if self.state()['active']: raise ValueError('A shell recording is already running')
+            if self.preparing or self.state()['active']: raise ValueError('A shell recording is already preparing or running')
+            self.preparing=True
+        try:
             if mode not in ('output','region') or audio not in ('none','system','microphone') or encoder not in ('cpu','radeon'):
                 raise ValueError('Invalid recording mode, audio or encoder')
             if not isinstance(output,str) or not 1<=len(output)<=128 or any(ord(c)<32 for c in output): raise ValueError('Choose a connected output')
@@ -52,7 +53,9 @@ class Recorder:
             if not codec: raise ValueError('No CPU VP8/VP9 encoder; install ffmpeg-free with libvpx support')
             geometry=None
             if mode=='region':
-                self.selector=subprocess.Popen([self.runner.executable('slurp'),'-f','%x,%y %wx%h'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+                with self.lock:
+                    if self.closed: raise ValueError('Recording service is closing')
+                    self.selector=subprocess.Popen([self.runner.executable('slurp'),'-f','%x,%y %wx%h'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
                 try:
                     geometry=self.selector.communicate(timeout=60)[0].strip()
                     if self.selector.returncode: raise ValueError('Area selection cancelled')
@@ -75,15 +78,19 @@ class Recorder:
             if device: args+=['-d',device,'-F','format=nv12,hwupload']
             else: args+=['-p','deadline=realtime','-p','cpu-used=6']
             if source: args+=['--audio='+source,'-C','libopus']
-            self.path=path;self.log=tempfile.TemporaryFile(mode='w+',encoding='utf-8',errors='replace')
-            try: self.child=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=self.log,start_new_session=True)
-            except OSError:
-                self.log.close();self.log=None;path.unlink(missing_ok=True);raise
-            self.started=time.monotonic();self.info={'active':True,'owned':True,'name':'wf-recorder','path':str(path),'elapsed':0,'encoder':codec,'audio':audio,'error':''}
+            with self.lock:
+                if self.closed: path.unlink(missing_ok=True); raise ValueError('Recording service is closing')
+                self.path=path;self.log=tempfile.TemporaryFile(mode='w+',encoding='utf-8',errors='replace')
+                try: self.child=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=self.log,start_new_session=True)
+                except OSError:
+                    self.log.close();self.log=None;path.unlink(missing_ok=True);raise
+                self.started=time.monotonic();self.info={'active':True,'owned':True,'name':'wf-recorder','path':str(path),'elapsed':0,'encoder':codec,'audio':audio,'error':''}
             time.sleep(.15)
             state=self.state()
             if not state['active']: raise ValueError(state['error'] or 'Recorder exited before capture began')
             return 'Recording requested: '+str(path)
+        finally:
+            with self.lock: self.preparing=False
 
     def stop(self):
         with self.lock:
@@ -94,17 +101,21 @@ class Recorder:
         state=self.state()
         if state['error']: raise ValueError(state['error'])
         try: self.runner.run('ffmpeg','-v','error','-i',state['path'],'-t','0.1','-f','null','-',timeout=12)
-        except RuntimeError as error: raise ValueError('Recording retained but decode check failed: '+str(error)) from error
+        except RuntimeError as error:
+            with self.lock: self.info['error']='Recording retained but decode check failed: '+str(error)
+            raise ValueError(self.info['error']) from error
         return 'Saved recording: '+state['path']
 
     def close(self):
-        self.closed=True
-        if self.selector and self.selector.poll() is None: self.selector.terminate()
-        if self.child and self.child.poll() is None:
+        with self.lock:
+            self.closed=True
+            selector=self.selector;child=self.child
+        if selector and selector.poll() is None: selector.terminate()
+        if child and child.poll() is None:
             try: self.stop()
             except (OSError,ValueError,RuntimeError):
-                if self.child and self.child.poll() is None:
-                    self.child.terminate()
-                    try:self.child.wait(timeout=2)
-                    except subprocess.TimeoutExpired:self.child.kill();self.child.wait()
+                if child.poll() is None:
+                    child.terminate()
+                    try:child.wait(timeout=2)
+                    except subprocess.TimeoutExpired:child.kill();child.wait()
         self.state()

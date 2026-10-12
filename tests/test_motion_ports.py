@@ -15,9 +15,13 @@ import Quickshell
 import Quickshell.Io
 import "qml/components"
 import "qml/services"
+import "qml/theme"
 import "qml/components/shapes/Polygons.js" as Polygons
 import "qml/components/shapes/shapes/morph.js" as Morph
 ShellRoot {
+    id: fixture
+    property real nextTarget: 0
+    SpringMotion { id: boundSpring; target: fixture.nextTarget; driver.running: false; onTargetChanged: retarget(target) }
     Component.onCompleted: Quickshell.watchFiles = false
     OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
     SpringMotion { id: spring; driver.running: false }
@@ -49,7 +53,13 @@ ShellRoot {
             OSDManager.show("Brightness",86);
             const second=OSDManager.entries[Quickshell.screens[0].name];
             const output=first && second && first.sequence<second.sequence && second.value===86 && osd.open;
-            return JSON.stringify({preserved,converged,reduced,finite,privacy,output});
+            fixture.nextTarget=1;
+            const began=boundSpring.running;
+            for(let i=0;i<1800 && boundSpring.running;i++) boundSpring.advance(1/120);
+            fixture.nextTarget=-1;
+            const bound=began && boundSpring.running && boundSpring.value===1;
+            const profileEqual=Theme.settingsEqual({font:{body:"Roboto",bar:"Mono"}},{font:{bar:"Mono",body:"Roboto"}}) && !Theme.settingsEqual({motion:1},{motion:2});
+            return JSON.stringify({preserved,converged,reduced,finite,privacy,output,bound,profileEqual});
         }
     }
 }""")
@@ -63,5 +73,5 @@ ShellRoot {
                         except ValueError: time.sleep(.1); continue
                         break
                     log.seek(0)
-                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True,'output':True},log.read())
+                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True,'output':True,'bound':True,'profileEqual':True},log.read())
                 finally: process.terminate();process.wait(timeout=5)

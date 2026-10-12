@@ -48,7 +48,7 @@ QtObject {
             snapTo(v);
             return;
         }
-        if (target === v && !_running)
+        if (target === v && !_running && isSettled())
             return;
         if (target !== v) target = v;
         const tau = timeConstantMs;

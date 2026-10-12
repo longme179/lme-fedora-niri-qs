@@ -130,6 +130,10 @@ class RecorderCase(Fixture,unittest.TestCase):
         self.assertIn('Saved recording',recorder.stop());child.send_signal.assert_called_once_with(signal.SIGINT)
         self.assertEqual(runner.calls,[('ffmpeg','-v','error','-i',str(path),'-t','0.1','-f','null','-')])
         with self.assertRaises(ValueError): recorder.stop()
+        child.poll.return_value=None;recorder.child=child;recorder.log=__import__('tempfile').TemporaryFile(mode='w+')
+        runner.run=Mock(side_effect=backend.CommandError('Invalid video'))
+        with self.assertRaises(ValueError): recorder.stop()
+        self.assertIn('decode check failed',recorder.state()['error']);self.assertTrue(path.exists())
     def test_invalid_modes_and_non_amd_devices_cannot_start_process(self):
         from screen_recording import Recorder
         runner=FakeRunner({('ffmpeg','-hide_banner','-encoders'):' V..... libvpx-vp9\n V..... h264_vaapi'},available={'wf-recorder'})
@@ -139,3 +143,31 @@ class RecorderCase(Fixture,unittest.TestCase):
         with self.assertRaises(ValueError): recorder.start(str(self.root/'videos'),'invalid','eDP-1','none','cpu')
         self.assertIsNone(recorder.child);self.assertFalse((self.root/'videos').exists())
         self.assertFalse(any('nvidia' in str(call) for call in runner.calls))
+
+class RecorderPreparationCase(Fixture,unittest.TestCase):
+    def test_preparation_does_not_block_state_and_shutdown_prevents_late_spawn(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+        from screen_recording import Recorder
+        ready,release=Event(),Event()
+        class Runner(FakeRunner):
+            def run(self,*args,**kwargs):
+                ready.set();release.wait(3);return ' V..... libvpx-vp9'
+        runner=Runner(available={'wf-recorder'});recorder=Recorder(runner,self.root/'sys')
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future=executor.submit(recorder.start,str(self.root/'videos'),'output','eDP-1','none','cpu')
+            try:
+                self.assertTrue(ready.wait(1));self.assertTrue(recorder.state()['preparing'])
+                recorder.close();release.set()
+                with self.assertRaises(ValueError):future.result(timeout=2)
+                self.assertIsNone(recorder.child);self.assertFalse((self.root/'videos').exists())
+            finally: release.set()
+
+class NotesClipboardCase(Fixture,unittest.TestCase):
+    def test_long_unicode_notes_use_existing_clipboard_bound(self):
+        from clipboard import MAX_TEXT
+        class Runner(FakeRunner):
+            def run(self,name,*args,**kwargs): self.text=kwargs.get('input');return ''
+        runner=Runner(available={'wl-copy'});live=self.make_backend(runner);text='é'*100000
+        self.assertTrue(live.handle({'action':'copyText','text':text})['ok']);self.assertEqual(runner.text,text)
+        self.assertFalse(live.handle({'action':'copyText','text':'x'*(MAX_TEXT+1)})['ok'])

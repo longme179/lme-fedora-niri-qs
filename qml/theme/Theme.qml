@@ -14,6 +14,12 @@ QtObject {
     function colorFor(key, fallback) { return overrides[key] || generated[key] || fallback; }
     function tokenColor(key) { return root[key]; }
     function tokenTitle(key) { return key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()); }
+    function settingsEqual(a, b) {
+        if (a === b) return true;
+        if (!a || !b || typeof a !== "object" || typeof b !== "object" || Array.isArray(a) !== Array.isArray(b)) return false;
+        const keys = Object.keys(a);
+        return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && settingsEqual(a[key], b[key]));
+    }
     function fontFor(key) { return fonts[key] || (key === "mono" ? "JetBrains Mono" : key === "body" ? "Roboto" : fontFamily); }
     property FileView catalogFile: FileView {
         path: Quickshell.shellPath("config/theme-tokens.json")

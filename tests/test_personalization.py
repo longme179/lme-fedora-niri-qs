@@ -172,6 +172,9 @@ ShellRoot {
         repo = Path(__file__).resolve().parents[1]; entry = repo/'upgrades-demo.qml'
         with tempfile.TemporaryDirectory() as config, tempfile.TemporaryFile(mode='w+') as log:
             env = {**os.environ, 'LME_TEST_UPGRADES': '1', 'XDG_CONFIG_HOME': config}
+            # Keep the seat keyboard present; device removal clears Qt focus in headless Sway.
+            keyboard=subprocess.Popen(['wtype','-s','60000'],env=env)
+            time.sleep(.15)
             process = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
             def ipc(method, *args):
                 return subprocess.check_output(['quickshell', '-p', str(entry), 'ipc', 'call', 'upgradesFixture', method, *args], env=env, text=True, timeout=5).strip()
@@ -193,14 +196,15 @@ ShellRoot {
             def run(key,value,**extra):ipc('run',json.dumps({'action':'setting','key':key,'value':value,**extra}))
             try:
                 wait(lambda s:s.get('ready'));ipc('navigate','settings','elements');wait(lambda s:s.get('colors')==6);time.sleep(.6)
-                click('elementPreviewButton')
+                click('elementPreviewButton');wait(lambda s:s['buttonFocus'])
                 p=point('elementPreviewButton')
                 pointer=subprocess.Popen([str(Path(os.environ['LME_TEST_POINTER']).with_name('pointer-move')),str(p['x']),str(p['y']),'8000'],env=env)
                 try:
                     wait(lambda s:s['hover'] and s['scale']>1.009)
-                    subprocess.run(['wtype','-P','space'],env=env,check=True)
-                    wait(lambda s:s['ripple']>.1 and s['rippleOpacity']>0)
-                    subprocess.run(['wtype','-p','space'],env=env,check=True);wait(lambda s:not s['feedbackRunning'] and s['rippleOpacity']==0)
+                    press=subprocess.Popen(['wtype','-P','space','-s','1500','-p','space'],env=env)
+                    try: wait(lambda s:s['ripple']>.1 and s['rippleOpacity']>0)
+                    finally: press.wait(timeout=4)
+                    wait(lambda s:not s['feedbackRunning'] and s['rippleOpacity']==0)
                     run('animations',False);wait(lambda s:not s['animations'] and s['scale']==1)
                     pointer.terminate();pointer.wait(timeout=5)
                     run('animations',True);wait(lambda s:s['animations']);time.sleep(.2)
@@ -228,6 +232,10 @@ ShellRoot {
                     run('barHeight',height);state=wait(lambda s:s['bar']['height']==height)
                     self.assertGreaterEqual(state['bar']['viewportHeight'],30,'Bar modules must fit without vertical clipping')
                 run('barHeight',48);wait(lambda s:s['bar']['height']==48)
+                run('springMotion',False);wait(lambda s:not s['springMotion'] and s['panel']['progress']==1)
+                ipc('panel','');wait(lambda s:not s['panel']['active'])
+                ipc('panel','control');wait(lambda s:s['panel']['progress']==1)
+                run('springMotion',True);wait(lambda s:s['springMotion']);self.assertEqual(json.loads(ipc('themeState'))['panel']['progress'],1)
                 run('motionSpeed',.5);wait(lambda s:s['panel']['progress']==1)
                 open_panel=json.loads(ipc('themeState'))['panel'];ipc('panel','')
                 closing=wait(lambda s:s['panel']['active'] and not s['panel']['shown'])['panel']
@@ -249,6 +257,7 @@ ShellRoot {
             finally:
                 subprocess.run(['wtype','-p','space'],env=env,check=False)
                 process.terminate();process.wait(timeout=5)
+                keyboard.terminate();keyboard.wait(timeout=5)
 
     def test_real_shell_under_gpt_symlink_opens_reuses_and_reopens_settings(self):
         repo=Path(__file__).resolve().parents[1]

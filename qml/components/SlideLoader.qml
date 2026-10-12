@@ -27,6 +27,7 @@ Loader {
         if (to === 1) mounted = true;
         motion.stop();
         if (Theme.springMotion) { spring.retarget(to); if (!spring.running && to === 0) mounted = false; return; }
+        spring.snapTo(to);
         if (!Theme.animations) { progress = to; if (to === 0) mounted = false; return; }
         motion.to = to; motion.start();
     }

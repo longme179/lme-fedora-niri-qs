@@ -17,7 +17,7 @@ not include purchased Dracula Pro files, wallpapers, fonts, or branding assets.
 Palette values are editable locally; users who own a preferred Pro variant can
 enter their own color values. The project is unaffiliated with Dracula Pro.
 
-The included wallpaper and UI shapes are original vector artwork. Application
+The included wallpaper and hand-drawn shell icons are original artwork. Rounded-polygon geometry and the adapted Canvas are credited in the geometric morph section below. Application
 icons are resolved from the user's installed icon theme, and are not bundled.
 
 The modular bar, searchable settings registry and Material design direction also

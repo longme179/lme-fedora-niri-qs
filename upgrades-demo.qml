@@ -73,7 +73,7 @@ ShellRoot {
             const confirm = root.find(window.contentItem, "Confirm shut down");
             return JSON.stringify({ready: ShellState.backendReady, colors: Theme.catalog.colors.length,
                 buttonFill: Theme.buttonFill.toString(), barFill: Theme.barFill.toString(), bodyFont: Theme.fontFamily, barFont: Theme.barFamily,
-                bodySize: Theme.bodySize, animations: Theme.animations, status: ShellState.statusMessage, hover: button ? button.hovered : false, scale: button ? button.scale : 1, radius: button ? button.background.radius : 0,
+                bodySize: Theme.bodySize, springMotion: Theme.springMotion, animations: Theme.animations, status: ShellState.statusMessage, buttonFocus: button ? button.activeFocus : false, hover: button ? button.hovered : false, scale: button ? button.scale : 1, radius: button ? button.background.radius : 0,
                 ripple: feedback ? feedback.rippleProgress : 0, rippleOpacity: feedback ? feedback.rippleOpacity : 0,
                 feedbackRunning: feedback ? feedback.animating : false,
                 field: field ? {text:field.text,focus:field.activeFocus,width:field.width,height:field.height} : {}, colorGroup: group ? group.currentIndex : -1,

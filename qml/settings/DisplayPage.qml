@@ -42,6 +42,7 @@ ColumnLayout {
         }
     }
     Timer { interval: 3000; repeat: true; running: root.visible; onTriggered: { root.now = Date.now(); if (ShellState.backendReady && !ShellState.pendingActions.displayRefresh) ShellState.run("displayRefresh"); } }
+    SettingsCard { MirrorControls { Layout.fillWidth: true } }
     SettingsCard {
         title: "Arrange displays"
         description: "Select a display, drag it into place, or enter exact coordinates. Changes are tested before they are saved."

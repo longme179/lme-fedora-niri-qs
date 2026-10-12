@@ -40,7 +40,7 @@ packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard)
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
-        cava matugen wf-recorder ffmpeg-free pulseaudio-utils slurp swappy
+        cava matugen wl-mirror wf-recorder ffmpeg-free pulseaudio-utils slurp swappy
         blueman swaylock swayidle wlsunset tesseract tesseract-langpack-eng tesseract-langpack-vie libnotify playerctl
         xdg-utils xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
         gnome-keyring)

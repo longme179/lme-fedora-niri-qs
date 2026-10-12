@@ -8,7 +8,7 @@ Singleton {
     readonly property bool watching: !ShellState.demo && !ShellState.settingsApp && !!ShellState.niri.available && (ShellState.preferences.privacyIndicators !== false || ShellState.preferences.dndWhileSharing !== false)
     property var casts: []
     readonly property var captures: (ShellState.system.privacy || {}).captures || []
-    readonly property bool sharing: casts.some(c => c.is_active) || captures.some(c => c.kind === "screen") || !!(ShellState.system.recording || {}).owned
+    readonly property bool sharing: !!(ShellState.snapshot.mirror || {}).active || casts.some(c => c.is_active) || captures.some(c => c.kind === "screen") || !!(ShellState.system.recording || {}).owned
     readonly property var indicators: [
         {icon:"microphone", title:"Microphone in use", active:captures.some(c => c.kind === "microphone"), kind:"microphone"},
         {icon:"camera", title:"Camera in use", active:captures.some(c => c.kind === "camera"), kind:"camera"},

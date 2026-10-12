@@ -51,7 +51,8 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 click('recordingFormat'); subprocess.run(['wtype','-s','200','-k','Up','-k','Return'],check=True,env=env)
                 wait(lambda s: s['preferences']['recordingFormat'] == 'mov' and s['preferences']['recordingCodec'] == 'auto')
                 show('settings', 'display')
-                wait(lambda s: len(s.get('displays', {}).get('outputs', [])) == 1)
+                displays = wait(lambda s: len(s.get('displays', {}).get('outputs', [])) == 2)['displays']['outputs']
+                self.assertEqual([o['name'] for o in displays], ['eDP-1', 'HDMI-A-1'])
                 click('displayMode'); subprocess.run(['wtype', '-s', '200', '-k', 'Up', '-k', 'Return'], check=True, env=env)
                 dragger = os.environ.get('LME_TEST_DRAG')
                 if dragger:
@@ -65,7 +66,8 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 show('settings', 'controlLayout')
                 dragger = os.environ.get('LME_TEST_DRAG')
                 if dragger:
-                    start = json.loads(ipc('position', 'controlGrip-charging')); finish = json.loads(ipc('position', 'controlGrip-weather'))
+                    # Scroll the earlier destination into view before measuring the source.
+                    finish = json.loads(ipc('position', 'controlGrip-weather')); start = json.loads(ipc('position', 'controlGrip-charging'))
                     subprocess.run([dragger, str(start['x']), str(start['y']), str(finish['x']), str(finish['y'])], check=True, timeout=5)
                     wait(lambda s: s['preferences']['controlLayout'][0]['id'] == 'charging')
                 layout = wait(lambda s: s.get('ready'))['preferences']['controlLayout']

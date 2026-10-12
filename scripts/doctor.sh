@@ -55,6 +55,7 @@ if command -v satty >/dev/null 2>&1; then
 else
     optional swappy 'external screenshot annotation: swappy (or separately installed satty)'
 fi
+optional wl-mirror 'external display mirroring: wl-mirror'
 optional wf-recorder 'screen recording: wf-recorder'
 optional ffmpeg 'recording encoder checks and container conversion: ffmpeg-free or a compatible full build'
 optional pactl 'recording audio: pulseaudio-utils'

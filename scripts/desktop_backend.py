@@ -42,6 +42,7 @@ from screen_capture import ScreenCapture
 from privacy import captures
 from clipboard import MAX_TEXT
 from screen_recording import Recorder
+from display_mirror import DisplayMirror
 from file_search import roots as search_roots, search as search_files
 from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
@@ -53,7 +54,7 @@ DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
-    "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
+    "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
     "fileSearchEnabled": True,
@@ -79,7 +80,7 @@ DEFAULT_PREFERENCES = {
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy"}
 TOOLS = (
-    "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
+    "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
     "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffmpeg", "pactl", "slurp", "satty", "swappy",
 )
@@ -288,7 +289,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
@@ -507,6 +508,8 @@ class DesktopBackend:
         self.night_state = {}
         self.capture = ScreenCapture(self.runner)
         self.recorder = Recorder(self.runner,sysfs)
+        self.mirror = DisplayMirror(self.runner)
+        self.mirror_state = self.mirror.state() if not demo else {'active': False, 'available': True, 'error': ''}
         self.platform = {"niriVersion": "Demo" if demo else "Not checked", "popupBlurSupported": demo}
         if manage_idle and not demo and not settings_only: self.platform = self.compositor_features()
         self.display_control = DisplayControl(self.runner)
@@ -854,9 +857,13 @@ class DesktopBackend:
             place = self.weather.auto_location if self.preferences.values['weatherAutoLocation'] else self.preferences.values['weatherLocation']
             self.night_state = self.night_light.sync(self.preferences.values, place)
         self.capture.refresh()
+        if not self.settings_only:
+            self.mirror_state = self.mirror.state(
+                outputs=self.display_control.outputs() if self.mirror.child else None,
+                enabled=self.preferences.values['mirroringEnabled'])
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                    "lastResult": dict(self.last_result), "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
                     "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -875,7 +882,7 @@ class DesktopBackend:
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
+                "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
                 "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
@@ -952,7 +959,7 @@ class DesktopBackend:
         if hasattr(self, "_demo_state"):
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
-            self._demo_state.update(wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
+            self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
                 monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
@@ -1079,7 +1086,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
+            if self.settings_only and action not in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1115,6 +1122,20 @@ class DesktopBackend:
                 "processCount": 3, "sampledAt": 1, "error": ""}
         elif action == "keybindRefresh":
             self.keybinds = read_keybinds(str(Path(__file__).resolve().parents[1]/"config/niri/lme-shell.kdl"))
+        elif action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
+            if action == 'mirrorRefresh':
+                self.perform_demo('displayRefresh', {})
+                if len(self.displays['outputs']) == 1:
+                    external = copy.deepcopy(self.displays['outputs'][0])
+                    external.update(name='HDMI-A-1', description='Demo projector', x=1920)
+                    self.displays['outputs'].append(external)
+            if action == 'mirrorStart':
+                names = {o['name'] for o in self.displays['outputs'] if o['enabled']}
+                if request.get('source') not in names or request.get('target') not in names or request.get('source') == request.get('target'):
+                    raise ValueError('Choose two different, active niri displays.')
+                if not self.preferences.values['mirroringEnabled']: raise ValueError('Display mirroring is disabled')
+                self.mirror_state = {'active': True, 'available': True, 'source': request.get('source'), 'target': request.get('target'), 'error': ''}
+            elif action == 'mirrorStop': self.mirror_state = {**self.mirror_state, 'active': False}
         elif action == "platformRefresh": pass
         elif action == "nightLightRefresh":
             self.night_state = {'available': True, 'enabled': self.preferences.values['nightLightEnabled'], 'active': self.preferences.values['nightLightEnabled'], 'temperature': self.preferences.values['nightLightTemperature'], 'mode': self.preferences.values['nightLightMode'], 'start': self.preferences.values['nightLightStart'], 'end': self.preferences.values['nightLightEnd'], 'error': ''}
@@ -1258,6 +1279,27 @@ class DesktopBackend:
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
+            if self.settings_only:
+                if action != 'mirrorRefresh':
+                    args = [request.get('source'), request.get('target')] if action == 'mirrorStart' else []
+                    if any(not isinstance(a, str) for a in args): raise ValueError('Choose source and target displays')
+                    reply = run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', action, *args)
+                    if reply.strip() != 'true': raise ValueError('Start LME Shell before controlling display mirroring.')
+                reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'mirrorStatus')
+                self.mirror_state = {'active': False, 'available': self.runner.available('wl-mirror'),
+                                     'error': 'Start LME Shell before controlling display mirroring.'}
+                try:
+                    value = json.loads(reply or '{}')
+                    if isinstance(value, dict) and type(value.get('active')) is bool: self.mirror_state = value
+                except ValueError: pass
+                return 'Mirror refreshed' if action == 'mirrorRefresh' else 'Mirror request sent'
+            if action == 'mirrorStart':
+                if not self.preferences.values['mirroringEnabled']: raise ValueError('Display mirroring is disabled')
+                return self.mirror.start(request.get('source'), request.get('target'), self.display_control.outputs())
+            if action == 'mirrorStop': return self.mirror.stop()
+            self.mirror_state = self.mirror.state()
+            return 'Mirror refreshed'
         if action == 'nightLightRefresh':
             if type(request.get('retry', False)) is not bool: raise ValueError('Night Light retry must be boolean')
             if self.settings_only:
@@ -1749,6 +1791,7 @@ def main(argv: list[str] | None = None) -> int:
         backend.night_light.close()
         backend.capture.close()
         backend.recorder.close()
+        backend.mirror.close()
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)

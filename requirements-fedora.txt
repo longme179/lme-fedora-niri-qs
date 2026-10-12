@@ -90,3 +90,6 @@ ffmpeg-free
 # Optional recording audio and region picker:
 pulseaudio-utils
 slurp
+
+# Optional external-display mirroring (Fedora repositories):
+wl-mirror

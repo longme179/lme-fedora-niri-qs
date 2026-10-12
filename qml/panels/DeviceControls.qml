@@ -76,5 +76,7 @@ Flickable {
         }
         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.border; Layout.topMargin: 8; Layout.bottomMargin: 8 }
         WifiWidget { Layout.fillWidth: true }
+        Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.border; Layout.topMargin: 8; Layout.bottomMargin: 8 }
+        MirrorControls { Layout.fillWidth: true }
     }
 }

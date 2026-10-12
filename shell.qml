@@ -27,6 +27,17 @@ ShellRoot {
         target: "shell"
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function close(): void { ShellState.closePanels(); }
+        function mirrorStatus(): string { return JSON.stringify(ShellState.snapshot.mirror || {}); }
+        function mirrorStart(source: string, target: string): bool {
+            if (!ShellState.backendReady) return false;
+            ShellState.run("mirrorStart", {source: source, target: target});
+            return true;
+        }
+        function mirrorStop(): bool {
+            if (!ShellState.backendReady) return false;
+            ShellState.run("mirrorStop");
+            return true;
+        }
         function idleStatus(): string { return JSON.stringify(ShellState.snapshot.idle || {}); }
         function nightLightStatus(): string { return JSON.stringify(ShellState.snapshot.nightLight || {}); }
         function retryNightLight(): void { ShellState.run("nightLightRefresh"); }

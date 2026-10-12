@@ -30,6 +30,7 @@ import "qml/theme"
 ShellRoot {
     id: fixture
     property var lastExit: ({})
+    property var lastRetarget: ({})
     Component.onCompleted: Quickshell.watchFiles = false
     OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
     FloatingWindow {
@@ -47,12 +48,17 @@ ShellRoot {
             return JSON.stringify({ready: ShellState.backendReady, active: popup.active, shown: popup.shown, progress: popup.progress,
                 dx: popup.offsetX, dy: popup.offsetY, outside: popup.outsideViewport, dim: backdrop.amount,
                 lastExit: fixture.lastExit, viewportWidth: window.width, viewportHeight: window.height, deformation: Theme.deformation,
+                lastRetarget: fixture.lastRetarget,
                 spring: Theme.springMotion, animations: Theme.animations,
                 osdVisible: osd.visible,
                 islandVisible: island.visible, islandMounted: island.mounted, islandProgress: island.progress,
                 islandDy: island.offsetY, bottom: Theme.barBottom});
         }
-        function setOpen(open: bool): void { popup.shown = open; }
+        function setOpen(open: bool): void {
+            const before = popup.offsetX, active = popup.active;
+            popup.shown = open;
+            fixture.lastRetarget = {before, after: popup.offsetX, active};
+        }
         function place(edge: string): void {
             popup.direction = edge === "top" ? "up" : edge === "bottom" ? "down" : "right";
             popup.x = edge === "left" ? 16 : edge === "right" ? window.width - popup.width - 16 : (window.width - popup.width) / 2;
@@ -118,10 +124,12 @@ ShellRoot {
                                 wait(lambda s: s["dim"] == 0)
                     setting("springMotion", True); wait(lambda s: s["spring"])
                     ipc("place", "right"); ipc("setOpen", "true"); wait(lambda s: s["progress"] == 1)
-                    ipc("setOpen", "false"); time.sleep(.04); before = json.loads(ipc("state"))
+                    ipc("setOpen", "false"); time.sleep(.04)
                     ipc("setOpen", "true"); after = json.loads(ipc("state"))
                     self.assertTrue(after["active"]); self.assertGreater(after["dx"], 0, "Reopening must preserve the moving position")
-                    self.assertLess(abs(after["dx"] - before["dx"]), 100)
+                    self.assertTrue(after["lastRetarget"]["active"])
+                    self.assertAlmostEqual(after["lastRetarget"]["before"], after["lastRetarget"]["after"], delta=.001,
+                                           msg="Retarget must preserve position within the same event, independent of IPC latency")
                     wait(lambda s: s["progress"] == 1 and abs(s["dx"]) < .01)
                     # Disabling motion during an exit must release it immediately too.
                     ipc("setOpen", "false"); time.sleep(.03); setting("animations", False)

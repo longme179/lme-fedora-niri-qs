@@ -18,7 +18,7 @@ Enable **Appearance → Geometric shape morph**, then hover/press a gear or anot
 
 ## Moving tab indicator
 
-**Appearance → Moving tab indicator** controls stretching selection in Control Center tabs and the Settings sidebar. Try mouse selection, Ctrl+Tab in Control Center, and filtered Settings navigation; reduced motion snaps. It adapts DMS independent leading/trailing edges to LME grid and vertical layouts.
+**Appearance → Moving tab indicator** controls stretching selection in Control Center tabs and the Settings sidebar. Try mouse selection, Ctrl+Tab in Control Center, and filtered Settings navigation; reduced motion snaps. It adapts DMS independent leading/trailing edges to LME grid and vertical layouts. Selection fill tracks ancestor layout offsets and shares the selected button’s hover/press scale and corner radius, so its plate and feedback outline remain aligned.
 
 ## Installed font picker
 
@@ -70,7 +70,7 @@ Install `wf-recorder ffmpeg-free`; `pulseaudio-utils` adds audio, `slurp` adds r
 
 ## Validation and remaining limits
 
-The full opt-in private Wayland suite completed **168 tests, all passed, no skips** on Quickshell 0.3.2 / Qt 6.8.2. It covers the existing shell plus spring physics and bound-target retargeting, real frame overshoot/reduced motion, Settings launch/reopen, font search selection, HSV/alpha apply, notes autosave/conflicts, notification protocols, nearest-edge popup exits/reversals, immediate input release, backdrop interpolation, Canvas stroke pixels, and existing screenshot/OCR flows. Backend fixtures cover transfer safety, battery units, capture classification, search bounds/cancellation, owned recorder signaling and nonblocking preparation/shutdown.
+The full opt-in private Wayland suite completed **169 tests, all passed, no skips** on Quickshell 0.3.2 / Qt 6.8.2. It covers the existing shell plus spring physics and bound-target retargeting, real frame overshoot/reduced motion, Settings launch/reopen, font search selection, HSV/alpha apply, notes autosave/conflicts, notification protocols, nearest-edge popup exits/reversals, immediate input release, backdrop interpolation, Canvas stroke pixels, and existing screenshot/OCR flows. Backend fixtures cover transfer safety, battery units, capture classification, search bounds/cancellation, owned recorder signaling and nonblocking preparation/shutdown.
 
 Integration review also corrected initial tab-indicator placement and fallback contrast, swatch presentation, full-profile matching, bound spring target changes, easing/spring toggles, overlay capture timing, and nonblocking recorder setup. The virtual keyboard remains connected during held-key tests so headless Sway models a real keyboard without resetting Qt focus.
 

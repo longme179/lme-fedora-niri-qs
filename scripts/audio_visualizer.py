@@ -11,7 +11,8 @@ from pathlib import Path
 
 CONFIG='''[general]
 bars=16
-framerate=25
+framerate=60
+autosens=1
 sleep_timer=3
 [input]
 method=pulse
@@ -24,6 +25,10 @@ ascii_max_range=100
 bar_delimiter=59
 frame_delimiter=10
 channels=mono
+[smoothing]
+noise_reduction=20
+monstercat=0
+waves=0
 '''
 
 

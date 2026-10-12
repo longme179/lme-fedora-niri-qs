@@ -21,7 +21,7 @@ Item {
                 required property int index
                 width: Math.max(1,(root.width-45)/16); height: Math.max(2,root.height*(VisualizerState.bars[index] || 0)); anchors.bottom: parent.bottom
                 radius: 2; color: Theme.accent
-                Behavior on height { NumberAnimation { duration: Theme.animations ? 50 : 0 } }
+                // Cava smooths the signal; another animation here delays every new frame.
             }
         }
     }

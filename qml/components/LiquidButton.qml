@@ -35,7 +35,7 @@ Button {
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
         Behavior on radius { MotionAnimation {} }
     }
-    LiquidFeedback { objectName: "liquidFeedback"; z: -.5; hovered: root.hovered; pressed: root.down; radius: root.plate ? root.plate.radius : root.height / 2 }
+    LiquidFeedback { objectName: "liquidFeedback"; z: -.5; hovered: root.hovered; pressed: root.down; originX: root.pressX || root.width/2; originY: root.pressY || root.height/2; radius: root.plate ? root.plate.radius : root.height / 2 }
     contentItem: Text {
         text: root.text
         textFormat: Text.PlainText

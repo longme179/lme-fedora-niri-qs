@@ -31,9 +31,10 @@ ComboBox {
         border.color: root.visualFocus ? Theme.accent : Theme.alpha(Theme.border, root.enabled ? 0.65 : 0.35)
         Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
         Behavior on radius { MotionAnimation {} }
-        LiquidFeedback { hovered: root.hovered; pressed: root.down; radius: parent.radius }
+        LiquidFeedback { id: feedback; hovered: root.hovered; pressed: root.down; radius: parent.radius }
     }
 
+    TapHandler { onPressedChanged: if (pressed) { feedback.originX=point.position.x; feedback.originY=point.position.y; } }
     contentItem: Text {
         text: root.displayText
         textFormat: Text.PlainText

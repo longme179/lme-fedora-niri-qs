@@ -74,6 +74,7 @@ ColumnLayout {
         PreferenceSwitch { title: "Animations"; detail: "Disable to remove spatial motion and press deformation"; preference: "animations" }
         PreferenceSwitch { title: "Geometric shape morph"; detail: "Icon buttons morph rounded polygons on hover and press"; preference: "shapeMorph" }
         PreferenceSwitch { title: "Moving tab indicator"; detail: "Stretch the selected tab between choices"; preference: "animatedTabs" }
+        PreferenceSwitch { title: "Pointer-origin ripple"; detail: "Press waves start at the pointer and clip to rounded corners"; preference: "pointerRipple" }
         PreferenceSwitch { title: "Spring motion"; detail: "Keep velocity when a popup reverses or the Island resizes"; preference: "springMotion" }
         RowLayout {
             Layout.fillWidth: true

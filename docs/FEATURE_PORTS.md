@@ -19,3 +19,7 @@ Enable **Appearance → Geometric shape morph**, then hover/press a gear or anot
 ## Installed font picker
 
 In **Elements → Type that feels like you**, open the arrow menu, search, then select a font. The existing preview remains. Enter accepts the first search result, Down moves into the list; Escape closes it. Manual input remains available, including when **Searchable font menus** is off. Missing fonts still use Qt fallback.
+
+## Pointer-origin ripple
+
+Enable **Appearance → Pointer-origin ripple**. Press near a rounded button corner, hold, then release; ink starts at that point and stays clipped. Keyboard presses use the center. Shader source and compiled QSB are bundled; rebuild with `QSB_BINARY=/usr/lib64/qt6/bin/qsb bash scripts/build-shaders.sh` (Fedora build-only package: `qt6-qtshadertools`). Software rendering uses the same rounded clip in Canvas. The press/hold/release lifecycle remains Caelestia-derived.

@@ -96,3 +96,5 @@ Based on iNiR by snowarch (https://github.com/snowarch/inir), revision `48cdcecb
 `StretchIndicator.qml` adapts the independent-edge movement of DCommon `DTabBar.qml` at the DCommon revision above; MIT notice retained. Navigation and controls remain LME implementations.
 
 `FontPicker.qml` adapts installed-family enumeration from DMS `SettingsFontDropdownRow.qml` at `6640a943b30d11407bc868469910dcb0800f3254` (MIT, Copyright (c) 2025 Avenge Media LLC); notice: `third_party/DankMaterialShell-LICENSE`. Search, popup and live-preview integration use LME controls.
+
+Pointer-origin feedback adapts DCommon `DRipple.qml` and retains `ripple.frag` at `bd90e4b6f2ec36035fc2cb560acdc0e418f669ac` (MIT ©2025-2026 Avenge Media LLC). Full notice: `third_party/DankQmlCommon-LICENSE`. Existing Caelestia GPL press/hold/release attribution is preserved.

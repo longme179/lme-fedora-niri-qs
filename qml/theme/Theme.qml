@@ -79,8 +79,10 @@ QtObject {
     readonly property int barHeight: ShellState.preferences.barHeight || 42
     readonly property int barBorderWidth: ShellState.preferences.barBorderWidth === undefined ? 1 : ShellState.preferences.barBorderWidth
     readonly property var barCorners: ShellState.preferences.barCorners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1})
-    function barCornerRadius(corner, height) {
-        const value = barCorners[corner];
+    function islandStyle(zone) { return (ShellState.preferences.barIslandStyles || {})[zone] || {}; }
+    function cornersFor(zone) { return zone ? islandStyle(zone).corners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1}) : barCorners; }
+    function barCornerRadius(corner, height, zone) {
+        const value = cornersFor(zone || "")[corner];
         return value === undefined || value < 0 ? height / 2 : Math.min(value, height / 2);
     }
     readonly property int barFontSize: ShellState.preferences.barFontSize || 13

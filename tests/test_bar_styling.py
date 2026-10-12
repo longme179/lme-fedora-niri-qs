@@ -12,6 +12,19 @@ from settings_transfer import document, validate_document
 
 
 class BarStylingCase(Fixture, unittest.TestCase):
+    def test_independent_islands_merge_stale_writers_reset_and_export(self):
+        first = backend.Preferences(self.preferences.path); second = backend.Preferences(self.preferences.path)
+        first.set('barIslandStyles', {'borderWidth': 0, 'fillColor': '#80112233'}, token='left')
+        second.set('barIslandStyles', {'corners': dict.fromkeys(first.values['barCorners'], 0)}, token='right')
+        restored = backend.Preferences(self.preferences.path)
+        self.assertEqual(set(restored.values['barIslandStyles']), {'left', 'right'})
+        self.assertEqual(document(restored.values, 'preset')['settings']['barIslandStyles'], restored.values['barIslandStyles'])
+        first.set('barIslandStyles', '', token='left')
+        self.assertEqual(set(backend.Preferences(self.preferences.path).values['barIslandStyles']), {'right'})
+        for style in ({'borderWidth': True}, {'borderWidth': 5}, {'fillColor': 'red'}, {'unknown': 1}, {'corners': {}}):
+            with self.assertRaises(ValueError): first.set('barIslandStyles', style, token='center')
+        with self.assertRaises(ValueError): first.set('barIslandStyles', {}, token='invalid')
+
     def test_old_settings_keep_pill_defaults_and_new_settings_roundtrip(self):
         self.preferences.set('accent', '#123456')
         corners = {'topLeft': 0, 'topRight': -1, 'bottomLeft': 8, 'bottomRight': 32}
@@ -75,7 +88,7 @@ ShellRoot {
             const surfaces = items(bar).filter(c => c.objectName === "barSurface" && c.visible);
             return JSON.stringify({ready: ShellState.backendReady, preset: items(settings).find(c => c.objectName === "barCornerPreset").currentIndex,
                 surfaces: surfaces.map(s => ({radii: [s.topLeftRadius, s.topRightRadius, s.bottomLeftRadius, s.bottomRightRadius],
-                    width: s.border.width, color: s.border.color.toString(), clip: s.clip}))});
+                    zone: s.zone, fill: s.color.toString(), width: s.border.width, color: s.border.color.toString(), clip: s.clip}))});
         }
         function preset(index: int): void {
             const selector = items(settings).find(c => c.objectName === "barCornerPreset");
@@ -83,6 +96,7 @@ ShellRoot {
             while (selector.currentIndex > index) selector.decrementCurrentIndex();
             selector.activated(index);
         }
+        function scope(index: int): void { items(settings).find(c => c.objectName === "barStyleTarget").currentIndex = index; }
         function setting(key: string, value: string): void { ShellState.run("setting", {key: key, value: JSON.parse(value)}); }
     }
 }''')
@@ -111,7 +125,28 @@ ShellRoot {
                     ipc('setting', 'barBorderWidth', '0'); wait([8, 32, 0, 32], width=0)
                     ipc('setting', 'themeOverrides', '{"barBorder":"#80112233"}'); wait([8, 32, 0, 32], width=0, color='#80112233')
                     ipc('setting', 'barBorderWidth', '4'); wait([8, 32, 0, 32], width=4, color='#80112233')
-                    ipc('setting', 'barStyle', '"islands"'); wait([8, 32, 0, 32], count=3, width=4, color='#80112233')
+                    ipc('setting', 'barStyle', '"islands"'); wait([32]*4, count=3, width=1, color='#80112233')
+                    ipc('setting', 'barIslandStyles', json.dumps({'left': {'corners': dict.fromkeys(['topLeft','topRight','bottomLeft','bottomRight'], 0), 'borderWidth': 2, 'fillColor': '#ff0000'}, 'center': {'borderWidth': 0}, 'right': {'borderColor': '#00ff00'}}))
+                    end = time.monotonic()+5
+                    while time.monotonic() < end:
+                        state = json.loads(ipc('state')); surfaces = {s['zone']: s for s in state['surfaces']}
+                        if surfaces.get('left', {}).get('width') == 2: break
+                        time.sleep(.05)
+                    self.assertEqual(surfaces['left']['radii'], [0]*4)
+                    self.assertTrue(surfaces['left']['fill'].endswith('ff0000'))
+                    self.assertEqual(surfaces['center']['width'], 0)
+                    self.assertEqual(surfaces['center']['radii'], [32]*4)
+                    self.assertEqual(surfaces['right']['color'], '#00ff00')
+                    ipc('scope', '2'); ipc('preset', '1')
+                    end = time.monotonic()+5
+                    while time.monotonic() < end:
+                        surfaces = {s['zone']: s for s in json.loads(ipc('state'))['surfaces']}
+                        if surfaces['center']['radii'] == [0]*4: break
+                        time.sleep(.05)
+                    self.assertEqual(surfaces['center']['radii'], [0]*4)
+                    self.assertEqual(surfaces['left']['width'], 2)
+                    self.assertEqual(surfaces['right']['color'], '#00ff00')
+                    ipc('setting', 'barStyle', '"connected"'); wait([8, 32, 0, 32], width=4, color='#80112233')
                     log.seek(0); output = log.read()
                     for problem in ('TypeError', 'ReferenceError', 'Binding loop', 'Unable to assign', 'Failed to load configuration'):
                         self.assertNotIn(problem, output)

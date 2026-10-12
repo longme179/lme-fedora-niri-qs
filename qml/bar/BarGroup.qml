@@ -9,11 +9,12 @@ Item {
     property var windowInfo: null
     property real budget: 500
     property bool compact: false
+    property string zone: "left"
     property bool island: true
     implicitWidth: Math.min(budget, row.implicitWidth > 0 ? row.implicitWidth + 20 : 0)
     implicitHeight: Theme.barHeight
     visible: implicitWidth > 0
-    BarSurface { anchors.fill: parent; visible: root.island }
+    BarSurface { zone: root.zone; anchors.fill: parent; visible: root.island }
     Flickable {
         id: scroller
         objectName: "barModuleViewport"

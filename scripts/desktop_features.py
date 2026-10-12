@@ -46,10 +46,35 @@ def theme_overrides(value, fonts=False):
 
 
 def theme_token(key, token, value):
+    if key == 'barIslandStyles':
+        if token not in ('left', 'center', 'right'): raise ValueError('Unknown bar island')
+        return bar_island_styles({token: value}) if value != '' else {}
     if key not in ('themeOverrides', 'fontOverrides') or not isinstance(token, str) or not isinstance(value, str):
         raise ValueError('Invalid theme token update')
     validated = theme_overrides({token: value or ('Roboto' if key == 'fontOverrides' else '#000000')}, fonts=key == 'fontOverrides')
     return validated if value else {}
+
+
+def bar_corners(value):
+    if not isinstance(value, dict) or set(value) != {'topLeft', 'topRight', 'bottomLeft', 'bottomRight'} or not all(type(v) is int and -1 <= v <= 32 for v in value.values()):
+        raise ValueError('Use four corner radii between -1 (automatic) and 32 px')
+    return dict(value)
+
+
+def bar_island_styles(value):
+    if not isinstance(value, dict) or set(value) - {'left', 'center', 'right'}: raise ValueError('Unknown bar island')
+    result = {}
+    for zone, style in value.items():
+        if not isinstance(style, dict) or set(style) - {'corners', 'borderWidth', 'borderColor', 'fillColor'}: raise ValueError('Unknown island style')
+        normalized = dict(style)
+        if 'corners' in style: normalized['corners'] = bar_corners(style['corners'])
+        if 'borderWidth' in style and (type(style['borderWidth']) is not int or not 0 <= style['borderWidth'] <= 4): raise ValueError('Island borders must be 0–4 px')
+        for key in ('borderColor', 'fillColor'):
+            if key in style:
+                if not isinstance(style[key], str) or style[key] and not re.fullmatch(r'#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})', style[key]): raise ValueError('Use #RRGGBB or #AARRGGBB')
+                normalized[key] = style[key].lower()
+        result[zone] = normalized
+    return result
 
 
 def control_layout(value):

@@ -104,11 +104,11 @@ preferences/profile architecture instead of introducing a second theme store.
 Choose Pill, Square, Square left end or Square right end, then customize each
 corner independently. Automatic roundness follows half the bar height; turn
 Auto off to choose 0–32 px. Radii are capped at half the bar height when drawn.
-The same settings apply to the connected surface or to each of the three islands.
+Choose Connected bar, Left island, Center island or Right island in the surface selector. Each island has separate corners, fill and outline. Islands default to automatic pill corners and a 1 px outline; the connected bar keeps its own saved geometry. Switching modes preserves all four styles.
 
 Outline thickness is 0–4 px; 0 removes the outline. Enter `#RRGGBB` or
 `#AARRGGBB` for its color, use the visual picker, or Reset to inherit the palette.
-The `barBorder` element is also available in Elements and fonts. Corner geometry
+The `barBorder` element is also available in Elements and fonts. Each island also accepts its own fill/border hex colors, including alpha. Reset this island removes only its overrides. Corner geometry, island colors
 and thickness are included in portable presets/backups; the color remains part
 of Appearance profiles through the existing element override system. Existing
 settings retain the automatic pill shape and 1 px inherited outline.

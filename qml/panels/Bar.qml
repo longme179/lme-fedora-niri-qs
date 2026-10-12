@@ -12,20 +12,21 @@ Item {
     implicitHeight: Theme.barHeight
     BarSurface { anchors.fill: parent; visible: !root.islands }
     BarGroup {
-        id: leftGroup
+        id: leftGroup; zone: "left"
         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
         width: implicitWidth; height: parent.height
         modules: root.layout.left; screenInfo: root.screenInfo; windowInfo: root.windowInfo
         budget: root.width * 0.39; compact: root.width < 1200; island: root.islands
     }
     BarGroup {
-        id: rightGroup
+        id: rightGroup; zone: "right"
         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
         width: implicitWidth; height: parent.height
         modules: root.layout.right; screenInfo: root.screenInfo; windowInfo: root.windowInfo
         budget: root.width * 0.58; compact: root.width < 1200; island: root.islands
     }
     BarGroup {
+        zone: "center"
         readonly property real freeWidth: Math.max(0, root.width - leftGroup.width - rightGroup.width - 24)
         width: implicitWidth; height: parent.height
         x: Math.max(leftGroup.width + 12, Math.min((root.width - width) / 2, rightGroup.x - width - 12))

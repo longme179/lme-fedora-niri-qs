@@ -32,7 +32,7 @@ from typing import Any
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
-                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token)
+                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
@@ -73,7 +73,7 @@ DEFAULT_PREFERENCES = {
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
-    "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1,
+    "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1, "barIslandStyles": {},
     "barCorners": {"topLeft": -1, "topRight": -1, "bottomLeft": -1, "bottomRight": -1},
     "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
@@ -337,8 +337,8 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
         return value
     if key == "barBorderWidth" and type(value) is int and 0 <= value <= 4: return value
-    if key == "barCorners" and isinstance(value, dict) and set(value) == {"topLeft", "topRight", "bottomLeft", "bottomRight"}:
-        if all(type(radius) is int and -1 <= radius <= 32 for radius in value.values()): return dict(value)
+    if key == "barCorners": return bar_corners(value)
+    if key == "barIslandStyles": return bar_island_styles(value)
     if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
         return value
     if key == "barLayout" and isinstance(value, dict) and set(value) == {"left", "center", "right"}:

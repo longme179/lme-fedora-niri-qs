@@ -42,7 +42,7 @@ without editing QML.
 | **Everyday tools** | Clipboard text/images with search and pins; grouped, persistent notifications; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Capture and comfort** | Start/stop output or region recording, screenshot drawing/redaction, external Satty/Swappy annotation, local OCR and scheduled Night Light. |
-| **Topbar styling** | Connected bar or islands; independent corner roundness, square-left/right presets, border thickness and alpha/hex color. Settings → Top bar applies changes live and includes them in settings exports. |
+| **Topbar styling** | Connected bar plus independently styled Left/Center/Right islands; corner roundness, square-left/right presets, border thickness and alpha/hex fill/color. Settings → Top bar applies changes live and includes them in settings exports. |
 | **Personal appearance** | Per-element hex colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, wallpaper library and optional Material palette generation. |
 
 **New in 2.0:** NVIDIA-first recording with iGPU/CPU fallback, MKV/MP4/MOV/WebM

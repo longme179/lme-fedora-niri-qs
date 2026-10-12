@@ -14,12 +14,24 @@ ColumnLayout {
     readonly property bool ready: ShellState.backendReady && !ShellState.pendingActions.setting
     readonly property var cornerKeys: ["topLeft", "topRight", "bottomLeft", "bottomRight"]
     readonly property var cornerPresets: [[-1, -1, -1, -1], [0, 0, 0, 0], [0, -1, 0, -1], [-1, 0, -1, 0]]
-    property string borderError: ""
+    readonly property bool islands: ShellState.preferences.barStyle === "islands"
+    readonly property string styleZone: styleTarget.currentIndex > 0 ? BarRegistry.zones[styleTarget.currentIndex - 1] : ""
+    readonly property var selectedStyle: styleZone ? Theme.islandStyle(styleZone) : ({})
+    readonly property var selectedCorners: Theme.cornersFor(styleZone)
+    readonly property int selectedBorderWidth: styleZone ? (selectedStyle.borderWidth === undefined ? 1 : selectedStyle.borderWidth) : Theme.barBorderWidth
+    property string pickerField: "borderColor"
+    onIslandsChanged: styleTarget.currentIndex = islands ? 1 : 0
     ColorPicker {
         id: borderPicker; parent: Overlay.overlay; anchors.centerIn: parent
-        onChosen: color => ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: color.toString()})
+        onChosen: color => root.patchStyle(root.pickerField, color.toString())
     }
-    function corner(key, value) { ShellState.run("setting", {key: "barCorners", value: Object.assign({}, Theme.barCorners, {[key]: value})}); }
+    function patchStyle(field, value) {
+        if (styleZone) ShellState.run("setting", {key: "barIslandStyles", token: styleZone, value: Object.assign({}, selectedStyle, {[field]: value})});
+        else if (field === "corners" || field === "borderWidth") ShellState.run("setting", {key: field === "corners" ? "barCorners" : "barBorderWidth", value: value});
+        else ShellState.run("setting", {key: "themeOverrides", token: field === "borderColor" ? "barBorder" : "barFill", value: value});
+    }
+    function styleColor(field) { return selectedStyle[field] || (field === "borderColor" ? Theme.barBorder : Theme.barFill); }
+    function corner(key, value) { patchStyle("corners", Object.assign({}, selectedCorners, {[key]: value})); }
     property alias dragProxy: proxy
     function save(value) { if (ready) ShellState.run("setting", {key: "barLayout", value: value}); }
     function move(id, zone, index) {
@@ -93,17 +105,23 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Edges and outline"
-        description: "Style the connected bar or each island. Automatic corners follow the bar height; 0 px makes a square corner. Border colors use #RRGGBB or #AARRGGBB (alpha first)."
+        description: "Choose the connected bar or one island. Each island has independent corners, fill and outline; changing the connected bar does not reshape islands. Automatic corners follow the bar height; 0 px is square."
+        LiquidComboBox {
+            id: styleTarget; objectName: "barStyleTarget"; Layout.fillWidth: true
+            model: ["Connected bar", "Left island", "Center island", "Right island"]
+            Accessible.name: "Bar surface to customize"
+            Component.onCompleted: currentIndex = root.islands ? 1 : 0
+        }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: Theme.barHeight + 16
-            BarSurface { anchors.fill: parent; anchors.margins: 8 }
+            BarSurface { zone: root.styleZone; anchors.fill: parent; anchors.margins: 8 }
             LabelText { anchors.centerIn: parent; text: "Live bar preview"; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; color: Theme.barText }
         }
         LiquidComboBox {
             objectName: "barCornerPreset"; Layout.fillWidth: true
             model: ["Pill", "Square", "Square left end", "Square right end", "Custom corners"]
             currentIndex: {
-                const found = root.cornerPresets.findIndex(p => root.cornerKeys.every((key, index) => Theme.barCorners[key] === p[index]));
+                const found = root.cornerPresets.findIndex(p => root.cornerKeys.every((key, index) => root.selectedCorners[key] === p[index]));
                 return found < 0 ? 4 : found;
             }
             enabled: root.ready; Accessible.name: "Bar corner preset"
@@ -111,7 +129,7 @@ ColumnLayout {
                 if (currentIndex >= root.cornerPresets.length) return;
                 const next = {};
                 root.cornerKeys.forEach((key, index) => next[key] = root.cornerPresets[currentIndex][index]);
-                ShellState.run("setting", {key: "barCorners", value: next});
+                root.patchStyle("corners", next);
             }
         }
         Repeater {
@@ -119,11 +137,11 @@ ColumnLayout {
             delegate: ColumnLayout {
                 id: cornerRow; required property string modelData
                 Layout.fillWidth: true; spacing: 6
-                readonly property bool automatic: Theme.barCorners[modelData] < 0
+                readonly property bool automatic: root.selectedCorners[modelData] < 0
                 RowLayout {
                     Layout.fillWidth: true
                     LabelText { text: Theme.tokenTitle(cornerRow.modelData); font.weight: Font.Bold; Layout.fillWidth: true }
-                    LabelText { text: cornerRow.automatic ? "Automatic" : Theme.barCorners[cornerRow.modelData] + " px"; color: Theme.muted }
+                    LabelText { text: cornerRow.automatic ? "Automatic" : root.selectedCorners[cornerRow.modelData] + " px"; color: Theme.muted }
                     ExpressiveSwitch {
                         checked: cornerRow.automatic; enabled: root.ready
                         Accessible.name: "Automatic " + Theme.tokenTitle(cornerRow.modelData) + " corner"
@@ -138,40 +156,49 @@ ColumnLayout {
                     onMoved: if (!pressed) root.corner(cornerRow.modelData, Math.round(value))
                     onPressedChanged: if (!pressed) root.corner(cornerRow.modelData, Math.round(value))
                 }
-                Binding { target: cornerRadius; property: "value"; value: Theme.barCornerRadius(cornerRow.modelData, Theme.barHeight); when: !cornerRadius.pressed; restoreMode: Binding.RestoreNone }
+                Binding { target: cornerRadius; property: "value"; value: Theme.barCornerRadius(cornerRow.modelData, Theme.barHeight, root.styleZone); when: !cornerRadius.pressed; restoreMode: Binding.RestoreNone }
             }
         }
         LabelText { text: "Outline · " + Math.round(outline.value) + " px (0 hides the border)"; font.weight: Font.Bold }
         LiquidSlider {
             id: outline; objectName: "barBorderWidth"; Layout.fillWidth: true; from: 0; to: 4; stepSize: 1
             enabled: root.ready; Accessible.name: "Bar border thickness"
-            onMoved: if (!pressed) ShellState.run("setting", {key: "barBorderWidth", value: Math.round(value)})
-            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "barBorderWidth", value: Math.round(value)})
+            onMoved: if (!pressed) root.patchStyle("borderWidth", Math.round(value))
+            onPressedChanged: if (!pressed) root.patchStyle("borderWidth", Math.round(value))
         }
-        Binding { target: outline; property: "value"; value: Theme.barBorderWidth; when: !outline.pressed; restoreMode: Binding.RestoreNone }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Border color"; Layout.fillWidth: true }
-            IconButton {
-                visible: ShellState.preferences.colorPicker !== false; enabled: root.ready; tooltip: "Choose bar border color"
-                contentItem: Rectangle { color: Theme.barBorder; radius: 8; border.width: 1; border.color: Theme.border }
-                onClicked: { borderPicker.initialColor = Theme.barBorder; borderPicker.open(); }
-            }
-            ExpressiveField {
-                id: borderHex; objectName: "barBorderColor"; Layout.preferredWidth: 126; maximumLength: 9
-                text: (ShellState.preferences.themeOverrides || {}).barBorder || Theme.barBorder.toString()
-                Accessible.name: "Bar border hex color"
-                onEditingFinished: {
-                    const value = text.trim();
-                    if (!/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) { root.borderError = "Use #RRGGBB or #AARRGGBB"; return; }
-                    root.borderError = "";
-                    ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: value});
+        Binding { target: outline; property: "value"; value: root.selectedBorderWidth; when: !outline.pressed; restoreMode: Binding.RestoreNone }
+        Repeater {
+            model: [{key: "borderColor", title: "Border color"}, {key: "fillColor", title: "Fill color"}]
+            delegate: ColumnLayout {
+                id: colorRow; required property var modelData; Layout.fillWidth: true
+                property string error: ""
+                readonly property color selectedColor: root.styleColor(modelData.key)
+                function sync() { if (hex && !hex.activeFocus) hex.text = selectedColor.toString(); }
+                RowLayout {
+                    Layout.fillWidth: true
+                    LabelText { text: colorRow.modelData.title; Layout.fillWidth: true }
+                    IconButton {
+                        visible: ShellState.preferences.colorPicker !== false; enabled: root.ready; tooltip: "Choose " + colorRow.modelData.title.toLowerCase()
+                        contentItem: Rectangle { color: colorRow.selectedColor; radius: 8; border.width: 1; border.color: Theme.border }
+                        onClicked: { root.pickerField = colorRow.modelData.key; borderPicker.initialColor = colorRow.selectedColor; borderPicker.open(); }
+                    }
+                    ExpressiveField {
+                        id: hex; objectName: colorRow.modelData.key === "borderColor" ? "barBorderColor" : "barFillColor"; Layout.preferredWidth: 126; maximumLength: 9
+                        text: colorRow.selectedColor.toString(); Accessible.name: colorRow.modelData.title + " hex color"
+                        onEditingFinished: {
+                            const value = text.trim();
+                            if (!/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) { colorRow.error = "Use #RRGGBB or #AARRGGBB"; return; }
+                            colorRow.error = ""; root.patchStyle(colorRow.modelData.key, value);
+                        }
+                    }
+                    LiquidButton { text: "Reset"; enabled: root.ready; onClicked: { colorRow.error = ""; root.patchStyle(colorRow.modelData.key, ""); } }
                 }
+                onSelectedColorChanged: sync()
+                Connections { target: root; function onStyleZoneChanged() { colorRow.error = ""; colorRow.sync(); } }
+                LabelText { visible: !!colorRow.error; text: colorRow.error; color: Theme.red; Layout.fillWidth: true }
             }
-            LiquidButton { text: "Reset"; enabled: root.ready; onClicked: { root.borderError = ""; ShellState.run("setting", {key: "themeOverrides", token: "barBorder", value: ""}); } }
         }
-        Connections { target: ShellState; function onPreferencesChanged() { if (!borderHex.activeFocus) borderHex.text = (ShellState.preferences.themeOverrides || {}).barBorder || Theme.barBorder.toString(); } }
-        LabelText { visible: !!root.borderError; text: root.borderError; color: Theme.red; Layout.fillWidth: true }
+        LiquidButton { visible: !!root.styleZone; text: "Reset this island"; enabled: root.ready; onClicked: ShellState.run("setting", {key: "barIslandStyles", token: root.styleZone, value: ""}) }
     }
     Repeater {
         model: BarRegistry.zones

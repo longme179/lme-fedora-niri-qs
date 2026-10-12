@@ -64,7 +64,8 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Type that feels like you"
-        description: "Enter an installed font family name. Qt uses a fallback when that font is missing. Headings keep their bold weight; uncustomized roles follow the body family."
+        description: "Search installed font families or enter a family name. Qt uses a fallback when that font is missing. Headings keep their bold weight; uncustomized roles follow the body family."
+        PreferenceSwitch { title: "Searchable font menus"; detail: "Browse installed fonts while retaining manual input and live preview"; preference: "fontPicker" }
         Repeater {
             model: Theme.catalog.fonts
             delegate: ColumnLayout {
@@ -73,7 +74,7 @@ ColumnLayout {
                 RowLayout {
                     Layout.fillWidth: true
                     LabelText { text: fontRow.modelData.title; Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; font.weight: Font.Bold }
-                    ExpressiveField { id: family; objectName: "font-" + fontRow.modelData.key; Layout.preferredWidth: 230; Layout.minimumWidth: 120; maximumLength: 80; text: Theme.fontFor(fontRow.modelData.key); Accessible.name: fontRow.modelData.title + " font family"; onAccepted: root.save(fontRow.modelData.key, text, true) }
+                    FontPicker { id: family; objectName: "font-" + fontRow.modelData.key; Layout.preferredWidth: 230; Layout.minimumWidth: 120; maximumLength: 80; text: Theme.fontFor(fontRow.modelData.key); Accessible.name: fontRow.modelData.title + " font family"; onAccepted: root.save(fontRow.modelData.key, text, true); onFontSelected: name => root.save(fontRow.modelData.key, name, true) }
                     LiquidButton { text: "Apply"; enabled: !!family.text.trim() && ShellState.backendReady; Accessible.name: "Apply " + fontRow.modelData.title + " font"; onClicked: root.save(fontRow.modelData.key, family.text, true) }
                     IconButton { glyph: "↺"; tooltip: "Reset " + fontRow.modelData.title + " font"; onClicked: root.save(fontRow.modelData.key, "", true) }
                 }

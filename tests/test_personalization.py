@@ -215,6 +215,8 @@ ShellRoot {
                 click('element-buttonFill');type_text('#113355');wait(lambda s:s['buttonFill']=='#113355')
                 click('element-buttonFill');type_text('#xyz');time.sleep(.2);self.assertEqual(json.loads(ipc('themeState'))['buttonFill'],'#113355')
                 click('font-body');type_text('DejaVu Sans');wait(lambda s:s['bodyFont']=='DejaVu Sans' and s['barFont']=='DejaVu Sans')
+                click('font-body-menu');type_text('Roboto');wait(lambda s:s['bodyFont']=='Roboto')
+                run('fontOverrides','DejaVu Sans',token='body');wait(lambda s:s['bodyFont']=='DejaVu Sans')
                 run('fontOverrides','Roboto',token='bar');wait(lambda s:s['barFont']=='Roboto')
                 run('barEdge','bottom');run('barEdgeMargin',28);run('barSideMargin',64);run('barHeight',48)
                 ipc('navigate','desktop','appearance');state=wait(lambda s:bool(s['bar']))

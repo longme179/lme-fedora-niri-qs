@@ -15,3 +15,7 @@ Enable **Appearance → Geometric shape morph**, then hover/press a gear or anot
 ## Moving tab indicator
 
 **Appearance → Moving tab indicator** controls stretching selection in Control Center tabs and the Settings sidebar. Try mouse selection, Ctrl+Tab in Control Center, and filtered Settings navigation; reduced motion snaps. It adapts DMS independent leading/trailing edges to LME grid and vertical layouts.
+
+## Installed font picker
+
+In **Elements → Type that feels like you**, open the arrow menu, search, then select a font. The existing preview remains. Enter accepts the first search result, Down moves into the list; Escape closes it. Manual input remains available, including when **Searchable font menus** is off. Missing fonts still use Qt fallback.

@@ -7,6 +7,8 @@ import "../theme"
 Rectangle {
     id: root
     readonly property var charging: ShellState.system.charging || {}
+    readonly property var battery: ShellState.system.battery || {}
+    function timeLabel(seconds) { if (seconds === null || seconds === undefined) return "Time unavailable"; const minutes=Math.ceil(seconds/60); return Math.floor(minutes/60)+"h "+(minutes%60)+"m "+(battery.charging ? "to full" : "remaining"); }
     readonly property bool busy: !!ShellState.pendingActions.chargeMode || !!charging.busy
     implicitHeight: content.implicitHeight + 32
     radius: 24; color: Theme.alpha(Theme.surfaceContainerHigh, 0.78)
@@ -19,6 +21,11 @@ Rectangle {
             ShellIcon { name: "battery"; width: 18; height: 18; color: Theme.green }
             LabelText { text: "Battery charging"; font.weight: Font.Bold; font.pixelSize: root.width < 340 ? 14 : 16; Layout.fillWidth: true; wrapMode: Text.Wrap }
             LabelText { text: root.busy ? "Changing…" : root.charging.limitPercent !== undefined && root.charging.limitPercent !== null ? root.charging.limitPercent + "% limit" : root.charging.mode === "conservation" ? "Conservation" : root.charging.mode === "max" ? "Max charge" : "Unavailable"; font.pixelSize: 12; color: Theme.muted }
+        }
+        LabelText {
+            visible: ShellState.preferences.batteryDetails !== false && !!root.battery.available
+            text: (root.battery.health === null || root.battery.health === undefined ? "Health unavailable" : "Health " + root.battery.health.toFixed(1) + "%") + " · " + (root.battery.powerW === null || root.battery.powerW === undefined ? "Power unavailable" : root.battery.powerW.toFixed(1) + " W") + " · " + root.timeLabel(root.battery.secondsRemaining)
+            Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12
         }
         GridLayout {
             Layout.fillWidth: true; columnSpacing: 8; rowSpacing: 8

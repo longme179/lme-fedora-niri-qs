@@ -103,7 +103,7 @@ class BackendCase(Fixture, unittest.TestCase):
         self.put("sys/class/power_supply/BAT0/type", "Battery")
         self.put("sys/class/power_supply/BAT0/capacity", "73")
         self.put("sys/class/power_supply/BAT0/status", "Charging")
-        self.assertEqual(self.make_backend().battery(), {"available": True, "percent": 73, "charging": True, "acOnline": True})
+        self.assertEqual(self.make_backend().battery(), {"available": True, "percent": 73, "charging": True, "acOnline": True, "health": None, "powerW": None, "secondsRemaining": None, "devices": [{"name":"BAT0","status":"Charging","health":None,"powerW":None,"secondsRemaining":None}]})
 
     def test_nmcli_escaped_ssid_and_no_rescan(self):
         runner = FakeRunner({

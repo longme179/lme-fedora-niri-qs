@@ -35,3 +35,7 @@ Enable **Elements → Visual color picker**, click a role swatch, drag saturatio
 ## Export, import and backup
 
 **Behavior → Settings export and restore** accepts a JSON path. Export preset produces a portable document suitable for sharing/factory-default review; private backup includes personal settings and must be treated as private. Import validates the entire file before applying, preserves unimported settings, and creates `settings-before-import-*.json` beside the live settings. Use the same Import action to restore that backup. Exports refuse overwrite. Clipboard/notification history, notes and external wallpaper files are deliberately outside settings backups. Tests cover private-field exclusion, invalid all-or-nothing import, backup permissions and restoration data.
+
+## Battery health, power and ETA
+
+Enable **Behavior → Battery health details** and inspect the Battery charging card. The backend reads standard power_supply energy/charge/current units; absent or invalid data stays unavailable. ETA is an instantaneous estimate and may vary with load; multiple-pack ETA is omitted. Fixtures cover energy/charge units, charge/discharge, zero power and unknown design capacity. Actual IdeaPad telemetry is not available in cloud.

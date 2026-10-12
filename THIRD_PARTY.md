@@ -104,3 +104,5 @@ The HSV/alpha picker workflow references DMS `ColorPickerContent.qml` and DCommo
 Privacy classification references DMS `PrivacyService.qml` (6640a943, MIT) and Noctalia `privacy_capture_classification.cpp` (8504aff8, MIT). LME aggregates active streams without the upstream early-return mute issue and reads niri cast events; implementation is original.
 
 Settings transfer references DMS backup validation/rollback workflow (`core/internal/backup/backup.go`, 6640a943, MIT). LME uses validated JSON and existing atomic preference writes, not archive extraction or the Go backend.
+
+Battery health/power/ETA presentation references Noctalia `battery_widget.cpp` / `upower_service.cpp` at 8504aff8 (MIT). LME retains its Linux sysfs backend, with original unit-aware calculation and explicit unavailable values.

@@ -42,3 +42,20 @@ class TransferCase(Fixture, unittest.TestCase):
         backups=list(self.preferences.path.parent.glob('settings-before-import-*.json'))
         self.assertEqual(len(backups),1);self.assertEqual(json.loads(backups[0].read_text())['settings']['accent'],'#123456')
         self.assertEqual(backups[0].stat().st_mode & 0o777,0o600)
+
+class BatteryCase(Fixture, unittest.TestCase):
+    def test_energy_units_and_charging_time(self):
+        for key,value in {'type':'Battery','capacity':'50','status':'Discharging','energy_now':'20000000','energy_full':'40000000','energy_full_design':'50000000','power_now':'10000000'}.items(): self.put('sys/class/power_supply/BAT0/'+key,value)
+        live=self.make_backend();state=live.battery()
+        self.assertEqual((state['health'],state['powerW'],state['secondsRemaining']),(80,10,7200))
+        self.put('sys/class/power_supply/BAT0/status','Charging')
+        self.assertEqual(live.battery()['secondsRemaining'],7200)
+    def test_charge_units_zero_power_and_unknown_are_not_guessed(self):
+        for key,value in {'type':'Battery','capacity':'60','status':'Discharging','charge_now':'3000000','charge_full':'5000000','charge_full_design':'6000000','current_now':'1000000','voltage_now':'12000000'}.items(): self.put('sys/class/power_supply/BAT0/'+key,value)
+        live=self.make_backend();state=live.battery()
+        self.assertEqual((state['powerW'],state['secondsRemaining']),(12,10800))
+        self.assertAlmostEqual(state['health'],83.3)
+        self.put('sys/class/power_supply/BAT0/current_now','0')
+        self.assertIsNone(live.battery()['secondsRemaining'])
+        self.put('sys/class/power_supply/BAT0/charge_full_design','NaN')
+        self.assertIsNone(live.battery()['health'])

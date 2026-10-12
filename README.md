@@ -15,11 +15,11 @@
 
 [![Watch the LME Shell 2.0 demo — Activity island with media and timers over the blurred desktop](docs/media/demo-2.0.png)](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)
 
-**[▶ Watch the demo](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)** · [Download the original MP4](https://github.com/longme179/lme-fedora-niri-qs/releases/download/2.0/lme-shell-2.0-demo.mp4) · [Get release 2.0](https://github.com/longme179/lme-fedora-niri-qs/releases/tag/2.0)
+**[▶ Watch the demo](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)** · [Download the original MP4](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=1) · [Get release 2.0](https://github.com/longme179/lme-fedora-niri-qs/releases/tag/2.0)
 
 The preview comes from the maintainer's recording, with a customized layout.
 Click it to watch the 65-second demo in Dropbox; the original 1080p MP4 is also
-included in the GitHub release.
+linked from the GitHub release.
 
 LME is built with **Quickshell and QML/Qt Quick**. A modular bar, an expandable
 Activity island and a standalone Settings app put everyday desktop controls
@@ -80,7 +80,7 @@ cd ~/src/lme-fedora-niri-qs
 ```
 
 This checkout tracks `main`. For a fixed **2.0** snapshot, download
-[lme-shell-2.0.zip](https://github.com/longme179/lme-fedora-niri-qs/releases/download/2.0/lme-shell-2.0.zip)
+[the source ZIP](https://github.com/longme179/lme-fedora-niri-qs/archive/refs/tags/2.0.zip)
 instead and extract it into a permanent directory. Run the following commands
 from the checkout or extracted source directory. Keep that directory after
 installation: the installed shell links to it.

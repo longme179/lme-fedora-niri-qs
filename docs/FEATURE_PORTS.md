@@ -43,3 +43,7 @@ Enable **Behavior → Battery health details** and inspect the Battery charging 
 ## Configurable spring OSD
 
 **Behavior → Volume and brightness OSD** sets nine positions, horizontal/vertical layout, edge distance and focused/all/named output. Output popups own their timers and retain the surface through spring exit. Hover pauses autohide. Change volume/brightness to test; disable Animations to test instant hiding. Disconnected outputs are removed; unplugging a selected named output does not silently redirect feedback. Physical multi-monitor behavior still requires testing on niri.
+
+## Real audio spectrum
+
+Enable **Behavior → Audio spectrum** and play media with a visible Control Center media card or expanded Island. Cava starts only while an enabled visible card needs frames; silence uses zero levels, not decorative animation. Install Fedora `cava` if missing. Parsing/clamping is tested and the missing-binary state is exercised; actual audio capture remains untested without Cava in cloud.

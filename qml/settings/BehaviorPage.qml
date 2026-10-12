@@ -7,8 +7,9 @@ import "../theme"
 ColumnLayout {
     spacing: 20
     SettingsCard {
-        title: "Privacy and battery"
+        title: "Privacy and media"
         description: "PipeWire capture activity and niri screen casts. Direct V4L2 camera access outside PipeWire is not detected."
+        PreferenceSwitch { title: "Audio spectrum"; detail: "Real Cava spectrum while a visible media card is playing; requires cava"; preference: "audioVisualizer" }
         PreferenceSwitch { title: "Battery health details"; detail: "Show health, power and time when reported by the kernel"; preference: "batteryDetails" }
         PreferenceSwitch { title: "Capture indicators"; detail: "Show active microphone, camera and screen sharing"; preference: "privacyIndicators" }
         PreferenceSwitch { title: "Silence popups while sharing"; detail: "Automatic suppression preserves your manual DND setting"; preference: "dndWhileSharing" }

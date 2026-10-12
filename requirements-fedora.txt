@@ -73,3 +73,7 @@ slurp
 
 # System monitor and keybind viewer use Python stdlib only.
 # Native popup blur uses Quickshell Wayland BackgroundEffect; no capture/shader package.
+
+[optional-selected-ports]
+# Real media spectrum (starts only for visible enabled media cards):
+cava

@@ -66,3 +66,10 @@ class OsdSettingsCase(unittest.TestCase):
         self.assertEqual(backend.validate_preference('osdPosition','center-right'),'center-right')
         for key,value in [('osdMargin',True),('osdMargin',97),('osdPosition','outside'),('osdLayout','diagonal'),('osdOutput','bad\nname')]:
             with self.assertRaises(ValueError): backend.validate_preference(key,value)
+
+class VisualizerCase(unittest.TestCase):
+    def test_real_frames_are_bounded_and_malformed_frames_are_discarded(self):
+        from audio_visualizer import frame
+        self.assertEqual(frame(';'.join(['50']*16)+';'),[.5]*16)
+        self.assertEqual(frame(';'.join(['-5','200']*8)),[0,1]*8)
+        for text in ['1;2',';'.join(['NaN']*16),';'.join(['invalid']*16)]: self.assertIsNone(frame(text))

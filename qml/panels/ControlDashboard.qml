@@ -312,6 +312,7 @@ Item {
                     LiquidButton { text: root.player && root.player.isPlaying ? "Pause" : "Play"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canTogglePlaying; onClicked: root.player.togglePlaying(); palette.button: Theme.purple; palette.buttonText: Theme.background }
                     LiquidButton { text: "Next"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canGoNext; onClicked: root.player.next(); palette.button: Theme.panel; palette.buttonText: Theme.text }
                 }
+                AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying }
                 LiquidComboBox {
                     id: playerSelector
                     visible: root.players.length > 1

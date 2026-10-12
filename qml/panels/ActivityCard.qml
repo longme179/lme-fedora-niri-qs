@@ -43,6 +43,7 @@ ColumnLayout {
                     LabelText { text: ActivityState.artist; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 12; elide: Text.ElideRight }
                 }
             }
+            AudioVisualizer { Layout.fillWidth: true; playing: ActivityState.playing }
             RowLayout {
                 visible: ActivityState.players.length > 1; Layout.fillWidth: true
                 LiquidComboBox {

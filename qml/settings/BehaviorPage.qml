@@ -9,6 +9,7 @@ ColumnLayout {
     SettingsCard {
         title: "Privacy and media"
         description: "PipeWire capture activity and niri screen casts. Direct V4L2 camera access outside PipeWire is not detected."
+        PreferenceSwitch { title: "Quick notes"; detail: "An autosaved text buffer in Control Center → Agenda"; preference: "quickNotes" }
         PreferenceSwitch { title: "Audio spectrum"; detail: "Real Cava spectrum while a visible media card is playing; requires cava"; preference: "audioVisualizer" }
         PreferenceSwitch { title: "Battery health details"; detail: "Show health, power and time when reported by the kernel"; preference: "batteryDetails" }
         PreferenceSwitch { title: "Capture indicators"; detail: "Show active microphone, camera and screen sharing"; preference: "privacyIndicators" }

@@ -6,3 +6,4 @@ singleton ActivityState 1.0 ActivityState.qml
 singleton PrivacyState 1.0 PrivacyState.qml
 singleton OSDManager 1.0 OSDManager.qml
 singleton VisualizerState 1.0 VisualizerState.qml
+singleton NotesState 1.0 NotesState.qml

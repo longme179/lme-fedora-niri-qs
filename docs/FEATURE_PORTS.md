@@ -47,3 +47,7 @@ Enable **Behavior → Battery health details** and inspect the Battery charging 
 ## Real audio spectrum
 
 Enable **Behavior → Audio spectrum** and play media with a visible Control Center media card or expanded Island. Cava starts only while an enabled visible card needs frames; silence uses zero levels, not decorative animation. Install Fedora `cava` if missing. Parsing/clamping is tested and the missing-binary state is exercised; actual audio capture remains untested without Cava in cloud.
+
+## Autosaved quick notes
+
+Enable **Behavior → Quick notes**, then **Control Center → Agenda → Notes**. A plain-text buffer autosaves after 600 ms and survives tab/panel changes. Storage: `$XDG_STATE_HOME/lme-shell/notes.txt` (default `~/.local/state/lme-shell/notes.txt`), initialized privately. External edits while dirty stop autosave and offer Copy/Reload; failed writes keep the buffer. Notes are outside settings exports/backups. Limit: 100,000 characters; force-killing the shell can lose the last unsaved interval.

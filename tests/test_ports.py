@@ -73,3 +73,13 @@ class VisualizerCase(unittest.TestCase):
         self.assertEqual(frame(';'.join(['50']*16)+';'),[.5]*16)
         self.assertEqual(frame(';'.join(['-5','200']*8)),[0,1]*8)
         for text in ['1;2',';'.join(['NaN']*16),';'.join(['invalid']*16)]: self.assertIsNone(frame(text))
+
+class NotesCase(Fixture, unittest.TestCase):
+    def test_initialization_keeps_existing_text_and_private_permissions(self):
+        import os
+        from unittest.mock import patch
+        with patch.dict(os.environ,XDG_STATE_HOME=str(self.root/'state')):
+            live=self.make_backend();self.assertTrue(live.handle({'action':'notesInit'})['ok'])
+            path=self.root/'state/lme-shell/notes.txt';path.write_text('Private meeting notes')
+            live.handle({'action':'notesInit'})
+            self.assertEqual(path.read_text(),'Private meeting notes');self.assertEqual(path.stat().st_mode & 0o777,0o600)

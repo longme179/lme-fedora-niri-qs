@@ -45,7 +45,7 @@ from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -269,7 +269,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes"} and type(value) is bool: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
@@ -1204,6 +1204,14 @@ class DesktopBackend:
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
+    def prepare_notes(self):
+        path = Path(os.environ.get("XDG_STATE_HOME") or Path.home()/".local/state") / "lme-shell/notes.txt"
+        path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+        if path.is_symlink() or path.exists() and not path.is_file(): raise ValueError("Notes path must be a regular file")
+        descriptor=os.open(path,os.O_CREAT|os.O_WRONLY|os.O_NOFOLLOW,0o600)
+        os.close(descriptor);path.chmod(0o600)
+        return "Notes storage ready"
+
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
         if action == 'nightLightRefresh':
@@ -1257,6 +1265,7 @@ class DesktopBackend:
             if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
+        if action == "notesInit": return self.prepare_notes()
         if action == "settingsExport":
             self.preferences.reload(force=True)
             return "Exported " + export_document(request.get("path"),self.preferences.values,request.get("kind"))
@@ -1438,7 +1447,7 @@ class DesktopBackend:
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
             return self.apply_wallpaper(request.get("path"))
-        if action in {"settingsExport", "settingsImport"}:
+        if action in {"settingsExport", "settingsImport", "notesInit"}:
             return "Settings transfer is disabled in demo mode"
         if action == "setting":
             key = request.get("key")

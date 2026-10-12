@@ -34,7 +34,7 @@ class Recorder:
                 self.info.update(active=False,owned=False,elapsed=max(0,int(time.monotonic()-self.started)))
                 if code:
                     self.log.seek(0,2);size=self.log.tell();self.log.seek(max(0,size-2000))
-                    self.info['error']='Recorder stopped ('+str(code)+'): '+self.log.read().strip()[-350:]
+                    self.info['error']='Recorder stopped ('+str(code)+'): '+self.log.read().strip()[:1000]
                 elif not self.path or not self.path.exists() or not self.path.stat().st_size:
                     self.info['error']='Recorder produced no video'
                 self.child=None;self.log.close();self.log=None
@@ -68,13 +68,15 @@ class Recorder:
                 result += [(c,None,'CPU') for c in ENCODERS[family] if not c.endswith(('_nvenc','_vaapi')) and c in names]
         return result
 
-    def probe(self, codec, device):
+    def probe(self, codec, device, fps, bitrate):
         args=['-hide_banner','-loglevel','error']
         if device: args+=['-vaapi_device',device]
-        args+=['-f','lavfi','-i','color=size=128x128:rate=1','-frames:v','1','-an']
+        # Desktop-sized frames avoid rejecting NVENC's minimum-dimension constraints.
+        # shortcut: probe geometry is fixed, match capture dimensions if small regions need preflight.
+        args+=['-f','lavfi','-i','color=size=1920x1080:rate='+str(fps),'-frames:v','1','-an']
         if device: args+=['-vf','format=nv12,hwupload']
         else: args+=['-pix_fmt','yuv420p']
-        self.runner.run('ffmpeg',*args,'-c:v',codec,'-f','null','-',timeout=8)
+        self.runner.run('ffmpeg',*args,'-c:v',codec,'-b:v',str(bitrate)+'k','-f','null','-',timeout=8)
 
     def start(self, folder, mode, output, audio, encoder, container='mkv', video_codec='auto', fps=30, bitrate=12000):
         with self.lock:
@@ -119,9 +121,9 @@ class Recorder:
             for codec, device, gpu in candidates:
                 if self.closed: raise ValueError('Recording cancelled during shell shutdown')
                 with self.lock: self.info.update(encoder=codec,gpu=gpu)
-                try: self.probe(codec,device)
+                try: self.probe(codec,device,fps,bitrate)
                 except RuntimeError as error:
-                    failures.append(codec+': '+str(error)[-250:]); continue
+                    failures.append(codec+': '+str(error)[:350]); continue
                 with tempfile.NamedTemporaryFile(prefix='Recording-'+time.strftime('%Y%m%d-%H%M%S')+'-',suffix='.mkv',dir=directory,delete=False) as reserved: path=Path(reserved.name)
                 target=path.with_suffix('.'+container)
                 pad='pad=ceil(iw/2)*2:ceil(ih/2)*2'

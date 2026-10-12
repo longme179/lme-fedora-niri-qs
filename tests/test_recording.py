@@ -34,6 +34,40 @@ class RecordingCase(Fixture, unittest.TestCase):
         self.assertEqual(recorder.candidates(names,'cpu','webm','vp9'),[('libvpx-vp9',None,'CPU')])
         self.assertEqual(runner.calls,[])
 
+    def test_nvenc_probe_meets_desktop_dimensions_and_retains_requested_rate_and_bitrate(self):
+        self.put('sys/class/drm/renderD129/device/vendor','0x10de')
+        class Runner(FakeRunner):
+            def run(self,name,*args,**kwargs):
+                self.calls.append((name,*args))
+                if '-encoders' in args:return ' V..... h264_nvenc'
+                if 'color=size=1920x1080:rate=60' not in args:raise backend.CommandError('Frame Dimension less than the minimum supported value')
+                return ''
+        runner=Runner(available={'wf-recorder','ffmpeg'});recorder=Recorder(runner,self.root/'sys')
+        child=Mock();child.poll.return_value=None
+        with patch('screen_recording.subprocess.Popen',return_value=child) as spawn,patch('screen_recording.time.sleep'):
+            recorder.start(str(self.root/'videos'),'output','eDP-1','none','nvidia','mp4','h264',60,16000)
+        probe=runner.calls[1]
+        self.assertIn('color=size=1920x1080:rate=60',probe);self.assertIn('16000k',probe)
+        self.assertEqual(recorder.state()['gpu'],'NVIDIA');self.assertEqual(recorder.state()['fallback'],'')
+        self.assertIn('h264_nvenc',spawn.call_args.args[0]);recorder.child=None;recorder.log.close()
+
+    def test_encoder_error_keeps_first_cause_instead_of_only_ffmpeg_tail(self):
+        self.put('sys/class/drm/renderD129/device/vendor','0x10de')
+        class Runner(FakeRunner):
+            def run(self,name,*args,**kwargs):
+                if '-encoders' in args:return ' V..... h264_nvenc'
+                raise backend.CommandError('Frame Dimension less than the minimum supported value.\n'+'Thread cleanup detail. '*30)
+        recorder=Recorder(Runner(available={'wf-recorder','ffmpeg'}),self.root/'sys')
+        with self.assertRaisesRegex(ValueError,'Frame Dimension less than the minimum supported value'):
+            recorder.start(str(self.root/'videos'),'output','eDP-1','none','nvidia')
+        self.assertIn('Frame Dimension',recorder.state()['error']);self.assertIsNone(recorder.child)
+
+    def test_owned_child_failure_keeps_primary_error_before_thread_cleanup(self):
+        recorder=Recorder(FakeRunner(),self.root/'sys');child=Mock();child.poll.return_value=1;child.returncode=1
+        recorder.child=child;recorder.started=time.monotonic();recorder.log=tempfile.TemporaryFile(mode='w+')
+        recorder.log.write('Frame Dimension less than the minimum supported value.\n'+'Thread cleanup detail. '*50)
+        self.assertIn('Frame Dimension',recorder.state()['error']);self.assertIsNone(recorder.child)
+
     def test_failed_nvenc_probe_falls_back_to_amd_with_explicit_hybrid_arguments(self):
         self.put('sys/class/drm/renderD129/device/vendor','0x10de')
         self.put('sys/class/drm/renderD128/device/vendor','0x1002')

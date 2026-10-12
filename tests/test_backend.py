@@ -370,6 +370,19 @@ class BackendCase(Fixture, unittest.TestCase):
             with self.assertRaisesRegex(backend.CommandError, "unavailable"):
                 runner.run("wpctl", "get-volume")
 
+    def test_command_errors_strip_terminal_colors_before_truncation_and_redact_input(self):
+        runner = backend.CommandRunner()
+        runner.commands['matugen'] = '/usr/bin/true'
+        completed = subprocess.CompletedProcess(['matugen'], 1, '', '\x1b[91mMultiple source colors\x1b[0m\n\x1b[1;33mprivate input\x1b[0m')
+        with patch.object(backend.subprocess, 'run', return_value=completed):
+            with self.assertRaises(backend.CommandError) as caught:
+                runner.run('matugen', 'image', input='private input')
+        self.assertIn('Multiple source colors', str(caught.exception))
+        self.assertIn('[redacted]', str(caught.exception))
+        self.assertNotIn('\x1b', str(caught.exception))
+        self.assertNotIn('[91m', str(caught.exception))
+        self.assertNotIn('private input', str(caught.exception))
+
 
 class DesktopEntryCase(Fixture, unittest.TestCase):
     def desktop(self, relative, **values):

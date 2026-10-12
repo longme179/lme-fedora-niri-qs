@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Generate Matugen 4 wallpaper palettes without an interactive terminal by
+  selecting its highest-ranked source color. Keep the Matugen 3 command intact
+  and remove terminal color escapes from backend error messages.
 - Independently customize Left/Center/Right island corners, fill and outline.
   Connected-bar geometry no longer reshapes the islands; settings transfer keeps
   each surface, and one shared editor switches between the four targets.

@@ -144,3 +144,6 @@ the options, generate a preview and Apply palette. Changing options invalidates
 that preview; regenerate before applying. All base palette roles are covered,
 including green/yellow, while manual overrides remain. Requires Matugen 3 or 4;
 no templates, external app themes, wallpaper commands or user hooks are run.
+Matugen 4 uses its highest-ranked source color automatically, so generation
+works from Settings without a terminal or a color-selection prompt. Matugen 3
+keeps its existing command format.

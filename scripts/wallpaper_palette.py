@@ -43,6 +43,7 @@ def preview(runner, raw, scheme="tonal-spot", mode="dark", contrast=0):
     with tempfile.TemporaryDirectory(prefix='lme-matugen-') as folder:
         config=Path(folder)/'config.toml';config.write_text('[config]\n\n[templates]\n')
         args=['image',str(path),'-m',mode,'-t','scheme-'+scheme,'--contrast',str(contrast),'-c',str(config),'--json','hex','--dry-run']
-        if int(match[1])>=4: args.append('--old-json-output')
+        # Matugen 4 otherwise prompts for a source color and fails without a terminal.
+        if int(match[1])>=4: args+=['--source-color-index=0','--old-json-output']
         output=runner.run('matugen',*args,timeout=35)
     return {'colors':colors_from_json(output,mode),'path':str(path),'paletteScheme':scheme,'paletteMode':mode,'paletteContrast':contrast}

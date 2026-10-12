@@ -132,6 +132,7 @@ class CommandRunner:
             raise CommandError(f"Unable to run {name}: {exc.strerror}") from exc
         if result.returncode:
             detail = result.stderr.strip() or result.stdout.strip()
+            detail = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', detail).strip()
             if input and input.strip(): detail = detail.replace(input.strip(), "[redacted]")
             detail = detail[:350]
             raise CommandError(f"{name} failed ({result.returncode})" + (f": {detail}" if detail else ""))

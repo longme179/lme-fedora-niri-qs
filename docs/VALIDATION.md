@@ -1,5 +1,21 @@
 # Validation and platform limits
 
+## Noninteractive Matugen generation — 2026-10-13
+
+Reproduced the reported multiple-source-color/no-terminal error with the real
+Matugen 4.2.0 binary and the repository's multicolor wallpaper. After adding
+`--source-color-index=0`, all nine schemes in both dark and light mode generated
+complete, valid role colors without a terminal. The portable upstream release
+was downloaded to `/tmp` and checked against its published SHA-256; no system
+package was installed. Matugen 4.0/4.1 argument sources also expose this flag;
+their binaries and the owner's exact wallpaper were not tested.
+
+`scripts/check.sh` passed **206 tests, no skips**, with all private Wayland
+opt-ins and the real Matugen test enabled. Regression checks preserve Matugen 3's
+legacy arguments and verify ANSI removal and input redaction in error messages.
+Bash syntax, demo state and diff checks passed. Matugen 3 compatibility was
+checked through its argument source and a CLI fixture, not its actual binary.
+
 ## Independent islands, palette catalog and audio defaults — 2026-10-12
 
 `scripts/check.sh` passed **203 tests, no skips**, with all private Wayland

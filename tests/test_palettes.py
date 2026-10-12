@@ -56,11 +56,38 @@ class PaletteCase(Fixture, unittest.TestCase):
         self.assertEqual(result['colors']['accent'],'#445566')
         self.assertEqual(result['paletteScheme'],'expressive')
         self.assertIn('[templates]',runner.assert_config)
-        for arg in ('--dry-run','--old-json-output','scheme-expressive','light','0.5'):self.assertIn(arg,runner.calls[-1])
+        for arg in ('--dry-run','--source-color-index=0','--old-json-output','scheme-expressive','light','0.5'):self.assertIn(arg,runner.calls[-1])
         live=self.make_backend();live.palette_preview=result
         self.assertFalse(live.handle({'action':'paletteApply','path':str(path)})['ok'])
         live.preferences.update({'paletteScheme':'expressive','paletteMode':'light','paletteContrast':.5})
         self.assertTrue(live.handle({'action':'paletteApply','path':str(path)})['ok'])
+
+    def test_v3_keeps_legacy_cli_and_v4_never_needs_a_terminal(self):
+        path=self.put('wallpaper.png','image fixture')
+        for major in (3,4):
+            class Runner(FakeRunner):
+                def run(self,name,*args,**kwargs):
+                    self.calls.append((name,*args))
+                    if '--version' in args: return 'matugen '+str(major)+'.1.0'
+                    if major==4 and '--source-color-index=0' not in args:
+                        raise backend.CommandError('Multiple source colors found, no preference was inputted, and a terminal was not detected.')
+                    if major==3 and any(a.startswith(('--prefer','--source-color-index')) or a=='--old-json-output' for a in args):
+                        raise backend.CommandError('Unexpected argument on Matugen 3')
+                    return json.dumps({'colors':{key:{'dark':'#112233','light':'#445566'} for key in ROLES.values()}})
+            runner=Runner(available={'matugen'})
+            self.assertEqual(preview(runner,str(path))['colors']['accent'],'#112233')
+
+    @unittest.skipUnless(os.environ.get('LME_TEST_MATUGEN_BINARY'), 'opt-in real portable Matugen')
+    def test_real_multicolor_image_noninteractive_schemes_and_modes(self):
+        runner=backend.CommandRunner();runner.commands['matugen']=os.environ['LME_TEST_MATUGEN_BINARY']
+        path=Path(__file__).resolve().parents[1]/'assets/wallpapers/liquid-dracula.png'
+        for mode in ('dark','light'):
+            for scheme in PALETTE_SCHEMES:
+                result=preview(runner,str(path),scheme,mode,.5)
+                self.assertEqual(result['paletteMode'],mode)
+                self.assertEqual(result['paletteScheme'],scheme)
+                self.assertEqual(set(result['colors']),set(ROLES))
+                self.assertTrue(all(re.fullmatch(r'#[0-9a-f]{6}',v) for v in result['colors'].values()))
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'opt-in native palette UI')

@@ -83,3 +83,18 @@ class NotesCase(Fixture, unittest.TestCase):
             path=self.root/'state/lme-shell/notes.txt';path.write_text('Private meeting notes')
             live.handle({'action':'notesInit'})
             self.assertEqual(path.read_text(),'Private meeting notes');self.assertEqual(path.stat().st_mode & 0o777,0o600)
+
+class PaletteCase(Fixture,unittest.TestCase):
+    def test_dark_roles_are_validated_before_theme_changes(self):
+        from wallpaper_palette import ROLES,colors_from_json
+        raw=json.dumps({'colors':{role:{'dark':'#123456','light':'#ffffff'} for role in set(ROLES.values())}})
+        self.assertEqual(colors_from_json('warning\n'+raw)['accent'],'#123456')
+        with self.assertRaises(ValueError): colors_from_json(raw.replace('#123456','bad'))
+        live=self.make_backend();self.preferences.set('themeOverrides',{'buttonFill':'#abcdef'})
+        before=self.preferences.path.read_bytes();live.palette_preview={'colors':{},'path':'image.png'}
+        self.assertFalse(live.handle({'action':'paletteApply','path':'image.png'})['ok']);self.assertEqual(before,self.preferences.path.read_bytes())
+        live.palette_preview={'colors':colors_from_json(raw),'path':'image.png'}
+        self.assertTrue(live.handle({'action':'paletteApply','path':'image.png'})['ok'])
+        self.assertEqual(self.preferences.values['themeOverrides'],{'buttonFill':'#abcdef'})
+        self.assertEqual(self.preferences.values['paletteSource'],'wallpaper')
+        self.assertTrue(live.handle({'action':'paletteReset'})['ok']);self.assertEqual(self.preferences.values['paletteSource'],'dracula')

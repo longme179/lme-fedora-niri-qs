@@ -77,3 +77,6 @@ slurp
 [optional-selected-ports]
 # Real media spectrum (starts only for visible enabled media cards):
 cava
+
+# Material palette preview (isolated dry-run, no GTK/terminal templates):
+matugen

@@ -9,6 +9,8 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
+    readonly property var palette: ShellState.snapshot.palettePreview || {colors:{},path:""}
+    readonly property string palettePath: selectedPath || ShellState.preferences.wallpaper || ""
     property string query: ""
     property bool favoritesOnly: false
     property string selectedPath: ""
@@ -71,6 +73,23 @@ ColumnLayout {
             }
             LabelText { anchors.centerIn: parent; width: parent.width - 20; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; visible: !root.entries.length; text: ShellState.pendingActions.wallpaperScan ? "Scanning images…" : root.favoritesOnly ? "No matching favorites" : "Choose a folder to browse your wallpapers."; color: Theme.muted }
         }
+    }
+    SettingsCard {
+        title: "Material palette from wallpaper"
+        description: "Preview a dark tonal palette before applying. Dracula remains the default. Glass opacity and manual element overrides are preserved; no external app themes are changed. Requires matugen."
+        RowLayout {
+            LiquidButton { text: ShellState.pendingActions.palettePreview ? "Generating…" : "Preview palette"; enabled: !ShellState.demo && !!root.palettePath && !ShellState.pendingActions.palettePreview; onClicked: ShellState.run("palettePreview",{path:root.palettePath}) }
+            LiquidButton { text: "Apply palette"; enabled: !ShellState.demo && root.palette.path === root.palettePath && !!root.palette.colors.accent; onClicked: ShellState.run("paletteApply",{path:root.palettePath}) }
+            LiquidButton { text: "Use Dracula"; onClicked: ShellState.run("paletteReset") }
+        }
+        Flow {
+            Layout.fillWidth: true; spacing: 8
+            Repeater {
+                model: Object.keys(root.palette.colors || {})
+                delegate: Rectangle { required property string modelData; width: 50; height: 42; radius: 12; color: root.palette.colors[modelData]; ToolTip.visible: hovered.hovered; ToolTip.text: Theme.tokenTitle(modelData); HoverHandler { id: hovered } }
+            }
+        }
+        LabelText { text: "Current source: " + (ShellState.preferences.paletteSource || "dracula"); color: Theme.muted }
     }
     SettingsCard {
         title: "Your backdrop"

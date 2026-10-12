@@ -10,7 +10,8 @@ QtObject {
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})
     readonly property var fonts: ShellState.preferences.fontOverrides || ({})
     property var catalog: ({colors: [], fonts: []})
-    function colorFor(key, fallback) { return overrides[key] || fallback; }
+    readonly property var generated: ShellState.preferences.paletteSource === "wallpaper" ? ShellState.preferences.wallpaperPalette || ({}) : ({})
+    function colorFor(key, fallback) { return overrides[key] || generated[key] || fallback; }
     function tokenColor(key) { return root[key]; }
     function tokenTitle(key) { return key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()); }
     function fontFor(key) { return fonts[key] || (key === "mono" ? "JetBrains Mono" : key === "body" ? "Roboto" : fontFamily); }

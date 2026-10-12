@@ -31,7 +31,7 @@ from typing import Any
 
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
-from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS,
+from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
                               appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
@@ -40,6 +40,7 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
 from privacy import captures
+from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from settings_transfer import export_document, read_document, document
 
@@ -52,7 +53,7 @@ DEFAULT_PREFERENCES = {
     "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
-    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS,
+    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
     "barEdge": "top", "barEdgeMargin": 8, "barSideMargin": 12, "barHeight": 42,
     "nightLightEnabled": False, "nightLightMode": "manual", "nightLightTemperature": 4500,
     "nightLightStart": "20:00", "nightLightEnd": "07:00",
@@ -68,7 +69,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -274,6 +275,8 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
     if key == "osdOutput" and isinstance(value,str) and 1 <= len(value) <= 128 and not any(ord(c)<32 for c in value): return value
+    if key == "paletteSource" and value in ("dracula","wallpaper"): return value
+    if key == "wallpaperPalette": return validate_palette(value)
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
@@ -463,6 +466,7 @@ class DesktopBackend:
         self.feature_jobs = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
+        self.palette_preview = {"colors": {}, "path": ""}
         self.monitor_enabled = False
         self.monitor = SystemMonitor(proc)
         self.idle_control = IdleControl(self.runner)
@@ -820,7 +824,7 @@ class DesktopBackend:
         self.capture.refresh()
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                    "lastResult": dict(self.last_result), "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
                     "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -839,7 +843,7 @@ class DesktopBackend:
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
                 "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
@@ -872,7 +876,8 @@ class DesktopBackend:
                     del self.feature_jobs[action]
                     break
                 value = job.result()
-                if action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
+                if action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
+                elif action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
                 elif action == "captureOcr":
                     token, content = value
                     if self.capture.state.get('token') == token: self.capture.state['ocrText'] = content
@@ -1039,7 +1044,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
+            if self.settings_only and action not in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1265,6 +1270,18 @@ class DesktopBackend:
             if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
+        if action == "palettePreview":
+            self.runner.executable("matugen")
+            self.palette_preview = {"colors": {}, "path": ""}
+            return self.start_feature(action,lambda: palette_preview(self.runner,request.get("path")))
+        if action == "paletteApply":
+            colors=validate_palette(self.palette_preview.get("colors"))
+            if not colors or self.palette_preview.get("path") != request.get("path"): raise ValueError("Generate a preview for this image first")
+            self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
+            return "Wallpaper palette applied; element overrides preserved"
+        if action == "paletteReset":
+            self.preferences.update({"paletteSource":"dracula","accent":DRACULA_PROFILE["accent"]})
+            return "Dracula palette restored; element overrides preserved"
         if action == "notesInit": return self.prepare_notes()
         if action == "settingsExport":
             self.preferences.reload(force=True)
@@ -1447,7 +1464,7 @@ class DesktopBackend:
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
             return self.apply_wallpaper(request.get("path"))
-        if action in {"settingsExport", "settingsImport", "notesInit"}:
+        if action in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
             return "Settings transfer is disabled in demo mode"
         if action == "setting":
             key = request.get("key")

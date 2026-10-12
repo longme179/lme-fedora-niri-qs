@@ -112,3 +112,5 @@ OSD placement/output lifecycle references DMS `DOSD.qml` / `OSDManager.qml` (664
 The Cava visualizer lifecycle/configuration references DMS `CavaService.qml` at 6640a943 (MIT). The Python stdlib bridge and ref-counted QML integration are original; Cava is an external runtime package.
 
 Quick notes references DMS `NotepadStorageService.qml` / `NotepadTextEditor.qml` (6640a943, MIT). LME uses an original single-buffer implementation with Quickshell atomic writes; no Markdown/highlighter plugin is bundled.
+
+Wallpaper palette preview references DMS `MatugenPreviewService.qml` and isolated dry-run in `core/internal/matugen/matugen.go` (6640a943, MIT). LME maps validated dark Material roles into its theme, without DMS templates/daemon or Noctalia native renderer. Matugen is an external package.

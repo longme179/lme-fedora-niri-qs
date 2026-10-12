@@ -51,3 +51,7 @@ Enable **Behavior → Audio spectrum** and play media with a visible Control Cen
 ## Autosaved quick notes
 
 Enable **Behavior → Quick notes**, then **Control Center → Agenda → Notes**. A plain-text buffer autosaves after 600 ms and survives tab/panel changes. Storage: `$XDG_STATE_HOME/lme-shell/notes.txt` (default `~/.local/state/lme-shell/notes.txt`), initialized privately. External edits while dirty stop autosave and offer Copy/Reload; failed writes keep the buffer. Notes are outside settings exports/backups. Limit: 100,000 characters; force-killing the shell can lose the last unsaved interval.
+
+## Wallpaper Material palette
+
+Install Fedora `matugen`, select an image in **Wallpaper**, then Preview palette → Apply palette. Generation uses an empty temporary config and dry-run, never your Matugen templates. Dark Material roles flow through existing theme tokens; manual element overrides win and glass stays unchanged. Use Dracula switches back; Accent settings can still customize the selected palette. Appearance profiles and portable exports include the generated colors, not the image path. Matugen 3/4 parsing and failure preservation use fixtures; generation on a real binary remains pending in cloud.

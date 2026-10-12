@@ -379,6 +379,7 @@ Item {
     }
     Component {
         id: captureModule
+        ColumnLayout {
         GridLayout {
             columns: width < 420 ? 2 : 4
             columnSpacing: 8; rowSpacing: 8
@@ -390,6 +391,8 @@ Item {
             LiquidButton { text: "Cancel capture"; visible: (ShellState.snapshot.capture || {}).status === "pending"; onClicked: ShellState.run("captureClose") }
             LiquidButton { text: "Settings"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("settings"); palette.button: Theme.surface; palette.buttonText: Theme.purple }
             LiquidButton { text: "Power"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("power"); palette.button: Theme.surface; palette.buttonText: Theme.pink }
+        }
+        RecorderWidget { Layout.fillWidth: true; visible: ShellState.preferences.recordingEnabled !== false }
         }
     }
     Component {

@@ -16,6 +16,17 @@ ColumnLayout {
         PreferenceSwitch { title: "Silence popups while sharing"; detail: "Automatic suppression preserves your manual DND setting"; preference: "dndWhileSharing" }
     }
     SettingsCard {
+        title: "Screen recording"
+        description: "Owned wf-recorder capture on niri 26.04+. CPU VP8/VP9 is the safe default. Optional Radeon VAAPI uses only an AMD render node; codec/driver availability is checked when starting."
+        PreferenceSwitch { title: "Recording controls"; detail: "Capture card and Island start/stop controls"; preference: "recordingEnabled" }
+        RowLayout {
+            ExpressiveField { id: recordings; Layout.fillWidth:true; text:ShellState.preferences.recordingFolder || ""; Accessible.name:"Recording folder" }
+            LiquidButton { text:"Save folder"; onClicked:ShellState.run("setting",{key:"recordingFolder",value:recordings.text}) }
+        }
+        LiquidComboBox { model:["CPU · VP8/VP9","Radeon · VAAPI"]; currentIndex:ShellState.preferences.recordingEncoder === "radeon" ? 1 : 0; Accessible.name:"Recording encoder"; onActivated:ShellState.run("setting",{key:"recordingEncoder",value:currentIndex ? "radeon" : "cpu"}) }
+        LabelText { text:"Requires wf-recorder and ffmpeg-free; audio needs pactl (pulseaudio-utils), region selection needs slurp. Recordings are private MKV files. Other recording apps are never stopped."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
+    }
+    SettingsCard {
         title: "Launcher file search"
         description: "Use / followed by a filename in the launcher. Hidden files and symlinks are skipped; each search has a time/path/result limit. No background index is created."
         PreferenceSwitch { title: "Search files and folders"; detail: "Names in your selected local folders"; preference: "fileSearchEnabled" }

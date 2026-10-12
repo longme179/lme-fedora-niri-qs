@@ -7,7 +7,7 @@ from desktop_features import APPEARANCE_KEYS
 
 PORTABLE = set(APPEARANCE_KEYS) | {
     'barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barFontSize','barLayout',
-    'fileSearchEnabled','quickNotes','audioVisualizer','osdEnabled','osdPosition','osdLayout','osdMargin','controlLayout','controlWidth','popupBlur','fontPicker','colorPicker','privacyIndicators','dndWhileSharing',
+    'recordingEnabled','recordingEncoder','fileSearchEnabled','quickNotes','audioVisualizer','osdEnabled','osdPosition','osdLayout','osdMargin','controlLayout','controlWidth','popupBlur','fontPicker','colorPicker','privacyIndicators','dndWhileSharing',
     'batteryDetails','weatherAutoLocation','weatherUnit','activityEnabled','clipboardEnabled','clipboardImages','clipboardLimit',
     'nightLightMode','nightLightTemperature','nightLightStart','nightLightEnd',
 }

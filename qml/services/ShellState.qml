@@ -100,6 +100,10 @@ QtObject {
         closePanels();
         nativeOverviewDelay.restart();
     }
+    property bool overlayVisible: false
+    property var recordingRequest: ({})
+    function startRecording(request) { if(demo || authenticationActive) return; closePanels(); recordingRequest=request; recordDelay.restart(); }
+    property Timer recordDelay: Timer { interval: 80; onTriggered: { if(root.authenticationActive) return; if(root.overlayVisible) { restart(); return; } root.run("recordStart",root.recordingRequest); } }
     property string captureMode: "screen"
     function takeScreenshot(mode) {
         if (!['screen', 'area', 'window'].includes(mode) || demo || authenticationActive) return;

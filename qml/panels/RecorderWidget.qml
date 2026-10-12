@@ -1,0 +1,29 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import "../components"
+import "../services"
+import "../theme"
+Rectangle {
+    id: root
+    readonly property var recording: ShellState.snapshot.recorder || {active:false}
+    readonly property var outputs: Quickshell.screens.map(s=>s.name)
+    implicitHeight: content.implicitHeight+28; radius: 20; color: Theme.cardFill
+    visible: ShellState.preferences.recordingEnabled !== false
+    ColumnLayout {
+        id: content; anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 14; spacing: 10
+        LabelText { text: root.recording.active ? "Screen recording · " + FocusTimer.format(root.recording.elapsed || 0) : "Screen recording"; font.weight: Font.Bold }
+        RowLayout {
+            Layout.fillWidth: true
+            LiquidComboBox { id: output; Layout.fillWidth: true; model: root.outputs; Accessible.name: "Recording output" }
+            LiquidComboBox { id: mode; model:["Output","Region"]; Accessible.name:"Recording area" }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            LiquidComboBox { id: audio; Layout.fillWidth:true; model:["No audio","System audio","Microphone"]; Accessible.name:"Recording audio" }
+            LiquidButton { text: root.recording.active ? "Stop and save" : "Record"; enabled: !ShellState.demo && ShellState.backendReady && !ShellState.pendingActions.recordStart && !ShellState.pendingActions.recordStop && !!output.currentText; onClicked: { if(root.recording.active) ShellState.run("recordStop"); else ShellState.startRecording({mode:mode.currentIndex ? "region" : "output",output:output.currentText,audio:["none","system","microphone"][audio.currentIndex]}); } }
+        }
+        LabelText { visible: !!root.recording.error; text: root.recording.error || ""; color: Theme.red; wrapMode:Text.Wrap; Layout.fillWidth:true }
+        LabelText { text: root.recording.path || "30 fps · choose a region within the selected output"; color:Theme.muted; font.pixelSize:12; elide:Text.ElideMiddle; Layout.fillWidth:true }
+    }
+}

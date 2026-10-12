@@ -40,6 +40,7 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
 from privacy import captures
+from screen_recording import Recorder
 from file_search import roots as search_roots, search as search_files
 from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
@@ -48,7 +49,7 @@ from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "fileSearchEnabled": True, "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")], "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "cpu", "fileSearchEnabled": True, "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")], "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -71,7 +72,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffmpeg", "pactl", "slurp",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -272,7 +273,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
@@ -280,6 +281,8 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "paletteSource" and value in ("dracula","wallpaper"): return value
     if key == "wallpaperPalette": return validate_palette(value)
     if key == "fileSearchRoots": return search_roots(value)
+    if key == "recordingEncoder" and value in ("cpu","radeon"): return value
+    if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
@@ -480,6 +483,7 @@ class DesktopBackend:
         self.night_light = NightLight(self.runner)
         self.night_state = {}
         self.capture = ScreenCapture(self.runner)
+        self.recorder = Recorder(self.runner,sysfs)
         self.platform = {"niriVersion": "Demo" if demo else "Not checked", "popupBlurSupported": demo}
         if manage_idle and not demo and not settings_only: self.platform = self.compositor_features()
         self.display_control = DisplayControl(self.runner)
@@ -829,7 +833,7 @@ class DesktopBackend:
         self.capture.refresh()
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                    "lastResult": dict(self.last_result), "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
                     "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -848,7 +852,7 @@ class DesktopBackend:
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
+                "recorder": self.recorder.state(), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
                 "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
@@ -900,6 +904,8 @@ class DesktopBackend:
 
     def recording(self) -> dict[str, Any]:
         """Read supported recorder processes belonging to this session's user."""
+        owned = self.recorder.state()
+        if owned["active"]: return owned
         supported = {"wf-recorder": "wf-recorder", "gpu-screen-recorder": "GPU Screen Recorder"}
         try:
             uptime = float((self.proc / "uptime").read_text().split()[0])
@@ -1212,6 +1218,8 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
+        elif action in {"recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
+            pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
@@ -1276,6 +1284,14 @@ class DesktopBackend:
             if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
+        if action == "recordStart":
+            if not self.preferences.values["recordingEnabled"]: raise ValueError("Screen recording is disabled")
+            niri=self.niri_state()
+            outputs={w.get("output") for w in niri["workspaces"] if w.get("output")}
+            output=request.get("output")
+            if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
+            return self.start_feature(action,lambda:self.recorder.start(self.preferences.values["recordingFolder"],request.get("mode"),output,request.get("audio"),self.preferences.values["recordingEncoder"]))
+        if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
             self.file_search_cancel.set()
@@ -1486,8 +1502,6 @@ class DesktopBackend:
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
             return self.apply_wallpaper(request.get("path"))
-        if action in {"fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
-            return "Settings transfer is disabled in demo mode"
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
@@ -1699,6 +1713,7 @@ def main(argv: list[str] | None = None) -> int:
         backend.idle_control.close()
         backend.night_light.close()
         backend.capture.close()
+        backend.recorder.close()
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)

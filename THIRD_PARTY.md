@@ -116,3 +116,5 @@ Quick notes references DMS `NotepadStorageService.qml` / `NotepadTextEditor.qml`
 Wallpaper palette preview references DMS `MatugenPreviewService.qml` and isolated dry-run in `core/internal/matugen/matugen.go` (6640a943, MIT). LME maps validated dark Material roles into its theme, without DMS templates/daemon or Noctalia native renderer. Matugen is an external package.
 
 Launcher file search references DMS `DSearchService.qml` (6640a943, MIT). LME uses original bounded/cancellable Python stdlib traversal and existing launcher results, without DSearch indexing daemon.
+
+Recording workflow references iNiR `scripts/videos/record.sh` / `RecordingOsd.qml` (48cdcecb, GPL-3.0 with NOTICE). The LME manager is rewritten for owned processes, CPU/AMD choices and existing IPC; no NVIDIA probe or global stop logic was copied. iNiR attribution remains in README/About and `third_party/iNiR-NOTICE`.

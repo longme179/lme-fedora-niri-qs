@@ -19,8 +19,9 @@ ColumnLayout {
             ColumnLayout {
                 Layout.fillWidth: true
                 LabelText { text: "Recording · " + FocusTimer.format(ActivityState.recording.elapsed || 0); font.weight: Font.Bold; Layout.fillWidth: true }
-                LabelText { text: (ActivityState.recording.name || "Recorder") + " · stop in the recording app"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                LabelText { text: (ActivityState.recording.name || "Recorder") + (ActivityState.recording.owned ? " · captured by this shell" : " · stop in the recording app"); color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
             }
+            LiquidButton { visible: !!ActivityState.recording.owned; text: "Stop and save"; enabled: !ShellState.pendingActions.recordStop; onClicked: ShellState.run("recordStop") }
         }
     }
     Rectangle {

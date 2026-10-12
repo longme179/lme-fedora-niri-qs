@@ -115,3 +115,27 @@ class FileSearchCase(Fixture,unittest.TestCase):
         live.file_search={'entries':[{'path':str(target)}]}
         self.assertTrue(live.handle({'action':'fileOpen','path':str(target)})['ok'])
         self.assertEqual(runner.spawns,[['/usr/bin/gio','open',target.as_uri()]])
+
+class RecorderCase(Fixture,unittest.TestCase):
+    def test_stop_signals_only_owned_child_and_decodes_result(self):
+        import signal,time
+        from screen_recording import Recorder
+        from unittest.mock import Mock
+        runner=FakeRunner(available={'ffmpeg'});recorder=Recorder(runner,self.root/'sys')
+        path=self.put('record.mkv','video fixture');child=Mock();child.poll.return_value=None;child.returncode=0
+        def wait(**_):child.poll.return_value=0;return 0
+        child.wait.side_effect=wait
+        recorder.child=child;recorder.path=path;recorder.started=time.monotonic();recorder.log=__import__('tempfile').TemporaryFile(mode='w+')
+        recorder.info={'active':True,'owned':True,'path':str(path),'error':''}
+        self.assertIn('Saved recording',recorder.stop());child.send_signal.assert_called_once_with(signal.SIGINT)
+        self.assertEqual(runner.calls,[('ffmpeg','-v','error','-i',str(path),'-t','0.1','-f','null','-')])
+        with self.assertRaises(ValueError): recorder.stop()
+    def test_invalid_modes_and_non_amd_devices_cannot_start_process(self):
+        from screen_recording import Recorder
+        runner=FakeRunner({('ffmpeg','-hide_banner','-encoders'):' V..... libvpx-vp9\n V..... h264_vaapi'},available={'wf-recorder'})
+        recorder=Recorder(runner,self.root/'sys')
+        self.put('sys/class/drm/renderD129/device/vendor','0x10de')
+        with self.assertRaises(ValueError): recorder.start(str(self.root/'videos'),'output','eDP-1','none','radeon')
+        with self.assertRaises(ValueError): recorder.start(str(self.root/'videos'),'invalid','eDP-1','none','cpu')
+        self.assertIsNone(recorder.child);self.assertFalse((self.root/'videos').exists())
+        self.assertFalse(any('nvidia' in str(call) for call in runner.calls))

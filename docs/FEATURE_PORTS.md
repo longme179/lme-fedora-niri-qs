@@ -59,3 +59,7 @@ Install Fedora `matugen`, select an image in **Wallpaper**, then Preview palette
 ## Launcher file/folder search
 
 Enable **Behavior → Launcher file search** and set local folders (semicolon-separated). Type `/ report` in the launcher, select a result, Enter opens it with its default application. Default roots are Documents/Desktop/Downloads/Pictures. Search skips hidden paths and symlinks, caps 100 results/10,000 paths/1.5 s, and cancels superseded jobs. Slow or network filesystem calls can exceed the traversal deadline; select local folders. No indexer or extra package is required. Tests cover cancellation, bounds, hidden/symlink exclusion and safe URI opening.
+
+## Owned screen recording
+
+Install `wf-recorder ffmpeg-free`; `pulseaudio-utils` adds audio, `slurp` adds region selection. In **Behavior → Screen recording**, select folder/CPU or Radeon. **Control Center → Controls → Capture** selects output, area and audio, then Record. Popup exit is awaited before capture/selector. Stop and save is also in the Island for shell-owned recordings. CPU prefers VP9 then VP8, 30 fps; Radeon explicitly selects only AMD VAAPI render nodes. No NVIDIA probe, global pkill or unrelated-recorder stop is used. Successful stop checks a short FFmpeg decode and retains failed output for recovery. niri 26.04 has wlr-screencopy; real capture/audio/VAAPI is unverified without wf-recorder/hardware in cloud.

@@ -80,3 +80,10 @@ cava
 
 # Material palette preview (isolated dry-run, no GTK/terminal templates):
 matugen
+
+# Start/stop owned screen recording; requires niri >= 26.04 screencopy:
+wf-recorder
+ffmpeg-free
+# Optional recording audio and region picker:
+pulseaudio-utils
+slurp

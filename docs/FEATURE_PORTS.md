@@ -31,3 +31,7 @@ Enable **Elements → Visual color picker**, click a role swatch, drag saturatio
 ## Privacy and sharing DND
 
 **Behavior → Capture indicators / Silence popups while sharing**. Add the Privacy module in Top bar settings for older saved bar layouts. Start a microphone/camera PipeWire stream or a niri portal screen share; active icons appear in the bar/Control Center. Share suppression composes with manual DND and retains notification history. Fixtures test muted/virtual streams and native cast/DND transitions. Direct camera access outside PipeWire and applications bypassing niri/PipeWire capture are not detected; real meeting apps need testing on Fedora. `pipewire-utils` supplies `pw-dump`.
+
+## Export, import and backup
+
+**Behavior → Settings export and restore** accepts a JSON path. Export preset produces a portable document suitable for sharing/factory-default review; private backup includes personal settings and must be treated as private. Import validates the entire file before applying, preserves unimported settings, and creates `settings-before-import-*.json` beside the live settings. Use the same Import action to restore that backup. Exports refuse overwrite. Clipboard/notification history, notes and external wallpaper files are deliberately outside settings backups. Tests cover private-field exclusion, invalid all-or-nothing import, backup permissions and restoration data.

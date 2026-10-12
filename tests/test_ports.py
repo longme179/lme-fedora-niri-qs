@@ -17,3 +17,28 @@ class PrivacyCase(Fixture, unittest.TestCase):
         live=self.make_backend(FakeRunner({('pw-dump',):'invalid'}))
         self.assertFalse(live.privacy()['available'])
         self.assertEqual(live.privacy()['captures'],[])
+
+class TransferCase(Fixture, unittest.TestCase):
+    def test_portable_excludes_private_data_and_rejects_partial_invalid_import(self):
+        from settings_transfer import document, validate_document, export_document
+        values={**backend.DEFAULT_PREFERENCES,'tasks':[{'id':'note','text':'Private','done':False}],'weatherLocation':{'latitude':1,'longitude':2}}
+        data=document(values,'preset')
+        self.assertFalse(set(data['settings']) & {'tasks','weatherLocation','wallpaper','bluetoothAdapter','niriConfigPath','displayLayout'})
+        self.assertIn('barLayout',data['settings'])
+        validate_document(data,backend.validate_preference,backend.DEFAULT_PREFERENCES)
+        path=self.root/'preset.json';export_document(str(path),values,'preset')
+        with self.assertRaises(FileExistsError): export_document(str(path),values,'preset')
+        self.preferences.set('accent','#123456')
+        before=self.preferences.path.read_bytes()
+        path.write_text(json.dumps({'schema':1,'kind':'preset','settings':{'accent':'#ffffff','opacity':0}}))
+        result=self.make_backend().handle({'action':'settingsImport','path':str(path)})
+        self.assertFalse(result['ok']);self.assertEqual(self.preferences.path.read_bytes(),before)
+    def test_restore_creates_private_backup_before_applying(self):
+        from settings_transfer import export_document
+        self.preferences.set('accent','#123456')
+        path=self.root/'preset.json';export_document(str(path),{**backend.DEFAULT_PREFERENCES,'accent':'#abcdef'},'preset')
+        result=self.make_backend().handle({'action':'settingsImport','path':str(path)})
+        self.assertTrue(result['ok'],result);self.assertEqual(self.preferences.values['accent'],'#abcdef')
+        backups=list(self.preferences.path.parent.glob('settings-before-import-*.json'))
+        self.assertEqual(len(backups),1);self.assertEqual(json.loads(backups[0].read_text())['settings']['accent'],'#123456')
+        self.assertEqual(backups[0].stat().st_mode & 0o777,0o600)

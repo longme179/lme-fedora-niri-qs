@@ -102,3 +102,5 @@ Pointer-origin feedback adapts DCommon `DRipple.qml` and retains `ripple.frag` a
 The HSV/alpha picker workflow references DMS `ColorPickerContent.qml` and DCommon `DSaturationValuePicker.qml`; the LME implementation uses existing controls and does not vendor DMS screen-picking commands.
 
 Privacy classification references DMS `PrivacyService.qml` (6640a943, MIT) and Noctalia `privacy_capture_classification.cpp` (8504aff8, MIT). LME aggregates active streams without the upstream early-return mute issue and reads niri cast events; implementation is original.
+
+Settings transfer references DMS backup validation/rollback workflow (`core/internal/backup/backup.go`, 6640a943, MIT). LME uses validated JSON and existing atomic preference writes, not archive extraction or the Go backend.

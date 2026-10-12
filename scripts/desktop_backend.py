@@ -40,6 +40,7 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
 from privacy import captures
+from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
@@ -381,7 +382,7 @@ class Preferences:
     def set(self, key: str, value: Any, token: str | None = None) -> None:
         self.update({key: theme_token(key, token, value) if token is not None else value}, token=token)
 
-    def update(self, values: dict[str, Any], token: str | None = None) -> None:
+    def update(self, values: dict[str, Any], token: str | None = None, backup: bool = False) -> Path | None:
         values = {key: validate_preference(key, value) for key, value in values.items()}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         # Serialize the app and shell's writers, including task updates.
@@ -393,7 +394,10 @@ class Preferences:
                 key = next(iter(values))
                 merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
                 values[key] = merged
+            backup_path = self.path.parent / ("settings-before-import-" + str(time.time_ns()) + ".json") if backup else None
+            if backup_path: write_json(backup_path, document(self.values,"backup"))
             self._write({**self.values, **values})
+            return backup_path
 
     def _write(self, updated: dict[str, Any]) -> None:
         temporary: str | None = None
@@ -1029,7 +1033,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
+            if self.settings_only and action not in {"settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1247,6 +1251,13 @@ class DesktopBackend:
             if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
+        if action == "settingsExport":
+            self.preferences.reload(force=True)
+            return "Exported " + export_document(request.get("path"),self.preferences.values,request.get("kind"))
+        if action == "settingsImport":
+            values=read_document(request.get("path"),validate_preference,DEFAULT_PREFERENCES)
+            backup=self.preferences.update(values,backup=True)
+            return "Imported settings. Previous settings: " + str(backup)
         if action.startswith("appearance"): return self.appearance_action(action, request)
         if action == "wallpaperScan":
             return self.start_feature(action, lambda: wallpaper_library(request.get("folder")))
@@ -1421,6 +1432,8 @@ class DesktopBackend:
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
             return self.apply_wallpaper(request.get("path"))
+        if action in {"settingsExport", "settingsImport"}:
+            return "Settings transfer is disabled in demo mode"
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Independently customize Left/Center/Right island corners, fill and outline.
+  Connected-bar geometry no longer reshapes the islands; settings transfer keeps
+  each surface, and one shared editor switches between the four targets.
+- Preview/apply 35 Gowall-derived palettes plus LME Dracula without a Gowall
+  runtime dependency. Add Material scheme, dark/light and contrast options;
+  reject stale previews and retain manual colors/fonts and island overrides.
+- Persist recording audio selection with System audio as the default. Verify
+  requested audio tracks with ffprobe before remuxing, retaining videos on failure.
+- Share snapshot fields between shell and Settings. Keep preset data in a static
+  catalog loaded once rather than sending it in every backend state update.
+- Remove fixed release links/badges from README; release publication remains the
+  maintainer's decision.
+
 - Mirror an active niri display onto a connected monitor/projector using the
   optional Fedora `wl-mirror` package. Source/destination and Start/Stop controls
   live in Settings → Displays and Control Center → Devices; the shell owns its

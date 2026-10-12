@@ -3,7 +3,6 @@
 <p align="center"><strong>Material 3 Expressive meets liquid glass.<br>A personal desktop shell for Fedora and niri.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/longme179/lme-fedora-niri-qs/releases/tag/2.0"><img src="https://img.shields.io/badge/release-2.0-9580ff?style=flat-square" alt="Release 2.0"></a>
   <img src="https://img.shields.io/badge/Fedora-44-51a2da?style=flat-square" alt="Fedora 44">
   <img src="https://img.shields.io/badge/niri-26.04%2B-80ffea?style=flat-square" alt="niri 26.04 or newer for all integrations">
   <img src="https://img.shields.io/badge/Quickshell-0.3.2%2B-ff80bf?style=flat-square" alt="Quickshell 0.3.2 or newer">
@@ -13,9 +12,9 @@
   <a href="#installation">Install</a> · <a href="#features">Features</a> · <a href="#make-it-yours">Personalize</a> · <a href="#documentation">Documentation</a> · <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-[![Watch the LME Shell 2.0 demo — Activity island with media and timers over the blurred desktop](docs/media/demo-2.0.png)](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)
+[![Watch the maintainer’s LME Shell demo — Activity island with media and timers over the blurred desktop](docs/media/demo-2.0.png)](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)
 
-**[▶ Watch the demo](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)** · [Download the original MP4](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=1) · [Get release 2.0](https://github.com/longme179/lme-fedora-niri-qs/releases/tag/2.0)
+**[▶ Watch the demo](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)** · [Download the original MP4](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=1)
 
 The preview comes from the maintainer's recording, with a customized layout.
 Click it to watch the 65-second demo in Dropbox; the original 1080p MP4 is also
@@ -43,9 +42,9 @@ without editing QML.
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Capture and comfort** | Start/stop output or region recording, screenshot drawing/redaction, external Satty/Swappy annotation, local OCR and scheduled Night Light. |
 | **Topbar styling** | Connected bar plus independently styled Left/Center/Right islands; corner roundness, square-left/right presets, border thickness and alpha/hex fill/color. Settings → Top bar applies changes live and includes them in settings exports. |
-| **Personal appearance** | Per-element hex colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, wallpaper library and optional Material palette generation. |
+| **Personal appearance** | Per-element hex colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes with scheme, light/dark and contrast controls. |
 
-**New in 2.0:** NVIDIA-first recording with iGPU/CPU fallback, MKV/MP4/MOV/WebM
+**Recording:** NVIDIA-first recording with iGPU/CPU fallback, MKV/MP4/MOV/WebM
 and encoding controls, external screenshot annotation, workspace selection
 without a redundant monitor-centering action, and a more responsive audio
 spectrum. See the [changelog](CHANGELOG.md) for the changes since 1.9.
@@ -80,11 +79,11 @@ git clone https://github.com/longme179/lme-fedora-niri-qs.git ~/src/lme-fedora-n
 cd ~/src/lme-fedora-niri-qs
 ```
 
-This checkout tracks `main`. For a fixed **2.0** snapshot, download
-[the source ZIP](https://github.com/longme179/lme-fedora-niri-qs/archive/refs/tags/2.0.zip)
-instead and extract it into a permanent directory. Run the following commands
-from the checkout or extracted source directory. Keep that directory after
-installation: the installed shell links to it.
+This checkout tracks `main`. You can also use GitHub’s **Code → Download ZIP**
+and extract it into a permanent directory. Run the following commands from
+that source directory, and keep it after installation: the installed shell
+links to it. The maintainer decides when to publish releases; no versioned
+release download is required for this installation path.
 
 ### 2. Review and install packages
 
@@ -214,7 +213,7 @@ backups. [Configuration guide](docs/CONFIGURATION.md).
 | **Wallpaper** | Install `awww` **and** `awww-daemon` from a trusted available source; the package helper does not install them. [Setup](docs/INSTALL.md#wallpaper-and-charging) · [Upstream](https://codeberg.org/LGFae/awww) |
 | **Material palette / Audio spectrum** | `matugen` / `cava`. Cava runs for visible, playing media cards, with 60 fps and reduced smoothing. |
 | **External display mirroring** | `wl-mirror` (Fedora: `sudo dnf install wl-mirror`). Connect and enable both outputs, then use Settings → Displays or Control Center → Devices. Choose Source/Destination and Start mirror; Stop closes only LME’s mirror window. [Setup and hardware checks](docs/MIRRORING.md). |
-| **Recording** | `wf-recorder`, compatible FFmpeg; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
+| **Recording** | `wf-recorder`, compatible FFmpeg/`ffprobe`; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
 | **External annotation / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. External editors receive a saved, flattened PNG including redactions. |
 | **Night Light / Idle** | `wlsunset` with working gamma control; `swayidle` and `swaylock` for idle profiles. Enable these in Settings. |
 | **Weather** | Internet access for Open-Meteo and approximate IP location; no API key needed. Manual location is available. |
@@ -304,10 +303,9 @@ First-time Bluetooth pairing and enterprise Wi-Fi use Fedora's existing tools;
 Control Center links to Blueman and the network editor.
 
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.
-Native UI checks require a private Wayland session. The 2.0 codebase passed
-**187 tests with all native opt-ins enabled, no skips**, plus QML lint on changed
-components. This does not certify every GPU, radio, display or suspend path.
-See [validation details](docs/FEATURE_PORTS.md#validation-and-remaining-limits).
+Native UI checks require a private Wayland session. See [validation details](docs/VALIDATION.md)
+for the executed checks and hardware limits. These checks do not certify every
+GPU, radio, display or suspend path.
 
 ## Credits and license
 

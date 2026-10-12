@@ -30,7 +30,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Color palettes"
-        description: "35 Gowall palettes plus LME Dracula. Preview dark or light palettes without changing your desktop, then apply. Save the result as an Appearance profile to switch quickly."
+        description: (Math.max(0, Theme.paletteCatalog.length - 1)) + " Gowall palettes plus LME Dracula. Preview dark or light palettes without changing your desktop, then apply. Save the result as an Appearance profile to switch quickly."
         PalettePicker {}
     }
     SettingsCard {

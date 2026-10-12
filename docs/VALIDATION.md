@@ -1,5 +1,31 @@
 # Validation and platform limits
 
+## Independent islands, palette catalog and audio defaults — 2026-10-12
+
+`scripts/check.sh` passed **203 tests, no skips**, with all private Wayland
+opt-ins enabled on Quickshell 0.3.2 / Qt 6.8.2. Changed QML controls/pages passed
+lint; Bash syntax, demo state and diff checks passed. Native checks apply a
+preset to one island while keeping the other surfaces unchanged, test isolated
+settings writers/reset/export, and switch Rose Pine, Catppuccin Latte and Gruvbox
+through actual palette UI clicks. Preview leaves the active theme unchanged;
+manual color overrides remain after Apply. Light/dark Settings and a bar with
+three distinct island styles were rendered and visually checked.
+
+Catalog checks cover all 35 Gowall registered palettes plus LME Dracula, valid
+role colors and readable text against opaque base surfaces. These checks do not
+measure contrast over every translucent wallpaper/application background.
+Matugen options/config isolation and stale-preview rejection use a CLI fixture;
+3.1.0/4.2.0 argument sources were inspected, but no Matugen binary was installed
+or run in this environment.
+
+Real FFmpeg/ffprobe tests preserve an audio track across MP4 remux and retain a
+video with a clear error when requested audio is absent. The owner confirmed
+System audio already works with the Bluetooth sink: the reported issue was the
+widget resetting to No audio. The source/capture path stays unchanged; selection
+now persists across openings/restarts. Live Bluetooth recording after this
+update still needs the owner's check. No system package was installed and no
+release/tag was created or moved.
+
 ## Display mirroring and topbar styling — 2026-10-12
 
 `scripts/check.sh` passed **196 tests with no skips** with all private Wayland

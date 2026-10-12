@@ -53,7 +53,8 @@ DEFAULT_PREFERENCES = {
     "language": "en", "animations": True, "opacity": 0.90,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
-    "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "cpu",
+    "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
+    "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "fileSearchEnabled": True,
     "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")],
     "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused",
@@ -94,18 +95,24 @@ class CommandError(RuntimeError):
 
 class CommandRunner:
     def __init__(self) -> None:
-        # Cache capability discovery once, including known missing commands.
+        # Existing commands stay cached; missing or removed tools are rechecked on demand.
         self.commands = {name: shutil.which(name) for name in TOOLS}
         self.commands['quickshell'] = shutil.which(os.environ.get('LME_QS_BINARY', 'quickshell')) or self.commands['quickshell'] or shutil.which('qs')
 
     def available(self, name: str) -> bool:
-        return bool(self.commands.get(name))
+        if name not in self.commands: return False
+        path = self.commands[name]
+        if not path or not os.access(path, os.X_OK):
+            search = os.pathsep.join([os.environ.get("PATH", ""), str(Path.home()/".local/bin"), "/usr/local/bin", "/usr/bin", "/bin"])
+            self.commands[name] = shutil.which(name, path=search)
+            if name == 'quickshell':
+                self.commands[name] = shutil.which(os.environ.get('LME_QS_BINARY','quickshell'),path=search) or self.commands[name] or shutil.which('qs',path=search)
+        return bool(self.commands[name])
 
     def executable(self, name: str) -> str:
-        path = self.commands.get(name)
-        if not path:
+        if not self.available(name):
             raise CommandError(f"Required command is unavailable: {name}")
-        return path
+        return self.commands[name]
 
     def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None) -> str:
         argv = [self.executable(name), *map(str, args)]
@@ -288,7 +295,11 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "paletteSource" and value in ("dracula","wallpaper"): return value
     if key == "wallpaperPalette": return validate_palette(value)
     if key == "fileSearchRoots": return search_roots(value)
-    if key == "recordingEncoder" and value in ("cpu","radeon"): return value
+    if key == "recordingEncoder" and value in ("auto","nvidia","cpu","radeon"): return value
+    if key == "recordingFormat" and value in ("mkv","mp4","mov","webm"): return value
+    if key == "recordingCodec" and value in ("auto","h264","hevc","av1","vp9"): return value
+    if key == "recordingFps" and type(value) is int and value in (24,30,60,120): return value
+    if key == "recordingBitrate" and type(value) is int and 1000 <= value <= 100000: return value
     if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
@@ -390,6 +401,9 @@ class Preferences:
                         values[key] = validate_preference(key, value)
                     except ValueError:
                         pass
+                # The original CPU default predates format controls; upgrade it once to GPU-first.
+                if saved.get("recordingEncoder") == "cpu" and "recordingFormat" not in saved:
+                    values["recordingEncoder"] = "auto"
                 self.values = values
                 self._stamp = stamp
         except FileNotFoundError:
@@ -1297,7 +1311,8 @@ class DesktopBackend:
             outputs={w.get("output") for w in niri["workspaces"] if w.get("output")}
             output=request.get("output")
             if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
-            return self.start_feature(action,lambda:self.recorder.start(self.preferences.values["recordingFolder"],request.get("mode"),output,request.get("audio"),self.preferences.values["recordingEncoder"]))
+            prefs=dict(self.preferences.values)
+            return self.start_feature(action,lambda:self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio"),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"]))
         if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")

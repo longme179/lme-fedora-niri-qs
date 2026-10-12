@@ -66,7 +66,15 @@ Enable **Behavior → Launcher file search** and set local folders (semicolon-se
 
 ## Owned screen recording
 
-Install `wf-recorder ffmpeg-free`; `pulseaudio-utils` adds audio, `slurp` adds region selection. In **Behavior → Screen recording**, select folder/CPU or Radeon. **Control Center → Controls → Capture** selects output, area and audio, then Record. Popup exit is awaited before capture/selector. Stop and save is also in the Island for shell-owned recordings. CPU prefers VP9 then VP8, 30 fps; Radeon explicitly selects only AMD VAAPI render nodes. No NVIDIA probe, global pkill or unrelated-recorder stop is used. Successful stop checks a short FFmpeg decode and retains failed output for recovery. niri 26.04 has wlr-screencopy; real capture/audio/VAAPI is unverified without wf-recorder/hardware in cloud.
+Install `wf-recorder ffmpeg-free`; `pulseaudio-utils` adds audio, `slurp` adds region selection. **Behavior → Screen recording** sets folder, encoder, container (MKV/MP4/MOV/WebM), codec, 24/30/60/120 fps and bitrate (1,000–100,000 kbps). **Control Center → Controls → Capture** selects output, area and audio, then Record. Popup exit is awaited before capture/selector. Stop and save is also in the Island for shell-owned recordings.
+
+**Auto** tries NVIDIA NVENC first, then AMD/Intel VAAPI, then CPU. GPU presence is read from sysfs; only starting capture runs synthetic encoder probes. No idle NVIDIA polling or global pkill is used. Explicit NVIDIA/Radeon/CPU choices restrict the encoder tier; use Auto for cross-tier fallback. The card reports actual encoder, GPU and startup fallback reasons. Old CPU defaults saved before format controls migrate once to Auto; selecting CPU now is preserved.
+
+Auto codec prefers H.264, then AV1/HEVC/VP9 where the container supports them. WebM allows AV1/VP9; MOV allows H.264/HEVC. MP4/MOV audio uses AAC, MKV/WebM uses Opus. Fedora `ffmpeg-free` may omit selected encoders; missing codec support causes a clear error or Auto fallback. NVIDIA requires a working NVIDIA driver and NVENC-capable FFmpeg/wf-recorder builds. AMD/Intel require working VAAPI codecs; this shell does not install or change GPU drivers. Check `ffmpeg -hide_banner -encoders` and the actual card result. High-fps CPU encoding, especially AV1, may not keep up.
+
+Hybrid capture uses `--no-dmabuf` and an explicit upload for VAAPI to avoid cross-GPU buffer import failures. Frames are padded to even dimensions for 4:2:0 codecs. This prioritizes compatibility over zero-copy throughput. Capture always writes a private MKV first; Stop validates it, remuxes to the requested container without re-encoding, checks the result, and only then removes the original. Conversion failures keep the original MKV; existing files are never overwritten. Closing the shell finalizes only its owned recorder. Mid-recording GPU/driver failure is reported and retained; automatic recovery applies to startup, not a running recording.
+
+`/usr/bin/wf-recorder` is rediscovered on demand even if installed after shell startup or niri supplies a minimal PATH. If an error persists, restart the updated shell and confirm its logged configuration path matches the copy you updated. niri 26.04 provides wlr-screencopy; real capture/audio/GPU behavior still needs testing on the laptop.
 
 ## Validation and remaining limits
 

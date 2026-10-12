@@ -176,7 +176,8 @@ sudo dnf install cava matugen wf-recorder ffmpeg-free pulseaudio-utils slurp
 ```
 
 `cava` supplies real spectrum data; `matugen` previews Material colors;
-`wf-recorder` captures an output/region; `ffmpeg-free` encodes/checks video;
+`wf-recorder` captures an output/region; FFmpeg encodes/checks video (the Fedora
+`ffmpeg-free` build may omit NVENC or other chosen codecs);
 `pulseaudio-utils` supplies `pactl` for recording audio; `slurp` selects a region.
 Install only the tools for features you use. Restart the shell and reopen Settings
 after installation so their backends discover the new tools. Recording needs niri 26.04+;

@@ -333,7 +333,7 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertFalse((self.root / "unsafe").exists())
 
     def test_command_runner_reports_missing_timeout_and_exit_status(self):
-        with patch.object(backend.shutil, "which", return_value="/usr/bin/test-command"):
+        with patch.object(backend.shutil, "which", return_value="/usr/bin/true"):
             runner = backend.CommandRunner()
         with patch.object(backend.subprocess, "run", side_effect=subprocess.TimeoutExpired("wpctl", 3)):
             with self.assertRaisesRegex(backend.CommandError, "timed out"):
@@ -345,8 +345,9 @@ class BackendCase(Fixture, unittest.TestCase):
             self.assertIsInstance(command.call_args.args[0], list)
             self.assertNotIn("shell", command.call_args.kwargs)
         runner.commands["wpctl"] = None
-        with self.assertRaisesRegex(backend.CommandError, "unavailable"):
-            runner.run("wpctl", "get-volume")
+        with patch.object(backend.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(backend.CommandError, "unavailable"):
+                runner.run("wpctl", "get-volume")
 
 
 class DesktopEntryCase(Fixture, unittest.TestCase):

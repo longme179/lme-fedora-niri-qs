@@ -17,14 +17,60 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Screen recording"
-        description: "Owned wf-recorder capture on niri 26.04+. CPU VP8/VP9 is the safe default. Optional Radeon VAAPI uses only an AMD render node; codec/driver availability is checked when starting."
+        description: "Auto tries NVIDIA NVENC, integrated GPU VAAPI, then CPU. Drivers are probed only when you start recording, so the RTX is not polled while idle."
         PreferenceSwitch { title: "Recording controls"; detail: "Capture card and Island start/stop controls"; preference: "recordingEnabled" }
         RowLayout {
             ExpressiveField { id: recordings; Layout.fillWidth:true; text:ShellState.preferences.recordingFolder || ""; Accessible.name:"Recording folder" }
             LiquidButton { text:"Save folder"; onClicked:ShellState.run("setting",{key:"recordingFolder",value:recordings.text}) }
         }
-        LiquidComboBox { model:["CPU · VP8/VP9","Radeon · VAAPI"]; currentIndex:ShellState.preferences.recordingEncoder === "radeon" ? 1 : 0; Accessible.name:"Recording encoder"; onActivated:ShellState.run("setting",{key:"recordingEncoder",value:currentIndex ? "radeon" : "cpu"}) }
-        LabelText { text:"Requires wf-recorder and ffmpeg-free; audio needs pactl (pulseaudio-utils), region selection needs slurp. Recordings are private MKV files. Other recording apps are never stopped."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
+        RowLayout {
+            LabelText { text: "Encoder"; Layout.fillWidth: true }
+            LiquidComboBox {
+                property var values: ["auto","nvidia","radeon","cpu"]
+                model: ["Auto · NVIDIA → iGPU → CPU","NVIDIA only · NVENC","Radeon only · VAAPI","CPU only"]
+                currentIndex: values.indexOf(ShellState.preferences.recordingEncoder || "auto")
+                Accessible.name: "Recording encoder"
+                onActivated: ShellState.run("setting",{key:"recordingEncoder",value:values[currentIndex]})
+            }
+        }
+        RowLayout {
+            LabelText { text: "Container"; Layout.fillWidth: true }
+            LiquidComboBox {
+                id: recordingFormat; objectName: "recordingFormat"; model: ["mkv","mp4","mov","webm"]
+                currentIndex: model.indexOf(ShellState.preferences.recordingFormat || "mkv")
+                Accessible.name: "Recording container"
+                onActivated: {
+                    const allowed = currentText === "webm" ? ["auto","av1","vp9"] : currentText === "mov" ? ["auto","h264","hevc"] : ["auto","h264","hevc","av1","vp9"];
+                    ShellState.run("setting",{key:"recordingFormat",value:currentText});
+                    if (!allowed.includes(ShellState.preferences.recordingCodec || "auto")) ShellState.run("setting",{key:"recordingCodec",value:"auto"});
+                }
+            }
+        }
+        RowLayout {
+            LabelText { text: "Video codec"; Layout.fillWidth: true }
+            LiquidComboBox {
+                objectName: "recordingCodec"
+                model: ShellState.preferences.recordingFormat === "webm" ? ["auto","av1","vp9"] : ShellState.preferences.recordingFormat === "mov" ? ["auto","h264","hevc"] : ["auto","h264","hevc","av1","vp9"]
+                currentIndex: Math.max(0, model.indexOf(ShellState.preferences.recordingCodec || "auto"))
+                Accessible.name: "Recording video codec"
+                onActivated: ShellState.run("setting",{key:"recordingCodec",value:currentText})
+            }
+        }
+        RowLayout {
+            LabelText { text: "Frame rate"; Layout.fillWidth: true }
+            LiquidComboBox {
+                model: ["24 fps","30 fps","60 fps","120 fps"]
+                currentIndex: [24,30,60,120].indexOf(ShellState.preferences.recordingFps || 30)
+                Accessible.name: "Recording frame rate"
+                onActivated: ShellState.run("setting",{key:"recordingFps",value:[24,30,60,120][currentIndex]})
+            }
+        }
+        RowLayout {
+            LabelText { text: "Bitrate · kbps"; Layout.fillWidth: true }
+            ExpressiveField { id: bitrate; Layout.preferredWidth: 110; text: String(ShellState.preferences.recordingBitrate || 12000); maximumLength: 6; Accessible.name: "Recording bitrate in kbps" }
+            LiquidButton { text: "Apply"; enabled: /^\d+$/.test(bitrate.text) && Number(bitrate.text) >= 1000 && Number(bitrate.text) <= 100000; onClicked: ShellState.run("setting",{key:"recordingBitrate",value:Number(bitrate.text)}) }
+        }
+        LabelText { text:"Requires wf-recorder and FFmpeg with the chosen codecs. Audio needs pactl (pulseaudio-utils); region selection needs slurp. MP4/MOV use AAC audio; MKV/WebM use Opus. Other recording apps are never stopped. High frame rates and CPU AV1 can be expensive."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
     }
     SettingsCard {
         title: "Launcher file search"

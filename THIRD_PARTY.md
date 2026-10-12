@@ -117,4 +117,4 @@ Wallpaper palette preview references DMS `MatugenPreviewService.qml` and isolate
 
 Launcher file search references DMS `DSearchService.qml` (6640a943, MIT). LME uses original bounded/cancellable Python stdlib traversal and existing launcher results, without DSearch indexing daemon.
 
-Recording workflow references iNiR `scripts/videos/record.sh` / `RecordingOsd.qml` (48cdcecb, GPL-3.0 with NOTICE). The LME manager is rewritten for owned processes, CPU/AMD choices and existing IPC; no NVIDIA probe or global stop logic was copied. iNiR attribution remains in README/About and `third_party/iNiR-NOTICE`.
+Recording workflow references iNiR `scripts/videos/record.sh` / `RecordingOsd.qml` (48cdcecb, GPL-3.0 with NOTICE). The LME manager adapts NVIDIA-first → VAAPI → software fallback for owned processes and existing IPC. Encoder probes run only when capture starts; upstream idle NVIDIA polling and global stop logic are not used. iNiR attribution remains in README/About and `third_party/iNiR-NOTICE`.

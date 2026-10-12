@@ -362,3 +362,5 @@ Licensed under **GPL-3.0-or-later**, with the motion adaptation's retained
 GPL-3.0-only terms. See [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md)
 for source, dependency and asset attribution. Purchased Dracula Pro assets and
 fonts are not bundled.
+
+Rounded-polygon morphing: **Based on iNiR by snowarch (https://github.com/snowarch/inir)**. Modified for LME; upstream notice and geometry license are preserved in `third_party/iNiR-NOTICE` and `qml/components/shapes/LICENSE`.

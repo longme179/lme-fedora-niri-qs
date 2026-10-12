@@ -88,3 +88,7 @@ The Python implementation is original; it is not an astronomical ephemeris or
 display calibration system.
 
 `SpringMotion.qml` adapts DMS dank-qml-common at `bd90e4b6f2ec36035fc2cb560acdc0e418f669ac` (MIT, Copyright (c) 2025-2026 Avenge Media LLC). Modified for LME theme/loader lifecycle; full notice: [third_party/DankQmlCommon-LICENSE](third_party/DankQmlCommon-LICENSE).
+
+### Geometric morph
+
+Based on iNiR by snowarch (https://github.com/snowarch/inir), revision `48cdcecb0f6089cfbb7019054602eab28e154b3b`. `ShapeCanvas.qml` is modified for LME (GPL-3.0 with retained iNiR notice); rounded-polygon JS is retained under its Apache-2.0 license in `qml/components/shapes/LICENSE`. The library ports Knugel’s rounded-polygon-ts / AndroidX shape geometry, inherited through end-4. See [third_party/iNiR-NOTICE](third_party/iNiR-NOTICE) and [third_party/iNiR-LICENSE](third_party/iNiR-LICENSE). No upstream branding or assets are copied. Earlier no-vendoring descriptions apply only to the earlier feature implementations.

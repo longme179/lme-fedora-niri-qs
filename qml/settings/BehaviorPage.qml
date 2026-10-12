@@ -16,6 +16,13 @@ ColumnLayout {
         PreferenceSwitch { title: "Silence popups while sharing"; detail: "Automatic suppression preserves your manual DND setting"; preference: "dndWhileSharing" }
     }
     SettingsCard {
+        title: "Launcher file search"
+        description: "Use / followed by a filename in the launcher. Hidden files and symlinks are skipped; each search has a time/path/result limit. No background index is created."
+        PreferenceSwitch { title: "Search files and folders"; detail: "Names in your selected local folders"; preference: "fileSearchEnabled" }
+        ExpressiveField { id: fileFolders; Layout.fillWidth: true; text: (ShellState.preferences.fileSearchRoots || []).join("; "); placeholderText: "Folders separated by semicolons"; Accessible.name: "Launcher search folders" }
+        LiquidButton { text: "Save search folders"; onClicked: ShellState.run("setting",{key:"fileSearchRoots",value:fileFolders.text.split(";").map(p=>p.trim()).filter(Boolean)}) }
+    }
+    SettingsCard {
         title: "Default terminal"
         description: "Executable name only, for example kitty or foot."
         RowLayout {

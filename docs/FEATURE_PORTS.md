@@ -55,3 +55,7 @@ Enable **Behavior → Quick notes**, then **Control Center → Agenda → Notes*
 ## Wallpaper Material palette
 
 Install Fedora `matugen`, select an image in **Wallpaper**, then Preview palette → Apply palette. Generation uses an empty temporary config and dry-run, never your Matugen templates. Dark Material roles flow through existing theme tokens; manual element overrides win and glass stays unchanged. Use Dracula switches back; Accent settings can still customize the selected palette. Appearance profiles and portable exports include the generated colors, not the image path. Matugen 3/4 parsing and failure preservation use fixtures; generation on a real binary remains pending in cloud.
+
+## Launcher file/folder search
+
+Enable **Behavior → Launcher file search** and set local folders (semicolon-separated). Type `/ report` in the launcher, select a result, Enter opens it with its default application. Default roots are Documents/Desktop/Downloads/Pictures. Search skips hidden paths and symlinks, caps 100 results/10,000 paths/1.5 s, and cancels superseded jobs. Slow or network filesystem calls can exceed the traversal deadline; select local folders. No indexer or extra package is required. Tests cover cancellation, bounds, hidden/symlink exclusion and safe URI opening.

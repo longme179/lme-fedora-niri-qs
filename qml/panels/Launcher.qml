@@ -19,10 +19,13 @@ Item {
     property string calculationError: ""
     property bool calculating: false
     readonly property var favorites: ShellState.preferences.favoriteApps || []
-    readonly property string mode: query.startsWith(":") ? "emoji" : query.startsWith("@") ? "windows" : query.startsWith("=") || /^[\d\s().+*/%^-]+$/.test(query.trim()) && /[+*/%^-]/.test(query) ? "calculator" : "apps"
+    readonly property string mode: query.startsWith("/") && ShellState.preferences.fileSearchEnabled !== false ? "files" : query.startsWith(":") ? "emoji" : query.startsWith("@") ? "windows" : query.startsWith("=") || /^[\d\s().+*/%^-]+$/.test(query.trim()) && /[+*/%^-]/.test(query) ? "calculator" : "apps"
+    readonly property string fileQuery: query.slice(1).trim()
+    readonly property var files: ShellState.snapshot.fileSearch || {query:"",entries:[]}
     readonly property string expression: query.replace(/^=/, "").trim()
     readonly property var results: {
         const text = query.replace(/^[:@]/, "").trim().toLowerCase();
+        if (mode === "files") return files.query===fileQuery ? (files.entries || []).map(e => Object.assign({},e,{detail:(e.directory ? "Folder · " : "File · ")+e.path})) : [];
         if (mode === "calculator") return calculation && !calculating ? [{kind: "copy", id: "calculation", name: calculation, detail: "Enter to copy result", value: calculation}] : [];
         if (mode === "emoji") return emoji.filter(e => (e.name + " " + e.keywords).includes(text)).slice(0, 100).map(e => ({kind: "copy", id: e.emoji, name: e.emoji + "  " + e.name, detail: "Copy emoji", value: e.emoji}));
         const windows = (ShellState.niri.windows || []).filter(w => [w.title || "", w.app_id || ""].join(" ").toLowerCase().includes(text)).map(w => ({kind: "window", id: "window-" + w.id, windowId: w.id, name: w.title || w.app_id || "Window", detail: "Open window · workspace " + (((ShellState.niri.workspaces || []).find(ws => ws.id === w.workspace_id) || {}).idx || "—"), icon: ShellState.windowIcon(w)}));
@@ -35,6 +38,7 @@ Item {
         if (!item) return;
         if (item.kind === "app") ShellState.run("launch", {id: item.id});
         else if (item.kind === "window") ShellState.run("focusWindow", {id: item.windowId});
+        else if (item.kind === "file") ShellState.run("fileOpen", {path: item.path});
         else ShellState.run("copyText", {text: item.value});
         ShellState.closePanels();
     }
@@ -44,8 +48,10 @@ Item {
     onQueryChanged: {
         calculation = ""; calculationError = "";
         calculating = mode === "calculator" && expression.length > 0;
+        fileDelay.stop(); if(mode === "files" && fileQuery.length>=2) fileDelay.restart();
         calculateDelay.stop(); if (calculating) calculateDelay.restart();
     }
+    Timer { id: fileDelay; interval: 180; onTriggered: ShellState.run("fileSearch",{query:root.fileQuery}) }
     Timer { id: calculateDelay; interval: 140; onTriggered: ShellState.run("calculate", {query: root.expression}) }
     FileView {
         id: emojiFile; path: Quickshell.shellPath("assets/emoji.json"); printErrors: true
@@ -70,9 +76,10 @@ Item {
             LiquidButton { text: "Favorites"; selected: root.favoritesOnly; onClicked: root.favoritesOnly = !root.favoritesOnly }
             LiquidButton { text: "Esc"; onClicked: ShellState.closePanels(); Accessible.name: "Close launcher" }
         }
+        LabelText { visible: root.mode === "files"; text: root.fileQuery.length<2 ? "Enter at least two characters after /" : ShellState.pendingActions.fileSearch ? "Searching local folders…" : root.files.query===root.fileQuery && root.files.truncated ? "Results limited; narrow the name or search folders" : "Local filename search"; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 12 }
         ExpressiveField {
             id: search; objectName: "launcherSearch"; Layout.fillWidth: true; Layout.preferredHeight: 52
-            placeholderText: "Apps · = calculate · : emoji · @ windows"; maximumLength: 160; Accessible.name: "Search launcher"
+            placeholderText: "Apps · / files · = calculate · : emoji · @ windows"; maximumLength: 160; Accessible.name: "Search launcher"
             onTextChanged: { root.selectedId = ""; root.query = text; }
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) { ShellState.closePanels(); event.accepted = true; }

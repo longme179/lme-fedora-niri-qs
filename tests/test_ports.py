@@ -98,3 +98,20 @@ class PaletteCase(Fixture,unittest.TestCase):
         self.assertEqual(self.preferences.values['themeOverrides'],{'buttonFill':'#abcdef'})
         self.assertEqual(self.preferences.values['paletteSource'],'wallpaper')
         self.assertTrue(live.handle({'action':'paletteReset'})['ok']);self.assertEqual(self.preferences.values['paletteSource'],'dracula')
+
+class FileSearchCase(Fixture,unittest.TestCase):
+    def test_bounded_search_ignores_hidden_and_symlink_paths(self):
+        from file_search import search
+        from threading import Event
+        self.put('files/report.txt','text');self.put('files/.hidden/report-secret.txt','private');self.put('outside/report-other.txt','outside')
+        (self.root/'files/link').symlink_to(self.root/'outside',target_is_directory=True)
+        result=search('report',[str(self.root/'files')],Event())
+        self.assertEqual([e['name'] for e in result['entries']],['report.txt'])
+        event=Event();event.set();self.assertEqual(search('report',[str(self.root/'files')],event)['entries'],[])
+        self.assertTrue(search('report',[str(self.root/'files')],Event(),max_paths=0)['truncated'])
+    def test_open_only_search_results_and_keep_uri_boundaries(self):
+        target=self.put('files/report #1.txt','text');runner=FakeRunner(available={'gio'});live=self.make_backend(runner)
+        self.assertFalse(live.handle({'action':'fileOpen','path':str(target)})['ok'])
+        live.file_search={'entries':[{'path':str(target)}]}
+        self.assertTrue(live.handle({'action':'fileOpen','path':str(target)})['ok'])
+        self.assertEqual(runner.spawns,[['/usr/bin/gio','open',target.as_uri()]])

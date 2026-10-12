@@ -40,13 +40,15 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture
 from privacy import captures
+from file_search import roots as search_roots, search as search_files
+from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
+    "language": "en", "fontPicker": True, "privacyIndicators": True, "batteryDetails": True, "fileSearchEnabled": True, "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")], "quickNotes": True, "audioVisualizer": False, "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused", "dndWhileSharing": True, "colorPicker": True, "animations": True, "opacity": 0.90,
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
@@ -270,13 +272,14 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes"} and type(value) is bool: return value
+    if key in {"springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled"} and type(value) is bool: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
     if key == "osdOutput" and isinstance(value,str) and 1 <= len(value) <= 128 and not any(ord(c)<32 for c in value): return value
     if key == "paletteSource" and value in ("dracula","wallpaper"): return value
     if key == "wallpaperPalette": return validate_palette(value)
+    if key == "fileSearchRoots": return search_roots(value)
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
@@ -467,6 +470,8 @@ class DesktopBackend:
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
         self.palette_preview = {"colors": {}, "path": ""}
+        self.file_search = {"query":"", "entries":[], "truncated":False}
+        self.file_search_cancel = Event()
         self.monitor_enabled = False
         self.monitor = SystemMonitor(proc)
         self.idle_control = IdleControl(self.runner)
@@ -824,7 +829,7 @@ class DesktopBackend:
         self.capture.refresh()
         if self.settings_only:
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, "preferences": dict(self.preferences.values),
-                    "lastResult": dict(self.last_result), "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                    "lastResult": dict(self.last_result), "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
                     "keybinds": self.keybinds, "idle": self.idle_state, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -843,7 +848,7 @@ class DesktopBackend:
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
+                "fileSearch": self.file_search, "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays, "notificationHistory": self.notification_history,
                 "monitor": self.monitor.state if self.monitor_enabled else {}, "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform, "nightLight": self.night_state, "capture": self.capture.state}
 
     @staticmethod
@@ -876,7 +881,8 @@ class DesktopBackend:
                     del self.feature_jobs[action]
                     break
                 value = job.result()
-                if action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
+                if action == "fileSearch": self.file_search = value; message = "File search completed"
+                elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
                 elif action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
                 elif action == "captureOcr":
                     token, content = value
@@ -1270,6 +1276,22 @@ class DesktopBackend:
             if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
+        if action == "fileSearch":
+            if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
+            self.file_search_cancel.set()
+            previous=self.feature_jobs.pop(action,None)
+            if previous: previous.cancel()
+            self.file_search_cancel=Event();cancel=self.file_search_cancel
+            query=request.get("query");folders=list(self.preferences.values["fileSearchRoots"])
+            self.file_search={"query":query,"entries":[],"truncated":False}
+            return self.start_feature(action,lambda: search_files(query,folders,cancel))
+        if action == "fileOpen":
+            path=request.get("path")
+            if not isinstance(path,str) or not any(e["path"]==path for e in self.file_search["entries"]): raise ValueError("Search again before opening this file")
+            target=Path(path)
+            if str(target.resolve())!=path or not (target.is_file() or target.is_dir()): raise ValueError("File moved or became unavailable")
+            self.runner.spawn([self.runner.executable("gio"),"open",target.as_uri()])
+            return "Opened file"
         if action == "palettePreview":
             self.runner.executable("matugen")
             self.palette_preview = {"colors": {}, "path": ""}
@@ -1464,7 +1486,7 @@ class DesktopBackend:
             return f"{action.capitalize()} requested"
         if action == "wallpaper":
             return self.apply_wallpaper(request.get("path"))
-        if action in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
+        if action in {"fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
             return "Settings transfer is disabled in demo mode"
         if action == "setting":
             key = request.get("key")

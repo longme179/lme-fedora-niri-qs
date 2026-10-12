@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Mirror an active niri display onto a connected monitor/projector using the
+  optional Fedora `wl-mirror` package. Source/destination and Start/Stop controls
+  live in Settings → Displays and Control Center → Devices; the shell owns its
+  child, handles disconnects and uses the existing sharing/DND preference.
+- Customize topbar outline thickness, alpha/hex color and all four corner radii.
+  Pill, square and square-left/right presets apply to connected bars and islands.
+  Defaults retain the existing appearance; portable presets include the geometry.
+
 ## 2.0 — 2026-10-12
 
 ### Added

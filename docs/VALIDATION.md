@@ -1,5 +1,31 @@
 # Validation and platform limits
 
+## Display mirroring and topbar styling — 2026-10-12
+
+`scripts/check.sh` passed **196 tests with no skips** with all private Wayland
+opt-ins enabled, using Quickshell 0.3.2 and Qt 6.8.2 on private Sway. QML lint
+passed for the changed bar surfaces, Top bar page, mirror controls, Displays
+page and device panel. Bash syntax, demo snapshot and diff checks passed.
+
+New coverage rejects invalid/inactive/identical mirror outputs, missing tools
+and disabled mirroring. Real fixture child processes verify Stop, disconnect,
+disable and close cleanup while another instance remains alive. Settings IPC is
+checked without spawning a second owner; real virtual-pointer clicks exercise
+the demo's Source/Destination and Start/Stop UI. Capture errors clear on restart.
+
+Native QML checks exercise square-left/right presets, independent corners,
+automatic roundness, height clamping, 0–4 px outlines, alpha colors and connected
+versus island surfaces. Validation/export tests preserve old pill defaults and
+round-trip the new settings. Rendered Settings pages were also visually checked.
+The existing display-preview and Control Center drag checks still pass with the
+demo's additional projector.
+
+No new system package was installed. `wl-mirror` CLI/fullscreen support, its
+actual GPL license and Fedora package availability were inspected; actual output
+capture, projector hotplug and hybrid Radeon/RTX rendering were **not** tested
+on the owner's Fedora/niri hardware. Follow [the hardware checklist](MIRRORING.md)
+before relying on it for a presentation.
+
 Cloud development and the target Fedora desktop are different environments.
 The repository includes useful checks that work without controlling the user's
 computer, and a separate real-session checklist.

@@ -11,3 +11,7 @@ Validated: native QML retarget/velocity/convergence/reduced-motion regression, q
 ## Geometric morph
 
 Enable **Appearance → Geometric shape morph**, then hover/press a gear or another icon button. Its silhouette interpolates rounded polygon cubic paths. Animations off keeps a static circle. Source math is Apache-2.0, adapted Canvas retains iNiR GPL/NOTICE credits. Paint work is limited to interaction, resize and color changes; laptop CPU/GPU cost remains unmeasured.
+
+## Moving tab indicator
+
+**Appearance → Moving tab indicator** controls stretching selection in Control Center tabs and the Settings sidebar. Try mouse selection, Ctrl+Tab in Control Center, and filtered Settings navigation; reduced motion snaps. It adapts DMS independent leading/trailing edges to LME grid and vertical layouts.

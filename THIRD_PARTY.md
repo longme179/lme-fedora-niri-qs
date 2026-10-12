@@ -92,3 +92,5 @@ display calibration system.
 ### Geometric morph
 
 Based on iNiR by snowarch (https://github.com/snowarch/inir), revision `48cdcecb0f6089cfbb7019054602eab28e154b3b`. `ShapeCanvas.qml` is modified for LME (GPL-3.0 with retained iNiR notice); rounded-polygon JS is retained under its Apache-2.0 license in `qml/components/shapes/LICENSE`. The library ports Knugel’s rounded-polygon-ts / AndroidX shape geometry, inherited through end-4. See [third_party/iNiR-NOTICE](third_party/iNiR-NOTICE) and [third_party/iNiR-LICENSE](third_party/iNiR-LICENSE). No upstream branding or assets are copied. Earlier no-vendoring descriptions apply only to the earlier feature implementations.
+
+`StretchIndicator.qml` adapts the independent-edge movement of DCommon `DTabBar.qml` at the DCommon revision above; MIT notice retained. Navigation and controls remain LME implementations.

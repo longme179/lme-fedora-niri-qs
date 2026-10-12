@@ -5,6 +5,7 @@ import "../theme"
 Button {
     id: root
     property bool selected: checked
+    property bool selectionFill: true
     readonly property Rectangle plate: background as Rectangle
     readonly property bool semanticFill: !Qt.colorEqual(palette.button, Theme.buttonFill)
     implicitWidth: Math.max(36, contentItem.implicitWidth + leftPadding + rightPadding)
@@ -25,7 +26,7 @@ Button {
     Behavior on scale { MotionAnimation {} }
     background: Rectangle {
         radius: root.down ? 12 : root.hovered && Theme.animations ? Math.max(14, height / 2 - 4) : height / 2
-        color: root.selected ? Theme.buttonSelected
+        color: root.selected ? (root.selectionFill ? Theme.buttonSelected : "transparent")
             : root.down ? root.semanticFill ? Qt.lighter(root.palette.button, 1.14) : Theme.buttonPressed
             : root.hovered ? root.semanticFill ? Qt.lighter(root.palette.button, 1.08) : Theme.buttonHover
             : root.palette.button

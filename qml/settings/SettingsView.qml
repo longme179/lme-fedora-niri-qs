@@ -52,15 +52,20 @@ Item {
                     contentWidth: width; contentHeight: navigationColumn.implicitHeight
                     clip: true; boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar {}
+                    StretchIndicator {
+                        parent: navigationScroll.contentItem; vertical: true
+                        targetItem: navRepeater.count ? navRepeater.itemAt(SettingsRegistry.search(search.text).findIndex(p => p.key===root.page)) : null
+                    }
                     ColumnLayout {
-                        id: navigationColumn
+                        id: navigationColumn; z: 1
                         width: navigationScroll.width - 8; spacing: 6
                         Repeater {
-                            model: SettingsRegistry.search(search.text)
+                            id: navRepeater; model: SettingsRegistry.search(search.text)
                             delegate: LiquidButton {
                                 id: nav
                                 required property var modelData
                                 Layout.fillWidth: true; Layout.preferredHeight: Math.max(48, contentItem.implicitHeight + 14)
+                                selectionFill: !Theme.animatedTabs
                                 text: modelData.title; selected: root.page === modelData.key
                                 checkable: false
                                 Accessible.name: modelData.title + " settings"

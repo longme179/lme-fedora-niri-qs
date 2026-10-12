@@ -51,22 +51,27 @@ GlassPanel {
             }
             LiquidButton { text: "Edit layout"; onClicked: ShellState.openSettingsPage("controlLayout") }
         }
+        Item {
+            Layout.fillWidth: true; Layout.preferredHeight: tabGrid.implicitHeight
+            StretchIndicator { targetItem: tabRepeater.itemAt(root.currentTab); fill: Theme.accent }
         GridLayout {
-            Layout.fillWidth: true; columnSpacing: 5; rowSpacing: 5
+            id: tabGrid; anchors.fill: parent; columnSpacing: 5; rowSpacing: 5
             columns: 3
             Repeater {
-                model: root.tabs
+                id: tabRepeater; model: root.tabs
                 delegate: LiquidButton {
                     required property string modelData
                     required property int index
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     text: modelData
-                    palette.button: root.currentTab === index ? Theme.accent : Theme.surface
+                    selected: root.currentTab === index; selectionFill: !Theme.animatedTabs
+                    palette.button: root.currentTab === index && !Theme.animatedTabs ? Theme.accent : Theme.surface
                     palette.buttonText: root.currentTab === index ? Theme.background : Theme.text
                     onClicked: root.currentTab = index
                 }
             }
+        }
         }
         Loader {
             Layout.fillWidth: true; Layout.fillHeight: true

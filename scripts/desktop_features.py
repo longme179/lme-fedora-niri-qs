@@ -8,7 +8,7 @@ import operator
 from pathlib import Path
 import re
 
-MOTION_DEFAULTS = {"springMotion": True, "shapeMorph": True, "motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
+MOTION_DEFAULTS = {"springMotion": True, "shapeMorph": True, "animatedTabs": True, "motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
 THEME_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / 'config/theme-tokens.json').read_text())
 THEME_DEFAULTS = {"themeOverrides": {}, "fontOverrides": {}, "fontSize": 14}
 APPEARANCE_KEYS = ("accent", "opacity", "density", "animations", *MOTION_DEFAULTS, *THEME_DEFAULTS)

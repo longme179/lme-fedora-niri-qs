@@ -87,6 +87,7 @@ QtObject {
     readonly property int cardSpacing: compact ? 10 : 16
     readonly property string monoFamily: fontFor("mono")
     readonly property bool animations: ShellState.preferences.animations !== false
+    readonly property bool springMotion: ShellState.preferences.springMotion !== false
     readonly property string motionPreset: ShellState.preferences.motionPreset || "expressive"
     readonly property real motionSpeed: ShellState.preferences.motionSpeed || 1
     readonly property real motionBounce: ShellState.preferences.motionBounce === undefined ? .35 : ShellState.preferences.motionBounce

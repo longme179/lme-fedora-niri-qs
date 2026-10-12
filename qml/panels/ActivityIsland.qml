@@ -7,20 +7,23 @@ import "../theme"
 Item {
     id: root
     property bool expanded: ShellState.activityOpen && !ShellState.authenticationActive
-    property real expansion: expanded ? 1 : 0
-    readonly property bool transitioning: morph.running
+    property real expansion: Theme.springMotion ? expansionSpring.value : (expanded ? 1 : 0)
+    readonly property bool transitioning: morph.running || expansionSpring.running || widthSpring.running || heightSpring.running
     readonly property real compactWidth: Math.max(54, ShellState.activityAnchorWidth)
     readonly property real expandedWidth: Math.min(460, parent ? parent.width - 28 : 460)
     readonly property real expandedHeight: Math.min(card.implicitHeight + 76, parent ? parent.height - 36 : 680)
-    visible: expanded || expansion > 0
-    width: compactWidth + (expandedWidth - compactWidth) * expansion
-    height: 30 + (expandedHeight - 30) * expansion
+    visible: expanded || transitioning || expansion > 0
+    width: Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion
+    height: Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion
     x: Math.max(14, Math.min((parent ? parent.width : width) - width - 14, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
     y: Theme.barBottom && parent ? parent.height - Theme.barTopMargin - 6 - height : Theme.barTopMargin + 6
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
     onExpandedChanged: if (expanded) Qt.callLater(() => closeButton.forceActiveFocus());
-    Behavior on expansion { MotionAnimation { id: morph; large: true; easing.bezierCurve: root.expanded ? Theme.spatialCurve : [.3, 0, .8, 1, 1, 1] } }
+    Behavior on expansion { enabled: !Theme.springMotion; MotionAnimation { id: morph; large: true; easing.bezierCurve: root.expanded ? Theme.spatialCurve : [.3, 0, .8, 1, 1, 1] } }
+    SpringMotion { id: expansionSpring; target: root.expanded ? 1 : 0; enabled: Theme.springMotion; stiffness: 280 * Theme.motionSpeed * Theme.motionSpeed; damping: (32 - 12 * Theme.motionBounce) * Theme.motionSpeed; positionEpsilon: .001; onTargetChanged: retarget(target); Component.onCompleted: snapTo(target) }
+    SpringMotion { id: widthSpring; value: root.compactWidth; target: root.expanded ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion; stiffness: expansionSpring.stiffness; damping: expansionSpring.damping; onTargetChanged: retarget(target); Component.onCompleted: snapTo(target) }
+    SpringMotion { id: heightSpring; value: 30; target: root.expanded ? root.expandedHeight : 30; enabled: Theme.springMotion; stiffness: expansionSpring.stiffness; damping: expansionSpring.damping; onTargetChanged: retarget(target); Component.onCompleted: snapTo(target) }
     GlassPanel { role: "islandFill";
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true
         MouseArea { anchors.fill: parent }

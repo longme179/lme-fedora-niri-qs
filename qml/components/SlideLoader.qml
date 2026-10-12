@@ -7,9 +7,9 @@ Loader {
     property Component content
     property Component retainedContent
     property string direction: "right"
-    property real progress: 0
+    property real progress: Theme.springMotion ? spring.value : 0
     property bool mounted: false
-    readonly property bool transitioning: motion.running
+    readonly property bool transitioning: motion.running || spring.running
     readonly property real slideOffset: (1 - progress) * (direction === "right" ? 92 : direction === "down" ? -32 : 64)
     active: mounted
     enabled: shown
@@ -26,10 +26,11 @@ Loader {
     function move(to) {
         if (to === 1) mounted = true;
         motion.stop();
+        if (Theme.springMotion) { spring.retarget(to); if (!spring.running && to === 0) mounted = false; return; }
         if (!Theme.animations) { progress = to; if (to === 0) mounted = false; return; }
         motion.to = to; motion.start();
     }
-    function replay() { progress = 0; move(shown ? 1 : 0); }
+    function replay() { if (Theme.springMotion) spring.snapTo(0); else progress = 0; move(shown ? 1 : 0); }
     onShownChanged: { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
     onContentChanged: if (shown) { retainedContent = content; replay(); }
     Component.onCompleted: if (shown) { retainedContent = content; move(1); }
@@ -38,11 +39,18 @@ Loader {
         if (panel && shown) panel.forceActiveFocus();
         if (shown) replay();
     }
+    SpringMotion {
+        id: spring; enabled: Theme.springMotion
+        stiffness: 280 * Theme.motionSpeed * Theme.motionSpeed
+        damping: (Theme.motionPreset === "smooth" ? 34 : 32 - 12 * Theme.motionBounce) * Theme.motionSpeed
+        positionEpsilon: .001; velocityEpsilon: .001
+        onRunningChanged: if (!running && !root.shown) root.mounted = false
+    }
     MotionAnimation {
         id: motion; target: root; property: "progress"; large: true
         duration: to === 0 ? (Theme.animations ? Math.round(200 / Theme.motionSpeed) : 0) : Theme.slideDuration
         easing.bezierCurve: to === 0 ? Theme.exitCurve : Theme.spatialCurve
         onFinished: if (!root.shown) root.mounted = false
     }
-    Connections { target: Theme; function onAnimationsChanged() { if (!Theme.animations) { motion.stop(); root.progress = root.shown ? 1 : 0; root.mounted = root.shown; } } }
+    Connections { target: Theme; function onSpringMotionChanged() { root.progress = Qt.binding(() => Theme.springMotion ? spring.value : (root.shown ? 1 : 0)); root.move(root.shown ? 1 : 0); } function onAnimationsChanged() { if (!Theme.animations) { motion.stop(); if (Theme.springMotion) spring.snapTo(root.shown ? 1 : 0); else root.progress = root.shown ? 1 : 0; root.mounted = root.shown; } } }
 }

@@ -86,3 +86,5 @@ calculation uses the approximate algorithm from *Almanac for Computers* (1990),
 described in Ed Williams' [Sunrise/Sunset Algorithm](https://edwilliams.org/sunrise_sunset_algorithm.htm).
 The Python implementation is original; it is not an astronomical ephemeris or
 display calibration system.
+
+`SpringMotion.qml` adapts DMS dank-qml-common at `bd90e4b6f2ec36035fc2cb560acdc0e418f669ac` (MIT, Copyright (c) 2025-2026 Avenge Media LLC). Modified for LME theme/loader lifecycle; full notice: [third_party/DankQmlCommon-LICENSE](third_party/DankQmlCommon-LICENSE).

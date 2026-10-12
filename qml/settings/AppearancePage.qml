@@ -72,6 +72,7 @@ ColumnLayout {
         PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
         LabelText { text: "Compositor: "+((ShellState.snapshot.platform || {}).niriVersion || "Checking…"); color: Theme.muted; font.pixelSize: 12 }
         PreferenceSwitch { title: "Animations"; detail: "Disable to remove spatial motion and press deformation"; preference: "animations" }
+        PreferenceSwitch { title: "Spring motion"; detail: "Keep velocity when a popup reverses or the Island resizes"; preference: "springMotion" }
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Motion preset"; Layout.fillWidth: true }

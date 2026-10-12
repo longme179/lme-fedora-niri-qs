@@ -29,6 +29,11 @@ ColumnLayout {
         }
     }
     SettingsCard {
+        title: "Color palettes"
+        description: "35 Gowall palettes plus LME Dracula. Preview dark or light palettes without changing your desktop, then apply. Save the result as an Appearance profile to switch quickly."
+        PalettePicker {}
+    }
+    SettingsCard {
         title: "Material, through glass"
         description: "Expressive shapes and flat tonal surfaces, with the transparency of your Liquid desktop."
         RowLayout {
@@ -39,7 +44,7 @@ ColumnLayout {
             }
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 4
-                LabelText { text: "Dracula Pro inspired"; font.weight: Font.Bold; font.pixelSize: 16 }
+                LabelText { text: ShellState.preferences.paletteSource === "preset" ? Theme.activePreset.name || "Color palette" : ShellState.preferences.paletteSource === "wallpaper" ? "Material from wallpaper" : "Dracula Pro inspired"; font.weight: Font.Bold; font.pixelSize: 16 }
                 LabelText { text: "Roboto · bold headings · no gradients"; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
             }
         }

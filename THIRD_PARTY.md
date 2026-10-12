@@ -134,3 +134,19 @@ is not copied: dynamic casting changes a portal stream source, while Hyprland's
 monitor configuration does not run on niri. Noctalia (`02cb10745d6274e4a696a00308c8ef4cefa7416d`, MIT)
 explicitly delegates mirroring to dedicated applications. LME owns one wl-mirror
 child process and uses niri's supported xdg-toplevel fullscreen-output request.
+
+
+Built-in color presets adapt the 35 palette arrays in
+[Achno/gowall internal/image/themes.go](https://github.com/Achno/gowall/blob/d8c7e03c4b6844d459292a07dde724bec98f5a4e/internal/image/themes.go)
+at `d8c7e03c4b6844d459292a07dde724bec98f5a4e`. Copyright (c) 2024 Achno,
+MIT; the full notice is retained in [third_party/gowall-LICENSE](third_party/gowall-LICENSE).
+The RGB arrays are adapted to LME's UI roles, with synthesized neutral surfaces
+where an image palette has none and readable foregrounds for light/dark sets.
+Gowall's PaleNight alpha values of 1 are normalized to opaque role colors; shell
+transparency is controlled independently. No Gowall image-processing code or
+binary is included. The catalog also retains LME's original Dracula palette.
+
+Matugen's scheme/mode/contrast CLI was inspected at
+`9f8c7fd583e44310a642772ff8f13b693949baf2` (4.2.0), with its actual GPLv2 LICENSE.
+It remains an external optional dependency; no Matugen code is redistributed.
+The integration uses an isolated template-free configuration and dry-run output.

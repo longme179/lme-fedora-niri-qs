@@ -112,3 +112,35 @@ The `barBorder` element is also available in Elements and fonts. Each island als
 and thickness are included in portable presets/backups; the color remains part
 of Appearance profiles through the existing element override system. Existing
 settings retain the automatic pill shape and 1 px inherited outline.
+
+
+## Built-in color palettes
+
+Settings → Appearance → Color palettes offers LME Dracula plus all 35 theme
+arrays currently registered in Gowall: Catppuccin Mocha/Frappe/Latte, Nord,
+Everforest, Solarized, Gruvbox, Dracula, Tokyo Moon/Storm/Dark, One Dark, Srcery,
+Monokai, Material, Synthwave 84, Atom Dark, Oceanic Next, Shades of Purple,
+Arc Dark, Sunset Aurant/Saffron/Tangerine, Cyberpunk, Night Owl, GitHub Light,
+Rose Pine, Kanagawa, Melange Dark/Light, Palenight and Ayu/Dark/Light/Mirage.
+
+Search, inspect the preview, then Apply palette. Preview does not change your
+current theme. Global element/font overrides and independent island overrides
+remain; reset those overrides if you want the preset's complete appearance.
+Save a named Appearance profile to keep the chosen preset with your motion,
+opacity, typography and other appearance settings. Presets need no Gowall binary.
+
+These are UI adaptations of image palettes, not exact terminal theme mappings.
+Neutral surfaces are derived where missing and foregrounds are adjusted for
+readability. Light variants include Catppuccin Latte, GitHub Light, Melange Light
+and Ayu Light. LME Dracula remains the factory default. Gowall's README mentions
+Sweet, but its registered theme table contains no Sweet palette at the inspected
+revision; no unverified colors were invented for it.
+
+## Material palette generation
+
+Settings → Wallpaper keeps the isolated Matugen preview/apply workflow and adds
+nine schemes, dark/light mode and contrast from -1 to 1. Choose an image, change
+the options, generate a preview and Apply palette. Changing options invalidates
+that preview; regenerate before applying. All base palette roles are covered,
+including green/yellow, while manual overrides remain. Requires Matugen 3 or 4;
+no templates, external app themes, wallpaper commands or user hooks are run.

@@ -11,6 +11,8 @@ ColumnLayout {
     spacing: 20
     readonly property var palette: ShellState.snapshot.palettePreview || {colors:{},path:""}
     readonly property string palettePath: selectedPath || ShellState.preferences.wallpaper || ""
+    readonly property var schemes: Theme.paletteSchemes
+    readonly property bool previewMatches: palette.path === palettePath && ["paletteScheme", "paletteMode", "paletteContrast"].every(key => palette[key] === ShellState.preferences[key])
     property string query: ""
     property bool favoritesOnly: false
     property string selectedPath: ""
@@ -76,10 +78,23 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Material palette from wallpaper"
-        description: "Preview a dark tonal palette before applying. Dracula remains the default. Glass opacity and manual element overrides are preserved; no external app themes are changed. Requires matugen."
+        description: "Choose a Material scheme, dark/light mode and contrast, then preview before applying. Dracula remains the default. Glass opacity and manual element overrides are preserved; no external app themes are changed. Requires matugen."
+        RowLayout {
+            Layout.fillWidth: true
+            LiquidComboBox { objectName: "paletteScheme"; Layout.fillWidth: true; model: root.schemes.map(s => Theme.tokenTitle(s.replace(/-/g, " "))); currentIndex: root.schemes.indexOf(ShellState.preferences.paletteScheme || "tonal-spot"); Accessible.name: "Material color scheme"; onActivated: ShellState.run("setting", {key:"paletteScheme",value:root.schemes[currentIndex]}) }
+            LiquidComboBox { model: ["Dark", "Light"]; currentIndex: ShellState.preferences.paletteMode === "light" ? 1 : 0; Accessible.name: "Material color mode"; onActivated: ShellState.run("setting", {key:"paletteMode",value:currentIndex ? "light" : "dark"}) }
+        }
+        LabelText { text: "Contrast · " + materialContrast.value.toFixed(1) + " (0 = standard)"; font.weight: Font.Bold }
+        LiquidSlider {
+            id: materialContrast; Layout.fillWidth: true; from: -1; to: 1; stepSize: .1
+            Accessible.name: "Material palette contrast"
+            onMoved: if (!pressed) ShellState.run("setting", {key:"paletteContrast",value:Math.round(value*10)/10})
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key:"paletteContrast",value:Math.round(value*10)/10})
+        }
+        Binding { target: materialContrast; property: "value"; value: ShellState.preferences.paletteContrast || 0; when: !materialContrast.pressed; restoreMode: Binding.RestoreNone }
         RowLayout {
             LiquidButton { text: ShellState.pendingActions.palettePreview ? "Generating…" : "Preview palette"; enabled: !ShellState.demo && !!root.palettePath && !ShellState.pendingActions.palettePreview; onClicked: ShellState.run("palettePreview",{path:root.palettePath}) }
-            LiquidButton { text: "Apply palette"; enabled: !ShellState.demo && root.palette.path === root.palettePath && !!root.palette.colors.accent; onClicked: ShellState.run("paletteApply",{path:root.palettePath}) }
+            LiquidButton { text: "Apply palette"; enabled: !ShellState.demo && root.previewMatches && !!root.palette.colors.accent; onClicked: ShellState.run("paletteApply",{path:root.palettePath}) }
             LiquidButton { text: "Use Dracula"; onClicked: ShellState.run("paletteReset") }
         }
         Flow {

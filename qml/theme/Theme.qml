@@ -10,7 +10,18 @@ QtObject {
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})
     readonly property var fonts: ShellState.preferences.fontOverrides || ({})
     property var catalog: ({colors: [], fonts: []})
-    readonly property var generated: ShellState.preferences.paletteSource === "wallpaper" ? ShellState.preferences.wallpaperPalette || ({}) : ({})
+    property var paletteCatalog: []
+    property var paletteSchemes: []
+    readonly property var activePreset: paletteCatalog.find(p => p.id === ShellState.preferences.palettePreset) || ({})
+    readonly property var generated: ShellState.preferences.paletteSource === "wallpaper" ? ShellState.preferences.wallpaperPalette || ({})
+        : ShellState.preferences.paletteSource === "preset" ? activePreset.colors || ({}) : ({})
+    property FileView presetsFile: FileView {
+        path: Quickshell.shellPath("config/palettes.json")
+        onLoaded: {
+            try { const data = JSON.parse(text()); root.paletteCatalog = data.palettes; root.paletteSchemes = data.schemes; }
+            catch (error) { console.warn("Palette catalog could not be loaded:", error); }
+        }
+    }
     function colorFor(key, fallback) { return overrides[key] || generated[key] || fallback; }
     function tokenColor(key) { return root[key]; }
     function tokenTitle(key) { return key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()); }

@@ -32,7 +32,7 @@ from typing import Any
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
-                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles)
+                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
@@ -295,7 +295,11 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
     if key == "osdOutput" and isinstance(value,str) and 1 <= len(value) <= 128 and not any(ord(c)<32 for c in value): return value
-    if key == "paletteSource" and value in ("dracula","wallpaper"): return value
+    if key == "paletteSource" and value in ("dracula","wallpaper","preset"): return value
+    if key == "palettePreset" and isinstance(value,str) and value in PALETTE_IDS: return value
+    if key == "paletteScheme" and value in PALETTE_SCHEMES: return value
+    if key == "paletteMode" and value in ("dark","light"): return value
+    if key == "paletteContrast" and type(value) in (float,int) and math.isfinite(value) and -1 <= value <= 1: return float(value)
     if key == "wallpaperPalette": return validate_palette(value)
     if key == "fileSearchRoots": return search_roots(value)
     if key == "recordingEncoder" and value in ("auto","nvidia","cpu","radeon"): return value
@@ -1091,7 +1095,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1269,6 +1273,12 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
+        elif action == "paletteReset":
+            self.preferences.values.update(paletteSource="dracula", accent=DRACULA_PROFILE["accent"])
+        elif action == "palettePreset":
+            ident=validate_preference('palettePreset',request.get('id'))
+            colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
+            self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
         elif action in {"recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
@@ -1391,13 +1401,20 @@ class DesktopBackend:
             if str(target.resolve())!=path or not (target.is_file() or target.is_dir()): raise ValueError("File moved or became unavailable")
             self.runner.spawn([self.runner.executable("gio"),"open",target.as_uri()])
             return "Opened file"
+        if action == "palettePreset":
+            ident=validate_preference('palettePreset',request.get('id'))
+            selected=next(p for p in PALETTE_CATALOG if p['id']==ident)
+            self.preferences.update({'palettePreset':ident,'paletteSource':'preset','accent':selected['colors']['accent']})
+            return selected['name']+' palette applied; manual overrides preserved'
         if action == "palettePreview":
             self.runner.executable("matugen")
             self.palette_preview = {"colors": {}, "path": ""}
-            return self.start_feature(action,lambda: palette_preview(self.runner,request.get("path")))
+            options={key:self.preferences.values[key] for key in ('paletteScheme','paletteMode','paletteContrast')}
+            return self.start_feature(action,lambda: palette_preview(self.runner,request.get("path"),options['paletteScheme'],options['paletteMode'],options['paletteContrast']))
         if action == "paletteApply":
             colors=validate_palette(self.palette_preview.get("colors"))
-            if not colors or self.palette_preview.get("path") != request.get("path"): raise ValueError("Generate a preview for this image first")
+            if (not colors or self.palette_preview.get("path") != request.get("path")
+                    or any(self.palette_preview.get(k)!=self.preferences.values[k] for k in ('paletteScheme','paletteMode','paletteContrast'))): raise ValueError("Generate a preview for this image first")
             self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
             return "Wallpaper palette applied; element overrides preserved"
         if action == "paletteReset":

@@ -93,7 +93,7 @@ class PaletteCase(Fixture,unittest.TestCase):
         live=self.make_backend();self.preferences.set('themeOverrides',{'buttonFill':'#abcdef'})
         before=self.preferences.path.read_bytes();live.palette_preview={'colors':{},'path':'image.png'}
         self.assertFalse(live.handle({'action':'paletteApply','path':'image.png'})['ok']);self.assertEqual(before,self.preferences.path.read_bytes())
-        live.palette_preview={'colors':colors_from_json(raw),'path':'image.png'}
+        live.palette_preview={'colors':colors_from_json(raw),'path':'image.png', 'paletteScheme':'tonal-spot','paletteMode':'dark','paletteContrast':0.0}
         self.assertTrue(live.handle({'action':'paletteApply','path':'image.png'})['ok'])
         self.assertEqual(self.preferences.values['themeOverrides'],{'buttonFill':'#abcdef'})
         self.assertEqual(self.preferences.values['paletteSource'],'wallpaper')

@@ -136,6 +136,7 @@ card onto a workspace or use its selector; menus include output names when
 workspaces on separate monitors have the same number. A closed window or
 removed workspace is rejected rather than moving another window.
 
+
 Recent Fedora installations use TuneD/`tuned-ppd`; `power-profiles-daemon` is
 an alternative. Both expose compatible power-profile D-Bus APIs. Do not run
 competing providers or replace a working TuneD setup just to install this shell.
@@ -146,6 +147,21 @@ An older provider may expose only the legacy `net.hadess.PowerProfiles` name and
 If `brightnessctl` cannot write the laptop backlight, inspect Fedora's existing
 device permissions and login/session membership. Do not run the whole shell
 with sudo or make `/sys` writable globally.
+
+## Pointer jumps when selecting a workspace
+
+Update the installed shell and restart it. Workspace clicks now send one
+`FocusWorkspace` request with its stable ID through `NIRI_SOCKET`, instead of
+calling `focus-monitor` first. The redundant monitor action centered the pointer
+even when selecting another workspace on the same display. Stable IDs also avoid
+confusing equal workspace numbers on different displays.
+
+If the pointer still moves, check `input` in your niri configuration and any
+included files. Remove or comment out `warp-mouse-to-focus` if enabled, then run
+`niri validate`; niri reloads saved valid configuration automatically. This is
+a compositor-wide policy, with no per-action skip flag in niri 26.04. Switching
+focus to a different display also follows niri's monitor pointer policy. The
+shell does not silently rewrite your niri configuration.
 
 ## Wallpaper changes fail
 

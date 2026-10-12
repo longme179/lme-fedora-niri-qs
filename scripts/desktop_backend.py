@@ -1468,9 +1468,8 @@ class DesktopBackend:
                 workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
             if workspace is None:
                 raise ValueError("Workspace is no longer available")
-            if workspace.get("output"):
-                run("niri", "msg", "action", "focus-monitor", str(workspace["output"]))
-            run("niri", "msg", "action", "focus-workspace", str(workspace["idx"]))
+            # A redundant focus-monitor centers the cursor even on the current output.
+            self.niri_action({"FocusWorkspace": {"reference": {"Id": int(workspace_id)}}})
             return "Workspace focused"
         if action == "volume":
             value = self.percentage(request.get("value"))

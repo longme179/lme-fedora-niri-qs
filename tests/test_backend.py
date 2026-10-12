@@ -208,13 +208,34 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertEqual(live.snapshot()["system"]["audio"]["volume"], 55)
         self.assertEqual(runner.calls.count(volume_query), 2)
 
-    def test_workspace_id_resolves_index_on_correct_output(self):
+    def test_workspace_selection_uses_stable_id_without_redundant_monitor_focus(self):
         runner = FakeRunner(available={"niri"})
         live = self.make_backend(runner)
-        live.niri = {"available": True, "workspaces": [{"id": 14, "idx": 2, "output": "HDMI-A-1"}], "windows": []}
-        self.assertTrue(live.handle({"action": "workspace", "id": 14})["ok"])
-        self.assertEqual(runner.calls, [("niri", "msg", "action", "focus-monitor", "HDMI-A-1"),
-                                        ("niri", "msg", "action", "focus-workspace", "2")])
+        live.niri = {"available": True, "workspaces": [{"id": 14, "idx": 2, "output": "HDMI-A-1"}, {"id": 9, "idx": 2, "output": "eDP-1", "is_focused": True}], "windows": []}
+        with patch.object(live, 'niri_action') as action:
+            for ident in (9,14):
+                self.assertTrue(live.handle({"action": "workspace", "id": ident})["ok"])
+                action.assert_called_with({"FocusWorkspace": {"reference": {"Id": ident}}})
+            self.assertEqual(action.call_count,2)
+        self.assertEqual(runner.calls,[])
+
+    def test_workspace_selection_roundtrips_one_atomic_action_over_niri_socket(self):
+        import socket
+        from threading import Thread
+        endpoint=str(self.root/'niri.sock');received=[]
+        with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as server:
+            server.bind(endpoint);server.listen(1);server.settimeout(3)
+            def reply():
+                with server.accept()[0] as client:
+                    with client.makefile('rb') as stream: received.append(json.loads(stream.readline()))
+                    client.sendall(b'{"Ok":"Handled"}\n')
+            thread=Thread(target=reply);thread.start()
+            live=self.make_backend(FakeRunner())
+            live.niri={'available':True,'workspaces':[{'id':14,'idx':2,'output':'eDP-1'}],'windows':[]}
+            try:
+                with patch.dict(os.environ,NIRI_SOCKET=endpoint):self.assertTrue(live.handle({'action':'workspace','id':14})['ok'])
+            finally:thread.join(timeout=4)
+        self.assertFalse(thread.is_alive());self.assertEqual(received,[{'Action':{'FocusWorkspace':{'reference':{'Id':14}}}}])
 
     def test_destructive_actions_only_on_explicit_request(self):
         runner = FakeRunner(available={"systemctl", "niri"})

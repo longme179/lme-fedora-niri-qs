@@ -1,6 +1,8 @@
 // LME Shell integration fragment. Do not replace your niri configuration.
 // Requires niri >= 25.11 for overview and stable-ID window movement.
 // Remove existing binds with these same keys before merging this fragment.
+// For stationary workspace clicks, leave input/warp-mouse-to-focus disabled.
+// Workspace selection uses one stable-ID action; niri still owns cursor policy.
 
 spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-shell/scripts/start.sh\""
 // The shell includes a Polkit password popup. Keep only one session agent;

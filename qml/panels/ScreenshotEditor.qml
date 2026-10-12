@@ -16,7 +16,7 @@ Item {
     property real zoom: 1
     property string exportAction: ""
     property string error: ""
-    readonly property bool busy: !!exportAction || !!ShellState.pendingActions.captureExport || !!ShellState.pendingActions.captureOcr
+    readonly property bool busy: !!exportAction || !!ShellState.pendingActions.captureExport || !!ShellState.pendingActions.captureOcr || !!ShellState.pendingActions.captureAnnotate
     readonly property var canvas: drawing
     function render(action) {
         if (busy || !drawing.ready) return;
@@ -93,6 +93,7 @@ Item {
                         onExported: {
                             const action = root.exportAction; root.exportAction = "";
                             if (action === "ocr") ShellState.run("captureOcr", {token: root.session.token, language: languages.currentText});
+                            else if (action === "annotate") ShellState.run("captureAnnotate", {token: root.session.token, folder: saveFolder.text});
                             else ShellState.run("captureExport", {token: root.session.token, operation: action, folder: saveFolder.text});
                         }
                     }
@@ -110,8 +111,12 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             ExpressiveField { id: saveFolder; objectName: "screenshotFolder"; Layout.fillWidth: true; text: root.session.saveFolder || ""; placeholderText: "Save folder"; maximumLength: 4096; Accessible.name: "Screenshot save folder" }
+        }
+        Flow {
+            Layout.fillWidth: true; spacing: 8
             LiquidButton { text: "Save PNG"; enabled: drawing.ready && !root.busy; onClicked: root.render("save") }
             LiquidButton { text: "Copy image"; enabled: drawing.ready && !root.busy; onClicked: root.render("copy") }
+            LiquidButton { text: "Annotate externally"; enabled: drawing.ready && !root.busy; onClicked: root.render("annotate") }
         }
         RowLayout {
             Layout.fillWidth: true

@@ -104,6 +104,20 @@ class ScreenCapture:
         try: return self._export(source, token, operation, folder)
         finally: source.close()
 
+    def annotate(self, token, editor, folder):
+        # DMS NiriService.qml (a1e6f6d6): open Satty/Swappy with an argv path.
+        # Copyright (c) 2025 Avenge Media LLC; MIT notice in third_party/DankMaterialShell-LICENSE.
+        if editor not in ('auto','satty','swappy'): raise ValueError('Choose Auto, Satty or Swappy')
+        chosen=next((name for name in ('satty','swappy') if self.runner.available(name)),None) if editor=='auto' else editor
+        if not chosen or not self.runner.available(chosen): raise ValueError('Install swappy (Fedora) or satty, or choose an installed screenshot editor in Behavior settings')
+        binary=self.runner.executable(chosen)
+        # Persist the flattened image before launching; closing the studio deletes runtime files.
+        with self.lock:
+            with self.rendered(token).open('rb') as source: self._export(source,token,'save',folder)
+            path=self.state['savedPath']
+        self.runner.spawn([binary,'-f',path])
+        return 'Opened '+chosen+' · edited PNG saved at '+path
+
     def _export(self, source, token, operation, folder):
         if operation == 'copy':
             # wl-copy's clipboard owner forks; captured pipes would stay open in that child.

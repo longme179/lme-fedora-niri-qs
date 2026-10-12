@@ -55,6 +55,7 @@ DEFAULT_PREFERENCES = {
     "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
+    "captureEditor": "auto",
     "fileSearchEnabled": True,
     "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")],
     "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused",
@@ -80,7 +81,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffmpeg", "pactl", "slurp",
+    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffmpeg", "pactl", "slurp", "satty", "swappy",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -300,6 +301,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "recordingCodec" and value in ("auto","h264","hevc","av1","vp9"): return value
     if key == "recordingFps" and type(value) is int and value in (24,30,60,120): return value
     if key == "recordingBitrate" and type(value) is int and 1000 <= value <= 100000: return value
+    if key == "captureEditor" and value in ("auto","satty","swappy"): return value
     if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
@@ -1121,6 +1123,8 @@ class DesktopBackend:
             else: self.capture.state['languages'] = ['eng', 'vie']
         elif action == "captureExport":
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
+        elif action == "captureAnnotate":
+            if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
         elif action == "captureOcr": self.capture.state['ocrText'] = 'LME Shell\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
@@ -1274,6 +1278,14 @@ class DesktopBackend:
             if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')
             message = self.start_feature(action, lambda: self.capture.export(request['token'], request.get('operation'), request.get('folder')))
             self.feature_jobs[action].capture_token = request['token']
+            return message
+        if action == 'captureAnnotate':
+            token=request.get('token')
+            if type(token) is not str: raise ValueError('Missing screenshot session')
+            if token != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
+            editor=self.preferences.values['captureEditor']
+            message=self.start_feature(action,lambda:self.capture.annotate(token,editor,request.get('folder')))
+            self.feature_jobs[action].capture_token=token
             return message
         if action == 'captureOcr':
             token, language = request.get('token'), request.get('language')

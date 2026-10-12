@@ -10,8 +10,8 @@ recording daemon.
 sudo dnf install wlsunset tesseract tesseract-langpack-eng tesseract-langpack-vie
 ```
 
-Vietnamese recognition is optional; the interface stays in English. Restart
-LME Shell after installing commands so its cached capabilities refresh.
+Vietnamese recognition is optional; the interface stays in English. Missing
+commands are rediscovered on demand after installation.
 `scripts/install-fedora.sh --optional --install` includes these packages.
 `scripts/doctor.sh` reports missing commands. Use niri 26.04 for the complete
 desktop configuration, including the native full-screen popup blur fragment.
@@ -79,6 +79,17 @@ never overwritten. A failed save removes its partial new file. **Copy image**
 copies the rendered PNG using `wl-clipboard`. The exported image is flattened:
 redacted pixels are solid black, with no hidden annotation layer or original
 image embedded in the PNG.
+
+**Annotate externally** first renders and saves that same flattened PNG, then
+opens Satty or Swappy with its file path. Choose the app in
+**Settings → Behavior → Screenshot annotation**. Auto prefers installed Satty,
+then Swappy. Fedora 44 has `swappy`: `sudo dnf install swappy`. Satty is supported
+when installed separately; neither app is installed automatically by the shell.
+Save further edits inside the external app. External changes are not imported
+back into Screenshot studio. The private saved PNG survives closing the studio
+or shell; runtime originals are not passed to the external app. If launch fails,
+the saved PNG remains available for recovery. Missing editors produce a visible
+install/selection message without creating a new export.
 
 **Niri also puts the original capture in the clipboard.** Redacting in the
 editor does not erase that earlier clipboard item or other clipboard managers'

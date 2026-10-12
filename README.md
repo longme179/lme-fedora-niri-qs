@@ -179,6 +179,14 @@ sudo dnf install cava matugen wf-recorder ffmpeg-free pulseaudio-utils slurp
 `wf-recorder` captures an output/region; FFmpeg encodes/checks video (the Fedora
 `ffmpeg-free` build may omit NVENC or other chosen codecs);
 `pulseaudio-utils` supplies `pactl` for recording audio; `slurp` selects a region.
+
+For an external screenshot annotation app, install `swappy` with
+`sudo dnf install swappy`. In Screenshot studio choose **Annotate externally**;
+the shell opens a saved PNG with your current annotations/redactions flattened.
+**Settings → Behavior** selects Auto, Satty (if separately installed), or Swappy,
+and configures recording GPU preference, container, codec, FPS and bitrate.
+Recording Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing drivers only
+when recording starts. See [recording details and tests](docs/FEATURE_PORTS.md#owned-screen-recording).
 Install only the tools for features you use. Restart the shell and reopen Settings
 after installation so their backends discover the new tools. Recording needs niri 26.04+;
 Radeon VAAPI additionally depends on the available driver and codec support.
@@ -392,8 +400,8 @@ Inspired by [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland),
 [Caelestia](https://github.com/caelestia-dots/shell) and
 [Noctalia](https://github.com/noctalia-dev/noctalia).
 
-Licensed under **GPL-3.0-or-later**, with the motion adaptation's retained
-GPL-3.0-only terms. See [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md)
+Licensed under **GPL-3.0-or-later**, with retained GPL-3.0-only terms in adapted
+upstream components. See [LICENSE](LICENSE) and [THIRD_PARTY.md](THIRD_PARTY.md)
 for source, dependency and asset attribution. Purchased Dracula Pro assets and
 fonts are not bundled.
 

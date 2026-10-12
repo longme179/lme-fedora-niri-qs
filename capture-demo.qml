@@ -7,6 +7,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "qml/panels"
+import "qml/services"
 import "qml/theme"
 
 ShellRoot {
@@ -51,7 +52,7 @@ ShellRoot {
         target: "captureFixture"
         function state(): string {
             const folder = root.find(window.contentItem, "screenshotFolder");
-            return JSON.stringify({ready: !!root.editor && root.editor.canvas.ready, strokes: root.editor ? root.editor.canvas.strokes.length : -1, redo: root.editor ? root.editor.canvas.redoStack.length : -1, busy: root.editor ? root.editor.busy : false, error: root.editor ? root.editor.error : "", ocr: root.ocr, folderFocused: !!folder && folder.activeFocus});
+            return JSON.stringify({ready: !!root.editor && root.editor.canvas.ready, strokes: root.editor ? root.editor.canvas.strokes.length : -1, redo: root.editor ? root.editor.canvas.redoStack.length : -1, busy: root.editor ? root.editor.busy : false, error: root.editor ? root.editor.error : "", ocr: root.ocr, folderFocused: !!folder && folder.activeFocus, lastResult: ShellState.lastResult});
         }
         function position(name: string): string {
             const item = root.find(window.contentItem, name); if (!item) return "{}";

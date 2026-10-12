@@ -73,6 +73,21 @@ ColumnLayout {
         LabelText { text:"Requires wf-recorder and FFmpeg with the chosen codecs. Audio needs pactl (pulseaudio-utils); region selection needs slurp. MP4/MOV use AAC audio; MKV/WebM use Opus. Other recording apps are never stopped. High frame rates and CPU AV1 can be expensive."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
     }
     SettingsCard {
+        title: "Screenshot annotation"
+        description: "Screenshot studio → Annotate externally saves your flattened edits, including redactions, before opening a separate editor. Closing the studio keeps this saved PNG. External edits are not imported back into the studio."
+        RowLayout {
+            LabelText { text: "External editor"; Layout.fillWidth: true }
+            LiquidComboBox {
+                property var values: ["auto","satty","swappy"]
+                model: ["Auto · Satty then Swappy","Satty","Swappy"]
+                currentIndex: values.indexOf(ShellState.preferences.captureEditor || "auto")
+                Accessible.name: "External screenshot editor"
+                onActivated: ShellState.run("setting",{key:"captureEditor",value:values[currentIndex]})
+            }
+        }
+        LabelText { text: "Fedora: sudo dnf install swappy. Satty is also supported if installed separately. Choose the output path inside the external editor when saving further edits."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+    }
+    SettingsCard {
         title: "Launcher file search"
         description: "Use / followed by a filename in the launcher. Hidden files and symlinks are skipped; each search has a time/path/result limit. No background index is created."
         PreferenceSwitch { title: "Search files and folders"; detail: "Names in your selected local folders"; preference: "fileSearchEnabled" }

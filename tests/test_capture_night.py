@@ -153,6 +153,54 @@ class CaptureNightCase(Fixture, unittest.TestCase):
         for invalid in ('missing', 'eng;id', '--help', ''):
             with self.assertRaises(ValueError): controller.ocr(token, invalid)
 
+    def test_external_annotation_uses_persistent_flattened_png_and_allowlisted_argv(self):
+        controller=self.capture();token=controller.state['token']
+        edited=Path(controller.state['renderPath']);edited.write_bytes(PNG+b'edited marker')
+        controller.runner.names.update({'satty','swappy'})
+        folder=self.root/'saved space; $(literal)'
+        self.assertIn('Opened satty',controller.annotate(token,'auto',str(folder)))
+        saved=Path(controller.state['savedPath'])
+        self.assertEqual(controller.runner.spawns,[['/usr/bin/satty','-f',str(saved)]])
+        self.assertEqual(saved.read_bytes(),edited.read_bytes());self.assertNotEqual(saved.read_bytes(),Path(controller.state['path']).read_bytes())
+        self.assertEqual(saved.stat().st_mode & 0o777,0o600)
+        self.assertIn('Opened swappy',controller.annotate(token,'swappy',str(folder)))
+        runtime=controller.directory.name;controller.close()
+        self.assertFalse(Path(runtime).exists());self.assertTrue(saved.exists())
+        with self.assertRaises(ValueError):controller.annotate(token,'auto',str(folder))
+
+    def test_missing_editor_stale_token_or_bad_editor_does_not_export_or_spawn(self):
+        controller=self.capture();token=controller.state['token'];Path(controller.state['renderPath']).write_bytes(PNG)
+        folder=self.root/'saved'
+        with self.assertRaisesRegex(ValueError,'Install swappy'):controller.annotate(token,'auto',str(folder))
+        controller.runner.names.add('swappy')
+        for token_arg,editor in [('stale','swappy'),(token,'swappy;id'),(token,'satty')]:
+            with self.assertRaises(ValueError):controller.annotate(token_arg,editor,str(folder))
+        self.assertFalse(folder.exists());self.assertEqual(controller.runner.spawns,[])
+        with self.assertRaises(ValueError):backend.validate_preference('captureEditor','custom --command')
+
+    def test_external_editor_launch_failure_keeps_saved_image_and_transfer_preference(self):
+        controller=self.capture();token=controller.state['token'];Path(controller.state['renderPath']).write_bytes(PNG)
+        controller.runner.names.add('swappy')
+        with patch.object(controller.runner,'spawn',side_effect=backend.CommandError('Launch failed')):
+            with self.assertRaises(backend.CommandError):controller.annotate(token,'auto',str(self.root/'saved'))
+        self.assertEqual(Path(controller.state['savedPath']).read_bytes(),PNG)
+        from settings_transfer import document,validate_document
+        self.preferences.set('captureEditor','swappy')
+        data=document(self.preferences.values,'preset');self.assertEqual(data['settings']['captureEditor'],'swappy')
+        self.assertEqual(validate_document(data,backend.validate_preference,backend.DEFAULT_PREFERENCES)['captureEditor'],'swappy')
+
+    def test_backend_annotation_worker_reports_success_and_rejects_stale_session(self):
+        runner=FakeRunner(available={'swappy'});live=self.make_backend(runner)
+        self.addCleanup(live.feature_executor.shutdown);controller=self.capture()
+        Path(controller.state['renderPath']).write_bytes(PNG);controller.runner=runner;live.capture=controller
+        token=controller.state['token'];folder=str(self.root/'saved')
+        self.assertTrue(live.handle({'action':'captureAnnotate','token':token,'folder':folder})['ok'])
+        live.feature_jobs['captureAnnotate'].result(timeout=2);live.finish_features()
+        self.assertTrue(live.last_result['ok']);self.assertEqual(runner.spawns[0][0],'/usr/bin/swappy')
+        count=len(runner.spawns)
+        self.assertFalse(live.handle({'action':'captureAnnotate','token':'stale','folder':folder})['ok'])
+        self.assertNotIn('captureAnnotate',live.feature_jobs);self.assertEqual(len(runner.spawns),count)
+
     def test_closed_capture_cannot_publish_a_late_ocr_result(self):
         live = self.make_backend(); self.addCleanup(live.feature_executor.shutdown)
         live.capture.state = {'status': 'ready', 'token': 'old', 'ocrText': ''}
@@ -270,6 +318,13 @@ class NativeCaptureCase(unittest.TestCase):
                     wait(lambda s:not s['busy']); self.assertEqual(png_size(rendered),(960,540))
                     self.assertEqual(png_pixel(rendered,170,240)[:3],(0,0,0)); self.assertEqual(png_pixel(rendered,170,240)[-1],255)
                     self.assertNotEqual(png_pixel(Path(capture.state['path']),170,240)[:3],(0,0,0))
+                    click('Annotate externally')
+                    wait(lambda s: not s['busy'] and (s.get('lastResult') or {}).get('action') == 'captureAnnotate')
+                    capture.runner=FakeRunner(available={'swappy'})
+                    capture.annotate(capture.state['token'],'auto',str(root/'external'))
+                    external=Path(capture.state['savedPath'])
+                    self.assertEqual(png_pixel(external,170,240)[:3],(0,0,0))
+                    self.assertEqual(capture.runner.spawns,[['/usr/bin/swappy','-f',str(external)]])
                     capture.runner=backend.CommandRunner(); token=capture.state['token']
                     capture.export(token,'save',str(root/'saved'))
                     self.assertEqual(Path(capture.state['savedPath']).read_bytes(),rendered.read_bytes())

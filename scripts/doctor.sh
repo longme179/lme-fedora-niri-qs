@@ -50,6 +50,15 @@ optional swaylock 'lock screen'
 optional swayidle 'laptop idle profiles; enable in Settings > Idle and sleep'
 optional wlsunset 'Night Light gamma control; Settings > Night Light'
 optional tesseract 'Screenshot studio OCR; install tesseract-langpack-eng (and optionally -vie)'
+if command -v satty >/dev/null 2>&1; then
+    optional satty 'external screenshot annotation'
+else
+    optional swappy 'external screenshot annotation: swappy (or separately installed satty)'
+fi
+optional wf-recorder 'screen recording: wf-recorder'
+optional ffmpeg 'recording encoder checks and container conversion: ffmpeg-free or a compatible full build'
+optional pactl 'recording audio: pulseaudio-utils'
+optional slurp 'recording region selection: slurp'
 optional awww 'wallpaper selection and restoration'
 optional awww-daemon 'wallpaper daemon'
 optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'

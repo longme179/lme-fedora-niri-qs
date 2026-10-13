@@ -27,6 +27,9 @@ Item {
     property int pendingVolume: -1
     property int pendingBrightness: -1
     property int pendingMic: -1
+    property bool editing: false
+    property alias grid: quickGrid
+    readonly property var quickIds: ["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "overview"]
 
     function flushVolume() {
         volumeDelay.stop();
@@ -51,7 +54,7 @@ Item {
     Timer { id: volumeDelay; interval: 100; onTriggered: root.flushVolume() }
     Timer { id: brightnessDelay; interval: 100; onTriggered: root.flushBrightness() }
     Timer { id: micDelay; interval: 100; onTriggered: root.flushMic() }
-    Keys.onEscapePressed: ShellState.closePanels()
+    Keys.onEscapePressed: event => { if (root.editing) event.accepted = false; else ShellState.closePanels(); }
 
     component Tile: LiquidButton {
         id: tile
@@ -59,21 +62,28 @@ Item {
         required property string detail
         property bool active: false
         property color accent: Theme.purple
+        property string iconName: "settings"
         Layout.fillWidth: true
-        implicitHeight: Theme.compact ? 66 : 77
+        implicitHeight: Theme.compact ? 82 : 90
+        leftPadding: 8; rightPadding: 8; topPadding: 8; bottomPadding: 8
+        opacity: root.editing || enabled ? 1 : .35
         Accessible.name: label + ": " + detail
         background: Rectangle {
             radius: tile.active ? 24 : 16
             color: tile.active ? Theme.mix(Theme.panel, tile.accent, tile.hovered ? 0.38 : 0.28) : Theme.surfaceContainerHigh
             border.color: tile.activeFocus ? tile.accent : tile.active ? Theme.alpha(tile.accent, 0.48) : Theme.border
             border.width: 1
-            opacity: tile.enabled ? 1 : 0.5
+            opacity: root.editing || tile.enabled ? 1 : 0.5
             Behavior on radius { MotionAnimation {} }
         }
-        contentItem: ColumnLayout {
-            spacing: 6
-            Text { Layout.fillWidth: true; elide: Text.ElideRight; text: tile.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
-            Text { Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+        contentItem: GridLayout {
+            columns: tile.width < 150 ? 1 : 2; rowSpacing: 5; columnSpacing: 10
+            ShellIcon { name: tile.iconName; color: tile.active ? tile.accent : Theme.text; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Layout.alignment: Qt.AlignHCenter }
+            ColumnLayout {
+                Layout.fillWidth: true; Layout.preferredWidth: 1; spacing: 4
+                Text { Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; horizontalAlignment: tile.width < 150 ? Text.AlignHCenter : Text.AlignLeft; text: tile.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: tile.width < 150 ? 12 : 14; font.weight: Font.Bold }
+                Text { visible: tile.width >= 150; Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+            }
         }
     }
 
@@ -99,8 +109,17 @@ Item {
                     Caption { text: Qt.locale("en_US").toString(root.now, "dddd, MMMM d") }
                 }
                 Item { Layout.fillWidth: true }
-                LiquidButton { text: "Lock"; onClicked: { ShellState.closePanels(); ShellState.run("lock"); } }
+                LiquidButton { text: "Lock"; enabled: !root.editing; onClicked: { ShellState.closePanels(); ShellState.run("lock"); } }
             }
+            ControlGrid {
+                id: quickGrid
+                Layout.fillWidth: true
+                editing: root.editing; dragLayer: root; viewport: scroll
+                components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
+                    stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, overview: overviewModule,
+                    captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule})
+            }
+            LiquidButton { visible: root.editing; text: "Reset grid"; enabled: quickGrid.ready; onClicked: quickGrid.reset() }
             GridLayout {
                 id: content; Layout.fillWidth: true
                 columns: width >= 500 ? 2 : 1
@@ -110,7 +129,8 @@ Item {
                     delegate: Loader {
                         id: card
                         required property var modelData
-                        active: modelData.enabled
+                        active: modelData.enabled && !root.quickIds.includes(modelData.id)
+                        enabled: !root.editing
                         visible: active
                         Layout.fillWidth: true; Layout.preferredWidth: 1
                         Layout.columnSpan: content.columns === 1 || modelData.size === "full" ? content.columns : 1
@@ -136,7 +156,7 @@ Item {
     Component {
         id: wifiModule
         Tile {
-            label: "Wi-Fi"
+            label: "Wi-Fi"; iconName: "wifi"
             detail: !root.network.available ? "Unavailable" : root.wifiConnected ? root.network.ssid || "Connected" : root.network.enabled ? "Not connected" : "Turned off"
             active: !!root.network.enabled
             enabled: !!root.network.available
@@ -147,7 +167,7 @@ Item {
     Component {
         id: bluetoothModule
         Tile {
-            label: "Bluetooth"
+            label: "Bluetooth"; iconName: "bluetooth"
             detail: ShellState.pendingActions.bluetoothToggle ? "Changing power…" : root.bluetooth.hardBlocked ? "Hardware blocked" : root.bluetooth.softBlocked ? "Software blocked" : !root.bluetooth.available ? "No adapter" : root.bluetooth.enabled ? "Powered on" : "Turned off"
             active: !!root.bluetooth.enabled
             enabled: !!root.bluetooth.available && !root.bluetooth.hardBlocked && !ShellState.pendingActions.bluetoothToggle
@@ -157,27 +177,27 @@ Item {
     Component {
         id: microphoneModule
         Tile {
-            label: "Microphone"; detail: !root.microphone.available ? "Unavailable" : root.microphone.muted ? "Muted" : "Ready to record"
+            label: "Microphone"; iconName: "microphone"; detail: !root.microphone.available ? "Unavailable" : root.microphone.muted ? "Muted" : "Ready to record"
             active: !!root.microphone.available && !root.microphone.muted; enabled: !!root.microphone.available
             accent: Theme.pink; onClicked: ShellState.run("micMute")
         }
     }
     Component {
         id: dndModule
-        Tile { label: "Do not disturb"; detail: Notifications.dnd ? "Popups silenced" : "Notifications enabled"; active: Notifications.dnd; accent: Theme.yellow; onClicked: Notifications.setDnd(Notifications.dnd ? 0 : -1) }
+        Tile { label: "Do not disturb"; iconName: "bell-off"; detail: Notifications.dnd ? "Popups silenced" : "Notifications enabled"; active: Notifications.dnd; accent: Theme.yellow; onClicked: Notifications.setDnd(Notifications.dnd ? 0 : -1) }
     }
     Component {
         id: stayAwakeModule
-        Tile { label: "Stay awake"; detail: ShellState.stayAwake ? "Idle sleep inhibited" : "Normal idle behavior"; active: ShellState.stayAwake; accent: Theme.green; onClicked: ShellState.stayAwake = !ShellState.stayAwake }
+        Tile { label: "Stay awake"; iconName: "clock"; detail: ShellState.stayAwake ? "Idle sleep inhibited" : "Normal idle behavior"; active: ShellState.stayAwake; accent: Theme.green; onClicked: ShellState.stayAwake = !ShellState.stayAwake }
     }
     Component {
         id: motionModule
-        Tile { label: "Motion"; detail: Theme.animations ? Theme.motionPreset[0].toUpperCase() + Theme.motionPreset.slice(1) + " · " + Theme.motionSpeed.toFixed(1) + "×" : "Reduced motion"; active: Theme.animations; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
+        Tile { label: "Motion"; iconName: "refresh"; detail: Theme.animations ? Theme.motionPreset[0].toUpperCase() + Theme.motionPreset.slice(1) + " · " + Theme.motionSpeed.toFixed(1) + "×" : "Reduced motion"; active: Theme.animations; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
     }
     Component {
         id: nightLightModule
         Tile {
-            label: "Night Light"; accent: Theme.yellow
+            label: "Night Light"; iconName: "weather-sun"; accent: Theme.yellow
             readonly property var night: ShellState.snapshot.nightLight || {}
             active: !!night.active
             detail: night.error ? "Needs attention · Settings" : night.active ? (night.temperature || 4500) + " K" : ShellState.preferences.nightLightEnabled ? "Scheduled" : "Turned off"
@@ -384,9 +404,6 @@ Item {
             columns: width < 420 ? 2 : 4
             columnSpacing: 8; rowSpacing: 8
             Layout.fillWidth: true
-            LiquidButton { text: "Screen capture"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("screen"); palette.button: Theme.surface; palette.buttonText: Theme.text }
-            LiquidButton { text: "Select area"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("area"); palette.button: Theme.surface; palette.buttonText: Theme.text }
-            LiquidButton { text: "Focused window"; Layout.fillWidth: true; onClicked: ShellState.takeScreenshot("window"); palette.button: Theme.surface; palette.buttonText: Theme.text }
             LabelText { visible: (ShellState.snapshot.capture || {}).status === "pending"; text: "A capture is pending. Escape cancels niri's selector; use Cancel capture to start again."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
             LiquidButton { text: "Cancel capture"; visible: (ShellState.snapshot.capture || {}).status === "pending"; onClicked: ShellState.run("captureClose") }
             LiquidButton { text: "Settings"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("settings"); palette.button: Theme.surface; palette.buttonText: Theme.purple }
@@ -397,6 +414,9 @@ Item {
     }
     Component {
         id: overviewModule
-        LiquidButton { text: "Workspace overview"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("overview") }
+        Tile { label: "Overview"; detail: "Windows and workspaces"; iconName: "overview"; onClicked: ShellState.togglePanel("overview") }
     }
+    Component { id: screenModule; Tile { label: "Screen capture"; detail: "Capture your display"; iconName: "camera"; onClicked: ShellState.takeScreenshot("screen") } }
+    Component { id: areaModule; Tile { label: "Select area"; detail: "Choose a region"; iconName: "camera"; onClicked: ShellState.takeScreenshot("area") } }
+    Component { id: windowModule; Tile { label: "Focused window"; detail: "Capture the active window"; iconName: "overview"; onClicked: ShellState.takeScreenshot("window") } }
 }

@@ -9,6 +9,7 @@ ColumnLayout {
     spacing: 20
     readonly property var titles: ({weather: "Weather", charging: "Battery charging", wifi: "Wi-Fi", bluetooth: "Bluetooth", microphone: "Microphone", dnd: "Do not disturb", stayAwake: "Stay awake", motion: "Motion", nightLight: "Night Light", sliders: "Volume & brightness", powerProfile: "Power profile", media: "Media player", resources: "System resources", capture: "Capture & actions", overview: "Workspace overview"})
     readonly property var layout: ShellState.preferences.controlLayout || []
+    readonly property var quickIds: ["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "overview"]
     readonly property bool ready: ShellState.backendReady && !ShellState.pendingActions.setting
     function save(next) { if (ready) ShellState.run("setting", {key: "controlLayout", value: next}); }
     function move(id, index) {
@@ -22,7 +23,7 @@ ColumnLayout {
     function patch(id, changes) { save(layout.map(m => m.id === id ? Object.assign({}, m, changes) : m)); }
     SettingsCard {
         title: "Your controls, in your order"
-        description: "Drag the grip or use the arrows. Hidden cards keep their positions. Half-width cards become full-width in a narrow panel."
+        description: "Use Edit layout inside Control center to place quick controls on a 4 or 8 column canvas. Hidden controls keep their cells. Arrange detailed cards below; half-width cards become full-width in a narrow panel."
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Panel width"; Layout.fillWidth: true }
@@ -44,6 +45,7 @@ ColumnLayout {
                     anchors.fill: parent; anchors.margins: 8; spacing: 6
                     Item {
                         objectName: "controlGrip-" + row.modelData.id
+                        visible: !root.quickIds.includes(row.modelData.id)
                         Layout.preferredWidth: 26; Layout.fillHeight: true
                         LabelText { anchors.centerIn: parent; text: "⠿"; font.pixelSize: 22; color: Theme.muted }
                         MouseArea {
@@ -56,9 +58,9 @@ ColumnLayout {
                         }
                     }
                     LabelText { text: root.titles[row.modelData.id]; Layout.fillWidth: true; wrapMode: Text.Wrap; font.weight: Font.Bold; font.pixelSize: 13 }
-                    IconButton { glyph: "↑"; implicitWidth: 26; tooltip: "Move earlier"; enabled: root.ready && row.index > 0; onClicked: root.move(row.modelData.id, row.index - 1) }
-                    IconButton { glyph: "↓"; implicitWidth: 26; tooltip: "Move later"; enabled: root.ready && row.index < root.layout.length - 1; onClicked: root.move(row.modelData.id, row.index + 2) }
-                    LiquidComboBox { implicitWidth: 96; model: ["Full", "Half"]; currentIndex: row.modelData.size === "half" ? 1 : 0; enabled: root.ready; Accessible.name: root.titles[row.modelData.id] + " card size"; onActivated: root.patch(row.modelData.id, {size: currentIndex ? "half" : "full"}) }
+                    IconButton { visible: !root.quickIds.includes(row.modelData.id); glyph: "↑"; implicitWidth: 26; tooltip: "Move earlier"; enabled: root.ready && row.index > 0; onClicked: root.move(row.modelData.id, row.index - 1) }
+                    IconButton { visible: !root.quickIds.includes(row.modelData.id); glyph: "↓"; implicitWidth: 26; tooltip: "Move later"; enabled: root.ready && row.index < root.layout.length - 1; onClicked: root.move(row.modelData.id, row.index + 2) }
+                    LiquidComboBox { visible: !["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "overview"].includes(row.modelData.id); implicitWidth: 96; model: ["Full", "Half"]; currentIndex: row.modelData.size === "half" ? 1 : 0; enabled: root.ready; Accessible.name: root.titles[row.modelData.id] + " card size"; onActivated: root.patch(row.modelData.id, {size: currentIndex ? "half" : "full"}) }
                     ExpressiveSwitch { checked: row.modelData.enabled; enabled: root.ready; Accessible.name: "Show " + root.titles[row.modelData.id]; onToggled: root.patch(row.modelData.id, {enabled: checked}) }
                 }
             }

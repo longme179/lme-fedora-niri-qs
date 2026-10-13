@@ -31,8 +31,8 @@ from typing import Any
 
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
-from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
-                              appearance_profile, control_layout, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
+from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, DEFAULT_CONTROL_GRID, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
+                              appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, read_json, write_json, apply_layout, current_layout
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
@@ -62,7 +62,7 @@ DEFAULT_PREFERENCES = {
     "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused",
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
-    "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlWidth": 600,
+    "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
     "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
@@ -326,6 +326,7 @@ def validate_preference(key: str, value: Any) -> Any:
         if len(normalized) > 20: raise ValueError("Keep at most 19 custom profiles plus Dracula")
         return normalized
     if key == "controlLayout": return control_layout(value)
+    if key == "controlGrid": return control_grid(value)
     if key == "controlWidth" and type(value) is int and 480 <= value <= 900: return value
     if key == "displayLayout" and value == []: return []
     if key == "displayLayout": return validate_layout(value)

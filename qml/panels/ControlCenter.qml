@@ -9,15 +9,16 @@ import "../theme"
 GlassPanel {
     id: root
     role: "controlFill"
-    implicitWidth: ShellState.preferences.controlWidth || 600
+    implicitWidth: Math.max(ShellState.preferences.controlWidth || 600, (ShellState.preferences.controlGrid || {}).columns === 8 ? 900 : 480)
     implicitHeight: 900
     focus: true
     property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications", "System"]
+    property bool editing: false
     property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? Math.max(0, ["controls", "audio", "devices", "agenda", "notifications", "system"].indexOf(Quickshell.env("LME_SHELL_CONTROL_TAB"))) : ShellState.controlTab
-    onCurrentTabChanged: { ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); }
+    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); }
     Component.onCompleted: if (currentTab === 4) Notifications.markRead()
     Connections { target: ShellState; function onControlTabChanged() { if (root.currentTab !== ShellState.controlTab) root.currentTab = ShellState.controlTab; } }
-    Keys.onEscapePressed: ShellState.closePanels()
+    Keys.onEscapePressed: if (editing) editing = false; else ShellState.closePanels()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ControlModifier)) {
             currentTab = (currentTab + ((event.modifiers & Qt.ShiftModifier) ? tabs.length - 1 : 1)) % tabs.length;
@@ -50,11 +51,34 @@ GlassPanel {
                 Accessible.name: "Quick appearance profile"
                 onActivated: ShellState.run("appearanceApply", {name: currentText})
             }
-            LiquidButton { text: "Edit layout"; onClicked: ShellState.openSettingsPage("controlLayout") }
+            LiquidButton { objectName: "controlEdit"; visible: root.currentTab === 0; text: root.editing ? "Done" : "Edit layout"; selected: root.editing; onClicked: root.editing = !root.editing }
+        }
+        RowLayout {
+            visible: root.editing; Layout.fillWidth: true
+            LabelText { text: "Drag a tile, or focus it and use arrow keys."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }
+            LiquidButton { text: "Widgets…"; onClicked: ShellState.openSettingsPage("controlLayout") }
+        }
+        RowLayout {
+            visible: root.editing; Layout.fillWidth: true
+            LiquidComboBox {
+                objectName: "controlGridColumns"; model: ["4 columns", "8 columns"]
+                currentIndex: (ShellState.preferences.controlGrid || {}).columns === 8 ? 1 : 0
+                enabled: !ShellState.pendingActions.setting
+                Accessible.name: "Control canvas columns"
+                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize(currentIndex ? 8 : 4, (ShellState.preferences.controlGrid || {}).rows || 4)
+            }
+            LiquidComboBox {
+                objectName: "controlGridRows"; model: ["4 rows", "8 rows"]
+                currentIndex: (ShellState.preferences.controlGrid || {}).rows === 8 ? 1 : 0
+                enabled: !ShellState.pendingActions.setting
+                Accessible.name: "Control canvas rows"
+                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, currentIndex ? 8 : 4)
+            }
+            Item { Layout.fillWidth: true }
         }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: tabGrid.implicitHeight
-            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.currentTab) : null; fill: Theme.accent }
+            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.currentTab) as LiquidButton : null; fill: Theme.accent }
         GridLayout {
             id: tabGrid; anchors.fill: parent; columnSpacing: 5; rowSpacing: 5
             columns: 3
@@ -76,12 +100,13 @@ GlassPanel {
         }
         }
         Loader {
+            id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
             sourceComponent: root.currentTab === 0 ? controls : root.currentTab === 1 ? audio : root.currentTab === 2 ? devices : root.currentTab === 3 ? agenda : root.currentTab === 4 ? notices : monitor
         }
     }
     Component { id: monitor; SystemMonitor {} }
-    Component { id: controls; ControlDashboard {} }
+    Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }
     Component { id: devices; DeviceControls {} }
     Component { id: agenda; Agenda {} }

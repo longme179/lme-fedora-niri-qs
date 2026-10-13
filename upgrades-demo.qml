@@ -22,7 +22,7 @@ ShellRoot {
         Loader {
             id: view
             anchors.centerIn: parent
-            width: root.mode === "desktop" ? window.width : root.mode === "settings" ? Math.min(1160, window.width - 32) : root.mode === "control" ? Math.min(ShellState.preferences.controlWidth || 600, window.width - 32) : root.mode === "wifi" ? 560 : 700
+            width: root.mode === "desktop" ? window.width : root.mode === "settings" ? Math.min(1160, window.width - 32) : root.mode === "control" ? Math.min(Math.max(ShellState.preferences.controlWidth || 600, (ShellState.preferences.controlGrid || {}).columns === 8 ? 900 : 480), window.width - 32) : root.mode === "wifi" ? 560 : 700
             height: root.mode === "desktop" ? window.height : Math.min(window.height - 32, root.mode === "settings" ? 900 : 800)
             sourceComponent: root.mode === "desktop" ? desktop : root.mode === "settings" ? settingsView : root.mode === "launcher" ? launcher : root.mode === "wifi" ? wifi : root.mode === "notifications" ? notifications : control
         }
@@ -63,6 +63,20 @@ ShellRoot {
                 processMatches: root.find(window.contentItem, "systemMonitor") ? root.find(window.contentItem, "systemMonitor").processes.length : -1,
                 keybindMatches: root.find(window.contentItem, "keybindPage") ? root.find(window.contentItem, "keybindPage").matches.length : -1,
                 wifiPopup: root.mode === "wifi" && view.item ? view.item.connectionPopup.visible : false});
+        }
+        function controlGridState(): string {
+            const grid = root.find(window.contentItem, "controlGrid");
+            if (!grid) return "{}";
+            return JSON.stringify({editing: grid.editing, ready: grid.ready, columns: grid.columns, rows: grid.rows,
+                layout: grid.layout, width: grid.width, height: grid.height,
+                scrollY: grid.viewport ? grid.viewport.contentY : 0,
+                visible: grid.tiles.filter(t => grid.shown(t.id)).map(t => t.id),
+                saved: ShellState.preferences.controlGrid, dnd: Notifications.dnd,
+                slots: grid.tiles.map(t => {
+                    const item = root.find(grid, "controlTile-" + t.id);
+                    const loaded = item ? item.children.find(child => child.item)?.item : null;
+                    return item ? {id: t.id, width: item.width, height: item.height, x: item.x, y: item.y, focus: item.activeFocus, opacity: loaded ? loaded.opacity : 0} : {id: t.id};
+                })});
         }
         function themeState(): string {
             const button = root.find(window.contentItem, "elementPreviewButton"), feedback = button ? root.find(button, "liquidFeedback") : null;

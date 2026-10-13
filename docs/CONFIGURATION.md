@@ -214,9 +214,25 @@ capture bitmap thumbnails. Its Live preview button opens the native overview.
 
 ## Control center
 
-The panel is 600 px wide at the target resolution, clamped to the output's
-available space. Press `Ctrl+Tab` or `Ctrl+Shift+Tab` to cycle tabs, and Escape
-to close. Scroll the Controls and Devices tabs for lower actions.
+The panel normally starts at 600 px, clamped to the output's available space.
+An eight-column canvas requests at least 900 px so its labels remain readable.
+Press `Ctrl+Tab` or `Ctrl+Shift+Tab` to cycle tabs. Escape leaves Edit mode first,
+then closes the popup. Scroll the Controls and Devices tabs for lower actions.
+
+In Controls, **Edit layout** enables the quick-control canvas. Choose four or
+eight columns and four or eight rows, then drag controls onto a cell. Toggle-only
+controls occupy 1×1; Wi-Fi, Overview and capture actions occupy 2×1. Occupied drops
+reposition affected controls without overlap. Dropping outside the canvas cancels;
+arrow keys move a focused control and dragging near a viewport edge scrolls.
+Edit mode blocks actions, including the detailed cards and Lock button.
+
+Each valid drop saves automatically in `controlGrid`, including preset export and
+backup/restore. Changing columns repacks controls; increasing rows preserves their
+positions. **Reset grid** resets only quick-control positions. Hidden controls
+reserve their cells so enabling them restores their positions. Empty trailing rows
+collapse outside Edit mode. **Widgets…** opens Settings for visibility and detailed
+card ordering/sizing; weather, charging, sliders, media and recording retain their
+natural card height below the canvas.
 
 | Tab | Controls |
 | --- | --- |

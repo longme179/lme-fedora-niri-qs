@@ -36,7 +36,7 @@ without editing QML.
 | --- | --- |
 | **A bar you can arrange** | Enable, reorder and move modules; choose connected or separate pills, top/bottom placement and edge distances. Ordered workspaces and a tray dropdown keep the bar compact. |
 | **An Activity island** | Expand media controls, focus/break timer, stopwatch and owned recording controls. Real Cava spectrum follows playback. |
-| **A modular Control Center** | Rearrange, resize or hide cards. Connect to Wi-Fi, manage Bluetooth devices, mix audio, adjust brightness and select power profiles. |
+| **A modular Control Center** | Edit a 4×4, 8×4 or 8×8 quick-control canvas directly in the popup. Drag toggles and actions, and arrange or hide detailed cards. Connect to Wi-Fi, manage Bluetooth devices, mix audio and adjust brightness. |
 | **A useful launcher** | Fuzzy app search, favorites, calculator, emoji, open windows and bounded file/folder search. |
 | **Everyday tools** | Clipboard text/images with search and pins; grouped, persistent notifications; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |

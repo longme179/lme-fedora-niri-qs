@@ -88,6 +88,11 @@ Item {
                     ctx.beginPath(); ctx.arc(12, 19, r, Math.PI * 1.25, Math.PI * 1.75); ctx.stroke();
                 }
                 ctx.beginPath(); ctx.arc(12, 19, 1, 0, Math.PI * 2); ctx.fill();
+            } else if (root.name === "bluetooth") {
+                ctx.beginPath(); ctx.moveTo(6,7); ctx.lineTo(18,17); ctx.lineTo(12,22); ctx.lineTo(12,2); ctx.lineTo(18,7); ctx.lineTo(6,17); ctx.stroke();
+            } else if (root.name === "microphone") {
+                ctx.beginPath(); ctx.roundedRect(8,2,8,13,4,4); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(5,10); ctx.lineTo(5,12); ctx.bezierCurveTo(5,21,19,21,19,12); ctx.lineTo(19,10); ctx.moveTo(12,19); ctx.lineTo(12,23); ctx.moveTo(8,23); ctx.lineTo(16,23); ctx.stroke();
             } else if (root.name === "audio") {
                 ctx.beginPath(); ctx.moveTo(3, 9); ctx.lineTo(7, 9); ctx.lineTo(12, 5); ctx.lineTo(12, 19); ctx.lineTo(7, 15); ctx.lineTo(3, 15); ctx.closePath(); ctx.stroke();
                 for (const r of [5, 9]) { ctx.beginPath(); ctx.arc(12, 12, r, -0.8, 0.8); ctx.stroke(); }

@@ -150,3 +150,15 @@ Matugen's scheme/mode/contrast CLI was inspected at
 `9f8c7fd583e44310a642772ff8f13b693949baf2` (4.2.0), with its actual GPLv2 LICENSE.
 It remains an external optional dependency; no Matugen code is redistributed.
 The integration uses an isolated template-free configuration and dry-run output.
+
+The quick-control canvas adapts the rectangle overlap test from DankMaterialShell
+[Common/GridLayout.js](https://github.com/AvengeMedia/DankMaterialShell/blob/d041ffccb0c95f2a4fd5a5d7e75512ce69cfa13d/quickshell/Common/GridLayout.js)
+at `d041ffccb0c95f2a4fd5a5d7e75512ce69cfa13d`, Copyright (c) 2025 Avenge Media LLC,
+MIT. The adapted JS retains that header; the full license is in
+[third_party/DankMaterialShell-LICENSE](third_party/DankMaterialShell-LICENSE).
+`Widgets/DEditableGridSlot.qml` informed the raised edit layer and input isolation;
+its implementation is not copied. iNiR `modules/sidebarRight/quickToggles/AndroidQuickPanel.qml`
+at `48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3) informed the one/two-cell
+controls. Noctalia's C++ Control Center at `b6d1c44d44ebaafcc218b9b2e69d8c626278fdbf`
+(MIT) was inspected but no C++ code was ported. These references were cloned
+outside LME's checkout; they add no new runtime dependency.

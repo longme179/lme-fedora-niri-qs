@@ -21,6 +21,9 @@ DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,
                    "density": "comfortable", "animations": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS}
 CONTROL_MODULES = ("weather", "charging", "wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "sliders", "powerProfile", "media", "resources", "capture", "overview")
 DEFAULT_CONTROL_LAYOUT = [{"id": key, "enabled": True, "size": "half" if key in {"wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight"} else "full"} for key in CONTROL_MODULES]
+CONTROL_TILES = json.loads((Path(__file__).resolve().parents[1] / 'config/control-grid.json').read_text())
+CONTROL_SPANS = {tile['id']: tile['cols'] for tile in CONTROL_TILES}
+DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': 4, 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
@@ -96,6 +99,26 @@ def control_layout(value):
         seen.add(item["id"])
         result.append(dict(item))
     return result
+
+
+def control_grid(value):
+    if (not isinstance(value, dict) or set(value) != {'columns', 'rows', 'tiles'}
+            or type(value['columns']) is not int or value['columns'] not in (4, 8)
+            or type(value['rows']) is not int or value['rows'] not in (4, 8)):
+        raise ValueError('Choose a 4 or 8 column canvas with 4 or 8 rows')
+    if not isinstance(value['tiles'], list) or len(value['tiles']) != len(CONTROL_SPANS):
+        raise ValueError('Include every quick control exactly once')
+    occupied, seen = set(), set()
+    for tile in value['tiles']:
+        if (not isinstance(tile, dict) or set(tile) != {'id', 'col', 'row'}
+                or not isinstance(tile['id'], str) or tile['id'] not in CONTROL_SPANS or tile['id'] in seen
+                or type(tile['col']) is not int or type(tile['row']) is not int
+                or not 0 <= tile['col'] <= value['columns'] - CONTROL_SPANS[tile['id']] or not 0 <= tile['row'] < value['rows']):
+            raise ValueError('Quick controls must fit within the canvas')
+        cells = {(tile['row'], col) for col in range(tile['col'], tile['col'] + CONTROL_SPANS[tile['id']])}
+        if occupied & cells: raise ValueError('Quick controls cannot overlap')
+        occupied |= cells; seen.add(tile['id'])
+    return {**value, 'tiles': [dict(tile) for tile in value['tiles']]}
 
 
 def wallpaper_library(raw):

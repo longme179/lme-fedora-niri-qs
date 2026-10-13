@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Edit quick controls directly in the Control Center with a 4/8 column and 4/8
+  row canvas. Snap drag/drop, collision handling, keyboard movement and edge
+  scrolling save atomically; Edit mode blocks actions. Keep detailed cards and
+  their visibility/size settings, and include canvas layout in portable presets.
 - Stop clipboard watchers even when Quickshell kills their Python service during
   reload. Reuse the existing Linux parent-death supervisor instead of leaving
   orphan capture processes behind.

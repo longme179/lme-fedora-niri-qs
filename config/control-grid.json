@@ -1,0 +1,101 @@
+[
+  {
+    "id": "wifi",
+    "title": "Wi-Fi",
+    "icon": "wifi",
+    "cols": 2,
+    "col": 0,
+    "row": 0,
+    "module": "wifi"
+  },
+  {
+    "id": "bluetooth",
+    "title": "Bluetooth",
+    "icon": "bluetooth",
+    "cols": 1,
+    "col": 2,
+    "row": 0,
+    "module": "bluetooth"
+  },
+  {
+    "id": "microphone",
+    "title": "Microphone",
+    "icon": "microphone",
+    "cols": 1,
+    "col": 3,
+    "row": 0,
+    "module": "microphone"
+  },
+  {
+    "id": "dnd",
+    "title": "Do not disturb",
+    "icon": "bell-off",
+    "cols": 1,
+    "col": 0,
+    "row": 1,
+    "module": "dnd"
+  },
+  {
+    "id": "stayAwake",
+    "title": "Stay awake",
+    "icon": "clock",
+    "cols": 1,
+    "col": 1,
+    "row": 1,
+    "module": "stayAwake"
+  },
+  {
+    "id": "motion",
+    "title": "Motion",
+    "icon": "refresh",
+    "cols": 1,
+    "col": 2,
+    "row": 1,
+    "module": "motion"
+  },
+  {
+    "id": "nightLight",
+    "title": "Night Light",
+    "icon": "weather-sun",
+    "cols": 1,
+    "col": 3,
+    "row": 1,
+    "module": "nightLight"
+  },
+  {
+    "id": "overview",
+    "title": "Overview",
+    "icon": "overview",
+    "cols": 2,
+    "col": 0,
+    "row": 2,
+    "module": "overview"
+  },
+  {
+    "id": "captureScreen",
+    "title": "Screen capture",
+    "icon": "camera",
+    "cols": 2,
+    "col": 2,
+    "row": 2,
+    "module": "capture"
+  },
+  {
+    "id": "captureArea",
+    "title": "Select area",
+    "icon": "camera",
+    "cols": 2,
+    "col": 0,
+    "row": 3,
+    "module": "capture"
+  },
+  {
+    "id": "captureWindow",
+    "title": "Focused window",
+    "icon": "overview",
+    "cols": 2,
+    "col": 2,
+    "row": 3,
+    "module": "capture"
+  }
+]

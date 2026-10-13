@@ -1,5 +1,37 @@
 # Validation and platform limits
 
+## Editable Control Center and clipboard ownership — 2026-10-13
+
+`scripts/check.sh` passed **211 tests, no skips**, with all private Wayland
+opt-ins and the portable Matugen 4.2.0 check enabled. An initial run found that
+the previous `/tmp` Matugen binary was absent after environment restoration;
+the checksum-verified portable binary was restored and the full run passed.
+No system package was installed. After final icon/edit-contrast adjustments,
+all **six related native grid/upgrade checks** passed again. Changed QML files
+passed qmllint without warnings; Python compilation, Bash syntax, demo state
+and diff checks passed.
+
+The QML engine tested **4,392 legal drop scenarios** across 4/8 columns and
+4/8 rows, with no overlap or out-of-bounds placement. Real pointer/keyboard
+tests use a private Settings backend: drag an occupied cell, cancel an outside
+drop, block DND during editing, preserve readable edit opacity, resize, move to
+the last row with focus scrolling, hide a control and restart to read the same
+saved layout from disk. Validator tests reject malformed/overlapping data before
+writing and round-trip the layout through portable presets. The earlier card
+editor, responsive controls, launcher, Wi-Fi and notification checks still pass.
+480 px and 900 px panels, including 8×8 editing, were rendered and inspected.
+
+The native clipboard regression reproduced watchers surviving a SIGKILL before
+the fix, then verified both terminate after it. Text/image capture, copy, pause
+and settings disable/enable checks also pass. Existing orphans from older
+versions are not killed automatically; log out/in once to clear them.
+
+These checks use Quickshell 0.3.2 / Qt 6.8.2 on private software-rendered Sway.
+Live niri edge-drag behavior, hardware toggles and 120 Hz GPU motion still need
+the owner's session. Detailed cards remain below the quick-control canvas,
+with their existing visibility, order and size settings. See
+[the review and manual checklist](CODE_REVIEW.md).
+
 ## Noninteractive Matugen generation — 2026-10-13
 
 Reproduced the reported multiple-source-color/no-terminal error with the real

@@ -12,13 +12,12 @@
   <a href="#installation">Install</a> · <a href="#features">Features</a> · <a href="#make-it-yours">Personalize</a> · <a href="#documentation">Documentation</a> · <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-[![Watch the maintainer’s LME Shell demo — Activity island with media and timers over the blurred desktop](docs/media/demo-2.0.png)](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)
+[![Watch the maintainer’s LME Shell demo — Control Center over the blurred desktop](docs/media/demo.png)](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)
 
-**[▶ Watch the demo](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=0)** · [Download the original MP4](https://www.dropbox.com/scl/fi/k49ecqpegw4wugxeti9e5/Recording-20261012-212816-b_ljs2h1.mp4?rlkey=wheqf766q9nw2u6eyljpr8qs6&st=cxkenwuw&dl=1)
+**[▶ Watch the demo](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)** · [View the original post](https://github.com/longme179/lme-fedora-niri-qs/issues/1)
 
 The preview comes from the maintainer's recording, with a customized layout.
-Click it to watch the 65-second demo in Dropbox; the original 1080p MP4 is also
-available through the original MP4 link above.
+Click it to watch the 71-second, 720p demo hosted on GitHub.
 
 LME is built with **Quickshell and QML/Qt Quick**. A modular bar, an expandable
 Activity island and a standalone Settings app put everyday desktop controls

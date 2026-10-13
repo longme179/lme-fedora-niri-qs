@@ -31,6 +31,8 @@ ShellRoot {
     id: fixture
     property var lastExit: ({})
     property var lastRetarget: ({})
+    property var lastContentChange: ({})
+    property bool alternate: false
     Component.onCompleted: Quickshell.watchFiles = false
     OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
     FloatingWindow {
@@ -38,10 +40,12 @@ ShellRoot {
         PopupBackdrop { id: backdrop; anchors.fill: parent; shown: popup.shown || island.expanded }
         SlideLoader { id: popup; x: 20; y: 300; width: 200; height: 180; shown: false; exitToEdge: true
             onActiveChanged: if (!active && !shown) fixture.lastExit = mapToItem(window.contentItem, 0, 0, width, height)
-            content: GlassPanel {} }
+            content: fixture.alternate ? alternateContent : mainContent }
         ActivityIsland { id: island }
         MorphShape { id: shape; x: 500; y: 20; width: 50; height: 50; shape: "flower"; color: "transparent"; strokeColor: "red"; strokeWidth: 2 }
     }
+    Component { id: mainContent; GlassPanel {} }
+    Component { id: alternateContent; GlassPanel {} }
     IpcHandler {
         target: "popupTest"
         function state(): string {
@@ -49,6 +53,7 @@ ShellRoot {
                 dx: popup.offsetX, dy: popup.offsetY, outside: popup.outsideViewport, dim: backdrop.amount,
                 lastExit: fixture.lastExit, viewportWidth: window.width, viewportHeight: window.height, deformation: Theme.deformation,
                 lastRetarget: fixture.lastRetarget,
+                lastContentChange: fixture.lastContentChange,
                 spring: Theme.springMotion, animations: Theme.animations,
                 osdVisible: osd.visible,
                 islandVisible: island.visible, islandMounted: island.mounted, islandProgress: island.progress,
@@ -63,6 +68,11 @@ ShellRoot {
             popup.direction = edge === "top" ? "up" : edge === "bottom" ? "down" : "right";
             popup.x = edge === "left" ? 16 : edge === "right" ? window.width - popup.width - 16 : (window.width - popup.width) / 2;
             popup.y = edge === "top" ? 16 : edge === "bottom" ? window.height - popup.height - 16 : (window.height - popup.height) / 2;
+        }
+        function swapContent(): void {
+            const before = popup.progress;
+            fixture.alternate = !fixture.alternate;
+            fixture.lastContentChange = {before, after: popup.progress};
         }
         function setting(key: string, value: string): void { ShellState.run("setting", {key, value: JSON.parse(value)}); }
         function activity(open: bool): void { ShellState.activityOpen = open; }
@@ -102,6 +112,16 @@ ShellRoot {
                     wait(lambda s: s.get("ready"))
                     setting("motionPreset", "jelly"); setting("motionBounce", 1)
                     wait(lambda s: s["deformation"] == .09)
+                    ipc("setOpen", "true")
+                    wait(lambda s: 0 < s["progress"] < 1)
+                    ipc("swapContent")
+                    changed = json.loads(ipc("state"))["lastContentChange"]
+                    self.assertAlmostEqual(changed["before"], changed["after"], delta=.001, msg="Changing popup content must not restart its entrance")
+                    wait(lambda s: s["progress"] == 1)
+                    ipc("swapContent")
+                    changed = json.loads(ipc("state"))["lastContentChange"]
+                    self.assertEqual(changed, {"before": 1, "after": 1})
+                    ipc("setOpen", "false"); wait(lambda s: not s["active"])
                     for spring in (True, False):
                         setting("springMotion", spring); wait(lambda s: s["spring"] == spring)
                         for edge in ("left", "right", "top", "bottom"):

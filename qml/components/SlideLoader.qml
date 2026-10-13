@@ -8,6 +8,7 @@ Loader {
     property Component retainedContent
     property string direction: "right"
     property bool exitToEdge: false
+    property bool animateResize: true
     property string exitEdge: "nearest"
     property real exitX: 0
     property real exitY: 0
@@ -23,6 +24,8 @@ Loader {
     active: mounted
     enabled: shown
     sourceComponent: retainedContent
+    Behavior on width { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
+    Behavior on height { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
     transform: [
         Translate { x: root.offsetX; y: root.offsetY },
         Scale {
@@ -74,21 +77,21 @@ Loader {
     onOutsideViewportChanged: if (outsideViewport) Qt.callLater(finishClose)
     function replay() { if (Theme.springMotion) spring.snapTo(0); else progress = 0; move(shown ? 1 : 0); }
     onShownChanged: { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
-    onContentChanged: if (shown) { retainedContent = content; replay(); }
+    onContentChanged: if (shown) { retainedContent = content; if (!mounted) move(1); }
     Component.onCompleted: if (shown) { retainedContent = content; move(1); }
     onLoaded: {
         const panel = item as Item;
         if (panel && shown) panel.forceActiveFocus();
-        if (shown) replay();
+        if (shown) move(1);
     }
     SpringMotion {
         id: spring; enabled: Theme.springMotion
-        stiffness: 280 * Theme.motionSpeed * Theme.motionSpeed
-        damping: (Theme.motionPreset === "smooth" ? 34 : 32 - 12 * Theme.motionBounce) * Theme.motionSpeed
+        stiffness: Theme.springStiffness(true)
+        damping: Theme.springDamping(true)
         positionEpsilon: .001; velocityEpsilon: .001
         onRunningChanged: if (!running) Qt.callLater(root.finishClose)
     }
-    SpringMotion { id: exitSpringX; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: 34 * Theme.motionSpeed; onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
+    SpringMotion { id: exitSpringX; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: 2 * Math.sqrt(stiffness); onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
     SpringMotion { id: exitSpringY; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: exitSpringX.damping; onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
     MotionAnimation { id: exitMotionX; target: root; property: "exitX"; duration: Math.round(200 / Theme.motionSpeed); easing.bezierCurve: Theme.exitCurve; onFinished: root.finishClose() }
     MotionAnimation { id: exitMotionY; target: root; property: "exitY"; duration: exitMotionX.duration; easing.bezierCurve: Theme.exitCurve; onFinished: root.finishClose() }

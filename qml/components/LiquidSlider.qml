@@ -26,15 +26,20 @@ Slider {
         }
     }
     handle: Rectangle {
+        id: thumb
+        readonly property real targetWidth: root.pressed ? 4 : 6
+        readonly property real targetHeight: root.hovered && Theme.animations ? 32 : 28
+        MotionValue { id: widthMotion; target: thumb.targetWidth }
+        MotionValue { id: heightMotion; target: thumb.targetHeight }
         x: root.leftPadding + root.visualPosition * (root.availableWidth - width)
         y: root.topPadding + root.availableHeight / 2 - height / 2
-        width: root.pressed ? 4 : 6
-        height: root.hovered && Theme.animations ? 32 : 28
+        width: Theme.springMotion ? widthMotion.value : targetWidth
+        height: Theme.springMotion ? heightMotion.value : targetHeight
         radius: 3
         color: root.palette.highlight
         border.width: root.visualFocus ? 2 : 0
         border.color: Theme.text
-        Behavior on width { MotionAnimation {} }
-        Behavior on height { MotionAnimation {} }
+        Behavior on width { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
+        Behavior on height { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
     }
 }

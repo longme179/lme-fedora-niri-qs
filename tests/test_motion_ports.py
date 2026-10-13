@@ -25,6 +25,7 @@ ShellRoot {
     Component.onCompleted: Quickshell.watchFiles = false
     OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
     SpringMotion { id: spring; driver.running: false }
+    MotionValue { id: follow; target: fixture.nextTarget; driver.running: false }
     IpcHandler {
         target: "test"
         function check(): string {
@@ -54,12 +55,17 @@ ShellRoot {
             const second=OSDManager.entries[Quickshell.screens[0].name];
             const output=first && second && first.sequence<second.sequence && second.value===86 && osd.open;
             fixture.nextTarget=1;
+            for(let i=0;i<10;i++) follow.advance(1/120);
+            const followingValue=follow.value, followingVelocity=follow.velocity;
             const began=boundSpring.running;
             for(let i=0;i<1800 && boundSpring.running;i++) boundSpring.advance(1/120);
             fixture.nextTarget=-1;
+            const following=follow.value===followingValue && follow.velocity===followingVelocity && followingVelocity>0;
+            for(let i=0;i<1800 && follow.running;i++) follow.advance(1/120);
+            const followingSettled=follow.value===-1 && !follow.running;
             const bound=began && boundSpring.running && boundSpring.value===1;
             const profileEqual=Theme.settingsEqual({font:{body:"Roboto",bar:"Mono"}},{font:{bar:"Mono",body:"Roboto"}}) && !Theme.settingsEqual({motion:1},{motion:2});
-            return JSON.stringify({preserved,converged,reduced,finite,privacy,output,bound,profileEqual});
+            return JSON.stringify({preserved,converged,reduced,finite,privacy,output,bound,profileEqual,following,followingSettled});
         }
     }
 }""")
@@ -73,5 +79,5 @@ ShellRoot {
                         except ValueError: time.sleep(.1); continue
                         break
                     log.seek(0)
-                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True,'output':True,'bound':True,'profileEqual':True},log.read())
+                    self.assertEqual(result,{'preserved':True,'converged':True,'reduced':True,'finite':True,'privacy':True,'output':True,'bound':True,'profileEqual':True,'following':True,'followingSettled':True},log.read())
                 finally: process.terminate();process.wait(timeout=5)

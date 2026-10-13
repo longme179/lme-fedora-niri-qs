@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Extend the existing frame-clock spring to shared hover/corner feedback, switch
+  thumbs, slider handles and stretching tab indicators. Centralize preset tuning;
+  preserve velocity on target changes and keep indicators/thumbs within bounds.
+- Continue popup motion when its content changes, tween open-panel sizes and
+  unify Island sizing with the same springs. Animate font menus/dropdowns, use
+  monotonic color/hover easing and restore active icon tint. Retain reduced motion
+  and curve-based fallback without adding runtime dependencies.
 - Align Launcher/Wallpaper hover feedback with their selected card corners.
   Flat hit targets stay inside their frames; scroll gutters protect first/last
   rows and full-width Font Picker, Audio and Devices controls from clipping.

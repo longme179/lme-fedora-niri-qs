@@ -15,6 +15,7 @@ SlideLoader {
     readonly property real expandedHeight: Math.min(panel ? panel.implicitHeight : 680, parent ? parent.height - 36 : 680)
     shown: expanded
     exitToEdge: true
+    animateResize: false
     direction: Theme.barBottom ? "up" : "down"
     visible: mounted
     width: Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion
@@ -23,8 +24,8 @@ SlideLoader {
     y: Theme.barBottom && parent ? parent.height - Theme.barTopMargin - 6 - height : Theme.barTopMargin + 6
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    SpringMotion { id: widthSpring; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion; stiffness: 280 * Theme.motionSpeed * Theme.motionSpeed; damping: (32 - 12 * Theme.motionBounce) * Theme.motionSpeed; onTargetChanged: { if (root.mounted) retarget(target); else snapTo(target); } }
-    SpringMotion { id: heightSpring; value: 30; target: root.mounted ? root.expandedHeight : 30; enabled: Theme.springMotion; stiffness: widthSpring.stiffness; damping: widthSpring.damping; onTargetChanged: { if (root.mounted) retarget(target); else snapTo(target); } }
+    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }
+    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted }
     content: GlassPanel { role: "islandFill";
         implicitHeight: card.implicitHeight + 76
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true

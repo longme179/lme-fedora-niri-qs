@@ -22,7 +22,7 @@ Item {
     property real rippleOpacity: 0
     readonly property bool animating: expand.running || release.running
     anchors.fill: parent
-    Behavior on hoverAmount { MotionAnimation { duration: Theme.animationDuration } }
+    Behavior on hoverAmount { NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve } }
     Rectangle { anchors.fill: parent; radius: root.radius; color: "transparent"; border.width: 1; border.color: Theme.alpha(root.ink, root.hoverAmount * .28) }
     ShaderEffect {
         visible: !root.software && root.rippleOpacity > 0

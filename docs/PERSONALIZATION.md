@@ -68,19 +68,32 @@ implemented in this release.
 
 ## Motion
 
-Smooth, Expressive and Jelly retain the speed/bounce controls in Appearance.
-Buttons and icons now scale and morph their corners on hover/press. A bounded
-flat ripple expands on press, holds while pressed and fades after release.
-Workspace pills animate their active width. Settings pages enter with the shared
-slide motion. Desktop panels retain their content during exit and support
-reopening during that transition without snapping their position.
+**Settings → Appearance** offers Smooth, Expressive and Jelly with speed/bounce
+controls. **Spring motion** applies the existing frame-clock spring to hover
+scale, button corners, switch thumbs, slider handles, tab indicators and popup/
+Island geometry. Changing a target preserves position and velocity. Smooth uses
+critical damping; Expressive and Jelly add progressively more bounce. Turning
+Spring motion off keeps the curve-based transitions.
 
-Spatial motion uses overshooting expressive curves; effects use a separate
-non-overshooting curve. Turning Motion off stops these transitions and places
-controls/panels immediately. Feedback has no continuously running idle animation
-and adds no shader, font asset or runtime package. Native compositor blur remains
-the existing niri 26.04 mechanism; it does not substitute the wallpaper for live
-applications. See [upstream motion attribution](../THIRD_PARTY.md).
+Tab indicators stretch toward the next choice and follow the selected button's
+hover/press shape. Switch thumbs and indicators stay inside their tracks. Slider
+values follow the pointer directly; only the handle's shape animates. Flat list
+hit targets keep the selected card's corners and size, and scroll gutters keep
+feedback clear of clipped edges.
+
+Desktop panels retain their content during exit, travel toward the nearest
+screen edge and can reverse before closing. Switching between popup contents
+continues the current entrance instead of replaying it. Size changes tween once
+the panel is nearly open; the Island uses its own size springs. Font menus and
+dropdowns have a short entrance and exit. Settings pages keep the shared slide
+transition.
+
+Colors, opacity and ripple feedback use non-overshooting effects easing. Turning
+Motion off stops transitions and places controls/panels immediately. Idle spring
+drivers stop, and these changes add no runtime package. Native compositor blur
+remains the existing niri 26.04 mechanism; it does not substitute the wallpaper
+for live applications. Its radius still changes immediately; backdrop dimming
+animates. See [upstream motion attribution](../THIRD_PARTY.md).
 
 ## Extending the theme
 

@@ -19,6 +19,6 @@ TextField {
         border.width: root.activeFocus ? 2 : 1
         border.color: root.activeFocus ? Theme.accent : Theme.outlineVariant
         Behavior on radius { MotionAnimation {} }
-        Behavior on border.color { ColorAnimation { duration: Theme.animationDuration } }
+        Behavior on border.color { ColorMotion {} }
     }
 }

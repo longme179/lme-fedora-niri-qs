@@ -29,7 +29,7 @@ ComboBox {
         color: root.down ? Qt.lighter(root.palette.button, 1.18) : root.hovered && root.enabled ? Qt.lighter(root.palette.button, 1.1) : root.palette.button
         border.width: root.visualFocus ? 2 : 1
         border.color: root.visualFocus ? Theme.accent : Theme.alpha(Theme.border, root.enabled ? 0.65 : 0.35)
-        Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
+        Behavior on color { ColorMotion {} }
         Behavior on radius { MotionAnimation {} }
         LiquidFeedback { id: feedback; hovered: root.hovered; pressed: root.down; radius: parent.radius }
     }
@@ -82,6 +82,7 @@ ComboBox {
         background: Rectangle {
             radius: 8
             color: option.highlighted || option.hovered ? Theme.alpha(Theme.accent, 0.24) : root.currentIndex === option.index ? Theme.alpha(Theme.accent, 0.12) : "transparent"
+            Behavior on color { ColorMotion {} }
         }
         contentItem: Text {
             text: option.text
@@ -109,6 +110,11 @@ ComboBox {
         width: Math.max(root.width, 176)
         implicitHeight: Math.min(menuList.contentHeight + topPadding + bottomPadding, 300)
         padding: 6
+        enter: Transition { ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
+            NumberAnimation { property: "scale"; from: .97; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
+        } }
+        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Math.round(120 / Theme.motionSpeed) * (Theme.animations ? 1 : 0); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve } }
         // Keep the menu inside the shell's surface, independent of the system Qt style.
         popupType: Popup.Item
 

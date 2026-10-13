@@ -47,12 +47,14 @@ Item {
         opacity: root.editing || enabled ? 1 : .35
         Accessible.name: label + ": " + detail
         background: Rectangle {
-            radius: tile.active ? 24 : 16
+            MotionValue { id: tileRadius; target: tile.active ? 24 : 16 }
+            radius: Theme.springMotion ? tileRadius.value : tile.active ? 24 : 16
             color: tile.active ? Theme.mix(Theme.panel, tile.accent, tile.hovered ? 0.38 : 0.28) : Theme.surfaceContainerHigh
             border.color: tile.activeFocus ? tile.accent : tile.active ? Theme.alpha(tile.accent, 0.48) : Theme.border
             border.width: 1
             opacity: root.editing || tile.enabled ? 1 : 0.5
-            Behavior on radius { MotionAnimation {} }
+            Behavior on radius { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
+            Behavior on color { ColorMotion {} }
         }
         contentItem: GridLayout {
             columns: tile.width < 150 ? 1 : 2; rowSpacing: 5; columnSpacing: 10

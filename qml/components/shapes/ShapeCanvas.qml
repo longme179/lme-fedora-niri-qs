@@ -55,11 +55,7 @@ Canvas {
     // into them. Match the shell.
     Behavior on color {
         enabled: Theme.animations
-        animation: ColorAnimation {
-            duration: Theme.animationDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Theme.effectsCurve
-        }
+        animation: ColorMotion {}
     }
 
     onWidthChanged: requestPaint()

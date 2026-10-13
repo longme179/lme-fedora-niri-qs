@@ -1,5 +1,49 @@
 # Validation and platform limits
 
+## Launcher feedback and shared spring motion — 2026-10-13
+
+`scripts/check.sh` passed **229 tests, no skips**, with all private Wayland
+opt-ins and portable Matugen 4.2.0 enabled. The 17 changed/new production motion
+QML files passed qmllint without warnings using the private Quickshell import
+path. Python compilation, Bash syntax, demo state and diff checks passed. No
+system package was installed.
+
+The Launcher previously drew a rounded selected row beneath a capsule-shaped,
+scaled transparent hit target. Native pointer tests now verify matching 16 px
+corners, scale 1 and first-row scroll gutters during hover and press. The same
+flat feedback fix applies to wallpaper tiles; Font Picker, Audio and Devices
+controls gain space inside their scroll viewports. Launcher, Control Center and
+Settings renders were inspected after the changes.
+
+The shared spring follows a changed target without resetting value or velocity
+and settles exactly, including deterministic 120 Hz stepping. Real pointer
+checks cover tab fill alignment through offset, resize, hover and press, and
+reduced motion. Popup checks cover content replacement both during entrance and
+fully open, rapid close/reopen, all four exit edges, spring/curve fallback,
+backdrop dimming, Island/OSD lifecycle and motion disabled. Existing Settings,
+grid drag/drop, clipboard, notification and capture-window checks also pass.
+
+An initial full run had four window-discovery failures: the private environment
+paired one Sway instance's Wayland display with the other instance's IPC socket.
+Unix peer credentials confirmed the mismatch. The private helper now pairs them
+by compositor PID; the affected checks and subsequent full suite passed. This
+changed no shell code or host-session configuration.
+
+On the target desktop, check the following under **Settings → Appearance**:
+
+- Hover and press Launcher rows and installed-font options, including the first
+  and last visible rows. Their feedback should stay inside a single outline.
+- Switch Control Center/Settings tabs rapidly, interrupt popup exits by reopening,
+  and switch between popup contents while opening. Motion should continue from
+  the current position.
+- Compare Smooth, Expressive and Jelly, then turn Spring motion and Motion off
+  separately. Slider values should follow the pointer immediately in every mode.
+
+Tests/rendering use Quickshell 0.3.2, Qt 6.8.2 and software-rendered private Sway.
+The 120 Hz spring stepping is a logic check, not a GPU/frame-pacing benchmark.
+Live Fedora/niri/Radeon smoothness and native compositor blur remain unmeasured;
+blur radius is still binary while the existing dim layer animates.
+
 ## Clipboard/screenshot annotation and Favorites removal — 2026-10-13
 
 `scripts/check.sh` discovered **228 tests: 204 passed, 24 skipped**, with private

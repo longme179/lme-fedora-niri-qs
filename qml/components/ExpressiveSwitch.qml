@@ -17,14 +17,19 @@ Switch {
         opacity: root.enabled ? 1 : 0.4
         LiquidFeedback { hovered: root.hovered; pressed: root.down; radius: 16 }
         Rectangle {
-            width: root.checked || root.down ? 24 : 16; height: width; radius: width / 2
-            x: root.checked ? parent.width - width - 4 : 8
+            id: thumb
+            readonly property real targetWidth: root.checked || root.down ? 24 : 16
+            readonly property real targetX: root.checked ? parent.width - targetWidth - 4 : 8
+            MotionValue { id: sizeMotion; target: thumb.targetWidth }
+            MotionValue { id: positionMotion; target: thumb.targetX }
+            width: Theme.springMotion ? sizeMotion.value : targetWidth; height: width; radius: width / 2
+            x: Math.max(4, Math.min(parent.width - width - 4, Theme.springMotion ? positionMotion.value : targetX))
             y: (parent.height - height) / 2
             color: root.checked ? Theme.switchThumb : Theme.muted
             Text { anchors.centerIn: parent; text: "✓"; visible: root.checked; color: Theme.accent; font.pixelSize: 15; font.family: Theme.fontFamily; font.bold: true }
-            Behavior on x { MotionAnimation {} }
-            Behavior on width { MotionAnimation {} }
+            Behavior on x { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
+            Behavior on width { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
         }
-        Behavior on color { ColorAnimation { duration: Theme.animationDuration } }
+        Behavior on color { ColorMotion {} }
     }
 }

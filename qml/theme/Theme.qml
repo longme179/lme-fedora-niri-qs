@@ -133,6 +133,13 @@ QtObject {
     readonly property var effectsCurve: [.34, .8, .34, 1, 1, 1]
     readonly property var exitCurve: [.3, 0, .8, .15, 1, 1]
     readonly property real deformation: animations && motionPreset === "jelly" ? .09 * motionBounce : 0
+    function springStiffness(large) {
+        return (large ? 560 : 880) * (motionPreset === "jelly" ? .8 : 1) * motionSpeed * motionSpeed;
+    }
+    function springDamping(large) {
+        const ratio = motionPreset === "smooth" ? 1 : motionPreset === "jelly" ? .72 - .25 * motionBounce : .86 - .22 * motionBounce;
+        return 2 * Math.sqrt(springStiffness(large)) * ratio;
+    }
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity * color.a); }
     function mix(a, b, amount) { return Qt.rgba(a.r * (1 - amount) + b.r * amount, a.g * (1 - amount) + b.g * amount, a.b * (1 - amount) + b.b * amount, 1); }
     function loadPalette() {

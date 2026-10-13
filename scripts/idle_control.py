@@ -151,10 +151,10 @@ def main():
     try:
         if args.action == 'client':
             if not args.parent or not command: raise RuntimeError('Idle client requires its parent and command')
-            # Quickshell may kill the backend without cleanup; Linux then stops swayidle too.
+            # Quickshell may kill the backend without cleanup; Linux stops its owned client too.
             libc = ctypes.CDLL(None, use_errno=True)
             libc.prctl.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong]
-            if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0): raise OSError(ctypes.get_errno(), 'Cannot supervise swayidle')
+            if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0): raise OSError(ctypes.get_errno(), 'Cannot supervise session client')
             if os.getppid() != args.parent: return 0
             os.execv(command[0], command)
         if args.action == 'lock' or args.lock: secure_lock()

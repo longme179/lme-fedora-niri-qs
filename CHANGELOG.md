@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Stop clipboard watchers even when Quickshell kills their Python service during
+  reload. Reuse the existing Linux parent-death supervisor instead of leaving
+  orphan capture processes behind.
 - Generate Matugen 4 wallpaper palettes without an interactive terminal by
   selecting its highest-ranked source color. Keep the Matugen 3 command intact
   and remove terminal color escapes from backend error messages.

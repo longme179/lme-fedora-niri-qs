@@ -227,7 +227,8 @@ class CaptureService:
         self.lock = lock
         try:
             for kind in wanted:
-                self.watchers[kind] = subprocess.Popen([executable, '--no-newline', '--type', kind, '--watch',
+                self.watchers[kind] = subprocess.Popen([sys.executable, str(Path(__file__).with_name('idle_control.py').resolve()),
+                    'client', '--parent', str(os.getpid()), executable, '--no-newline', '--type', kind, '--watch',
                     sys.executable, str(Path(__file__).resolve()), '--capture', kind, '--directory', str(self.history.directory)],
                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.error = ""

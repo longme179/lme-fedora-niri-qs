@@ -164,6 +164,20 @@ class NativeClipboardCase(unittest.TestCase):
         self.process.stdin.write(json.dumps(dict(action=action, **payload)).encode() + b'\n'); self.process.stdin.flush()
         return self.wait_for(lambda state: (state.get('lastResult') or {}).get('sequence', 0) > previous)
 
+    def test_watchers_stop_when_the_service_is_killed_without_cleanup(self):
+        pids = subprocess.check_output(['ps', '-o', 'pid=', '--ppid', str(self.process.pid)], text=True).split()
+        self.assertEqual(len(pids), 2)
+        self.process.kill(); self.process.wait(timeout=4)
+        def alive(pid):
+            try: return Path(f'/proc/{pid}/stat').read_text().split(') ', 1)[1][0] != 'Z'
+            except FileNotFoundError: return False
+        end = time.monotonic() + 3
+        while any(alive(pid) for pid in pids) and time.monotonic() < end: time.sleep(.05)
+        survivors = [pid for pid in pids if alive(pid)]
+        # Clean up only this test's children when the regression is reproduced.
+        for pid in survivors: os.kill(int(pid), 15)
+        self.assertEqual(survivors, [], 'Orphaned clipboard watchers survived the service')
+
     def test_real_text_and_image_capture_copy_pause_and_clear(self):
         text = 'native clipboard test\nXin chào\n'.encode()
         subprocess.run(['wl-copy', '--type', 'text/plain;charset=utf-8'], input=text, check=True)

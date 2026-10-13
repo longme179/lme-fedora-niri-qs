@@ -162,3 +162,13 @@ at `48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3) informed the one/two-cell
 controls. Noctalia's C++ Control Center at `b6d1c44d44ebaafcc218b9b2e69d8c626278fdbf`
 (MIT) was inspected but no C++ code was ported. These references were cloned
 outside LME's checkout; they add no new runtime dependency.
+
+The independent slider/control cleanup inspected fresh shallow checkouts of
+DankMaterialShell at `c3e93ee39a3a4b79c59076176a44cde389458380` (MIT), particularly
+`quickshell/Modules/ControlCenter/Widgets/CcSliderRow.qml` and `AudioSliderRow.qml`.
+Their shared row, separate mute action and drag-safe value binding informed LME's
+original `ControlSlider.qml`, which reuses its existing slider, IPC and theme.
+iNiR's `modules/sidebarRight/quickToggles/androidStyle/AndroidPowerProfileToggle.qml`
+at `48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3) informed capability-aware
+profile cycling. These implementations were referenced, not copied; LME retains
+its existing Fedora D-Bus/CLI backend and adds no runtime package dependency.

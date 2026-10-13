@@ -220,8 +220,10 @@ Press `Ctrl+Tab` or `Ctrl+Shift+Tab` to cycle tabs. Escape leaves Edit mode firs
 then closes the popup. Scroll the Controls and Devices tabs for lower actions.
 
 In Controls, **Edit layout** enables the quick-control canvas. Choose four or
-eight columns and four or eight rows, then drag controls onto a cell. Toggle-only
-controls occupy 1×1; Wi-Fi, Overview and capture actions occupy 2×1. Empty drops
+eight columns, then drag controls onto a cell. The complete factory layout fits
+4×8 or 8×4; eight rows and restored larger canvases are available with scrolling.
+Power and Settings occupy 1×1; Wi-Fi, Overview, capture actions and Power profile
+occupy 2×1. Volume, microphone level and brightness each occupy 4×1. Empty drops
 move only the selected control; matching-size tiles swap. Other occupied drops
 cancel without moving anything. Arrow keys find the next valid cell, and dragging
 near a viewport edge scrolls. Dropping outside the canvas cancels.
@@ -232,8 +234,25 @@ backup/restore. Changing columns repacks controls; increasing rows preserves the
 positions. **Reset grid** resets only quick-control positions. Hidden controls
 reserve their cells so enabling them restores their positions. Empty trailing rows
 collapse outside Edit mode. **Widgets…** opens Settings for visibility and detailed
-card ordering/sizing; weather, charging, sliders, media and recording retain their
-natural card height below the canvas.
+card ordering/sizing; weather, charging, media, resources and recording retain their
+natural card height below the canvas. Buttons have no order/size controls in
+Settings: only visibility affects them. Reordering cards or their preference list
+does not change canvas coordinates or recreate loaded cards.
+
+Slider icons mute/unmute speaker or microphone; the Volume gear still opens audio
+settings. Values retain the previous 0–100% range (brightness starts at 1%),
+bounded update rate and final release update. Power profile cycles through the
+service's advertised profiles, skipping Performance if it is absent. The normal
+command-error path remains available if a provider cannot advertise its list.
+Power opens the existing confirmation menu. To add its optional topbar shortcut,
+enable **Power** in Settings → Top bar; existing bar layouts remain unchanged.
+
+Saved layouts migrate automatically. New controls are placed in free cells;
+additional rows are appended when necessary, up to 32, without moving saved tiles.
+The three sliders inherit the old slider group's visibility; capture actions,
+Power and Settings inherit the old capture group's visibility. Detailed card
+order, sizes, custom colors and fonts are preserved. Importing older presets
+uses the same validation/migration path.
 
 | Tab | Controls |
 | --- | --- |

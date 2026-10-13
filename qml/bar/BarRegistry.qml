@@ -18,6 +18,7 @@ QtObject {
         {id: "network", title: "Network", detail: "Connection status", icon: "wifi"},
         {id: "battery", title: "Battery", detail: "Charge level when a battery is present", icon: "battery"},
         {id: "clock", title: "Clock", detail: "Date, time and agenda", icon: "clock"},
+        {id: "power", title: "Power", detail: "Lock, sleep, restart or shut down", icon: "power"},
         {id: "settings", title: "Settings", detail: "Open the separate settings app", icon: "settings"},
         {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"},
         {id: "clipboard", title: "Clipboard", detail: "Search text and image history", icon: "clipboard"}

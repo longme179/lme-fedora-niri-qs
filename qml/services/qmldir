@@ -7,3 +7,4 @@ singleton PrivacyState 1.0 PrivacyState.qml
 singleton OSDManager 1.0 OSDManager.qml
 singleton VisualizerState 1.0 VisualizerState.qml
 singleton NotesState 1.0 NotesState.qml
+singleton ControlRegistry 1.0 ControlRegistry.qml

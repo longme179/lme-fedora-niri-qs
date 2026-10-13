@@ -79,7 +79,7 @@ DEFAULT_PREFERENCES = {
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power"}
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
@@ -837,6 +837,18 @@ class DesktopBackend:
         self.power_profile_provider = None
         return None
 
+    def power_profiles(self) -> list[str]:
+        provider = self.power_profile_provider
+        if provider is None: return []
+        if provider[0] == 'dbus':
+            raw = self.try_run('busctl', '--system', 'get-property', *provider[1:], 'Profiles') or ''
+            advertised = re.findall(r'"Profile"\s+s\s+"([^\"]+)"', raw)
+        else:
+            raw = self.try_run('powerprofilesctl', 'list') or ''
+            advertised = re.findall(r'^\s*\*?\s*(power-saver|balanced|performance):', raw, re.MULTILINE)
+        order = ['power-saver', 'balanced', 'performance']
+        return [profile for profile in order if profile in advertised] if advertised else order
+
     def niri_state(self) -> dict[str, Any]:
         workspaces = self.try_run("niri", "msg", "--json", "workspaces")
         windows = self.try_run("niri", "msg", "--json", "windows")
@@ -883,7 +895,7 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile(), charging=self.charging(), recording=self.recording(), privacy=self.privacy())
+                          powerProfile=self.power_profile(), powerProfiles=self.power_profiles(), charging=self.charging(), recording=self.recording(), privacy=self.privacy())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
@@ -1008,7 +1020,7 @@ class DesktopBackend:
                                      "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": True}],
                                      "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "name": "Headphones", "connected": True}]},
                        "audio": {"available": True, "volume": 42, "muted": False}, "microphone": {"available": True, "volume": 60, "muted": False},
-                       "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced",
+                       "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced", "powerProfiles": ["power-saver", "balanced", "performance"],
                        "charging": {"available": True, "canSet": True, "kind": "threshold", "mode": "conservation",
                                     "limitPercent": 85, "supports85": True, "reason": "", "busy": False}},
             "weather": {"available": True, "configured": True, "automatic": True, "loading": False, "stale": False, "error": "",

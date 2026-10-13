@@ -15,6 +15,7 @@ ShellRoot {
     id: root
     property string mode: "control"
     property string page: "appearance"
+    property var cardReferences: ({})
     Component.onCompleted: if (Quickshell.env("LME_TEST_UPGRADES") !== "1") Qt.quit()
     FloatingWindow {
         id: window
@@ -52,8 +53,9 @@ ShellRoot {
             if (menu) { menu.pendingAction = "shutdown"; menu.pendingLabel = "Shut down"; }
         }
         function state(): string {
-            return JSON.stringify({ready: ShellState.backendReady, preferences: ShellState.preferences, lastResult: ShellState.lastResult,
-                mode: root.mode, query: root.mode === "launcher" && view.item ? view.item.query : "", results: root.mode === "launcher" && view.item ? view.item.results : [],
+            return JSON.stringify({ready: ShellState.backendReady, preferences: ShellState.preferences, system: ShellState.system, lastResult: ShellState.lastResult,
+                mode: root.mode, panelKind: ShellState.panelKind, powerOpen: ShellState.powerOpen, settingsOpen: ShellState.settingsOpen,
+                query: root.mode === "launcher" && view.item ? view.item.query : "", results: root.mode === "launcher" && view.item ? view.item.results : [],
                 calculationError: root.mode === "launcher" && view.item ? view.item.calculationError : "", displays: ShellState.snapshot.displays || {},
                 groups: root.mode === "notifications" && view.item ? view.item.grouped.length : 0, dnd: Notifications.dnd, popups: Notifications.popups.length,
                 history: Notifications.history.length, library: ShellState.snapshot.wallpaperLibrary || {},
@@ -77,6 +79,14 @@ ShellRoot {
                     const loaded = item ? item.children.find(child => child.item)?.item : null;
                     return item ? {id: t.id, width: item.width, height: item.height, x: item.x, y: item.y, focus: item.activeFocus, opacity: loaded ? loaded.opacity : 0} : {id: t.id};
                 })});
+        }
+        function rememberCards(): void {
+            const refs = {};
+            for (const id of ControlRegistry.cardIds) refs[id] = root.find(window.contentItem, "controlCard-" + id)?.item;
+            root.cardReferences = refs;
+        }
+        function cardsStable(): bool {
+            return Object.keys(root.cardReferences).length > 0 && Object.keys(root.cardReferences).every(id => root.cardReferences[id] === root.find(window.contentItem, "controlCard-" + id)?.item);
         }
         function themeState(): string {
             const button = root.find(window.contentItem, "elementPreviewButton"), feedback = button ? root.find(button, "liquidFeedback") : null;

@@ -28,7 +28,10 @@ Item {
             ctx.lineWidth = 1.8;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            if (root.name === "camera") {
+            if (root.name === "power") {
+                ctx.beginPath(); ctx.arc(12,13,8,-Math.PI/3,Math.PI*4/3); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12,2); ctx.lineTo(12,12); ctx.stroke();
+            } else if (root.name === "camera") {
                 ctx.beginPath(); ctx.roundedRect(3,5,13,14,2,2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(16,9); ctx.lineTo(22,6); ctx.lineTo(22,18); ctx.lineTo(16,15); ctx.closePath(); ctx.stroke();
             } else if (root.name === "screen-share") {
                 ctx.beginPath(); ctx.roundedRect(2,3,20,15,2,2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(8,22); ctx.lineTo(16,22); ctx.moveTo(12,18); ctx.lineTo(12,22); ctx.stroke();

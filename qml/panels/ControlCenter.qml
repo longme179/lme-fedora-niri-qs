@@ -68,11 +68,13 @@ GlassPanel {
                 onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize(currentIndex ? 8 : 4, (ShellState.preferences.controlGrid || {}).rows || 4)
             }
             LiquidComboBox {
-                objectName: "controlGridRows"; model: ["4 rows", "8 rows"]
-                currentIndex: (ShellState.preferences.controlGrid || {}).rows === 8 ? 1 : 0
+                objectName: "controlGridRows"
+                readonly property var choices: [...new Set([8, ...((ShellState.preferences.controlGrid || {}).columns === 8 ? [4] : []), (ShellState.preferences.controlGrid || {}).rows || 8])].sort((a, b) => a - b)
+                model: choices.map(rows => rows + " rows")
+                currentIndex: Math.max(0, choices.indexOf((ShellState.preferences.controlGrid || {}).rows || 8))
                 enabled: !ShellState.pendingActions.setting
                 Accessible.name: "Control canvas rows"
-                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, currentIndex ? 8 : 4)
+                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, choices[currentIndex])
             }
             Item { Layout.fillWidth: true }
         }

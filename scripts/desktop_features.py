@@ -19,11 +19,16 @@ PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", 
 APPEARANCE_KEYS = ("accent", "opacity", "density", "animations", *MOTION_DEFAULTS, *THEME_DEFAULTS, *PALETTE_DEFAULTS)
 DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,
                    "density": "comfortable", "animations": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS}
-CONTROL_MODULES = ("weather", "charging", "wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "sliders", "powerProfile", "media", "resources", "capture", "overview")
-DEFAULT_CONTROL_LAYOUT = [{"id": key, "enabled": True, "size": "half" if key in {"wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight"} else "full"} for key in CONTROL_MODULES]
-CONTROL_TILES = json.loads((Path(__file__).resolve().parents[1] / 'config/control-grid.json').read_text())
+CONTROL_CATALOG = json.loads((Path(__file__).resolve().parents[1] / 'config/control-grid.json').read_text())
+CONTROL_TILES = CONTROL_CATALOG['tiles']
+CONTROL_MODULES = tuple(item['id'] for item in [*CONTROL_CATALOG['cards'], *CONTROL_TILES])
+DEFAULT_CONTROL_LAYOUT = [{'id': item['id'], 'enabled': True, 'size': item.get('size', 'full' if item.get('cols', 0) >= 4 else 'half')}
+                          for item in [*CONTROL_CATALOG['cards'], *CONTROL_TILES]]
 CONTROL_SPANS = {tile['id']: tile['cols'] for tile in CONTROL_TILES}
-DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': 4, 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
+DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': 8, 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
+LEGACY_CONTROL_MODULES = {'weather', 'charging', 'wifi', 'bluetooth', 'microphone', 'dnd', 'stayAwake', 'motion', 'nightLight',
+                          'sliders', 'powerProfile', 'media', 'resources', 'capture', 'overview'}
+LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power'}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
@@ -85,30 +90,36 @@ def bar_island_styles(value):
 
 
 def control_layout(value):
-    # Preserve saved layouts from before the Night Light tile existed.
-    if isinstance(value, list) and len(value) == len(CONTROL_MODULES) - 1 and all(isinstance(item, dict) and isinstance(item.get('id'), str) for item in value) and {item['id'] for item in value} == set(CONTROL_MODULES) - {'nightLight'}:
-        value = [*value, {'id': 'nightLight', 'enabled': True, 'size': 'half'}]
-    if not isinstance(value, list) or len(value) != len(CONTROL_MODULES):
+    if not isinstance(value, list) or len(value) > len(CONTROL_MODULES):
         raise ValueError("The layout must include every control module exactly once")
     result, seen = [], set()
     for item in value:
-        if (not isinstance(item, dict) or set(item) != {"id", "enabled", "size"}
-                or not isinstance(item["id"], str) or item["id"] not in CONTROL_MODULES or item["id"] in seen
-                or type(item["enabled"]) is not bool or item["size"] not in ("half", "full")):
-            raise ValueError("Invalid control module")
-        seen.add(item["id"])
-        result.append(dict(item))
+        if (not isinstance(item, dict) or set(item) != {'id', 'enabled', 'size'}
+                or not isinstance(item['id'], str) or item['id'] not in {*CONTROL_MODULES, 'sliders'} or item['id'] in seen
+                or type(item['enabled']) is not bool or item['size'] not in ('half', 'full')):
+            raise ValueError('Invalid control module')
+        seen.add(item['id']); result.append(dict(item))
+    if seen in (set(CONTROL_MODULES) - {'nightLight'}, LEGACY_CONTROL_MODULES - {'nightLight'}):
+        result.append({'id': 'nightLight', 'enabled': True, 'size': 'half'}); seen.add('nightLight')
+    if seen == LEGACY_CONTROL_MODULES:
+        actions_enabled = next(item['enabled'] for item in result if item['id'] == 'capture')
+        migrated = []
+        for item in result:
+            ids = ('volume', 'micLevel', 'brightness') if item['id'] == 'sliders' else ('capture', 'captureScreen', 'captureArea', 'captureWindow') if item['id'] == 'capture' else (item['id'],)
+            migrated.extend({**item, 'id': id} for id in ids)
+        result = [*migrated, {'id': 'settings', 'enabled': actions_enabled, 'size': 'half'}, {'id': 'power', 'enabled': actions_enabled, 'size': 'half'}]
+    if {item['id'] for item in result} != set(CONTROL_MODULES):
+        raise ValueError('The layout must include every control module exactly once')
     return result
 
 
 def control_grid(value):
     if (not isinstance(value, dict) or set(value) != {'columns', 'rows', 'tiles'}
             or type(value['columns']) is not int or value['columns'] not in (4, 8)
-            or type(value['rows']) is not int or value['rows'] not in (4, 8)):
-        raise ValueError('Choose a 4 or 8 column canvas with 4 or 8 rows')
-    if not isinstance(value['tiles'], list) or len(value['tiles']) != len(CONTROL_SPANS):
-        raise ValueError('Include every quick control exactly once')
-    occupied, seen = set(), set()
+            or type(value['rows']) is not int or not 4 <= value['rows'] <= 32):
+        raise ValueError('Choose 4 or 8 columns and 4–32 rows')
+    if not isinstance(value['tiles'], list): raise ValueError('Include every quick control exactly once')
+    occupied, seen, result = set(), set(), []
     for tile in value['tiles']:
         if (not isinstance(tile, dict) or set(tile) != {'id', 'col', 'row'}
                 or not isinstance(tile['id'], str) or tile['id'] not in CONTROL_SPANS or tile['id'] in seen
@@ -117,8 +128,24 @@ def control_grid(value):
             raise ValueError('Quick controls must fit within the canvas')
         cells = {(tile['row'], col) for col in range(tile['col'], tile['col'] + CONTROL_SPANS[tile['id']])}
         if occupied & cells: raise ValueError('Quick controls cannot overlap')
-        occupied |= cells; seen.add(tile['id'])
-    return {**value, 'tiles': [dict(tile) for tile in value['tiles']]}
+        occupied |= cells; seen.add(tile['id']); result.append(dict(tile))
+    if seen not in (set(CONTROL_SPANS), LEGACY_GRID_IDS): raise ValueError('Include every quick control exactly once')
+    rows = value['rows']
+    # Add new controls in vacant cells, growing downward without shifting saved positions.
+    for tile in CONTROL_TILES:
+        if tile['id'] in seen: continue
+        placed = False
+        while not placed:
+            for row in range(rows):
+                for col in range(value['columns'] - tile['cols'] + 1):
+                    cells = {(row, x) for x in range(col, col + tile['cols'])}
+                    if not occupied & cells:
+                        result.append({'id': tile['id'], 'col': col, 'row': row}); occupied |= cells; placed = True; break
+                if placed: break
+            if not placed:
+                if rows == 32: raise ValueError('No space remains for new controls')
+                rows += 1
+    return {**value, 'rows': rows, 'tiles': result}
 
 
 def wallpaper_library(raw):

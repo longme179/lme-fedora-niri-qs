@@ -1,7 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import "../services"
 import "../theme"
 import "ControlGridLogic.js" as GridLogic
@@ -13,12 +11,12 @@ Item {
     property Item dragLayer: root
     property Flickable viewport: null
     property var components: ({})
-    property var tiles: []
+    readonly property var tiles: ControlRegistry.tiles
     property var draft: null
     property string movingId: ""
     property bool dragging: false
     property var proposed: null
-    readonly property var saved: ShellState.preferences.controlGrid || ({columns: 4, rows: 4, tiles: []})
+    readonly property var saved: ShellState.preferences.controlGrid || ({columns: 4, rows: 8, tiles: []})
     readonly property var configuration: draft || saved
     readonly property int columns: configuration.columns || 4
     readonly property int rows: configuration.rows || 4
@@ -32,10 +30,6 @@ Item {
     implicitHeight: shownRows * unitHeight + gap * Math.max(0, shownRows - 1)
     onSavedChanged: draft = null
     onEditingChanged: if (!editing) cancelDrag()
-    FileView {
-        path: Quickshell.shellPath("config/control-grid.json")
-        onLoaded: root.tiles = JSON.parse(text())
-    }
     Connections {
         target: ShellState
         function onLastResultChanged() {
@@ -44,7 +38,7 @@ Item {
     }
     function shown(id) {
         const tile = tiles.find(t => t.id === id);
-        return tile && (ShellState.preferences.controlLayout || []).some(m => m.id === tile.module && m.enabled);
+        return tile && (ShellState.preferences.controlLayout || []).some(m => m.id === tile.id && m.enabled);
     }
     function cancelDrag() { ghost.visible = false; movingId = ""; proposed = null; dragging = false; }
     function updateTarget() {
@@ -75,7 +69,8 @@ Item {
     function reset() { save(GridLogic.pack(tiles, columns)); }
     function resize(columns, rows) {
         const next = columns === root.columns && layout.every(t => t.row < rows) ? layout : GridLogic.pack(tiles, columns);
-        save(next, columns, rows);
+        const needed = Math.max(4, ...next.map(t => t.row + 1));
+        save(next, columns, Math.max(rows, needed));
     }
     function nudge(id, dx, dy) {
         const start = layout.find(t => t.id === id);
@@ -117,6 +112,7 @@ Item {
             }
             Loader {
                 anchors.fill: parent
+                active: slot.visible
                 sourceComponent: root.components[slot.tile.id] || null
                 enabled: !root.editing
             }

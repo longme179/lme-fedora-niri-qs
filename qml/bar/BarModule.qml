@@ -24,7 +24,7 @@ Loader {
     height: 30
     y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
-                   : ["launcher", "overview", "tray", "notifications", "settings", "clipboard"].includes(moduleId) ? actionComponent : statusComponent
+                   : ["launcher", "overview", "tray", "notifications", "settings", "clipboard", "power"].includes(moduleId) ? actionComponent : statusComponent
     Component { id: privacyComponent; PrivacyIndicator {} }
     Component {
         id: activityComponent
@@ -34,11 +34,12 @@ Loader {
         id: actionComponent
         IconButton {
             id: button
+            objectName: "barAction-" + root.moduleId
             implicitWidth: 30; implicitHeight: 30
             iconName: root.moduleId === "notifications" ? (Notifications.dnd ? "bell-off" : "bell") : BarRegistry.info(root.moduleId).icon
             tooltip: ["overview", "launcher"].includes(root.moduleId) ? "" : BarRegistry.info(root.moduleId).title
             Accessible.name: BarRegistry.info(root.moduleId).title
-            active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : false
+            active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : root.moduleId === "power" ? ShellState.powerOpen : false
             onClicked: {
                 if (root.moduleId === "overview") ShellState.nativeOverview();
                 else {

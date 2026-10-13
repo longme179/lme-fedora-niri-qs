@@ -16,44 +16,22 @@ Item {
     readonly property var network: ShellState.system.network || {}
     readonly property bool wifiConnected: network.wifiConnected === undefined ? !!network.connected : !!network.wifiConnected
     readonly property var bluetooth: ShellState.system.bluetooth || {}
-    readonly property var audio: ShellState.system.audio || {}
     readonly property var microphone: ShellState.system.microphone || {}
-    readonly property var brightness: ShellState.system.brightness || {}
     readonly property var battery: ShellState.system.battery || {}
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
     property string selectedPlayerName: ""
     readonly property var player: players.find(item => item.dbusName === selectedPlayerName) || players.find(item => item.isPlaying) || players[0] || null
     property date now: new Date()
-    property int pendingVolume: -1
-    property int pendingBrightness: -1
-    property int pendingMic: -1
     property bool editing: false
     property alias grid: quickGrid
-    readonly property var quickIds: ["wifi", "bluetooth", "microphone", "dnd", "stayAwake", "motion", "nightLight", "overview"]
+    readonly property var cards: (ShellState.preferences.controlLayout || []).filter(item => ControlRegistry.cardIds.includes(item.id))
+    readonly property var cardComponents: ({weather: weatherModule, charging: chargingModule, media: mediaModule, resources: resourcesModule, capture: captureModule})
 
-    function flushVolume() {
-        volumeDelay.stop();
-        if (pendingVolume >= 0) ShellState.run("volume", { value: pendingVolume });
-        pendingVolume = -1;
-    }
-    function flushBrightness() {
-        brightnessDelay.stop();
-        if (pendingBrightness >= 0) ShellState.run("brightness", { value: pendingBrightness });
-        pendingBrightness = -1;
-    }
-    function flushMic() {
-        micDelay.stop();
-        if (pendingMic >= 0) ShellState.run("micVolume", {value: pendingMic});
-        pendingMic = -1;
-    }
     function numeric(value, suffix) {
         return value === null || value === undefined ? "—" : Math.round(value) + (suffix || "");
     }
 
     Timer { interval: 1000; running: root.visible; repeat: true; onTriggered: root.now = new Date() }
-    Timer { id: volumeDelay; interval: 100; onTriggered: root.flushVolume() }
-    Timer { id: brightnessDelay; interval: 100; onTriggered: root.flushBrightness() }
-    Timer { id: micDelay; interval: 100; onTriggered: root.flushMic() }
     Keys.onEscapePressed: event => { if (root.editing) event.accepted = false; else ShellState.closePanels(); }
 
     component Tile: LiquidButton {
@@ -117,7 +95,8 @@ Item {
                 editing: root.editing; dragLayer: root; viewport: scroll
                 components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
                     stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, overview: overviewModule,
-                    captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule})
+                    captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
+                    volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule, settings: settingsModule, power: powerModule})
             }
             LiquidButton { visible: root.editing; text: "Reset grid"; enabled: quickGrid.ready; onClicked: quickGrid.reset() }
             GridLayout {
@@ -125,25 +104,24 @@ Item {
                 columns: width >= 500 ? 2 : 1
                 columnSpacing: 12; rowSpacing: Theme.cardSpacing
                 Repeater {
-                    model: ShellState.preferences.controlLayout || []
+                    model: ControlRegistry.cards.length
                     delegate: Loader {
                         id: card
-                        required property var modelData
-                        active: modelData.enabled && !root.quickIds.includes(modelData.id)
+                        required property int index
+                        readonly property var modelData: root.cards[index] || null
+                        objectName: "controlCard-" + (modelData ? modelData.id : "")
+                        active: modelData !== null && modelData.enabled
                         enabled: !root.editing
                         visible: active
                         Layout.fillWidth: true; Layout.preferredWidth: 1
-                        Layout.columnSpan: content.columns === 1 || modelData.size === "full" ? content.columns : 1
+                        Layout.columnSpan: content.columns === 1 || modelData && modelData.size === "full" ? content.columns : 1
                         Layout.preferredHeight: item ? (item as Item).implicitHeight : 0
-                        sourceComponent: root.moduleComponent(modelData.id)
+                        sourceComponent: modelData ? root.cardComponents[modelData.id] : null
                     }
                 }
             }
             LabelText { visible: !(ShellState.preferences.controlLayout || []).some(m => m.enabled); text: "All widgets are hidden. Use Edit layout to restore them."; wrapMode: Text.Wrap; Layout.fillWidth: true; color: Theme.muted }
         }
-    }
-    function moduleComponent(id) {
-        return ({weather: weatherModule, charging: chargingModule, wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule, stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, sliders: slidersModule, powerProfile: powerProfileModule, media: mediaModule, resources: resourcesModule, capture: captureModule, overview: overviewModule})[id] || null;
     }
     Component {
         id: weatherModule
@@ -204,98 +182,24 @@ Item {
             onClicked: if (night.error || night.available === false) ShellState.openSettingsPage("nightLight"); else ShellState.run("setting", {key: "nightLightEnabled", value: !ShellState.preferences.nightLightEnabled})
         }
     }
-    Component {
-        id: slidersModule
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: sliders.implicitHeight + 26
-            radius: Theme.smallRadius
-            color: Theme.surface
-            ColumnLayout {
-                id: sliders
-                anchors.fill: parent
-                anchors.margins: 13
-                spacing: 6
-                RowLayout {
-                    Layout.fillWidth: true
-                    LiquidButton { text: root.audio.muted ? "Unmute" : "Volume"; enabled: !!root.audio.available; onClicked: ShellState.run("mute"); palette.button: Theme.panel; palette.buttonText: root.audio.muted ? Theme.pink : Theme.text; Accessible.name: root.audio.muted ? "Unmute audio" : "Mute audio" }
-                    Item { Layout.fillWidth: true }
-                    Caption { text: root.audio.available ? (root.audio.muted ? "Muted" : root.numeric(volume.value, "%")) : "Audio unavailable" }
-                    IconButton { glyph: "⋯"; tooltip: "Audio settings"; onClicked: ShellState.run("openSettings", { target: "audio" }); implicitWidth: 32 }
-                }
-                LiquidSlider {
-                    id: volume
-                    Layout.fillWidth: true
-                    from: 0
-                    to: 100
-                    stepSize: 1
-                    enabled: !!root.audio.available
-                    Accessible.name: "Volume"
-                    palette.highlight: Theme.purple
-                    onMoved: {
-                        root.pendingVolume = Math.round(value);
-                        if (!volumeDelay.running) volumeDelay.start();
-                    }
-                    onPressedChanged: { if (!pressed) root.flushVolume(); }
-                }
-                Binding { target: volume; property: "value"; value: root.audio.volume || 0; when: !volume.pressed; restoreMode: Binding.RestoreNone }
-                RowLayout {
-                    Layout.fillWidth: true
-                    LiquidButton { text: root.microphone.muted ? "Unmute mic" : "Microphone"; enabled: !!root.microphone.available; onClicked: ShellState.run("micMute"); palette.button: Theme.panel; palette.buttonText: root.microphone.muted ? Theme.pink : Theme.text }
-                    Item { Layout.fillWidth: true }
-                    Caption { text: root.microphone.available ? root.microphone.muted ? "Muted" : root.numeric(micVolume.value, "%") : "No microphone" }
-                }
-                LiquidSlider {
-                    id: micVolume
-                    Layout.fillWidth: true; from: 0; to: 100; stepSize: 1
-                    enabled: !!root.microphone.available; Accessible.name: "Microphone level"
-                    palette.highlight: Theme.pink
-                    onMoved: { root.pendingMic = Math.round(value); if (!micDelay.running) micDelay.start(); }
-                    onPressedChanged: if (!pressed) root.flushMic()
-                }
-                Binding { target: micVolume; property: "value"; value: root.microphone.volume || 0; when: !micVolume.pressed; restoreMode: Binding.RestoreNone }
-                RowLayout {
-                    Layout.fillWidth: true
-                    Text { text: "Brightness"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 13 }
-                    Item { Layout.fillWidth: true }
-                    Caption { text: root.brightness.available ? root.numeric(brightnessSlider.value, "%") : "No backlight device" }
-                }
-                LiquidSlider {
-                    id: brightnessSlider
-                    Layout.fillWidth: true
-                    from: 1
-                    to: 100
-                    stepSize: 1
-                    enabled: !!root.brightness.available
-                    Accessible.name: "Screen brightness"
-                    palette.highlight: Theme.yellow
-                    onMoved: {
-                        root.pendingBrightness = Math.round(value);
-                        if (!brightnessDelay.running) brightnessDelay.start();
-                    }
-                    onPressedChanged: { if (!pressed) root.flushBrightness(); }
-                }
-                Binding { target: brightnessSlider; property: "value"; value: root.brightness.percent || 1; when: !brightnessSlider.pressed; restoreMode: Binding.RestoreNone }
-            }
-        }
-    }
+    Component { id: volumeModule; ControlSlider { channel: "volume"; editing: root.editing } }
+    Component { id: micLevelModule; ControlSlider { channel: "micLevel"; editing: root.editing } }
+    Component { id: brightnessModule; ControlSlider { channel: "brightness"; editing: root.editing } }
     Component {
         id: powerProfileModule
-        RowLayout {
-            Layout.fillWidth: true
-            Text { text: "Power profile"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 13 }
-            Item { Layout.fillWidth: true }
-            LiquidComboBox {
-                id: profile
-                model: ["Power saver", "Balanced", "Performance"]
-                property var values: ["power-saver", "balanced", "performance"]
-                currentIndex: Math.max(0, values.indexOf(ShellState.system.powerProfile || "balanced"))
-                enabled: !!ShellState.system.powerProfile
-                onActivated: ShellState.run("powerProfile", { value: values[currentIndex] })
-                Accessible.name: "Power profile"
-            }
+        Tile {
+            label: "Power profile"; iconName: "battery"
+            readonly property var profiles: ShellState.system.powerProfiles || ["power-saver", "balanced", "performance"]
+            readonly property int profile: profiles.indexOf(ShellState.system.powerProfile)
+            active: profile >= 0 && ShellState.system.powerProfile !== "balanced"
+            accent: ShellState.system.powerProfile === "power-saver" ? Theme.green : Theme.pink
+            detail: ({"power-saver": "Power saver", balanced: "Balanced", performance: "Performance"})[ShellState.system.powerProfile] || "Unavailable"
+            enabled: profile >= 0 && profiles.length > 1 && !ShellState.pendingActions.powerProfile
+            onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]})
         }
     }
+    Component { id: settingsModule; Tile { label: "Settings"; detail: "Shell preferences"; iconName: "settings"; onClicked: ShellState.togglePanel("settings") } }
+    Component { id: powerModule; Tile { label: "Power"; detail: "Lock, sleep or shut down"; iconName: "power"; accent: Theme.pink; onClicked: ShellState.togglePanel("power") } }
     Component {
         id: mediaModule
         Rectangle {
@@ -400,16 +304,9 @@ Item {
     Component {
         id: captureModule
         ColumnLayout {
-        GridLayout {
-            columns: width < 420 ? 2 : 4
-            columnSpacing: 8; rowSpacing: 8
-            Layout.fillWidth: true
             LabelText { visible: (ShellState.snapshot.capture || {}).status === "pending"; text: "A capture is pending. Escape cancels niri's selector; use Cancel capture to start again."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
             LiquidButton { text: "Cancel capture"; visible: (ShellState.snapshot.capture || {}).status === "pending"; onClicked: ShellState.run("captureClose") }
-            LiquidButton { text: "Settings"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("settings"); palette.button: Theme.surface; palette.buttonText: Theme.purple }
-            LiquidButton { text: "Power"; Layout.fillWidth: true; onClicked: ShellState.togglePanel("power"); palette.button: Theme.surface; palette.buttonText: Theme.pink }
-        }
-        RecorderWidget { Layout.fillWidth: true; visible: ShellState.preferences.recordingEnabled !== false }
+            RecorderWidget { Layout.fillWidth: true; visible: ShellState.preferences.recordingEnabled !== false }
         }
     }
     Component {

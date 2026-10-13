@@ -1,5 +1,33 @@
 # Validation and platform limits
 
+## Independent slider/actions and stable card models — 2026-10-13
+
+`scripts/check.sh` passed **215 tests, no skips**, with all private Wayland
+opt-ins and the checksum-verified portable Matugen 4.2.0 enabled. Changed QML
+passed qmllint without warnings; Python compilation, Bash syntax, demo state
+and diff checks passed. No system package was installed.
+
+Native QML exercises **5,628 cell scenarios**, accepting empty/matching-size
+drops and rejecting incompatible ones while checking that unrelated controls
+never move. Real pointer tests move speaker/microphone levels to 100% and
+brightness to its 1% minimum, mute both channels, cycle the three demo profiles,
+block actions in Edit mode, toggle independent visibility in Settings and open
+the Power menu through its optional bar module. Hardware commands remain mocked
+in that action test. Existing backend tests verify actual command arguments;
+new fixtures verify two-profile capability discovery through D-Bus and CLI.
+
+A private real Settings backend verifies persistence, card-order/size changes
+leaving grid coordinates untouched, and the same card QObject instances after
+a canvas move. Migration checks preserve old visibility, all eleven saved tile
+positions, colors/fonts through unchanged preferences, and scattered layouts
+that need extra rows. Updated 480 px and 900 px views were rendered and inspected.
+
+Live Fedora speaker/mic/backlight and power-profile cycling still need the
+owner's check; screenshots use demo data and software-rendered Sway with
+Quickshell 0.3.2 / Qt 6.8.2. No RAM, GPU or 120 Hz benchmark was performed.
+See [the scoped cleanup review](CODE_REVIEW.md) for what changed and what stayed
+outside this pass.
+
 ## Editable Control Center and clipboard ownership — 2026-10-13
 
 `scripts/check.sh` passed **211 tests, no skips**, with all private Wayland

@@ -312,6 +312,20 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertTrue(live.handle({"action": "powerProfile", "value": "performance"})["ok"])
         self.assertEqual(runner.calls[-1], ("powerprofilesctl", "set", "performance"))
 
+    def test_profile_cycle_capabilities_follow_dbus_and_cli_advertised_profiles(self):
+        service = backend.POWER_PROFILE_SERVICES[0]
+        query = ('busctl', '--system', 'get-property', *service, 'Profiles')
+        runner = FakeRunner({('busctl', '--system', 'get-property', *service, 'ActiveProfile'): 's "balanced"',
+                             query: 'aa{sv} 2 1 "Profile" s "balanced" 1 "Profile" s "power-saver"'})
+        live = self.make_backend(runner)
+        self.assertEqual(live.power_profile(), 'balanced')
+        self.assertEqual(live.power_profiles(), ['power-saver', 'balanced'])
+        cli = self.make_backend(FakeRunner({('powerprofilesctl', 'get'): 'balanced', ('powerprofilesctl', 'list'): '* balanced:\n  power-saver:\n'}))
+        self.assertEqual(cli.power_profile(), 'balanced')
+        self.assertEqual(cli.power_profiles(), ['power-saver', 'balanced'])
+        live.power_profile_provider = None
+        self.assertEqual(live.power_profiles(), [])
+
     def test_busctl_binary_without_profile_service_is_not_a_capability(self):
         queries = [("busctl", "--system", "get-property", *service, "ActiveProfile")
                    for service in backend.POWER_PROFILE_SERVICES]

@@ -6,6 +6,41 @@ and validation, settings transfer, clipboard subprocess lifetime and the relevan
 capture/display helpers. It is not a claim that every platform path has been
 exercised on the owner's machine.
 
+## Independent controls and conservative cleanup follow-up
+
+The feedback about unrelated movement was reproducible in the collision helper:
+its first-fit fallback could move controls outside the drop's footprint. It was
+not driven by the Settings card order. That fallback is removed. Empty cells
+move one control; equal-size cells swap two; incompatible occupied drops cancel.
+The native QML check now covers 5,628 scenarios and asserts unaffected positions.
+
+Cleanup stays within Control Center and its direct dependencies:
+
+- `ControlRegistry.qml` reads one shared button/card catalog for QML and Python.
+  Repeated quick-ID/title/default lists are removed. Settings displays button
+  visibility separately from the five ordered/sized cards.
+- `ControlSlider.qml` replaces the old three-slider card, three duplicated
+  flush functions and dashboard timers. It retains mute, audio settings,
+  bounded updates, a release flush and bindings that wait for action results.
+- The dashboard's card model has five stable loaders instead of the former
+  fifteen-entry mixed model. Canvas updates do not recreate card instances;
+  a native check compares their actual QObject identities. Hidden canvas controls
+  are loaded only when visible.
+- Old grid positions and hidden slider/capture groups migrate before writing.
+  Scattered layouts grow downward instead of repacking existing tiles. New
+  Power/Settings actions use the existing settings launcher and confirmation
+  menu; an optional bar module uses the same panel route.
+
+`ControlDashboard.qml` is reduced from 422 to 319 lines, with slider handling
+shared by the three new tiles. An AST name-use scan of Python imports found no
+unused-import candidates; it is a limited static check, not whole-program proof.
+No broad service rewrite, package replacement or architecture change is included.
+
+Fresh MIT DMS `CcSliderRow.qml`/`AudioSliderRow.qml` and GPLv3 iNiR
+`AndroidPowerProfileToggle.qml` informed the design. LME keeps its own IPC,
+theme and Fedora provider logic; precise revisions and credits are in
+[THIRD_PARTY.md](../THIRD_PARTY.md). RAM/FPS/GPU improvements have not been measured.
+
 ## Confirmed findings
 
 | Priority | Finding | Resolution |

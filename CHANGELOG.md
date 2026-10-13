@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Move Power/Settings into independent 1×1 canvas tiles, power-profile cycling
+  into 2×1, and speaker/microphone/brightness into three 4×1 slider tiles. Add an
+  optional Power bar module and follow advertised profile capabilities.
+- Share button/card metadata and slider handling; remove the superseded slider
+  card and duplicate actions. Keep five card loaders stable across canvas edits,
+  lazily instantiate visible controls, and migrate old visibility/positions.
 - Keep unrelated canvas controls fixed when editing. Move onto empty cells or
   swap equal-size tiles; incompatible occupied drops cancel instead of repacking.
 - Edit quick controls directly in the Control Center with a 4/8 column and 4/8

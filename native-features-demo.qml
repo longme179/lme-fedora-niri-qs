@@ -16,8 +16,10 @@ ShellRoot {
     }
     IpcHandler {
         target: "featuresFixture"
-        function clipboardStatus(): string { return JSON.stringify({ready: ClipboardState.ready, capturing: ClipboardState.capturing, visible: ShellState.clipboardOpen, count: ClipboardState.entries.length, query: ClipboardState.query, kind: ClipboardState.filter, preview: clipboardLoader.item ? clipboardLoader.item.previewOpen : false, focused: clipboardLoader.item ? clipboardLoader.item.searchFocused : false, pinned: ClipboardState.entries.filter(i => i.pinned).length, images: ClipboardState.entries.filter(i => i.kind === "image").length, error: ClipboardState.state.error || ClipboardState.messageError}); }
+        function clipboardStatus(): string { return JSON.stringify({ready: ClipboardState.ready, capturing: ClipboardState.capturing, visible: ShellState.clipboardOpen, count: ClipboardState.entries.length, query: ClipboardState.query, kind: ClipboardState.filter, preview: clipboardLoader.item ? clipboardLoader.item.previewOpen : false, focused: clipboardLoader.item ? clipboardLoader.item.searchFocused : false, pinned: ClipboardState.entries.filter(i => i.pinned).length, images: ClipboardState.entries.filter(i => i.kind === "image").length, lastResult: ShellState.lastResult, error: ClipboardState.state.error || ClipboardState.messageError}); }
         function openClipboard(): void { ShellState.togglePanel("clipboard"); }
+        function openNotifications(): void { ShellState.togglePanel("notifications"); }
+        function annotationStatus(): string { return JSON.stringify({ready: ShellState.backendReady, notifications: Notifications.history, visible: ShellState.notificationsOpen, lastResult: ShellState.lastResult}); }
         function openActivity(): void { ShellState.togglePanel("activity"); }
         function activityStatus(): string { return JSON.stringify({visible: ShellState.activityOpen, expansion: island.expansion, transitioning: island.transitioning, width: island.width, height: island.height, kind: ActivityState.kind, players: ActivityState.players.length, playing: ActivityState.playing, title: ActivityState.track, timerRunning: FocusTimer.running, remaining: FocusTimer.remaining, stopwatchRunning: FocusTimer.stopwatchRunning, elapsed: FocusTimer.stopwatchElapsed}); }
         function timerNearCompletion(): void { FocusTimer.remaining = 1; FocusTimer.start(); }
@@ -38,6 +40,11 @@ ShellRoot {
         ActivityIsland { id: island }
         Loader { id: clipboardLoader; anchors.centerIn: parent; active: ShellState.clipboardOpen; sourceComponent: Component { ClipboardPanel {} }
             width: 620; height: 710 }
+        Loader {
+            anchors.centerIn: parent; active: ShellState.notificationsOpen
+            sourceComponent: Component { NotificationCenter {} }
+            width: 620; height: 760
+        }
         }
     }
 }

@@ -38,7 +38,7 @@ from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
 from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
-from screen_capture import ScreenCapture
+from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
 from clipboard import MAX_TEXT
 from screen_recording import Recorder
@@ -923,6 +923,7 @@ class DesktopBackend:
                     or type(item.get("urgency")) is not int): continue
             result.append({"id": item["id"][:128], "appName": item["appName"][:256], "summary": item["summary"][:512],
                            "body": item["body"][:4096], "appIcon": str(item.get("appIcon") or "")[:512],
+                           "imagePath": item.get('imagePath') if isinstance(item.get('imagePath'), str) and len(item['imagePath']) <= 4096 and item['imagePath'].startswith(('/', 'file://')) and not any(ord(c) < 32 for c in item['imagePath']) else '',
                            "timestamp": item["timestamp"], "urgency": max(0, min(2, item["urgency"])),
                            "actions": [], "active": False, "popup": False, "transient": False})
         return result
@@ -1173,6 +1174,7 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
+        elif action == "imageAnnotate": pass
         elif action == "captureOcr": self.capture.state['ocrText'] = 'LME Shell\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
@@ -1348,6 +1350,9 @@ class DesktopBackend:
             else: self.night_light.signature = None
             return 'Night Light refreshed'
         if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
+        if action == 'imageAnnotate':
+            editor = self.preferences.values['captureEditor']
+            return self.start_feature(action, lambda: annotate_image(self.runner, editor, request.get('path')))
         if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
         if action == 'captureExport':
             if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')

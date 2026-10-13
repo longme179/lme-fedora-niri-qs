@@ -153,8 +153,10 @@ ShellRoot {
                     required property var modelData
                     width: toastColumn.width
                     height: toastContent.implicitHeight + 32
+                    MouseArea { anchors.fill: parent; enabled: !!toastCard.modelData.imagePath; onClicked: Notifications.openImage(toastCard.modelData.id) }
                     ColumnLayout {
                         id: toastContent
+                        z: 1
                         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
                         spacing: 8
                         RowLayout {
@@ -164,6 +166,7 @@ ShellRoot {
                         LabelText { text: toastCard.modelData.summary; font.weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap }
                         LabelText { text: toastCard.modelData.body; visible: text.length > 0; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight }
                         RowLayout {
+                            LiquidButton { visible: !!toastCard.modelData.imagePath; text: "Annotate"; onClicked: Notifications.openImage(toastCard.modelData.id) }
                             Repeater {
                                 model: toastCard.modelData.actions || []
                                 delegate: IconButton { required property var modelData; text: modelData.text; implicitWidth: Math.min(145, Math.max(80, text.length * 8)); onClicked: Notifications.invokeAction(toastCard.modelData.id, modelData.identifier) }

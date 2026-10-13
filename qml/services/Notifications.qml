@@ -38,7 +38,20 @@ Singleton {
     onHistoryChanged: if (historyLoaded && !ShellState.demo && !ShellState.settingsApp) persistDelay.restart()
     Timer {
         id: persistDelay; interval: 500
-        onTriggered: if (ShellState.backendReady) ShellState.run("notificationSave", {entries: root.history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))})
+        onTriggered: if (ShellState.backendReady) ShellState.run("notificationSave", {entries: root.history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", imagePath: e.imagePath || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))})
+    }
+
+    function screenshotImage(notification) {
+        const hints = notification.hints || {};
+        if (!((notification.appName || "").toLowerCase() === "niri" && (notification.summary || "").toLowerCase().includes("screenshot")) && hints.category !== "screenshot") return "";
+        // niri sends its screenshot URI as app_icon, with no native notification action.
+        return [hints["image-path"], hints.image_path, notification.appIcon, notification.image].find(value => typeof value === "string" && (value.startsWith("/") || value.startsWith("file://"))) || "";
+    }
+    function openImage(id) {
+        const entry = history.find(e => e.id === id);
+        if (!entry || !entry.imagePath) return;
+        ShellState.run("imageAnnotate", {path: entry.imagePath});
+        hidePopup(id);
     }
 
     function snapshot(notification, timestamp, popup) {
@@ -46,6 +59,7 @@ Singleton {
             id: notification.id,
             appName: notification.appName || "Application",
             appIcon: notification.appIcon || "",
+            imagePath: screenshotImage(notification),
             summary: notification.summary || "Notification",
             body: notification.body || "",
             timestamp: timestamp,

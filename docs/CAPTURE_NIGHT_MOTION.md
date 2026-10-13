@@ -82,7 +82,7 @@ image embedded in the PNG.
 
 **Annotate externally** first renders and saves that same flattened PNG, then
 opens Satty or Swappy with its file path. Choose the app in
-**Settings → Behavior → Screenshot annotation**. Auto prefers installed Satty,
+**Settings → Behavior → Image annotation**. Auto prefers installed Satty,
 then Swappy. Fedora 44 has `swappy`: `sudo dnf install swappy`. Satty is supported
 when installed separately; neither app is installed automatically by the shell.
 Save further edits inside the external app. External changes are not imported

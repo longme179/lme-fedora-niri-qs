@@ -79,8 +79,8 @@ ColumnLayout {
         LabelText { text:"Requires wf-recorder and FFmpeg with the chosen codecs. Audio needs pactl (pulseaudio-utils); region selection needs slurp. MP4/MOV use AAC audio; MKV/WebM use Opus. Other recording apps are never stopped. High frame rates and CPU AV1 can be expensive."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted }
     }
     SettingsCard {
-        title: "Screenshot annotation"
-        description: "Screenshot studio → Annotate externally saves your flattened edits, including redactions, before opening a separate editor. Closing the studio keeps this saved PNG. External edits are not imported back into the studio."
+        title: "Image annotation"
+        description: "Click a clipboard image or screenshot notification to open this editor with a saved copy. Screenshot studio → Annotate externally saves your flattened edits, including redactions. External edits are not imported back into the studio."
         RowLayout {
             LabelText { text: "External editor"; Layout.fillWidth: true }
             LiquidComboBox {

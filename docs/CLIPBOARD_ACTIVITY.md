@@ -15,9 +15,19 @@ sudo dnf install wl-clipboard
 Open **Clipboard** from the modular bar or bind **Super+V**. Search matches the
 full text, including text beyond its visible preview. All/Text/Images filters,
 image previews, pin/unpin, individual deletion and confirmed clearing are
-available. Use Up/Down to select and Enter to copy; the panel closes after a
-successful copy. Paste into the destination application with its normal paste
+available. Use Up/Down to select; Enter copies text or opens an image for annotation.
+Click an image to annotate it, right-click its thumbnail to preview it, or use
+its Copy button to copy the original. The panel closes after opening the editor
+or a successful copy. Paste into the destination application with its normal paste
 shortcut. Copying from history does not synthesize typing into another window.
+
+Choose Auto, Satty or Swappy in **Settings → Behavior → Image annotation**.
+Auto prefers installed Satty, then Swappy. Annotation opens a separate copy in
+your Pictures/Screenshots directory, preserving the clipboard history image.
+Screenshot notifications with an attached local image also open the editor when
+clicked, or through their Annotate button. niri's screenshot notification is
+supported even though it provides no native action. Ordinary app icons do not
+trigger annotation.
 
 **Settings → Clipboard** controls capture, image capture and history size
 (20–500 items; default 100). Pause/Resume in the history panel persists across

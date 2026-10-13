@@ -107,6 +107,7 @@ Item {
                 ScrollBar.vertical: ScrollBar {}
                 delegate: Rectangle {
                     id: entry
+                    objectName: "notificationCard-" + (modelData.id || modelData.appName)
                     required property var modelData
                     width: notificationList.width
                     height: modelData.group ? groupHeading.implicitHeight + 18 : cardContent.implicitHeight + 28
@@ -114,6 +115,7 @@ Item {
                     color: modelData.group ? "transparent" : Theme.surface
                     border.color: modelData.urgency === 2 ? Theme.red : Theme.border
                     border.width: modelData.group ? 0 : 1
+                    MouseArea { anchors.fill: parent; enabled: !!entry.modelData.imagePath; onClicked: Notifications.openImage(entry.modelData.id) }
                     RowLayout {
                         id: groupHeading; visible: !!entry.modelData.group
                         anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 8
@@ -122,6 +124,7 @@ Item {
                     }
                     ColumnLayout {
                         id: cardContent
+                        z: 1
                         visible: !entry.modelData.group
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -147,6 +150,7 @@ Item {
                         Flow {
                             Layout.fillWidth: true
                             spacing: 6
+                            LiquidButton { objectName: "notificationAnnotate-" + entry.modelData.id; visible: !!entry.modelData.imagePath; text: "Annotate"; onClicked: Notifications.openImage(entry.modelData.id) }
                             Repeater {
                                 model: entry.modelData.active ? entry.modelData.actions : []
                                 delegate: LiquidButton {

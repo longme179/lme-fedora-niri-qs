@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Open clipboard images and screenshot notifications in the chosen Satty/Swappy
+  editor. Preserve originals through private saved copies, retain right-click
+  previews and an explicit Copy button, and recognize niri's screenshot icon URI.
 - Remove unused `grim` from the package reference; retain `slurp` for recording
   regions. Note niri's experimental non-xray blur limits in the config fragment.
 - Let the clipboard service read commands from regular files and exit cleanly

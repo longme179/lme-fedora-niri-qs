@@ -9,6 +9,8 @@ import tempfile
 import time
 import threading
 import uuid
+from urllib.parse import unquote, urlsplit
+from clipboard import image_type
 
 PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
 
@@ -32,6 +34,47 @@ def pictures_directory():
             if Path(value).is_absolute() and '\x00' not in value: return Path(value)
     except OSError: pass
     return home / 'Pictures'
+
+
+def annotation_editor(runner, editor):
+    # DMS NiriService.qml (a1e6f6d6): open Satty/Swappy with an argv path.
+    # Copyright (c) 2025 Avenge Media LLC; MIT notice in third_party/DankMaterialShell-LICENSE.
+    if editor not in ('auto', 'satty', 'swappy'): raise ValueError('Choose Auto, Satty or Swappy')
+    chosen = next((name for name in ('satty', 'swappy') if runner.available(name)), None) if editor == 'auto' else editor
+    if not chosen or not runner.available(chosen):
+        raise ValueError('Install swappy (Fedora) or satty, or choose an installed screenshot editor in Behavior settings')
+    return chosen, runner.executable(chosen)
+
+
+def annotate_image(runner, editor, value):
+    chosen, binary = annotation_editor(runner, editor)
+    if not isinstance(value, str) or not value or len(value) > 4096:
+        raise ValueError('Choose a local image')
+    url = urlsplit(value)
+    if url.scheme:
+        if url.scheme != 'file' or url.netloc not in ('', 'localhost') or url.query or url.fragment:
+            raise ValueError('Choose a local image')
+        value = unquote(url.path)
+    if not Path(value).is_absolute() or any(ord(c) < 32 for c in value):
+        raise ValueError('Choose a local image')
+    image = Path(value).resolve(strict=True)
+    if not image.is_file() or image.stat().st_uid != os.getuid(): raise ValueError('Choose an image owned by your user')
+    if image.stat().st_size > 64 * 1024 * 1024: raise ValueError('Image exceeds 64 MiB')
+    with image.open('rb') as source:
+        suffix = image_type(source.read(24))[1]
+        if suffix == 'png': png_size(image)
+        source.seek(0)
+        folder = pictures_directory() / 'Screenshots'
+        folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Editing a clipboard cache file in place would desynchronize its stored bytes and preview.
+        with tempfile.NamedTemporaryFile(dir=folder, prefix='Annotation-', suffix='.' + suffix, delete=False) as output:
+            target = Path(output.name)
+            try: shutil.copyfileobj(source, output)
+            except OSError:
+                target.unlink(missing_ok=True)
+                raise
+    runner.spawn([binary, '-f', str(target)])
+    return 'Opened ' + chosen + ' · image copy saved at ' + str(target)
 
 
 class ScreenCapture:
@@ -105,12 +148,7 @@ class ScreenCapture:
         finally: source.close()
 
     def annotate(self, token, editor, folder):
-        # DMS NiriService.qml (a1e6f6d6): open Satty/Swappy with an argv path.
-        # Copyright (c) 2025 Avenge Media LLC; MIT notice in third_party/DankMaterialShell-LICENSE.
-        if editor not in ('auto','satty','swappy'): raise ValueError('Choose Auto, Satty or Swappy')
-        chosen=next((name for name in ('satty','swappy') if self.runner.available(name)),None) if editor=='auto' else editor
-        if not chosen or not self.runner.available(chosen): raise ValueError('Install swappy (Fedora) or satty, or choose an installed screenshot editor in Behavior settings')
-        binary=self.runner.executable(chosen)
+        chosen, binary = annotation_editor(self.runner, editor)
         # Persist the flattened image before launching; closing the studio deletes runtime files.
         with self.lock:
             with self.rendered(token).open('rb') as source: self._export(source,token,'save',folder)

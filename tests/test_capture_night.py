@@ -17,7 +17,7 @@ from test_backend import backend, Fixture, FakeRunner
 from test_clipboard import PNG
 from desktop_features import appearance_profile, control_layout, MOTION_DEFAULTS
 from night_light import NightLight, clock_minutes, desired_state, solar_times
-from screen_capture import ScreenCapture, png_size
+from screen_capture import ScreenCapture, png_size, annotate_image
 
 
 class CaptureNightCase(Fixture, unittest.TestCase):
@@ -200,6 +200,48 @@ class CaptureNightCase(Fixture, unittest.TestCase):
         count=len(runner.spawns)
         self.assertFalse(live.handle({'action':'captureAnnotate','token':'stale','folder':folder})['ok'])
         self.assertNotIn('captureAnnotate',live.feature_jobs);self.assertEqual(len(runner.spawns),count)
+
+    def test_annotation_of_existing_images_preserves_source_and_uses_selected_editor(self):
+        source = self.root / 'clipboard #1; $(literal).png'
+        source.write_bytes(PNG)
+        runner = FakeRunner(available={'satty', 'swappy'})
+        with patch('screen_capture.pictures_directory', return_value=self.root / 'Pictures'):
+            for editor, expected in [('auto', 'satty'), ('swappy', 'swappy')]:
+                message = annotate_image(runner, editor, source.as_uri())
+                self.assertIn('Opened ' + expected, message)
+                binary, flag, saved = runner.spawns[-1]
+                self.assertEqual((binary, flag), ('/usr/bin/' + expected, '-f'))
+                self.assertNotEqual(Path(saved), source)
+                self.assertEqual(Path(saved).read_bytes(), PNG)
+                self.assertEqual(Path(saved).stat().st_mode & 0o777, 0o600)
+                Path(saved).write_bytes(b'Edited by external app')
+                self.assertEqual(source.read_bytes(), PNG)
+        self.assertEqual(len(list((self.root / 'Pictures/Screenshots').iterdir())), 2)
+
+    def test_existing_image_annotation_rejects_remote_paths_invalid_images_and_missing_editors(self):
+        runner = FakeRunner(available={'swappy'})
+        for value in [None, 'relative.png', 'https://example.com/image.png', 'file://remote/image.png', 'file:///image.png?x=1', 'file:///image%00.png']:
+            with self.subTest(path=value), self.assertRaises(ValueError): annotate_image(runner, 'auto', value)
+        source = self.root / 'not-image.png'; source.write_text('not an image')
+        with self.assertRaises(ValueError): annotate_image(runner, 'auto', str(source))
+        source.write_bytes(PNG)
+        with self.assertRaisesRegex(ValueError, 'Install swappy'): annotate_image(FakeRunner(), 'auto', str(source))
+        self.assertEqual(runner.spawns, [])
+
+    def test_backend_routes_image_annotation_with_saved_editor_and_demo_is_isolated(self):
+        source = self.root / 'screenshot.png'; source.write_bytes(PNG)
+        runner = FakeRunner(available={'swappy'})
+        self.preferences.set('captureEditor', 'swappy')
+        live = self.make_backend(runner); self.addCleanup(live.feature_executor.shutdown)
+        with patch('screen_capture.pictures_directory', return_value=self.root / 'Pictures'):
+            self.assertTrue(live.handle({'action': 'imageAnnotate', 'path': source.as_uri()})['ok'])
+            live.feature_jobs['imageAnnotate'].result(timeout=2); live.finish_features()
+        self.assertTrue(live.last_result['ok'])
+        self.assertEqual(runner.spawns[-1][0], '/usr/bin/swappy')
+        demo = self.make_backend(demo=True)
+        with patch.object(backend, 'annotate_image', side_effect=AssertionError('Host mutation')):
+            self.assertTrue(demo.handle({'action': 'imageAnnotate', 'path': source.as_uri()})['ok'])
+        self.assertEqual(demo.runner.spawns, [])
 
     def test_closed_capture_cannot_publish_a_late_ocr_result(self):
         live = self.make_backend(); self.addCleanup(live.feature_executor.shutdown)

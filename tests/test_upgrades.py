@@ -48,17 +48,24 @@ class UpgradesCase(Fixture, unittest.TestCase):
 
     def test_notification_restart_keeps_text_and_drops_transients_and_actions(self):
         live = self.make_backend()
-        entry = {"id": "1", "appName": "App", "summary": "Hello", "body": "A full notification body", "timestamp": 1,
+        entry = {"id": "1", "appName": "App", "summary": "Hello", "body": "A full notification body", "timestamp": 1, "imagePath": "file:///tmp/screenshot.png",
                  "urgency": 1, "actions": [{"identifier": "open"}], "active": True, "popup": True}
         self.assertTrue(live.handle({"action": "notificationSave", "entries": [entry, dict(entry, id="2", transient=True)]})["ok"])
         loaded = self.make_backend().notification_history
         self.assertEqual(len(loaded), 1)
         self.assertEqual(loaded[0]["body"], entry["body"])
+        self.assertEqual(loaded[0]['imagePath'], entry['imagePath'])
         self.assertEqual(loaded[0]["actions"], [])
         self.assertFalse(loaded[0]["popup"] or loaded[0]["active"])
         self.assertEqual(live.notification_path.stat().st_mode & 0o777, 0o600)
         live.notification_path.write_text("bad json")
         self.assertEqual(self.make_backend().notification_history, [])
+
+    def test_notification_history_keeps_local_image_paths_and_rejects_remote_images(self):
+        entries = [{"id": str(index), "appName": "niri", "summary": "Screenshot captured", "body": "", "timestamp": 1,
+                    "urgency": 1, "imagePath": path} for index, path in enumerate(['file:///tmp/screenshot%20one.png', '/tmp/image.png', 'https://example.com/image.png'])]
+        validated = backend.DesktopBackend.valid_notifications(entries)
+        self.assertEqual([e['imagePath'] for e in validated], ['file:///tmp/screenshot%20one.png', '/tmp/image.png', ''])
 
     def test_wallpaper_scan_filters_names_and_does_not_follow_external_symlinks(self):
         directory = self.root / "images"; directory.mkdir()

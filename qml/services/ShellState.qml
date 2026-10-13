@@ -123,7 +123,7 @@ QtObject {
         const request = Object.assign({}, payload || {}, {action: action});
         // Release the layer-shell keyboard grab before any external agent opens.
         // The built-in Polkit agent also closes panels for requests from apps.
-        if (action === "chargeMode" && !demo) closePanels();
+        if (action === "imageAnnotate" || action === "chargeMode" && !demo) closePanels();
         pendingActions = Object.assign({}, pendingActions, {[action]: true});
         backend.write(JSON.stringify(request) + "\n");
     }

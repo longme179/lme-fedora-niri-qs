@@ -97,8 +97,15 @@ class WeatherClient:
 
     def _search(self, query):
         data = self.opener('https://geocoding-api.open-meteo.com/v1/search?' + urlencode({'name': query, 'count': 6, 'language': 'en', 'format': 'json'}))
+        items = data.get('results')
+        if items is None:
+            items = []
+        if not isinstance(items, list):
+            raise ValueError('The location service returned an invalid response. Retry.')
         results = []
-        for item in data.get('results', [])[:6]:
+        for item in items[:6]:
+            if not isinstance(item, dict):
+                continue
             try:
                 results.append(location({'name': item['name'] + (', ' + item['admin1'] if item.get('admin1') and item['admin1'] != item['name'] else ''),
                                          'country': item.get('country', ''), 'latitude': item['latitude'], 'longitude': item['longitude']}))
@@ -112,19 +119,33 @@ class WeatherClient:
                   'current': 'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,wind_speed_10m',
                   'daily': 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'}
         data = self.opener('https://api.open-meteo.com/v1/forecast?' + urlencode(params))
-        current = data.get('current', {})
-        temperature = current.get('temperature_2m')
+        current = data.get('current')
+        temperature = current.get('temperature_2m') if isinstance(current, dict) else None
         if type(temperature) not in (int, float) or not math.isfinite(temperature):
             raise ValueError('The weather service returned no valid temperature.')
         def number(value):
             return value if type(value) in (int, float) and math.isfinite(value) else None
         code = current.get('weather_code')
-        condition, icon = CONDITIONS.get(code, ('Unknown conditions', 'weather-cloud'))
-        daily, forecast = data.get('daily', {}), []
-        dates = daily.get('time', [])
+        condition, icon = CONDITIONS.get(code if type(code) is int else None, ('Unknown conditions', 'weather-cloud'))
+        daily, forecast = data.get('daily'), []
+        if daily is None:
+            daily = {}
+        if not isinstance(daily, dict):
+            raise ValueError('The weather service returned an invalid forecast. Retry.')
+        dates = daily.get('time')
+        if dates is None:
+            dates = []
+        if not isinstance(dates, list):
+            raise ValueError('The weather service returned an invalid forecast. Retry.')
         for i, date in enumerate(dates[:3]):
+            if not isinstance(date, str):
+                continue
             def day(key):
-                values = daily.get(key, [])
+                values = daily.get(key)
+                if values is None:
+                    return None
+                if not isinstance(values, list):
+                    raise ValueError('The weather service returned an invalid forecast. Retry.')
                 return number(values[i]) if i < len(values) else None
             forecast.append({'date': date, 'min': day('temperature_2m_min'), 'max': day('temperature_2m_max'),
                              'rainChance': day('precipitation_probability_max')})

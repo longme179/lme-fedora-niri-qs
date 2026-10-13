@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Handle null or malformed weather/search responses with readable errors. Keep
+  the last good forecast after a failed refresh and allow missing daily data.
 - Move Power/Settings into independent 1×1 canvas tiles, power-profile cycling
   into 2×1, and speaker/microphone/brightness into three 4×1 slider tiles. Add an
   optional Power bar module and follow advertised profile capabilities.

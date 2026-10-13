@@ -343,6 +343,63 @@ class WeatherCase(Fixture, unittest.TestCase):
         self.assertFalse(state['available'])
         self.assertIn('valid temperature', state['error'])
 
+    def test_search_handles_absent_null_and_invalid_results(self):
+        for value in [{}, {'results': None}, {'results': []}, {'results': [None, 'invalid', 1, {}]},
+                      {'results': {}}, {'results': 'invalid'}, {'results': 1}]:
+            with self.subTest(response=value):
+                self.client.opener = lambda url, value=value: value
+                self.client.search('Nowhere')
+                self.pool.complete()
+                state = self.client.snapshot(self.prefs, allow_fetch=False)['search']
+                self.assertEqual(state['results'], [])
+                self.assertFalse(state['loading'])
+                if value.get('results') is None or isinstance(value['results'], list):
+                    self.assertEqual(state['error'], '')
+                else:
+                    self.assertIn('invalid response', state['error'])
+
+    def test_invalid_current_response_preserves_last_good_forecast(self):
+        good = self.settle()
+        for current in [None, [], 'invalid', {}, {'temperature_2m': None}]:
+            with self.subTest(current=current):
+                self.forecast = {'current': current}
+                self.client.refresh(automatic=False)
+                self.client.snapshot(self.prefs)
+                self.pool.complete()
+                state = self.client.snapshot(self.prefs)
+                self.assertTrue(state['available'])
+                self.assertTrue(state['stale'])
+                self.assertEqual(state['temperature'], good['temperature'])
+                self.assertEqual(state['error'], 'The weather service returned no valid temperature.')
+
+    def test_null_daily_fields_preserve_current_conditions(self):
+        for daily in [None, {'time': None}, {'time': [None, '2026-10-13'], 'temperature_2m_min': None,
+                                           'temperature_2m_max': None, 'precipitation_probability_max': None}]:
+            with self.subTest(daily=daily):
+                self.forecast['daily'] = daily
+                result = self.client._forecast({'latitude': 0, 'longitude': 0}, 'celsius')
+                self.assertEqual(result['temperature'], 29)
+                if daily and daily.get('time'):
+                    self.assertEqual(result['daily'], [{'date': '2026-10-13', 'min': None, 'max': None, 'rainChance': None}])
+                else:
+                    self.assertEqual(result['daily'], [])
+
+    def test_invalid_daily_containers_report_friendly_errors(self):
+        for daily in [[], 'invalid', {'time': {}}, {'time': 'invalid'},
+                      {'time': ['2026-10-13'], 'temperature_2m_min': 'invalid'}]:
+            with self.subTest(daily=daily):
+                self.forecast['daily'] = daily
+                with self.assertRaisesRegex(ValueError, 'invalid forecast'):
+                    self.client._forecast({'latitude': 0, 'longitude': 0}, 'celsius')
+
+    def test_invalid_weather_codes_use_unknown_conditions(self):
+        for code in [None, [], {}, '61', True]:
+            with self.subTest(code=code):
+                self.forecast['current']['weather_code'] = code
+                result = self.client._forecast({'latitude': 0, 'longitude': 0}, 'celsius')
+                self.assertEqual(result['condition'], 'Unknown conditions')
+                self.assertEqual(result['icon'], 'weather-cloud')
+
     def test_settings_only_does_not_automatically_access_network_but_detection_is_available(self):
         live = backend.DesktopBackend(runner=FakeRunner(), preferences=self.preferences, settings_only=True, weather=self.client)
         live.snapshot()

@@ -8,9 +8,9 @@ surfaces and the existing native Polkit agent. Settings and code remain English.
 | 13 · Appearance profiles | Settings → Appearance; Control Center profile menu | Save and apply accent, opacity, comfortable/compact density and motion together. Dracula stays available as the built-in default. Up to 20 profiles; saving an existing custom name updates it. |
 | 9 · Display Settings | Settings → Displays | Native niri modes, including fractional refresh rates, scale and draggable monitor arrangement with exact X/Y fields. Apply, then keep within 20 seconds or revert. The confirmation remains above the scrolling page. |
 | 6 · Notification Center | Notification button / Super+N | Group by application, search text, mute app popups, restore expired history after restart, and DND for 15 minutes, 1 hour, 8 hours or until turned off. Muted apps can be allowed again after their history is cleared. |
-| 5 · Wallpaper library | Settings → Wallpaper | Browse a folder recursively, search image names, preview, star favorites and apply through awww. PNG, JPEG, WebP, GIF and BMP; thumbnails decode asynchronously with a bounded requested size. |
+| 5 · Wallpaper library | Settings → Wallpaper | Browse a folder recursively, search image names, preview and apply through awww. PNG, JPEG, WebP, GIF and BMP; thumbnails decode asynchronously with a bounded requested size. |
 | 4 · Modular Control Center | Control Center → Edit layout | Drag module grips, use keyboard-accessible arrows, hide/show each tile or card, select full/half width and save automatically. Width is adjustable from 480 to 900 px. Half-width cards stack in a narrow panel. |
-| 2 · Smart launcher | Applications button / Super+Space | Name/keyword ranking, subsequences and small spelling mistakes, persistent favorites, arithmetic, emoji/symbol search and currently open windows. |
+| 2 · Smart launcher | Applications button / Super+Space | Name/keyword ranking, subsequences and small spelling mistakes, arithmetic, emoji/symbol search and currently open windows. |
 | 3 · Wi-Fi connections | Wi-Fi bar button, Control Center tile or Devices tab | Scan, enter a password in the shell, connect/disconnect, reconnect saved profiles and confirm before forgetting one. Busy and error states stay visible. |
 
 ## Displays
@@ -35,7 +35,7 @@ layout. Orientation, HDR and VRR are outside this iteration.
 
 ## Launcher
 
-- Type app names normally; star an app or use **Favorites** to filter.
+- Search app names or keywords; results are ranked by match quality.
 - `= (2 + 3) * 4` calculates; Enter copies the result with `wl-copy`.
 - `: smile` searches the bundled Unicode emoji/symbol names; Enter copies.
 - `@ terminal` searches open window titles/app IDs and focuses the selection.
@@ -71,8 +71,8 @@ Clear all removes saved history after the next successful write. DND deadlines
 survive restart; expired deadlines automatically stop silencing popups.
 
 Wallpaper scans stop after 500 images or 10,000 paths and report truncation. They
-skip image links outside the selected folder. Favorites do not modify source
-files. Slideshow and per-monitor wallpaper selection remain for a separate step.
+skip image links outside the selected folder. Slideshow and per-monitor wallpaper
+selection remain for a separate step.
 
 No new Python dependencies are required. In addition to the existing runtime,
 install `qt6-qtimageformats` for the advertised image formats; it is now included

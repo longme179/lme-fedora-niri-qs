@@ -14,18 +14,13 @@ ColumnLayout {
     readonly property var schemes: Theme.paletteSchemes
     readonly property bool previewMatches: palette.path === palettePath && ["paletteScheme", "paletteMode", "paletteContrast"].every(key => palette[key] === ShellState.preferences[key])
     property string query: ""
-    property bool favoritesOnly: false
     property string selectedPath: ""
     readonly property var library: ShellState.snapshot.wallpaperLibrary || {entries: []}
-    readonly property var favorites: ShellState.preferences.wallpaperFavorites || []
-    readonly property var entries: (library.entries || []).filter(e => (!favoritesOnly || favorites.includes(e.path)) && e.name.toLowerCase().includes(query.toLowerCase()))
+    readonly property var entries: (library.entries || []).filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
     function scan(path) {
         if (!path.trim()) return;
         ShellState.run("setting", {key: "wallpaperFolder", value: path});
         ShellState.run("wallpaperScan", {folder: path});
-    }
-    function favorite(path) {
-        ShellState.run("setting", {key: "wallpaperFavorites", value: favorites.includes(path) ? favorites.filter(p => p !== path) : [...favorites, path]});
     }
     function initialize() { if (ShellState.backendReady && (ShellState.preferences.wallpaperFolder || ShellState.demo)) ShellState.run("wallpaperScan", {folder: ShellState.preferences.wallpaperFolder}); }
     Component.onCompleted: initialize()
@@ -42,7 +37,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Wallpaper library"
-        description: "Browse a folder, search image names and keep your favorites. awww applies the selected image."
+        description: "Browse a folder and search image names. awww applies the selected image."
         RowLayout {
             Layout.fillWidth: true
             ExpressiveField { id: folder; Layout.fillWidth: true; text: ShellState.preferences.wallpaperFolder || ""; placeholderText: "Wallpaper folder path"; Accessible.name: "Wallpaper folder"; onAccepted: root.scan(text) }
@@ -51,7 +46,6 @@ ColumnLayout {
         RowLayout {
             Layout.fillWidth: true
             ExpressiveField { Layout.fillWidth: true; placeholderText: "Search images"; Accessible.name: "Search wallpapers"; onTextChanged: root.query = text }
-            LiquidButton { text: "Favorites"; selected: root.favoritesOnly; onClicked: root.favoritesOnly = !root.favoritesOnly }
             LiquidButton { text: ShellState.pendingActions.wallpaperScan ? "Scanning…" : "Scan"; enabled: !ShellState.pendingActions.wallpaperScan && folder.text.trim().length > 0; onClicked: root.scan(folder.text) }
         }
         LabelText { visible: !!root.library.error || !!root.library.truncated; text: root.library.error || "Showing up to 500 images from 10,000 paths. Choose a smaller folder to see the rest."; color: Theme.yellow; Layout.fillWidth: true; wrapMode: Text.Wrap }
@@ -68,12 +62,11 @@ ColumnLayout {
                         border.width: root.selectedPath === thumb.modelData.path ? 2 : 0; border.color: Theme.accent
                         Image { anchors.fill: parent; anchors.margins: 3; anchors.bottomMargin: 34; source: thumb.modelData.url; sourceSize.width: 300; sourceSize.height: 180; asynchronous: true; fillMode: Image.PreserveAspectCrop; clip: true }
                         LiquidButton { anchors.fill: parent; Accessible.name: "Preview " + thumb.modelData.name; background: Item {}  contentItem: Item {}  onClicked: root.selectedPath = thumb.modelData.path }
-                        LabelText { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10; anchors.rightMargin: 45; text: thumb.modelData.name; font.pixelSize: 12; elide: Text.ElideRight }
-                        IconButton { anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 5; glyph: root.favorites.includes(thumb.modelData.path) ? "★" : "☆"; tooltip: "Favorite wallpaper"; onClicked: root.favorite(thumb.modelData.path) }
+                        LabelText { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10; text: thumb.modelData.name; font.pixelSize: 12; elide: Text.ElideRight }
                     }
                 }
             }
-            LabelText { anchors.centerIn: parent; width: parent.width - 20; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; visible: !root.entries.length; text: ShellState.pendingActions.wallpaperScan ? "Scanning images…" : root.favoritesOnly ? "No matching favorites" : "Choose a folder to browse your wallpapers."; color: Theme.muted }
+            LabelText { anchors.centerIn: parent; width: parent.width - 20; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; visible: !root.entries.length; text: ShellState.pendingActions.wallpaperScan ? "Scanning images…" : root.query ? "No matching images" : "Choose a folder to browse your wallpapers."; color: Theme.muted }
         }
     }
     SettingsCard {

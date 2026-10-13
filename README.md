@@ -54,8 +54,8 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Includes workspace switching and a tray dropdown. |
 | **Activity island** | Media controls, focus/break timer, stopwatch and controls for recordings started by LME. Audio visualization uses Cava. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
-| **Launcher** | Fuzzy app search, favorites, calculator, emoji, open windows and file/folder search. |
-| **Everyday tools** | Clipboard text/images with search and pins; grouped, persistent notifications; timed DND; calendar, tasks and autosaved notes. |
+| **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
+| **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. |
@@ -198,7 +198,7 @@ with the shell, even when the shell is stopped.
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
-| **Wallpaper / Weather** | Image library, favorites, palette preview, automatic/manual location and units |
+| **Wallpaper / Weather** | Image library, palette preview, automatic/manual location and units |
 | **Behavior** | Privacy, OSD position/layout/output, notes, file search, recording, external editor and settings transfer |
 | **Keyboard shortcuts / Clipboard** | Search niri bindings; configure history and image capture |
 
@@ -225,7 +225,7 @@ backups. [Configuration guide](docs/CONFIGURATION.md).
 | **Material palette / Audio spectrum** | `matugen` / `cava`. Cava runs for visible, playing media cards, with 60 fps and reduced smoothing. |
 | **External display mirroring** | `wl-mirror` (Fedora: `sudo dnf install wl-mirror`). Connect and enable both outputs, then use Settings → Displays or Control Center → Devices. Choose Source/Destination and Start mirror; Stop closes only LME’s mirror window. [Setup and hardware checks](docs/MIRRORING.md). |
 | **Recording** | `wf-recorder`, compatible FFmpeg/`ffprobe`; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
-| **External annotation / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. External editors receive a saved, flattened PNG including redactions. |
+| **External annotation / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. Click clipboard images or screenshot notifications to open a saved copy in your chosen editor. Screenshot studio exports flattened PNGs including redactions. |
 | **Night Light / Idle** | `wlsunset` with working gamma control; `swayidle` and `swaylock` for idle profiles. Enable these in Settings. |
 | **Weather** | Internet access for Open-Meteo and approximate IP location; no API key needed. Manual location is available. |
 | **Lenovo charging** | Install the helper with `sudo ./scripts/install-charge-helper.sh --install`. Adjustable thresholds depend on firmware; some machines expose only a fixed conservation mode. [Charging guide](docs/CHARGING.md) |

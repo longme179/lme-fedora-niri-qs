@@ -63,7 +63,7 @@ DEFAULT_PREFERENCES = {
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
-    "wallpaperFolder": "", "wallpaperFavorites": [], "favoriteApps": [],
+    "wallpaperFolder": "",
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
     "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
@@ -333,11 +333,11 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "dndUntil" and type(value) is int and -1 <= value <= 4102444800000: return value
     if key in {"wallpaperFolder"} and isinstance(value, str) and len(value) <= 4096 and "\x00" not in value:
         return str(Path(value).expanduser().resolve()) if value else ""
-    if key in {"wallpaperFavorites", "favoriteApps", "notificationMutedApps"} and isinstance(value, list) and len(value) <= 100:
-        if all(isinstance(item, str) and 0 < len(item) <= (4096 if key == "wallpaperFavorites" else 256)
+    if key == "notificationMutedApps" and isinstance(value, list) and len(value) <= 100:
+        if all(isinstance(item, str) and 0 < len(item) <= 256
                and not any(ord(c) < 32 for c in item) for item in value):
             return list(dict.fromkeys(value))
-        raise ValueError("Invalid favorite or notification rule")
+        raise ValueError("Invalid notification rule")
     if key in {"activityEnabled", "clipboardEnabled", "clipboardImages"} and type(value) is bool: return value
     if key == "clipboardLimit" and type(value) is int and 20 <= value <= 500: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:

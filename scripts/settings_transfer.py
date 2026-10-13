@@ -28,6 +28,8 @@ def validate_document(data, validator, defaults):
     if not isinstance(data,dict) or set(data) != {'schema','kind','settings'} or type(data['schema']) is not int or data['schema']!=1 or data['kind'] not in ('preset','backup'):
         raise ValueError('Expected an LME schema 1 settings preset or backup')
     values=data['settings'];allowed=set(defaults) if data['kind']=='backup' else PORTABLE
+    if data['kind'] == 'backup' and isinstance(values, dict):
+        values = {k:v for k,v in values.items() if k not in {'favoriteApps', 'wallpaperFavorites'}}
     if not isinstance(values,dict) or not values or not set(values)<=allowed:
         raise ValueError('Unknown or private settings in this document')
     # Validate everything before the caller mutates preferences.

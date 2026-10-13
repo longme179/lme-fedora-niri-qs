@@ -227,7 +227,7 @@ Item {
                         Layout.fillWidth: true
                         spacing: 4
                         Text { Layout.fillWidth: true; text: root.player ? root.player.trackTitle || root.player.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
-                        Caption { Layout.fillWidth: true; text: root.player ? root.player.trackArtist || root.player.identity : "Play media in your favorite app"; textFormat: Text.PlainText; elide: Text.ElideRight }
+                        Caption { Layout.fillWidth: true; text: root.player ? root.player.trackArtist || root.player.identity : "Play media in an app"; textFormat: Text.PlainText; elide: Text.ElideRight }
                     }
                 }
                 RowLayout {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove app/wallpaper Favorites controls, ranking and preferences. Older backups
+  still import their remaining settings while retired favorite fields are ignored.
 - Open clipboard images and screenshot notifications in the chosen Satty/Swappy
   editor. Preserve originals through private saved copies, retain right-click
   previews and an explicit Copy button, and recognize niri's screenshot icon URI.

@@ -8,7 +8,7 @@ QtObject {
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
         {key: "nightLight", title: "Night Light", icon: "weather-sun", description: "Softer light after sunset", keywords: "blue gamma warm temperature schedule sunrise sunset wlsunset"},
-        {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "background image picture folder library favorites thumbnail matugen material scheme contrast palette light dark"},
+        {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
         {key: "weather", title: "Weather", icon: "weather-sun", description: "Local conditions, wherever you are", keywords: "location city automatic ip forecast celsius fahrenheit temperature"},
         {key: "clipboard", title: "Clipboard", icon: "clipboard", description: "Text and images, ready when you need them", keywords: "history capture copy paste image pin"},
         {key: "idle", title: "Idle and sleep", icon: "battery", description: "Timeouts that follow your charger", keywords: "laptop ac battery display lock suspend sleep swayidle awake"},

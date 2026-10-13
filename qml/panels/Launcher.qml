@@ -13,12 +13,10 @@ Item {
     implicitWidth: 700; implicitHeight: 650
     property string query: ""
     property string selectedId: ""
-    property bool favoritesOnly: false
     property var emoji: []
     property string calculation: ""
     property string calculationError: ""
     property bool calculating: false
-    readonly property var favorites: ShellState.preferences.favoriteApps || []
     readonly property string mode: query.startsWith("/") && ShellState.preferences.fileSearchEnabled !== false ? "files" : query.startsWith(":") ? "emoji" : query.startsWith("@") ? "windows" : query.startsWith("=") || /^[\d\s().+*/%^-]+$/.test(query.trim()) && /[+*/%^-]/.test(query) ? "calculator" : "apps"
     readonly property string fileQuery: query.slice(1).trim()
     readonly property var files: ShellState.snapshot.fileSearch || {query:"",entries:[]}
@@ -30,8 +28,8 @@ Item {
         if (mode === "emoji") return emoji.filter(e => (e.name + " " + e.keywords).includes(text)).slice(0, 100).map(e => ({kind: "copy", id: e.emoji, name: e.emoji + "  " + e.name, detail: "Copy emoji", value: e.emoji}));
         const windows = (ShellState.niri.windows || []).filter(w => [w.title || "", w.app_id || ""].join(" ").toLowerCase().includes(text)).map(w => ({kind: "window", id: "window-" + w.id, windowId: w.id, name: w.title || w.app_id || "Window", detail: "Open window · workspace " + (((ShellState.niri.workspaces || []).find(ws => ws.id === w.workspace_id) || {}).idx || "—"), icon: ShellState.windowIcon(w)}));
         if (mode === "windows") return windows;
-        const apps = Search.apps(text, ShellState.apps, favorites, favoritesOnly).map(a => ({kind: "app", id: a.id, name: a.name, detail: a.genericName || a.comment || "Launch application", icon: ShellState.appIcon(a.icon)}));
-        return [...apps, ...(text && !favoritesOnly ? windows : [])];
+        const apps = Search.apps(text, ShellState.apps).map(a => ({kind: "app", id: a.id, name: a.name, detail: a.genericName || a.comment || "Launch application", icon: ShellState.appIcon(a.icon)}));
+        return [...apps, ...(text ? windows : [])];
     }
     function activate(index) {
         const item = results[index];
@@ -42,7 +40,6 @@ Item {
         else ShellState.run("copyText", {text: item.value});
         ShellState.closePanels();
     }
-    function favorite(id) { selectedId = id; ShellState.run("setting", {key: "favoriteApps", value: favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id]}); }
     function focusSearch() { selectedId = ""; query = ""; search.text = ""; search.forceActiveFocus(); resultsList.currentIndex = 0; }
     onResultsChanged: { const previous = results.findIndex(r => r.id === selectedId); resultsList.currentIndex = previous >= 0 ? previous : results.length ? 0 : -1; }
     onQueryChanged: {
@@ -73,7 +70,6 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Launcher"; font.pixelSize: 24; font.weight: Font.Bold; Layout.fillWidth: true }
-            LiquidButton { text: "Favorites"; selected: root.favoritesOnly; onClicked: root.favoritesOnly = !root.favoritesOnly }
             LiquidButton { text: "Esc"; onClicked: ShellState.closePanels(); Accessible.name: "Close launcher" }
         }
         LabelText { visible: root.mode === "files"; text: root.fileQuery.length<2 ? "Enter at least two characters after /" : ShellState.pendingActions.fileSearch ? "Searching local folders…" : root.files.query===root.fileQuery && root.files.truncated ? "Results limited; narrow the name or search folders" : "Local filename search"; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 12 }
@@ -114,11 +110,10 @@ Item {
                             LabelText { text: resultRow.modelData.name; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
                             LabelText { text: resultRow.modelData.detail; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
                         }
-                        IconButton { visible: resultRow.modelData.kind === "app"; glyph: root.favorites.includes(resultRow.modelData.id) ? "★" : "☆"; tooltip: "Favorite application"; Accessible.name: "Favorite " + resultRow.modelData.name; onClicked: root.favorite(resultRow.modelData.id) }
                     }
                 }
             }
-            LabelText { anchors.centerIn: parent; width: parent.width - 24; visible: !root.results.length && !root.calculating && !root.calculationError; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.muted; text: root.mode === "calculator" ? "Enter an arithmetic expression" : root.favoritesOnly ? "No matching favorites. Star an application to keep it here." : "No matching results" }
+            LabelText { anchors.centerIn: parent; width: parent.width - 24; visible: !root.results.length && !root.calculating && !root.calculationError; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.muted; text: root.mode === "calculator" ? "Enter an arithmetic expression" : "No matching results" }
         }
         LabelText { text: root.results.length + " results · ↑ ↓ navigate · Enter open or copy"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
     }

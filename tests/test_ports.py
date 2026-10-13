@@ -19,6 +19,21 @@ class PrivacyCase(Fixture, unittest.TestCase):
         self.assertEqual(live.privacy()['captures'],[])
 
 class TransferCase(Fixture, unittest.TestCase):
+    def test_legacy_favorites_are_ignored_without_losing_other_backup_settings(self):
+        from settings_transfer import validate_document
+        values = {'accent': '#123456', 'favoriteApps': ['app'], 'wallpaperFavorites': ['/image.png']}
+        restored = validate_document({'schema': 1, 'kind': 'backup', 'settings': values}, backend.validate_preference, backend.DEFAULT_PREFERENCES)
+        self.assertEqual(restored, {'accent': '#123456'})
+        self.preferences.path.parent.mkdir(parents=True, exist_ok=True)
+        self.preferences.path.write_text(json.dumps(values))
+        loaded = backend.Preferences(self.preferences.path)
+        self.assertEqual(loaded.values['accent'], '#123456')
+        for key in ['favoriteApps', 'wallpaperFavorites']:
+            self.assertNotIn(key, loaded.values)
+            with self.assertRaises(ValueError): loaded.set(key, [])
+        with self.assertRaises(ValueError):
+            validate_document({'schema': 1, 'kind': 'backup', 'settings': {**values, 'unknown': True}}, backend.validate_preference, backend.DEFAULT_PREFERENCES)
+
     def test_portable_excludes_private_data_and_rejects_partial_invalid_import(self):
         from settings_transfer import document, validate_document, export_document
         values={**backend.DEFAULT_PREFERENCES,'tasks':[{'id':'note','text':'Private','done':False}],'weatherLocation':{'latitude':1,'longitude':2}}

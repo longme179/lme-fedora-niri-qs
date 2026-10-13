@@ -22,10 +22,10 @@ function score(term, name, other) {
     if (term.length >= 3 && term.length <= 40 && name.split(/\s+/).some(word => distance(term, word) <= Math.min(2, Math.floor(term.length / 3)))) return 20;
     return -1;
 }
-function apps(query, apps, favorites, onlyFavorites) {
+function apps(query, apps) {
     const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 8);
-    return apps.filter(app => !onlyFavorites || favorites.includes(app.id)).map(app => {
+    return apps.map(app => {
         const scores = terms.map(t => score(t, app.name.toLowerCase(), [app.genericName || "", app.comment || "", ...(app.keywords || [])].join(" ").toLowerCase()));
         return {app: app, score: scores.some(s => s < 0) ? -1 : scores.reduce((a, b) => a + b, 0)};
-    }).filter(item => item.score >= 0).sort((a, b) => b.score - a.score || Number(favorites.includes(b.app.id)) - Number(favorites.includes(a.app.id)) || a.app.name.localeCompare(b.app.name)).map(item => item.app);
+    }).filter(item => item.score >= 0).sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name)).map(item => item.app);
 }

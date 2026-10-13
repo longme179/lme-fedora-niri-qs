@@ -1,5 +1,35 @@
 # Validation and platform limits
 
+## Clipboard/screenshot annotation and Favorites removal — 2026-10-13
+
+`scripts/check.sh` discovered **228 tests: 204 passed, 24 skipped**, with private
+clipboard, annotation and upgrade UI checks enabled. Changed clipboard,
+notification, launcher and settings views plus the native fixture passed qmllint
+without warnings. The shell entry and ShellState retain the previously documented
+Quickshell metadata warnings. Python compilation, Bash syntax, demo state and
+diff checks passed.
+
+Real pointer tests verify clipboard-image annotation, right-click previews,
+explicit image copying through wl-clipboard, pin/delete/clear behavior and
+text-search/keyboard copying. Real private D-Bus notifications verify niri's
+screenshot app-icon URI, ordinary icons remaining non-actionable, and annotation
+through the Notification Center button and card body.
+
+A click on the actual shell's screenshot toast launches a substitute Satty
+executable through the live Python backend. The executable records its argv;
+checks confirm `-f`, a private copied image under the isolated Pictures/Screenshots
+directory and an unchanged source. Unit checks cover Satty-first selection,
+explicit Swappy selection, local URI decoding, invalid/missing editors and image
+input, persistence of notification image paths and demo isolation.
+
+Existing Settings/Launcher/Wallpaper UI checks pass after removing Favorites.
+Legacy settings and backup fixtures retain unrelated preferences and ignore the
+two retired favorite fields; unknown fields still fail import validation.
+
+Actual Satty/Swappy windows, their save/copy UI and target Fedora/niri behavior
+remain unverified. No package was installed. The native tests use a private Sway
+session and an editor substitute, not the owner's desktop or real editor UI.
+
 ## External audit follow-up — 2026-10-13
 
 `scripts/check.sh` discovered **221 tests: 189 passed, 32 skipped**. Python

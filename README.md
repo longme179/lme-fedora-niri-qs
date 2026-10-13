@@ -12,18 +12,14 @@
   <a href="#installation">Install</a> · <a href="#features">Features</a> · <a href="#make-it-yours">Personalize</a> · <a href="#documentation">Documentation</a> · <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-[![Watch the maintainer’s LME Shell demo — Control Center over the blurred desktop](docs/media/demo.png)](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)
+[![LME Shell Control Center over a blurred desktop](docs/media/demo.png)](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)
 
 **[▶ Watch the demo](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)** · [View the original post](https://github.com/longme179/lme-fedora-niri-qs/issues/1)
 
-The preview comes from the maintainer's recording, with a customized layout.
-Click it to watch the 71-second, 720p demo hosted on GitHub.
-
-LME is built with **Quickshell and QML/Qt Quick**. A modular bar, an expandable
-Activity island and a standalone Settings app put everyday desktop controls
-within reach. Rounded shapes, springs that keep their velocity, translucent
-glass, Dracula-inspired colors and Roboto typography carry through the interface.
-The UI, source and documentation are in English.
+LME is a desktop shell built with **Quickshell and QML/Qt Quick**. It includes a
+modular bar, an expandable Activity island and a standalone Settings app, with
+translucent panels, spring animations, Dracula-inspired colors and Roboto fonts.
+The interface and documentation are in English.
 
 First run uses one connected top bar, a centered Activity island and a Control
 Center on the right. Choose your own modules, colors, fonts, spacing and motion
@@ -31,22 +27,17 @@ without editing QML.
 
 ## Features
 
-| Your desktop | What LME brings |
+| Feature | Details |
 | --- | --- |
-| **A bar you can arrange** | Enable, reorder and move modules; choose connected or separate pills, top/bottom placement and edge distances. Ordered workspaces and a tray dropdown keep the bar compact. |
-| **An Activity island** | Expand media controls, focus/break timer, stopwatch and owned recording controls. Real Cava spectrum follows playback. |
-| **A modular Control Center** | Drag independent toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
-| **A useful launcher** | Fuzzy app search, favorites, calculator, emoji, open windows and bounded file/folder search. |
+| **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Includes workspace switching and a tray dropdown. |
+| **Activity island** | Media controls, focus/break timer, stopwatch and controls for recordings started by LME. Audio visualization uses Cava. |
+| **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
+| **Launcher** | Fuzzy app search, favorites, calculator, emoji, open windows and file/folder search. |
 | **Everyday tools** | Clipboard text/images with search and pins; grouped, persistent notifications; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
-| **Capture and comfort** | Start/stop output or region recording, screenshot drawing/redaction, external Satty/Swappy annotation, local OCR and scheduled Night Light. |
-| **Topbar styling** | Connected bar plus independently styled Left/Center/Right islands; corner roundness, square-left/right presets, border thickness and alpha/hex fill/color. Settings → Top bar applies changes live and includes them in settings exports. |
-| **Personal appearance** | Per-element hex colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes with scheme, light/dark and contrast controls. |
-
-**Recording:** NVIDIA-first recording with iGPU/CPU fallback, MKV/MP4/MOV/WebM
-and encoding controls, external screenshot annotation, workspace selection
-without a redundant monitor-centering action, and a more responsive audio
-spectrum. See the [changelog](CHANGELOG.md) for the feature history.
+| **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
+| **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. |
+| **Themes and fonts** | Per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes with scheme, light/dark and contrast controls. |
 
 ## Installation
 
@@ -65,8 +56,8 @@ supports niri 25.11+. LME supplies the desktop interface; niri manages windows.
 | Fedora desktop services | NetworkManager, BlueZ, PipeWire/WirePlumber and an existing power-profile provider |
 
 [requirements-fedora.txt](requirements-fedora.txt) groups packages by purpose.
-It is a **DNF package list**, not a pip requirements file. The package helper
-assumes niri is already installed and does not change GPU drivers or partitions.
+It is a **DNF package list** for the installation helper. Install niri before
+running the helper; GPU drivers are managed separately.
 
 ### 1. Keep a permanent checkout
 
@@ -81,8 +72,7 @@ cd ~/src/lme-fedora-niri-qs
 This checkout tracks `main`. You can also use GitHub’s **Code → Download ZIP**
 and extract it into a permanent directory. Run the following commands from
 that source directory, and keep it after installation: the installed shell
-links to it. The maintainer decides when to publish releases; no versioned
-release download is required for this installation path.
+links to it.
 
 ### 2. Review and install packages
 
@@ -111,8 +101,8 @@ only when Quickshell is unavailable:
 ./scripts/install-fedora.sh --install --optional --copr
 ```
 
-Package signatures and TLS checks stay enabled. See the
-[repository availability guide](docs/INSTALL.md#quickshell-repository-availability).
+See the [repository availability guide](docs/INSTALL.md#quickshell-repository-availability)
+for more details.
 
 </details>
 
@@ -178,7 +168,7 @@ Open Settings from either gear button, the application launcher, **Super+Comma**
 or `./scripts/settings.sh`. It runs in its own window and shares saved preferences
 with the shell, even when the shell is stopped.
 
-![The standalone Settings app showing per-element colors and live previews in the maintainer’s recording](docs/media/settings-2.0.png)
+![LME Settings with per-element colors and live previews](docs/media/settings-2.0.png)
 
 | Page | Customize |
 | --- | --- |
@@ -199,8 +189,8 @@ If you set `XDG_CONFIG_HOME`, use that directory instead of `~/.config`.
 Automatic idle management and Night Light start disabled.
 
 **Share a preset:** use **Behavior → Settings export and restore → Export preset**.
-Send this portable JSON when proposing factory settings; it excludes personal
-paths, location, device IDs and tasks. Import validates fields and backs up
+Use the exported JSON to share your setup; it excludes personal paths, location,
+device IDs and tasks. Import validates fields and backs up
 current settings. Private backups include personal settings and should stay
 private. Clipboard/notification history and notes are separate from settings
 backups. [Configuration guide](docs/CONFIGURATION.md).
@@ -251,8 +241,8 @@ quickshell -c lme-shell kill
 ./scripts/start.sh
 ```
 
-The symlink uses the updated source. Reopen Settings too; rerun the package
-preview/install if new dependencies are needed. For a release ZIP installation,
+Restart Settings as well. If an update adds dependencies, rerun the package
+helper to review and install them. For a release ZIP installation,
 extract the new version to a permanent directory and rerun both install scripts
 with `--replace` to update their targets while keeping backups.
 
@@ -303,8 +293,7 @@ Control Center links to Blueman and the network editor.
 
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.
 Native UI checks require a private Wayland session. See [validation details](docs/VALIDATION.md)
-for the executed checks and hardware limits. These checks do not certify every
-GPU, radio, display or suspend path.
+for test coverage and hardware-specific limitations.
 
 ## Credits and license
 
@@ -321,5 +310,5 @@ licenses and the iNiR notice are retained.
 LME's original code is **GPL-3.0-or-later**, with retained GPL-3.0-only terms in
 adapted upstream components. See [LICENSE](LICENSE), [THIRD_PARTY.md](THIRD_PARTY.md)
 and `third_party/` for attribution and licensing. Purchased Dracula Pro assets
-and fonts are not bundled. The demo recording was supplied by the maintainer;
-its wallpaper/artwork remains credited to its respective creators.
+and fonts are not bundled. Demo wallpaper and artwork belong to their respective
+creators.

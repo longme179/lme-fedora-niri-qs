@@ -247,9 +247,15 @@ def serve(directory: Path):
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     selector = selectors.DefaultSelector()
-    selector.register(sys.stdin, selectors.EVENT_READ)
     buffer, last_signature, last_config, available = b"", None, 0, False
     try:
+        try:
+            selector.register(sys.stdin, selectors.EVENT_READ)
+        except PermissionError:
+            # epoll does not accept regular files or /dev/null as stdin.
+            selector.close()
+            selector = selectors.SelectSelector()
+            selector.register(sys.stdin, selectors.EVENT_READ)
         while running:
             if time.monotonic() - last_config >= 1:
                 capture_service.update(preferences()); last_config = time.monotonic()

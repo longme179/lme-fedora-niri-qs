@@ -6,6 +6,7 @@ from pathlib import Path
 import selectors
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -119,6 +120,30 @@ class HistoryCase(unittest.TestCase):
             with self.assertRaises(ValueError): backend.validate_preference('clipboardLimit', value)
         with patch.dict(os.environ, {'CLIPBOARD_STATE': 'sensitive'}): capture('text', self.root / 'unused')
         self.assertFalse((self.root / 'unused').exists())
+
+    def test_service_reads_commands_and_eof_from_pipe_file_and_devnull(self):
+        config = self.root / 'config/lme-shell'
+        config.mkdir(parents=True)
+        (config / 'settings.json').write_text(json.dumps({'clipboardEnabled': False}))
+        env = dict(os.environ, XDG_CONFIG_HOME=str(config.parent))
+        command = json.dumps({'action': 'search', 'query': 'test', 'kind': 'all'}) + '\n'
+        source = self.root / 'commands.jsonl'
+        source.write_text(command)
+        script = Path(__file__).resolve().parents[1] / 'scripts/clipboard.py'
+        with source.open() as stream:
+            for name, stdin in [('pipe', None), ('file', stream), ('devnull', subprocess.DEVNULL)]:
+                with self.subTest(stdin=name):
+                    result = subprocess.run([sys.executable, str(script), '--directory', str(self.root / name)],
+                        stdin=stdin, input=command if name == 'pipe' else None, capture_output=True,
+                        text=True, env=env, timeout=5)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stderr, '')
+                    states = [json.loads(line) for line in result.stdout.splitlines()]
+                    self.assertTrue(states)
+                    self.assertFalse(states[-1]['capturing'])
+                    if name != 'devnull':
+                        self.assertEqual(states[-1]['lastResult']['action'], 'search')
+                        self.assertTrue(states[-1]['lastResult']['ok'])
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_CLIPBOARD_NATIVE') == '1', 'Enable only in a private Wayland session')

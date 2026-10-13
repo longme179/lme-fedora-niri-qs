@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Let the clipboard service read commands from regular files and exit cleanly
+  with `/dev/null` stdin, using the same selector fallback as the desktop backend.
 - Handle null or malformed weather/search responses with readable errors. Keep
   the last good forecast after a failed refresh and allow missing daily data.
 - Move Power/Settings into independent 1×1 canvas tiles, power-profile cycling

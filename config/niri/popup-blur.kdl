@@ -1,6 +1,8 @@
 // Optional: niri >= 26.04. Merge/include only on a supported niri build.
 // The shell requests the blur region only while its overlay is visible.
 // xray=false includes application windows in the blur, rather than wallpaper only.
+// Non-xray effects are experimental in niri and may disappear during
+// window open/close animations or while dragging tiled windows.
 layer-rule {
     match namespace="^lme-(overlay|authentication)$"
     background-effect {

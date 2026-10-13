@@ -1,5 +1,24 @@
 # Validation and platform limits
 
+## External audit follow-up — 2026-10-13
+
+`scripts/check.sh` discovered **221 tests: 189 passed, 32 skipped**. Python
+compilation, Bash syntax, demo state and diff checks passed. Six new regression
+tests reproduced failures before the fixes and passed afterward.
+
+Weather fixtures cover absent/null search results, malformed response types,
+null daily data and arrays, invalid weather codes and keeping the last valid
+forecast after a failed refresh. Clipboard subprocess checks read actual commands
+and EOF through pipes and regular files, and exit cleanly with `/dev/null` stdin.
+Capture is disabled and storage/configuration use temporary directories.
+
+The package reference removes unused `grim`; installer dry-run already omitted
+it and retains `slurp` for recording-region selection. The blur fragment adds
+upstream's non-xray limitation as a comment; rendering settings are unchanged.
+
+Private Wayland and hardware checks were not rerun for these changes. Weather
+responses are fixtures, not live requests to Open-Meteo. No QML or layout changed.
+
 ## Independent slider/actions and stable card models — 2026-10-13
 
 `scripts/check.sh` passed **215 tests, no skips**, with all private Wayland

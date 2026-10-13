@@ -66,11 +66,11 @@ gnome-keyring
 # Optional wallpaper daemon. Check repository availability before installing.
 # Upstream: https://codeberg.org/LGFae/awww.git (client and awww-daemon).
 awww
-# Optional external screenshot utilities. Screenshot studio uses niri capture,
-# Qt Canvas annotations and Tesseract OCR; it needs neither grim nor slurp.
+# Optional screenshot annotation and recording-region selection.
+# Screenshot studio uses niri capture, Qt Canvas annotations and Tesseract OCR.
+# slurp selects regions for screen recording.
 # External annotation: Fedora 44 supplies Swappy; Satty is supported if installed separately.
 swappy
-grim
 slurp
 
 # System monitor and keybind viewer use Python stdlib only.

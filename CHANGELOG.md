@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove unused `grim` from the package reference; retain `slurp` for recording
+  regions. Note niri's experimental non-xray blur limits in the config fragment.
 - Let the clipboard service read commands from regular files and exit cleanly
   with `/dev/null` stdin, using the same selector fallback as the desktop backend.
 - Handle null or malformed weather/search responses with readable errors. Keep

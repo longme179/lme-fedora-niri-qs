@@ -9,12 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="#installation">Install</a> · <a href="#features">Features</a> · <a href="#make-it-yours">Personalize</a> · <a href="#documentation">Documentation</a> · <a href="CHANGELOG.md">Changelog</a>
+  <a href="#preview">Preview</a> · <a href="#installation">Install</a> · <a href="#features">Features</a> · <a href="#make-it-yours">Personalize</a> · <a href="#documentation">Documentation</a> · <a href="CHANGELOG.md">Changelog</a>
 </p>
-
-[![LME Shell Control Center over a blurred desktop](docs/media/demo.png)](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)
-
-**[▶ Watch the demo](https://github.com/user-attachments/assets/7734865e-cf30-4db4-b0c7-67c3ea8212d9)** · [View the original post](https://github.com/longme179/lme-fedora-niri-qs/issues/1)
 
 LME is a desktop shell built with **Quickshell and QML/Qt Quick**. It includes a
 modular bar, an expandable Activity island and a standalone Settings app, with
@@ -24,6 +20,32 @@ The interface and documentation are in English.
 First run uses one connected top bar, a centered Activity island and a Control
 Center on the right. Choose your own modules, colors, fonts, spacing and motion
 without editing QML.
+
+## Preview
+
+![Control Center in edit mode, with draggable tiles and sliders over a blurred desktop](https://github.com/user-attachments/assets/429d8285-dc0d-4803-bb44-198c4b884b35)
+
+https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
+
+<details>
+<summary><strong>More screenshots</strong></summary>
+
+**Activity island**
+
+![Compact Activity island showing media playback](https://github.com/user-attachments/assets/5b235203-1ff5-4a7f-9dd3-46c53d1b21ca)
+
+<table>
+  <tr>
+    <th width="55%">Control Center</th>
+    <th width="45%">Wi-Fi</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="https://github.com/user-attachments/assets/0266766e-0ec2-44f1-a6ab-4e21be98d63f" alt="Control Center with weather, charging, media, system statistics and recording controls" width="480"></td>
+    <td valign="top"><img src="https://github.com/user-attachments/assets/49043d58-ed26-49ce-b79a-d4ae3bd276fe" alt="Wi-Fi panel showing the connected network and saved networks" width="380"></td>
+  </tr>
+</table>
+
+</details>
 
 ## Features
 
@@ -168,7 +190,7 @@ Open Settings from either gear button, the application launcher, **Super+Comma**
 or `./scripts/settings.sh`. It runs in its own window and shares saved preferences
 with the shell, even when the shell is stopped.
 
-![LME Settings with per-element colors and live previews](docs/media/settings-2.0.png)
+![LME Settings showing popup blur, spring motion, shape morphing and animation presets](https://github.com/user-attachments/assets/5a87fa0e-b7d2-47a4-968b-f78510552d0a)
 
 | Page | Customize |
 | --- | --- |

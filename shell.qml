@@ -3,7 +3,6 @@
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -63,7 +62,8 @@ ShellRoot {
                 color: "transparent"
                 WlrLayershell.namespace: "lme-bar"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                Bar { anchors.fill: parent; screenInfo: screenScope.modelData; windowInfo: barWindow }
+                BackgroundEffect.blurRegion: visible && ShellState.barBlurEnabled ? bar.blurRegion : null
+                Bar { id: bar; anchors.fill: parent; screenInfo: screenScope.modelData; windowInfo: barWindow }
                 IdleInhibitor { window: barWindow; enabled: ShellState.stayAwake && !ShellState.demo }
             }
         }
@@ -85,7 +85,8 @@ ShellRoot {
         PopupBackdrop { anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13 }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
-            anchors.fill: parent
+            width: overlay.screen ? overlay.screen.width : overlay.width
+            height: overlay.screen ? overlay.screen.height : overlay.height
             focus: true
             Keys.onEscapePressed: ShellState.closePanels()
             ActivityIsland { id: activityIsland; z: 2 }
@@ -97,12 +98,12 @@ ShellRoot {
                 shown: ShellState.panelOpen && !ShellState.activityOpen
                 content: ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
                                : ShellState.panelKind === "notifications" ? notificationsComponent : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : ShellState.panelKind === "clipboard" ? clipboardComponent : powerComponent
-                width: item ? Math.min(item.implicitWidth, overlay.width - 32) : 400
-                height: item ? Math.min(item.implicitHeight, overlay.height - Theme.panelTopMargin - 16) : 500
-                x: centered ? (overlay.width - width) / 2
-                   : ShellState.panelKind === "tray" && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(overlay.width - width - 14, ShellState.trayAnchorX - width))
-                   : overlay.width - width - 14
-                y: centered ? (overlay.height - height) / 2 : Theme.barBottom ? overlay.height - height - Theme.panelTopMargin : Theme.panelTopMargin
+                width: item ? Math.min(item.implicitWidth, parent.width - 32) : 400
+                height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : 500
+                x: centered ? (parent.width - width) / 2
+                   : ShellState.panelKind === "tray" && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(parent.width - width - 14, ShellState.trayAnchorX - width))
+                   : parent.width - width - 14
+                y: centered ? (parent.height - height) / 2 : Theme.barBottom ? parent.height - height - Theme.panelTopMargin : Theme.panelTopMargin
                 MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
             }
         }
@@ -130,83 +131,9 @@ ShellRoot {
             }
         }
     }
-    PanelWindow {
-        screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && Notifications.popups.length > 0 && !ShellState.notificationsOpen && !ShellState.authenticationActive
-        anchors { top: !Theme.barBottom; bottom: Theme.barBottom; right: true }
-        margins { top: Theme.barBottom ? 0 : Theme.panelTopMargin; bottom: Theme.barBottom ? Theme.panelTopMargin : 0; right: 14 }
-        implicitWidth: 360
-        implicitHeight: toastColumn.implicitHeight
-        color: "transparent"
-        exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "lme-notifications"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        Column {
-            id: toastColumn
-            width: parent.width; spacing: 10
-            Repeater {
-                model: Notifications.popups
-                delegate: GlassPanel {
-                    id: toastCard
-                    role: "notificationFill"
-                    required property var modelData
-                    width: toastColumn.width
-                    height: toastContent.implicitHeight + 32
-                    MouseArea { anchors.fill: parent; enabled: !!toastCard.modelData.imagePath; onClicked: Notifications.openImage(toastCard.modelData.id) }
-                    ColumnLayout {
-                        id: toastContent
-                        z: 1
-                        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
-                        spacing: 8
-                        RowLayout {
-                            LabelText { text: toastCard.modelData.appName; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
-                            IconButton { glyph: "×"; tooltip: "Dismiss notification"; implicitWidth: 24; implicitHeight: 24; onClicked: Notifications.dismiss(toastCard.modelData.id) }
-                        }
-                        LabelText { text: toastCard.modelData.summary; font.weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                        LabelText { text: toastCard.modelData.body; visible: text.length > 0; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight }
-                        RowLayout {
-                            LiquidButton { visible: !!toastCard.modelData.imagePath; text: "Annotate"; onClicked: Notifications.openImage(toastCard.modelData.id) }
-                            Repeater {
-                                model: toastCard.modelData.actions || []
-                                delegate: IconButton { required property var modelData; text: modelData.text; implicitWidth: Math.min(145, Math.max(80, text.length * 8)); onClicked: Notifications.invokeAction(toastCard.modelData.id, modelData.identifier) }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    NotificationToasts { preview: root.preview }
     Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
-    PanelWindow {
-        screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && !ShellState.authenticationActive && ShellState.statusMessage.length > 0
-        anchors.bottom: true
-        margins.bottom: 24
-        implicitWidth: 460
-        implicitHeight: 76
-        color: "transparent"; exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.namespace: "lme-osd"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-        GlassPanel {
-            anchors.fill: parent
-            ColumnLayout {
-                anchors.fill: parent; anchors.margins: 16; spacing: 9
-                LabelText {
-                    text: ShellState.statusMessage || ShellState.osdLabel + "  " + Math.round(ShellState.osdValue) + "%"
-                    color: ShellState.statusError && ShellState.statusMessage ? Theme.red : Theme.text
-                    Layout.fillWidth: true; wrapMode: Text.Wrap
-                    horizontalAlignment: Text.AlignHCenter
-                }
-                Rectangle {
-                    visible: !ShellState.statusMessage
-                    Layout.fillWidth: true; Layout.preferredHeight: 4; radius: 2; color: Theme.surface
-                    Rectangle { width: parent.width * Math.max(0, Math.min(100, ShellState.osdValue)) / 100; height: parent.height; radius: 2; color: Theme.accent }
-                }
-            }
-        }
-    }
+    StatusWindow { preview: root.preview }
     LazyLoader {
         active: root.preview
         component: FloatingWindow {

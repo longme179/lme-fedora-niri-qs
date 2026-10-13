@@ -1,8 +1,17 @@
 import QtQuick
+import Quickshell
 import "../components"
 import "../theme"
 
 GlassPanel {
+    id: root
+    readonly property Region blurRegion: Region {
+        item: root.visible && root.width > 0 ? root : null
+        topLeftRadius: Math.round(root.topLeftRadius)
+        topRightRadius: Math.round(root.topRightRadius)
+        bottomLeftRadius: Math.round(root.bottomLeftRadius)
+        bottomRightRadius: Math.round(root.bottomRightRadius)
+    }
     property string zone: ""
     readonly property color fill: style.fillColor || Theme.barFill
     readonly property var style: zone ? Theme.islandStyle(zone) : ({})

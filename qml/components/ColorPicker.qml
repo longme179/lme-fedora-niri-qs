@@ -5,7 +5,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme"
-Popup {
+MotionPopup {
     id: root
     property color initialColor: Theme.accent
     property real hue: 0
@@ -18,7 +18,7 @@ Popup {
     width: 350; height: contentItem.implicitHeight + 32; padding: 16
     modal: true; closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     background: GlassPanel { radius: 24 }
-    onOpened: { error.text=""; load(initialColor); hex.text=selectedColor.toString(); }
+    onAboutToShow: { error.text=""; load(initialColor); hex.text=selectedColor.toString(); }
     onSelectedColorChanged: if (!hex.activeFocus) hex.text=selectedColor.toString()
     function load(color) {
         parsedColor=color; hue=Math.max(0,parsedColor.hsvHue);

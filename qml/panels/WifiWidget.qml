@@ -67,7 +67,7 @@ ColumnLayout {
     }
     LabelText { visible: !(root.network.saved || []).length; text: "No saved Wi-Fi networks"; color: Theme.muted; font.pixelSize: 12 }
     LiquidButton { text: "Advanced network settings"; onClicked: ShellState.run("openSettings", {target: "network"}) }
-    Popup {
+    MotionPopup {
         id: connectionDialog; objectName: "wifiPasswordDialog"
         parent: Overlay.overlay; anchors.centerIn: parent
         width: Math.min(440, parent ? parent.width - 32 : 440)

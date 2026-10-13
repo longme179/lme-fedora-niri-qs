@@ -67,12 +67,12 @@ include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
 
 Use your installed directory instead if your config is named `gpt`. Only add this include on supported niri; older builds cannot parse these directives. If your config already contains a global `blur` block, merge its settings instead of adding another block. Run `niri validate` before applying the edited config.
 
-The fragment sets `xray false` specifically for `lme-overlay` and `lme-authentication`, so application windows participate in blur; xray blur would use the wallpaper. It starts with two passes, offset 3 and no saturation boost for a moderate integrated-Radeon budget. niri describes non-xray blur as experimental: check its rendering and performance on your actual output. Increase passes only if your machine has room for the additional work. The shell does not change niri config automatically.
+The fragment sets `xray false` for `lme-bar`, `lme-overlay` and `lme-authentication`, so application windows participate in blur; xray blur would use the wallpaper. Bar blur follows each glass surface's corners and leaves island gaps clear, independently of the popup-blur switch. If you previously merged the rule manually, add `bar` to its namespace regex. It starts with two passes, offset 3 and no saturation boost for a moderate integrated-Radeon budget. niri describes non-xray blur as experimental: check its rendering and performance on your actual output. Increase passes only if your machine has room for the additional work. The shell does not change niri config automatically.
 
 Upstream references: [niri blur configuration](https://github.com/YaLTeR/niri/blob/main/docs/wiki/Configuration%3A-Miscellaneous.md#blur), [layer background effects](https://github.com/YaLTeR/niri/blob/main/docs/wiki/Configuration%3A-Layer-Rules.md#background-effect). iNiR/DMS were workflow references; no implementation source was copied.
 
 ## Preferences and validation
 
-`idleEnabled`, `idleProfiles`, `idleLockBeforeSleep`, `niriConfigPath` and `popupBlur` use the existing atomic shared preferences file. Detailed monitor history stays in memory. Demo previews simulate these features without changing hardware, preferences, the clipboard or the session lock.
+`idleEnabled`, `idleProfiles`, `idleLockBeforeSleep`, `niriConfigPath`, `barBlur` and `popupBlur` use the existing atomic shared preferences file. Detailed monitor history stays in memory. Demo previews simulate these features without changing hardware, preferences, the clipboard or the session lock.
 
 Run `./scripts/check.sh` for backend contracts. On the private development Wayland session, add `LME_TEST_IDLE_NATIVE=1` for a real swayidle idle/resume test using a temporary fake niri command, and `LME_TEST_UPGRADE_UI=1` for actual System/Settings interactions. See [VALIDATION.md](VALIDATION.md) for the complete command and the target-machine limits.

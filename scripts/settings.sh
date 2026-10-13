@@ -35,6 +35,19 @@ if opened="$("$qs_binary" -p "$entry" ipc call settings openPage "$page" 2>/dev/
     if [[ "$opened" != true ]]; then
         printf 'Settings did not confirm a visible window; restarting this Settings instance.\n' >&2
         "$qs_binary" -p "$entry" kill >&2
+        # IPC acknowledges shutdown before the instance necessarily exits.
+        python3 - "$qs_binary" "$entry" <<'PY'
+import json, subprocess, sys, time
+deadline = time.monotonic() + 5
+while True:
+    reply = subprocess.check_output([sys.argv[1], '-p', sys.argv[2], 'list', '--json'], text=True, timeout=2).strip()
+    # 0.3.2 prints a plain-text message for an empty list, even with --json.
+    if not reply or reply.startswith('No running instances') or not json.loads(reply):
+        break
+    if time.monotonic() >= deadline:
+        raise SystemExit('Settings is still stopping; retry after it exits.')
+    time.sleep(.05)
+PY
     else
         if [[ "${LME_SHELL_DEMO:-}" != 1 ]] && command -v niri >/dev/null 2>&1; then
             python3 - <<'PY'

@@ -41,6 +41,18 @@ class BarStylingCase(Fixture, unittest.TestCase):
         self.assertEqual(other.values['barBorderWidth'], 1)
         self.assertEqual(other.values['barCorners'], dict.fromkeys(corners, -1))
 
+    def test_bar_blur_is_independent_validated_and_portable(self):
+        self.assertTrue(self.preferences.values['barBlur'])
+        self.preferences.set('barBlur', False)
+        saved = backend.Preferences(self.preferences.path).values
+        self.assertFalse(saved['barBlur'])
+        self.assertTrue(saved['popupBlur'])
+        preset = validate_document(document(saved, 'preset'), backend.validate_preference, backend.DEFAULT_PREFERENCES)
+        self.assertFalse(preset['barBlur'])
+        for invalid in (0, 1, 'false', None):
+            with self.assertRaises(ValueError): self.preferences.set('barBlur', invalid)
+        self.assertFalse(backend.Preferences(self.preferences.path).values['barBlur'])
+
     def test_malformed_corners_and_outline_do_not_replace_valid_settings(self):
         original = dict(self.preferences.values['barCorners'])
         for value in ({}, [], {**original, 'missing': 0}, {**original, 'topLeft': True},
@@ -88,7 +100,9 @@ ShellRoot {
             const surfaces = items(bar).filter(c => c.objectName === "barSurface" && c.visible);
             return JSON.stringify({ready: ShellState.backendReady, preset: items(settings).find(c => c.objectName === "barCornerPreset").currentIndex,
                 surfaces: surfaces.map(s => ({radii: [s.topLeftRadius, s.topRightRadius, s.bottomLeftRadius, s.bottomRightRadius],
-                    zone: s.zone, fill: s.color.toString(), width: s.border.width, color: s.border.color.toString(), clip: s.clip}))});
+                    zone: s.zone, fill: s.color.toString(), width: s.border.width, color: s.border.color.toString(), clip: s.clip})),
+                blur: bar.blurRegion.regions.filter(r => !!r.item).map(r => ({width: r.item.width, height: r.item.height,
+                    radii: [r.topLeftRadius, r.topRightRadius, r.bottomLeftRadius, r.bottomRightRadius]}))});
         }
         function preset(index: int): void {
             const selector = items(settings).find(c => c.objectName === "barCornerPreset");
@@ -112,7 +126,10 @@ ShellRoot {
                         try: state = json.loads(ipc('state'))
                         except ValueError: state = {}
                         surfaces = state.get('surfaces', [])
-                        if state.get('ready') and len(surfaces) == count and all(s['radii'] == radii and s['width'] == width and not s['clip'] and (color is None or s['color'] == color) for s in surfaces): return state
+                        if state.get('ready') and len(surfaces) == count and all(s['radii'] == radii and s['width'] == width and not s['clip'] and (color is None or s['color'] == color) for s in surfaces):
+                            self.assertEqual(len(state['blur']), count)
+                            self.assertTrue(all(r['width'] > 0 and r['radii'] == radii for r in state['blur']))
+                            return state
                         time.sleep(.04)
                     log.seek(0); self.fail(str(state)+'\n'+log.read())
                 try:
@@ -137,6 +154,7 @@ ShellRoot {
                     self.assertEqual(surfaces['center']['width'], 0)
                     self.assertEqual(surfaces['center']['radii'], [32]*4)
                     self.assertEqual(surfaces['right']['color'], '#00ff00')
+                    self.assertCountEqual([r['radii'] for r in state['blur']], [[0]*4, [32]*4, [32]*4])
                     ipc('scope', '2'); ipc('preset', '1')
                     end = time.monotonic()+5
                     while time.monotonic() < end:

@@ -167,13 +167,14 @@ it, especially `Mod+Comma` and `Mod+Shift+E` from niri's sample config. Keep one
 shell startup entry and one notification server/Polkit agent in your session.
 LME includes its own notification server and password popup.
 
-For **live blur behind popups** on niri 26.04+, also add:
+For **live blur behind the bar and popups** on niri 26.04+, also add:
 
 ```kdl
 include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
 ```
 
-Enable **Settings → Appearance → Blur behind popups**, then validate:
+**Settings → Appearance** has separate **Blur behind the bar** and
+**Blur behind popups** switches, both enabled by default. Then validate:
 
 ```bash
 niri validate

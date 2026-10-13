@@ -370,4 +370,4 @@ physical-laptop validation limits.
 
 ## Laptop idle and native popup blur
 
-Install `swayidle swaylock` and restart the shell before enabling Settings → Idle and sleep. They are included by `scripts/install-fedora.sh --optional`. CPU/process monitoring and the keybinding viewer need no extra packages. Full-screen application blur requires niri 26.04+ and the optional `config/niri/popup-blur.kdl` fragment; do not include this fragment on older niri. Follow [LAPTOP_FEATURES.md](LAPTOP_FEATURES.md) for merging and validation.
+Install `swayidle swaylock` and restart the shell before enabling Settings → Idle and sleep. They are included by `scripts/install-fedora.sh --optional`. CPU/process monitoring and the keybinding viewer need no extra packages. Bar and full-screen popup blur require niri 26.04+ and the optional `config/niri/popup-blur.kdl` fragment; do not include this fragment on older niri. The updated layer rule includes `lme-bar`, with separate bar/popup switches in Appearance. Follow [LAPTOP_FEATURES.md](LAPTOP_FEATURES.md) for merging and validation.

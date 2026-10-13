@@ -77,6 +77,9 @@ if 'ipc' in args:
     elif reply != 'void': print(reply)
 elif 'kill' in args:
     if os.environ.get('QS_KILL_FAIL') == '1': sys.exit(1)
+elif 'list' in args:
+    with open(os.environ['QS_CALLS']) as log: queries = sum('list' in json.loads(line) for line in log)
+    print(('[{"pid": 123}]' if queries == 1 else 'No running instances.') if os.environ.get('QS_LIST_DELAY') == '1' else '[]')
 else: print(json.dumps(args))
 '''); fake.chmod(0o755)
         env = {**os.environ, 'LME_QS_BINARY': str(fake), 'LME_SHELL_DEMO': '1', 'QS_CALLS': str(calls)}
@@ -90,8 +93,13 @@ else: print(json.dumps(args))
                 if reply == 'true':
                     self.assertEqual(len(recorded), 1)
                 else:
-                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'kill'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
+                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'kill'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
                     self.assertIn('restarting', result.stderr)
+        calls.write_text('')
+        delayed = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_LIST_DELAY': '1'}, capture_output=True, text=True, timeout=5)
+        self.assertEqual(delayed.returncode, 0, delayed.stderr)
+        recorded = [json.loads(line) for line in calls.read_text().splitlines()]
+        self.assertEqual(sum('list' in call for call in recorded), 2, 'Wait until shutdown releases the configuration before relaunching')
         calls.write_text('')
         result = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_KILL_FAIL': '1'}, capture_output=True, text=True, timeout=5)
         self.assertNotEqual(result.returncode, 0)

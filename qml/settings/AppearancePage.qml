@@ -75,6 +75,7 @@ ColumnLayout {
     SettingsCard {
         title: "Glass and motion"
         PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
+        PreferenceSwitch { title: "Blur behind the bar"; detail: "Blur through the bar's glass, following each island and its corners. Uses the same niri 26.04+ config fragment."; preference: "barBlur" }
         LabelText { text: "Compositor: "+((ShellState.snapshot.platform || {}).niriVersion || "Checking…"); color: Theme.muted; font.pixelSize: 12 }
         PreferenceSwitch { title: "Animations"; detail: "Disable to remove spatial motion and press deformation"; preference: "animations" }
         PreferenceSwitch { title: "Geometric shape morph"; detail: "Icon buttons morph rounded polygons on hover and press"; preference: "shapeMorph" }

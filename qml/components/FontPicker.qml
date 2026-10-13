@@ -22,16 +22,11 @@ ExpressiveField {
         glyph: "⌄"; implicitWidth: 32; implicitHeight: 32; tooltip: "Choose installed font"
         onClicked: { search.text=""; menu.open(); search.forceActiveFocus(); }
     }
-    Popup {
+    MotionPopup {
         id: menu
         width: Math.max(300,root.width); height: 340; y: root.height + 6
         padding: 12; closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: GlassPanel { radius: 20 }
-        enter: Transition { ParallelAnimation {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
-            NumberAnimation { property: "scale"; from: .97; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
-        } }
-        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Math.round(120 / Theme.motionSpeed) * (Theme.animations ? 1 : 0); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve } }
         contentItem: ColumnLayout {
             ExpressiveField {
                 id: search; objectName: "fontSearch"; Layout.fillWidth: true
@@ -49,7 +44,7 @@ ExpressiveField {
                 ScrollBar.vertical: ScrollBar {}
                 Keys.onReturnPressed: if (currentIndex>=0) root.choose(model[currentIndex])
                 delegate: Item {
-                    id: fontRow
+                        id: fontRow
                     required property string modelData
                     required property int index
                     width: list.width; height: option.implicitHeight + 8

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Blur beneath the actual bar glass on supported niri, matching the connected
+  bar or independent island corners and leaving gaps clear. Add a separate,
+  default-on Bar blur preference with preset/backup support.
+- Fly shell panels, Island, authentication, OSD, toasts and QML menus in and out
+  through the same edge. Preserve spring momentum during reversals, prepare menu
+  placement before showing its first frame and bound long-distance bounce.
+- Retain outgoing notification/status content until its exit completes, keep
+  live notification cards stable when others arrive and cap retained toast exits.
+  Closing authentication releases keyboard/input capture immediately.
+- Wait for loader bindings before mounting hidden panels and use stable viewport
+  sizes before Wayland configures each fresh surface. Prevent startup ghosts and
+  keep first/repeated openings on the same complete off-screen path.
+- Keep a flying dropdown from highlighting rows beneath a stationary pointer.
+  Wait for a stale Settings instance to exit before restarting its configuration.
 - Extend the existing frame-clock spring to shared hover/corner feedback, switch
   thumbs, slider handles and stretching tab indicators. Centralize preset tuning;
   preserve velocity on target changes and keep indicators/thumbs within bounds.

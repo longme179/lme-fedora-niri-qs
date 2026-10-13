@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import "../bar"
 import "../services"
 import "../theme"
@@ -9,8 +10,9 @@ Item {
     property var windowInfo: null
     readonly property var layout: ShellState.preferences.barLayout || BarRegistry.defaults
     readonly property bool islands: ShellState.preferences.barStyle === "islands"
+    readonly property Region blurRegion: Region { regions: [surface.blurRegion, leftGroup.blurRegion, centerGroup.blurRegion, rightGroup.blurRegion] }
     implicitHeight: Theme.barHeight
-    BarSurface { anchors.fill: parent; visible: !root.islands }
+    BarSurface { id: surface; anchors.fill: parent; visible: !root.islands }
     BarGroup {
         id: leftGroup; zone: "left"
         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
@@ -26,6 +28,7 @@ Item {
         budget: root.width * 0.58; compact: root.width < 1200; island: root.islands
     }
     BarGroup {
+        id: centerGroup
         zone: "center"
         readonly property real freeWidth: Math.max(0, root.width - leftGroup.width - rightGroup.width - 24)
         width: implicitWidth; height: parent.height

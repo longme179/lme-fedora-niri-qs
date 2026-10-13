@@ -11,10 +11,13 @@ Item {
     property bool compact: false
     property string zone: "left"
     property bool island: true
+    property alias blurRegion: surface.blurRegion
     implicitWidth: Math.min(budget, row.implicitWidth > 0 ? row.implicitWidth + 20 : 0)
     implicitHeight: Theme.barHeight
     visible: implicitWidth > 0
-    BarSurface { zone: root.zone; anchors.fill: parent; visible: root.island }
+    onXChanged: blurRegion.changed()
+    onYChanged: blurRegion.changed()
+    BarSurface { id: surface; zone: root.zone; anchors.fill: parent; visible: root.island }
     Flickable {
         id: scroller
         objectName: "barModuleViewport"

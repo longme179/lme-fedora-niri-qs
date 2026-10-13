@@ -1,5 +1,50 @@
 # Validation and platform limits
 
+## Bar blur and same-edge popup travel — 2026-10-14
+
+`scripts/check.sh` passed **231 tests, no skips**, with every private Wayland
+opt-in and portable Matugen 4.2.0 enabled. Eleven changed control/bar/motion QML
+files passed qmllint without warnings. Window/singleton files retain the known
+Quickshell attached-type metadata warnings; their native runs loaded correctly.
+Python compilation, Bash syntax, demo state and diff checks passed. No package
+was installed.
+
+Native geometry checks cover connected/custom-corner bar regions, independent
+islands and their empty gaps. Bar blur is independently validated, persists and
+round-trips through a portable preset. Native popup checks verify complete
+off-screen entry, the same exit edge, spring/curve fallback, frame-observed
+reversals, reduced motion, top/bottom Island and configured OSD positions.
+Menus resolve actual placement before their first visible frame and preserve
+position on reversal. Existing keyboard Wi-Fi, dropdown, font/color editing and
+annotation-toast checks pass.
+
+A real-shell startup test verifies that hidden loaders never mount during
+construction. Both first and repeated layer-surface openings start beyond the
+real output dimensions. Stable viewports avoid seeding against Quickshell's
+unconfigured window size. Frame inspection exposed the initial hidden-Island
+flash before this fix; settled Launcher/Control Center and entry/exit renders
+were also inspected.
+
+Notification checks retain closing content, preserve existing card objects when
+another toast arrives, cap burst retention, release input and clear retired
+entries. Status text survives its exit; authentication still focuses, cancels
+and clears input. A stationary pointer no longer changes dropdown selection
+during travel. Settings restart checks cover delayed shutdown and Quickshell
+0.3.2's plain-text empty `list --json` result.
+
+The cloud terminal transport disconnected during final work. A temporary helper
+started through the already-running private preview completed validation in the
+same sandbox. The preview hook was restored. An initial recovery run hit the
+old preview's IPC; stopping that exact preview instance cleared the conflict
+and the subsequent full run passed. Recovery files stay outside the repository.
+
+Tests use Quickshell 0.3.2 / Qt 6.8.2 and private software-rendered Sway.
+Live niri blur and Radeon/120 Hz frame pacing remain unverified, and `niri
+validate` could not run without a niri binary. On the target desktop, include
+the updated blur fragment (or add `lme-bar` to the merged namespace rule), run
+`niri validate`, compare both bar layouts and open/close each panel rapidly under
+Jelly. Native blur radius remains binary; backdrop dimming animates.
+
 ## Launcher feedback and shared spring motion — 2026-10-13
 
 `scripts/check.sh` passed **229 tests, no skips**, with all private Wayland

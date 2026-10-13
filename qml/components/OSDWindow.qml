@@ -25,31 +25,34 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay; WlrLayershell.namespace: "lme-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     Timer { id: timeout; interval: 1600; onTriggered: root.open=false }
-    SlideLoader {
-        id: transition; anchors.fill: parent; shown: root.open; direction: root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "down" : "up"
-        exitToEdge: true
-        exitEdge: root.position.endsWith("left") ? "left" : root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "top" : "bottom"
-        content: GlassPanel {
-            anchors.fill: parent; radius: 28
-            ColumnLayout {
-                anchors.fill: parent; anchors.margins: 16; spacing: 10
-                LabelText { text: root.entry ? root.entry.label : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; font.weight: Font.Bold; font.pixelSize: 13 }
-                Item {
-                    Layout.fillWidth: true; Layout.fillHeight: true
-                    Rectangle {
-                        anchors.centerIn: parent; width: root.vertical ? 8 : parent.width; height: root.vertical ? parent.height : 8
-                        color: Theme.sliderTrack; radius: 4
-                        Rectangle {
-                            readonly property real level: Math.max(0,Math.min(100,root.entry ? root.entry.value : 0))/100
-                            width: root.vertical ? parent.width : parent.width*level; height: root.vertical ? parent.height*level : parent.height
-                            anchors.bottom: parent.bottom; radius: 4; color: Theme.sliderFill
-                            Behavior on width { MotionAnimation {} } Behavior on height { MotionAnimation {} }
+    Item {
+        width: root.implicitWidth; height: root.implicitHeight
+        SlideLoader {
+                id: transition; anchors.fill: parent; shown: root.open; direction: root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "down" : "up"
+                exitToEdge: true
+                exitEdge: root.position.endsWith("left") ? "left" : root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "top" : "bottom"
+                content: GlassPanel {
+                    anchors.fill: parent; radius: 28
+                    ColumnLayout {
+                        anchors.fill: parent; anchors.margins: 16; spacing: 10
+                        LabelText { text: root.entry ? root.entry.label : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; font.weight: Font.Bold; font.pixelSize: 13 }
+                        Item {
+                            Layout.fillWidth: true; Layout.fillHeight: true
+                            Rectangle {
+                                anchors.centerIn: parent; width: root.vertical ? 8 : parent.width; height: root.vertical ? parent.height : 8
+                                color: Theme.sliderTrack; radius: 4
+                                Rectangle {
+                                    readonly property real level: Math.max(0,Math.min(100,root.entry ? root.entry.value : 0))/100
+                                    width: root.vertical ? parent.width : parent.width*level; height: root.vertical ? parent.height*level : parent.height
+                                    anchors.bottom: parent.bottom; radius: 4; color: Theme.sliderFill
+                                    Behavior on width { MotionAnimation {} } Behavior on height { MotionAnimation {} }
+                                }
+                            }
                         }
+                        LabelText { visible: root.vertical; text: root.entry ? Math.round(root.entry.value)+"%" : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; color: Theme.accent }
                     }
+                    HoverHandler { onHoveredChanged: { if(hovered) timeout.stop(); else if(root.open) timeout.restart(); } }
                 }
-                LabelText { visible: root.vertical; text: root.entry ? Math.round(root.entry.value)+"%" : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; color: Theme.accent }
-            }
-            HoverHandler { onHoveredChanged: { if(hovered) timeout.stop(); else if(root.open) timeout.restart(); } }
         }
     }
 }

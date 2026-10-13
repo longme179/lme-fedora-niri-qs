@@ -73,7 +73,7 @@ ComboBox {
         height: 36
         leftPadding: 12
         rightPadding: 25
-        hoverEnabled: true
+        hoverEnabled: menu.opening && menu.progress === 1
         highlighted: root.highlightedIndex === index
         text: root.textAt(index)
         font: root.font
@@ -104,17 +104,13 @@ ComboBox {
         }
     }
 
-    popup: Popup {
+    popup: MotionPopup {
+        id: menu
         x: root.width - width
         y: root.height + 6
         width: Math.max(root.width, 176)
         implicitHeight: Math.min(menuList.contentHeight + topPadding + bottomPadding, 300)
         padding: 6
-        enter: Transition { ParallelAnimation {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
-            NumberAnimation { property: "scale"; from: .97; to: 1; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
-        } }
-        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Math.round(120 / Theme.motionSpeed) * (Theme.animations ? 1 : 0); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve } }
         // Keep the menu inside the shell's surface, independent of the system Qt style.
         popupType: Popup.Item
 

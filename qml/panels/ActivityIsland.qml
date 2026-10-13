@@ -15,6 +15,7 @@ SlideLoader {
     readonly property real expandedHeight: Math.min(panel ? panel.implicitHeight : 680, parent ? parent.height - 36 : 680)
     shown: expanded
     exitToEdge: true
+    exitEdge: Theme.barBottom ? "bottom" : "top"
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
     visible: mounted

@@ -81,12 +81,23 @@ values follow the pointer directly; only the handle's shape animates. Flat list
 hit targets keep the selected card's corners and size, and scroll gutters keep
 feedback clear of clipped edges.
 
-Desktop panels retain their content during exit, travel toward the nearest
-screen edge and can reverse before closing. Switching between popup contents
-continues the current entrance instead of replaying it. Size changes tween once
-the panel is nearly open; the Island uses its own size springs. Font menus and
-dropdowns have a short entrance and exit. Settings pages keep the shared slide
-transition.
+Desktop panels fly in from outside the nearest screen edge and return through
+that same edge when closed. The edge stays fixed during a single lifecycle,
+including resizing and reversals. The Island uses the bar's top/bottom edge;
+OSD and notification/status surfaces use their configured/anchored edge.
+Long-distance travel limits overshoot, while panel deformation and Island size
+springs retain the chosen preset. Tight native surfaces use critical damping
+for travel to keep their contents inside the final frame.
+
+Panels retain their content during exit and can reverse before closing.
+Switching between popup contents continues the current entrance instead of
+replaying it. Size changes tween once
+the panel is nearly open; the Island uses its own size springs. Font menus,
+dropdowns, color pickers and the Wi-Fi password dialog also fly in/out through
+one edge. They resolve Qt's actual placement before showing the first frame.
+Notification cards remain stable when another toast arrives, retain outgoing
+content briefly and release input during exit. Settings pages keep the shared
+slide transition.
 
 Colors, opacity and ripple feedback use non-overshooting effects easing. Turning
 Motion off stops transitions and places controls/panels immediately. Idle spring
@@ -94,6 +105,14 @@ drivers stop, and these changes add no runtime package. Native compositor blur
 remains the existing niri 26.04 mechanism; it does not substitute the wallpaper
 for live applications. Its radius still changes immediately; backdrop dimming
 animates. See [upstream motion attribution](../THIRD_PARTY.md).
+
+**Blur behind the bar** is independent of popup blur and defaults to enabled
+on supported niri. It follows the bar's actual surface and customized corners;
+three-island layouts leave their gaps clear. Include the updated
+[`config/niri/popup-blur.kdl`](../config/niri/popup-blur.kdl) and run `niri validate`.
+The fragment's layer rule now also matches `lme-bar`; manually merged configs
+need that namespace added. Blur still needs transparency: an opaque fill hides
+it. Unsupported compositors retain the transparent glass without native blur.
 
 ## Extending the theme
 

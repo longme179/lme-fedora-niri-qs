@@ -66,7 +66,7 @@ DEFAULT_PREFERENCES = {
     "wallpaperFolder": "",
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
-    "niriConfigPath": "", "popupBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
+    "niriConfigPath": "", "popupBlur": True, "barBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
     "barEdge": "top", "barEdgeMargin": 8, "barSideMargin": 12, "barHeight": 42,
     "nightLightEnabled": False, "nightLightMode": "manual", "nightLightTemperature": 4500,
     "nightLightStart": "20:00", "nightLightEnd": "07:00",
@@ -314,7 +314,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
-    if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur"} and type(value) is bool: return value
+    if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur", "barBlur"} and type(value) is bool: return value
     if key == "idleProfiles": return validate_profiles(value)
     if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
         return str(Path(value).expanduser().resolve()) if value else ""

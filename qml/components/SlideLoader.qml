@@ -10,14 +10,17 @@ Loader {
     property bool exitToEdge: false
     property bool animateResize: true
     property string exitEdge: "nearest"
+    property int travelEdge: -1
     property real exitX: 0
     property real exitY: 0
     property real progress: Theme.springMotion ? spring.value : 0
     property bool mounted: false
+    property bool initialized: false
     readonly property bool transitioning: mounted && (motion.running || spring.running || exitSpringX.running || exitSpringY.running || exitMotionX.running || exitMotionY.running)
-    readonly property real slideOffset: (1 - progress) * (direction === "right" ? 92 : direction === "down" ? -32 : 64)
+    readonly property real slideOffset: exitToEdge ? 0 : (1 - progress) * (direction === "right" ? 92 : direction === "down" ? -32 : 64)
     readonly property real offsetX: (direction === "right" ? slideOffset : 0) + (Theme.springMotion ? exitSpringX.value : exitX)
     readonly property real offsetY: (direction === "right" ? 0 : slideOffset) + (Theme.springMotion ? exitSpringY.value : exitY)
+    readonly property bool fillsTravelAxis: parent && (travelEdge < 2 ? width >= parent.width - 1 : height >= parent.height - 1)
     // Scale also deforms the translation; include travel before declaring a popup off-screen.
     readonly property real overdraw: Math.max(width, height, Math.abs(offsetX), Math.abs(offsetY)) * Math.abs(Theme.deformation * (1 - progress)) + 2
     readonly property bool outsideViewport: parent && (x + offsetX + width + overdraw < 0 || x + offsetX - overdraw > parent.width || y + offsetY + height + overdraw < 0 || y + offsetY - overdraw > parent.height)
@@ -44,29 +47,39 @@ Loader {
         spring.snapTo(0); exitSpringX.snapTo(0); exitSpringY.snapTo(0);
         if (!Theme.springMotion) progress = 0;
         exitX = 0; exitY = 0;
+        travelEdge = -1;
     }
-    function moveExit(open) {
+    function edgeOffset() {
         let dx = 0, dy = 0;
-        if (!open && exitToEdge && parent) {
+        if (exitToEdge && parent) {
             const gaps = [x, parent.width - x - width, y, parent.height - y - height];
             const forced = ["left", "right", "top", "bottom"].indexOf(exitEdge);
-            const edge = forced >= 0 ? forced : gaps.indexOf(Math.min(...gaps));
+            if (travelEdge < 0) travelEdge = forced >= 0 ? forced : gaps.indexOf(Math.min(...gaps));
             const cushion = Math.max(width, height) * Theme.deformation + 16;
-            const baseX = direction === "right" ? 92 : 0;
-            const baseY = direction === "right" ? 0 : direction === "down" ? -32 : 64;
-            // Overtravel crosses the viewport before an overdamped spring settles.
-            if (edge === 0) dx = -(x + width + cushion) * 1.3 - baseX;
-            else if (edge === 1) dx = (parent.width - x + cushion) * 1.3 - baseX;
-            else if (edge === 2) dy = -(y + height + cushion) * 1.3 - baseY;
-            else dy = (parent.height - y + cushion) * 1.3 - baseY;
+            // Use one edge for the entire lifecycle, including size changes and reversals.
+            if (travelEdge === 0) dx = -(x + width + cushion) * 1.3;
+            else if (travelEdge === 1) dx = (parent.width - x + cushion) * 1.3;
+            else if (travelEdge === 2) dy = -(y + height + cushion) * 1.3;
+            else dy = (parent.height - y + cushion) * 1.3;
         }
+        return {x: dx, y: dy};
+    }
+    function moveExit(open) {
+        const offset = open ? {x: 0, y: 0} : edgeOffset();
         exitMotionX.stop(); exitMotionY.stop();
-        if (Theme.springMotion) { exitSpringX.retarget(dx); exitSpringY.retarget(dy); }
-        else if (Theme.animations) { exitMotionX.to = dx; exitMotionY.to = dy; exitMotionX.start(); exitMotionY.start(); }
-        else { exitX = dx; exitY = dy; }
+        if (Theme.springMotion) { exitSpringX.retarget(offset.x); exitSpringY.retarget(offset.y); }
+        else if (Theme.animations) { exitMotionX.to = offset.x; exitMotionY.to = offset.y; exitMotionX.start(); exitMotionY.start(); }
+        else { exitX = offset.x; exitY = offset.y; }
     }
     function move(to) {
-        if (to === 1) mounted = true;
+        if (to === 0 && !mounted) return;
+        if (to === 1 && !mounted) {
+            travelEdge = -1;
+            mounted = true;
+            const offset = Theme.animations ? edgeOffset() : {x: 0, y: 0};
+            exitSpringX.snapTo(offset.x); exitSpringY.snapTo(offset.y);
+            exitX = offset.x; exitY = offset.y;
+        }
         motion.stop();
         moveExit(to === 1);
         if (Theme.springMotion) { spring.retarget(to); finishClose(); return; }
@@ -75,14 +88,21 @@ Loader {
         motion.to = to; motion.start();
     }
     onOutsideViewportChanged: if (outsideViewport) Qt.callLater(finishClose)
-    function replay() { if (Theme.springMotion) spring.snapTo(0); else progress = 0; move(shown ? 1 : 0); }
-    onShownChanged: { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
-    onContentChanged: if (shown) { retainedContent = content; if (!mounted) move(1); }
-    Component.onCompleted: if (shown) { retainedContent = content; move(1); }
+    function replay() {
+        if (Theme.springMotion) spring.snapTo(0); else progress = 0;
+        if (exitToEdge && shown) {
+            const offset = edgeOffset();
+            exitSpringX.snapTo(offset.x); exitSpringY.snapTo(offset.y);
+            exitX = offset.x; exitY = offset.y;
+        }
+        move(shown ? 1 : 0);
+    }
+    onShownChanged: if (initialized) { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
+    onContentChanged: if (initialized && shown) { retainedContent = content; if (!mounted) move(1); }
+    Component.onCompleted: { initialized = true; if (shown) { retainedContent = content; move(1); } }
     onLoaded: {
         const panel = item as Item;
         if (panel && shown) panel.forceActiveFocus();
-        if (shown) move(1);
     }
     SpringMotion {
         id: spring; enabled: Theme.springMotion
@@ -91,10 +111,11 @@ Loader {
         positionEpsilon: .001; velocityEpsilon: .001
         onRunningChanged: if (!running) Qt.callLater(root.finishClose)
     }
-    SpringMotion { id: exitSpringX; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: 2 * Math.sqrt(stiffness); onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
+    // Long-distance travel needs bounded bounce; tight native surfaces must not overshoot their clip.
+    SpringMotion { id: exitSpringX; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: root.shown && !root.fillsTravelAxis ? Math.max(spring.damping, 1.6 * Math.sqrt(stiffness)) : 2 * Math.sqrt(stiffness); onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
     SpringMotion { id: exitSpringY; enabled: Theme.springMotion; stiffness: spring.stiffness; damping: exitSpringX.damping; onRunningChanged: if (!running) Qt.callLater(root.finishClose) }
-    MotionAnimation { id: exitMotionX; target: root; property: "exitX"; duration: Math.round(200 / Theme.motionSpeed); easing.bezierCurve: Theme.exitCurve; onFinished: root.finishClose() }
-    MotionAnimation { id: exitMotionY; target: root; property: "exitY"; duration: exitMotionX.duration; easing.bezierCurve: Theme.exitCurve; onFinished: root.finishClose() }
+    MotionAnimation { id: exitMotionX; target: root; property: "exitX"; duration: root.shown ? Theme.slideDuration : Math.round(200 / Theme.motionSpeed); easing.bezierCurve: root.shown ? Theme.effectsCurve : Theme.exitCurve; onFinished: root.finishClose() }
+    MotionAnimation { id: exitMotionY; target: root; property: "exitY"; duration: exitMotionX.duration; easing.bezierCurve: exitMotionX.easing.bezierCurve; onFinished: root.finishClose() }
     MotionAnimation {
         id: motion; target: root; property: "progress"; large: true
         duration: to === 0 ? (Theme.animations ? Math.round(200 / Theme.motionSpeed) : 0) : Theme.slideDuration

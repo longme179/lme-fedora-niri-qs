@@ -38,14 +38,22 @@ ExpressiveField {
                 id: list; Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                 model: root.families.filter(f => f.toLowerCase().includes(search.text.trim().toLowerCase()))
                 currentIndex: -1; boundsBehavior: Flickable.StopAtBounds
+                spacing: 4
+                header: Item { height: 4 }
+                footer: Item { height: 4 }
                 ScrollBar.vertical: ScrollBar {}
                 Keys.onReturnPressed: if (currentIndex>=0) root.choose(model[currentIndex])
-                delegate: LiquidButton {
+                delegate: Item {
+                    id: fontRow
                     required property string modelData
                     required property int index
-                    width: list.width; text: modelData; font.family: modelData
-                    selected: list.currentIndex===index
-                    onClicked: root.choose(modelData)
+                    width: list.width; height: option.implicitHeight + 8
+                    LiquidButton {
+                        id: option; x: 4; y: 4; width: parent.width - 12
+                        text: fontRow.modelData; font.family: fontRow.modelData
+                        selected: list.currentIndex === fontRow.index
+                        onClicked: root.choose(fontRow.modelData)
+                    }
                 }
             }
             LabelText { visible: !list.count; text: "No installed fonts match"; color: Theme.muted }

@@ -47,6 +47,18 @@ ShellRoot {
         function navigate(mode: string, page: string): void { root.page = page; root.mode = mode; }
         function run(request: string): void { const data = JSON.parse(request); ShellState.run(data.action, data); }
         function panel(name: string): void { if (name) ShellState.togglePanel(name); else ShellState.closePanels(); }
+        function feedbackGeometry(name: string): string {
+            const button = root.find(window.contentItem, name);
+            if (!button) return "{}";
+            const feedback = button.children.find(child => child.objectName === "liquidFeedback");
+            let viewport = button.parent;
+            while (viewport && typeof viewport.contentY !== "number") viewport = viewport.parent;
+            return JSON.stringify({flat: button.flat, scale: button.scale, hovered: button.hovered, down: button.down,
+                radius: button.parent.radius, feedbackRadius: feedback ? feedback.radius : -1,
+                frame: button.mapToItem(button.parent, 0, 0, button.width, button.height),
+                viewport: viewport ? button.mapToItem(viewport, 0, 0, button.width, button.height) : null,
+                width: button.width, height: button.height});
+        }
         function confirmPower(): void {
             const loader = root.find(window.contentItem, "desktopPanel");
             const menu = loader ? loader.item as PowerMenu : null;

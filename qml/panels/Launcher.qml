@@ -93,22 +93,28 @@ Item {
             ListView {
                 id: resultsList; anchors.fill: parent; clip: true; spacing: 6; model: root.results
                 boundsBehavior: Flickable.StopAtBounds; ScrollBar.vertical: ScrollBar {}
-                delegate: Rectangle {
+                header: Item { height: 4 }
+                footer: Item { height: 4 }
+                delegate: Item {
                     id: resultRow; required property var modelData; required property int index
-                    width: resultsList.width - 8; height: Theme.compact ? 62 : 72; radius: 16
-                    color: resultsList.currentIndex === index ? Theme.primaryContainer : Theme.alpha(Theme.surfaceContainer, .6)
-                    LiquidButton { anchors.fill: parent; background: Item {}  contentItem: Item {}  Accessible.name: resultRow.modelData.name; onClicked: root.activate(resultRow.index) }
-                    RowLayout {
-                        anchors.fill: parent; anchors.margins: 12; spacing: 14
-                        Item {
-                            Layout.preferredWidth: 36; Layout.preferredHeight: 36
-                            Image { id: appIcon; anchors.fill: parent; source: resultRow.modelData.icon || ""; sourceSize.width: 36; sourceSize.height: 36; asynchronous: true; fillMode: Image.PreserveAspectFit }
-                            LabelText { anchors.centerIn: parent; visible: appIcon.status !== Image.Ready; text: resultRow.modelData.id === "calculation" ? "=" : resultRow.modelData.kind === "copy" ? resultRow.modelData.value.substring(0, 2) : resultRow.modelData.name.charAt(0); font.pixelSize: 26; color: Theme.accent }
-                        }
-                        ColumnLayout {
-                            Layout.fillWidth: true; spacing: 4
-                            LabelText { text: resultRow.modelData.name; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
-                            LabelText { text: resultRow.modelData.detail; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
+                    width: resultsList.width; height: Theme.compact ? 62 : 72
+                    Rectangle {
+                        anchors.top: parent.top; anchors.bottom: parent.bottom
+                        x: 4; width: parent.width - 16; radius: 16
+                        color: resultsList.currentIndex === resultRow.index ? Theme.primaryContainer : Theme.alpha(Theme.surfaceContainer, .6)
+                        LiquidButton { objectName: "launcherResult-" + resultRow.index; anchors.fill: parent; flat: true; cornerRadius: parent.radius; background: Item {}  contentItem: Item {}  Accessible.name: resultRow.modelData.name; onClicked: root.activate(resultRow.index) }
+                        RowLayout {
+                            anchors.fill: parent; anchors.margins: 12; spacing: 14
+                            Item {
+                                Layout.preferredWidth: 36; Layout.preferredHeight: 36
+                                Image { id: appIcon; anchors.fill: parent; source: resultRow.modelData.icon || ""; sourceSize.width: 36; sourceSize.height: 36; asynchronous: true; fillMode: Image.PreserveAspectFit }
+                                LabelText { anchors.centerIn: parent; visible: appIcon.status !== Image.Ready; text: resultRow.modelData.id === "calculation" ? "=" : resultRow.modelData.kind === "copy" ? resultRow.modelData.value.substring(0, 2) : resultRow.modelData.name.charAt(0); font.pixelSize: 26; color: Theme.accent }
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true; spacing: 4
+                                LabelText { text: resultRow.modelData.name; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
+                                LabelText { text: resultRow.modelData.detail; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
+                            }
                         }
                     }
                 }

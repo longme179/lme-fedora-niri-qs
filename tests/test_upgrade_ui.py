@@ -9,6 +9,46 @@ import unittest
 
 @unittest.skipUnless(os.environ.get('LME_TEST_UPGRADE_UI') == '1', 'Enable only in a private Wayland session')
 class UpgradeInterfaceCase(unittest.TestCase):
+    def test_launcher_hover_and_press_share_the_selected_row_shape(self):
+        pointer = os.environ.get('LME_TEST_POINTER')
+        drag = os.environ.get('LME_TEST_DRAG')
+        if not pointer or not drag: raise unittest.SkipTest('Set private Wayland pointer tools')
+        fixture = Path(__file__).resolve().parents[1] / 'upgrades-demo.qml'
+        with tempfile.TemporaryDirectory() as config, tempfile.TemporaryFile(mode='w+') as log:
+            env = dict(os.environ, LME_TEST_UPGRADES='1', XDG_CONFIG_HOME=config)
+            process = subprocess.Popen(['quickshell', '-p', str(fixture)], env=env, stdout=log, stderr=log)
+            def ipc(method, *args):
+                return subprocess.run(['quickshell', '-p', str(fixture), 'ipc', 'call', 'upgradesFixture', method, *args], capture_output=True, text=True, env=env, timeout=4).stdout.strip()
+            def wait(predicate):
+                deadline = time.monotonic() + 6
+                while time.monotonic() < deadline:
+                    try: state = json.loads(ipc('feedbackGeometry', 'launcherResult-0'))
+                    except ValueError: state = {}
+                    if not state: ipc('navigate', 'launcher', 'appearance')
+                    if predicate(state): return state
+                    time.sleep(.025)
+                log.seek(0); self.fail('Launcher row mismatch: ' + str(state) + '\n' + log.read())
+            def aligned(state):
+                return state.get('flat') is True and state.get('scale') == 1 and state.get('feedbackRadius') == state.get('radius') == 16 and abs(state['frame']['x']) < .01 and abs(state['frame']['y']) < .01
+            try:
+                ipc('navigate', 'launcher', 'appearance')
+                state = wait(aligned)
+                self.assertGreaterEqual(state['viewport']['x'], 4)
+                self.assertGreaterEqual(state['viewport']['y'], 4)
+                point = json.loads(ipc('position', 'launcherResult-0'))
+                hover = subprocess.Popen([str(Path(pointer).with_name('pointer-move')), str(point['x']), str(point['y']), '6000'], env=env)
+                try:
+                    wait(lambda s: aligned(s) and s['hovered'])
+                    press = subprocess.Popen([drag, str(point['x']), str(point['y']), str(point['x']), str(point['y'])], env=env)
+                    try: wait(lambda s: aligned(s) and s['down'])
+                    finally: press.wait(timeout=5)
+                finally: hover.terminate(); hover.wait(timeout=5)
+                log.seek(0)
+                for problem in ('ReferenceError', 'TypeError', 'Binding loop', 'Unable to assign', 'Failed to load configuration'):
+                    self.assertNotIn(problem, log.read()); log.seek(0)
+            finally:
+                process.terminate(); process.wait(timeout=6)
+
     def test_settings_launcher_wifi_notifications_and_responsive_cards(self):
         pointer = os.environ.get('LME_TEST_POINTER')
         if not pointer: raise unittest.SkipTest('Set LME_TEST_POINTER')

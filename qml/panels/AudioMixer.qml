@@ -41,7 +41,7 @@ Flickable {
     }
     ColumnLayout {
         id: content
-        width: parent.width; spacing: 14
+        x: 4; width: parent.width - 8; spacing: 14
         LabelText { text: "Audio devices & mixer"; font.pixelSize: 18; font.weight: Font.Bold; Layout.topMargin: 8 }
         LabelText { Layout.fillWidth: true; text: "Choose default devices and adjust each app independently."; color: Theme.muted; wrapMode: Text.Wrap }
         LabelText { text: "Output device"; color: Theme.cyan }

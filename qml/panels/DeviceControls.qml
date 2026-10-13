@@ -16,7 +16,7 @@ Flickable {
     ScrollBar.vertical: ScrollBar {}
     ColumnLayout {
         id: content
-        width: parent.width; spacing: 12
+        x: 4; width: parent.width - 8; spacing: 12
         RowLayout {
             Layout.fillWidth: true; Layout.topMargin: 8
             LabelText { text: "Bluetooth"; font.pixelSize: 20; font.weight: Font.Bold }

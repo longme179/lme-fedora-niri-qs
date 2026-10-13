@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Align Launcher/Wallpaper hover feedback with their selected card corners.
+  Flat hit targets stay inside their frames; scroll gutters protect first/last
+  rows and full-width Font Picker, Audio and Devices controls from clipping.
 - Remove app/wallpaper Favorites controls, ranking and preferences. Older backups
   still import their remaining settings while retired favorite fields are ignored.
 - Open clipboard images and screenshot notifications in the chosen Satty/Swappy

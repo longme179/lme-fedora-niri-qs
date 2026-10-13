@@ -61,7 +61,7 @@ ColumnLayout {
                         anchors.fill: parent; anchors.margins: 5; radius: 16; color: Theme.surface
                         border.width: root.selectedPath === thumb.modelData.path ? 2 : 0; border.color: Theme.accent
                         Image { anchors.fill: parent; anchors.margins: 3; anchors.bottomMargin: 34; source: thumb.modelData.url; sourceSize.width: 300; sourceSize.height: 180; asynchronous: true; fillMode: Image.PreserveAspectCrop; clip: true }
-                        LiquidButton { anchors.fill: parent; Accessible.name: "Preview " + thumb.modelData.name; background: Item {}  contentItem: Item {}  onClicked: root.selectedPath = thumb.modelData.path }
+                        LiquidButton { anchors.fill: parent; flat: true; cornerRadius: parent.radius; Accessible.name: "Preview " + thumb.modelData.name; background: Item {}  contentItem: Item {}  onClicked: root.selectedPath = thumb.modelData.path }
                         LabelText { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10; text: thumb.modelData.name; font.pixelSize: 12; elide: Text.ElideRight }
                     }
                 }

@@ -47,7 +47,7 @@ class ControlGridCase(Fixture, unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get('LME_TEST_UPGRADE_UI') == '1', 'private Wayland canvas UI')
 class ControlGridUiCase(unittest.TestCase):
-    def test_qml_layout_logic_keeps_every_legal_drop_inside_the_canvas(self):
+    def test_qml_fixed_cells_do_not_reflow_unrelated_controls(self):
         repo = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); (root/'qml').symlink_to(repo/'qml', target_is_directory=True)
@@ -64,7 +64,20 @@ ShellRoot {
             for (let round = 0; round < 3; round++) for (const tile of tiles)
                 for (let y = 0; y < rows; y++) for (let x = 0; x + tile.cols <= columns; x++) {
                     const next = Logic.move(layout, tiles, tile.id, x, y, columns, rows);
-                    if (!next) throw new Error("Legal drop was rejected");
+                    const hits = layout.filter(p => p.id !== tile.id && p.row === y
+                        && p.col < x + tile.cols && x < p.col + tiles.find(t => t.id === p.id).cols);
+                    const swap = hits.length === 1 && hits[0].col === x && tiles.find(t => t.id === hits[0].id).cols === tile.cols ? hits[0] : null;
+                    if (hits.length && !swap) {
+                        if (next) throw new Error("Mismatched drop moved other controls");
+                        checked++; continue;
+                    }
+                    if (!next) throw new Error("Empty or matching cell was rejected");
+                    for (const old of layout) {
+                        if (old.id !== tile.id && (!swap || old.id !== swap.id)) {
+                            const current = next.find(t => t.id === old.id);
+                            if (current.col !== old.col || current.row !== old.row) throw new Error("Unrelated control moved");
+                        }
+                    }
                     const occupied = new Set();
                     for (const place of next) {
                         const span = tiles.find(t => t.id === place.id).cols;
@@ -142,14 +155,14 @@ ShellRoot {
                 self.assertEqual(state()['saved'],moved['saved'])
                 click('controlTile-dnd')
                 self.assertTrue(next(t for t in state()['slots'] if t['id']=='dnd')['focus'])
-                subprocess.run(['wtype','-s','200','-k','Left'],env=env,check=True)
-                keyed=wait(lambda s:s.get('ready') and cell(s,'dnd')['col']==1);valid(keyed)
+                subprocess.run(['wtype','-s','200','-k','Right'],env=env,check=True)
+                keyed=wait(lambda s:s.get('ready') and cell(s,'dnd')['col']==3);valid(keyed)
                 click('controlGridColumns');subprocess.run(['wtype','-s','200','-k','Down','-k','Return'],env=env,check=True)
                 large=wait(lambda s:s.get('ready') and s.get('columns')==8);valid(large)
                 click('controlGridRows');subprocess.run(['wtype','-s','200','-k','Down','-k','Return'],env=env,check=True)
                 wait(lambda s:s.get('ready') and s.get('rows')==8)
                 click('controlTile-dnd')
-                for row in range(1,8):
+                for row in range(2,8):
                     subprocess.run(['wtype','-s','70','-k','Down'],env=env,check=True)
                     bottom=wait(lambda s:s.get('ready') and cell(s,'dnd')['row']==row);valid(bottom)
                 self.assertGreater(bottom['scrollY'],0)

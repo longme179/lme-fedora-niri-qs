@@ -221,9 +221,10 @@ then closes the popup. Scroll the Controls and Devices tabs for lower actions.
 
 In Controls, **Edit layout** enables the quick-control canvas. Choose four or
 eight columns and four or eight rows, then drag controls onto a cell. Toggle-only
-controls occupy 1×1; Wi-Fi, Overview and capture actions occupy 2×1. Occupied drops
-reposition affected controls without overlap. Dropping outside the canvas cancels;
-arrow keys move a focused control and dragging near a viewport edge scrolls.
+controls occupy 1×1; Wi-Fi, Overview and capture actions occupy 2×1. Empty drops
+move only the selected control; matching-size tiles swap. Other occupied drops
+cancel without moving anything. Arrow keys find the next valid cell, and dragging
+near a viewport edge scrolls. Dropping outside the canvas cancels.
 Edit mode blocks actions, including the detailed cards and Lock button.
 
 Each valid drop saves automatically in `controlGrid`, including preset export and

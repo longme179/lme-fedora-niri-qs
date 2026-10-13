@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep unrelated canvas controls fixed when editing. Move onto empty cells or
+  swap equal-size tiles; incompatible occupied drops cancel instead of repacking.
 - Edit quick controls directly in the Control Center with a 4/8 column and 4/8
   row canvas. Snap drag/drop, collision handling, keyboard movement and edge
   scrolling save atomically; Edit mode blocks actions. Keep detailed cards and

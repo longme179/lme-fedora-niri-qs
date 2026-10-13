@@ -55,7 +55,7 @@ GlassPanel {
         }
         RowLayout {
             visible: root.editing; Layout.fillWidth: true
-            LabelText { text: "Drag a tile, or focus it and use arrow keys."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }
+            LabelText { text: "Drop on empty cells, or swap tiles of the same size. Arrow keys find the next valid cell."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }
             LiquidButton { text: "Widgets…"; onClicked: ShellState.openSettingsPage("controlLayout") }
         }
         RowLayout {

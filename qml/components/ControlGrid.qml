@@ -77,7 +77,13 @@ Item {
         const next = columns === root.columns && layout.every(t => t.row < rows) ? layout : GridLogic.pack(tiles, columns);
         save(next, columns, rows);
     }
-    function moveTile(id, col, row) { save(GridLogic.move(layout, tiles, id, col, row, columns, rows)); }
+    function nudge(id, dx, dy) {
+        const start = layout.find(t => t.id === id);
+        for (let col = start.col + dx, row = start.row + dy; col >= 0 && col < columns && row >= 0 && row < rows; col += dx, row += dy) {
+            const next = GridLogic.move(layout, tiles, id, col, row, columns, rows);
+            if (next) { save(next); return; }
+        }
+    }
     Repeater {
         model: root.editing ? root.columns * root.rows : 0
         delegate: Rectangle {
@@ -134,7 +140,7 @@ Item {
             Keys.onPressed: event => {
                 if (!root.editing) return;
                 const delta = ({[Qt.Key_Left]: [-1, 0], [Qt.Key_Right]: [1, 0], [Qt.Key_Up]: [0, -1], [Qt.Key_Down]: [0, 1]})[event.key];
-                if (delta) { root.moveTile(tile.id, position.col + delta[0], position.row + delta[1]); event.accepted = true; }
+                if (delta) { root.nudge(tile.id, delta[0], delta[1]); event.accepted = true; }
             }
             activeFocusOnTab: root.editing
             Accessible.role: root.editing ? Accessible.Button : Accessible.NoRole

@@ -55,12 +55,13 @@ Settings alone, demo and preview do not start capture or write the clipboard.
 
 Click the bar's **Activity island** to expand media, focus timer and stopwatch.
 **Super+Shift+A** is provided in the niri fragment. The expanded surface morphs
-from the compact pill using OutExpo easing; it collapses with Close, Escape or
+using the shell's motion settings; it collapses with Close, Escape or
 an outside click. Turning off animations makes it immediate. The overlay keeps
 the bar's 42 px exclusive zone unchanged and clamps itself to the selected output.
 
 The compact caption prioritizes supported recording, then focus/break timer,
-stopwatch and MPRIS media. With no activity it shows the focused window title.
+stopwatch and MPRIS media. With no activity it shows **Activity Island**; the
+expanded panel keeps that heading regardless of the current activity.
 Media controls honor player capabilities, and a player selector appears when
 multiple MPRIS players are present. A timer or stopwatch started here is the
 same timer shown in Control Center → Agenda. It continues while panels are

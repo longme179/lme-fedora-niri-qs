@@ -23,7 +23,7 @@ QtObject {
     readonly property string title: kind === "recording" ? "Recording · " + FocusTimer.format(recording.elapsed || 0)
         : kind === "timer" ? (FocusTimer.mode === 0 ? "Focus" : "Break") + " · " + FocusTimer.format(FocusTimer.remaining)
         : kind === "stopwatch" ? "Stopwatch · " + FocusTimer.format(FocusTimer.stopwatchElapsed)
-        : kind === "media" ? track : ShellState.focusedTitle
+        : kind === "media" ? track : "Activity Island"
     readonly property string icon: kind === "recording" ? "record" : kind === "timer" || kind === "stopwatch" ? "clock" : kind === "media" ? "media" : "applications"
     function togglePlaying() { if (ShellState.demo) demoPlaying = !demoPlaying; else if (canPlay) player.togglePlaying(); }
     function previous() { if (!ShellState.demo && canPrevious) player.previous(); }

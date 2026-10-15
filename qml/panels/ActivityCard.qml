@@ -63,7 +63,8 @@ ColumnLayout {
     }
     Rectangle {
         Layout.fillWidth: true; implicitHeight: timerContent.implicitHeight + 28
-        radius: 22; color: Theme.primaryContainer
+        objectName: "activityTimerCard"
+        radius: 22; color: Theme.cardFill
         ColumnLayout {
             id: timerContent
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }
@@ -77,7 +78,7 @@ ColumnLayout {
                 Layout.fillWidth: true; spacing: 6
                 Repeater {
                     model: ["Focus", "Short break", "Long break"]
-                    delegate: LiquidButton { required property string modelData; required property int index; text: modelData; selected: FocusTimer.mode === index; Layout.fillWidth: true; onClicked: FocusTimer.selectMode(index) }
+                    delegate: LiquidButton { required property string modelData; required property int index; objectName: "activityMode-" + index; text: modelData; selected: FocusTimer.mode === index; Layout.fillWidth: true; onClicked: FocusTimer.selectMode(index) }
                 }
             }
             RowLayout {

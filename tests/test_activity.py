@@ -65,7 +65,13 @@ class ActivityInterfaceCase(unittest.TestCase):
                 point = json.loads(ipc('buttonPosition', name))
                 subprocess.run([pointer, str(point['x']), str(point['y'])], check=True, timeout=4)
             try:
-                wait(lambda s: s.get('players') == 1 and s.get('expansion') == 1)
+                state = wait(lambda s: s.get('players') == 1 and s.get('expansion') == 1)
+                self.assertEqual(state['caption'], 'Activity Island')
+                self.assertNotEqual(state['startColor'], state['cardColor'])
+                for mode in (1, 2, 0):
+                    click('activityMode-' + str(mode))
+                    state = wait(lambda s: s['mode'] == mode and s['modes'][mode]['color'] != s['cardColor'])
+                    self.assertEqual([entry['selected'] for entry in state['modes']], [i == mode for i in range(3)])
                 click('activityPlay'); wait(lambda s: s.get('playing') is False)
                 click('activityNext'); wait(lambda s: s.get('title') == 'Next track')
                 click('activityPrevious'); wait(lambda s: s.get('title') == 'Previous track')

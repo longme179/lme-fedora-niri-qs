@@ -34,7 +34,7 @@ SlideLoader {
         Row {
             x: 16; y: 8; spacing: 8
             ShellIcon { name: ActivityState.icon; width: 18; height: 18; color: ActivityState.kind === "recording" ? Theme.red : Theme.accent; anchors.verticalCenter: parent.verticalCenter }
-            LabelText { text: ActivityState.title; width: Math.max(0, root.width - 94); elide: Text.ElideRight; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
+            LabelText { objectName: "activityPanelTitle"; text: "Activity Island"; width: Math.max(0, root.width - 94); elide: Text.ElideRight; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
         }
         IconButton { objectName: "activityClose"; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8; implicitWidth: 30; implicitHeight: 30; glyph: "×"; Accessible.name: "Close activity"; onClicked: ShellState.closePanels(); Component.onCompleted: Qt.callLater(() => forceActiveFocus()) }
         ScrollView {

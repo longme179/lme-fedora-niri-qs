@@ -130,6 +130,7 @@ QtObject {
     readonly property bool animations: ShellState.preferences.animations !== false
     readonly property bool pointerRipple: ShellState.preferences.pointerRipple !== false
     readonly property bool animatedTabs: ShellState.preferences.animatedTabs !== false
+    readonly property bool mediaWave: ShellState.preferences.mediaWave !== false
     readonly property bool shapeMorph: ShellState.preferences.shapeMorph !== false
     readonly property bool springMotion: ShellState.preferences.springMotion !== false
     readonly property string motionPreset: ShellState.preferences.motionPreset || "expressive"

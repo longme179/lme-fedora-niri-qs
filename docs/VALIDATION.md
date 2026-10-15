@@ -1,5 +1,28 @@
 # Validation and platform limits
 
+## Activity Island selection and wavy playback progress — 2026-10-16
+
+`scripts/check.sh` completed **236 tests: 235 passed, one skipped**, with all
+private Wayland opt-ins enabled. The skipped check requires the absent external
+Matugen binary. The five focused activity tests also passed with Qt's OpenGL
+RHI, explicitly checking that the shader path was active. Six changed QML
+controls/services passed qmllint without warnings. Shader compilation, Python
+compilation, Bash syntax, demo snapshot and diff checks passed.
+
+Native pointer/keyboard checks verify the fixed Activity Island heading, all
+three selected timer modes and the Start button's background against its card.
+A private D-Bus MPRIS player exercises the real Quickshell service: advancing
+position, play/pause, seeks to 0/50/100%, missing track duration, player removal,
+close/reopen and stopping animation while hidden. Disabling the wave or all
+motion leaves a straight timeline whose position still updates. Backend tests
+cover boolean validation, appearance profiles and portable preset export.
+
+The rendered OpenGL popup was inspected: whole-second time labels, visible
+played wave and remaining track, and distinct Focus/Start backgrounds. Tests use
+Quickshell 0.3.2 / Qt 6.8.2 under private Sway; OpenGL runs through Mesa software
+rendering, not a physical Radeon. Actual browser/player integrations and 120 Hz
+smoothness on Fedora/niri remain unverified. No runtime package was added.
+
 ## Custom shell identity and smoked glass terminology — 2026-10-15
 
 `scripts/check.sh` passed **235 tests: 234 passed, one skipped**, with all private

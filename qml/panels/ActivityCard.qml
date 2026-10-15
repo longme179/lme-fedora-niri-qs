@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
 import "../components"
 import "../services"
@@ -44,7 +45,31 @@ ColumnLayout {
                     LabelText { text: ActivityState.artist; Layout.fillWidth: true; color: Theme.muted; font.pixelSize: 12; elide: Text.ElideRight }
                 }
             }
-            AudioVisualizer { Layout.fillWidth: true; playing: ActivityState.playing }
+            AudioVisualizer { Layout.fillWidth: true; visible: ActivityState.hasMedia && ShellState.preferences.audioVisualizer === true; playing: ActivityState.playing }
+            ColumnLayout {
+                id: mediaProgress
+                visible: ActivityState.progressAvailable
+                Layout.fillWidth: true; spacing: 2
+                WaveProgress {
+                    objectName: "activityMediaProgress"
+                    Layout.fillWidth: true
+                    value: ActivityState.duration > 0 ? ActivityState.position / ActivityState.duration : 0
+                    isPlaying: ActivityState.playing
+                    // Quickshell's getter advances its local clock; this does not poll D-Bus.
+                    onFrameTicked: if (ActivityState.player) ActivityState.player.positionChanged()
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    LabelText { objectName: "activityElapsed"; text: FocusTimer.format(Math.floor(ActivityState.position)); font.pixelSize: 11; color: Theme.muted }
+                    Item { Layout.fillWidth: true }
+                    LabelText { text: FocusTimer.format(Math.floor(ActivityState.duration)); font.pixelSize: 11; color: Theme.muted }
+                }
+                Timer {
+                    interval: 1000; repeat: true; triggeredOnStart: true
+                    running: mediaProgress.visible && (root.Window.window?.visible ?? false) && ActivityState.playing && (!Theme.mediaWave || !Theme.animations)
+                    onTriggered: if (ActivityState.player) ActivityState.player.positionChanged()
+                }
+            }
             RowLayout {
                 visible: ActivityState.players.length > 1; Layout.fillWidth: true
                 LiquidComboBox {

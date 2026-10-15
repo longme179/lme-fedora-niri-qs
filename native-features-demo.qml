@@ -23,14 +23,19 @@ ShellRoot {
         function annotationStatus(): string { return JSON.stringify({ready: ShellState.backendReady, notifications: Notifications.history, visible: ShellState.notificationsOpen, lastResult: ShellState.lastResult}); }
         function openActivity(): void { ShellState.togglePanel("activity"); }
         function activityStatus(): string {
-            const card = find(surface, "activityTimerCard"), timer = find(surface, "activityTimer");
+            const card = find(surface, "activityTimerCard"), timer = find(surface, "activityTimer"), wave = find(surface, "activityMediaProgress");
             return JSON.stringify({visible: ShellState.activityOpen, expansion: island.expansion, transitioning: island.transitioning, width: island.width, height: island.height, kind: ActivityState.kind, players: ActivityState.players.length, playing: ActivityState.playing, title: ActivityState.track, timerRunning: FocusTimer.running, remaining: FocusTimer.remaining, stopwatchRunning: FocusTimer.stopwatchRunning, elapsed: FocusTimer.stopwatchElapsed,
                 caption: find(surface,"activityPanelTitle")?.text, idleTitle: ActivityState.title, mode: FocusTimer.mode,
                 cardColor: card?.color.toString(), startColor: timer?.plate?.color.toString(),
-                modes: [0,1,2].map(i => { const button=find(surface,"activityMode-"+i); return {selected:button?.selected,color:button?.plate?.color.toString()}; })});
+                modes: [0,1,2].map(i => { const button=find(surface,"activityMode-"+i); return {selected:button?.selected,color:button?.plate?.color.toString()}; }),
+                position: ActivityState.position, duration: ActivityState.duration, progressAvailable: ActivityState.progressAvailable, elapsedText: find(surface,"activityElapsed")?.text,
+                wave: {present:!!wave,running:wave?.animating,phase:wave?.phase,amplitude:wave?.currentAmp,value:wave?.ratio,software:wave?.software}});
         }
         function timerNearCompletion(): void { FocusTimer.remaining = 1; FocusTimer.start(); }
-        function disableMotion(): void { ShellState.snapshot = Object.assign({}, ShellState.snapshot, {preferences: Object.assign({}, ShellState.preferences, {animations: false})}); }
+        function disableMotion(): void { ShellState.run("setting", {key:"animations",value:false}); }
+        function mediaWave(value: bool): void { ShellState.run("setting", {key:"mediaWave",value}); }
+        function seek(position: real): void { if (ActivityState.player && ActivityState.player.canSeek) ActivityState.player.position=position; }
+        function activityScreenshot(path: string): void { surface.grabToImage(result => result.saveToFile(path)); }
         function buttonPosition(name: string): string {
             const button = find(surface, name); if (!button) return "";
             const point = button.mapToGlobal(button.width / 2, button.height / 2);

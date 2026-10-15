@@ -8,10 +8,23 @@ import time
 import unittest
 from unittest.mock import patch
 
-from test_backend import Fixture
+from test_backend import backend, Fixture
+from settings_transfer import document, validate_document
 
 
 class RecordingCase(Fixture, unittest.TestCase):
+    def test_media_wave_preference_is_boolean_portable_and_in_profiles(self):
+        self.preferences.set('mediaWave', False)
+        preset = validate_document(document(self.preferences.values, 'preset'), backend.validate_preference, backend.DEFAULT_PREFERENCES)
+        self.assertFalse(preset['mediaWave'])
+        live = self.make_backend()
+        self.assertTrue(live.handle({'action':'appearanceSave','name':'Flat media'})['ok'])
+        self.assertFalse(next(p for p in self.preferences.values['appearanceProfiles'] if p['name']=='Flat media')['mediaWave'])
+        self.assertTrue(live.handle({'action':'appearanceApply','name':'Dracula'})['ok'])
+        self.assertTrue(self.preferences.values['mediaWave'])
+        for value in (None, 1, 'true'):
+            with self.assertRaises(ValueError): self.preferences.set('mediaWave', value)
+
     def recorder(self, name='wf-recorder', state='S'):
         self.put('proc/uptime', '200 100')
         self.put('proc/123/stat', '123 (recorder name) ' + ' '.join([state] + ['0'] * 18 + [str(100 * os.sysconf('SC_CLK_TCK'))]))
@@ -72,10 +85,30 @@ class ActivityInterfaceCase(unittest.TestCase):
                     click('activityMode-' + str(mode))
                     state = wait(lambda s: s['mode'] == mode and s['modes'][mode]['color'] != s['cardColor'])
                     self.assertEqual([entry['selected'] for entry in state['modes']], [i == mode for i in range(3)])
+                wave = wait(lambda s:s['wave'].get('running') and s['position'] > 30)
+                self.assertEqual(wave['duration'],120)
+                self.assertRegex(wave['elapsedText'],r'^\d{2}:\d{2}$')
+                self.assertGreater(wave['wave']['value'],.2)
+                if os.environ.get('LME_TEST_WAVE_RHI') == '1': self.assertFalse(wave['wave']['software'])
+                if os.environ.get('LME_TEST_ACTIVITY_SCREENSHOT'):
+                    destination=Path(os.environ['LME_TEST_ACTIVITY_SCREENSHOT'])
+                    ipc('activityScreenshot',str(destination));wait(lambda s:destination.exists())
+                wait(lambda s:s['wave']['phase'] != wave['wave']['phase'] and s['position'] > wave['position']+.2)
                 click('activityPlay'); wait(lambda s: s.get('playing') is False)
-                click('activityNext'); wait(lambda s: s.get('title') == 'Next track')
-                click('activityPrevious'); wait(lambda s: s.get('title') == 'Previous track')
+                paused = wait(lambda s:not s['wave']['running'] and s['wave']['amplitude']==0)
+                time.sleep(.2)
+                self.assertEqual(json.loads(ipc('activityStatus'))['wave']['phase'],paused['wave']['phase'])
+                for target in (0,120,60):
+                    ipc('seek',str(target));wait(lambda s:abs(s['wave']['value']-target/120)<.001)
+                click('activityNext'); wait(lambda s: s.get('title') == 'Next track' and not s['progressAvailable'])
+                click('activityPlay');wait(lambda s:s['playing'] and not s['progressAvailable'] and not s['wave']['running'])
+                click('activityPlay');wait(lambda s:not s['playing'])
+                click('activityPrevious'); wait(lambda s: s.get('title') == 'Previous track' and s['progressAvailable'])
                 click('activityPlay'); wait(lambda s: s.get('playing') is True)
+                ipc('mediaWave','false');flat=wait(lambda s:not s['wave']['running'] and s['wave']['amplitude']==0)
+                wait(lambda s:s['position']>flat['position']+.2)
+                self.assertEqual(json.loads(ipc('activityStatus'))['wave']['phase'],flat['wave']['phase'])
+                ipc('mediaWave','true');wait(lambda s:s['wave']['running'] and s['wave']['amplitude']>2.9)
                 click('activityTimer'); wait(lambda s: s.get('timerRunning') and s.get('kind') == 'timer' and s.get('remaining', 1500) < 1500)
                 click('activityTimer'); state = wait(lambda s: s.get('timerRunning') is False)
                 paused = state['remaining']; time.sleep(.5)
@@ -83,14 +116,23 @@ class ActivityInterfaceCase(unittest.TestCase):
                 click('activityTimerReset'); wait(lambda s: s.get('remaining') == 1500 and s.get('kind') == 'media')
                 click('activityStopwatch'); wait(lambda s: s.get('stopwatchRunning') and s.get('elapsed', 0) > 0 and s.get('kind') == 'stopwatch')
                 subprocess.run(['wtype', '-s', '200', '-k', 'Escape'], check=True)
-                wait(lambda s: s.get('visible') is False and s.get('expansion') == 0)
+                state=wait(lambda s: s.get('visible') is False and s.get('expansion') == 0)
+                self.assertFalse(state['wave']['present'])
                 ipc('openActivity'); wait(lambda s: s.get('visible') and s.get('expansion') == 1 and s.get('stopwatchRunning'))
                 click('activityStopwatchReset'); wait(lambda s: s.get('elapsed') == 0 and not s.get('stopwatchRunning'))
                 ipc('timerNearCompletion'); wait(lambda s: s.get('remaining') == 0 and not s.get('timerRunning'))
-                ipc('disableMotion'); click('activityClose')
+                ipc('disableMotion');flat=wait(lambda s:not s['wave']['running'] and s['wave']['amplitude']==0)
+                wait(lambda s:s['position']>flat['position']+.2)
+                self.assertFalse(json.loads(ipc('activityStatus'))['wave']['running'])
+                player.terminate();player.wait(timeout=5)
+                click('activityTimerReset')
+                state=wait(lambda s:s.get('players')==0 and s['kind']=='idle')
+                self.assertEqual(state['idleTitle'],'Activity Island')
+                self.assertFalse(state['progressAvailable']);self.assertFalse(state['wave']['running'])
+                click('activityClose')
                 wait(lambda s: s.get('visible') is False and not s.get('transitioning'))
             finally:
                 shell.terminate(); shell.wait(timeout=6); player.terminate(); player.wait(timeout=5)
             log.seek(0)
-            for error in ['ReferenceError', 'TypeError', 'QML error', 'Failed to load configuration', 'Unable to assign']:
+            for error in ['ReferenceError', 'TypeError', 'QML error', 'Failed to load configuration', 'Unable to assign', 'QOpenGLShader::compile', 'Failed to build graphics pipeline', 'Failed to create graphics pipeline', 'Failed to deserialize']:
                 self.assertNotIn(error, log.read()); log.seek(0)

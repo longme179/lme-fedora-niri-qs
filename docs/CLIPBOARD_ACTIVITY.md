@@ -68,6 +68,14 @@ same timer shown in Control Center → Agenda. It continues while panels are
 closed; shell restart resets timers. Completion uses the existing notification
 service and respects Do Not Disturb.
 
+For tracks with a known duration and position, the media card shows elapsed/total
+time and a moving wave on the played part of the timeline. Pausing flattens the
+wave; closing the panel stops its animation. Disable **Appearance → Glass and
+motion → Wavy media progress** for a straight bar. Disabling all animations also
+flattens it, while playback position continues updating once per second. Streams
+without duration/position data do not show a guessed timeline. This progress bar
+is independent of the optional Cava audio spectrum and requires no new package.
+
 Recording status detects the current user's `wf-recorder` and
 `gpu-screen-recorder` processes. It shows process uptime, which includes any
 paused recording time. Stop recording in its application. This feature does

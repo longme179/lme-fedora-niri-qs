@@ -186,3 +186,16 @@ LME reuses the already attributed iNiR shape renderer, keeps the bell/text still
 and uses a Qt render-thread rotation instead of upstream's shape/timer sequence.
 See `third_party/iNiR-NOTICE` and the existing shape licenses for that renderer.
 There are no new bundled libraries or runtime dependencies.
+
+`qml/components/WaveProgress.qml` and `qml/components/shaders/wave-progress.frag` adapt
+[DCommon M3WaveProgress.qml](https://github.com/AvengeMedia/dank-qml-common/blob/50ca5ccb4913098b0b67807d9ff7f642e79067b0/DCommon/Widgets/M3WaveProgress.qml)
+and `DCommon/Shaders/frag/wave_progress.frag` at
+`50ca5ccb4913098b0b67807d9ff7f642e79067b0`, the submodule revision used by the
+inspected DMS checkout at `a1e6f6d6acae5e0688a4f04bd0e584b201ff6f68`.
+Copyright (c) 2025-2026 Avenge Media LLC, MIT; the source headers and full notice
+in `third_party/DankQmlCommon-LICENSE` are retained. LME uses its own theme/motion
+settings, removes unused seek-preview segments, insets endpoint markers and adds
+a Canvas renderer for Qt's software backend. The compiled shader is included;
+developers can rebuild it with `bash scripts/build-shaders.sh`. The frame-based
+MPRIS position refresh follows DMS `Widgets/DSeekbar.qml` at the DMS revision
+above and reads Quickshell's local playback clock, without frame-rate D-Bus polls.

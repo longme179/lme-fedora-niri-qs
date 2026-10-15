@@ -16,6 +16,9 @@ QtObject {
     readonly property bool canPlay: ShellState.demo || !!(player && player.canTogglePlaying)
     readonly property bool canPrevious: ShellState.demo || !!(player && player.canGoPrevious)
     readonly property bool canNext: ShellState.demo || !!(player && player.canGoNext)
+    readonly property real duration: ShellState.demo ? 240 : player && player.lengthSupported && Number.isFinite(player.length) ? Math.max(0, player.length) : 0
+    readonly property bool progressAvailable: ShellState.demo || !!(player && player.positionSupported && duration > 0)
+    readonly property real position: ShellState.demo ? 64 : progressAvailable && Number.isFinite(player.position) ? Math.max(0, Math.min(duration, player.position)) : 0
     readonly property var recording: ShellState.system.recording || {active: false}
     readonly property bool timerActive: FocusTimer.running || FocusTimer.remaining !== FocusTimer.durations[FocusTimer.mode]
     readonly property bool stopwatchActive: FocusTimer.stopwatchRunning || FocusTimer.stopwatchElapsed > 0

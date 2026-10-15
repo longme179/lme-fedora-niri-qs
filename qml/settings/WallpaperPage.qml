@@ -105,7 +105,7 @@ ColumnLayout {
             Layout.fillWidth: true; Layout.preferredHeight: 240; radius: 20; color: Theme.surfaceContainer; clip: true
             Image { anchors.fill: parent; source: root.selectedPath ? "file://" + encodeURI(root.selectedPath).replace(/#/g, "%23").replace(/\?/g, "%3F") : ShellState.preferences.wallpaper ? "file://" + encodeURI(ShellState.preferences.wallpaper).replace(/#/g, "%23").replace(/\?/g, "%3F") : "../../assets/wallpapers/liquid-dracula.png"; sourceSize.width: 900; asynchronous: true; fillMode: Image.PreserveAspectCrop }
         }
-        LabelText { text: root.selectedPath || ShellState.preferences.wallpaper || "Bundled Liquid wallpaper"; color: Theme.muted; Layout.fillWidth: true; elide: Text.ElideMiddle }
+        LabelText { text: root.selectedPath || ShellState.preferences.wallpaper || "Bundled Dracula wallpaper"; color: Theme.muted; Layout.fillWidth: true; elide: Text.ElideMiddle }
         RowLayout {
             LiquidButton { text: ShellState.pendingActions.wallpaper ? "Applying…" : "Apply wallpaper"; enabled: root.selectedPath.length > 0 && ShellState.backendReady && !ShellState.pendingActions.wallpaper; onClicked: ShellState.run("wallpaper", {path: root.selectedPath}) }
             LiquidButton { text: "Choose an image…"; onClicked: chooser.open() }

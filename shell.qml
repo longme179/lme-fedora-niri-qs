@@ -139,7 +139,7 @@ ShellRoot {
         component: FloatingWindow {
             id: previewWindow
             implicitWidth: 1920; implicitHeight: 1080
-            title: "LME Shell · Demo"
+            title: ShellState.shellName + " · Demo"
             fullscreen: root.screenshotPath !== ""
             color: Theme.background
             DesktopPreview { id: previewContent; anchors.fill: parent }

@@ -16,6 +16,7 @@ QtObject {
     readonly property var system: snapshot.system || {}
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
+    readonly property string shellName: preferences.shellName || "LME Shell"
     readonly property bool popupBlurEnabled: !demo && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     property string panelKind: "control"
@@ -53,7 +54,7 @@ QtObject {
     readonly property string focusedTitle: {
         const windows = niri.windows || [];
         const focused = windows.find(w => w.is_focused);
-        return focused ? focused.title : "LME / Liquid Desktop";
+        return focused && focused.title ? focused.title : root.shellName;
     }
 
     function closePanels() {

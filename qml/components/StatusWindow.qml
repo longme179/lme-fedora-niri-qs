@@ -34,7 +34,7 @@ PanelWindow {
                 id: transition; anchors.fill: parent; shown: root.shown
                 exitToEdge: true; exitEdge: "bottom"
                 content: NotificationCard {
-                    entry: ({appName: root.error ? "Action failed" : "LME Shell", summary: root.message, body: "", urgency: root.error ? 2 : 1, actions: []})
+                    entry: ({appName: root.error ? "Action failed" : ShellState.shellName, summary: root.message, body: "", urgency: root.error ? 2 : 1, actions: []})
                     maximumHeight: Math.max(160, (root.screen?.height || 1080) * .6)
                     animateIdle: root.shown
                     onDismissRequested: ShellState.statusMessage = ""

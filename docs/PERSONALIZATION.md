@@ -1,4 +1,4 @@
-# Elements, typography and liquid motion
+# Elements, typography and expressive motion
 
 Open **Settings → Elements and fonts**, or run:
 
@@ -14,12 +14,29 @@ Escape or the close button ends that instance so it can be opened again.
 
 ![Live element color editing with sample state](previews/element-colors.png)
 
+## Your shell's name
+
+Open **Appearance → Shell name**, enter up to 48 characters and choose **Save**
+or press Enter. The name updates live in the Settings heading/window title,
+About, the bar's title when no window is focused, and newly created shell
+notifications. Demo branding follows it too. The reset button restores **LME Shell**.
+
+The name is saved with ordinary preferences and included in exported presets
+and backups. Appearance profiles do not replace it. Repository credits, launcher
+registration, configuration paths and IPC identifiers retain their technical
+identity. Existing notification history keeps its original sender names.
+
+After updating an older checkout, close and reopen Settings and merge the new
+`app-id="^lme-shell-settings$"` match from `config/niri/lme-shell.kdl` into your
+existing Settings window rule. Its stable app ID keeps floating/focus behavior
+independent of the name you choose.
+
 ## Colors and fonts
 
 Choose a color group, optionally filter its elements, then enter a hex value
 and press Enter or Apply. The live preview uses the desktop's actual controls.
-There are 45 editable color roles across the palette, Material surfaces, buttons
-and icons, inputs, bar and workspaces, and panels/cards. These are shared UI
+Editable color roles cover the palette, Material surfaces, buttons and icons,
+inputs, bar and workspaces, notifications, and panels/cards. These are shared UI
 classes: changing `buttonFill`, for example, changes ordinary buttons across
 the shell. Purpose-specific selected/error states retain their semantic roles.
 

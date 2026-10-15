@@ -36,7 +36,7 @@ Item {
                 anchors.fill: parent; anchors.margins: 14; spacing: 18
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 4
-                    LabelText { text: "LME Settings"; font.pixelSize: 22; font.weight: Font.Bold }
+                    LabelText { objectName: "shellNameHeading"; text: ShellState.shellName + " Settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: 22; font.weight: Font.Bold }
                     LabelText { text: "Make room for you."; color: Theme.muted; font.pixelSize: 13 }
                 }
                 ExpressiveField {

@@ -14,9 +14,9 @@ Item {
     Column {
         x: 110; y: 240
         spacing: 18
-        LabelText { text: "LME"; font.pixelSize: 14; font.letterSpacing: 12; color: Theme.purple }
+        LabelText { text: ShellState.shellName; width: 680; wrapMode: Text.Wrap; font.pixelSize: 14; font.letterSpacing: 4; color: Theme.purple }
         LabelText { text: "A little less noise.\nA little more space."; font.pixelSize: 59; font.weight: Font.Light; lineHeight: 1.12 }
-        LabelText { text: "LIQUID DESKTOP  /  FEDORA + NIRI"; font.pixelSize: 12; font.letterSpacing: 3; color: Theme.muted }
+        LabelText { text: "SMOKED GLASS  /  FEDORA + NIRI"; font.pixelSize: 12; font.letterSpacing: 3; color: Theme.muted }
     }
     GlassPanel {
         x: 112; y: 580; width: 490; height: 112

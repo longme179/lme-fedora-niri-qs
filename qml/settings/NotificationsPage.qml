@@ -28,7 +28,7 @@ ColumnLayout {
             Layout.preferredHeight: implicitHeight
             maximumHeight: 360
             dismissible: false
-            entry: ({appName: "LME Shell", summary: "A little more expressive", body: "Your notification colors, typography and shape update here as you edit. The bell stays still while its soft outline turns.", actions: []})
+            entry: ({appName: ShellState.shellName, summary: "A little more expressive", body: "Your notification colors, typography and shape update here as you edit. The bell stays still while its soft outline turns.", actions: []})
         }
         LiquidButton { text: "Send test notification"; onClicked: Notifications.local("Notification preview", "A longer message wraps naturally without losing its last line. Change the width, padding or text size to find your fit.") }
     }

@@ -16,7 +16,7 @@ ShellRoot {
     }
     FloatingWindow {
         id: window
-        title: ShellState.demo ? "LME Shell Settings - Demo" : "LME Shell Settings"
+        title: ShellState.shellName + " Settings" + (ShellState.demo ? " - Demo" : "")
         implicitWidth: 1100; implicitHeight: 780
         minimumSize: Qt.size(800, 600)
         color: "transparent"

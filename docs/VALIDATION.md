@@ -1,5 +1,28 @@
 # Validation and platform limits
 
+## Custom shell identity and smoked glass terminology — 2026-10-15
+
+`scripts/check.sh` passed **235 tests: 234 passed, one skipped**, with all private
+Wayland opt-ins enabled. The skipped check requires the absent external Matugen
+binary. Python compilation, Bash syntax, demo snapshot and diff checks passed.
+Changed Settings controls/services passed qmllint without warnings; SettingsView
+retains its existing repeater-item type warning.
+
+The new native test exercises the real standalone Settings implementation:
+Unicode names submitted through the input's accepted handler, live heading and
+window-title updates, new local-notification senders, restart persistence,
+another client's settings-file update, a 48-character wrapped heading and reset.
+It verifies the stable Quickshell app ID and Settings focus routing against a
+fake niri IPC executable returning a renamed window. Unit coverage rejects
+empty/oversized/control-character/non-string names, preserves the previous value
+after rejected edits and round-trips the name through a portable preset.
+
+Validation used private Sway with Quickshell 0.3.2 / Qt 6.8.2. niri's supplied
+app-ID rule was checked against its configuration source, but `niri validate`
+and live floating/focus behavior on Fedora/niri were not run. Existing installs
+need the updated Settings rule from `config/niri/lme-shell.kdl`; close and reopen
+Settings once so its new AppId pragma takes effect. No package was installed.
+
 ## Notification appearance and adaptive cards — 2026-10-15
 
 `scripts/check.sh` passed: **233 tests, 232 passed and one skipped**. All private

@@ -9,6 +9,31 @@ ColumnLayout {
     Component.onCompleted: if (ShellState.backendReady) ShellState.run("platformRefresh")
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
     SettingsCard {
+        title: "Shell name"
+        description: "Your display name in Settings, the bar's empty-window title and shell notifications."
+        RowLayout {
+            Layout.fillWidth: true; spacing: 10
+            ExpressiveField {
+                id: shellName; objectName: "shellNameInput"
+                Layout.fillWidth: true; maximumLength: 48
+                text: ShellState.shellName; placeholderText: "LME Shell"
+                Accessible.name: "Shell display name"
+                onAccepted: if (saveName.enabled) saveName.clicked()
+            }
+            LiquidButton {
+                id: saveName; objectName: "shellNameSave"; text: "Save"
+                enabled: ShellState.backendReady && !ShellState.pendingActions.setting && !!shellName.text.trim() && shellName.text.trim() !== ShellState.shellName
+                onClicked: ShellState.run("setting", {key: "shellName", value: shellName.text.trim()})
+            }
+            IconButton {
+                objectName: "shellNameReset"; glyph: "↺"; tooltip: "Reset shell name"
+                enabled: ShellState.backendReady && ShellState.shellName !== "LME Shell"
+                onClicked: { shellName.text = "LME Shell"; ShellState.run("setting", {key: "shellName", value: "LME Shell"}); }
+            }
+        }
+        Connections { target: ShellState; function onPreferencesChanged() { if (!shellName.activeFocus) shellName.text = ShellState.shellName; } }
+    }
+    SettingsCard {
         title: "Appearance profiles"
         description: "Save accent, opacity, density and motion together. Dracula is your built-in default."
         RowLayout {
@@ -35,7 +60,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Material, through glass"
-        description: "Expressive shapes and flat tonal surfaces, with the transparency of your Liquid desktop."
+        description: "Expressive shapes and flat tonal surfaces, with smoked glass transparency."
         RowLayout {
             Layout.fillWidth: true; spacing: 12
             Rectangle {

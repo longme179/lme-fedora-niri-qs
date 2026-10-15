@@ -9,7 +9,9 @@ spawn-sh-at-startup "exec \"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/lme-she
 // remove a previous authentication-agent autostart entry when switching.
 
 // Keep the independent settings application at its requested window size.
+// The app ID stays fixed when its display name changes.
 window-rule {
+    match app-id="^lme-shell-settings$"
     match title="^(LME Shell Settings( - Demo)?|LME Screenshot)$"
     open-floating true
 }

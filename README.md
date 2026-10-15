@@ -1,6 +1,6 @@
 <h1 align="center">LME Shell</h1>
 
-<p align="center"><strong>Material 3 Expressive meets liquid glass.<br>A personal desktop shell for Fedora and niri.</strong></p>
+<p align="center"><strong>Material 3 Expressive meets smoked glass.<br>A personal desktop shell for Fedora and niri.</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Fedora-44-51a2da?style=flat-square" alt="Fedora 44">
@@ -191,11 +191,13 @@ Open Settings from either gear button, the application launcher, **Super+Comma**
 or `./scripts/settings.sh`. It runs in its own window and shares saved preferences
 with the shell, even when the shell is stopped.
 
+Choose **Appearance → Shell name** to give your desktop a name of your own.
+
 ![LME Settings showing popup blur, spring motion, shape morphing and animation presets](https://github.com/user-attachments/assets/5a87fa0e-b7d2-47a4-968b-f78510552d0a)
 
 | Page | Customize |
 | --- | --- |
-| **Appearance** | Accent, glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets and popup blur |
+| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets and popup blur |
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
@@ -293,7 +295,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | Guide | Covers |
 | --- | --- |
 | [Installation](docs/INSTALL.md) | Fedora packages, sources, niri setup, custom paths and services |
-| [Configuration](docs/CONFIGURATION.md) / [Personalization](docs/PERSONALIZATION.md) | Preferences, profiles, colors, typography, geometry and liquid feedback |
+| [Configuration](docs/CONFIGURATION.md) / [Personalization](docs/PERSONALIZATION.md) | Preferences, profiles, colors, typography, geometry and expressive feedback |
 | [Selected feature ports](docs/FEATURE_PORTS.md) | Detailed controls, dependencies, tests and hardware limits |
 | [Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md) | Screenshot drawing/redaction/OCR, external annotation, schedules and animations |
 | [Laptop features](docs/LAPTOP_FEATURES.md) | System monitor, idle profiles, keybindings and native blur |

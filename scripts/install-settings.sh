@@ -31,7 +31,7 @@ launcher = str(repo / 'scripts/settings.sh')
 if any(c in launcher for c in '\n\r'):
     sys.exit('Error: the checkout path must not contain newlines.')
 quoted = launcher.replace('\\', '\\\\\\\\').replace('"', '\\\\"').replace('`', '\\\\`').replace('$', '\\\\$').replace('%', '%%')
-entry = '[Desktop Entry]\nType=Application\nName=LME Shell Settings\nComment=Personalize your Liquid Material desktop\nExec="' + quoted + '"\nIcon=preferences-system\nTerminal=false\nCategories=Settings;DesktopSettings;\nStartupNotify=false\n'
+entry = '[Desktop Entry]\nType=Application\nName=LME Shell Settings\nComment=Personalize your smoked glass desktop\nExec="' + quoted + '"\nIcon=preferences-system\nTerminal=false\nCategories=Settings;DesktopSettings;\nStartupNotify=false\n'
 exists = target.exists() or target.is_symlink()
 if exists and not target.is_symlink() and target.read_bytes() == entry.encode():
     print('Already installed:', target); sys.exit(0)

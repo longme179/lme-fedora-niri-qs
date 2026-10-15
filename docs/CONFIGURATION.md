@@ -12,6 +12,7 @@ Use the standalone Settings app to change preferences. Open it with
 
 ```json
 {
+  "shellName": "LME Shell",
   "language": "en",
   "animations": true,
   "opacity": 0.9,

@@ -55,7 +55,7 @@ import json, subprocess
 try:
     result = subprocess.run(['niri', 'msg', '--json', 'windows'], capture_output=True, text=True, timeout=3)
     for window in json.loads(result.stdout):
-        if window.get('title') == 'LME Shell Settings':
+        if window.get('app_id') == 'lme-shell-settings' or window.get('title') == 'LME Shell Settings':
             subprocess.run(['niri', 'msg', 'action', 'focus-window', '--id', str(window['id'])], check=False, timeout=3)
             break
 except (OSError, ValueError, subprocess.TimeoutExpired):

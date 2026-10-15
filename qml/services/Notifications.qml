@@ -125,7 +125,7 @@ Singleton {
     }
     function local(summary, body) {
         const timestamp = Date.now();
-        history = [{id: "local-" + timestamp, appName: "LME Shell", appIcon: "", summary: summary, body: body,
+        history = [{id: "local-" + timestamp, appName: ShellState.shellName, appIcon: "", summary: summary, body: body,
                     timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !effectiveDnd && !ShellState.notificationsOpen,
                     transient: false, local: true}, ...history].slice(0, 200);
         if (!ShellState.notificationsOpen) unreadCount++;

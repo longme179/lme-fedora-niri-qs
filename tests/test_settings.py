@@ -40,6 +40,19 @@ class SettingsCase(unittest.TestCase):
         validated["left"].clear()
         self.assertTrue(source["left"])
 
+    def test_shell_name_is_validated_persistent_and_portable(self):
+        from settings_transfer import document, validate_document
+        preferences = backend.Preferences(self.path)
+        self.assertEqual(preferences.values['shellName'], 'LME Shell')
+        preferences.set('shellName', "  Nebula & Mây's Desktop  ")
+        saved = backend.Preferences(self.path).values
+        self.assertEqual(saved['shellName'], "Nebula & Mây's Desktop")
+        preset = validate_document(document(saved, 'preset'), backend.validate_preference, backend.DEFAULT_PREFERENCES)
+        self.assertEqual(preset['shellName'], saved['shellName'])
+        for invalid in ('', '   ', 'x' * 49, '\nNebula', 'Nebula\nDesktop', 'Nebula\tDesktop', '\x7f', None, 42, True, []):
+            with self.subTest(value=invalid), self.assertRaises(ValueError): preferences.set('shellName', invalid)
+        self.assertEqual(backend.Preferences(self.path).values['shellName'], saved['shellName'])
+
     def test_stale_writers_merge_other_clients_changes(self):
         shell, app = backend.Preferences(self.path), backend.Preferences(self.path)
         shell.set("tasks", [{"id": "test-task", "text": "Keep me", "done": False}])

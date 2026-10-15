@@ -51,7 +51,7 @@ from settings_transfer import export_document, read_document, document
 
 
 DEFAULT_PREFERENCES = {
-    "language": "en", "animations": True, "opacity": 0.90,
+    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
@@ -285,6 +285,9 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key == "shellName" and isinstance(value, str):
+        name = value.strip()
+        if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name
     if key in {'themeOverrides', 'fontOverrides'}: return theme_overrides(value, fonts=key == 'fontOverrides')
     if key == 'fontSize' and type(value) is int and 12 <= value <= 20: return value
     if key == 'barEdge' and value in ('top', 'bottom'): return value
@@ -1021,7 +1024,7 @@ class DesktopBackend:
             "niri": {"available": True, "workspaces": [
                 {"id": i, "idx": i, "name": None, "output": "eDP-1", "is_focused": i == 1, "is_active": i == 1}
                 for i in range(1, 5)], "windows": [
-                    {"id": 1, "title": "LME Shell — Preview", "app_id": "firefox", "workspace_id": 1, "is_focused": True},
+                    {"id": 1, "title": "Desktop preview", "app_id": "firefox", "workspace_id": 1, "is_focused": True},
                     {"id": 2, "title": "Terminal · project", "app_id": "kitty", "workspace_id": 1, "is_focused": False},
                     {"id": 3, "title": "Documents", "app_id": "org.gnome.Nautilus", "workspace_id": 2, "is_focused": False}]},
             "system": {"cpu": 12.4, "memoryPercent": 34.2, "memoryUsedGiB": 5.47, "memoryTotalGiB": 16,
@@ -1187,7 +1190,7 @@ class DesktopBackend:
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
         elif action == "imageAnnotate": pass
-        elif action == "captureOcr": self.capture.state['ocrText'] = 'LME Shell\nLocal screenshot text recognition'
+        elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
         elif action == "idleInhibit":
@@ -1332,10 +1335,10 @@ class DesktopBackend:
                     args = [request.get('source'), request.get('target')] if action == 'mirrorStart' else []
                     if any(not isinstance(a, str) for a in args): raise ValueError('Choose source and target displays')
                     reply = run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', action, *args)
-                    if reply.strip() != 'true': raise ValueError('Start LME Shell before controlling display mirroring.')
+                    if reply.strip() != 'true': raise ValueError(f"Start {self.preferences.values['shellName']} before controlling display mirroring.")
                 reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'mirrorStatus')
                 self.mirror_state = {'active': False, 'available': self.runner.available('wl-mirror'),
-                                     'error': 'Start LME Shell before controlling display mirroring.'}
+                                     'error': f"Start {self.preferences.values['shellName']} before controlling display mirroring."}
                 try:
                     value = json.loads(reply or '{}')
                     if isinstance(value, dict) and type(value.get('active')) is bool: self.mirror_state = value
@@ -1351,7 +1354,7 @@ class DesktopBackend:
             if type(request.get('retry', False)) is not bool: raise ValueError('Night Light retry must be boolean')
             if self.settings_only:
                 self.night_state = {'available': self.runner.available('wlsunset'), 'active': False,
-                                    'error': 'Start LME Shell to control Night Light.'}
+                                    'error': f"Start {self.preferences.values['shellName']} to control Night Light."}
                 if request.get('retry'):
                     run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'retryNightLight')
                 reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'nightLightStatus')

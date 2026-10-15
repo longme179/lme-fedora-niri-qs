@@ -13,7 +13,7 @@ QtObject {
     property var demoEntries: [
         {id: "demo-note", kind: "text", preview: "One thing at a time.\nA little more space for your next idea.", pinned: true, bytes: 70, image: ""},
         {id: "demo-link", kind: "text", preview: "https://github.com/longme179/lme-fedora-niri-qs", pinned: false, bytes: 51, image: ""},
-        {id: "demo-image", kind: "image", preview: "PNG image · Liquid Dracula", pinned: false, bytes: 8240, image: "file://" + Quickshell.shellPath("assets/wallpapers/liquid-dracula.png")},
+        {id: "demo-image", kind: "image", preview: "PNG image · Dracula", pinned: false, bytes: 8240, image: "file://" + Quickshell.shellPath("assets/wallpapers/liquid-dracula.png")},
         {id: "demo-command", kind: "text", preview: "qs -c lme-shell", pinned: false, bytes: 14, image: ""}
     ]
     property string query: ""

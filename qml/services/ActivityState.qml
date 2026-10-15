@@ -11,7 +11,7 @@ QtObject {
     readonly property bool hasMedia: ShellState.demo || player !== null
     readonly property bool playing: ShellState.demo ? demoPlaying : player ? player.isPlaying : false
     readonly property string track: ShellState.demo ? "A little more space" : player ? player.trackTitle || player.identity : "No player connected"
-    readonly property string artist: ShellState.demo ? "Liquid Sessions" : player ? player.trackArtist || player.identity : "Open a music or video application"
+    readonly property string artist: ShellState.demo ? ShellState.shellName + " Sessions" : player ? player.trackArtist || player.identity : "Open a music or video application"
     readonly property string artwork: ShellState.demo ? "" : player ? player.trackArtUrl : ""
     readonly property bool canPlay: ShellState.demo || !!(player && player.canTogglePlaying)
     readonly property bool canPrevious: ShellState.demo || !!(player && player.canGoPrevious)

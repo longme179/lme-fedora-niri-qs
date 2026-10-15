@@ -103,7 +103,7 @@ Loader {
             LabelText {
                 id: titleText
                 anchors.fill: parent; leftPadding: 8; rightPadding: 8
-                text: ShellState.niri.available ? ShellState.focusedTitle : ShellState.demo ? "LME / Liquid Desktop" : "niri unavailable"
+                text: ShellState.niri.available ? ShellState.focusedTitle : ShellState.demo ? ShellState.shellName : "niri unavailable"
                 color: Theme.barMuted; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter
                 font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
             }

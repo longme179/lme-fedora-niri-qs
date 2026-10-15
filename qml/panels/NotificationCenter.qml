@@ -50,6 +50,7 @@ Item {
             Layout.fillWidth: true
             Text { text: "Notifications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 23; font.weight: Font.Bold }
             Item { Layout.fillWidth: true }
+            IconButton { iconName: "settings"; tooltip: "Notification settings"; onClicked: ShellState.openSettingsPage("notifications") }
             LiquidButton { text: "×"; Accessible.name: "Close notifications"; onClicked: ShellState.closePanels(); palette.button: Theme.surface; palette.buttonText: Theme.text }
         }
         Rectangle {
@@ -105,63 +106,29 @@ Item {
                 model: root.grouped
                 boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: ScrollBar {}
-                delegate: Rectangle {
-                    id: entry
+                delegate: Item {
+                    id: historyEntry
                     objectName: "notificationCard-" + (modelData.id || modelData.appName)
                     required property var modelData
                     width: notificationList.width
-                    height: modelData.group ? groupHeading.implicitHeight + 18 : cardContent.implicitHeight + 28
-                    radius: Theme.smallRadius
-                    color: modelData.group ? "transparent" : Theme.surface
-                    border.color: modelData.urgency === 2 ? Theme.red : Theme.border
-                    border.width: modelData.group ? 0 : 1
-                    MouseArea { anchors.fill: parent; enabled: !!entry.modelData.imagePath; onClicked: Notifications.openImage(entry.modelData.id) }
+                    height: modelData.group ? groupHeading.implicitHeight + 18 : cardContent.implicitHeight
                     RowLayout {
-                        id: groupHeading; visible: !!entry.modelData.group
+                        id: groupHeading; visible: !!historyEntry.modelData.group
                         anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 8
-                        LabelText { text: entry.modelData.appName + " · " + (entry.modelData.total || 0); Layout.fillWidth: true; elide: Text.ElideRight; font.weight: Font.Bold }
-                        LiquidButton { text: Notifications.mutedApps.includes(entry.modelData.appName) ? "Allow popups" : "Mute popups"; font.pixelSize: 11; onClicked: Notifications.muteApp(entry.modelData.appName, !Notifications.mutedApps.includes(entry.modelData.appName)) }
+                        LabelText { text: historyEntry.modelData.appName + " · " + (historyEntry.modelData.total || 0); Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight; font.weight: Font.Bold }
+                        LiquidButton { text: Notifications.mutedApps.includes(historyEntry.modelData.appName) ? "Allow popups" : "Mute popups"; font.pixelSize: 11; onClicked: Notifications.muteApp(historyEntry.modelData.appName, !Notifications.mutedApps.includes(historyEntry.modelData.appName)) }
                     }
-                    ColumnLayout {
+                    NotificationCard {
                         id: cardContent
-                        z: 1
-                        visible: !entry.modelData.group
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: 14
-                        spacing: 8
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: entry.modelData.appName; textFormat: Text.PlainText; color: Theme.purple; font.family: Theme.fontFamily; font.pixelSize: 12; font.weight: Font.Bold; elide: Text.ElideRight }
-                            Text { text: entry.modelData.group ? "" : root.timeText(entry.modelData.timestamp); color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 10 }
-                            IconButton {
-                                glyph: "×"
-                                implicitWidth: 28
-                                implicitHeight: 28
-                                Accessible.name: "Dismiss " + entry.modelData.summary
-                                onClicked: Notifications.dismiss(entry.modelData.id)
-                                palette.button: Theme.panel
-                                palette.buttonText: Theme.muted
-                            }
-                        }
-                        Text { Layout.fillWidth: true; text: entry.modelData.summary || ""; textFormat: Text.PlainText; wrapMode: Text.WordWrap; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
-                        Text { Layout.fillWidth: true; visible: text.length > 0; text: entry.modelData.body || ""; textFormat: Text.PlainText; wrapMode: Text.WordWrap; maximumLineCount: 8; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 6
-                            LiquidButton { objectName: "notificationAnnotate-" + entry.modelData.id; visible: !!entry.modelData.imagePath; text: "Annotate"; onClicked: Notifications.openImage(entry.modelData.id) }
-                            Repeater {
-                                model: entry.modelData.active ? entry.modelData.actions : []
-                                delegate: LiquidButton {
-                                    required property var modelData
-                                    text: modelData.text || modelData.identifier
-                                    onClicked: Notifications.invokeAction(entry.modelData.id, modelData.identifier)
-                                    palette.button: Theme.panel
-                                    palette.buttonText: Theme.cyan
-                                }
-                            }
-                        }
+                        anchors.left: parent.left; anchors.right: parent.right
+                        height: implicitHeight
+                        visible: !historyEntry.modelData.group
+                        entry: historyEntry.modelData
+                        timeText: historyEntry.modelData.group ? "" : root.timeText(historyEntry.modelData.timestamp)
+                        animateIdle: false
+                        onDismissRequested: Notifications.dismiss(historyEntry.modelData.id)
+                        onAnnotateRequested: Notifications.openImage(historyEntry.modelData.id)
+                        onActionRequested: identifier => Notifications.invokeAction(historyEntry.modelData.id, identifier)
                     }
                 }
             }

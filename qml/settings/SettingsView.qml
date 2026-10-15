@@ -130,7 +130,7 @@ Item {
                     content: root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage
                                    : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage : root.page === "elements" ? elementsPage
-                                   : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
+                                   : root.page === "notifications" ? notificationsPage : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
         }
@@ -141,6 +141,7 @@ Item {
     Component { id: displayPage; DisplayPage {} }
     Component { id: controlPage; ControlLayoutPage {} }
     Component { id: weatherPage; WeatherPage {} }
+    Component { id: notificationsPage; NotificationsPage { onFontSettingsRequested: root.navigate("elements") } }
     Component { id: clipboardPage; ClipboardPage {} }
     Component { id: idlePage; IdlePage {} }
     Component { id: keybindsPage; KeybindsPage {} }

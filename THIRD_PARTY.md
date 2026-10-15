@@ -172,3 +172,17 @@ iNiR's `modules/sidebarRight/quickToggles/androidStyle/AndroidPowerProfileToggle
 at `48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3) informed capability-aware
 profile cycling. These implementations were referenced, not copied; LME retains
 its existing Fedora D-Bus/CLI backend and adds no runtime package dependency.
+
+Notification appearance and wrapping were reviewed against DankMaterialShell
+`quickshell/Modules/Settings/NotificationsTab.qml`,
+`Modules/Notifications/NotificationMetrics.qml` and `NotificationCard.qml` at
+`a1e6f6d6acae5e0688a4f04bd0e584b201ff6f68` (MIT; actual root LICENSE inspected).
+The width-constrained text, wrapping actions and shared card metrics informed
+LME's original `NotificationCard.qml`; no DMS notification implementation is copied.
+The rotating, visibility-gated emblem references iNiR's
+`modules/common/widgets/MaterialLoadingIndicator.qml` at
+`48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3 with its retained notice).
+LME reuses the already attributed iNiR shape renderer, keeps the bell/text still,
+and uses a Qt render-thread rotation instead of upstream's shape/timer sequence.
+See `third_party/iNiR-NOTICE` and the existing shape licenses for that renderer.
+There are no new bundled libraries or runtime dependencies.

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import "../components"
@@ -13,11 +12,17 @@ PanelWindow {
     property bool preview: false
     property var entries: ({})
     readonly property bool accepting: !preview && !ShellState.notificationsOpen && !ShellState.authenticationActive
+    readonly property string position: ShellState.preferences.notificationPosition === "bar" || !ShellState.preferences.notificationPosition
+        ? (Theme.barBottom ? "bottom-right" : "top-right") : ShellState.preferences.notificationPosition
+    readonly property real edgeMargin: Theme.notificationMargin
+    readonly property real barMargin: Theme.panelTopMargin + Math.max(0, edgeMargin - 14)
+    readonly property real availableHeight: Math.max(160, (screen?.height || 1080) - barMargin - edgeMargin)
     screen: ShellState.panelScreen || Quickshell.screens[0]
     visible: toastModel.count > 0 && !preview
-    anchors { top: !Theme.barBottom; bottom: Theme.barBottom; right: true }
-    margins { top: Theme.barBottom ? 0 : Theme.panelTopMargin; bottom: Theme.barBottom ? Theme.panelTopMargin : 0; right: 14 }
-    implicitWidth: 360; implicitHeight: toastColumn.implicitHeight
+    anchors { top: position.startsWith("top"); bottom: position.startsWith("bottom"); left: position.endsWith("left"); right: position.endsWith("right") }
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+    implicitWidth: Math.min(Theme.notificationWidth, Math.max(160, (screen?.width || 1920) - edgeMargin * 2))
+    implicitHeight: Math.min(availableHeight, toastColumn.implicitHeight)
     color: "transparent"; exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay; WlrLayershell.namespace: "lme-notifications"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -69,32 +74,19 @@ PanelWindow {
                 readonly property Item panel: item as Item
                 width: toastColumn.width
                 height: panel ? panel.implicitHeight : 0
+                // Shared height limits must take effect together when another card arrives.
+                animateResize: toastModel.count === 1
                 shown: present && root.accepting
-                exitToEdge: true; exitEdge: "right"
+                exitToEdge: true
+                exitEdge: root.position.endsWith("left") ? "left" : root.position.endsWith("right") ? "right" : root.position.startsWith("top") ? "top" : "bottom"
                 onMountedChanged: if (!mounted && !present) { const id = identifier; Qt.callLater(() => root.remove(id)); }
-                content: GlassPanel {
-                    role: "notificationFill"
-                    implicitHeight: toastContent.implicitHeight + 32
-                    MouseArea { anchors.fill: parent; enabled: !!toast.entry.imagePath; onClicked: Notifications.openImage(toast.entry.id) }
-                    ColumnLayout {
-                        id: toastContent
-                        z: 1
-                        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
-                        spacing: 8
-                        RowLayout {
-                            LabelText { text: toast.entry.appName; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
-                            IconButton { glyph: "×"; tooltip: "Dismiss notification"; implicitWidth: 24; implicitHeight: 24; onClicked: Notifications.dismiss(toast.entry.id) }
-                        }
-                        LabelText { text: toast.entry.summary; font.weight: Font.DemiBold; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                        LabelText { text: toast.entry.body; visible: text.length > 0; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight }
-                        RowLayout {
-                            LiquidButton { visible: !!toast.entry.imagePath; text: "Annotate"; onClicked: Notifications.openImage(toast.entry.id) }
-                            Repeater {
-                                model: toast.entry.actions || []
-                                delegate: IconButton { required property var modelData; text: modelData.text; implicitWidth: Math.min(145, Math.max(80, text.length * 8)); onClicked: Notifications.invokeAction(toast.entry.id, modelData.identifier) }
-                            }
-                        }
-                    }
+                content: NotificationCard {
+                    entry: toast.entry
+                    maximumHeight: Math.max(1, (root.availableHeight - (toastModel.count - 1) * toastColumn.spacing) / Math.max(1, toastModel.count))
+                    animateIdle: toast.shown
+                    onDismissRequested: Notifications.dismiss(toast.entry.id)
+                    onAnnotateRequested: Notifications.openImage(toast.entry.id)
+                    onActionRequested: identifier => Notifications.invokeAction(toast.entry.id, identifier)
                 }
             }
         }

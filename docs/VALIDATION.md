@@ -1,5 +1,29 @@
 # Validation and platform limits
 
+## Notification appearance and adaptive cards — 2026-10-15
+
+`scripts/check.sh` passed: **233 tests, 232 passed and one skipped**. All private
+Wayland opt-ins were enabled; only the unrelated real portable Matugen test was
+skipped because its external binary is absent. Bash syntax, Python compilation,
+demo state and diff checks passed. The new card, emblem, settings page,
+notification center and registry passed qmllint without warnings. Layer-window
+files retain Quickshell's known attached-type metadata warnings; SettingsView
+also retains its existing repeater-item type warning. Native loading succeeded.
+
+New regressions cover long unbroken URLs, complete multiline text, wrapping
+action labels, scrolling to the end, width-dependent height, all six popup
+positions, output height limits, dynamic shell-status height, color/radius/border
+updates, preset round-tripping and rejected preference values. Idle rotation
+stops for hidden cards, its own toggle and disabled shell animations. The actual
+Settings route and preview width are checked. Existing live screenshot-toast
+annotation, retained closing cards, same-edge entry/exit, clipboard, font/color
+editing and authentication tests pass.
+
+The Settings preview was inspected in a private 1920×1080 Sway software-rendered
+session with Quickshell 0.3.2 / Qt 6.8.2. No package was installed. Live rotation
+smoothness, compositor blur and performance on Fedora/niri with Radeon at 120 Hz
+were not assessed on the maintainer's hardware.
+
 ## Bar blur and same-edge popup travel — 2026-10-14
 
 `scripts/check.sh` passed **231 tests, no skips**, with every private Wayland

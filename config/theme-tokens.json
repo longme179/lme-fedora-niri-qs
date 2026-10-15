@@ -5,7 +5,8 @@
     {"title": "Buttons and icons", "tokens": ["buttonFill", "buttonHover", "buttonPressed", "buttonSelected", "buttonText", "iconColor", "iconHover"]},
     {"title": "Inputs", "tokens": ["fieldFill", "fieldText", "switchTrack", "switchThumb", "sliderTrack", "sliderFill"]},
     {"title": "Bar and workspaces", "tokens": ["barFill", "barBorder", "barText", "barMuted", "barHover", "workspaceActive", "workspaceText"]},
-    {"title": "Panels and cards", "tokens": ["panelFill", "cardFill", "controlFill", "launcherFill", "notificationFill", "islandFill", "settingsFill"]}
+    {"title": "Panels and cards", "tokens": ["panelFill", "cardFill", "controlFill", "launcherFill", "islandFill", "settingsFill"]},
+    {"title": "Notifications", "tokens": ["notificationFill", "notificationTitle", "notificationBody", "notificationAccent", "notificationBorder"]}
   ],
   "fonts": [
     {"key": "body", "title": "Body text", "default": "Roboto"},

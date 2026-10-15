@@ -65,6 +65,10 @@ DEFAULT_PREFERENCES = {
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
     "wallpaperFolder": "",
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
+    "notificationWidth": 380, "notificationPosition": "bar", "notificationMargin": 14,
+    "notificationRadius": 28, "notificationPadding": 16, "notificationOpacity": .90,
+    "notificationBorderWidth": 1, "notificationTitleSize": 14, "notificationBodySize": 13,
+    "notificationIdleAnimation": True, "notificationIdleSpeed": 16,
     "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
     "niriConfigPath": "", "popupBlur": True, "barBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
     "barEdge": "top", "barEdgeMargin": 8, "barSideMargin": 12, "barHeight": 42,
@@ -292,6 +296,14 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
     if key in {"mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key == "notificationIdleAnimation" and type(value) is bool: return value
+    if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
+    if key == "notificationOpacity" and type(value) in (int, float) and math.isfinite(value) and .6 <= value <= 1: return float(value)
+    if key in {"notificationWidth", "notificationMargin", "notificationRadius", "notificationPadding", "notificationBorderWidth", "notificationTitleSize", "notificationBodySize", "notificationIdleSpeed"} and type(value) is int:
+        low, high = {"notificationWidth": (300, 640), "notificationMargin": (0, 64), "notificationRadius": (0, 48),
+                     "notificationPadding": (12, 28), "notificationBorderWidth": (0, 4), "notificationTitleSize": (12, 24),
+                     "notificationBodySize": (11, 22), "notificationIdleSpeed": (6, 40)}[key]
+        if low <= value <= high: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
     if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value

@@ -82,6 +82,20 @@ QtObject {
     readonly property color controlFill: colorFor("controlFill", panelFill)
     readonly property color launcherFill: colorFor("launcherFill", panelFill)
     readonly property color notificationFill: colorFor("notificationFill", panelFill)
+    readonly property color notificationTitle: colorFor("notificationTitle", text)
+    readonly property color notificationBody: colorFor("notificationBody", muted)
+    readonly property color notificationAccent: colorFor("notificationAccent", accent)
+    readonly property color notificationBorder: colorFor("notificationBorder", outlineVariant)
+    readonly property int notificationWidth: ShellState.preferences.notificationWidth ?? 380
+    readonly property int notificationMargin: ShellState.preferences.notificationMargin ?? 14
+    readonly property int notificationRadius: ShellState.preferences.notificationRadius ?? 28
+    readonly property int notificationPadding: ShellState.preferences.notificationPadding ?? 16
+    readonly property real notificationOpacity: ShellState.preferences.notificationOpacity ?? .90
+    readonly property int notificationBorderWidth: ShellState.preferences.notificationBorderWidth ?? 1
+    readonly property int notificationTitleSize: ShellState.preferences.notificationTitleSize ?? 14
+    readonly property int notificationBodySize: ShellState.preferences.notificationBodySize ?? 13
+    readonly property bool notificationIdleAnimation: ShellState.preferences.notificationIdleAnimation !== false
+    readonly property int notificationIdleSpeed: ShellState.preferences.notificationIdleSpeed ?? 16
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
     readonly property real panelOpacity: ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity

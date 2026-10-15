@@ -203,7 +203,7 @@ ShellRoot {
             def type_text(text):subprocess.run(['wtype','-s','150','-M','ctrl','-k','a','-m','ctrl',text,'-k','Return'],env=env,check=True,timeout=5)
             def run(key,value,**extra):ipc('run',json.dumps({'action':'setting','key':key,'value':value,**extra}))
             try:
-                wait(lambda s:s.get('ready'));ipc('navigate','settings','elements');wait(lambda s:s.get('colors')==6);time.sleep(.6)
+                wait(lambda s:s.get('ready'));ipc('navigate','settings','elements');wait(lambda s:bool(s.get('colors')));time.sleep(.6)
                 click('elementPreviewButton');wait(lambda s:s['buttonFocus'])
                 p=point('elementPreviewButton')
                 pointer=subprocess.Popen([str(Path(os.environ['LME_TEST_POINTER']).with_name('pointer-move')),str(p['x']),str(p['y']),'8000'],env=env)

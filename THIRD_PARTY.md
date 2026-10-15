@@ -195,7 +195,10 @@ inspected DMS checkout at `a1e6f6d6acae5e0688a4f04bd0e584b201ff6f68`.
 Copyright (c) 2025-2026 Avenge Media LLC, MIT; the source headers and full notice
 in `third_party/DankQmlCommon-LICENSE` are retained. LME uses its own theme/motion
 settings, removes unused seek-preview segments, insets endpoint markers and adds
-a Canvas renderer for Qt's software backend. The compiled shader is included;
-developers can rebuild it with `bash scripts/build-shaders.sh`. The frame-based
+a Canvas renderer for Qt's software backend. Its indeterminate mode shows a
+full-width playback wave without a playhead when timing metadata is unavailable.
+`MediaProgress.qml` composes it for Activity Island and Control Center. The
+compiled shader is included; developers can rebuild it with
+`bash scripts/build-shaders.sh`. The frame-based
 MPRIS position refresh follows DMS `Widgets/DSeekbar.qml` at the DMS revision
 above and reads Quickshell's local playback clock, without frame-rate D-Bus polls.

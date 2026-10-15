@@ -11,6 +11,7 @@ layout(std140, binding = 0) uniform buf {
     float widthPx;
     float heightPx;
     float value;
+    float indeterminate;
     float phase;
     float ampPx;
     float wavelengthPx;
@@ -60,6 +61,7 @@ void main() {
     float phW = 3.5;
     float phH = max(ubuf.lineWidthPx + 12.0, 16.0);
     float d = sdRoundBar(px - vec2(playX, mid), vec2(phW * 0.5, phH * 0.5), phW * 0.5);
-    col = blendOver(col, ubuf.fillColor.rgb, ubuf.fillColor.a * (1.0 - smoothstep(-AA, AA, d)));
+    if (ubuf.indeterminate < 0.5)
+        col = blendOver(col, ubuf.fillColor.rgb, ubuf.fillColor.a * (1.0 - smoothstep(-AA, AA, d)));
     fragColor = col * ubuf.qt_Opacity;
 }

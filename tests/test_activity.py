@@ -60,15 +60,16 @@ class ActivityInterfaceCase(unittest.TestCase):
         fixture = repo / 'native-features-demo.qml'
         with tempfile.TemporaryFile(mode='w+') as log:
             player = subprocess.Popen([python, str(repo / 'tests/mpris_fixture.py')], stdout=log, stderr=log)
+            browser = None
             env = dict(os.environ, LME_SHELL_DEMO='0', LME_SHELL_BACKEND_DEMO='1', LME_TEST_FEATURES='1', LME_TEST_CLIPBOARD_UI='0')
             shell = subprocess.Popen(['quickshell', '-p', str(fixture)], env=env, stdout=log, stderr=log)
             def ipc(method, *args):
                 reply = subprocess.run(['quickshell', '-p', str(fixture), 'ipc', 'call', 'featuresFixture', method, *args], env=env, capture_output=True, text=True, timeout=4)
                 return reply.stdout.strip()
-            def wait(predicate):
+            def wait(predicate, method='activityStatus'):
                 end = time.monotonic() + 10
                 while time.monotonic() < end:
-                    try: state = json.loads(ipc('activityStatus'))
+                    try: state = json.loads(ipc(method))
                     except ValueError: state = {}
                     if predicate(state): return state
                     time.sleep(.1)
@@ -77,6 +78,12 @@ class ActivityInterfaceCase(unittest.TestCase):
             def click(name):
                 point = json.loads(ipc('buttonPosition', name))
                 subprocess.run([pointer, str(point['x']), str(point['y'])], check=True, timeout=4)
+            def screenshot(suffix=''):
+                if not os.environ.get('LME_TEST_ACTIVITY_SCREENSHOT'): return
+                destination=Path(os.environ['LME_TEST_ACTIVITY_SCREENSHOT'])
+                destination=destination.with_stem(destination.stem+suffix)
+                destination.unlink(missing_ok=True)
+                ipc('activityScreenshot',str(destination));wait(lambda s:destination.exists())
             try:
                 state = wait(lambda s: s.get('players') == 1 and s.get('expansion') == 1)
                 self.assertEqual(state['caption'], 'Activity Island')
@@ -89,10 +96,9 @@ class ActivityInterfaceCase(unittest.TestCase):
                 self.assertEqual(wave['duration'],120)
                 self.assertRegex(wave['elapsedText'],r'^\d{2}:\d{2}$')
                 self.assertGreater(wave['wave']['value'],.2)
+                self.assertFalse(wave['wave']['indeterminate'])
                 if os.environ.get('LME_TEST_WAVE_RHI') == '1': self.assertFalse(wave['wave']['software'])
-                if os.environ.get('LME_TEST_ACTIVITY_SCREENSHOT'):
-                    destination=Path(os.environ['LME_TEST_ACTIVITY_SCREENSHOT'])
-                    ipc('activityScreenshot',str(destination));wait(lambda s:destination.exists())
+                screenshot()
                 wait(lambda s:s['wave']['phase'] != wave['wave']['phase'] and s['position'] > wave['position']+.2)
                 click('activityPlay'); wait(lambda s: s.get('playing') is False)
                 paused = wait(lambda s:not s['wave']['running'] and s['wave']['amplitude']==0)
@@ -101,7 +107,9 @@ class ActivityInterfaceCase(unittest.TestCase):
                 for target in (0,120,60):
                     ipc('seek',str(target));wait(lambda s:abs(s['wave']['value']-target/120)<.001)
                 click('activityNext'); wait(lambda s: s.get('title') == 'Next track' and not s['progressAvailable'])
-                click('activityPlay');wait(lambda s:s['playing'] and not s['progressAvailable'] and not s['wave']['running'])
+                click('activityPlay');unknown=wait(lambda s:s['playing'] and not s['progressAvailable'] and s['wave']['running'])
+                self.assertTrue(unknown['wave']['indeterminate']);self.assertTrue(unknown['timingUnavailable'])
+                wait(lambda s:s['wave']['phase']!=unknown['wave']['phase'])
                 click('activityPlay');wait(lambda s:not s['playing'])
                 click('activityPrevious'); wait(lambda s: s.get('title') == 'Previous track' and s['progressAvailable'])
                 click('activityPlay'); wait(lambda s: s.get('playing') is True)
@@ -109,6 +117,34 @@ class ActivityInterfaceCase(unittest.TestCase):
                 wait(lambda s:s['position']>flat['position']+.2)
                 self.assertEqual(json.loads(ipc('activityStatus'))['wave']['phase'],flat['wave']['phase'])
                 ipc('mediaWave','true');wait(lambda s:s['wave']['running'] and s['wave']['amplitude']>2.9)
+                browser = subprocess.Popen([python,str(repo/'tests/mpris_fixture.py'),'--browser','--no-position'],stdout=log,stderr=log)
+                wait(lambda s:s['players']==2)
+                browser_name='org.mpris.MediaPlayer2.chromium.lmeTest'
+                app_name='org.mpris.MediaPlayer2.lmeTest'
+                ipc('selectPlayer',browser_name,'false')
+                unknown=wait(lambda s:s['playerName']==browser_name and s['wave']['running'])
+                self.assertEqual(unknown['duration'],120)
+                self.assertFalse(unknown['progressAvailable']);self.assertTrue(unknown['wave']['indeterminate'])
+                wait(lambda s:s['wave']['phase']!=unknown['wave']['phase'])
+                screenshot('-browser')
+                click('activityPlay');wait(lambda s:not s['playing'] and not s['wave']['running'])
+                click('activityPlay');wait(lambda s:s['playing'] and s['wave']['running'])
+                ipc('openControl')
+                wait(lambda s:s['wave'].get('running'), 'controlStatus')
+                ipc('selectPlayer',browser_name,'true')
+                unknown=wait(lambda s:s['playerName']==browser_name and s['wave']['running'],'controlStatus')
+                self.assertTrue(unknown['wave']['indeterminate']);self.assertTrue(unknown['timingUnavailable'])
+                wait(lambda s:s['wave']['phase']!=unknown['wave']['phase'],'controlStatus')
+                screenshot('-control')
+                ipc('selectPlayer',app_name,'true')
+                known=wait(lambda s:s['playerName']==app_name and s['progressAvailable'],'controlStatus')
+                self.assertFalse(known['wave']['indeterminate'])
+                wait(lambda s:s['position']>known['position']+.2,'controlStatus')
+                ipc('openActivity');wait(lambda s:s['visible'] and s['expansion']==1)
+                ipc('selectPlayer',app_name,'false')
+                wait(lambda s:s['playerName']==app_name and s['progressAvailable'])
+                browser.terminate();browser.wait(timeout=5)
+                wait(lambda s:s['players']==1)
                 click('activityTimer'); wait(lambda s: s.get('timerRunning') and s.get('kind') == 'timer' and s.get('remaining', 1500) < 1500)
                 click('activityTimer'); state = wait(lambda s: s.get('timerRunning') is False)
                 paused = state['remaining']; time.sleep(.5)
@@ -127,11 +163,14 @@ class ActivityInterfaceCase(unittest.TestCase):
                 player.terminate();player.wait(timeout=5)
                 click('activityTimerReset')
                 state=wait(lambda s:s.get('players')==0 and s['kind']=='idle')
-                self.assertEqual(state['idleTitle'],'Activity Island')
+                for title in ('Firefox — YouTube','Terminal · project',''):
+                    self.assertEqual(json.loads(ipc('focusedWindow',title)),{'title':title or 'Activity Island','caption':'Activity Island'})
                 self.assertFalse(state['progressAvailable']);self.assertFalse(state['wave']['running'])
                 click('activityClose')
                 wait(lambda s: s.get('visible') is False and not s.get('transitioning'))
             finally:
+                if browser is not None:
+                    browser.terminate();browser.wait(timeout=5)
                 shell.terminate(); shell.wait(timeout=6); player.terminate(); player.wait(timeout=5)
             log.seek(0)
             for error in ['ReferenceError', 'TypeError', 'QML error', 'Failed to load configuration', 'Unable to assign', 'QOpenGLShader::compile', 'Failed to build graphics pipeline', 'Failed to create graphics pipeline', 'Failed to deserialize']:

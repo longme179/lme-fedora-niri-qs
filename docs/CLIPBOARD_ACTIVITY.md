@@ -60,21 +60,41 @@ an outside click. Turning off animations makes it immediate. The overlay keeps
 the bar's 42 px exclusive zone unchanged and clamps itself to the selected output.
 
 The compact caption prioritizes supported recording, then focus/break timer,
-stopwatch and MPRIS media. With no activity it shows **Activity Island**; the
-expanded panel keeps that heading regardless of the current activity.
+stopwatch and MPRIS media. With no activity it shows the focused window's title,
+or **Activity Island** when no window is focused. The expanded panel always uses
+**Activity Island** as its heading.
 Media controls honor player capabilities, and a player selector appears when
 multiple MPRIS players are present. A timer or stopwatch started here is the
 same timer shown in Control Center → Agenda. It continues while panels are
 closed; shell restart resets timers. Completion uses the existing notification
 service and respects Do Not Disturb.
 
-For tracks with a known duration and position, the media card shows elapsed/total
-time and a moving wave on the played part of the timeline. Pausing flattens the
-wave; closing the panel stops its animation. Disable **Appearance → Glass and
-motion → Wavy media progress** for a straight bar. Disabling all animations also
-flattens it, while playback position continues updating once per second. Streams
-without duration/position data do not show a guessed timeline. This progress bar
-is independent of the optional Cava audio spectrum and requires no new package.
+Activity Island and Control Center share the same media progress display. For
+tracks with a known duration and position, it shows elapsed/total time and a
+moving wave on the played part. If a browser or stream omits timing metadata,
+it shows a full-width playback wave with **Playback timing unavailable**, without
+an estimated percentage, timestamp or playhead. Timing labels return when the
+player supplies both properties. Each panel follows its selected MPRIS player.
+
+Pausing flattens the wave; closing the panel stops its animation. Disable
+**Appearance → Glass and motion → Wavy media progress** for a straight bar.
+Disabling all animations also flattens it, while known playback position
+continues updating once per second. This display is independent of the optional
+Cava audio spectrum and requires no new package. The browser must expose its
+media session through MPRIS; playback in a browser with that integration disabled
+cannot be detected by the shell.
+
+If a browser is playing but the wave stays flat, first check **Animations** and
+**Wavy media progress** in Appearance. Inspect what the running shell receives:
+
+```bash
+quickshell -c lme-shell ipc call shell mediaStatus
+```
+
+For a `gpt` installation, replace `lme-shell` with `gpt`. This read-only report
+includes Activity Island's selected player, playback state, timing capabilities
+and the two animation settings. It helps distinguish browser metadata from
+shell configuration; it does not include the media title or URL.
 
 Recording status detects the current user's `wf-recorder` and
 `gpu-screen-recorder` processes. It shows process uptime, which includes any

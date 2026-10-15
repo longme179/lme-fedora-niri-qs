@@ -7,7 +7,7 @@ QtObject {
     property string preferredPlayer: ""
     property bool demoPlaying: true
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
-    readonly property var player: players.find(p => p.uniqueId === preferredPlayer) || players.find(p => p.isPlaying) || players[0] || null
+    readonly property var player: players.find(p => p.dbusName === preferredPlayer) || players.find(p => p.isPlaying) || players[0] || null
     readonly property bool hasMedia: ShellState.demo || player !== null
     readonly property bool playing: ShellState.demo ? demoPlaying : player ? player.isPlaying : false
     readonly property string track: ShellState.demo ? "A little more space" : player ? player.trackTitle || player.identity : "No player connected"
@@ -16,9 +16,6 @@ QtObject {
     readonly property bool canPlay: ShellState.demo || !!(player && player.canTogglePlaying)
     readonly property bool canPrevious: ShellState.demo || !!(player && player.canGoPrevious)
     readonly property bool canNext: ShellState.demo || !!(player && player.canGoNext)
-    readonly property real duration: ShellState.demo ? 240 : player && player.lengthSupported && Number.isFinite(player.length) ? Math.max(0, player.length) : 0
-    readonly property bool progressAvailable: ShellState.demo || !!(player && player.positionSupported && duration > 0)
-    readonly property real position: ShellState.demo ? 64 : progressAvailable && Number.isFinite(player.position) ? Math.max(0, Math.min(duration, player.position)) : 0
     readonly property var recording: ShellState.system.recording || {active: false}
     readonly property bool timerActive: FocusTimer.running || FocusTimer.remaining !== FocusTimer.durations[FocusTimer.mode]
     readonly property bool stopwatchActive: FocusTimer.stopwatchRunning || FocusTimer.stopwatchElapsed > 0
@@ -26,7 +23,7 @@ QtObject {
     readonly property string title: kind === "recording" ? "Recording · " + FocusTimer.format(recording.elapsed || 0)
         : kind === "timer" ? (FocusTimer.mode === 0 ? "Focus" : "Break") + " · " + FocusTimer.format(FocusTimer.remaining)
         : kind === "stopwatch" ? "Stopwatch · " + FocusTimer.format(FocusTimer.stopwatchElapsed)
-        : kind === "media" ? track : "Activity Island"
+        : kind === "media" ? track : (ShellState.niri.windows || []).find(w => w.is_focused)?.title || "Activity Island"
     readonly property string icon: kind === "recording" ? "record" : kind === "timer" || kind === "stopwatch" ? "clock" : kind === "media" ? "media" : "applications"
     function togglePlaying() { if (ShellState.demo) demoPlaying = !demoPlaying; else if (canPlay) player.togglePlaying(); }
     function previous() { if (!ShellState.demo && canPrevious) player.previous(); }

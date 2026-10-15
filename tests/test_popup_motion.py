@@ -46,6 +46,11 @@ class PopupMotionCase(unittest.TestCase):
                     state = wait(lambda s: s.get('ready'))
                     self.assertFalse(state['ghost'], 'Hidden panels must never mount during construction')
                     self.assertFalse(state['visible'])
+                    media = json.loads(ipc('mediaStatus'))
+                    self.assertTrue(media['demo'])
+                    self.assertTrue(media['mediaWave'] and media['animations'])
+                    self.assertEqual(media['player'], '')
+                    self.assertFalse(media['positionSupported'] or media['lengthSupported'])
                     for _ in range(2):
                         opened = json.loads(ipc('fixtureOpen'))
                         self.assertGreater(opened['bounds']['left'], opened['width'], 'A fresh layer surface must start beyond the real output, not the unconfigured 100 px window')

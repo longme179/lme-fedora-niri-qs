@@ -8,6 +8,7 @@ import "../theme"
 Item {
     id: root
     property real value: 0
+    property bool indeterminate: false
     property bool isPlaying: false
     property real lineWidth: 2
     property real wavelength: 24
@@ -18,7 +19,7 @@ Item {
     property color fillColor: Theme.sliderFill
     readonly property bool software: GraphicsInfo.api === GraphicsInfo.Software
     readonly property bool animating: isPlaying && Theme.mediaWave && Theme.animations && visible && (Window.window?.visible ?? false)
-    readonly property real ratio: Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0
+    readonly property real ratio: indeterminate ? 1 : Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0
     implicitHeight: 24
     signal frameTicked()
 
@@ -31,6 +32,7 @@ Item {
         readonly property real widthPx: width
         readonly property real heightPx: height
         readonly property real value: root.ratio
+        readonly property real indeterminate: root.indeterminate ? 1 : 0
         readonly property real phase: root.phase
         readonly property real ampPx: root.currentAmp
         readonly property real wavelengthPx: root.wavelength
@@ -55,12 +57,15 @@ Item {
                 for (let x = start + 1.5; x < head; x += 1.5) c.lineTo(x, waveY(x));
                 c.lineTo(head, waveY(head)); c.stroke();
             }
-            c.strokeStyle = root.fillColor; c.lineWidth = 3.5;
-            c.beginPath(); c.moveTo(head, mid - 6); c.lineTo(head, mid + 6); c.stroke();
+            if (!root.indeterminate) {
+                c.strokeStyle = root.fillColor; c.lineWidth = 3.5;
+                c.beginPath(); c.moveTo(head, mid - 6); c.lineTo(head, mid + 6); c.stroke();
+            }
         }
         Connections {
             target: root
             function onRatioChanged() { if (root.software) fallback.requestPaint(); }
+            function onIndeterminateChanged() { if (root.software) fallback.requestPaint(); }
             function onPhaseChanged() { if (root.software) fallback.requestPaint(); }
             function onCurrentAmpChanged() { if (root.software) fallback.requestPaint(); }
             function onFillColorChanged() { if (root.software) fallback.requestPaint(); }

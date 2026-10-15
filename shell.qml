@@ -38,6 +38,13 @@ ShellRoot {
             return true;
         }
         function idleStatus(): string { return JSON.stringify(ShellState.snapshot.idle || {}); }
+        function mediaStatus(): string {
+            const player = ActivityState.player;
+            return JSON.stringify({demo: ShellState.demo, player: player?.dbusName || "", playing: ActivityState.playing,
+                positionSupported: player?.positionSupported ?? false, lengthSupported: player?.lengthSupported ?? false,
+                position: player?.position ?? 0, duration: player?.lengthSupported ? player.length : 0,
+                mediaWave: Theme.mediaWave, animations: Theme.animations});
+        }
         function nightLightStatus(): string { return JSON.stringify(ShellState.snapshot.nightLight || {}); }
         function retryNightLight(): void { ShellState.run("nightLightRefresh"); }
         function capture(mode: string): void { ShellState.takeScreenshot(mode); }

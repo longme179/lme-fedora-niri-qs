@@ -1,5 +1,40 @@
 # Validation and platform limits
 
+## Dynamic Island captions and shared browser playback waves — 2026-10-16
+
+The compact caption again follows the focused window when no higher-priority
+activity exists; an unfocused desktop and the expanded popup use **Activity
+Island**. Native regression checks cover two window titles, the empty desktop,
+timer selections and the unchanged popup heading.
+
+The five focused activity tests passed on both the software renderer and OpenGL
+RHI. They cover known timing, missing duration, a second browser-shaped MPRIS
+service without Position, player selection in both panels, pause/resume, hidden
+panels and reduced motion. OpenGL screenshots of both indeterminate waves were
+inspected. A separate actual `shell.qml` overlay check used the supplied Chromium
+duration/position values in a private MPRIS fixture: both panels rendered a
+moving played segment with the correct timing. The new read-only `mediaStatus`
+IPC was checked with that player and with no native player.
+
+The latest full `scripts/check.sh` run completed **236 tests: 233 passed, two
+failed and one skipped**. The failures were the Settings gear integration and a
+popup-close timing check (0.93 s against its 0.7 s limit). Both passed when rerun
+individually without changing their assertions. Earlier full runs also had
+intermittent IPC timeouts; this is not a consistently green full-suite result.
+The skipped test requires the unconfigured external Matugen binary. Six changed
+QML controls/services passed qmllint; Python compilation, shader compilation,
+Bash syntax, demo state and diff checks passed.
+
+Validation used private Sway, Quickshell 0.3.2 / Qt 6.8.2 and Mesa software GL.
+Hardware backend actions were simulated; the final full run additionally used
+`DBUS_SYSTEM_BUS_ADDRESS=unix:path=/workspace/.lme-dev/runtime/no-system-bus`.
+No runtime dependency was added. Actual Chromium playback on the owner's
+Fedora/niri/Radeon session remains unverified: playerctl reports valid timing,
+so missing metadata alone does not establish the reported failure's cause.
+After updating and restarting `gpt`, use
+`qs -c gpt ipc call shell mediaStatus` to inspect the running shell's player,
+timing capabilities and motion settings.
+
 ## Activity Island selection and wavy playback progress — 2026-10-16
 
 `scripts/check.sh` completed **236 tests: 235 passed, one skipped**, with all

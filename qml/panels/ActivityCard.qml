@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Window
 import QtQuick.Layouts
 import "../components"
 import "../services"
@@ -46,36 +45,14 @@ ColumnLayout {
                 }
             }
             AudioVisualizer { Layout.fillWidth: true; visible: ActivityState.hasMedia && ShellState.preferences.audioVisualizer === true; playing: ActivityState.playing }
-            ColumnLayout {
-                id: mediaProgress
-                visible: ActivityState.progressAvailable
-                Layout.fillWidth: true; spacing: 2
-                WaveProgress {
-                    objectName: "activityMediaProgress"
-                    Layout.fillWidth: true
-                    value: ActivityState.duration > 0 ? ActivityState.position / ActivityState.duration : 0
-                    isPlaying: ActivityState.playing
-                    // Quickshell's getter advances its local clock; this does not poll D-Bus.
-                    onFrameTicked: if (ActivityState.player) ActivityState.player.positionChanged()
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    LabelText { objectName: "activityElapsed"; text: FocusTimer.format(Math.floor(ActivityState.position)); font.pixelSize: 11; color: Theme.muted }
-                    Item { Layout.fillWidth: true }
-                    LabelText { text: FocusTimer.format(Math.floor(ActivityState.duration)); font.pixelSize: 11; color: Theme.muted }
-                }
-                Timer {
-                    interval: 1000; repeat: true; triggeredOnStart: true
-                    running: mediaProgress.visible && (root.Window.window?.visible ?? false) && ActivityState.playing && (!Theme.mediaWave || !Theme.animations)
-                    onTriggered: if (ActivityState.player) ActivityState.player.positionChanged()
-                }
-            }
+            MediaProgress { objectName: "activityMediaProgress"; Layout.fillWidth: true; player: ActivityState.player; playing: ActivityState.playing }
             RowLayout {
                 visible: ActivityState.players.length > 1; Layout.fillWidth: true
                 LiquidComboBox {
-                    Layout.fillWidth: true; model: ActivityState.players.map(p => ({text: p.identity, id: p.uniqueId})); textRole: "text"
+                    objectName: "activityPlayerSelector"
+                    Layout.fillWidth: true; model: ActivityState.players.map(p => p.identity)
                     currentIndex: Math.max(0, ActivityState.players.indexOf(ActivityState.player))
-                    onActivated: ActivityState.preferredPlayer = ActivityState.players[currentIndex].uniqueId
+                    onActivated: ActivityState.preferredPlayer = ActivityState.players[currentIndex].dbusName
                 }
             }
             RowLayout {

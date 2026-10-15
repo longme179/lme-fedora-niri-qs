@@ -239,8 +239,10 @@ Item {
                     LiquidButton { text: "Next"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canGoNext; onClicked: root.player.next(); palette.button: Theme.panel; palette.buttonText: Theme.text }
                 }
                 AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying }
+                MediaProgress { objectName: "controlMediaProgress"; Layout.fillWidth: true; player: root.player }
                 LiquidComboBox {
                     id: playerSelector
+                    objectName: "controlPlayerSelector"
                     visible: root.players.length > 1
                     Layout.fillWidth: true
                     model: root.players.map(item => item.identity)

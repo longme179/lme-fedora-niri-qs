@@ -133,8 +133,12 @@ Singleton {
     Timer {
         interval: 1000; repeat: true
         running: root.history.some(entry => entry.local && entry.active)
-        onTriggered: root.history = root.history.map(entry => entry.local && Date.now() - entry.timestamp >= 7000
-                                                     ? Object.assign({}, entry, {active: false, popup: false}) : entry)
+        onTriggered: {
+            const now = Date.now();
+            const expired = entry => entry.local && entry.active && now - entry.timestamp >= 7000;
+            if (root.history.some(expired)) root.history = root.history.map(entry => expired(entry)
+                ? Object.assign({}, entry, {active: false, popup: false}) : entry);
+        }
     }
 
     function invokeAction(id, identifier) {

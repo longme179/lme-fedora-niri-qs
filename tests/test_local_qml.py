@@ -117,3 +117,50 @@ ShellRoot {
         self.assertEqual(result["initial"], [True, True])
         self.assertEqual(result["disabled"], [False, False])
         self.assertEqual(result["resumed"], [True, True])
+
+    def test_local_notification_expiry_changes_history_only_when_due(self):
+        result = self.run_qml('import "qml/services"', '''
+    property int changes: 0
+    property int stage: 0
+    property var original: null
+    property var observations: ({})
+    Connections { target: Notifications; function onHistoryChanged() { fixture.changes++; } }
+    Component.onCompleted: Qt.callLater(() => {
+        Notifications.historyLoaded = true;
+        Notifications.history = [
+            {id: "old", local: true, active: false, popup: false, timestamp: Date.now() - 10000},
+            {id: "fresh", local: true, active: true, popup: true, timestamp: Date.now(), actions: [{text: "Keep"}]},
+            {id: "native", local: false, active: true, popup: true, timestamp: Date.now() - 10000}
+        ];
+        fixture.original = Notifications.history;
+        fixture.changes = 0;
+        check.start();
+    })
+    Timer {
+        id: check; interval: 1200; repeat: true
+        onTriggered: {
+            fixture.stage++;
+            if (fixture.stage === 1) {
+                fixture.observations.unchanged = Notifications.history === fixture.original && fixture.changes === 0;
+                Notifications.history[1].timestamp = Date.now() - 8000;
+            } else if (fixture.stage === 2) {
+                fixture.observations.expired = !Notifications.history[1].active && !Notifications.history[1].popup;
+                fixture.observations.actions = Notifications.history[1].actions;
+                fixture.observations.nativeActive = Notifications.history[2].active && Notifications.history[2].popup;
+                fixture.observations.oldUntouched = Notifications.history[0] === fixture.original[0];
+                fixture.original = Notifications.history;
+            } else {
+                fixture.observations.changes = fixture.changes;
+                fixture.observations.stopped = Notifications.history === fixture.original;
+                fixture.finish(fixture.observations);
+            }
+        }
+    }
+''')
+        self.assertTrue(result["unchanged"], result)
+        self.assertTrue(result["expired"], result)
+        self.assertEqual(result["changes"], 1)
+        self.assertTrue(result["nativeActive"])
+        self.assertTrue(result["oldUntouched"])
+        self.assertTrue(result["stopped"])
+        self.assertEqual(result["actions"], [{"text": "Keep"}])

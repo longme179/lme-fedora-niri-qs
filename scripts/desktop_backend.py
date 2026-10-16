@@ -124,9 +124,11 @@ class CommandRunner:
 
     def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None) -> str:
         argv = [self.executable(name), *map(str, args)]
+        # wl-copy's clipboard owner keeps inherited pipes open after its parent exits.
+        output = subprocess.DEVNULL if name == "wl-copy" else subprocess.PIPE
         try:
             result = subprocess.run(
-                argv, capture_output=True, text=True, timeout=timeout,
+                argv, stdout=output, stderr=output, text=True, timeout=timeout,
                 check=False, encoding="utf-8", errors="replace",
                 env={**os.environ, "LC_ALL": "C"},
                 input=input,
@@ -136,12 +138,12 @@ class CommandRunner:
         except OSError as exc:
             raise CommandError(f"Unable to run {name}: {exc.strerror}") from exc
         if result.returncode:
-            detail = result.stderr.strip() or result.stdout.strip()
+            detail = (result.stderr or "").strip() or (result.stdout or "").strip()
             detail = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', detail).strip()
             if input and input.strip(): detail = detail.replace(input.strip(), "[redacted]")
             detail = detail[:350]
             raise CommandError(f"{name} failed ({result.returncode})" + (f": {detail}" if detail else ""))
-        return result.stdout.strip()
+        return (result.stdout or "").strip()
 
     def spawn(self, argv: list[str]) -> None:
         try:

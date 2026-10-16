@@ -1,5 +1,8 @@
 """Selected desktop port regressions using private fixtures."""
 import json
+import os
+import signal
+import sys
 import unittest
 from test_backend import backend, Fixture, FakeRunner
 from privacy import captures
@@ -179,6 +182,38 @@ class RecorderPreparationCase(Fixture,unittest.TestCase):
             finally: release.set()
 
 class NotesClipboardCase(Fixture,unittest.TestCase):
+    def test_text_copy_returns_while_the_clipboard_owner_keeps_its_descriptors(self):
+        owner = self.root / 'owner.pid'
+        received = self.root / 'received.txt'
+        binary = self.put('wl-copy', f'''#!{sys.executable}
+import os, sys, time
+from pathlib import Path
+Path({str(received)!r}).write_bytes(sys.stdin.buffer.read())
+pid = os.fork()
+if pid:
+    Path({str(owner)!r}).write_text(str(pid))
+    os._exit(0)
+time.sleep(30)
+''')
+        binary.chmod(0o755)
+        runner = backend.CommandRunner()
+        runner.commands['wl-copy'] = str(binary)
+        live = self.make_backend(runner)
+        text = 'Calculator 42 · Emoji 🐈 · Xin chào'
+        try:
+            result = live.handle({'action': 'copyText', 'text': text})
+            self.assertTrue(result['ok'], result)
+            self.assertEqual(received.read_bytes(), text.encode())
+            os.kill(int(owner.read_text()), 0)
+        finally:
+            if owner.exists():
+                try: os.kill(int(owner.read_text()), signal.SIGTERM)
+                except ProcessLookupError: pass
+        binary.write_text('#!/bin/sh\nexit 7\n')
+        result = live.handle({'action': 'copyText', 'text': text})
+        self.assertFalse(result['ok'])
+        self.assertIn('wl-copy failed (7)', result['message'])
+
     def test_long_unicode_notes_use_existing_clipboard_bound(self):
         from clipboard import MAX_TEXT
         class Runner(FakeRunner):

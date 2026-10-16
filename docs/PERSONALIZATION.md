@@ -44,8 +44,11 @@ Use `#RRGGBB` or `#AARRGGBB`, with **alpha first**. Glass surfaces multiply that
 alpha by the configured interface opacity. Invalid values show an error and do
 not replace the last valid color. Reset removes an override and resumes the
 inherited palette. Reset all element colors clears the overrides together.
-`config/palette.json` remains the fallback palette; overrides live in the user's
-`settings.json`, separate from the source checkout.
+Dracula defaults are built into `qml/theme/Theme.qml`; bundled color presets
+are listed in `config/palettes.json`. An optional base palette can be loaded from
+`$XDG_CONFIG_HOME/lme-shell/palette.json` (normally
+`~/.config/lme-shell/palette.json`). Element overrides take precedence and live
+in the user's `settings.json`, separate from the source checkout.
 
 Font roles are Body text, Headings, Buttons and inputs, Bar text and Monospace.
 Enter an installed font family name and press Enter or Apply. Uncustomized roles

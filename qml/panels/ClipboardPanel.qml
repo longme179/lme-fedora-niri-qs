@@ -25,6 +25,11 @@ GlassPanel {
         else if (!ClipboardState.copyPending) ClipboardState.send("copy", {id: item.id});
     }
     function moveSelection(delta) {
+        if (!ClipboardState.entries.length) {
+            history.currentIndex = -1;
+            selectedId = "";
+            return;
+        }
         history.currentIndex = Math.max(0, Math.min(ClipboardState.entries.length - 1, history.currentIndex + delta));
         if (history.currentIndex >= 0) selectedId = ClipboardState.entries[history.currentIndex].id;
         history.positionViewAtIndex(history.currentIndex, ListView.Contain);

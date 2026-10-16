@@ -811,6 +811,16 @@ class DesktopBackend:
         return {"available": True, "volume": round(value * 100), "muted": "[MUTED]" in (output or "")}
 
     def brightness(self) -> dict[str, Any]:
+        devices = list((self.sysfs / "class/backlight").glob("*"))
+        # Keep brightnessctl's device selection when more than one backlight exists.
+        if len(devices) == 1:
+            try:
+                current = int(self.read(devices[0] / "brightness") or "")
+                maximum = int(self.read(devices[0] / "max_brightness") or "")
+                if maximum > 0 and 0 <= current <= maximum:
+                    return {"available": True, "percent": round(current * 100 / maximum)}
+            except ValueError:
+                pass
         output = self.try_run("brightnessctl", "--class=backlight", "-m")
         # Backlight-only class excludes keyboard and wireless status LEDs.
         for line in (output or "").splitlines():

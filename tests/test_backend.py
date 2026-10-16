@@ -135,6 +135,40 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertTrue(live.handle({"action": "brightness", "value": 63})["ok"])
         self.assertEqual(runner.calls[-1], ("brightnessctl", "--class=backlight", "set", "63%"))
 
+    def test_single_backlight_reads_fresh_sysfs_values_without_commands(self):
+        self.put("sys/class/backlight/amdgpu_bl1/max_brightness", "255")
+        self.put("sys/class/backlight/amdgpu_bl1/actual_brightness", "0")
+        self.put("sys/class/leds/keyboard/brightness", "1")
+        live = self.make_backend()
+        for value, percent in [(0, 0), (128, 50), (255, 100)]:
+            self.put("sys/class/backlight/amdgpu_bl1/brightness", str(value))
+            self.assertEqual(live.brightness(), {"available": True, "percent": percent})
+        self.assertEqual(live.runner.calls, [])
+
+    def test_invalid_or_unreadable_backlight_falls_back_to_brightnessctl(self):
+        runner = FakeRunner({("brightnessctl", "--class=backlight", "-m"): "amdgpu_bl1,backlight,128,50%,255"})
+        live = self.make_backend(runner)
+        for current, maximum in [("bad", "255"), ("128", "0"), ("128", "-1"), ("-1", "255"), ("256", "255")]:
+            with self.subTest(current=current, maximum=maximum):
+                self.put("sys/class/backlight/amdgpu_bl1/brightness", current)
+                self.put("sys/class/backlight/amdgpu_bl1/max_brightness", maximum)
+                runner.calls.clear()
+                self.assertEqual(live.brightness()["percent"], 50)
+                self.assertEqual(runner.calls, [("brightnessctl", "--class=backlight", "-m")])
+        with patch.object(Path, "read_text", side_effect=PermissionError):
+            self.assertEqual(live.brightness()["percent"], 50)
+        (self.root / "sys/class/backlight/amdgpu_bl1/max_brightness").unlink()
+        self.assertEqual(live.brightness()["percent"], 50)
+        self.assertEqual(self.make_backend().brightness(), {"available": False, "percent": None})
+
+    def test_multiple_backlights_keep_brightnessctl_device_selection(self):
+        for name in ("amdgpu_bl1", "nvidia_0"):
+            self.put(f"sys/class/backlight/{name}/brightness", "255")
+            self.put(f"sys/class/backlight/{name}/max_brightness", "255")
+        runner = FakeRunner({("brightnessctl", "--class=backlight", "-m"): "amdgpu_bl1,backlight,128,50%,255"})
+        self.assertEqual(self.make_backend(runner).brightness()["percent"], 50)
+        self.assertEqual(runner.calls, [("brightnessctl", "--class=backlight", "-m")])
+
     def test_preferences_are_atomic_validated_and_private(self):
         self.preferences.set("accent", "#ABCDEF")
         self.preferences.set("opacity", 0.85)

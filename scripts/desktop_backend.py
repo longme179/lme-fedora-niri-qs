@@ -546,6 +546,8 @@ class DesktopBackend:
         self.last_cpu: tuple[int, int] | None = None
         self.system_cache: dict[str, Any] | None = None
         self.last_system_sample = 0.0
+        self.privacy_cache = None
+        self.last_privacy_sample = 0.0
         self.power_profile_provider: tuple[str, ...] | None = None
         self.result_sequence = 0
         self.result_unemitted = False
@@ -642,10 +644,17 @@ class DesktopBackend:
                 **aggregate_batteries([battery_details(p,self.read) for p in batteries])}
 
     def privacy(self):
-        if not (self.preferences.values["privacyIndicators"] or self.preferences.values["dndWhileSharing"]): return {"captures": []}
+        if not (self.preferences.values["privacyIndicators"] or self.preferences.values["dndWhileSharing"]):
+            self.privacy_cache = None
+            return {"captures": []}
+        now = time.monotonic()
+        if self.privacy_cache is not None and now - self.last_privacy_sample < 5:
+            return self.privacy_cache
         output = self.try_run("pw-dump")
-        try: return {"captures": captures(json.loads(output or "null")), "available": True}
-        except (ValueError, TypeError, AttributeError): return {"captures": [], "available": False}
+        try: self.privacy_cache = {"captures": captures(json.loads(output or "null")), "available": True}
+        except (ValueError, TypeError, AttributeError): self.privacy_cache = {"captures": [], "available": False}
+        self.last_privacy_sample = time.monotonic()
+        return self.privacy_cache
 
     def compositor_features(self):
         version = self.try_run("niri", "--version") or "Unavailable"
@@ -920,9 +929,10 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile(), powerProfiles=self.power_profiles(), charging=self.charging(), recording=self.recording(), privacy=self.privacy())
+                          powerProfile=self.power_profile(), powerProfiles=self.power_profiles(), charging=self.charging(), recording=self.recording())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
+        self.system_cache["privacy"] = self.privacy()
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
             self.monitor.sample(self.system_cache)
@@ -981,6 +991,7 @@ class DesktopBackend:
                 self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}
                 if action == "wallpaperScan": self.wallpaper_library = {**self.wallpaper_library, "error": str(error)[:400]}
             del self.feature_jobs[action]
+            if action in {"recordStart", "recordStop"}: self.privacy_cache = None
             self.system_cache = None
             # Deliver each completion separately so every pending QML action clears.
             break
@@ -1147,6 +1158,8 @@ class DesktopBackend:
                                     "sequence": self.result_sequence}
                 if action == "calculate": self.last_result.update(query=request.get("query"), message=calculate(request.get("query")))
                 return dict(self.last_result)
+            if action in {"refresh", "micMute", "recordStart", "recordStop", "mirrorStart", "mirrorStop"}:
+                self.privacy_cache = None
             message = self.perform(action, request)
             if action == "chargeMode" or action in self.feature_jobs:
                 self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}

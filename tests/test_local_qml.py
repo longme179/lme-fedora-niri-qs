@@ -164,3 +164,33 @@ ShellRoot {
         self.assertTrue(result["oldUntouched"])
         self.assertTrue(result["stopped"])
         self.assertEqual(result["actions"], [{"text": "Keep"}])
+
+    def test_process_filter_sort_and_source_order_are_preserved(self):
+        result = self.run_qml('import "qml/panels"\nimport "qml/services"', '''
+    FloatingWindow {
+        visible: false; implicitWidth: 700; implicitHeight: 800
+        SystemMonitor { id: monitor; anchors.fill: parent }
+    }
+    function ids() { return monitor.processes.map(p => p.pid); }
+    Component.onCompleted: Qt.callLater(() => {
+        const source = [
+            {pid: 30, name: "Zeta", user: "roo", cpu: 1, memoryBytes: 20},
+            {pid: 20, name: "Alpha", user: "ada", cpu: 5, memoryBytes: 10},
+            {pid: 10, name: "Beta", user: "ada", cpu: 5, memoryBytes: 30},
+            {pid: 40, name: "Delta", user: "roo", cpu: 0, memoryBytes: 40}
+        ];
+        ShellState.snapshot = Object.assign({}, ShellState.snapshot, {monitor: {processes: source}});
+        const cpu = ids();
+        monitor.order = 1; const memory = ids();
+        monitor.order = 2; const name = ids();
+        monitor.query = "ALP"; const app = ids();
+        monitor.query = "10"; const pid = ids();
+        monitor.query = "ROO"; const user = ids();
+        monitor.query = "absent"; const empty = ids();
+        monitor.query = ""; monitor.order = 0;
+        fixture.finish({cpu, memory, name, app, pid, user, empty, recovered: ids(), source: source.map(p => p.pid)});
+    })
+''')
+        self.assertEqual(result, {"cpu": [10, 20, 30, 40], "memory": [40, 10, 30, 20],
+                                  "name": [20, 10, 40, 30], "app": [20], "pid": [10], "user": [40, 30],
+                                  "empty": [], "recovered": [10, 20, 30, 40], "source": [30, 20, 10, 40]})

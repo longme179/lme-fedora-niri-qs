@@ -12,7 +12,11 @@ Item {
     readonly property var samples: state.history || []
     property string query: ""
     property int order: 0
-    readonly property var processes: (state.processes || []).filter(p => (p.name+" "+p.pid+" "+p.user).toLowerCase().includes(query.toLowerCase())).slice().sort((a,b) => order === 0 ? (b.cpu || 0)-(a.cpu || 0) || b.memoryBytes-a.memoryBytes : order === 1 ? b.memoryBytes-a.memoryBytes : a.name.localeCompare(b.name))
+    readonly property var processes: {
+        const needle = query.toLowerCase();
+        return (state.processes || []).filter(p => (p.name+" "+p.pid+" "+p.user).toLowerCase().includes(needle))
+            .sort((a,b) => order === 0 ? (b.cpu || 0)-(a.cpu || 0) || b.memoryBytes-a.memoryBytes : order === 1 ? b.memoryBytes-a.memoryBytes : a.name.localeCompare(b.name));
+    }
     function percent(value) { return value === null || value === undefined ? "—" : Number(value).toFixed(1)+"%"; }
     function bytes(value) { if (value === null || value === undefined) return "—"; return value >= 1048576 ? (value/1048576).toFixed(1)+" MiB" : (value/1024).toFixed(1)+" KiB"; }
     function subscribe() { if (ShellState.backendReady) ShellState.run("monitor", {enabled: true}); }

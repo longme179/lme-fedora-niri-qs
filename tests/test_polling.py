@@ -285,3 +285,57 @@ class PollingCase(Fixture, unittest.TestCase):
             self.assertLessEqual(runner.calls.count(call), 6)
         self.assertEqual(sum(call[0] == "wpctl" for call in runner.calls), 32)
         self.assertLessEqual(len(runner.calls), 88)
+
+    def test_volume_drag_reads_only_the_changed_control_until_the_regular_sample(self):
+        query = ("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
+        runner = self.wifi_runner()
+        runner.responses[query] = "Volume: 0.3"; runner.names.add("wpctl")
+        live = self.make_backend(runner)
+        with patch.object(backend.time, "monotonic", return_value=100) as clock:
+            live.snapshot(); runner.calls.clear()
+            for index, value in enumerate(range(40, 50)):
+                clock.return_value = 100 + index / 10
+                self.assertTrue(live.handle({"action": "volume", "value": value})["ok"])
+                runner.responses[query] = f"Volume: {value / 100}"
+                self.assertEqual(live.snapshot()["system"]["audio"]["volume"], value)
+            self.assertEqual(len(runner.calls), 20)  # Ten writes and ten sink readbacks.
+            self.assertTrue(all(call[0] == "wpctl" for call in runner.calls))
+            self.assertEqual(runner.calls.count(query), 10)
+            self.assertEqual(live.last_system_sample, 100)
+            runner.responses[SUMMARY] = "GENERAL.DEVICE:wlan1\nGENERAL.TYPE:wifi\nGENERAL.STATE:30 (disconnected)"
+            clock.return_value = 102
+            self.assertEqual(live.snapshot()["system"]["network"]["device"], "wlan1")
+            self.assertEqual(runner.calls.count(SUMMARY), 1)
+
+    def test_control_readbacks_handle_partial_failures_without_refreshing_wifi_lists(self):
+        sink = ("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
+        source = ("wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@")
+        backlight = ("brightnessctl", "--class=backlight", "-m")
+        cases = [
+            ("volume", {"value": 63}, ("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", "63%"), sink, "Volume: 0.63", "audio", "volume", 63),
+            ("mute", {}, ("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"), sink, "Volume: 0.63 [MUTED]", "audio", "muted", True),
+            ("micVolume", {"value": 34}, ("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SOURCE@", "34%"), source, "Volume: 0.34", "microphone", "volume", 34),
+            ("micMute", {}, ("wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"), source, "Volume: 0.34 [MUTED]", "microphone", "muted", True),
+            ("brightness", {"value": 72}, ("brightnessctl", "--class=backlight", "set", "72%"), backlight, "panel,backlight,72,72%,100", "brightness", "percent", 72),
+        ]
+        runner = self.wifi_runner(); runner.names.update({"wpctl", "brightnessctl"})
+        live = self.make_backend(runner)
+        live.handle({"action": "wifiWatch", "enabled": True})
+        with patch.object(backend.time, "monotonic", return_value=100):
+            live.snapshot()
+            for action, payload, write, query, output, field, key, expected in cases:
+                for failed in (False, True):
+                    with self.subTest(action=action, failed=failed):
+                        runner.calls.clear()
+                        runner.responses[write] = backend.CommandError("Partially applied") if failed else ""
+                        runner.responses[query] = output
+                        self.assertEqual(live.handle({"action": action, **payload})["ok"], not failed)
+                        self.assertEqual(live.snapshot()["system"][field][key], expected)
+                        self.assertEqual(runner.calls, [write, query])
+            runner.names.remove("wpctl")
+            self.assertFalse(live.handle({"action": "volume", "value": 60})["ok"])
+            self.assertFalse(live.snapshot()["system"]["audio"]["available"])
+            runner.names.add("wpctl")
+            runner.responses[cases[0][2]] = ""
+            self.assertTrue(live.handle({"action": "volume", "value": 63})["ok"])
+            self.assertTrue(live.snapshot()["system"]["audio"]["available"])

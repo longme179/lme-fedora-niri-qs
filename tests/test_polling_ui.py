@@ -20,14 +20,21 @@ state_path = Path(os.environ["LME_TEST_HARDWARE"])
 def escape(value): return str(value).replace("\\", "\\\\").replace(":", "\\:")
 
 class Runner:
-    def available(self, name): return name in {"nmcli", "busctl", "wpctl", "pw-dump"}
+    def available(self, name): return name in {"nmcli", "busctl", "wpctl", "pw-dump", "brightnessctl"}
     def executable(self, name): raise backend.CommandError("Unexpected executable: " + name)
     def spawn(self, argv): raise backend.CommandError("Unexpected spawn")
     def run(self, name, *args, **kwargs):
         with open(os.environ["LME_TEST_COMMANDS"], "a") as log: log.write(json.dumps([name, *args]) + "\n")
         state = json.loads(state_path.read_text())
         def save(): write_json(state_path, state); return ""
-        if name == "wpctl": return "Volume: 0.5"
+        if name == "wpctl":
+            channel = "microphone" if "@DEFAULT_AUDIO_SOURCE@" in args else "audio"
+            if args[0] == "get-volume": return "Volume: " + str(state[channel]) + (" [MUTED]" if state[channel + "Muted"] else "")
+            if args[0] == "set-volume": state[channel] = int(args[-1].rstrip("%")) / 100; return save()
+            if args[0] == "set-mute": state[channel + "Muted"] = not state[channel + "Muted"]; return save()
+        if name == "brightnessctl":
+            (state_path.parent / "sys/class/backlight/panel/brightness").write_text(args[-1].rstrip("%"))
+            return ""
         if name == "pw-dump": return "[]"
         if name == "nmcli":
             if not state["networkUp"]: raise backend.CommandError("NetworkManager stopped")
@@ -80,12 +87,15 @@ class NativePollingCase(unittest.TestCase):
                 (root / name).symlink_to(repo / name, target_is_directory=True)
             hardware = root / "hardware.json"; commands = root / "commands.jsonl"
             values = dict(networkUp=True, bluezUp=True, powerUp=True, powered=True, connected=True,
-                          device="wlan0", ssid="Home:5G", profile="balanced")
+                          device="wlan0", ssid="Home:5G", profile="balanced", audio=.5, audioMuted=False,
+                          microphone=.5, microphoneMuted=False)
             def update(**changes):
                 values.update(changes)
                 temporary = hardware.with_suffix(".new")
                 temporary.write_text(json.dumps(values)); temporary.replace(hardware)
             update()
+            backlight = root / "sys/class/backlight/panel"; backlight.mkdir(parents=True)
+            (backlight / "brightness").write_text("100"); (backlight / "max_brightness").write_text("100")
             script = root / "backend.py"; script.write_text(FAKE_BACKEND)
             binary = root / "bin/python3"; binary.parent.mkdir()
             binary.write_text(f"""#!{sys.executable}
@@ -109,7 +119,15 @@ ShellRoot {
     id: root
     property string mode: ""
     property int disconnects: 0
-    Connections { target: ShellState; function onBackendReadyChanged() { if (!ShellState.backendReady) root.disconnects++; } }
+    property var results: ({})
+    Connections {
+        target: ShellState
+        function onBackendReadyChanged() { if (!ShellState.backendReady) root.disconnects++; }
+        function onLastResultChanged() {
+            const result = ShellState.lastResult;
+            if (result) root.results = Object.assign({}, root.results, {[result.action]: result});
+        }
+    }
     FloatingWindow {
         implicitWidth: 1000; implicitHeight: 1000
         Loader { anchors.fill: parent; active: !!root.mode; sourceComponent: root.mode === "wifi" ? wifi : center }
@@ -123,7 +141,7 @@ ShellRoot {
         function restart(): void { ShellState.backend.running = false; }
         function state(): string { return JSON.stringify({ready: ShellState.backendReady, system: ShellState.system,
             last: ShellState.lastResult, wifiResult: ShellState.wifiResult, pending: ShellState.pendingActions,
-            consumers: ShellState.wifiConsumers.length, disconnects: root.disconnects}); }
+            results: root.results, consumers: ShellState.wifiConsumers.length, disconnects: root.disconnects}); }
     }
 }''')
             env = dict(os.environ, PATH=str(binary.parent) + os.pathsep + os.environ["PATH"],
@@ -148,12 +166,27 @@ ShellRoot {
             def detailed():
                 return sum("list" in call or "UUID,TYPE,NAME" in call for call in calls())
             def action(name, **data):
+                previous = json.loads(ipc("state"))["results"].get(name, {}).get("sequence", -1)
                 ipc("action", json.dumps(dict(action=name, **data)))
-                return wait(lambda s: (s.get("last") or {}).get("action") == name and not s["last"].get("pending"))
+                state = wait(lambda s: (s.get("results", {}).get(name, {}).get("sequence", -1) > previous
+                                       and not s["results"][name].get("pending")))
+                self.assertTrue(state["results"][name]["ok"], state["results"][name])
+                return state
             try:
                 state = wait(lambda s: s.get("ready"))
                 self.assertEqual(state["system"]["network"]["networks"], [])
                 self.assertEqual(detailed(), 0)
+                for name, data, field, key, expected in [
+                    ("volume", {"value": 63}, "audio", "volume", 63),
+                    ("mute", {}, "audio", "muted", True),
+                    ("micVolume", {"value": 34}, "microphone", "volume", 34),
+                    ("micMute", {}, "microphone", "muted", True),
+                    ("brightness", {"value": 72}, "brightness", "percent", 72),
+                ]:
+                    state = action(name, **data)
+                    self.assertEqual(state["system"][field][key], expected)
+                    self.assertNotIn(name, state["pending"])
+                values.update(json.loads(hardware.read_text()))
                 ipc("navigate", "wifi")
                 wait(lambda s: s["consumers"] == 1 and len(s["system"]["network"]["saved"]) == 1)
                 ipc("navigate", "")
@@ -168,13 +201,13 @@ ShellRoot {
                 state = wait(lambda s: s["system"]["network"]["device"] == "wlan1" and s["system"]["bluetooth"]["adapter"] == "/org/bluez/hci1")
                 self.assertEqual(state["system"]["network"]["ssid"], "Changed:5G")
                 state = action("wifiDisconnect")
-                self.assertTrue(state["last"]["ok"]); self.assertFalse(state["system"]["network"]["wifiConnected"])
+                self.assertFalse(state["system"]["network"]["wifiConnected"])
                 state = action("wifiSaved", uuid="saved-id")
-                self.assertTrue(state["last"]["ok"]); self.assertTrue(state["system"]["network"]["wifiConnected"])
+                self.assertTrue(state["system"]["network"]["wifiConnected"])
                 state = action("bluetoothToggle")
-                self.assertTrue(state["last"]["ok"]); self.assertFalse(state["system"]["bluetooth"]["enabled"])
+                self.assertFalse(state["system"]["bluetooth"]["enabled"])
                 state = action("powerProfile", value="power-saver")
-                self.assertTrue(state["last"]["ok"]); self.assertEqual(state["system"]["powerProfile"], "power-saver")
+                self.assertEqual(state["system"]["powerProfile"], "power-saver")
                 # Preserve mutations made by the fake command worker before external changes.
                 values.update(json.loads(hardware.read_text()))
                 update(networkUp=False, bluezUp=False, powerUp=False)

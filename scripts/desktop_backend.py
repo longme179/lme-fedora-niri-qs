@@ -955,6 +955,9 @@ class DesktopBackend:
                           charging=self.charging(), recording=self.recording())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
+        if "audio" not in self.system_cache: self.system_cache["audio"] = self.audio()
+        if "microphone" not in self.system_cache: self.system_cache["microphone"] = self.audio("@DEFAULT_AUDIO_SOURCE@")
+        if "brightness" not in self.system_cache: self.system_cache["brightness"] = self.brightness()
         self.system_cache["privacy"] = self.privacy()
         adapter = self.preferences.values["bluetoothAdapter"]
         if self.bluetooth_cache is None or adapter != self.sampled_bluetooth_adapter or time.monotonic() - self.last_bluetooth_sample >= 5:
@@ -1194,11 +1197,14 @@ class DesktopBackend:
                 self.privacy_cache = None
             if action in {"refresh", "controlsRefresh", "bluetoothToggle", "bluetoothDevice"}: self.bluetooth_cache = None
             if action in {"refresh", "controlsRefresh", "powerProfile"}: self.power_cache = None
+            # Read back only the changed control, including writes that partially fail.
+            field = {"volume": "audio", "mute": "audio", "micVolume": "microphone", "micMute": "microphone", "brightness": "brightness"}.get(action)
+            if field and self.system_cache is not None: self.system_cache.pop(field, None)
             message = self.perform(action, request)
             if action == "chargeMode" or action in self.feature_jobs:
                 self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
                 return dict(self.last_result)
-            if action in {"refresh", "volume", "mute", "micVolume", "micMute", "brightness", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
+            if action in {"refresh", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
                 self.system_cache = None
             self.last_result = {"ok": True, "action": action, "message": message}
         except (CommandError, ValueError, TypeError, KeyError, OSError) as exc:

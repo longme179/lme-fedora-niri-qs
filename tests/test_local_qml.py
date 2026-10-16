@@ -83,3 +83,37 @@ ShellRoot {
         self.assertTrue(result["recovered"])
         self.assertEqual(result["last"], result["expectedLast"])
         self.assertEqual(result["first"], result["expectedFirst"])
+
+    def test_minute_clocks_keep_formats_and_follow_visibility(self):
+        result = self.run_qml('import "qml/bar"\nimport "qml/panels"', '''
+    FloatingWindow {
+        implicitWidth: 900; implicitHeight: 760
+        BarModule { id: bar; moduleId: "clock" }
+        ControlDashboard { id: dashboard; y: 40; width: 880; height: 700 }
+    }
+    function clockOf(item) { return item.resources.find(o => o.precision !== undefined && o.date !== undefined); }
+    Component.onCompleted: Qt.callLater(() => {
+        const barClock = clockOf(bar.item), panelClock = clockOf(dashboard);
+        const full = bar.item.caption;
+        const expected = Qt.locale("en_US").toString(new Date(), "ddd, MMM d  ·  HH:mm");
+        const precision = [barClock.precision, panelClock.precision];
+        const initial = [barClock.enabled, panelClock.enabled];
+        bar.compact = true;
+        const compact = bar.item.caption;
+        const expectedCompact = Qt.locale("en_US").toString(new Date(), "HH:mm");
+        bar.moduleId = "audio"; dashboard.visible = false;
+        const disabled = [clockOf(bar.item).enabled, panelClock.enabled];
+        bar.moduleId = "clock"; dashboard.visible = true;
+        fixture.finish({full, expected, compact, expectedCompact, precision, minute: SystemClock.Minutes,
+            initial, disabled, resumed: [clockOf(bar.item).enabled, panelClock.enabled],
+            panelDate: Qt.formatDateTime(dashboard.now, "yyyy-MM-dd hh:mm"),
+            expectedDate: Qt.formatDateTime(new Date(), "yyyy-MM-dd hh:mm")});
+    })
+''')
+        self.assertEqual(result["precision"], [result["minute"]] * 2)
+        self.assertEqual(result["full"], result["expected"])
+        self.assertEqual(result["compact"], result["expectedCompact"])
+        self.assertEqual(result["panelDate"], result["expectedDate"])
+        self.assertEqual(result["initial"], [True, True])
+        self.assertEqual(result["disabled"], [False, False])
+        self.assertEqual(result["resumed"], [True, True])

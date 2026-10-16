@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Services.Mpris
 import "../services"
 import "../theme"
@@ -21,7 +22,7 @@ Item {
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
     property string selectedPlayerName: ""
     readonly property var player: players.find(item => item.dbusName === selectedPlayerName) || players.find(item => item.isPlaying) || players[0] || null
-    property date now: new Date()
+    readonly property date now: clock.date
     property bool editing: false
     property alias grid: quickGrid
     readonly property var cards: (ShellState.preferences.controlLayout || []).filter(item => ControlRegistry.cardIds.includes(item.id))
@@ -31,7 +32,7 @@ Item {
         return value === null || value === undefined ? "—" : Math.round(value) + (suffix || "");
     }
 
-    Timer { interval: 1000; running: root.visible; repeat: true; onTriggered: root.now = new Date() }
+    SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.visible }
     Keys.onEscapePressed: event => { if (root.editing) event.accepted = false; else ShellState.closePanels(); }
 
     component Tile: LiquidButton {

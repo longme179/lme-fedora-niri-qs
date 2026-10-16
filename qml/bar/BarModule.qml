@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import "../components"
@@ -114,7 +115,7 @@ Loader {
         id: statusComponent
         LiquidButton {
             id: button
-            property date now: new Date()
+            readonly property date now: clock.date
             readonly property var audio: ShellState.system.audio || {}
             readonly property var network: ShellState.system.network || {}
             readonly property string caption: root.moduleId === "clock" ? Qt.locale("en_US").toString(now, root.compact ? "HH:mm" : "ddd, MMM d  ·  HH:mm")
@@ -139,7 +140,7 @@ Loader {
                     LabelText { id: statusText; text: button.caption; color: Theme.barText; width: Math.max(0, button.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
-            Timer { interval: 1000; running: root.moduleId === "clock"; repeat: true; onTriggered: button.now = new Date() }
+            SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.moduleId === "clock" }
         }
     }
 }

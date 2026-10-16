@@ -91,7 +91,7 @@ class UpgradesCase(Fixture, unittest.TestCase):
         runner = FakeRunner(available=("nmcli",))
         live = self.make_backend(runner)
         state = {"available": True, "enabled": True, "device": "wlp1s0", "networks": [{"ssid": "Home:5G", "bssid": "AA:BB:CC:DD:EE:FF", "enterprise": False}], "saved": [{"uuid": "safe-uuid", "name": "Home"}]}
-        live.network = lambda: state
+        live.network = lambda details=False: state
         return live, runner
 
     def test_wifi_operations_use_adapter_and_validate_network_ids(self):

@@ -45,6 +45,14 @@ QtObject {
     property string statusMessage: ""
     property bool statusError: false
     property bool backendReady: false
+    property var wifiConsumers: []
+    function watchWifi(consumer, enabled) {
+        const wasWatching = wifiConsumers.length > 0;
+        if (enabled && !wifiConsumers.includes(consumer)) wifiConsumers = [...wifiConsumers, consumer];
+        else if (!enabled) wifiConsumers = wifiConsumers.filter(item => item !== consumer);
+        if (backendReady && wasWatching !== (wifiConsumers.length > 0)) run("wifiWatch", {enabled: wifiConsumers.length > 0});
+    }
+    onBackendReadyChanged: if (backendReady && wifiConsumers.length) run("wifiWatch", {enabled: true})
     property int restartAttempts: 0
     property var lastResult: null
     property var wifiResult: null
@@ -155,12 +163,12 @@ QtObject {
             }
             if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
                 lastResult = next.lastResult;
-                if (String(next.lastResult.action).startsWith("wifi")) wifiResult = next.lastResult;
+                if (String(next.lastResult.action).startsWith("wifi") && next.lastResult.action !== "wifiWatch") wifiResult = next.lastResult;
                 const pending = Object.assign({}, pendingActions);
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

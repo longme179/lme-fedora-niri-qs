@@ -94,6 +94,7 @@ POWER_PROFILE_SERVICES = (
     ("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles"),
 )
 POWER_PROFILES = {"power-saver", "balanced", "performance"}
+NETWORK_SUMMARY_FIELDS = "GENERAL.DEVICE,GENERAL.TYPE,GENERAL.STATE,AP.IN-USE,AP.SSID,AP.SIGNAL"
 
 
 class CommandError(RuntimeError):
@@ -526,6 +527,7 @@ class DesktopBackend:
         self.file_search = {"query":"", "entries":[], "truncated":False}
         self.file_search_cancel = Event()
         self.monitor_enabled = False
+        self.wifi_watching = False
         self.monitor = SystemMonitor(proc)
         self.idle_control = IdleControl(self.runner)
         self.idle_state = {}
@@ -668,27 +670,46 @@ class DesktopBackend:
         statuses = [self.read(p / "status") for p in supplies if self.read(p / "type") == "Battery"]
         return not statuses or "Charging" in statuses or "Full" in statuses
 
-    def network(self) -> dict[str, Any]:
+    def network(self, details: bool = False) -> dict[str, Any]:
         result = {"available": False, "enabled": False, "connected": False, "wifiConnected": False, "ssid": "", "strength": None, "networks": [], "saved": [], "device": ""}
         radio = self.try_run("nmcli", "radio", "wifi")
         if radio is None:
             return result
         result.update(available=True, enabled=radio.strip() == "enabled")
-        devices = self.try_run("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status")
-        for line in (devices or "").splitlines():
+        output = self.try_run("nmcli", "-t", "-m", "multiline", "-f", NETWORK_SUMMARY_FIELDS, "device", "show")
+        devices = []
+        for line in (output or "").splitlines():
             fields = split_nmcli(line)
-            if len(fields) < 4: continue
-            if fields[1] == "wifi" and (not result["device"] or fields[2] == "connected"):
-                result["device"] = fields[0]
-            if fields[2] == "connected":
+            if len(fields) != 2: continue
+            key, value = fields
+            if key == "GENERAL.DEVICE": devices.append({"device": value, "type": "", "connected": False, "aps": {}})
+            elif devices:
+                device = devices[-1]
+                if key == "GENERAL.TYPE": device["type"] = value
+                elif key == "GENERAL.STATE": device["connected"] = value.split(" ", 1)[0] == "100"
+                else:
+                    match = re.fullmatch(r"AP\[(\d+)\]\.(IN-USE|SSID|SIGNAL)", key)
+                    if match: device["aps"].setdefault(match[1], {})[match[2]] = value
+        selected = None
+        for device in devices:
+            if device["type"] == "wifi" and (selected is None or device["connected"]): selected = device
+            if device["connected"] and device["type"] in {"wifi", "ethernet"}:
                 result["connected"] = True
-                if fields[1] == "ethernet":
-                    result["ssid"] = "Ethernet"
+                if device["type"] == "ethernet": result["ssid"] = "Ethernet"
+        if selected:
+            result["device"] = selected["device"]
+            if selected["connected"] and result["enabled"]:
+                active = next((ap for ap in selected["aps"].values() if ap.get("IN-USE") == "*"), {})
+                result.update(wifiConnected=True, ssid=active.get("SSID", ""))
+                try: result["strength"] = max(0, min(100, int(active.get("SIGNAL", ""))))
+                except ValueError: pass
+        if not details: return result
         connections = self.try_run("nmcli", "-t", "-f", "UUID,TYPE,NAME", "connection", "show")
         for line in (connections or "").splitlines():
             fields = split_nmcli(line)
             if len(fields) == 3 and fields[1] in {"wifi", "802-11-wireless"}:
                 result["saved"].append({"uuid": fields[0], "name": fields[2]})
+        if not result["enabled"] or not result["device"]: return result
         wireless = self.try_run("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY,BSSID,DEVICE", "device", "wifi", "list", "--rescan", "no")
         seen = set()
         for line in (wireless or "").splitlines():
@@ -927,7 +948,7 @@ class DesktopBackend:
         # Window/focus event bursts must not cause expensive hardware probes.
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
-            system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(),
+            system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(details=self.wifi_watching),
                           bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
                           powerProfile=self.power_profile(), powerProfiles=self.power_profiles(), charging=self.charging(), recording=self.recording())
             self.system_cache = system
@@ -1178,7 +1199,10 @@ class DesktopBackend:
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
         system = state["system"]
-        if action == "monitor":
+        if action == "wifiWatch":
+            if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
+            self.wifi_watching = request["enabled"]
+        elif action == "monitor":
             if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
             self.monitor_enabled = request["enabled"]
             self.monitor.state = {"history": [{"cpu": 18+12*math.sin(i/4), "memory": 34+i/20, "download": 200000+80000*math.sin(i/3), "upload": 16000} for i in range(60)],
@@ -1411,6 +1435,12 @@ class DesktopBackend:
             message = self.start_feature(action, lambda: (token, self.capture.ocr(token, language)))
             self.feature_jobs[action].capture_token = token
             return message
+        if action == "wifiWatch":
+            if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
+            if self.wifi_watching != request["enabled"]:
+                self.wifi_watching = request["enabled"]
+                self.system_cache = None
+            return ""
         if action == "monitor":
             if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
             self.monitor_enabled = request["enabled"]
@@ -1705,7 +1735,7 @@ class DesktopBackend:
         return "Appearance profile " + {"appearanceSave": "saved", "appearanceApply": "applied", "appearanceDelete": "deleted"}[action]
 
     def wifi_action(self, action, request):
-        state = self.network()
+        state = self.network(details=True)
         if not state["available"]: raise CommandError("NetworkManager is unavailable")
         interface = request.get("device") or state.get("device")
         if not isinstance(interface, str) or interface != state.get("device") or not interface:

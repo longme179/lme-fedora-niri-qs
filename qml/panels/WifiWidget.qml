@@ -7,6 +7,9 @@ import "../services"
 import "../theme"
 ColumnLayout {
     id: root
+    Component.onCompleted: ShellState.watchWifi(root, visible)
+    onVisibleChanged: ShellState.watchWifi(root, visible)
+    Component.onDestruction: ShellState.watchWifi(root, false)
     spacing: 12
     readonly property var network: ShellState.system.network || {}
     readonly property bool connected: network.wifiConnected === undefined ? !!network.connected : !!network.wifiConnected

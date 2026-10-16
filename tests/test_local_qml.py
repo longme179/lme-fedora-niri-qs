@@ -44,6 +44,63 @@ ShellRoot {
             self.assertEqual(len(lines), 1, log)
             return json.loads(lines[0])
 
+    def test_wifi_consumers_follow_visibility_destruction_and_backend_restart(self):
+        result = self.run_qml('import "qml/panels"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property int sequence: 0
+    property bool disconnected: false
+    property var observations: ({})
+    FloatingWindow {
+        implicitWidth: 600; implicitHeight: 800
+        Loader { id: first; active: false; width: 560; sourceComponent: wifi }
+        Loader { id: second; active: false; width: 560; sourceComponent: wifi }
+    }
+    Component { id: wifi; WifiWidget {} }
+    Connections {
+        target: ShellState
+        function onBackendReadyChanged() { if (fixture.phase === 6 && !ShellState.backendReady) fixture.disconnected = true; }
+    }
+    Timer {
+        interval: 60; running: true; repeat: true
+        onTriggered: {
+            if (++fixture.ticks > 160) { fixture.finish({timeout: fixture.phase, consumers: ShellState.wifiConsumers.length}); return; }
+            const count = ShellState.wifiConsumers.length;
+            const pending = ShellState.pendingActions.wifiWatch;
+            if (!ShellState.backendReady || pending) return;
+            const result = ShellState.lastResult || {};
+            if (fixture.phase === 0) { first.active = true; fixture.phase = 1; }
+            else if (fixture.phase === 1 && count === 1 && result.action === "wifiWatch") {
+                fixture.observations.opened = true;
+                fixture.observations.quiet = !ShellState.statusMessage;
+                ShellState.wifiResult = {ok: false, message: "Keep the connection error"};
+                fixture.sequence = result.sequence;
+                second.active = true; fixture.phase = 2;
+            } else if (fixture.phase === 2 && count === 2) {
+                first.visible = false; fixture.phase = 3;
+            } else if (fixture.phase === 3 && count === 1) {
+                fixture.observations.shared = result.sequence === fixture.sequence;
+                first.active = false; second.visible = false; fixture.phase = 4;
+            } else if (fixture.phase === 4 && count === 0 && result.sequence > fixture.sequence) {
+                fixture.observations.closed = true;
+                fixture.observations.errorKept = ShellState.wifiResult.message === "Keep the connection error";
+                fixture.sequence = result.sequence;
+                second.visible = true; fixture.phase = 5;
+            } else if (fixture.phase === 5 && count === 1 && result.sequence > fixture.sequence) {
+                ShellState.backend.running = false; fixture.phase = 6;
+            } else if (fixture.phase === 6 && fixture.disconnected && result.action === "wifiWatch") {
+                fixture.observations.reconnected = true;
+                second.active = false; fixture.phase = 7;
+            } else if (fixture.phase === 7 && count === 0) {
+                fixture.observations.destroyed = true;
+                fixture.finish(fixture.observations);
+            }
+        }
+    }
+''')
+        self.assertEqual(result, dict(opened=True, quiet=True, shared=True, closed=True,
+                                      errorKept=True, reconnected=True, destroyed=True))
+
     def test_empty_clipboard_navigation_and_filtered_recovery(self):
         result = self.run_qml('import "qml/panels"\nimport "qml/services"', '''
     FloatingWindow {

@@ -108,10 +108,10 @@ class BackendCase(Fixture, unittest.TestCase):
     def test_nmcli_escaped_ssid_and_no_rescan(self):
         runner = FakeRunner({
             ("nmcli", "radio", "wifi"): "enabled",
-            ("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"): "wlp1s0:wifi:connected:Home\\:5G",
+            ("nmcli", "-t", "-m", "multiline", "-f", backend.NETWORK_SUMMARY_FIELDS, "device", "show"): "GENERAL.DEVICE:wlp1s0\nGENERAL.TYPE:wifi\nGENERAL.STATE:100 (connected)\nAP[1].IN-USE:*\nAP[1].SSID:Home\\:5G\nAP[1].SIGNAL:84",
             ("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY,BSSID,DEVICE", "device", "wifi", "list", "--rescan", "no"): "yes:Home\\:5G:84:WPA2:AA\\:BB\\:CC\\:DD\\:EE\\:FF:wlp1s0",
         })
-        network = self.make_backend(runner).network()
+        network = self.make_backend(runner).network(details=True)
         self.assertEqual(network["ssid"], "Home:5G")
         self.assertEqual(network["strength"], 84)
         self.assertTrue(network["connected"])
@@ -121,7 +121,7 @@ class BackendCase(Fixture, unittest.TestCase):
     def test_wired_connection_does_not_claim_wifi_is_connected(self):
         runner = FakeRunner({
             ("nmcli", "radio", "wifi"): "disabled",
-            ("nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"): "enp1s0:ethernet:connected:Wired\nwlp1s0:wifi:unavailable:",
+            ("nmcli", "-t", "-m", "multiline", "-f", backend.NETWORK_SUMMARY_FIELDS, "device", "show"): "GENERAL.DEVICE:enp1s0\nGENERAL.TYPE:ethernet\nGENERAL.STATE:100 (connected)\nGENERAL.DEVICE:wlp1s0\nGENERAL.TYPE:wifi\nGENERAL.STATE:20 (unavailable)",
         })
         state = self.make_backend(runner).network()
         self.assertTrue(state["connected"])

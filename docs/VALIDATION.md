@@ -1,5 +1,46 @@
 # Validation and platform limits
 
+## Controlled polling — 2026-10-16
+
+PipeWire privacy, BlueZ and power-profile reads now use separate five-second
+caches. They are checked on each snapshot; with the default two-second poll,
+background reads normally occur every six seconds. Opening Control Center's
+Controls/Devices tabs, selecting a Bluetooth adapter and performing relevant
+actions force fresh BlueZ/profile reads. Failed Bluetooth/profile actions also invalidate
+their cache, since a device may have changed before reporting an error. Active
+profile and advertised profiles are refreshed together, including provider
+fallback and recovery after a service restart.
+
+Disabling both privacy preferences clears captures at the next snapshot; re-enabling
+them queries PipeWire again. Recording, mirroring, microphone mute and explicit
+refresh invalidate capture data. Niri screencast events still update sharing
+state through the existing event stream. External PipeWire/BlueZ/profile
+changes can take approximately six seconds to appear at the default poll rate.
+
+Network summary sampling uses two nmcli calls, retaining the actual active AP's
+SSID and signal rather than substituting a connection profile's name. Periodic full AP
+details and saved profiles are queried only while a Wi-Fi widget is visible;
+the last widget closing removes those lists from live snapshots. Multiple
+widgets share one watch, and a backend restart restores it. Wi-Fi operations
+read fresh detailed state independently of the watch, so removed adapters and
+stale network IDs are still rejected. Late operation completions refresh the
+summary without re-enabling a closed widget's watch.
+
+`test_polling.py` covers cadence, invalidation, device replacement, service
+failure/recovery and command-count bounds. `test_local_qml.py` covers visible,
+hidden and destroyed widgets, shared watches, tab changes and backend restart.
+The opt-in `LME_TEST_POLLING_UI=1` test connects actual QML to the backend's real
+main loop on private Wayland; only command/hardware boundaries are simulated.
+It exercises close/reopen, adapter changes, Wi-Fi disconnect/reconnect,
+Bluetooth power, profile changes, service recovery and backend restart.
+The final `scripts/check.sh` run with `LME_TEST_POLLING_UI=1` completed **259
+tests: 221 passed, 38 skipped**. Seven QML regressions also passed on private
+Wayland. Changed QML files passed qmllint without errors; two existing Qt 6.8
+`QProcess::ExitStatus` metadata warnings remain. Other optional GUI suites,
+including the previously unstable broad Settings integration, were not rerun.
+No runtime dependency was added. Physical MT7921/BlueZ/tuned behavior, resource
+savings and battery impact still require checking on the owner's Fedora laptop.
+
 ## Dynamic Island captions and shared browser playback waves — 2026-10-16
 
 The compact caption again follows the focused window when no higher-priority

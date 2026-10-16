@@ -101,6 +101,56 @@ ShellRoot {
         self.assertEqual(result, dict(opened=True, quiet=True, shared=True, closed=True,
                                       errorKept=True, reconnected=True, destroyed=True))
 
+    def test_controls_refresh_on_open_relevant_tabs_and_backend_reconnect(self):
+        result = self.run_qml('import "qml/panels"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property int refreshes: 0
+    property bool disconnected: false
+    property var observations: ({})
+    FloatingWindow {
+        implicitWidth: 900; implicitHeight: 1000
+        Loader { id: panel; anchors.fill: parent; active: false; sourceComponent: center }
+    }
+    Component { id: center; ControlCenter {} }
+    Connections {
+        target: ShellState
+        function onLastResultChanged() { if (ShellState.lastResult.action === "controlsRefresh") fixture.refreshes++; }
+        function onBackendReadyChanged() { if (fixture.phase === 6 && !ShellState.backendReady) fixture.disconnected = true; }
+    }
+    Timer {
+        interval: 60; repeat: true; running: true
+        onTriggered: {
+            if (++fixture.ticks > 160) { fixture.finish({timeout: fixture.phase, refreshes: fixture.refreshes}); return; }
+            if (!ShellState.backendReady || ShellState.pendingActions.controlsRefresh || ShellState.pendingActions.wifiWatch) return;
+            if (fixture.phase === 0) { panel.active = true; fixture.phase = 1; }
+            else if (fixture.phase === 1 && fixture.refreshes === 1) {
+                fixture.observations.opened = true;
+                panel.visible = false; fixture.phase = 2;
+            } else if (fixture.phase === 2) {
+                fixture.observations.closed = fixture.refreshes === 1;
+                panel.visible = true; fixture.phase = 3;
+            } else if (fixture.phase === 3 && fixture.refreshes === 2) {
+                panel.item.currentTab = 4; fixture.phase = 4;
+            } else if (fixture.phase === 4) {
+                fixture.observations.unrelatedTab = fixture.refreshes === 2;
+                panel.item.currentTab = 2; fixture.phase = 5;
+            } else if (fixture.phase === 5 && fixture.refreshes === 3 && ShellState.wifiConsumers.length === 1) {
+                fixture.observations.deviceTab = true;
+                ShellState.backend.running = false; fixture.phase = 6;
+            } else if (fixture.phase === 6 && fixture.disconnected && fixture.refreshes === 4) {
+                fixture.observations.reconnected = true;
+                panel.active = false; fixture.phase = 7;
+            } else if (fixture.phase === 7 && !ShellState.wifiConsumers.length) {
+                fixture.observations.destroyed = fixture.refreshes === 4;
+                fixture.finish(fixture.observations);
+            }
+        }
+    }
+''')
+        self.assertEqual(result, dict(opened=True, closed=True, unrelatedTab=True, deviceTab=True,
+                                      reconnected=True, destroyed=True))
+
     def test_empty_clipboard_navigation_and_filtered_recovery(self):
         result = self.run_qml('import "qml/panels"\nimport "qml/services"', '''
     FloatingWindow {

@@ -14,10 +14,17 @@ GlassPanel {
     focus: true
     property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications", "System"]
     property bool editing: false
+    property bool initialized: false
     property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? Math.max(0, ["controls", "audio", "devices", "agenda", "notifications", "system"].indexOf(Quickshell.env("LME_SHELL_CONTROL_TAB"))) : ShellState.controlTab
-    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); }
-    Component.onCompleted: if (currentTab === 4) Notifications.markRead()
-    Connections { target: ShellState; function onControlTabChanged() { if (root.currentTab !== ShellState.controlTab) root.currentTab = ShellState.controlTab; } }
+    function refreshControls() { if (initialized && visible && [0, 2].includes(currentTab) && ShellState.backendReady) ShellState.run("controlsRefresh"); }
+    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); refreshControls(); }
+    onVisibleChanged: refreshControls()
+    Component.onCompleted: { initialized = true; if (currentTab === 4) Notifications.markRead(); refreshControls(); }
+    Connections {
+        target: ShellState
+        function onControlTabChanged() { if (root.currentTab !== ShellState.controlTab) root.currentTab = ShellState.controlTab; }
+        function onBackendReadyChanged() { if (ShellState.backendReady) root.refreshControls(); }
+    }
     Keys.onEscapePressed: if (editing) editing = false; else ShellState.closePanels()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ControlModifier)) {

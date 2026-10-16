@@ -550,6 +550,11 @@ class DesktopBackend:
         self.last_system_sample = 0.0
         self.privacy_cache = None
         self.last_privacy_sample = 0.0
+        self.bluetooth_cache = None
+        self.last_bluetooth_sample = 0.0
+        self.sampled_bluetooth_adapter = None
+        self.power_cache = None
+        self.last_power_sample = 0.0
         self.power_profile_provider: tuple[str, ...] | None = None
         self.result_sequence = 0
         self.result_unemitted = False
@@ -721,15 +726,10 @@ class DesktopBackend:
                     strength = max(0, min(100, int(fields[2])))
                 except ValueError:
                     strength = 0
-                result["networks"].append({"ssid": fields[1], "strength": strength, "connected": fields[0] == "yes",
+                result["networks"].append({"ssid": fields[1], "strength": strength,
+                                          "connected": fields[0] == "yes" and result["wifiConnected"] and fields[1] == result["ssid"],
                                           "security": fields[3], "secured": fields[3] not in {"", "--"},
                                           "enterprise": "802.1X" in fields[3] or "EAP" in fields[3], "bssid": fields[4]})
-            if len(fields) >= 3 and fields[0] == "yes":
-                result.update(connected=True, wifiConnected=True, ssid=fields[1])
-                try:
-                    result["strength"] = max(0, min(100, int(fields[2])))
-                except ValueError:
-                    pass
         result["networks"] = sorted(result["networks"], key=lambda item: (not item["connected"], -item["strength"]))[:60]
         return result
 
@@ -949,11 +949,20 @@ class DesktopBackend:
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(details=self.wifi_watching),
-                          bluetooth=self.bluetooth(), audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          powerProfile=self.power_profile(), powerProfiles=self.power_profiles(), charging=self.charging(), recording=self.recording())
+                          audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
+                          charging=self.charging(), recording=self.recording())
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         self.system_cache["privacy"] = self.privacy()
+        adapter = self.preferences.values["bluetoothAdapter"]
+        if self.bluetooth_cache is None or adapter != self.sampled_bluetooth_adapter or time.monotonic() - self.last_bluetooth_sample >= 5:
+            self.bluetooth_cache = self.bluetooth()
+            self.sampled_bluetooth_adapter = adapter
+            self.last_bluetooth_sample = time.monotonic()
+        if self.power_cache is None or time.monotonic() - self.last_power_sample >= 5:
+            self.power_cache = {"powerProfile": self.power_profile(), "powerProfiles": self.power_profiles()}
+            self.last_power_sample = time.monotonic()
+        self.system_cache.update(bluetooth=self.bluetooth_cache, **self.power_cache)
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
             self.monitor.sample(self.system_cache)
@@ -1181,6 +1190,8 @@ class DesktopBackend:
                 return dict(self.last_result)
             if action in {"refresh", "micMute", "recordStart", "recordStop", "mirrorStart", "mirrorStop"}:
                 self.privacy_cache = None
+            if action in {"refresh", "controlsRefresh", "bluetoothToggle", "bluetoothDevice"}: self.bluetooth_cache = None
+            if action in {"refresh", "controlsRefresh", "powerProfile"}: self.power_cache = None
             message = self.perform(action, request)
             if action == "chargeMode" or action in self.feature_jobs:
                 self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
@@ -1202,6 +1213,7 @@ class DesktopBackend:
         if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             self.wifi_watching = request["enabled"]
+        elif action == "controlsRefresh": pass
         elif action == "monitor":
             if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
             self.monitor_enabled = request["enabled"]
@@ -1441,6 +1453,7 @@ class DesktopBackend:
                 self.wifi_watching = request["enabled"]
                 self.system_cache = None
             return ""
+        if action == "controlsRefresh": return ""
         if action == "monitor":
             if type(request.get("enabled")) is not bool: raise ValueError("Monitor enabled must be boolean")
             self.monitor_enabled = request["enabled"]

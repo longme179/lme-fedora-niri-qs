@@ -1209,7 +1209,7 @@ class DesktopBackend:
             self.last_result = {"ok": True, "action": action, "message": message}
         except (CommandError, ValueError, TypeError, KeyError, OSError) as exc:
             self.last_result = {"ok": False, "action": action if isinstance(action, str) else "", "message": str(exc)[:400]}
-            if action in {"bluetoothToggle", "bluetoothDevice"}:
+            if isinstance(action, str) and action in {"bluetoothToggle", "bluetoothDevice"}:
                 self.system_cache = None
         self.last_result["sequence"] = self.result_sequence
         if action == "calculate": self.last_result["query"] = request.get("query")

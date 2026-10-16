@@ -67,6 +67,38 @@ class Fixture:
 
 class BackendCase(Fixture, unittest.TestCase):
 
+    def test_invalid_action_types_return_errors_and_leave_the_backend_usable(self):
+        for demo in (False, True):
+            live = self.make_backend(demo=demo)
+            for value in ([], {}, None, True, 42, 1.5, ""):
+                with self.subTest(demo=demo, action=value):
+                    result = live.handle({"action": value})
+                    self.assertFalse(result["ok"])
+                    self.assertEqual(result["action"], "")
+                    self.assertIn("object with an action", result["message"])
+            self.assertTrue(live.handle({"action": "refresh"})["ok"])
+
+    def test_malformed_protocol_requests_do_not_stop_demo_or_settings_processes(self):
+        invalid = [None, [], True, 42, "volume", {}, *({"action": value} for value in ([], {}, None, False, 1, ""))]
+        requests = [*invalid, {"action": "refresh"}]
+        script = Path(__file__).resolve().parents[1] / "scripts/desktop_backend.py"
+        env = dict(os.environ, XDG_CONFIG_HOME=str(self.root / "config"), XDG_STATE_HOME=str(self.root / "state"),
+                   XDG_RUNTIME_DIR=str(self.root / "runtime"))
+        for mode in ("--demo", "--settings"):
+            with self.subTest(mode=mode):
+                result = subprocess.run([sys.executable, str(script), mode], env=env,
+                                        input="".join(json.dumps(request) + "\n" for request in requests),
+                                        capture_output=True, text=True, timeout=8)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                states = [json.loads(line) for line in result.stdout.splitlines()]
+                self.assertEqual(len(states), len(requests) + 1)
+                for sequence, state in enumerate(states[1:-1], 1):
+                    self.assertFalse(state["lastResult"]["ok"])
+                    self.assertEqual(state["lastResult"]["action"], "")
+                    self.assertEqual(state["lastResult"]["sequence"], sequence)
+                self.assertTrue(states[-1]["lastResult"]["ok"])
+                self.assertEqual(states[-1]["lastResult"]["action"], "refresh")
+
     def test_unavailable_hardware_is_not_fabricated(self):
         live = self.make_backend()
         state = live.snapshot()

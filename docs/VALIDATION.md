@@ -1,5 +1,37 @@
 # Validation and platform limits
 
+## Backend audit fixes — 2026-10-16
+
+Text copy no longer captures pipes inherited by wl-copy's clipboard owner.
+A real forked-owner regression checks successful Unicode transfer and nonzero
+exit handling; a separate private Wayland check returned successfully in 0.007 s
+with the exact text available through wl-paste.
+
+Volume, mute, microphone and brightness actions invalidate only their own
+telemetry field, including partial failures. Readback remains immediate without
+resetting the regular system-sample deadline. Ten volume updates inside one
+sample window need ten writes and ten sink reads, with no nmcli commands.
+Tests cover all five actions, failure/recovery and the next regular network
+sample. Native QML/backend checks verify acknowledged values and cleared pending
+states. The fixture retains acknowledgements per action so automatic mirror
+refreshes cannot hide an operation's result.
+
+The niri event stream retries after five seconds on startup failure or EOF.
+An isolated test runs the actual backend loop and real child processes with a
+simulated niri boundary: initial compositor unavailability, failed startup,
+bounded retries, responsive commands, child reaping, resumed events and shutdown.
+Malformed actions now return structured errors; unit and real stdin-protocol
+tests verify that demo and Settings processes still accept subsequent commands.
+
+The final `scripts/check.sh` run completed **265 tests: 230 passed, 35 skipped**,
+with polling integration, native clipboard and clipboard UI opt-ins enabled.
+A separate pointer-driven slider/mute/profile test also passed. Bash syntax and
+demo snapshot checks passed. No dependency was added. Validation used private
+Sway, Quickshell 0.3.2 and Qt 6.8.2; niri and hardware control boundaries were
+simulated. Live Fedora/niri device behavior and resource savings remain
+unverified. Other optional GUI suites, including the broad Settings integration,
+were not rerun.
+
 ## Controlled polling — 2026-10-16
 
 PipeWire privacy, BlueZ and power-profile reads now use separate five-second

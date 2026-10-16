@@ -1854,10 +1854,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     selector = selectors.DefaultSelector()
     event_process: subprocess.Popen | None = None
+    next_event_retry = 0.0
     input_buffer = b""
     next_poll = time.monotonic() + args.interval
     event_refresh_due: float | None = None
     def stop_backend(_signal, _frame): raise KeyboardInterrupt
+    def close_event_stream():
+        nonlocal event_process
+        if event_process is None: return
+        if event_process.stdout: event_process.stdout.close()
+        if event_process.poll() is None:
+            event_process.terminate()
+            try: event_process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                event_process.kill()
+                event_process.wait(timeout=1)
+        event_process = None
     try:
         signal.signal(signal.SIGTERM, stop_backend)
         emit(backend)
@@ -1868,19 +1880,21 @@ def main(argv: list[str] | None = None) -> int:
             selector.close()
             selector = selectors.SelectSelector()
             selector.register(sys.stdin, selectors.EVENT_READ, "input")
-        if not args.demo and backend.niri["available"]:
-            try:
-                event_process = subprocess.Popen(
-                    [backend.runner.executable("niri"), "msg", "--json", "event-stream"],
-                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                )
-                if event_process.stdout:
-                    selector.register(event_process.stdout, selectors.EVENT_READ, "niri")
-            except (OSError, CommandError):
-                event_process = None
         while True:
             changed = False
+            if not args.demo and event_process is None and backend.niri["available"] and time.monotonic() >= next_event_retry:
+                try:
+                    event_process = subprocess.Popen(
+                        [backend.runner.executable("niri"), "msg", "--json", "event-stream"],
+                        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                    )
+                    selector.register(event_process.stdout, selectors.EVENT_READ, "niri")
+                except (OSError, CommandError):
+                    close_event_stream()
+                    next_event_retry = time.monotonic() + 5
             deadline = min(next_poll, event_refresh_due) if event_refresh_due is not None else next_poll
+            if not args.demo and event_process is None and backend.niri["available"]:
+                deadline = min(deadline, next_event_retry)
             if backend.capture.state['status'] == 'pending' or backend.feature_jobs: deadline = min(deadline, time.monotonic() + .2)
             for key, _mask in selector.select(max(0, deadline - time.monotonic())):
                 data = os.read(key.fd, 65536)
@@ -1888,6 +1902,8 @@ def main(argv: list[str] | None = None) -> int:
                     selector.unregister(key.fileobj)
                     if key.data == "input":
                         return 0
+                    close_event_stream()
+                    next_event_retry = time.monotonic() + 5
                     continue
                 if key.data == "niri":
                     if event_refresh_due is None:
@@ -1930,13 +1946,7 @@ def main(argv: list[str] | None = None) -> int:
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)
         selector.close()
-        if event_process and event_process.poll() is None:
-            event_process.terminate()
-            try:
-                event_process.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                event_process.kill()
-                event_process.wait(timeout=1)
+        close_event_stream()
 
 
 if __name__ == "__main__":

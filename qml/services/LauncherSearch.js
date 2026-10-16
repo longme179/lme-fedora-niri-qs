@@ -24,8 +24,11 @@ function score(term, name, other) {
 }
 function apps(query, apps) {
     const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 8);
+    if (!terms.length) return apps.slice().sort((a, b) => a.name.localeCompare(b.name));
     return apps.map(app => {
-        const scores = terms.map(t => score(t, app.name.toLowerCase(), [app.genericName || "", app.comment || "", ...(app.keywords || [])].join(" ").toLowerCase()));
+        const name = app.name.toLowerCase();
+        const other = [app.genericName || "", app.comment || "", ...(app.keywords || [])].join(" ").toLowerCase();
+        const scores = terms.map(t => score(t, name, other));
         return {app: app, score: scores.some(s => s < 0) ? -1 : scores.reduce((a, b) => a + b, 0)};
     }).filter(item => item.score >= 0).sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name)).map(item => item.app);
 }

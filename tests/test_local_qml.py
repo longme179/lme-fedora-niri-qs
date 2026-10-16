@@ -194,3 +194,38 @@ ShellRoot {
         self.assertEqual(result, {"cpu": [10, 20, 30, 40], "memory": [40, 10, 30, 20],
                                   "name": [20, 10, 40, 30], "app": [20], "pid": [10], "user": [40, 30],
                                   "empty": [], "recovered": [10, 20, 30, 40], "source": [30, 20, 10, 40]})
+
+    def test_launcher_ranking_and_once_per_app_normalization(self):
+        result = self.run_qml('import "qml/services/LauncherSearch.js" as Search', '''
+    Component.onCompleted: Qt.callLater(() => {
+        const source = [
+            {id: "terminal", name: "Terminal", comment: "Command line"},
+            {id: "dev", name: "Firefox Developer Edition", genericName: "Web browser"},
+            {id: "files", name: "Files", genericName: "File manager"},
+            {id: "firefox", name: "Firefox", keywords: ["Web", "Browser"]}
+        ];
+        const matches = {};
+        for (const query of ["", "  ", "Firefox", "frfx", "firfeox", "web browser", "firefox browser", "files", "terminal browser", "no-such-app"])
+            matches[query] = Search.apps(query, source).map(app => app.id);
+        const capped = Search.apps(Array(8).fill("web").concat(["missing"]).join(" "), source).map(app => app.id);
+        let reads = 0;
+        const counted = {name: "Firefox", get genericName() { reads++; return "Web browser"; }};
+        Search.apps("web browser", [counted]);
+        const perApp = reads;
+        reads = 0;
+        Search.apps("", [counted]);
+        const unicode = Search.apps("CAFÉ", [{name: "Café"}]).map(app => app.name);
+        fixture.finish({matches, capped, perApp, emptyReads: reads, unicode, source: source.map(app => app.id)});
+    })
+''')
+        alphabetical = ["files", "firefox", "dev", "terminal"]
+        browser = ["firefox", "dev"]
+        self.assertEqual(result["matches"], {"": alphabetical, "  ": alphabetical, "Firefox": browser,
+                                             "frfx": browser, "firfeox": browser, "web browser": browser,
+                                             "firefox browser": browser, "files": ["files"],
+                                             "terminal browser": [], "no-such-app": []})
+        self.assertEqual(result["capped"], browser)
+        self.assertEqual(result["perApp"], 1)
+        self.assertEqual(result["emptyReads"], 0)
+        self.assertEqual(result["unicode"], ["Café"])
+        self.assertEqual(result["source"], ["terminal", "dev", "files", "firefox"])

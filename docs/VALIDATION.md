@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Extended media controls — 2026-10-17
+
+Native MPRIS checks exercised pointer click/drag seeking, deferred seek during dragging, keyboard seeking, writable Shuffle and all three LoopStatus states. The private player logs confirm actual SetPosition/property writes. Unsupported controls are guarded and the feature is a boolean portable preference. All three focused tests passed; the existing five Activity/media/timer lifecycle checks also passed on private Sway, including a Chromium-like player without Position. Changed QML passes lint. Real browser/player capability differences remain dependent on their MPRIS implementation.
+
 ## Topbar gestures — 2026-10-17
 
 Per-module left/right/middle click and vertical scroll mappings are validated, persisted and included in portable presets. Focused checks cover default/disabled/overridden actions, real Qt mouse-button and wheel delivery, primary-click isolation, DND, middle click and two-notch relative volume. The full check completed 269 tests (230 passed, 39 skipped); QML lint passed for the changed controls and settings. No additional polling or package is required. Fedora/niri hardware behavior remains to be checked.

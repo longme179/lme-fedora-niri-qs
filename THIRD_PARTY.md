@@ -206,3 +206,7 @@ above and reads Quickshell's local playback clock, without frame-rate D-Bus poll
 ## Configurable bar gestures
 
 Gesture defaults reference [Noctalia widget_gesture_defaults.cpp](https://github.com/noctalia-dev/noctalia/blob/eeea6ff75cd71f9dbcd3acea6035449fefe3c71a/src/shell/bar/widget_gesture_defaults.cpp) (MIT). LME's QML dispatcher, preference validation and settings UI are original; no C++ implementation is copied. Relative volume uses the existing wpctl backend.
+
+## Extended media controls
+
+`MediaActions.qml` adapts the loop/shuffle interaction in [DMS MediaPlayerTab.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Modules/DDash/MediaPlayerTab.qml) (MIT, copyright Avenge Media LLC; full license in `third_party/DankMaterialShell-LICENSE`). Seeking uses Quickshell MPRIS and LME's existing wave timeline, without the DMS daemon.

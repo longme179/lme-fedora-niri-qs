@@ -10,7 +10,7 @@ import unittest
 
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")
 class LocalQmlCase(unittest.TestCase):
-    def run_qml(self, imports, body):
+    def run_qml(self, imports, body, environment=None):
         repo = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -32,6 +32,7 @@ ShellRoot {
             env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", LME_SHELL_DEMO="1",
                        XDG_CONFIG_HOME=str(root / "home"), XDG_STATE_HOME=str(root / "state"),
                        XDG_DATA_HOME=str(root / "data"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"))
+            env.update(environment or {})
             try:
                 result = subprocess.run(["quickshell", "-p", str(entry)], env=env, capture_output=True, text=True, timeout=15)
             except subprocess.TimeoutExpired as error:

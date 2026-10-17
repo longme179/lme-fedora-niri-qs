@@ -233,12 +233,7 @@ Item {
                         Caption { Layout.fillWidth: true; text: root.player ? root.player.trackArtist || root.player.identity : "Play media in an app"; textFormat: Text.PlainText; elide: Text.ElideRight }
                     }
                 }
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    LiquidButton { text: "Previous"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canGoPrevious; onClicked: root.player.previous(); palette.button: Theme.panel; palette.buttonText: Theme.text }
-                    LiquidButton { text: root.player && root.player.isPlaying ? "Pause" : "Play"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canTogglePlaying; onClicked: root.player.togglePlaying(); palette.button: Theme.purple; palette.buttonText: Theme.background }
-                    LiquidButton { text: "Next"; leftPadding: 8; rightPadding: 8; enabled: !!root.player && root.player.canGoNext; onClicked: root.player.next(); palette.button: Theme.panel; palette.buttonText: Theme.text }
-                }
+                MediaActions { Layout.fillWidth: true; player: root.player; prefix: "control" }
                 AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying }
                 MediaProgress { objectName: "controlMediaProgress"; Layout.fillWidth: true; player: root.player }
                 LiquidComboBox {

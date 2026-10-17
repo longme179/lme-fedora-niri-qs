@@ -55,12 +55,7 @@ ColumnLayout {
                     onActivated: ActivityState.preferredPlayer = ActivityState.players[currentIndex].dbusName
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter; spacing: 10
-                LiquidButton { objectName: "activityPrevious"; text: "Previous"; enabled: ActivityState.canPrevious; onClicked: ActivityState.previous() }
-                LiquidButton { objectName: "activityPlay"; text: ActivityState.playing ? "Pause" : "Play"; selected: true; enabled: ActivityState.canPlay; onClicked: ActivityState.togglePlaying() }
-                LiquidButton { objectName: "activityNext"; text: "Next"; enabled: ActivityState.canNext; onClicked: ActivityState.next() }
-            }
+            MediaActions { Layout.fillWidth: true; player: ActivityState.player; prefix: "activity" }
         }
     }
     Rectangle {

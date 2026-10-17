@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add saved full-transcript/current-line lyric modes and default follow in Behavior settings. Show synchronized lines on the compact Activity Island with track-title fallback; share its lookup with media views and replace lyric polling with cue-boundary scheduling adapted from end4-pC.
+
 - Restore spring-driven edge entry and exit for all bar popups. Remove the connecting surface and its setting while preserving custom appearance profiles and old settings imports.
 
 - Fix nested media controls collapsing into a narrow column in Activity Island, Control Center and desktop media cards. Use the available width and reflow when fonts/card sizes change.

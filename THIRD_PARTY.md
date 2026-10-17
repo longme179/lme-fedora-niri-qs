@@ -4,9 +4,10 @@ LME Shell is an original Fedora and niri implementation inspired by the desktop
 interaction patterns of [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland).
 The upstream reference inspected during development was commit
 `c4f0582cbf4ad29607dbf3c20337815de8690b34`. Its root license is GNU GPL version 3.
-No end-4 source code, wallpapers, bundled fonts, icons, or installation scripts
-have been copied into this project. Original project source is distributed
-under GPL-3.0-or-later; the motion adaptation below retains GPL-3.0-only.
+No upstream wallpapers, bundled fonts, icons or installation scripts have been
+copied into this project. Source adaptations are credited below. Original project
+source is distributed under GPL-3.0-or-later; motion and lyric scheduling
+adaptations retain GPL-3.0-only.
 The full GNU GPL version 3 license is in [LICENSE](LICENSE).
 
 Quickshell, Qt, niri, and the desktop utilities are external runtime dependencies
@@ -226,6 +227,8 @@ The pairing prompt flow references [DMS BluetoothPairingModal.qml](https://githu
 ## Synchronized lyrics
 
 Lyric subscription/cancellation, bounded metadata settling and follow/manual-scroll behavior reference [DMS LyricsService.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Services/LyricsService.qml), `LyricsController.qml`, `LyricsOverlay.qml` and `core/internal/server/lyrics/handlers.go` (MIT; existing DMS license retained). LME's Python LRC parser/cache and Qt Quick view are original and do not require the DMS/dankgo daemon. Optional online results come from [LRCLIB](https://lrclib.net); lyrics remain attributed to their provider.
+
+`qml/components/LyricsSession.qml` adapts cue-boundary scheduling and indexed line selection from [pctrade/end4-pC LyricsService.qml](https://github.com/pctrade/end4-pC/blob/8fbb6716cba628a13103e665e9538021683a7250/services/LyricsService.qml). The inspected revision is `8fbb6716cba628a13103e665e9538021683a7250`; its root [LICENSE](https://github.com/pctrade/end4-pC/blob/8fbb6716cba628a13103e665e9538021683a7250/LICENSE) is GPL-3.0, compatible with this GPL project, with the full text retained in LME's [LICENSE](LICENSE). The adaptation retains GPL-3.0-only. LME uses Quickshell's local playback clock, shared readers, visibility cancellation and its existing bounded Python lookup/cache; no end4-pC backend, dependencies or Hyprland integration is required. The upstream `modules/common/widgets/Lyrics.qml` and `scripts/lyrics/lyrics.py` were also inspected as references.
 
 ## Desktop widget canvas
 

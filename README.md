@@ -55,7 +55,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Audio visualization uses Cava; media cards share the same controls. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
 | **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
-| **Lyrics** | Follow synchronized lyrics in media panels. Read embedded/local LRC and cached results, with optional online lookup through LRCLIB. |
+| **Lyrics** | Choose a scrolling transcript or current line, follow playback by default, and show synchronized lines on Activity Island. Embedded/local LRC and cache work offline; LRCLIB lookup is optional. |
 | **Desktop canvas** | Place clock, notes and media widgets per display. Drag and resize in Edit mode, then keep them below apps or make them click-through. |
 | **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications with [appearance controls](docs/NOTIFICATIONS.md) and a rotating Material emblem; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
@@ -250,9 +250,15 @@ support them; this is common in browsers.
 
 Click **Lyrics** in a media card. Embedded lyrics, a local `.lrc` sidecar and the
 cache work without online lookup. To search LRCLIB, enable online lookup under
-**Settings → Behavior → Lyrics**. This is off by default and sends track metadata
-only while lyrics are open. Matches depend on the supplied title/artist; a
-YouTube channel or video title may not identify a song. [Lyrics and media guide](docs/CONFIGURATION.md#synchronized-lyrics).
+**Settings → Behavior → Lyrics**. Choose **Full transcript · scroll** or **Current
+line**, and whether the transcript follows playback by default. Manual scrolling
+pauses follow; press **Follow** to resume.
+
+Activity Island shows the current synchronized line while playing and falls
+back to the track title when lyrics or timing are unavailable. You can turn this
+off separately. Online lookup is off by default; enabling it sends track metadata
+when an open lyrics view or the playing Island needs lyrics. Matches depend on
+the supplied title/artist; a YouTube channel or video title may not identify a song. [Lyrics and media guide](docs/CONFIGURATION.md#synchronized-lyrics).
 
 ## Optional integrations
 

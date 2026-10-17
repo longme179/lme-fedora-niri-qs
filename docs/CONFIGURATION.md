@@ -318,9 +318,15 @@ Settings → Behavior → Bluetooth pairing controls `bluetoothPairing`. Native 
 
 ## Synchronized lyrics
 
-Open Lyrics in Activity Island or the Control Center media card. Player-provided lyrics and a `.lrc` sidecar beside a local media file are checked first. Settings → Behavior → Lyrics can enable LRCLIB lookup; online access is off by default and sends only track title, artist, album and duration when lyrics are open. Positive results are cached for 14 days, missing results for six hours, with at most 128 cache entries. The cache is under `$XDG_CACHE_HOME/lme-shell/lyrics` (normally `~/.cache/lme-shell/lyrics`). Network lookup has a seven-second timeout and response/line limits.
+Open Lyrics in Activity Island, Control Center or a desktop media card. Settings → Behavior → Lyrics saves these choices:
 
-Synchronized lines follow playback; clicking a line seeks when supported. Scrolling suspends following until Follow is pressed. Plain lyrics and players without timing remain readable. Closing lyrics cancels its helper; no background lookup/timer continues. Some browser videos provide a channel rather than a song artist, and LRCLIB may have no match.
+- **Display mode** (`lyricsMode`): `scroll` shows the full transcript; `line` shows the current synchronized line. The default is `scroll`. Plain lyrics still show the whole text, and players without timing retain the full transcript.
+- **Follow lyrics by default** (`lyricsFollow`, default `true`): center the active line when opening a transcript or changing tracks. Manual scrolling pauses follow for that view; **Follow** resumes it. Single-line mode always uses playback timing.
+- **Lyrics on Activity Island** (`activityLyrics`, default `true`): replace the compact media title with the current line while playing. Before the first cue, during empty instrumental cues, with plain/missing lyrics or without timing, use the track title. Recording and timers keep their existing priority; the popup heading remains Activity Island.
+
+Player-provided lyrics and a `.lrc` sidecar beside a local media file are checked first. LRCLIB lookup is off by default. When enabled, track title, artist, album and duration are sent when a visible, expanded lyrics view or the playing Island needs lyrics. Positive results are cached for 14 days, missing results for six hours, with at most 128 entries under `$XDG_CACHE_HOME/lme-shell/lyrics` (normally `~/.cache/lme-shell/lyrics`). Lookup has a seven-second timeout and response/line limits. Browser metadata may describe a video/channel rather than a song, so matches are not guaranteed.
+
+Click a transcript line to seek when supported. Views of the Island's player share its lookup and playback state. Cue-boundary timers advance lines and a four-second local-clock refresh corrects timing; there is no 250 ms lyric polling. Closing the last view stops its helper and timers unless the playing Island still needs them. Paused players with no open view are idle. Mode, follow and Island preferences are included in presets and backups.
 
 ## Desktop widget canvas
 

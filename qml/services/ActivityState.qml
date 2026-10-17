@@ -14,6 +14,12 @@ QtObject {
     readonly property bool hasMedia: ShellState.demo || player !== null
     readonly property bool playing: ShellState.demo ? demoPlaying : player ? player.isPlaying : false
     readonly property string track: ShellState.demo ? "A little more space" : display ? display.title || display.identity : "No player connected"
+    property LyricsSession lyrics: LyricsSession {
+        player: root.player
+        active: ShellState.preferences.activityLyrics !== false && ShellState.preferences.activityEnabled !== false && root.kind === "media" && root.playing && !ShellState.demo
+    }
+    readonly property string mediaTitle: playing && ShellState.preferences.activityLyrics !== false && ShellState.preferences.lyricsEnabled !== false && lyrics.wanted && lyrics.currentText.trim()
+        ? lyrics.currentText.replace(/\s+/g, " ") : track
     readonly property string artist: ShellState.demo ? ShellState.shellName + " Sessions" : display ? display.artist || display.identity : "Open a music or video application"
     readonly property string artwork: ShellState.demo ? "" : display ? display.artUrl : ""
     readonly property bool canPlay: ShellState.demo || !!(player && player.canTogglePlaying)
@@ -26,7 +32,7 @@ QtObject {
     readonly property string title: kind === "recording" ? "Recording · " + FocusTimer.format(recording.elapsed || 0)
         : kind === "timer" ? (FocusTimer.mode === 0 ? "Focus" : "Break") + " · " + FocusTimer.format(FocusTimer.remaining)
         : kind === "stopwatch" ? "Stopwatch · " + FocusTimer.format(FocusTimer.stopwatchElapsed)
-        : kind === "media" ? track : (ShellState.niri.windows || []).find(w => w.is_focused)?.title || "Activity Island"
+        : kind === "media" ? mediaTitle : (ShellState.niri.windows || []).find(w => w.is_focused)?.title || "Activity Island"
     readonly property string icon: kind === "recording" ? "record" : kind === "timer" || kind === "stopwatch" ? "clock" : kind === "media" ? "media" : "applications"
     function togglePlaying() { if (ShellState.demo) demoPlaying = !demoPlaying; else if (canPlay) player.togglePlaying(); }
     function previous() { if (!ShellState.demo && canPrevious) player.previous(); }

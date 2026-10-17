@@ -21,7 +21,11 @@ values = {
              **{name: V('b', True) for name in ['CanGoNext', 'CanGoPrevious', 'CanPlay', 'CanPause', 'CanSeek', 'CanControl']}}
 }
 if '--lyrics' in sys.argv:
-    values[PLAYER]['Metadata'] = V('a{sv}', {key: values[PLAYER]['Metadata'].lookup_value(key, None) for key in values[PLAYER]['Metadata'].unpack()} | {'xesam:asText': V('s', '[00:00.00] Opening line\n[00:30.00] Current line\n[00:35.00] Last line')})
+    text = 'Plain opening\nPlain ending' if '--plain-lyrics' in sys.argv else '[00:00.00] Opening line\n[00:30.00] Current line\n[00:35.00] Last line'
+    values[PLAYER]['Metadata'] = V('a{sv}', {key: values[PLAYER]['Metadata'].lookup_value(key, None) for key in values[PLAYER]['Metadata'].unpack()} | {'xesam:asText': V('s', text)})
+if '--double-rate' in sys.argv:
+    values[PLAYER]['Rate'] = V('d', 2.0)
+    values[PLAYER]['MaximumRate'] = V('d', 2.0)
 
 if '--no-controls' in sys.argv:
     values[PLAYER]['CanControl'] = V('b', False)
@@ -46,7 +50,7 @@ position_time = GLib.get_monotonic_time()
 
 def position():
     base = values[PLAYER]['Position'].unpack()
-    return base + GLib.get_monotonic_time() - position_time if values[PLAYER]['PlaybackStatus'].unpack() == 'Playing' else base
+    return base + int((GLib.get_monotonic_time() - position_time) * values[PLAYER]['Rate'].unpack()) if values[PLAYER]['PlaybackStatus'].unpack() == 'Playing' else base
 
 def call(conn, sender, path, interface, method, args, invocation):
     global position_time

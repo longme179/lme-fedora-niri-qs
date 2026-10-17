@@ -1,5 +1,15 @@
 # Validation and platform limits
 
+## Lyric modes and Island captions — 2026-10-17
+
+The final private suite completes **305 tests: 274 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Native media/Activity, desktop, lyrics, Bluetooth, polling and popup-motion checks were enabled. Whole-tree lint covers 123 QML files with **zero errors and the same 57 existing warnings**; changed lyric components, state and Behavior page pass focused lint without diagnostics.
+
+Lyrics regressions cover saved defaults and preset/backup round trips; shared Island/view readers; transcript/current-line switching; default follow, manual scroll and reopening; pause/resume, seeking and cue boundaries; 2× playback with no visible timeline; player disconnect/reconnect; disabling lyrics/Island captions; plain lyrics, missing timing and title fallback. Disconnect testing exposed a stale timing binding reading a null player; the scheduler now checks the current player before reading it. Lookups remain bounded and offline/local/cache tests still pass. No runtime package was added.
+
+A private native Wayland render was inspected for both lyric modes in the actual Activity popup and for Settings → Behavior. The popup resized from 897 px for the transcript to 741 px for the current line, with content inside the card and the popup heading retained. The compact title was confirmed to contain the current cue. Render logs contain no TypeError, ReferenceError, assignment or binding-loop diagnostics. Source attribution and the inspected end4-pC revision/license are recorded in THIRD_PARTY.md.
+
+Target checks: play a timed local song, then a browser song; select both lyric modes, scroll manually and press Follow, seek, pause/resume and change tracks. Close all panels and confirm Island lines continue, then disable its lyric switch and confirm the track title returns. Enable online lookup only if wanted; live LRCLIB coverage and browser metadata matching were not validated against the user's music. Fedora/niri blur composition and perceived motion on the 120 Hz laptop remain hardware checks.
+
 ## Restored edge popup motion — 2026-10-17
 
 The full private suite completes **300 tests: 269 passed, 31 skipped**, plus Bash syntax checks and the demo snapshot. Native bar clicks verify the first Control Center and Activity Island frame starts outside the actual output with opaque content. Motion checks cover all four edges, top/bottom Island placement, reversal without reset, prompt closure, resize while open, repeated openings and reduced motion. Legacy settings/import regressions preserve colors, fonts and appearance profiles while dropping the retired connected-surface flag. Focused changed-control lint has no errors; ShellState retains two existing ExitStatus metadata warnings. The connected-surface checks below describe the preceding implementation, now removed.

@@ -8,8 +8,21 @@ ColumnLayout {
     spacing: 20
     SettingsCard {
         title: "Lyrics"
-        description: "Open Lyrics in either media card. Player metadata and local .lrc files are used first; LRCLIB results are cached. Online lookup sends track title, artist, album and duration to lrclib.net only while lyrics are open."
-        PreferenceSwitch { title: "Show lyrics controls"; detail: "Display synchronized or plain lyrics in media cards"; preference: "lyricsEnabled" }
+        description: "Open Lyrics in a media card. Player metadata and local .lrc files are used first; LRCLIB results are cached. Online lookup sends track title, artist, album and duration to lrclib.net while a lyrics view is open or Activity Island displays lyrics during playback."
+        PreferenceSwitch { title: "Enable lyrics"; detail: "Display synchronized or plain lyrics in media cards"; preference: "lyricsEnabled" }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Display mode"; Layout.fillWidth: true }
+            LiquidComboBox {
+                objectName: "lyricsDisplayMode"
+                model: ["Full transcript · scroll", "Current line"]
+                currentIndex: ShellState.preferences.lyricsMode === "line" ? 1 : 0
+                Accessible.name: "Lyrics display mode"
+                onActivated: ShellState.run("setting", {key: "lyricsMode", value: currentIndex ? "line" : "scroll"})
+            }
+        }
+        PreferenceSwitch { title: "Follow lyrics by default"; detail: "Center the current line in the full transcript; manual scrolling pauses follow until you press Follow"; preference: "lyricsFollow" }
+        PreferenceSwitch { title: "Lyrics on Activity Island"; detail: "Show the current synchronized line while playing; use the track title when lyrics or timing are unavailable"; preference: "activityLyrics" }
         PreferenceSwitch { title: "Online lyrics · LRCLIB"; detail: "Optional network lookup; cached and local lyrics work offline"; preference: "lyricsOnline" }
     }
     SettingsCard {

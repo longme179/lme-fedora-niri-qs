@@ -213,7 +213,7 @@ Gesture defaults reference [Noctalia widget_gesture_defaults.cpp](https://github
 
 ## Stable media presentation
 
-`MediaPresentation.qml` adapts [DMS MediaPresentation.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Modules/DDash/Media/MediaPresentation.qml) (MIT ©2025-2026 Avenge Media LLC; license retained in `third_party/DankMaterialShell-LICENSE`). The modified LME version retains a coherent cosmetic snapshot for bounded metadata/player-loss grace periods. Live capabilities and transport controls always use the real player.
+`MediaPresentation.qml` adapts [DMS MediaPresentation.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Modules/DDash/Media/MediaPresentation.qml) (MIT ©2025 Avenge Media LLC; license retained in `third_party/DankMaterialShell-LICENSE`). The modified LME version retains a coherent cosmetic snapshot for bounded metadata/player-loss grace periods. Live capabilities and transport controls always use the real player.
 
 ## Ambient Material media shapes
 

@@ -1,10 +1,12 @@
 """Native MPRIS capability guards and pointer/keyboard media controls."""
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import test_local_qml as qml_tests
 from test_backend import backend
 from settings_transfer import document, validate_document
@@ -34,7 +36,7 @@ class MediaControlQmlCase(unittest.TestCase):
     def test_seek_shuffle_repeat_through_real_mpris(self):
         with tempfile.TemporaryDirectory() as directory:
             events = Path(directory) / 'events.jsonl'
-            with unittest.mock.patch.dict(os.environ, LME_MPRIS_EVENTS=str(events)):
+            with patch.dict(os.environ, LME_MPRIS_EVENTS=str(events)):
                 self.player()
             result = self.run_qml('import QtTest\nimport Quickshell.Services.Mpris\nimport "qml/components"\nimport "qml/services"', '''
     property var player: Mpris.players.values[0] || null
@@ -106,3 +108,70 @@ class MediaControlQmlCase(unittest.TestCase):
     } }
 ''', {'LME_SHELL_DEMO': '0', 'LME_SHELL_BACKEND_DEMO': '1'})
         self.assertEqual(result, dict(seek=False, shuffle=False, repeat=False))
+
+    def test_track_change_during_drag_does_not_seek_the_new_track(self):
+        with tempfile.TemporaryDirectory() as directory:
+            events = Path(directory) / 'events.jsonl'
+            with patch.dict(os.environ, LME_MPRIS_EVENTS=str(events)):
+                self.player()
+            result = self.run_qml('import QtTest\nimport Quickshell.Services.Mpris\nimport "qml/components"', '''
+    property var player: Mpris.players.values[0] || null
+    property int phase: 0
+    property int ticks: 0
+    FloatingWindow {
+        implicitWidth: 500; implicitHeight: 200
+        MediaProgress { id: progress; width: 460; player: fixture.player }
+    }
+    TestCase { id: pointer; when: false }
+    function slider(item) {
+        if (item.objectName === "mediaSeek") return item;
+        for (const child of item.children || []) { const found = slider(child); if (found) return found; }
+        return null;
+    }
+    Timer {
+        interval: 120; running: true; repeat: true
+        onTriggered: {
+            if (++fixture.ticks > 50) { fixture.finish({timeout: fixture.phase}); return; }
+            if (!fixture.player || !progress.canSeek) return;
+            const slider = fixture.slider(progress);
+            if (fixture.phase === 0) { fixture.player.pause(); fixture.phase++; }
+            else if (fixture.phase === 1 && !fixture.player.isPlaying) {
+                pointer.mousePress(slider, 40, 16); pointer.mouseMove(slider, 350, 16);
+                fixture.player.previous(); fixture.phase++;
+            } else if (fixture.phase === 2 && fixture.player.trackTitle === "Previous track") {
+                pointer.mouseRelease(slider, 350, 16); fixture.phase++;
+            } else if (fixture.phase === 3) fixture.finish({complete: true});
+        }
+    }
+''', {'LME_SHELL_DEMO': '0', 'LME_SHELL_BACKEND_DEMO': '1'})
+            self.assertEqual(result, {'complete': True})
+            calls = [json.loads(line) for line in events.read_text().splitlines()]
+            self.assertFalse(any(method == 'SetPosition' for method,args in calls), calls)
+
+
+@unittest.skipUnless(shutil.which('quickshell'), 'Quickshell is required')
+class MediaResponsiveCase(unittest.TestCase):
+    run_qml = qml_tests.LocalQmlCase.run_qml
+
+    def test_large_font_controls_stay_inside_a_narrow_card(self):
+        result = self.run_qml('import "qml/components"\nimport "qml/services"', '''
+    FloatingWindow {
+        implicitWidth: 300; implicitHeight: 600
+        MediaActions { id: actions; width: 200 }
+    }
+    Component.onCompleted: ShellState.snapshot = Object.assign({}, ShellState.snapshot,
+        {preferences: Object.assign({}, ShellState.preferences, {fontSize: 24})})
+    function buttons(item) {
+        let result = item.objectName.startsWith("media") ? [item] : [];
+        for (const child of item.children || []) result = result.concat(buttons(child));
+        return result;
+    }
+    Timer { interval: 150; running: true; onTriggered: {
+        const controls = fixture.buttons(actions);
+        fixture.finish({count: controls.length, inside: controls.every(button => {
+            const p = button.mapToItem(actions, 0, 0);
+            return p.x >= -.1 && p.x + button.width <= actions.width + .1;
+        })});
+    } }
+''')
+        self.assertEqual(result, dict(count=5, inside=True))

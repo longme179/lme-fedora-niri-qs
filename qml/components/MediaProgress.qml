@@ -9,12 +9,13 @@ import "../theme"
 ColumnLayout {
     id: root
     property MprisPlayer player
-    property bool playing: ShellState.demo || !!(player && player.isPlaying)
+    property bool playing: ShellState.demo ? ActivityState.demoPlaying : !!(player && player.isPlaying)
     readonly property bool hasMedia: ShellState.demo || player !== null
     readonly property real duration: ShellState.demo ? 240 : player && player.lengthSupported && Number.isFinite(player.length) ? Math.max(0, player.length) : 0
     readonly property bool progressAvailable: ShellState.demo || !!(player && player.positionSupported && duration > 0)
     readonly property real position: ShellState.demo ? 64 : progressAvailable && Number.isFinite(player.position) ? Math.max(0, Math.min(duration, player.position)) : 0
     readonly property bool canSeek: ShellState.preferences.mediaControls !== false && !ShellState.demo && !!(player && player.canControl && player.canSeek && progressAvailable)
+    function trackKey(source: MprisPlayer): string { return source ? String(source.metadata["mpris:trackid"] || source.trackTitle || "") : ""; }
     function seek(seconds) {
         if (!canSeek || !Number.isFinite(seconds)) return;
         player.position = Math.max(0, Math.min(duration, seconds));
@@ -40,8 +41,25 @@ ColumnLayout {
             from: 0; to: Math.max(1, root.duration); stepSize: 5; live: true
             leftPadding: 4; rightPadding: 4; hoverEnabled: true
             Accessible.name: "Seek playback"
-            onPressedChanged: if (!pressed && enabled) root.seek(value)
-            onMoved: if (!pressed && enabled) root.seek(value)
+            property MprisPlayer dragPlayer: null
+            property string dragTrack: ""
+            onPressedChanged: {
+                if (pressed) { dragPlayer = root.player; dragTrack = root.trackKey(root.player); }
+                else {
+                    if (enabled && root.visible && (root.Window.window?.visible ?? false) && root.player === dragPlayer && root.trackKey(root.player) === dragTrack) root.seek(value);
+                    dragPlayer = null;
+                }
+            }
+            Keys.onPressed: event => {
+                if (!enabled) return;
+                let target = root.position;
+                if ([Qt.Key_Right, Qt.Key_Up].includes(event.key)) target += 5;
+                else if ([Qt.Key_Left, Qt.Key_Down].includes(event.key)) target -= 5;
+                else if (event.key === Qt.Key_Home) target = 0;
+                else if (event.key === Qt.Key_End) target = root.duration;
+                else return;
+                event.accepted = true; root.seek(target);
+            }
             background: Item {}
             handle: Rectangle {
                 x: scrub.leftPadding + scrub.visualPosition * scrub.availableWidth - width / 2

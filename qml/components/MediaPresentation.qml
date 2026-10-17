@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025-2026 Avenge Media LLC
+// Copyright (c) 2025 Avenge Media LLC
 // Adapted from DMS MediaPresentation (8e690022); LME retains cosmetic metadata only.
 import QtQuick
 

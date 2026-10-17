@@ -1,5 +1,11 @@
 # Validation and platform limits
 
+## Media interaction review — 2026-10-17
+
+Final validation: `scripts/check.sh` completed **285 tests: 248 passed, 37 skipped**, with the private MPRIS, Bluetooth, Activity and polling-UI opt-ins enabled. All 19 changed QML files pass focused lint without diagnostics; Bash syntax, demo state and diff whitespace checks pass. Whole-tree lint has zero errors and the same 40 toolchain warnings as baseline. No Bluetooth helper remains after panel shutdown.
+
+A new native MPRIS regression first reproduced a seek sent to the new track when a track changed during a pointer drag. The release now checks the player/track captured on press and the card/window visibility. Keyboard seeks are handled separately; ordinary click/drag/keyboard, shuffle and repeat still pass. Another QML check sets 24 px body text in a 200 px media card and verifies that all five controls stay within its bounds; controls stack when their measured widths do not fit. The demo progress follows play/pause consistently. Native root smoke checks opened eight panels and Settings → Top bar on private Sway without QML runtime errors.
+
 ## Native Bluetooth pairing — 2026-10-17
 
 Seven focused checks pass against an isolated D-Bus daemon and a Gio BlueZ fixture: scan/stop, PIN and numeric passkey entry, numeric confirmation, authorization/service requests, keyboard display codes, invalid/stale replies, rejection/cancel, scan/prompt deadlines, adapter changes and BlueZ owner loss/re-registration. A Qt-input UI test scans, pairs with a leading-zero PIN, connects, closes/reopens Devices and handles a rapid reopen without leaving the agent stopped. Closing stops owned discovery and cancels pairing. The agent is on demand and does not request default-agent ownership.
@@ -910,3 +916,11 @@ These checks use Quickshell 0.3.2 / Qt 6.8.2 on private Sway. The exact stale
 instance on the owner's Fedora/niri session was not inspected; its IPC output
 was suppressed by the old launcher. The target desktop still needs a check
 after updating the installed `gpt` configuration.
+
+## Target-machine checks for gestures, media and pairing
+
+1. In Settings → Top bar, assign a gesture and restart the shell to confirm persistence. Scroll audio, right-click mute and right-click notifications/DND; verify that secondary clicks do not open the primary panel.
+2. Play browser and desktop-player media. Click/drag the timeline, use arrow keys/Home/End, and try shuffle/repeat where supported. Change tracks during a drag; releasing must not seek the new track.
+3. Switch players and rapidly change tracks while watching both media cards. Metadata retention is bounded; controls must immediately follow the live player's capabilities.
+4. Pause, close the media panel, disable animations and toggle Moving media shapes. Check that motion stops and the controls stay readable with the configured font size.
+5. With `python3-gobject-base` installed, scan in Control center → Devices. Test a headset and, if available, a PIN/passkey keyboard. Confirm, reject and cancel a request, switch adapters if present, and close/reopen Devices while scanning or pairing. Check that only the shell's discovery/pairing session stops. These hardware tests have not been performed in the cloud.

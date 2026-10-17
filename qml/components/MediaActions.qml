@@ -8,6 +8,9 @@ import "../services"
 
 ColumnLayout {
     id: root
+    // Child grids choose columns from our width; do not let their current row cap it.
+    Layout.minimumWidth: 0
+    Layout.maximumWidth: Infinity
     property MprisPlayer player
     property string prefix: "media"
     readonly property bool canShuffle: !ShellState.demo && !!(player && player.canControl && player.shuffleSupported)

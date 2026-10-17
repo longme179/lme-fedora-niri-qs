@@ -175,3 +175,38 @@ class MediaResponsiveCase(unittest.TestCase):
     } }
 ''')
         self.assertEqual(result, dict(count=5, inside=True))
+
+    def test_nested_layout_uses_card_width_and_reflows_after_font_and_size_changes(self):
+        result = self.run_qml('import QtQuick.Layouts\nimport "qml/components"\nimport "qml/services"', '''
+    property int phase: 0
+    property var states: []
+    FloatingWindow {
+        implicitWidth: 600; implicitHeight: 700
+        ColumnLayout {
+            id: card; width: 400
+            MediaActions { id: actions; Layout.fillWidth: true }
+        }
+    }
+    function controls(item) {
+        let result = item.objectName.startsWith("media") ? [item] : [];
+        for (const child of item.children || []) result = result.concat(controls(child));
+        return result;
+    }
+    Timer { interval: 150; repeat: true; running: true; onTriggered: {
+        const buttons = fixture.controls(actions);
+        const points = buttons.map(button => button.mapToItem(actions, 0, 0));
+        fixture.states.push({width: actions.width, available: card.width,
+            row: Math.abs(points[0].y-points[1].y)<.1 && Math.abs(points[1].y-points[2].y)<.1,
+            inside: buttons.every((button,i) => points[i].x>=-.1 && points[i].x+button.width<=actions.width+.1)});
+        if (fixture.phase++ === 0) {
+            card.width=152;
+            ShellState.snapshot=Object.assign({},ShellState.snapshot,{preferences:Object.assign({},ShellState.preferences,{fontSize:24})});
+        } else if (fixture.phase===2) card.width=520;
+        else fixture.finish(fixture.states);
+    } }
+''')
+        for state in result:
+            self.assertAlmostEqual(state['width'], state['available'], delta=.1)
+            self.assertTrue(state['inside'], state)
+        self.assertTrue(result[0]['row'] and result[2]['row'], result)
+        self.assertFalse(result[1]['row'], result)

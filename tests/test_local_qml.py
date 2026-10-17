@@ -41,6 +41,8 @@ ShellRoot {
             self.assertEqual(result.returncode, 0, log)
             self.assertNotIn("TypeError", log)
             self.assertNotIn("ReferenceError", log)
+            self.assertNotIn("Unable to assign", log)
+            self.assertNotIn("Binding loop", log)
             lines = [line.split("LOCAL_QML_RESULT ", 1)[1] for line in log.splitlines() if "LOCAL_QML_RESULT " in line]
             self.assertEqual(len(lines), 1, log)
             return json.loads(lines[0])

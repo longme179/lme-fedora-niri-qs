@@ -60,7 +60,7 @@ Flickable {
             LiquidButton {
                 objectName: "bluetoothScan"
                 text: BluetoothState.state.scanPending ? "Starting scan…" : BluetoothState.state.scanning ? "Stop scanning" : "Scan for devices"
-                enabled: root.bluetooth.enabled && BluetoothState.state.ready && !BluetoothState.state.scanPending
+                enabled: !!root.bluetooth.enabled && BluetoothState.state.ready && !BluetoothState.state.scanPending
                 onClicked: BluetoothState.scan(!BluetoothState.state.scanning)
             }
             LiquidButton { visible: !BluetoothState.state.ready; text: "Retry"; onClicked: BluetoothState.retry() }

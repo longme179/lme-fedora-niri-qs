@@ -6,7 +6,7 @@ from pathlib import Path
 from desktop_features import APPEARANCE_KEYS
 
 PORTABLE = set(APPEARANCE_KEYS) | {
-    'shellName',
+    'shellName','surfaceStyle',
     'desktopShapeCount','desktopShapeScale','desktopShapeOpacity','desktopShapeSpeed','desktopShapeStyle','desktopShapeRotation',
     'notificationWidth','notificationPosition','notificationMargin','notificationRadius','notificationPadding','notificationOpacity',
     'notificationBorderWidth','notificationTitleSize','notificationBodySize','notificationIdleAnimation','notificationIdleSpeed',

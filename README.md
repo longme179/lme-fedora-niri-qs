@@ -61,7 +61,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
-| **Themes and fonts** | Per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes with scheme, light/dark and contrast controls. |
+| **Themes and fonts** | Smoked glass by default, optional Liquid glass, per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes. |
 
 ## Installation
 
@@ -194,6 +194,13 @@ or `./scripts/settings.sh`. It runs in its own window and shares saved preferenc
 with the shell, even when the shell is stopped.
 
 Choose **Appearance → Shell name** to give your desktop a name of your own.
+
+**Appearance → Surface style → Liquid glass** switches to neutral, translucent
+surfaces with refractive edges and pointer highlights. Turn it off to return to
+your saved colors and opacity. Fonts, layout, corner shapes and motion keep
+their settings. Enable the niri blur configuration above for live blur;
+[rendering details and limits](docs/CONFIGURATION.md#surface-style) explain the
+wallpaper-based edge effect and software fallback.
 
 ![LME Settings showing popup blur, spring motion, shape morphing and animation presets](https://github.com/user-attachments/assets/5a87fa0e-b7d2-47a4-968b-f78510552d0a)
 
@@ -380,7 +387,11 @@ geometry and recording workflow adaptations are modified for LME; copyright,
 licenses and the iNiR notice are retained.
 
 LME's original code is **GPL-3.0-or-later**, with retained GPL-3.0-only terms in
-adapted upstream components. See [LICENSE](LICENSE), [THIRD_PARTY.md](THIRD_PARTY.md)
+adapted upstream components. The optional Liquid renderer adapts
+[Serpantinum](https://github.com/ilyamiro/serpantinum) by Illia Miroshnichenko,
+under **AGPL-3.0-or-later**. GPLv3 section 13 permits this combination; the
+combined work follows AGPLv3's interaction requirements while individual files
+retain their licenses. See [LICENSE](LICENSE), [THIRD_PARTY.md](THIRD_PARTY.md)
 and `third_party/` for attribution and licensing. Purchased Dracula Pro assets
 and fonts are not bundled. Demo wallpaper and artwork belong to their respective
 creators.

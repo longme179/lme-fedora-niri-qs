@@ -18,6 +18,7 @@ Rectangle {
     property bool awaiting: false
     radius: Theme.smallRadius
     color: Theme.surfaceContainerHigh
+    GlassMaterial { anchors.fill: parent; radius: parent.radius }
     border.width: slider.visualFocus ? 2 : 1
     border.color: slider.visualFocus ? accent : Theme.border
     implicitHeight: Theme.compact ? 82 : 90

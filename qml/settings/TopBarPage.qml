@@ -159,10 +159,11 @@ ColumnLayout {
                 Binding { target: cornerRadius; property: "value"; value: Theme.barCornerRadius(cornerRow.modelData, Theme.barHeight, root.styleZone); when: !cornerRadius.pressed; restoreMode: Binding.RestoreNone }
             }
         }
+        LabelText { visible: Theme.liquidGlass; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; text: "Liquid glass uses its own fill and outline. Your saved colors and border thickness return in Smoked mode; corners still apply here." }
         LabelText { text: "Outline · " + Math.round(outline.value) + " px (0 hides the border)"; font.weight: Font.Bold }
         LiquidSlider {
             id: outline; objectName: "barBorderWidth"; Layout.fillWidth: true; from: 0; to: 4; stepSize: 1
-            enabled: root.ready; Accessible.name: "Bar border thickness"
+            enabled: root.ready && !Theme.liquidGlass; Accessible.name: "Bar border thickness"
             onMoved: if (!pressed) root.patchStyle("borderWidth", Math.round(value))
             onPressedChanged: if (!pressed) root.patchStyle("borderWidth", Math.round(value))
         }
@@ -170,7 +171,7 @@ ColumnLayout {
         Repeater {
             model: [{key: "borderColor", title: "Border color"}, {key: "fillColor", title: "Fill color"}]
             delegate: ColumnLayout {
-                id: colorRow; required property var modelData; Layout.fillWidth: true
+                id: colorRow; required property var modelData; Layout.fillWidth: true; enabled: !Theme.liquidGlass
                 property string error: ""
                 readonly property color selectedColor: root.styleColor(modelData.key)
                 function sync() { if (hex && !hex.activeFocus) hex.text = selectedColor.toString(); }
@@ -198,7 +199,7 @@ ColumnLayout {
                 LabelText { visible: !!colorRow.error; text: colorRow.error; color: Theme.red; Layout.fillWidth: true }
             }
         }
-        LiquidButton { visible: !!root.styleZone; text: "Reset this island"; enabled: root.ready; onClicked: ShellState.run("setting", {key: "barIslandStyles", token: root.styleZone, value: ""}) }
+        LiquidButton { visible: !!root.styleZone; text: "Reset this island"; enabled: root.ready && !Theme.liquidGlass; onClicked: ShellState.run("setting", {key: "barIslandStyles", token: root.styleZone, value: ""}) }
     }
     Repeater {
         model: BarRegistry.zones

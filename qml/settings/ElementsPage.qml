@@ -29,7 +29,9 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Color your elements"
-        description: "Change individual UI classes using #RRGGBB or #AARRGGBB (alpha first). Reset returns an element to its inherited palette. Changes apply immediately and save in Appearance profiles."
+        enabled: !Theme.liquidGlass
+        description: Theme.liquidGlass ? "Liquid glass is active. Switch it off in Appearance to edit your saved element colors. Font settings below still apply."
+            : "Change individual UI classes using #RRGGBB or #AARRGGBB (alpha first). Reset returns an element to its inherited palette. Changes apply immediately and save in Appearance profiles."
         PreferenceSwitch { title: "Visual color picker"; detail: "Choose HSV and opacity, with alpha-first hex input"; preference: "colorPicker" }
         RowLayout {
             Layout.fillWidth: true

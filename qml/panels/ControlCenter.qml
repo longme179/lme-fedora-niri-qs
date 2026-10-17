@@ -54,7 +54,8 @@ GlassPanel {
                 property var profiles: ShellState.preferences.appearanceProfiles || []
                 model: profiles.map(p => p.name)
                 currentIndex: profiles.findIndex(p => Object.keys(p).filter(k => k !== "name").every(k => Theme.settingsEqual(p[k], ShellState.preferences[k])))
-                displayText: currentIndex >= 0 ? currentText : "Custom appearance"
+                enabled: !Theme.liquidGlass
+                displayText: Theme.liquidGlass ? "Liquid glass" : currentIndex >= 0 ? currentText : "Custom appearance"
                 Accessible.name: "Quick appearance profile"
                 onActivated: ShellState.run("appearanceApply", {name: currentText})
             }

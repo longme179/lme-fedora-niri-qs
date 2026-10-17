@@ -1,0 +1,20 @@
+Serpantinum Liquid Glass renderer
+Copyright (C) 2026 Illia Miroshnichenko
+License: AGPL-3.0-or-later; full text: Serpantinum-LICENSE.md
+Source: https://github.com/ilyamiro/serpantinum
+Revision: cfdd81039163feab0609cac76521ae62c85a2609
+
+Adapted files:
+- src/quickshell/reusables/display/LiquidGlass.qml -> qml/components/GlassOptics.qml
+- src/assets/shaders/effects/liquid_glass.frag -> qml/components/shaders/liquid-glass.frag
+  (including its compiled .qsb artifact)
+
+LME changes: local/theme paths, optional source texture, transparent hybrid body,
+bounded wallpaper refraction at the rim, and premultiplied highlight coverage.
+The real application backdrop remains compositor-owned; no live desktop capture
+is performed. The surrounding lifecycle/neutral-theme integration is LME code.
+
+These adapted files remain AGPL-3.0-or-later. LME's GPLv3-covered portions retain
+their licenses; combining the renderers follows GPLv3/AGPLv3 section 13, including
+the AGPL remote-network source requirements when applicable to the combination.
+This notice does not relicense third-party GPL, MIT or other covered files.

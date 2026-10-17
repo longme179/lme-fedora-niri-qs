@@ -68,7 +68,7 @@ ColumnLayout {
                 LiquidSlider {
                     id: slider; objectName: row.modelData.key
                     Layout.fillWidth: true; from: row.modelData.low; to: row.modelData.high; stepSize: 1
-                    enabled: ShellState.backendReady
+                    enabled: ShellState.backendReady && (!Theme.liquidGlass || !["notificationOpacity", "notificationBorderWidth"].includes(row.modelData.key))
                     Accessible.name: "Notification " + row.modelData.title.toLowerCase()
                     onMoved: if (!pressed) row.save()
                     onPressedChanged: if (!pressed) row.save()
@@ -79,9 +79,11 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Colors and fonts"
-        description: "Choose a color to edit HSV, alpha or hex. Notification colors also appear in Elements and fonts and are saved with Appearance profiles."
+        description: Theme.liquidGlass ? "Liquid glass uses neutral colors, its own opacity and a thin outline. Switch it off in Appearance to edit saved colors. Font and layout settings still apply."
+            : "Choose a color to edit HSV, alpha or hex. Notification colors also appear in Elements and fonts and are saved with Appearance profiles."
         Flow {
             id: swatches
+            enabled: !Theme.liquidGlass
             Layout.fillWidth: true; spacing: 8
             Repeater {
                 model: ["notificationFill", "notificationTitle", "notificationBody", "notificationAccent", "notificationBorder"]
@@ -101,7 +103,7 @@ ColumnLayout {
         }
         Flow {
             Layout.fillWidth: true; spacing: 8
-            LiquidButton { text: "Reset notification colors"; onClicked: { const colors = Object.assign({}, ShellState.preferences.themeOverrides || {}); for (const key of ["notificationFill", "notificationTitle", "notificationBody", "notificationAccent", "notificationBorder"]) delete colors[key]; ShellState.run("setting", {key: "themeOverrides", value: colors}); } }
+            LiquidButton { text: "Reset notification colors"; enabled: !Theme.liquidGlass; onClicked: { const colors = Object.assign({}, ShellState.preferences.themeOverrides || {}); for (const key of ["notificationFill", "notificationTitle", "notificationBody", "notificationAccent", "notificationBorder"]) delete colors[key]; ShellState.run("setting", {key: "themeOverrides", value: colors}); } }
             LiquidButton { text: "Font families…"; onClicked: root.fontSettingsRequested() }
         }
     }

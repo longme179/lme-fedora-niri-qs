@@ -6,6 +6,20 @@ import "../services"
 
 QtObject {
     id: root
+    readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
+    readonly property var glassColors: ({
+        background:"#151b23", panel:"#1c2530", surface:"#303b48", text:"#f5f8fc", muted:"#c6d0dc", border:"#80ffffff",
+        purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
+        primaryContainer:"#50667588", secondaryContainer:"#404b5968", tertiaryContainer:"#40546470",
+        surfaceContainer:"#263341", surfaceContainerHigh:"#403d4a59", onPrimary:"#151b23",
+        buttonFill:"#403d4a59", buttonHover:"#6655687b", buttonPressed:"#8065798c", buttonSelected:"#90607080",
+        buttonText:"#f5f8fc", iconColor:"#f5f8fc", iconHover:"#33ffffff",
+        fieldFill:"#59212d3a", fieldText:"#f5f8fc", switchTrack:"#d7e7f5", switchThumb:"#273442",
+        sliderTrack:"#406e8298", sliderFill:"#d7e7f5", barFill:"#1b2530", barBorder:"#55ffffff",
+        barText:"#f5f8fc", barMuted:"#c6d0dc", barHover:"#50667588", workspaceActive:"#d7e7f5", workspaceText:"#151b23",
+        panelFill:"#1b2530", cardFill:"#403d4a59", controlFill:"#1b2530", launcherFill:"#1b2530", islandFill:"#1b2530", settingsFill:"#1b2530",
+        notificationFill:"#1b2530", notificationTitle:"#f5f8fc", notificationBody:"#d2dbe5", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
+    })
     property var custom: ({})
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})
     readonly property var fonts: ShellState.preferences.fontOverrides || ({})
@@ -22,7 +36,7 @@ QtObject {
             catch (error) { console.warn("Palette catalog could not be loaded:", error); }
         }
     }
-    function colorFor(key, fallback) { return overrides[key] || generated[key] || fallback; }
+    function colorFor(key, fallback) { return liquidGlass ? glassColors[key] || fallback : overrides[key] || generated[key] || fallback; }
     function tokenColor(key) { return root[key]; }
     function tokenTitle(key) { return key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()); }
     function settingsEqual(a, b) {
@@ -48,7 +62,7 @@ QtObject {
     readonly property color yellow: colorFor("yellow", custom.yellow || "#ffff80")
     readonly property color red: colorFor("red", custom.red || "#ff9580")
     readonly property color border: colorFor("border", custom.border || "#605975")
-    readonly property color accent: ShellState.preferences.accent || purple
+    readonly property color accent: liquidGlass ? "#d7e7f5" : ShellState.preferences.accent || purple
     // Material color roles retain the user's Dracula palette and glass opacity.
     readonly property color primaryContainer: colorFor("primaryContainer", mix(panel, accent, 0.30))
     readonly property color secondaryContainer: colorFor("secondaryContainer", mix(panel, pink, 0.22))
@@ -90,8 +104,8 @@ QtObject {
     readonly property int notificationMargin: ShellState.preferences.notificationMargin ?? 14
     readonly property int notificationRadius: ShellState.preferences.notificationRadius ?? 28
     readonly property int notificationPadding: ShellState.preferences.notificationPadding ?? 16
-    readonly property real notificationOpacity: ShellState.preferences.notificationOpacity ?? .90
-    readonly property int notificationBorderWidth: ShellState.preferences.notificationBorderWidth ?? 1
+    readonly property real notificationOpacity: liquidGlass ? .58 : ShellState.preferences.notificationOpacity ?? .90
+    readonly property int notificationBorderWidth: liquidGlass ? 1 : ShellState.preferences.notificationBorderWidth ?? 1
     readonly property int notificationTitleSize: ShellState.preferences.notificationTitleSize ?? 14
     readonly property int notificationBodySize: ShellState.preferences.notificationBodySize ?? 13
     readonly property bool notificationIdleAnimation: ShellState.preferences.notificationIdleAnimation !== false
@@ -101,7 +115,7 @@ QtObject {
     readonly property int activityPopupMaxHeight: ShellState.preferences.activityPopupMaxHeight ?? 0
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
-    readonly property real panelOpacity: ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
+    readonly property real panelOpacity: liquidGlass ? .55 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42
@@ -111,7 +125,7 @@ QtObject {
     function cornersFor(zone) { return zone ? islandStyle(zone).corners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1}) : barCorners; }
     function barCornerRadius(corner, height, zone) {
         const value = cornersFor(zone || "")[corner];
-        return value === undefined || value < 0 ? height / 2 : Math.min(value, height / 2);
+        return Math.max(0, value === undefined || value < 0 ? height / 2 : Math.min(value, height / 2));
     }
     readonly property int barFontSize: ShellState.preferences.barFontSize || 13
     readonly property int barFontWeight: Font.Medium

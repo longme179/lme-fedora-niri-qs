@@ -1,5 +1,37 @@
 # Validation and platform limits
 
+## Optional Liquid glass — 2026-10-17
+
+`scripts/check.sh` completed **321 tests: 320 passed, one skipped**, with the
+expanded private Wayland suites listed below. The skip requires a real Matugen
+binary. Bash syntax and the demo snapshot passed. Whole-tree lint covers
+**129 QML files: zero errors, 57 existing warnings**; changed/new glass components
+pass focused lint without diagnostics. The bundled shader was rebuilt with Qt
+6.8.2's `qsb` for the existing cross-platform targets.
+
+Six new regressions cover preference validation, persistence and portable
+presets/backups; separation from Material profiles; all neutral color roles;
+exact restoration of saved colors, opacity and per-island styles; retained font,
+corner and motion settings; native Settings input and software fallback. GPU
+checks use Mesa OpenGL under private Sway and exercise one shared texture per
+window, separate windows, destruction, hidden consumers, ten repeated mode
+cycles, resize, Jelly-v2 reversal/settling, live geometry mapping and button
+input. The lifecycle/motion check also passes at output scale 2.
+
+Rendered-pixel assertions check a transparent center, rounded corners, visible
+refraction affected by the actual texture and a safe missing-image fallback.
+A portrait wallpaper with spaces and `#` in its path verifies URL handling and
+center cropping. Actual shell/Settings entry points rendered Activity Island,
+Control Center and Appearance; their images were inspected. The final topbar
+Settings capture loads without warnings after guarding temporarily negative
+preview dimensions. No package, desktop screencopy or polling loop was added.
+
+Tests use Quickshell 0.3.2 / Qt 6.8.2. Live niri blur, Radeon/RTX frame pacing,
+power use and Vulkan/Metal rendering have not been measured here. Refraction
+uses the saved wallpaper only at the rim; live apps remain compositor-owned.
+Moved floating windows and wallpaper transitions have the approximations
+described in [Surface style](CONFIGURATION.md#surface-style).
+
 ## Always-on wallpaper shapes and visual controls — 2026-10-17
 
 The desktop layer now depends only on `desktopShapes`, independently of media.

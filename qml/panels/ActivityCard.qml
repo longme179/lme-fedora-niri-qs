@@ -12,6 +12,7 @@ ColumnLayout {
         visible: ActivityState.recording.active === true
         Layout.fillWidth: true; implicitHeight: recordingContent.implicitHeight + 28
         radius: 20; color: Theme.secondaryContainer
+        GlassMaterial { anchors.fill: parent; radius: parent.radius }
         RowLayout {
             id: recordingContent
             anchors.fill: parent; anchors.margins: 14; spacing: 12
@@ -27,6 +28,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true; implicitHeight: mediaContent.implicitHeight + 28
         radius: 22; color: Theme.surfaceContainerHigh
+        GlassMaterial { anchors.fill: parent; radius: parent.radius }
         MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: ActivityState.playing }
         ColumnLayout {
             id: mediaContent
@@ -64,6 +66,7 @@ ColumnLayout {
         Layout.fillWidth: true; implicitHeight: timerContent.implicitHeight + 28
         objectName: "activityTimerCard"
         radius: 22; color: Theme.cardFill
+        GlassMaterial { anchors.fill: parent; radius: parent.radius }
         ColumnLayout {
             id: timerContent
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }

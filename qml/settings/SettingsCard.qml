@@ -11,6 +11,7 @@ Rectangle {
     implicitHeight: column.implicitHeight + Theme.cardPadding * 2
     radius: 24
     color: Theme.alpha(Theme.cardFill, 0.78)
+    GlassMaterial { anchors.fill: parent; radius: root.radius }
     ColumnLayout {
         id: column
         anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: Theme.cardPadding

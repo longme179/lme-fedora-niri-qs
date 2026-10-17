@@ -58,6 +58,7 @@ Item {
             opacity: root.editing || tile.enabled ? 1 : 0.5
             Behavior on radius { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
             Behavior on color { ColorMotion {} }
+            GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: tile.hovered; pressed: tile.down }
         }
         contentItem: GridLayout {
             columns: tile.width < 150 ? 1 : 2; rowSpacing: 5; columnSpacing: 10
@@ -213,6 +214,7 @@ Item {
             MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: ShellState.demo ? ActivityState.demoPlaying : !!root.player && root.player.isPlaying }
             radius: Theme.smallRadius
             color: Theme.surface
+            GlassMaterial { anchors.fill: parent; radius: parent.radius }
             ColumnLayout {
                 id: media
                 anchors.fill: parent
@@ -259,6 +261,7 @@ Item {
         Rectangle {
             implicitHeight: resources.implicitHeight + 28
             radius: Theme.smallRadius; color: Theme.surface
+            GlassMaterial { anchors.fill: parent; radius: parent.radius }
             ColumnLayout {
                 id: resources
                 anchors.fill: parent; anchors.margins: 14

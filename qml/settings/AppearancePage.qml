@@ -9,6 +9,24 @@ ColumnLayout {
     Component.onCompleted: if (ShellState.backendReady) ShellState.run("platformRefresh")
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
     SettingsCard {
+        title: "Surface style"
+        description: "Liquid glass uses neutral colors and refractive edges. Your saved palette, accent, opacity and element colors stay unchanged; switch back to restore them."
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Liquid glass"; Layout.fillWidth: true; font.weight: Font.Medium }
+            ExpressiveSwitch {
+                objectName: "surfaceStyle"; Accessible.name: "Liquid glass"
+                checked: Theme.liquidGlass
+                enabled: ShellState.backendReady && !ShellState.pendingActions.setting
+                onToggled: ShellState.run("setting", {key: "surfaceStyle", value: checked ? "liquid" : "smoked"})
+            }
+        }
+        LabelText {
+            visible: Theme.liquidGlass; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted
+            text: "Palette controls are paused. Fonts, layout, corners and motion still apply. Enable compositor blur below and include niri's popup-blur fragment for a blurred backdrop."
+        }
+    }
+    SettingsCard {
         title: "Shell name"
         description: "Your display name in Settings, the bar's empty-window title and shell notifications."
         RowLayout {
@@ -37,13 +55,13 @@ ColumnLayout {
         title: "Appearance profiles"
         description: "Save accent, opacity, density and motion together. Dracula is your built-in default."
         RowLayout {
-            Layout.fillWidth: true
+            Layout.fillWidth: true; enabled: !Theme.liquidGlass
             LiquidComboBox { id: profiles; Layout.fillWidth: true; model: (ShellState.preferences.appearanceProfiles || []).map(p => p.name); Accessible.name: "Appearance profile" }
             LiquidButton { text: "Apply"; enabled: profiles.currentIndex >= 0 && ShellState.backendReady; onClicked: ShellState.run("appearanceApply", {name: profiles.currentText}) }
             LiquidButton { text: "Delete"; enabled: profiles.currentText !== "Dracula" && profiles.currentIndex >= 0; onClicked: ShellState.run("appearanceDelete", {name: profiles.currentText}) }
         }
         RowLayout {
-            Layout.fillWidth: true
+            Layout.fillWidth: true; enabled: !Theme.liquidGlass
             ExpressiveField { id: profileName; objectName: "appearanceProfileName"; Layout.fillWidth: true; placeholderText: "New profile name"; maximumLength: 40; Accessible.name: "Profile name"; onAccepted: if (text.trim()) ShellState.run("appearanceSave", {name: text.trim()}) }
             LiquidButton { text: "Save current"; enabled: profileName.text.trim().length > 0 && ShellState.backendReady; onClicked: ShellState.run("appearanceSave", {name: profileName.text.trim()}) }
         }
@@ -55,6 +73,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Color palettes"
+        enabled: !Theme.liquidGlass
         description: (Math.max(0, Theme.paletteCatalog.length - 1)) + " Gowall palettes plus LME Dracula. Preview dark or light palettes without changing your desktop, then apply. Save the result as an Appearance profile to switch quickly."
         PalettePicker {}
     }
@@ -76,6 +95,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Accent color"
+        enabled: !Theme.liquidGlass
         description: "Your accent flows into selected controls and surface colors. A licensed palette can be loaded from palette.json."
         RowLayout {
             spacing: 12
@@ -180,7 +200,7 @@ ColumnLayout {
         LiquidSlider {
             id: opacitySlider
             Layout.fillWidth: true; from: 0.72; to: 1; stepSize: 0.01
-            enabled: ShellState.backendReady
+            enabled: ShellState.backendReady && !Theme.liquidGlass
             Accessible.name: "Panel opacity"
             onPressedChanged: if (!pressed) ShellState.run("setting", {key: "opacity", value: Math.round(value * 100) / 100})
             onMoved: if (!pressed) ShellState.run("setting", {key: "opacity", value: Math.round(value * 100) / 100})

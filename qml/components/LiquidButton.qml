@@ -41,6 +41,7 @@ Button {
         border.color: Theme.accent
         Behavior on color { ColorMotion {} }
         Behavior on radius { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
+        GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: root.hovered; pressed: root.down; visible: !root.flat }
     }
     LiquidFeedback { objectName: "liquidFeedback"; z: -.5; hovered: root.hovered; pressed: root.down; originX: root.pressX; originY: root.pressY; radius: root.plate ? root.plate.radius : root.cornerRadius }
     contentItem: Text {

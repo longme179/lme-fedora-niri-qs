@@ -234,6 +234,23 @@ Lyric subscription/cancellation, bounded metadata settling and follow/manual-scr
 
 Per-output records, edit mode and dragging reference [iNiR DesktopWidgetLayout.qml](https://github.com/snowarch/iNiR/blob/48cdcecb0f6089cfbb7019054602eab28e154b3b/services/DesktopWidgetLayout.qml) and `AbstractOverlayWidget.qml` (GPL-3.0 with the retained iNiR NOTICE). LME's implementation is original, uses normalized positions and atomic per-widget field patches, and reuses its own notes/media controls. Each widget is a bounded native layer surface rather than a desktop-sized input overlay.
 
+## Optional Liquid glass renderer
+
+`qml/components/GlassOptics.qml` and `shaders/liquid-glass.frag` (including its
+compiled `.qsb`) adapt Serpantinum's `LiquidGlass.qml` and `liquid_glass.frag` at
+[`cfdd81039163feab0609cac76521ae62c85a2609`](https://github.com/ilyamiro/serpantinum/tree/cfdd81039163feab0609cac76521ae62c85a2609),
+copyright (C) 2026 Illia Miroshnichenko, **AGPL-3.0-or-later**. Full upstream
+license and modification details are retained in
+[`third_party/Serpantinum-LICENSE.md`](third_party/Serpantinum-LICENSE.md) and
+[`third_party/Serpantinum-NOTICE`](third_party/Serpantinum-NOTICE).
+
+LME uses shared, bounded wallpaper textures for rim refraction and leaves the
+body transparent for native niri blur. It does not copy the upstream parent
+discovery/timer/capture system. Text/input and the existing popup layer effect
+remain independent. GPLv3 section 13 allows the GPL/AGPL combination; the copied
+files retain AGPL and the combined work follows AGPLv3's interaction requirements.
+No new runtime library or external service is required.
+
 ## Jelly-v2 motion references
 
 The original LME `PopupElasticity.qml` and `popup-jelly.vert`/`.frag` use documented Qt Quick ShaderEffect, GridMesh and Item Layer APIs. Motion design follows the continuity principles described in [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/). No Apple or Qt implementation source was copied. The existing spring integrator retains the DCommon MIT attribution above; LME's deformation model/shaders use GPL-3.0-or-later.

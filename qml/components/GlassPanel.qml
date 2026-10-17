@@ -8,7 +8,14 @@ Rectangle {
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
     border.width: 1
     border.color: Theme.outlineVariant
+    GlassMaterial {
+        anchors.fill: parent
+        radius: root.radius
+        topLeftRadius: root.topLeftRadius; topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius; bottomRightRadius: root.bottomRightRadius
+    }
     Rectangle {
+        visible: !Theme.liquidGlass
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.max(0, parent.width - parent.radius * 2)

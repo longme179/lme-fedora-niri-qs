@@ -296,6 +296,43 @@ The `clipboard` and `activity` bar modules can occupy any zone. Settings exposes
 these options; [CLIPBOARD_ACTIVITY.md](CLIPBOARD_ACTIVITY.md) explains storage,
 shortcuts and behavior when upgrading an existing layout.
 
+## Surface style
+
+Settings → Appearance → Surface style selects `surfaceStyle`: `"smoked"`
+(default) or `"liquid"`. The switch is saved in settings and portable presets
+and backups. It is independent of Material appearance profiles.
+
+Liquid uses a neutral glass palette for all color roles, including custom bar
+island fills/borders and notifications. Dracula, Matugen, palette.json, accent,
+element overrides, panel/notification opacity and outline thickness remain
+saved but are temporarily bypassed; their editors are paused. Switching back
+reads those same saved values again. There is no backup/restore cycle and no
+bulk preference rewrite. Fonts, sizes, bar placement, module layouts, per-island
+corner geometry, density, features and motion preferences continue to apply.
+
+The material adds rounded refraction, dispersion and pointer highlights to
+shared panel, card and button backgrounds; text and input remain separate.
+It composes with the existing popup spring/Jelly-v2 effect. Native niri blur
+still supplies live apps and desktop shapes behind the transparent body; enable
+the existing bar/popup blur switches and include `config/niri/popup-blur.kdl`.
+This is a hybrid effect: a bounded wallpaper image supplies the thin refractive
+rim, **not live application refraction**. No desktop screenshots or capture
+permissions are used. Wallpaper crossfades and moved floating Settings windows
+are not tracked exactly: the rim uses the saved image and assumes floating
+windows are centered. Layer-shell panels follow their output and margins.
+
+Each visible GPU window shares one wallpaper texture, decoded at half logical
+resolution, capped at 1280 × 720. There are no per-button capture/poll timers;
+texture sampling is confined to the rim. Hiding/destroying the last consumer or
+switching back releases it and unloads the shaders. Missing images retain the
+transparent tint/highlights. Qt's software renderer uses a rounded outline
+instead of refraction. No new runtime package is required; the compiled shader
+is bundled and can be rebuilt with `bash scripts/build-shaders.sh`.
+
+The renderer is adapted from Serpantinum under AGPL-3.0-or-later; see
+[its notice](../third_party/Serpantinum-NOTICE) for the source revision, local
+changes and license.
+
 ## Appearance, displays and desktop libraries
 
 See [Desktop upgrades](DESKTOP_UPGRADES.md) for appearance profile fields, display

@@ -7,6 +7,11 @@ import "../theme"
 ColumnLayout {
     spacing: 20
     SettingsCard {
+        title: "Bluetooth pairing"
+        description: "Scan and pair from Control center → Devices, including PIN and passkey confirmation. The agent runs only while the Devices panel is open. Requires python3-gobject-base (Gio/GLib)."
+        PreferenceSwitch { title: "Pair Bluetooth devices in the shell"; detail: "External device settings remain available"; preference: "bluetoothPairing" }
+    }
+    SettingsCard {
         title: "Privacy and media"
         description: "PipeWire capture activity and niri screen casts. Direct V4L2 camera access outside PipeWire is not detected."
         PreferenceSwitch { title: "Quick notes"; detail: "An autosaved text buffer in Control Center → Agenda"; preference: "quickNotes" }

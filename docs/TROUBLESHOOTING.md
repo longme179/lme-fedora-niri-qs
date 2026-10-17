@@ -83,11 +83,7 @@ radios, inspect NetworkManager and Bluetooth service state. An unavailable
 Bluetooth adapter, hard rfkill block, unsupported firmware power profile, or
 missing backlight device cannot be solved by a QML refresh.
 
-Use `nm-connection-editor` for Wi-Fi connection authentication and
-`blueman-manager` for pairing. The sidebar toggles radios and opens those
-tools. The Devices tab also connects/disconnects already paired devices and
-selects a Bluetooth adapter; it does not manage secrets or perform first-time
-pairing itself.
+Use Control Center → Devices to scan and pair Bluetooth devices, enter a PIN or confirm a passkey. Native pairing needs `python3-gobject-base`; enable it in Settings → Behavior. Scan stops after 60 seconds or when Devices closes. Closing Devices also cancels an unfinished pairing. A missing service/adapter or rejected PIN is shown in the panel; Retry restarts the agent. `blueman-manager` remains available through External device settings. Use `nm-connection-editor` for enterprise Wi-Fi authentication.
 
 ### BlueZ fails to power on
 

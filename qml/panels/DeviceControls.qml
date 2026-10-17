@@ -10,6 +10,13 @@ Flickable {
     id: root
     readonly property var bluetooth: ShellState.system.bluetooth || {}
     readonly property var network: ShellState.system.network || {}
+    readonly property bool nativePairing: !ShellState.demo && ShellState.preferences.bluetoothPairing !== false
+    readonly property var devices: nativePairing && BluetoothState.state.ready ? BluetoothState.state.devices || [] : bluetooth.devices || []
+    function watch() { BluetoothState.watch(root, visible && nativePairing); }
+    Component.onCompleted: watch()
+    Component.onDestruction: BluetoothState.watch(root, false)
+    onVisibleChanged: watch()
+    onNativePairingChanged: watch()
     readonly property var adapters: bluetooth.adapters || []
     contentWidth: width; contentHeight: content.implicitHeight + 16
     clip: true; boundsBehavior: Flickable.StopAtBounds
@@ -32,7 +39,7 @@ Flickable {
             text: root.bluetooth.hardBlocked ? "Hardware blocked. Disable airplane mode or use the laptop radio switch."
                   : root.bluetooth.softBlocked ? "Software blocked. Enabling will ask BlueZ to unblock the adapter."
                   : !root.bluetooth.available ? "No adapter found. Check bluetooth.service and the installed firmware."
-                  : root.bluetooth.enabled ? "Powered on · known devices below" : "Powered off"
+                  : root.bluetooth.enabled ? "Powered on · scan to find nearby devices" : "Powered off"
         }
         LabelText {
             visible: ShellState.lastResult && !ShellState.lastResult.ok && String(ShellState.lastResult.action).startsWith("bluetooth")
@@ -47,8 +54,27 @@ Flickable {
             onActivated: ShellState.run("setting", {key: "bluetoothAdapter", value: root.adapters[currentIndex].path})
             Accessible.name: "Bluetooth adapter"
         }
+        LabelText { visible: root.nativePairing && !!BluetoothState.error; text: BluetoothState.error; color: Theme.red; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        RowLayout {
+            visible: root.nativePairing; Layout.fillWidth: true
+            LiquidButton {
+                objectName: "bluetoothScan"
+                text: BluetoothState.state.scanPending ? "Starting scan…" : BluetoothState.state.scanning ? "Stop scanning" : "Scan for devices"
+                enabled: root.bluetooth.enabled && BluetoothState.state.ready && !BluetoothState.state.scanPending
+                onClicked: BluetoothState.scan(!BluetoothState.state.scanning)
+            }
+            LiquidButton { visible: !BluetoothState.state.ready; text: "Retry"; onClicked: BluetoothState.retry() }
+            Item { Layout.fillWidth: true }
+        }
+        BluetoothPairing { Layout.fillWidth: true }
+        RowLayout {
+            visible: root.nativePairing && !!BluetoothState.state.pairing && !BluetoothState.request.token
+            Layout.fillWidth: true
+            LabelText { text: "Pairing device…"; Layout.fillWidth: true }
+            LiquidButton { text: "Cancel"; onClicked: BluetoothState.cancel() }
+        }
         Repeater {
-            model: root.bluetooth.devices || []
+            model: root.devices
             delegate: Rectangle {
                 id: device
                 required property var modelData
@@ -58,20 +84,21 @@ Flickable {
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 4
                         LabelText { text: device.modelData.name; elide: Text.ElideRight; Layout.fillWidth: true }
-                        LabelText { text: device.modelData.connected ? "Connected" : "Paired"; color: device.modelData.connected ? Theme.green : Theme.muted; font.pixelSize: 12 }
+                        LabelText { text: device.modelData.connected ? "Connected" : device.modelData.paired === false ? "Available to pair" : "Paired"; color: device.modelData.connected ? Theme.green : Theme.muted; font.pixelSize: 12 }
                     }
                     LiquidButton {
-                        text: device.modelData.connected ? "Disconnect" : "Connect"
-                        enabled: !!root.bluetooth.enabled && !ShellState.pendingActions.bluetoothDevice
-                        onClicked: ShellState.run("bluetoothDevice", {path: device.modelData.path, connected: !device.modelData.connected})
+                        objectName: "bluetoothDevice-" + device.modelData.path
+                        text: BluetoothState.state.pairing === device.modelData.path ? "Pairing…" : device.modelData.connected ? "Disconnect" : device.modelData.paired === false ? "Pair" : "Connect"
+                        enabled: !!root.bluetooth.enabled && !ShellState.pendingActions.bluetoothDevice && !BluetoothState.state.pairing
+                        onClicked: if (device.modelData.paired === false) BluetoothState.pair(device.modelData.path); else ShellState.run("bluetoothDevice", {path: device.modelData.path, connected: !device.modelData.connected})
                     }
                 }
             }
         }
-        LabelText { visible: !(root.bluetooth.devices || []).length; text: "No paired devices. Open device settings to pair a new device."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        LabelText { visible: !root.devices.length; text: root.nativePairing ? "No devices found. Make your device discoverable, then scan." : "No paired devices. Open device settings to pair a new device."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
         RowLayout {
             Layout.fillWidth: true
-            LiquidButton { text: "Pair & device settings"; Layout.fillWidth: true; onClicked: ShellState.run("openSettings", {target: "bluetooth"}) }
+            LiquidButton { text: "External device settings"; Layout.fillWidth: true; onClicked: ShellState.run("openSettings", {target: "bluetooth"}) }
             LiquidButton { text: "Refresh"; onClicked: ShellState.run("refresh") }
         }
         Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Theme.border; Layout.topMargin: 8; Layout.bottomMargin: 8 }

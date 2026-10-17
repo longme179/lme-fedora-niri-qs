@@ -313,8 +313,7 @@ if unwanted; niri owns that policy.
 
 [Report a problem](https://github.com/longme179/lme-fedora-niri-qs/issues) with
 reproduction steps, logs, doctor output, `niri --version` and `qs --version`.
-First-time Bluetooth pairing and enterprise Wi-Fi use Fedora's existing tools;
-Control Center links to Blueman and the network editor.
+Pair new Bluetooth devices from Control Center → Devices, including PIN and passkey confirmation. Install `python3-gobject-base` for the pairing agent. Blueman and the network editor remain available for external device settings and enterprise Wi-Fi.
 
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.
 Native UI checks require a private Wayland session. See [validation details](docs/VALIDATION.md)

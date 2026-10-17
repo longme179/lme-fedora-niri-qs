@@ -259,7 +259,7 @@ uses the same validation/migration path.
 | --- | --- |
 | Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, Night Light, motion presets, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, Screenshot studio (screen/area/window, annotations and OCR), lock, settings, power menu and workspace board |
 | Audio | Default output/input selection, each device's volume/mute, application stream volume/mute and advanced audio settings |
-| Devices | Bluetooth adapter selection, paired-device connect/disconnect, block/error information, pairing settings, Wi-Fi scanning/password entry and saved profiles |
+| Devices | Bluetooth adapter selection, nearby-device scan, pairing/PIN/passkey confirmation, connect/disconnect, block/error information, Wi-Fi scanning/password entry and saved profiles |
 | Agenda | English calendar, local to-do list, 25-minute focus/5-minute short break/15-minute long break, and stopwatch |
 | Notifications | Persistent grouped/searchable history, per-app popup rules, timed DND and clearing notifications |
 
@@ -273,8 +273,7 @@ because they are saved in `settings.json`.
 The native mixer tracks devices only while its tab is loaded. Radio and
 hardware probes remain cached between backend refreshes; the Wi-Fi list uses
 NetworkManager's existing scan cache. The shell does not continuously scan for
-Bluetooth devices or Wi-Fi networks. Bluetooth pairing and enterprise setup open Fedora's
-existing tools.
+Bluetooth devices or Wi-Fi networks. Bluetooth scans start explicitly from Devices and stop after 60 seconds or when the panel closes. Pairing supports PIN/passkey entry, numeric confirmation and displayed keyboard codes. Closing the panel cancels the shell's pairing and stops its own discovery session. Enterprise Wi-Fi and external Bluetooth tools remain available.
 
 ## Preferences and permissions
 
@@ -308,3 +307,11 @@ support in the wallpaper library.
 ## Laptop features and popup blur
 
 Control Center → System provides detailed on-demand monitoring. Settings → Idle and sleep controls AC/battery timeouts and locking; Settings → Keyboard shortcuts reads your niri binds/includes. Appearance → Blur behind popups requests native full-screen blur on niri 26.04+ after merging the provided config fragment. See [LAPTOP_FEATURES.md](LAPTOP_FEATURES.md) for requirements, defaults, parser bounds and setup.
+
+## Module gestures and media
+
+Settings → Top bar → Click and scroll actions stores per-module `barGestures` overrides. Default preserves each left click; audio right click toggles mute and vertical scroll changes volume by 5% per notch. Notifications right click toggles DND, and middle click opens Settings. Workspace scroll selects adjacent workspaces on that output. Choose Do nothing to disable a gesture or Restore default gestures to reset all mappings. Scroll input is accumulated for 60 ms and uses relative volume updates.
+
+Settings → Appearance provides `mediaControls` (seek/shuffle/repeat), `mediaStability` (brief cosmetic metadata retention) and `mediaShapes` (ambient Material polygons). Seek supports click/drag and keyboard arrows/Home/End when the player supports MPRIS seeking. Shuffle/repeat require writable player support; unavailable controls are disabled. Repeat cycles Off → All → One → Off. Shapes stop while hidden, paused or animations are disabled; the same settings apply to Activity Island and Control Center.
+
+Settings → Behavior → Bluetooth pairing controls `bluetoothPairing`. Native pairing needs Fedora's `python3-gobject-base`. The Gio agent runs only while Devices is open, retains no entered PIN/passkey on disk, and leaves other applications' default agents alone. A successful Pair is followed by Connect; if connecting fails the device remains paired and the error is shown.

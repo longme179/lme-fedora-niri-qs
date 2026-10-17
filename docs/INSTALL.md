@@ -13,6 +13,7 @@ library and needs no `pip install`.
 | Package | Purpose |
 | --- | --- |
 | `quickshell` ≥ 0.3.2 | QML shell host, Wayland layers/idle inhibitor, notification server, MPRIS, PipeWire mixer, Polkit agent |
+| `python3-gobject-base` | Gio/GLib for native Bluetooth pairing; no GTK UI is required |
 | `python3` | Application discovery and desktop integration backend |
 | `qt6-qtbase`, `qt6-qtdeclarative`, `qt6-qtwayland`, `qt6-qtsvg` | Qt Quick runtime and image support |
 | `NetworkManager` | Wi-Fi scans, password entry and saved-profile controls via `nmcli` |

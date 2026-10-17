@@ -34,7 +34,7 @@ while (($#)); do
     shift
 done
 
-packages=(quickshell python3 qt6-qtbase qt6-qtdeclarative qt6-qtwayland
+packages=(quickshell python3 python3-gobject-base qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     qt6-qtsvg qt6-qtimageformats google-roboto-fonts google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-utils pipewire-pulseaudio
     wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard)

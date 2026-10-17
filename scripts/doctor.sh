@@ -29,6 +29,12 @@ else
     required quickshell quickshell
 fi
 required python3 python3
+if /usr/bin/python3 -c 'from gi.repository import Gio, GLib' >/dev/null 2>&1; then
+    printf 'OK       Gio/GLib for native Bluetooth pairing\n'
+else
+    printf 'OPTIONAL Native Bluetooth pairing: install python3-gobject-base\n'
+    optional_missing=$((optional_missing + 1))
+fi
 required niri niri
 required nmcli NetworkManager
 required wpctl wireplumber
@@ -64,7 +70,7 @@ optional slurp 'recording region selection: slurp'
 optional awww 'wallpaper selection and restoration'
 optional awww-daemon 'wallpaper daemon'
 optional nm-connection-editor 'advanced Wi-Fi setup: network-manager-applet'
-optional blueman-manager 'Bluetooth pairing: blueman'
+optional blueman-manager 'external Bluetooth device settings: blueman'
 optional pavucontrol 'advanced audio setup: pavucontrol'
 optional notify-send 'notification smoke test: libnotify'
 optional kitty 'default terminal; configurable'

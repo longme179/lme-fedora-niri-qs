@@ -1,5 +1,11 @@
 # Validation and platform limits
 
+## Native Bluetooth pairing — 2026-10-17
+
+Seven focused checks pass against an isolated D-Bus daemon and a Gio BlueZ fixture: scan/stop, PIN and numeric passkey entry, numeric confirmation, authorization/service requests, keyboard display codes, invalid/stale replies, rejection/cancel, scan/prompt deadlines, adapter changes and BlueZ owner loss/re-registration. A Qt-input UI test scans, pairs with a leading-zero PIN, connects, closes/reopens Devices and handles a rapid reopen without leaving the agent stopped. Closing stops owned discovery and cancels pairing. The agent is on demand and does not request default-agent ownership.
+
+`python3-gobject-base` is listed in requirements/install instructions and doctor; its Fedora package page was verified. No package was installed during this change. New QML passes focused lint (with a narrow suppression for Quickshell 0.3.2 unexported ExitStatus metadata). Whole-tree lint reports zero errors and the same 40 warnings as the original f2e53ef baseline in this toolchain. Real MT7921/headset pairing, firmware behavior and Fedora system-bus policy remain untested here.
+
 ## Ambient media shapes — 2026-10-17
 
 Four Material polygons use LME geometry, with no new QML/C++ plugin. Native QML checks confirm movement while visible/playing, frozen coordinates while paused, unloading while hidden/disabled, and no animation with reduced motion. The toggle is portable and participates in appearance profiles. Two focused checks and changed-file lint pass. Radeon frame-time/power measurements are not available in this cloud environment.

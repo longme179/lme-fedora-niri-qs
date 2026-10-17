@@ -7,6 +7,8 @@
 [required-shell]
 quickshell
 python3
+# Gio/GLib for the on-demand BlueZ pairing agent (no GTK UI dependency).
+python3-gobject-base
 qt6-qtbase
 qt6-qtdeclarative
 qt6-qtwayland

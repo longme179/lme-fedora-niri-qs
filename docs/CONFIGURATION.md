@@ -328,7 +328,7 @@ Settings → Desktop widgets enables the canvas and adds clock, notes or media w
 
 Edit on desktop raises the widgets above applications and opens a small toolbar. Drag a widget's header grip or resize its lower-right corner. Focus the grip and use arrows (Shift for 1-pixel steps) for keyboard movement. Done returns widgets below application windows. Non-interactive widgets pass clicks through; Edit restores access. Add the Desktop widgets module in Settings → Top bar or run `quickshell -c gpt ipc call shell desktopEdit` to toggle Edit. The desktop does not reserve application space.
 
-The `desktopEnabled` and `desktopWidgets` preferences are included in export/import. Widget patches merge individual fields under the settings file lock, so a drag cannot overwrite a concurrent visibility/output edit. Removing a notes widget leaves its note intact. The niri blur include now also matches `lme-desktop`; update that include if your installation is a copy.
+The `desktopEnabled` and `desktopWidgets` preferences are included in export/import. Widget patches merge individual fields under the settings file lock, so a drag cannot overwrite a concurrent visibility/output edit. Moving a widget does not rewrite its saved dimensions when the output clips it. Resizing keeps the top-left corner fixed where space permits; unrelated setting updates do not clear an active gesture. Removing a notes widget leaves its note intact. The niri blur include now also matches `lme-desktop`; update that include if your installation is a copy.
 
 ## Connected popup surfaces
 

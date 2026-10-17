@@ -51,8 +51,8 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 
 | Feature | Details |
 | --- | --- |
-| **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Includes workspace switching and a tray dropdown. |
-| **Activity island** | Media controls, focus/break timer, stopwatch and controls for recordings started by LME. Audio visualization uses Cava. |
+| **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Assign left/right/middle click and scroll actions per module. Includes workspace switching and a tray dropdown. |
+| **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Audio visualization uses Cava; media cards share the same controls. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
 | **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
 | **Lyrics** | Follow synchronized lyrics in media panels. Read embedded/local LRC and cached results, with optional online lookup through LRCLIB. |
@@ -199,12 +199,13 @@ Choose **Appearance → Shell name** to give your desktop a name of your own.
 
 | Page | Customize |
 | --- | --- |
-| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets and popup blur |
+| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets, connected popup surfaces and bar/popup blur |
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
 | **Wallpaper / Weather** | Image library, palette preview, automatic/manual location and units |
-| **Behavior** | Privacy, OSD position/layout/output, notes, file search, recording, external editor and settings transfer |
+| **Desktop widgets** | Add clock/notes/media, choose an output, enable click-through and arrange widgets in Edit mode |
+| **Behavior** | Lyrics and online lookup, Bluetooth pairing, privacy, OSD layout, notes, file search, recording, external editor and settings transfer |
 | **Keyboard shortcuts / Clipboard** | Search niri bindings; configure history and image capture |
 
 Jump to a page with `./scripts/settings.sh --page topbar`. Use
@@ -222,6 +223,37 @@ current settings. Private backups include personal settings and should stay
 private. Clipboard/notification history and notes are separate from settings
 backups. [Configuration guide](docs/CONFIGURATION.md).
 
+### Desktop widgets
+
+The canvas starts disabled. To set it up:
+
+1. Open **Settings → Desktop widgets**, enable it, then choose **Add clock**, **Add notes** or **Add media**.
+2. Choose a display for each widget. Turn **Interactive** off to let clicks pass through; **Visible** hides a widget without removing its saved layout.
+3. Click **Edit on desktop**. Drag the header grip to move a widget, resize its lower-right corner, then press **Done**. Focus the grip and use arrow keys to move it; Shift makes one-pixel adjustments.
+
+Outside Edit, widgets sit below application windows, so an app can cover them.
+You can add a **Desktop widgets** module in **Settings → Top bar** to toggle Edit.
+The canvas supports up to 12 widgets. Notes widgets share the existing Quick notes
+buffer; removing a widget leaves the note intact.
+
+**Primary display** follows the first connected output. A widget assigned to a
+named output stays saved while that output is absent. If a widget is missing,
+check its Visible switch and display selection, or choose Primary display.
+Moving a widget on a smaller output preserves its saved size. Layouts are
+included in settings export/import; note contents are stored separately.
+
+### Media and lyrics
+
+Activity Island, Control Center and desktop media widgets use MPRIS. Click or
+drag the timeline to seek. Shuffle/repeat stay disabled when the player does not
+support them; this is common in browsers.
+
+Click **Lyrics** in a media card. Embedded lyrics, a local `.lrc` sidecar and the
+cache work without online lookup. To search LRCLIB, enable online lookup under
+**Settings → Behavior → Lyrics**. This is off by default and sends track metadata
+only while lyrics are open. Matches depend on the supplied title/artist; a
+YouTube channel or video title may not identify a song. [Lyrics and media guide](docs/CONFIGURATION.md#synchronized-lyrics).
+
 ## Optional integrations
 
 | Feature | What to install or configure |
@@ -232,6 +264,7 @@ backups. [Configuration guide](docs/CONFIGURATION.md).
 | **Recording** | `wf-recorder`, compatible FFmpeg/`ffprobe`; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
 | **External annotation / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. Click clipboard images or screenshot notifications to open a saved copy in your chosen editor. Screenshot studio exports flattened PNGs including redactions. |
 | **Night Light / Idle** | `wlsunset` with working gamma control; `swayidle` and `swaylock` for idle profiles. Enable these in Settings. |
+| **Lyrics** | No extra package. Optional LRCLIB lookup needs internet access; player metadata/local LRC and cached lyrics work offline. |
 | **Weather** | Internet access for Open-Meteo and approximate IP location; no API key needed. Manual location is available. |
 | **Lenovo charging** | Install the helper with `sudo ./scripts/install-charge-helper.sh --install`. Adjustable thresholds depend on firmware; some machines expose only a fixed conservation mode. [Charging guide](docs/CHARGING.md) |
 

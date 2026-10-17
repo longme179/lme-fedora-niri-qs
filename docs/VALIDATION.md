@@ -1,5 +1,15 @@
 # Validation and platform limits
 
+## Activity media layout and desktop canvas audit — 2026-10-17
+
+Final validation completed **302 tests: 271 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Native media/Activity, desktop, lyrics, Bluetooth, polling and popup-motion checks were enabled. Whole-tree QML lint reports zero errors and the same 57 warnings as the preceding revision; ordinary changed controls pass focused lint without diagnostics. The native Activity render was inspected after the layout fix.
+
+The nested media layout reproduced a 93 px control group inside a 400 px card. Explicit standalone widths in the earlier regression missed this parent-layout constraint. The shared control now accepts the parent width; a regression checks wide → narrow/24 px font → wide reflow, bounds and horizontal transport rows.
+
+Desktop resize was reproduced moving a widget from `(320, 296)` to `(300, 272)` while resizing 320×220 to 420×300. The origin is now frozen before resizing. Moving on a small viewport no longer persists clipped dimensions or fails the 180 px schema minimum; explicit resize saves the requested bounded dimensions. An unrelated settings update while a grip was held reproduced clearing both draft coordinates; active gestures now retain them.
+
+Native checks exercise pointer move/resize, top-left anchoring, click-through masks, bottom/overlay layer transitions, constrained viewport geometry, concurrent gesture/settings updates, stable canvas instances, hide/show, named-output absence/reassignment, disable/re-enable and deletion. Output absence and small viewport dimensions are simulated; physical monitor hotplug, actual scaled niri outputs and pointer delivery through the native input mask still require target-machine checks.
+
 ## Lyrics, desktop and popup integration — 2026-10-17
 
 The full private validation command completes **298 tests: 267 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Enabled native suites include lyrics, desktop widgets, media controls, Activity, Bluetooth, controlled polling and popup motion. The connected-popup check also verifies spring resizing after the Island has opened. Ordinary changed components/pages pass focused lint without diagnostics; whole-tree lint reports zero errors and 57 warnings, including existing demo typing diagnostics and Quickshell native-window/attached-type/ExitStatus metadata limitations. New desktop layer windows were exercised at runtime. No runtime package was added or installed.

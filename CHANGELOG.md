@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fix nested media controls collapsing into a narrow column in Activity Island, Control Center and desktop media cards. Use the available width and reflow when fonts/card sizes change.
+- Keep desktop resize anchored, preserve saved dimensions on smaller outputs and retain drag drafts through unrelated settings updates. Add canvas lifecycle/output and geometry regressions; document setup and shared notes behavior.
+
 - Add synchronized lyrics to media panels with embedded/local LRC support, a bounded disk cache and opt-in LRCLIB lookup. Follow playback or scroll manually without background polling when hidden.
 - Add an optional desktop canvas with per-output clock, notes and media widgets. Persist drag/resize edits independently; support click-through mode and preserve disconnected-output layouts.
 - Connect bar-opened popups to their source through a temporary soft surface. Reuse spring momentum, freeze the closing source, unload the shader when settled and retain edge/reduced-motion fallbacks.

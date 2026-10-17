@@ -22,7 +22,7 @@ Loader {
     readonly property real offsetY: (direction === "right" ? 0 : slideOffset) + (Theme.springMotion ? exitSpringY.value : exitY)
     readonly property bool fillsTravelAxis: parent && (travelEdge < 2 ? width >= parent.width - 1 : height >= parent.height - 1)
     // Scale also deforms the translation; include travel before declaring a popup off-screen.
-    readonly property real overdraw: Math.max(width, height, Math.abs(offsetX), Math.abs(offsetY)) * Math.abs(Theme.deformation * (1 - progress)) + 2
+    readonly property real overdraw: Math.max(width, height) * Math.abs(elasticity.strain) + Math.max(width, height, Math.abs(offsetX), Math.abs(offsetY)) * Math.abs(Theme.deformation * (1 - progress)) + 2
     readonly property bool outsideViewport: parent && (x + offsetX + width + overdraw < 0 || x + offsetX - overdraw > parent.width || y + offsetY + height + overdraw < 0 || y + offsetY - overdraw > parent.height)
     active: mounted
     enabled: shown
@@ -34,10 +34,17 @@ Loader {
         Scale {
             origin.x: root.direction === "right" ? root.width : root.width / 2
             origin.y: root.direction === "down" ? 0 : root.height / 2
-            xScale: 1 - (1 - root.progress) * Theme.deformation
-            yScale: 1 + (1 - root.progress) * Theme.deformation
+            xScale: elasticity.engaged ? 1 : 1 - (1 - root.progress) * Theme.deformation
+            yScale: elasticity.engaged ? 1 : 1 + (1 - root.progress) * Theme.deformation
         }
     ]
+    PopupElasticity {
+        id: elasticity; objectName: "popupElasticity"
+        surface: root; mounted: root.mounted
+        horizontal: root.exitToEdge ? root.travelEdge < 2 : root.direction === "right"
+        velocity: root.exitToEdge ? (horizontal ? exitSpringX.velocity : exitSpringY.velocity) : (horizontal ? -92 : root.direction === "down" ? 32 : -64) * spring.velocity
+        bounded: root.fillsTravelAxis
+    }
     function finishClose() {
         if (shown || !mounted) return;
         // Off-screen content need not wait for the spring's sub-pixel settling tail.

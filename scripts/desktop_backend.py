@@ -331,7 +331,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "recordingBitrate" and type(value) is int and 1000 <= value <= 100000: return value
     if key == "captureEditor" and value in ("auto","satty","swappy"): return value
     if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
-    if key == "motionPreset" and value in ("smooth", "expressive", "jelly"): return value
+    if key == "motionPreset" and value in ("smooth", "expressive", "jelly", "jelly-v2"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
     if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur", "barBlur"} and type(value) is bool: return value

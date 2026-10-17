@@ -140,22 +140,22 @@ QtObject {
     readonly property real motionSpeed: ShellState.preferences.motionSpeed || 1
     readonly property real motionBounce: ShellState.preferences.motionBounce === undefined ? .35 : ShellState.preferences.motionBounce
     readonly property int animationDuration: animations ? Math.round(190 / motionSpeed) : 0
-    readonly property int slideDuration: animations ? Math.round((motionPreset === "jelly" ? 600 : motionPreset === "smooth" ? 360 : 460) / motionSpeed) : 0
+    readonly property int slideDuration: animations ? Math.round((["jelly", "jelly-v2"].includes(motionPreset) ? 600 : motionPreset === "smooth" ? 360 : 460) / motionSpeed) : 0
     // Spatial curves may overshoot; colors/opacity use monotonic effects easing.
     readonly property var spatialCurve: motionPreset === "smooth" ? [.18, .8, .22, 1, 1, 1]
-        : motionPreset === "jelly" ? [.32, 1 + .9 * motionBounce, .18, 1, 1, 1]
+        : ["jelly", "jelly-v2"].includes(motionPreset) ? [.32, 1 + .9 * motionBounce, .18, 1, 1, 1]
         : [.38, 1 + .6 * motionBounce, .22, 1, 1, 1]
     // Material expressive spatial/effects curves ported from DMS Anims.qml (MIT).
     // Copyright (c) 2025 Avenge Media LLC; notice: third_party/DankMaterialShell-LICENSE.
     readonly property var fastSpatialCurve: motionPreset === "smooth" ? spatialCurve : [.42, 1 + .67 * motionBounce, .21, .9, 1, 1]
     readonly property var effectsCurve: [.34, .8, .34, 1, 1, 1]
     readonly property var exitCurve: [.3, 0, .8, .15, 1, 1]
-    readonly property real deformation: animations && motionPreset === "jelly" ? .09 * motionBounce : 0
+    readonly property real deformation: animations && ["jelly", "jelly-v2"].includes(motionPreset) ? .09 * motionBounce : 0
     function springStiffness(large) {
-        return (large ? 560 : 880) * (motionPreset === "jelly" ? .8 : 1) * motionSpeed * motionSpeed;
+        return (large ? 560 : 880) * (["jelly", "jelly-v2"].includes(motionPreset) ? .8 : 1) * motionSpeed * motionSpeed;
     }
     function springDamping(large) {
-        const ratio = motionPreset === "smooth" ? 1 : motionPreset === "jelly" ? .72 - .25 * motionBounce : .86 - .22 * motionBounce;
+        const ratio = motionPreset === "smooth" ? 1 : ["jelly", "jelly-v2"].includes(motionPreset) ? .72 - .25 * motionBounce : .86 - .22 * motionBounce;
         return 2 * Math.sqrt(springStiffness(large)) * ratio;
     }
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity * color.a); }

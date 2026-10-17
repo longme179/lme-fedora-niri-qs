@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Audit native UI lifecycle and reject runtime assignment/binding-loop diagnostics in QML regressions. Fix Bluetooth Scan reading an undefined power state before the first backend snapshot.
+
+- Add opt-in Jelly-v2 popup motion: velocity-driven spring deformation, bowed/tapered mesh surfaces, bounded native-window rendering and a software fallback. Keep edge entry/exit and release the effect layer after settling.
+
 - Add independent maximum widths for the compact Activity pill and expanded popup, plus a height limit/Auto fit. Preserve defaults, save limits in appearance profiles and bound live spring resizing to the viewport.
 
 - Add saved full-transcript/current-line lyric modes and default follow in Behavior settings. Show synchronized lines on the compact Activity Island with track-title fallback; share its lookup with media views and replace lyric polling with cue-boundary scheduling adapted from end4-pC.

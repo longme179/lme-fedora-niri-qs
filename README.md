@@ -52,7 +52,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | Feature | Details |
 | --- | --- |
 | **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Assign left/right/middle click and scroll actions per module. Includes workspace switching and a tray dropdown. |
-| **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Audio visualization uses Cava; media cards share the same controls. |
+| **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Set maximum pill/popup dimensions in Appearance. Audio visualization uses Cava; media cards share the same controls. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
 | **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
 | **Lyrics** | Choose a scrolling transcript or current line, follow playback by default, and show synchronized lines on Activity Island. Embedded/local LRC and cache work offline; LRCLIB lookup is optional. |
@@ -199,7 +199,7 @@ Choose **Appearance → Shell name** to give your desktop a name of your own.
 
 | Page | Customize |
 | --- | --- |
-| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets and bar/popup blur |
+| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly/Jelly-v2 presets and bar/popup blur |
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |

@@ -233,3 +233,7 @@ Lyric subscription/cancellation, bounded metadata settling and follow/manual-scr
 ## Desktop widget canvas
 
 Per-output records, edit mode and dragging reference [iNiR DesktopWidgetLayout.qml](https://github.com/snowarch/iNiR/blob/48cdcecb0f6089cfbb7019054602eab28e154b3b/services/DesktopWidgetLayout.qml) and `AbstractOverlayWidget.qml` (GPL-3.0 with the retained iNiR NOTICE). LME's implementation is original, uses normalized positions and atomic per-widget field patches, and reuses its own notes/media controls. Each widget is a bounded native layer surface rather than a desktop-sized input overlay.
+
+## Jelly-v2 motion references
+
+The original LME `PopupElasticity.qml` and `popup-jelly.vert`/`.frag` use documented Qt Quick ShaderEffect, GridMesh and Item Layer APIs. Motion design follows the continuity principles described in [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/). No Apple or Qt implementation source was copied. The existing spring integrator retains the DCommon MIT attribution above; LME's deformation model/shaders use GPL-3.0-or-later.

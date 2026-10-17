@@ -14,6 +14,7 @@ Popup {
     property real travelX: 0
     property real travelY: 0
     readonly property real progress: Theme.springMotion ? spring.value : curveProgress
+    readonly property Item surface: background ? background.parent : contentItem ? contentItem.parent : null
     opacity: positioned ? 1 : 0
     popupType: Popup.Item
     MotionValue {
@@ -25,10 +26,16 @@ Popup {
         x: root.travelX * (1 - root.progress)
         y: root.travelY * (1 - root.progress)
     }
-    function attach(item) { if (item && shift && !item.transform.includes(shift)) item.transform.push(shift); }
-    onBackgroundChanged: attach(background)
-    onContentItemChanged: attach(contentItem)
-    Component.onCompleted: { attach(background); attach(contentItem); }
+    function attach() { if (surface && shift && !surface.transform.includes(shift)) surface.transform.push(shift); }
+    onSurfaceChanged: attach()
+    Component.onCompleted: attach()
+    PopupElasticity {
+        objectName: "popupElasticity"
+        parent: root.surface
+        surface: root.surface; mounted: root.mounted
+        horizontal: root.travelX !== 0
+        velocity: -(horizontal ? root.travelX : root.travelY) * spring.velocity
+    }
     function move(to) {
         curve.stop(); requested = to;
         if (!Theme.animations) { spring.snapTo(to); curveProgress = to; }

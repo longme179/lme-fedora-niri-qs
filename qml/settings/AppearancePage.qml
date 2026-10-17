@@ -142,10 +142,10 @@ ColumnLayout {
             Layout.fillWidth: true
             LabelText { text: "Motion preset"; Layout.fillWidth: true }
             LiquidComboBox {
-                objectName: "motionPreset"; model: ["Smooth", "Expressive", "Jelly"]
-                currentIndex: ["smooth", "expressive", "jelly"].indexOf(Theme.motionPreset)
+                objectName: "motionPreset"; model: ["Smooth", "Expressive", "Jelly", "Jelly-v2"]
+                currentIndex: ["smooth", "expressive", "jelly", "jelly-v2"].indexOf(Theme.motionPreset)
                 Accessible.name: "Motion preset"
-                onActivated: ShellState.run("setting", {key: "motionPreset", value: ["smooth", "expressive", "jelly"][currentIndex]})
+                onActivated: ShellState.run("setting", {key: "motionPreset", value: ["smooth", "expressive", "jelly", "jelly-v2"][currentIndex]})
             }
         }
         LabelText { text: "Speed · " + Theme.motionSpeed.toFixed(1) + "×"; font.weight: Font.Bold }

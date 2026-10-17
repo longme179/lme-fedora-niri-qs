@@ -1,5 +1,21 @@
 # Validation and platform limits
 
+## Whole-shell stability and Jelly-v2 — 2026-10-17
+
+The baseline completed **305 tests: 274 passed, 31 skipped**. Expanded validation then enabled native clipboard, annotation/OCR, authentication, idle, Settings/personalization, Control Center drag/drop and detached display-watchdog suites in addition to media, lyrics, desktop, Bluetooth, polling and motion. The final run completes **310 tests: 309 passed, one skipped**, plus Bash syntax and the demo snapshot. The skipped test needs an actual Matugen binary; mocked Matugen v3/v4 and native palette UI checks pass. Whole-tree lint covers 124 QML files with **zero errors and 57 existing warnings**; changed motion/Island/settings components pass focused lint without diagnostics.
+
+The stricter QML helper found `DeviceControls` assigning an undefined initial adapter-power value to Scan's boolean enabled property. It now defaults to false; all seven Bluetooth tests and the expanded suite pass after the fix. Static review also followed settings validation/atomic updates/imports, IPC dispatch, process teardown, notification/clipboard history and active-view subscriptions; the tests exercise their error/reconnect paths. This audit does not establish correctness for every external application or hardware driver.
+
+Island size regressions validate old/default settings, profile and preset/backup round trips, live spring resizing, viewport fitting with large edge margins, bottom-bar placement and reduced motion. Native rendering was inspected at 700×560 with font size 18 and both lyric modes; longer content remains scrollable. Popup layout limits preserve the selected maximum; transient Jelly-v2 deformation is a visual effect around that layout.
+
+Jelly-v2 tests exercise software and OpenGL/RHI, interrupted closing/reopening without position reset, preset changes during flight, bounded finite strain, prompt teardown and reduced motion. Pixel checks confirm an actual rendered bowed silhouette on both travel axes, expanded dimensions while deforming, fitting inside tight native bounds and release of the effect layer at rest. Legacy popup/Activity, menu-hover and resize regressions pass. The included shaders were built with Qt qsb; implementation references are linked in CONFIGURATION.md.
+
+Two separate OpenGL/Mesa llvmpipe stress runs each open 210 panels: warmup followed by four 50-open bursts at speed 0.5×/2× and bounce 0/1, with rapid reversals and panel replacement. After every burst, overlay/loaders/effect layers are inactive, file descriptors remain at 37 and the direct backend child count remains one. Logs have no TypeError, ReferenceError, assignment, binding-loop or shader-pipeline failure diagnostics. Private Sway reports unsupported compositor background effects; this does not validate niri blur.
+
+RSS samples (MiB, after warmup and each burst) were **329 → 438 → 456 → 472 → 433** for Expressive and **353 → 519 → 474 → 462 → 507** for Jelly-v2. Software GL/compiler caches are not separated from application allocations in these measurements. They show variation and additional Jelly-v2 rendering cost, and do not prove absence of a leak or predict laptop RAM/FPS. No memory-saving claim is made. Jelly-v2 is opt-in; its per-popup texture is disabled at rest. Measure long-session memory and 120 Hz frame pacing on the actual Radeon/niri session before treating performance as verified.
+
+Target checks: try both bar edges, the largest/smallest Island limits, long labels, dropdowns, repeated open/close and Escape, changed outputs/scales and Animations off. Verify native niri blur, real device reconnects and GPU frame pacing; cloud tests use private Sway, Qt 6.8.2 and Quickshell 0.3.2. No runtime package was installed or added.
+
 ## Lyric modes and Island captions — 2026-10-17
 
 The final private suite completes **305 tests: 274 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Native media/Activity, desktop, lyrics, Bluetooth, polling and popup-motion checks were enabled. Whole-tree lint covers 123 QML files with **zero errors and the same 57 existing warnings**; changed lyric components, state and Behavior page pass focused lint without diagnostics.

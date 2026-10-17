@@ -338,10 +338,20 @@ The `desktopEnabled` and `desktopWidgets` preferences are included in export/imp
 
 ## Popup motion
 
-Popups slide in from the screen edge and close through the same edge. Activity Island uses the bar edge. Spring motion preserves velocity when opening is interrupted by closing or reversed; changing the size of an open Island keeps its existing spring. Settings → Appearance offers Smooth, Expressive and Jelly presets, speed and bounce. Reduced motion skips the travel.
+Popups slide in from the screen edge and close through the same edge. Activity Island uses the bar edge. Spring motion preserves velocity when opening is interrupted by closing or reversed; changing the size of an open Island keeps its existing spring. Settings → Appearance offers Smooth, Expressive, Jelly and Jelly-v2 presets, speed and bounce. Reduced motion skips the travel.
 
 The former connected-surface animation and its switch have been removed. Existing settings, appearance profiles and imported presets/backups ignore `connectedPopups` while retaining the other customizations; no reset is needed.
 
 ## Activity Island size
 
 Settings → Appearance → Activity Island size controls `activityCompactMaxWidth` (120–1200 px, default 300), `activityPopupMaxWidth` (400–1600 px, default 460) and `activityPopupMaxHeight` (320–2160 px, or 0 for automatic screen fitting). The bar's available module space still caps the pill. Popup limits remain bounded by the viewport and edge margin during spring resizing; overflow stays scrollable. These limits are saved in appearance profiles and portable presets/backups.
+
+## Jelly-v2 popup motion
+
+Choose Settings → Appearance → Motion preset → **Jelly-v2**, with **Spring motion** enabled. The existing preset stays the default. Speed and Bounce apply to this preset too; disabling Animations removes both travel and deformation.
+
+Jelly-v2 retains the popup's edge-slide spring and drives a separate damped shape spring from signed travel velocity, normalized by popup size and motion speed. A 16×16 Qt Quick vertex mesh stretches along travel, compresses across it, tapers the trailing side and bows its edges. Targets can change without resetting either spring's velocity. Strain is bounded to ±0.42, keeping the mapping positive and preventing folded geometry.
+
+The Qt software renderer uses area-preserving scale feedback. OSD/toast surfaces normalize the effect into their existing native bounds so their edges stay visible. Off-screen closure does not wait for the shape spring's settling tail. The effect layer is enabled only while deforming, then removed; text returns to its normal render path at rest. The compiled vertex/fragment shaders ship in the repo; rebuilding them is optional with `bash scripts/build-shaders.sh` and Qt's `qsb` tool. No new runtime package is required.
+
+Design/implementation references inspected: [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/) (continuous position/velocity under interruptions), [Qt ShaderEffect](https://doc.qt.io/qt-6/qml-qtquick-shadereffect.html), [Qt Item layers](https://doc.qt.io/qt-6/qml-qtquick-item.html#item-layers) (transient texture cost) and [GridMesh](https://doc.qt.io/qt-6/qml-qtquick-gridmesh.html). The shape model and shaders are original LME code.

@@ -9,7 +9,7 @@ ColumnLayout {
     SettingsCard {
         title: "Lyrics"
         description: "Open Lyrics in either media card. Player metadata and local .lrc files are used first; LRCLIB results are cached. Online lookup sends track title, artist, album and duration to lrclib.net only while lyrics are open."
-        PreferenceSwitch { title: "Show lyrics controls"; preference: "lyricsEnabled" }
+        PreferenceSwitch { title: "Show lyrics controls"; detail: "Display synchronized or plain lyrics in media cards"; preference: "lyricsEnabled" }
         PreferenceSwitch { title: "Online lyrics · LRCLIB"; detail: "Optional network lookup; cached and local lyrics work offline"; preference: "lyricsOnline" }
     }
     SettingsCard {

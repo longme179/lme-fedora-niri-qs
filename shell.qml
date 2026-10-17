@@ -25,6 +25,7 @@ ShellRoot {
     IpcHandler {
         target: "shell"
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
+        function desktopEdit(): bool { if (!DesktopState.enabled) return false; DesktopState.editing = !DesktopState.editing; return true; }
         function close(): void { ShellState.closePanels(); }
         function mirrorStatus(): string { return JSON.stringify(ShellState.snapshot.mirror || {}); }
         function mirrorStart(source: string, target: string): bool {
@@ -75,6 +76,7 @@ ShellRoot {
             }
         }
     }
+    LazyLoader { active: !root.preview; component: DesktopCanvas {} }
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]

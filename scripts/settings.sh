@@ -11,12 +11,12 @@ while (($#)); do
         --page)
             if (($# < 2)); then printf 'Error: --page requires a page name.\n' >&2; exit 2; fi
             page="$2"; shift ;;
-        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page appearance|elements|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about]\n'; exit 0 ;;
+        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about]\n'; exit 0 ;;
         *) printf 'Error: unknown argument: %s\n' "$1" >&2; exit 2 ;;
     esac
     shift
 done
-case "$page" in appearance|elements|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about) ;; *) printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2 ;; esac
+case "$page" in appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about) ;; *) printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2 ;; esac
 qs_binary="${LME_QS_BINARY:-}"
 if [[ -z "$qs_binary" ]]; then
     parent_binary="$(readlink -f "/proc/$PPID/exe" 2>/dev/null || true)"

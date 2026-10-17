@@ -226,3 +226,7 @@ The pairing prompt flow references [DMS BluetoothPairingModal.qml](https://githu
 ## Synchronized lyrics
 
 Lyric subscription/cancellation, bounded metadata settling and follow/manual-scroll behavior reference [DMS LyricsService.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Services/LyricsService.qml), `LyricsController.qml`, `LyricsOverlay.qml` and `core/internal/server/lyrics/handlers.go` (MIT; existing DMS license retained). LME's Python LRC parser/cache and Qt Quick view are original and do not require the DMS/dankgo daemon. Optional online results come from [LRCLIB](https://lrclib.net); lyrics remain attributed to their provider.
+
+## Desktop widget canvas
+
+Per-output records, edit mode and dragging reference [iNiR DesktopWidgetLayout.qml](https://github.com/snowarch/iNiR/blob/48cdcecb0f6089cfbb7019054602eab28e154b3b/services/DesktopWidgetLayout.qml) and `AbstractOverlayWidget.qml` (GPL-3.0 with the retained iNiR NOTICE). LME's implementation is original, uses normalized positions and atomic per-widget field patches, and reuses its own notes/media controls. Each widget is a bounded native layer surface rather than a desktop-sized input overlay.

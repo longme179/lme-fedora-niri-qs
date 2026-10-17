@@ -8,6 +8,7 @@ QtObject {
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
         {key: "nightLight", title: "Night Light", icon: "weather-sun", description: "Softer light after sunset", keywords: "blue gamma warm temperature schedule sunrise sunset wlsunset"},
+        {key: "desktop", title: "Desktop widgets", icon: "overview", description: "Clock, notes and media on your desktop", keywords: "canvas drag resize widget output screen edit"},
         {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
         {key: "weather", title: "Weather", icon: "weather-sun", description: "Local conditions, wherever you are", keywords: "location city automatic ip forecast celsius fahrenheit temperature"},
         {key: "notifications", title: "Notifications", icon: "bell", description: "Messages with room to breathe", keywords: "popup toast appearance width position padding radius border opacity title body color font idle animation rotation cloud"},

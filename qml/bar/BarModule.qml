@@ -25,7 +25,7 @@ Loader {
     height: 30
     y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
-                   : ["launcher", "overview", "tray", "notifications", "settings", "clipboard", "power"].includes(moduleId) ? actionComponent : statusComponent
+                   : ["launcher", "overview", "tray", "notifications", "settings", "clipboard", "power", "desktop"].includes(moduleId) ? actionComponent : statusComponent
     ModuleGestures { anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo }
     Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
     Component {
@@ -44,7 +44,8 @@ Loader {
             active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : root.moduleId === "power" ? ShellState.powerOpen : false
             onClicked: {
                 if (BarGestures.perform(root.moduleId, "left", root.screenInfo)) return;
-                if (root.moduleId === "overview") ShellState.nativeOverview();
+                if (root.moduleId === "desktop") DesktopState.toggleEdit();
+                else if (root.moduleId === "overview") ShellState.nativeOverview();
                 else {
                     if (root.moduleId === "tray") {
                         const position = button.mapToItem(null, button.width, 0);

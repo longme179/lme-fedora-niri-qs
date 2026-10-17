@@ -4,7 +4,7 @@
 // Non-xray effects are experimental in niri and may disappear during
 // window open/close animations or while dragging tiled windows.
 layer-rule {
-    match namespace="^lme-(bar|overlay|authentication)$"
+    match namespace="^lme-(bar|overlay|authentication|desktop)$"
     background-effect {
         xray false
     }

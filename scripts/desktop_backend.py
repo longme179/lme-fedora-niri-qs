@@ -29,6 +29,7 @@ import tempfile
 import time
 from typing import Any
 
+from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, DEFAULT_CONTROL_GRID, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
@@ -53,7 +54,7 @@ from settings_transfer import export_document, read_document, document
 DEFAULT_PREFERENCES = {
     "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
-    "lyricsEnabled": True, "lyricsOnline": False, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
+    "desktopEnabled": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
@@ -83,7 +84,7 @@ DEFAULT_PREFERENCES = {
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop"}
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
@@ -301,7 +302,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"lyricsEnabled", "lyricsOnline", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "lyricsEnabled", "lyricsOnline", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "notificationIdleAnimation" and type(value) is bool: return value
     if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
     if key == "notificationOpacity" and type(value) in (int, float) and math.isfinite(value) and .6 <= value <= 1: return float(value)
@@ -365,6 +366,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "barIslandStyles": return bar_island_styles(value)
     if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
         return value
+    if key == "desktopWidgets": return desktop_widgets(value)
     if key == "barGestures":
         actions = {"default", "none", "control", "audio", "devices", "agenda", "system", "wifi", "notifications", "activity",
                    "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
@@ -457,10 +459,10 @@ class Preferences:
             pass
 
     def set(self, key: str, value: Any, token: str | None = None) -> None:
-        self.update({key: theme_token(key, token, value) if token is not None else value}, token=token)
+        self.update({key: (widget_patch(token,value) if key == "desktopWidgets" else theme_token(key, token, value)) if token is not None else value}, token=token)
 
     def update(self, values: dict[str, Any], token: str | None = None, backup: bool = False) -> Path | None:
-        values = {key: validate_preference(key, value) for key, value in values.items()}
+        values = {key: desktop_widgets(value, partial=True) if key == "desktopWidgets" and token is not None else validate_preference(key, value) for key, value in values.items()}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         # Serialize the app and shell's writers, including task updates.
         lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
@@ -469,8 +471,10 @@ class Preferences:
             self.reload(force=True)
             if token is not None:
                 key = next(iter(values))
-                merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
-                values[key] = merged
+                if key == "desktopWidgets": values[key] = merge_widgets(self.values[key],values[key],token)
+                else:
+                    merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
+                    values[key] = merged
             backup_path = self.path.parent / ("settings-before-import-" + str(time.time_ns()) + ".json") if backup else None
             if backup_path: write_json(backup_path, document(self.values,"backup"))
             self._write({**self.values, **values})
@@ -1195,7 +1199,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1306,6 +1310,9 @@ class DesktopBackend:
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
             if 'token' in request:
+                if key == 'desktopWidgets':
+                    self.preferences.values[key] = merge_widgets(self.preferences.values[key],widget_patch(request['token'],request.get('value')),request['token'])
+                    return 'Desktop widget saved'
                 delta = theme_token(key, request['token'], request.get('value'))
                 current = dict(self.preferences.values[key]); current.pop(request['token'], None); current.update(delta)
                 self.preferences.values[key] = current
@@ -1734,6 +1741,11 @@ class DesktopBackend:
             if 'token' in request and not isinstance(request['token'], str): raise ValueError('Invalid theme token')
             self.preferences.set(key, request.get("value"), token=request.get('token'))
             return "Preferences saved"
+        if action == "desktopEdit":
+            if self.settings_only:
+                reply = run('quickshell','-p',self.shell_entry,'ipc','call','shell','desktopEdit')
+                if reply.strip() != 'true': raise ValueError('Enable desktop widgets and start the main shell first')
+            return 'Desktop edit requested'
         if action == "openSettings":
             target = request.get("target")
             commands = {"network": "nm-connection-editor", "bluetooth": "blueman-manager", "audio": "pavucontrol"}

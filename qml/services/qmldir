@@ -10,3 +10,4 @@ singleton NotesState 1.0 NotesState.qml
 singleton ControlRegistry 1.0 ControlRegistry.qml
 
 singleton BluetoothState 1.0 BluetoothState.qml
+singleton DesktopState 1.0 DesktopState.qml

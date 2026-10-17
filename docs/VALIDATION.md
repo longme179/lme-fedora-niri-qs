@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Desktop widget canvas — 2026-10-17
+
+Validation covers bounded schemas/portable presets, atomic per-field edits from stale writers, deletion without resurrection and demo isolation. A private Wayland test verifies bottom/overlay layer transitions, pointer-driven move/resize and an empty input mask in click-through mode. Native resize commits the requested dimensions instead of waiting for a compositor configure event. niri multi-monitor hotplug/scale changes and compositor blur need target-machine checks.
+
 ## Synchronized lyrics — 2026-10-17
 
 Parser/cache checks cover fractional/multiple timestamps, translations at identical times, offsets, plain text, oversized/expanded data, local/embedded precedence, offline and negative caches, instrumental tracks and corrupt data. A real private MPRIS/QML fixture loads embedded LRC, follows seek while paused, closes/reopens and clears lyrics on track change. Changed QML passes lint. LRCLIB catalogue coverage and timing of real browser players remain provider/player-dependent.

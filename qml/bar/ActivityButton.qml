@@ -6,6 +6,7 @@ import "../theme"
 LiquidButton {
     id: root
     property var screenInfo: null
+    function primaryAction() { return false; }
     property var windowInfo: null
     property real budget: 360
     implicitHeight: 30
@@ -24,6 +25,7 @@ LiquidButton {
         }
     }
     onClicked: {
+        if (root.primaryAction()) return;
         const point = root.mapToItem(null, root.width / 2, 0);
         ShellState.activityAnchorX = point.x + (windowInfo ? Theme.barSideMargin : 0);
         ShellState.activityAnchorWidth = width;

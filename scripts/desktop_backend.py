@@ -77,7 +77,7 @@ DEFAULT_PREFERENCES = {
     "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
     "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
     "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
-    "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1, "barIslandStyles": {},
+    "barGestures": {}, "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1, "barIslandStyles": {},
     "barCorners": {"topLeft": -1, "topRight": -1, "bottomLeft": -1, "bottomRight": -1},
     "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
@@ -365,6 +365,16 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "barIslandStyles": return bar_island_styles(value)
     if key == "barFontSize" and type(value) is int and 12 <= value <= 16:
         return value
+    if key == "barGestures":
+        actions = {"default", "none", "control", "audio", "devices", "agenda", "system", "wifi", "notifications", "activity",
+                   "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
+                   "volumeUp", "volumeDown", "mediaToggle", "mediaNext", "mediaPrevious", "workspaceNext", "workspacePrevious"}
+        gestures = {"left", "right", "middle", "scrollUp", "scrollDown"}
+        if (isinstance(value, dict) and set(value) <= BAR_MODULES
+                and all(isinstance(bindings, dict) and set(bindings) <= gestures
+                        and all(isinstance(action, str) and action in actions for action in bindings.values())
+                        for bindings in value.values())):
+            return copy.deepcopy(value)
     if key == "barLayout" and isinstance(value, dict) and set(value) == {"left", "center", "right"}:
         seen, normalized = set(), {}
         for zone in ("left", "center", "right"):
@@ -1301,7 +1311,7 @@ class DesktopBackend:
                 self.preferences.values[key] = current
             else: self.preferences.values[key] = validate_preference(key, request.get("value"))
         elif action == "volume":
-            system["audio"]["volume"] = self.percentage(request.get("value"))
+            system["audio"]["volume"] = max(0, min(100, system["audio"]["volume"] + self.percentage(request["delta"], -100))) if "delta" in request else self.percentage(request.get("value"))
         elif action == "mute":
             system["audio"]["muted"] = not system["audio"]["muted"]
         elif action == "micVolume":
@@ -1648,6 +1658,10 @@ class DesktopBackend:
             self.niri_action({"FocusWorkspace": {"reference": {"Id": int(workspace_id)}}})
             return "Workspace focused"
         if action == "volume":
+            if "delta" in request:
+                delta = self.percentage(request["delta"], -100)
+                run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{abs(delta)}%{'+' if delta >= 0 else '-'}")
+                return "Volume adjusted"
             value = self.percentage(request.get("value"))
             run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{value}%")
             return f"Volume {value}%"

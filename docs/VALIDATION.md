@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Topbar gestures — 2026-10-17
+
+Per-module left/right/middle click and vertical scroll mappings are validated, persisted and included in portable presets. Focused checks cover default/disabled/overridden actions, real Qt mouse-button and wheel delivery, primary-click isolation, DND, middle click and two-notch relative volume. The full check completed 269 tests (230 passed, 39 skipped); QML lint passed for the changed controls and settings. No additional polling or package is required. Fedora/niri hardware behavior remains to be checked.
+
 ## Backend audit fixes — 2026-10-16
 
 Text copy no longer captures pipes inherited by wl-copy's clipboard owner.

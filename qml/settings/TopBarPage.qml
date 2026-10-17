@@ -287,6 +287,41 @@ ColumnLayout {
         }
         LiquidButton { text: "Restore default layout"; enabled: root.ready; onClicked: root.save(BarRegistry.clone(BarRegistry.defaults)) }
     }
+    SettingsCard {
+        title: "Click and scroll actions"
+        description: "Choose a module, then assign its mouse gestures. Default keeps its normal left click; audio scroll adjusts volume, right click mutes, and notifications right click toggles Do Not Disturb. Workspace left click selects the clicked workspace."
+        LiquidComboBox {
+            id: gestureModule; objectName: "gestureModule"; Layout.fillWidth: true
+            model: BarRegistry.modules.map(m => m.title)
+            Accessible.name: "Module gestures"
+        }
+        Repeater {
+            model: BarGestures.gestures
+            delegate: RowLayout {
+                id: gestureRow
+                required property string modelData
+                required property int index
+                readonly property string moduleId: BarRegistry.modules[gestureModule.currentIndex].id
+                readonly property string configured: (ShellState.preferences.barGestures || {})[moduleId]?.[modelData] || "default"
+                Layout.fillWidth: true
+                LabelText { text: BarGestures.labels[gestureRow.index]; Layout.fillWidth: true }
+                LiquidComboBox {
+                    objectName: "gesture-" + gestureRow.modelData
+                    Layout.preferredWidth: 230; Layout.maximumWidth: root.width * .6
+                    model: BarGestures.actions.map(a => a.title)
+                    currentIndex: Math.max(0, BarGestures.actions.findIndex(a => a.id === gestureRow.configured))
+                    enabled: root.ready
+                    Accessible.name: BarGestures.labels[gestureRow.index] + " action"
+                    onActivated: {
+                        const bindings = ShellState.preferences.barGestures || {};
+                        const next = Object.assign({}, bindings, {[gestureRow.moduleId]: Object.assign({}, bindings[gestureRow.moduleId] || {}, {[gestureRow.modelData]: BarGestures.actions[currentIndex].id})});
+                        ShellState.run("setting", {key: "barGestures", value: next});
+                    }
+                }
+            }
+        }
+        LiquidButton { text: "Restore default gestures"; enabled: root.ready; onClicked: ShellState.run("setting", {key: "barGestures", value: {}}) }
+    }
     Rectangle {
         id: proxy
         parent: root.parent

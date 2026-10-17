@@ -26,10 +26,11 @@ Loader {
     y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launcher", "overview", "tray", "notifications", "settings", "clipboard", "power"].includes(moduleId) ? actionComponent : statusComponent
-    Component { id: privacyComponent; PrivacyIndicator {} }
+    ModuleGestures { anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo }
+    Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
     Component {
         id: activityComponent
-        ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget }
+        ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget; function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } }
     }
     Component {
         id: actionComponent
@@ -42,6 +43,7 @@ Loader {
             Accessible.name: BarRegistry.info(root.moduleId).title
             active: root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : root.moduleId === "power" ? ShellState.powerOpen : false
             onClicked: {
+                if (BarGestures.perform(root.moduleId, "left", root.screenInfo)) return;
                 if (root.moduleId === "overview") ShellState.nativeOverview();
                 else {
                     if (root.moduleId === "tray") {
@@ -51,7 +53,6 @@ Loader {
                     ShellState.togglePanel(root.moduleId, root.screenInfo);
                 }
             }
-            TapHandler { enabled: root.moduleId === "overview"; acceptedButtons: Qt.RightButton; onTapped: ShellState.togglePanel("overview", root.screenInfo) }
             Rectangle { visible: root.moduleId === "notifications" && Notifications.unreadCount > 0; width: 6; height: 6; radius: 3; color: Theme.pink; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 4 }
         }
     }
@@ -89,7 +90,7 @@ Loader {
                             font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                         }
-                        onClicked: ShellState.run("workspace", {id: modelData.id})
+                        onClicked: if (!BarGestures.perform(root.moduleId, "left", root.screenInfo)) ShellState.run("workspace", {id: modelData.id})
                         onActiveFocusChanged: if (activeFocus) workspaceScroller.contentX = Math.max(0, Math.min(x, workspaceScroller.contentWidth - workspaceScroller.width))
                     }
                 }
@@ -100,6 +101,7 @@ Loader {
         id: titleComponent
         Item {
             implicitWidth: Math.min(titleMetrics.width + 16, Math.max(0, root.titleBudget))
+            TapHandler { onTapped: BarGestures.perform(root.moduleId, "left", root.screenInfo) }
             TextMetrics { id: titleMetrics; text: titleText.text; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
             LabelText {
                 id: titleText
@@ -114,7 +116,7 @@ Loader {
     Component {
         id: statusComponent
         LiquidButton {
-            id: button
+            id: statusButton
             readonly property date now: clock.date
             readonly property var audio: ShellState.system.audio || {}
             readonly property var network: ShellState.system.network || {}
@@ -129,15 +131,15 @@ Loader {
             implicitWidth: Math.min(Math.ceil(captionMeasure.implicitWidth) + 2 + (root.moduleId === "clock" ? 24 : 48), root.moduleId === "media" ? 220 : 300)
             implicitHeight: 30; leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
             Accessible.name: BarRegistry.info(root.moduleId).title + ": " + caption
-            onClicked: ShellState.togglePanel(root.moduleId === "network" ? "wifi" : "control", root.screenInfo)
-            background: Rectangle { radius: 15; color: button.hovered || ShellState.controlOpen ? Theme.barHover : "transparent"; border.width: button.visualFocus ? 2 : 0; border.color: Theme.accent }
-            LabelText { id: captionMeasure; visible: false; text: button.caption; font: statusText.font }
+            onClicked: if (!BarGestures.perform(root.moduleId, "left", root.screenInfo)) ShellState.togglePanel(root.moduleId === "network" ? "wifi" : "control", root.screenInfo)
+            background: Rectangle { radius: 15; color: statusButton.hovered || ShellState.controlOpen ? Theme.barHover : "transparent"; border.width: statusButton.visualFocus ? 2 : 0; border.color: Theme.accent }
+            LabelText { id: captionMeasure; visible: false; text: statusButton.caption; font: statusText.font }
             contentItem: Item {
                 Row {
                     id: content
                     anchors.centerIn: parent; spacing: 6
                     ShellIcon { visible: root.moduleId !== "clock"; name: BarRegistry.info(root.moduleId).icon; color: root.moduleId === "battery" && root.battery.percent < 20 ? Theme.red : Theme.barMuted; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
-                    LabelText { id: statusText; text: button.caption; color: Theme.barText; width: Math.max(0, button.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
+                    LabelText { id: statusText; text: statusButton.caption; color: Theme.barText; width: Math.max(0, statusButton.width - (root.moduleId === "clock" ? 24 : 48)); elide: Text.ElideRight; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
             SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.moduleId === "clock" }

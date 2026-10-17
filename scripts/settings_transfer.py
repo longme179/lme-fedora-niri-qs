@@ -9,7 +9,7 @@ PORTABLE = set(APPEARANCE_KEYS) | {
     'shellName',
     'notificationWidth','notificationPosition','notificationMargin','notificationRadius','notificationPadding','notificationOpacity',
     'notificationBorderWidth','notificationTitleSize','notificationBodySize','notificationIdleAnimation','notificationIdleSpeed',
-    'barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barBorderWidth','barCorners','barIslandStyles','barFontSize','barLayout','barBlur',
+    'barGestures','barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barBorderWidth','barCorners','barIslandStyles','barFontSize','barLayout','barBlur',
     'mirroringEnabled','recordingEnabled','recordingEncoder','recordingAudio','recordingFormat','recordingCodec','recordingFps','recordingBitrate','captureEditor','fileSearchEnabled','quickNotes','audioVisualizer','osdEnabled','osdPosition','osdLayout','osdMargin','controlLayout','controlWidth','popupBlur','fontPicker','colorPicker','privacyIndicators','dndWhileSharing',
     'controlGrid','batteryDetails','weatherAutoLocation','weatherUnit','activityEnabled','clipboardEnabled','clipboardImages','clipboardLimit',
     'nightLightMode','nightLightTemperature','nightLightStart','nightLightEnd',

@@ -202,3 +202,7 @@ compiled shader is included; developers can rebuild it with
 `bash scripts/build-shaders.sh`. The frame-based
 MPRIS position refresh follows DMS `Widgets/DSeekbar.qml` at the DMS revision
 above and reads Quickshell's local playback clock, without frame-rate D-Bus polls.
+
+## Configurable bar gestures
+
+Gesture defaults reference [Noctalia widget_gesture_defaults.cpp](https://github.com/noctalia-dev/noctalia/blob/eeea6ff75cd71f9dbcd3acea6035449fefe3c71a/src/shell/bar/widget_gesture_defaults.cpp) (MIT). LME's QML dispatcher, preference validation and settings UI are original; no C++ implementation is copied. Relative volume uses the existing wpctl backend.

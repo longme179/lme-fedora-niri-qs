@@ -66,15 +66,15 @@ class LyricsQmlCase(unittest.TestCase):
     property var checks: ({})
     FloatingWindow { implicitWidth: 500; implicitHeight: 500; LyricsView { id: lyrics; width: 460; expanded: true; player: fixture.player } }
     Timer { interval: 100; running: true; repeat: true; onTriggered: {
-        if (++fixture.ticks > 100) { fixture.finish({timeout:fixture.phase,data:lyrics.data}); return; }
+        if (++fixture.ticks > 100) { fixture.finish({timeout:fixture.phase,data:lyrics.lyricData}); return; }
         if (!fixture.player) return;
-        if (fixture.phase === 0 && lyrics.data.status === "ready") { fixture.player.pause(); fixture.phase++; }
+        if (fixture.phase === 0 && lyrics.lyricData.status === "ready") { fixture.player.pause(); fixture.phase++; }
         else if (fixture.phase === 1 && !fixture.player.isPlaying) { fixture.player.position=36; fixture.phase++; }
         else if (fixture.phase === 2 && lyrics.currentLine===2) {
             fixture.checks.follow=true; lyrics.visible=false; fixture.checks.hidden=!lyrics.active; lyrics.visible=true; fixture.phase++;
-        } else if (fixture.phase === 3 && lyrics.active && lyrics.data.status === "ready") {
+        } else if (fixture.phase === 3 && lyrics.active && lyrics.lyricData.status === "ready") {
             fixture.checks.reopened=true; fixture.player.next(); fixture.phase++;
-        } else if (fixture.phase === 4 && lyrics.data.status === "offline") {
+        } else if (fixture.phase === 4 && lyrics.lyricData.status === "offline") {
             fixture.checks.cleared=lyrics.lines.length===0; fixture.finish(fixture.checks);
         }
     } }

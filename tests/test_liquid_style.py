@@ -58,7 +58,7 @@ class LiquidThemeCase(unittest.TestCase):
             fixture.checks.collapsed=Theme.barCornerRadius("topLeft",-16,"left")===0 && Theme.barCornerRadius("topRight",0,"left")===0;
             ShellState.run("setting",{key:"surfaceStyle",value:"liquid"}); fixture.phase++;
         } else if(fixture.phase===1 && Theme.liquidGlass) {
-            fixture.checks.neutral=Theme.text.toString()==="#f5f8fc" && Theme.accent.toString()==="#d7e7f5" && Theme.panelOpacity===.55 && bar.fill===Theme.barFill && bar.border.width===1;
+            fixture.checks.neutral=Theme.text.toString()==="#000000" && Theme.accent.toString()==="#d7e7f5" && Theme.panelOpacity===.55 && bar.fill===Theme.barFill && bar.border.width===1;
             fixture.checks.allRoles=Theme.catalog.colors.every(group=>group.tokens.every(key=>!!Theme.glassColors[key]));
             fixture.checks.kept=Theme.fontFamily==="DejaVu Sans" && Theme.bodySize===17 && Theme.motionPreset==="jelly-v2" && bar.topLeftRadius===0 && bar.topRightRadius===16;
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"}); fixture.phase++;
@@ -71,6 +71,32 @@ class LiquidThemeCase(unittest.TestCase):
 ''', {'XDG_CONFIG_HOME': directory})
             self.assertEqual(result, dict(before=True, collapsed=True, neutral=True, allRoles=True, kept=True, restored=True, noGpu=True))
             self.assertEqual(backend.Preferences(path).values, prefs.values)
+
+    def test_liquid_pauses_only_global_blur_and_preserves_the_saved_preference(self):
+        result = self.run_qml('import "qml/services"', '''
+    Timer { interval:80;running:true;repeat:true;onTriggered: {
+        if(!ShellState.backendReady) return;
+        const saved=Object.assign({},ShellState.preferences,{surfaceStyle:"smoked",popupBlur:true,barBlur:true});
+        function apply(style,popup,supported) {
+            ShellState.snapshot=Object.assign({},ShellState.snapshot,{
+                platform:{popupBlurSupported:supported},
+                preferences:Object.assign({},saved,{surfaceStyle:style,popupBlur:popup})
+            });
+        }
+        apply("smoked",true,true);
+        const smoked=ShellState.popupBlurEnabled && ShellState.barBlurEnabled;
+        apply("liquid",true,true);
+        const liquid=!ShellState.popupBlurEnabled && ShellState.barBlurEnabled && ShellState.preferences.popupBlur===true;
+        apply("smoked",true,true);
+        const restored=ShellState.popupBlurEnabled && ShellState.barBlurEnabled;
+        apply("liquid",false,true);apply("smoked",false,true);
+        const disabled=!ShellState.popupBlurEnabled && ShellState.preferences.popupBlur===false;
+        apply("smoked",true,false);
+        fixture.finish({smoked:smoked,liquid:liquid,restored:restored,disabled:disabled,
+            unsupported:!ShellState.popupBlurEnabled && !ShellState.barBlurEnabled});
+    }}
+''', {'LME_SHELL_DEMO':'0','LME_SHELL_BACKEND_DEMO':'1'})
+        self.assertEqual(result, dict(smoked=True, liquid=True, restored=True, disabled=True, unsupported=True))
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'private Wayland glass checks')
@@ -113,6 +139,11 @@ class LiquidNativeCase(unittest.TestCase):
     property int phase:0
     property int ticks:0
     property var checks:({})
+    function blurPreference(item) {
+        if(item.preference==="popupBlur") return item;
+        for(const child of item.children || []) { const found=blurPreference(child);if(found) return found; }
+        return null;
+    }
     Timer { interval:100; running:true; repeat:true; onTriggered: {
         if(++fixture.ticks>100) { fixture.finish({timeout:fixture.phase}); return; }
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
@@ -122,25 +153,28 @@ class LiquidNativeCase(unittest.TestCase):
             const material=mouse.findChild(page,"glassMaterial");
             fixture.checks.fallback=material.software && material.active && GlassState.backdrops.length===0;
             fixture.checks.enabled=toggle.enabled;
+            fixture.checks.paused=!fixture.blurPreference(page).enabled && ShellState.preferences.popupBlur===true;
             mouse.mouseClick(toggle,26,20); fixture.phase++;
         } else if(fixture.phase===2 && !Theme.liquidGlass) {
-            fixture.checks.restored=GlassState.backdrops.length===0; fixture.finish(fixture.checks);
+            fixture.checks.restored=GlassState.backdrops.length===0 && fixture.blurPreference(page).enabled && ShellState.preferences.popupBlur===true; fixture.finish(fixture.checks);
         }
     }}
 ''', {'QT_QPA_PLATFORM': 'wayland'})
-        self.assertEqual(result, dict(fallback=True, enabled=True, restored=True))
+        self.assertEqual(result, dict(fallback=True, enabled=True, paused=True, restored=True))
 
-    def test_glass_tiles_and_selected_tabs_stay_clear_and_all_labels_restore_their_style(self):
+    def test_glass_tiles_and_tabs_stay_clear_black_text_and_input_restore_their_colors(self):
         result = self.run_qml('import QtTest\nimport "qml/components"\nimport "qml/panels"\nimport "qml/services"\nimport "qml/theme"', '''
     FloatingWindow { implicitWidth:1000;implicitHeight:1000
         ControlCenter { id:center;anchors.fill:parent }
-        LabelText { id:label;text:"Outlined label" }
+        LabelText { id:label;text:"Black label";color:fixture.labelColor }
+        Loader { id:lateLabel;active:Theme.liquidGlass;sourceComponent:ShellText { text:"Late label";color:"red" } }
         ExpressiveField { id:entry;width:250;y:60;text:"Editable input" }
         TestCase { id:mouse;when:false }
     }
     property int phase:0
     property int ticks:0
     property int age:0
+    property color labelColor:"#446688"
     property var checks:({})
     function labels(item) {
         const result=[];
@@ -156,7 +190,7 @@ class LiquidNativeCase(unittest.TestCase):
     Timer { interval:100;running:true;repeat:true;onTriggered: {
         if(++fixture.ticks>90) { fixture.finish({timeout:fixture.phase});return; }
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
-        if(fixture.phase===0) { fixture.checks.normal=label.style===Text.Normal;ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
+        if(fixture.phase===0) { fixture.checks.normal=label.style===Text.Normal && label.color.toString()==="#446688";ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
         else if(fixture.phase===1 && Theme.liquidGlass) {
             if(++fixture.age<5) return;
             const wifi=mouse.findChild(center,"controlTile-wifi"),power=mouse.findChild(center,"controlTile-power");
@@ -166,21 +200,25 @@ class LiquidNativeCase(unittest.TestCase):
             const indicator=mouse.findChild(center,"controlTabIndicator");
             fixture.checks.selection=indicator.fill.a<.2 && indicator.targetItem.palette.buttonText===Theme.text;
             const text=fixture.labels(center);
-            fixture.checks.outlined=text.length>35 && text.every(item=>item.style===Text.Outline && item.styleColor.toString()==="#cc000000");
+            fixture.checks.black=text.length>35 && text.every(item=>item.style===Text.Normal && item.color.toString()==="#000000")
+                && label.color.toString()==="#000000" && lateLabel.item.color.toString()==="#000000";
             mouse.mouseClick(entry,entry.width/2,entry.height/2);
             mouse.keyClick(Qt.Key_A,Qt.ControlModifier);
             for(const key of [Qt.Key_1,Qt.Key_2,Qt.Key_3]) mouse.keyClick(key);
-            fixture.checks.input=entry.text==="123" && entry.background.color.a>.6;
+            fixture.checks.input=entry.text==="123" && entry.color.toString()==="#000000" && entry.background.color.a>.6 && entry.background.color.r>.9;
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
         } else if(fixture.phase===2 && !Theme.liquidGlass) {
-            fixture.checks.restored=label.style===Text.Normal && fixture.labels(center).every(item=>item.style===Text.Normal);
+            fixture.checks.restored=label.style===Text.Normal && label.color.toString()==="#446688" && fixture.labels(center).every(item=>item.style===Text.Normal);
+            fixture.labelColor="#668844";fixture.phase++;
+        } else if(fixture.phase===3) {
+            fixture.checks.binding=label.color.toString()==="#668844";
             fixture.finish(fixture.checks);
         }
     }}
 ''', {'QT_QPA_PLATFORM': 'wayland'})
-        self.assertEqual(result, dict(normal=True, clear=True, selection=True, outlined=True, input=True, restored=True))
+        self.assertEqual(result, dict(normal=True, clear=True, selection=True, black=True, input=True, restored=True, binding=True))
 
-    def test_black_glyph_outline_renders_on_a_white_backdrop_and_disappears_in_smoked(self):
+    def test_black_glyphs_render_without_an_outline_and_restore_the_smoked_color(self):
         try:
             from PIL import Image
         except ImportError:
@@ -190,13 +228,14 @@ class LiquidNativeCase(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             result = self.run_qml('import Quickshell.Io\nimport "qml/components"\nimport "qml/services"', '''
     FloatingWindow { color:"white";implicitWidth:900;implicitHeight:700
-        LabelText { anchors.centerIn:parent;text:"Glass text 0123";color:"white";font.pixelSize:24 }
+        LabelText { id:label;anchors.centerIn:parent;text:"Glass text 0123";color:"white";font.pixelSize:24 }
     }
     property int phase:0
     property int ticks:0
+    property bool black:false
     Process { id:shot;command:["grim",SHOTS+"/liquid.png"];onExited:code=> {
-        if(fixture.phase===1) { ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++; }
-        else fixture.finish({captured:code===0});
+        if(fixture.phase===1) { fixture.black=label.style===Text.Normal && label.color.toString()==="#000000";ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++; }
+        else fixture.finish({captured:code===0,black:fixture.black,restored:label.color.toString()==="#ffffff"});
     }}
     Timer { interval:100;repeat:true;running:true;onTriggered: {
         if(++fixture.ticks>90) { fixture.finish({timeout:fixture.phase});return; }
@@ -206,13 +245,13 @@ class LiquidNativeCase(unittest.TestCase):
         else if(fixture.phase===2 && fixture.ticks>12 && !shot.running) { shot.command=["grim",SHOTS+"/smoked.png"];fixture.phase++;shot.running=true; }
     }}
 '''.replace('SHOTS',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
-            self.assertEqual(result, dict(captured=True))
+            self.assertEqual(result, dict(captured=True, black=True, restored=True))
             def dark_pixels(name):
                 image=Image.open(Path(directory)/name).convert('RGB')
                 x,y=image.width//2,image.height//2
                 pixels=image.load()
                 return sum(max(pixels[col,row])<160 for row in range(y-30,y+30) for col in range(x-150,x+150))
-            self.assertGreater(dark_pixels('liquid.png'), 250, 'White glyphs need a visible thin dark outline on white')
+            self.assertGreater(dark_pixels('liquid.png'), 600, 'Liquid must render filled black glyphs')
             self.assertEqual(dark_pixels('smoked.png'), 0, 'Smoked typography must retain its previous rendering')
 
     def test_shared_texture_resize_motion_reversal_hidden_and_repeated_teardown(self):

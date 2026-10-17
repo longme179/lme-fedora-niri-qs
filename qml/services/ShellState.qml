@@ -17,7 +17,7 @@ QtObject {
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
     readonly property string shellName: preferences.shellName || "LME Shell"
-    readonly property bool popupBlurEnabled: !demo && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property bool popupBlurEnabled: !demo && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     property string panelKind: "control"
     property bool launcherOpen: false

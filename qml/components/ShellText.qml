@@ -3,6 +3,13 @@ import QtQuick
 import "../theme"
 
 Text {
-    style: Theme.liquidGlass ? Text.Outline : Text.Normal
-    styleColor: "#cc000000"
+    id: root
+    // Preserve each label's own color binding when returning to Smoked.
+    Binding {
+        target: root
+        property: "color"
+        value: "#000000"
+        when: Theme.liquidGlass
+        restoreMode: Binding.RestoreBindingOrValue
+    }
 }

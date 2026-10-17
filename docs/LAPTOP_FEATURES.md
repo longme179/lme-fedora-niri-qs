@@ -57,6 +57,8 @@ Advanced KDL v2 multiline strings and custom typed property values are outside t
 
 **Settings → Appearance → Blur behind popups** requests a full-screen blur region for the popup's screen. This includes the expanded Activity Island, Control Center, other shell panels and the authentication popup. Popup content stays sharp. Requests are released when the overlay closes; screenshot capture is not used and the clipboard is untouched.
 
+Liquid glass pauses full-screen popup blur without changing the saved preference. Switching back to Smoked restores it; local bar blur remains independent.
+
 This requires **official niri 26.04 or newer**, with `ext-background-effect-v1`, and Quickshell 0.3.2's Wayland background-effect support. Older niri builds retain the existing dim backdrop. This is compositor blur, not a claim that a dimmer blurs applications.
 
 On supported niri, include/merge [config/niri/popup-blur.kdl](../config/niri/popup-blur.kdl). For the default installation, add this to your niri config:

@@ -139,6 +139,9 @@ keeps applications and the bar visible in the blurred background, with the
 popup sharp. Merge the global blur block if one already exists. Native non-xray
 blur remains an experimental compositor feature.
 
+Liquid glass pauses this full-screen blur; the saved preference applies again
+when switching back to Smoked. Local bar blur remains independent.
+
 
 Recording audio choices now persist between popup openings and shell restarts.
 System audio is the default; choose No audio explicitly for a silent recording

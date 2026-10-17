@@ -8,17 +8,17 @@ QtObject {
     id: root
     readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
     readonly property var glassColors: ({
-        background:"#151b23", panel:"#08141b23", surface:"#04ffffff", text:"#f5f8fc", muted:"#e2e9f2", border:"#55ffffff",
+        background:"#151b23", panel:"#08141b23", surface:"#04ffffff", text:"#000000", muted:"#000000", border:"#55ffffff",
         purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
         primaryContainer:"#20ffffff", secondaryContainer:"#08ffffff", tertiaryContainer:"#08ffffff",
-        surfaceContainer:"#06ffffff", surfaceContainerHigh:"#06ffffff", onPrimary:"#151b23",
+        surfaceContainer:"#06ffffff", surfaceContainerHigh:"#06ffffff", onPrimary:"#000000",
         buttonFill:"#04ffffff", buttonHover:"#10ffffff", buttonPressed:"#18ffffff", buttonSelected:"#28ffffff",
-        buttonText:"#f5f8fc", iconColor:"#f5f8fc", iconHover:"#33ffffff",
-        fieldFill:"#a6000000", fieldText:"#f5f8fc", switchTrack:"#d7e7f5", switchThumb:"#273442",
+        buttonText:"#000000", iconColor:"#f5f8fc", iconHover:"#33ffffff",
+        fieldFill:"#a6ffffff", fieldText:"#000000", switchTrack:"#d7e7f5", switchThumb:"#273442",
         sliderTrack:"#18ffffff", sliderFill:"#d7e7f5", barFill:"#08ffffff", barBorder:"#55ffffff",
-        barText:"#f5f8fc", barMuted:"#e2e9f2", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#f5f8fc",
+        barText:"#000000", barMuted:"#000000", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#000000",
         panelFill:"#08ffffff", cardFill:"#06ffffff", controlFill:"#08ffffff", launcherFill:"#08ffffff", islandFill:"#08ffffff", settingsFill:"#08ffffff",
-        notificationFill:"#08ffffff", notificationTitle:"#f5f8fc", notificationBody:"#e2e9f2", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
+        notificationFill:"#08ffffff", notificationTitle:"#000000", notificationBody:"#000000", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
     })
     property var custom: ({})
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})

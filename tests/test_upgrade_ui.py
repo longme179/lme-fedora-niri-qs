@@ -171,6 +171,8 @@ class UpgradeInterfaceCase(unittest.TestCase):
                 wait(lambda s:s['ready']);ipc('navigate','settings','appearance')
                 run('setting',key='motionPreset',value='jelly');run('setting',key='motionBounce',value=.8);run('setting',key='motionSpeed',value=.5)
                 wait(lambda s:s['preferences']['motionPreset']=='jelly' and s['deformation']>.05)
+                # Measure the button after the page's entrance has settled.
+                wait(lambda s:s['motionProgress']==1)
                 click('Replay preview');samples=[];end=time.monotonic()+1.6
                 while time.monotonic()<end:
                     samples.append(json.loads(ipc('state'))['motionProgress']);time.sleep(.035)

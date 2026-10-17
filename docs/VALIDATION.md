@@ -1,5 +1,30 @@
 # Validation and platform limits
 
+## Black Liquid text and paused popup blur — 2026-10-18
+
+Liquid labels, headings, button captions, menus and input text now use black
+without an outline. This replaces the outlined typography described below.
+Native inputs retain Qt selection/IME support with a light translucent fill.
+Switching back restores each label's original color binding. Full-screen popup
+blur is paused in Liquid without changing the saved preference; local bar blur,
+popup dimming and motion remain independent.
+
+`scripts/check.sh` completed **324 tests: 323 passed, one optional Matugen skip**,
+with the expanded private Wayland suites below. Bash syntax and the demo
+snapshot passed. Lint covers **130 QML files: zero errors, the same 57 warnings**.
+Nine Liquid regressions cover rendered black glyphs without an outline,
+Control Center labels and selected tabs, native input, late-created labels,
+restored live color bindings, blur mode/support guards and saved preferences,
+shader rendering and resource teardown. An OpenGL capture of Activity Island
+and Control Center was inspected under private Sway.
+
+The existing motion UI test now waits for the Settings entrance to settle
+before locating and clicking Replay preview. Its earlier missed click also
+reproduced on the unchanged baseline; the overshoot assertion remains intact.
+
+Live blur requests on niri and Radeon/RTX rendering on the target laptop remain
+unverified here. The wallpaper-rim rendering limits below still apply.
+
 ## Clearer Liquid surfaces and outlined labels — 2026-10-18
 
 `scripts/check.sh` completed **323 tests: 322 passed, one Matugen skip**, with

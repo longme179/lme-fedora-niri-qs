@@ -313,16 +313,18 @@ corner geometry, density, features and motion preferences continue to apply.
 Liquid surfaces use near-clear fills rather than opaque gray Material plates.
 Active tiles keep a faint status tint and selected tabs retain a translucent
 highlight. The optical layer has a clear center and a narrow refractive rim.
-Display labels, headings, bar text, button captions and menu text use Qt's thin
-black glyph outline in Liquid mode; Smoked keeps its original text rendering.
+Display labels, headings, bar text, button captions and menu text turn black
+without an outline in Liquid mode; Smoked restores their original colors.
 Editable fields retain native Qt input rendering, selection and IME behavior,
-with a dark translucent fill for readable input on bright backdrops.
+with a light translucent fill behind black input text.
 
 The material adds rounded refraction, dispersion and pointer highlights to
 shared panel, card and button backgrounds; text and input remain separate.
-It composes with the existing popup spring/Jelly-v2 effect. Native niri blur
-still supplies live apps and desktop shapes behind the transparent body; enable
-the existing bar/popup blur switches and include `config/niri/popup-blur.kdl`.
+It composes with the existing popup spring/Jelly-v2 effect. Full-screen blur
+behind panels and authentication popups is disabled while Liquid is active;
+the saved `popupBlur` preference applies again in Smoked mode. Popup dimming
+and motion remain active. Local bar blur is independent and still requires
+`config/niri/popup-blur.kdl` on niri 26.04+.
 This is a hybrid effect: a bounded wallpaper image supplies the thin refractive
 rim, **not live application refraction**. No desktop screenshots or capture
 permissions are used. Wallpaper crossfades and moved floating Settings windows

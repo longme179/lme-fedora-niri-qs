@@ -23,7 +23,7 @@ ColumnLayout {
         }
         LabelText {
             visible: Theme.liquidGlass; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted
-            text: "Palette controls are paused. Fonts, layout, corners and motion still apply. Enable compositor blur below and include niri's popup-blur fragment for a blurred backdrop."
+            text: "Palette controls and full-screen popup blur are paused. Fonts, layout, corners and motion still apply. Bar blur remains available."
         }
     }
     SettingsCard {
@@ -146,7 +146,11 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Glass and motion"
-        PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
+        PreferenceSwitch {
+            title: "Blur behind popups"; preference: "popupBlur"; enabled: !Theme.liquidGlass
+            detail: Theme.liquidGlass ? "Paused in Liquid glass. Your saved preference applies in Smoked mode."
+                : "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."
+        }
         PreferenceSwitch { title: "Blur behind the bar"; detail: "Blur through the bar's glass, following each island and its corners. Uses the same niri 26.04+ config fragment."; preference: "barBlur" }
         LabelText { text: "Compositor: "+((ShellState.snapshot.platform || {}).niriVersion || "Checking…"); color: Theme.muted; font.pixelSize: 12 }
         PreferenceSwitch { title: "Animations"; detail: "Disable to remove spatial motion and press deformation"; preference: "animations" }

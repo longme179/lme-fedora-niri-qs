@@ -10,7 +10,7 @@ import re
 
 MOTION_DEFAULTS = {"springMotion": True, "shapeMorph": True, "animatedTabs": True, "pointerRipple": True, "mediaWave": True, "mediaShapes": True, "motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
 THEME_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / 'config/theme-tokens.json').read_text())
-THEME_DEFAULTS = {"themeOverrides": {}, "fontOverrides": {}, "fontSize": 14}
+THEME_DEFAULTS = {"themeOverrides": {}, "fontOverrides": {}, "fontSize": 14, "activityCompactMaxWidth": 300, "activityPopupMaxWidth": 460, "activityPopupMaxHeight": 0}
 PALETTE_DOCUMENT = json.loads((Path(__file__).resolve().parents[1] / 'config/palettes.json').read_text())
 PALETTE_CATALOG = PALETTE_DOCUMENT['palettes']
 PALETTE_IDS = {p['id'] for p in PALETTE_CATALOG}

@@ -341,3 +341,7 @@ The `desktopEnabled` and `desktopWidgets` preferences are included in export/imp
 Popups slide in from the screen edge and close through the same edge. Activity Island uses the bar edge. Spring motion preserves velocity when opening is interrupted by closing or reversed; changing the size of an open Island keeps its existing spring. Settings → Appearance offers Smooth, Expressive and Jelly presets, speed and bounce. Reduced motion skips the travel.
 
 The former connected-surface animation and its switch have been removed. Existing settings, appearance profiles and imported presets/backups ignore `connectedPopups` while retaining the other customizations; no reset is needed.
+
+## Activity Island size
+
+Settings → Appearance → Activity Island size controls `activityCompactMaxWidth` (120–1200 px, default 300), `activityPopupMaxWidth` (400–1600 px, default 460) and `activityPopupMaxHeight` (320–2160 px, or 0 for automatic screen fitting). The bar's available module space still caps the pill. Popup limits remain bounded by the viewport and edge margin during spring resizing; overflow stays scrollable. These limits are saved in appearance profiles and portable presets/backups.

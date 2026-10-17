@@ -98,6 +98,33 @@ ColumnLayout {
         }
     }
     SettingsCard {
+        title: "Activity Island size"
+        description: "Set limits for the bar pill and its expanded popup. The available screen and bar space always take priority. Height 0 fits the content to the screen; overflow scrolls inside the popup."
+        Repeater {
+            model: [{key:"activityCompactMaxWidth",title:"Maximum bar pill width",min:120,max:1200,step:10},
+                {key:"activityPopupMaxWidth",title:"Maximum popup width",min:400,max:1600,step:20},
+                {key:"activityPopupMaxHeight",title:"Maximum popup height",min:0,max:2160,step:40}]
+            delegate: ColumnLayout {
+                id: limit; required property var modelData
+                Layout.fillWidth: true; spacing: 8
+                LabelText { Layout.fillWidth: true; wrapMode: Text.Wrap; font.weight: Font.Bold; text: limit.modelData.title + " · " + (dimension.value === 0 ? "Auto" : Math.round(dimension.value) + " px") }
+                LiquidSlider {
+                    id: dimension; objectName: limit.modelData.key
+                    Layout.fillWidth: true; from: limit.modelData.min; to: limit.modelData.max; stepSize: limit.modelData.step
+                    enabled: ShellState.backendReady
+                    Accessible.name: limit.modelData.title
+                    function save() {
+                        const size = Math.round(value);
+                        ShellState.run("setting", {key:limit.modelData.key, value:limit.modelData.key === "activityPopupMaxHeight" && size > 0 ? Math.max(320,size) : size});
+                    }
+                    onMoved: if (!pressed) save()
+                    onPressedChanged: if (!pressed) save()
+                }
+                Binding { target: dimension; property: "value"; value: ShellState.preferences[limit.modelData.key] ?? Theme[limit.modelData.key]; when: !dimension.pressed; restoreMode: Binding.RestoreNone }
+            }
+        }
+    }
+    SettingsCard {
         title: "Glass and motion"
         PreferenceSwitch { title: "Blur behind popups"; detail: "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."; preference: "popupBlur" }
         PreferenceSwitch { title: "Blur behind the bar"; detail: "Blur through the bar's glass, following each island and its corners. Uses the same niri 26.04+ config fragment."; preference: "barBlur" }

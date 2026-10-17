@@ -10,7 +10,7 @@ LiquidButton {
     property var windowInfo: null
     property real budget: 360
     implicitHeight: 30
-    implicitWidth: Math.min(Math.ceil(measure.implicitWidth) + 54, Math.max(0, Math.min(300, budget)))
+    implicitWidth: Math.min(Math.ceil(measure.implicitWidth) + 54, Math.max(0, Math.min(Theme.activityCompactMaxWidth, budget)))
     leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
     visible: !(ShellState.activityOpen && (!ShellState.panelScreen || ShellState.panelScreen === screenInfo))
     Accessible.name: "Activity: " + ActivityState.title + ". Expand media and timers."

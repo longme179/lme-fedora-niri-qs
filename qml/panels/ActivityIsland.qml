@@ -9,20 +9,22 @@ SlideLoader {
     id: root
     property bool expanded: ShellState.activityOpen && !ShellState.authenticationActive
     readonly property real expansion: progress
-    readonly property real compactWidth: Math.max(54, ShellState.activityAnchorWidth)
-    readonly property real expandedWidth: Math.min(460, parent ? parent.width - 28 : 460)
+    readonly property real sideInset: parent ? Math.min(14, Math.max(0, parent.width / 2 - 1)) : 14
+    readonly property real edgeInset: parent ? Math.min(Theme.barTopMargin + 6, Math.max(0, parent.height / 2 - 1)) : Theme.barTopMargin + 6
+    readonly property real compactWidth: Math.min(expandedWidth, Math.max(54, ShellState.activityAnchorWidth))
+    readonly property real expandedWidth: Math.max(1, Math.min(Theme.activityPopupMaxWidth, parent ? parent.width - 2 * sideInset : Theme.activityPopupMaxWidth))
     readonly property Item panel: item as Item
-    readonly property real expandedHeight: Math.min(panel ? panel.implicitHeight : 680, parent ? parent.height - 36 : 680)
+    readonly property real expandedHeight: Math.max(1, Math.min(panel ? panel.implicitHeight : 680, Theme.activityPopupMaxHeight || Infinity, parent ? parent.height - edgeInset - 14 : 680))
     shown: expanded
     exitToEdge: true
     exitEdge: Theme.barBottom ? "bottom" : "top"
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
     visible: mounted
-    width: Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion
-    height: Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion
-    x: Math.max(14, Math.min((parent ? parent.width : width) - width - 14, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
-    y: Theme.barBottom && parent ? parent.height - Theme.barTopMargin - 6 - height : Theme.barTopMargin + 6
+    width: Math.max(1, Math.min(expandedWidth, Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion))
+    height: Math.max(1, Math.min(expandedHeight, Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion))
+    x: Math.max(sideInset, Math.min((parent ? parent.width : width) - width - sideInset, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
+    y: Theme.barBottom && parent ? parent.height - edgeInset - height : edgeInset
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
     MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }

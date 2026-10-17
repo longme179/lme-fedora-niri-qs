@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add independent maximum widths for the compact Activity pill and expanded popup, plus a height limit/Auto fit. Preserve defaults, save limits in appearance profiles and bound live spring resizing to the viewport.
+
 - Add saved full-transcript/current-line lyric modes and default follow in Behavior settings. Show synchronized lines on the compact Activity Island with track-title fallback; share its lookup with media views and replace lyric polling with cue-boundary scheduling adapted from end4-pC.
 
 - Restore spring-driven edge entry and exit for all bar popups. Remove the connecting surface and its setting while preserving custom appearance profiles and old settings imports.

@@ -347,6 +347,9 @@ def validate_preference(key: str, value: Any) -> Any:
         return normalized
     if key == "controlLayout": return control_layout(value)
     if key == "controlGrid": return control_grid(value)
+    if key in {"activityCompactMaxWidth", "activityPopupMaxWidth", "activityPopupMaxHeight"} and type(value) is int:
+        low, high = {"activityCompactMaxWidth": (120, 1200), "activityPopupMaxWidth": (400, 1600), "activityPopupMaxHeight": (320, 2160)}[key]
+        if low <= value <= high or key == "activityPopupMaxHeight" and value == 0: return value
     if key == "controlWidth" and type(value) is int and 480 <= value <= 900: return value
     if key == "displayLayout" and value == []: return []
     if key == "displayLayout": return validate_layout(value)

@@ -96,6 +96,9 @@ QtObject {
     readonly property int notificationBodySize: ShellState.preferences.notificationBodySize ?? 13
     readonly property bool notificationIdleAnimation: ShellState.preferences.notificationIdleAnimation !== false
     readonly property int notificationIdleSpeed: ShellState.preferences.notificationIdleSpeed ?? 16
+    readonly property int activityCompactMaxWidth: ShellState.preferences.activityCompactMaxWidth ?? 300
+    readonly property int activityPopupMaxWidth: ShellState.preferences.activityPopupMaxWidth ?? 460
+    readonly property int activityPopupMaxHeight: ShellState.preferences.activityPopupMaxHeight ?? 0
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
     readonly property real panelOpacity: ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity

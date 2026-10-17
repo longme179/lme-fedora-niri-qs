@@ -7,6 +7,7 @@ from desktop_features import APPEARANCE_KEYS
 
 PORTABLE = set(APPEARANCE_KEYS) | {
     'shellName',
+    'desktopShapeCount','desktopShapeScale','desktopShapeOpacity','desktopShapeSpeed','desktopShapeStyle','desktopShapeRotation',
     'notificationWidth','notificationPosition','notificationMargin','notificationRadius','notificationPadding','notificationOpacity',
     'notificationBorderWidth','notificationTitleSize','notificationBodySize','notificationIdleAnimation','notificationIdleSpeed',
     'barGestures','barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barBorderWidth','barCorners','barIslandStyles','barFontSize','barLayout','barBlur',

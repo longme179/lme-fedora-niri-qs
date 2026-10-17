@@ -1,6 +1,38 @@
 # Validation and platform limits
 
+## Always-on wallpaper shapes and visual controls — 2026-10-17
+
+The desktop layer now depends only on `desktopShapes`, independently of media.
+It keeps moving with no player, during pause and through player disconnects;
+the global Animations switch still stops motion. Turning the feature off
+destroys all its surfaces. Media-card shapes retain their playback behavior.
+
+`scripts/check.sh` completed **315 tests: 314 passed, one skipped**, with the
+same expanded private Wayland suites as below. The skip requires a real Matugen
+binary. Bash syntax and the demo snapshot passed. Whole-tree lint covers
+**125 QML files: zero errors, 57 existing warnings**; all three changed QML
+components pass focused lint without diagnostics.
+
+New tests validate all six visual settings, reject nonfinite/out-of-range values
+and wrong types, and check saved/preset round trips. Native pointer and keyboard
+input adjusts all four sliders and the shape-style dropdown. Rendering checks
+cover 12 shapes, size/opacity/speed changes, stopped rotation with continuing
+drift, shrinking back to one shape and retaining the same desktop surface.
+MPRIS tests confirm startup without a player and uninterrupted motion through
+Chromium-style playback/pause/disconnect/reconnect. Shared media-card and desktop
+widget regressions also pass.
+
+Separate private-Sway checks confirm real click-through, coverage by an opaque
+application, a second output, scale 2 and output disable/enable, then complete
+surface release when the feature is disabled. The Settings desktop page was
+rendered and inspected with saved custom options; logs contain no QML runtime
+errors. No package or backend polling was added. Enabled shapes can animate
+behind opaque apps even without media; target Fedora/niri GPU frame pacing and
+power consumption have not been measured.
+
 ## Floating wallpaper shapes — 2026-10-17
+
+This records the initial media-linked version, superseded by the section above.
 
 `scripts/check.sh` completed **313 tests: 312 passed, one skipped**, with the
 native desktop, media, lyrics, motion, polling, Bluetooth, Settings, clipboard,

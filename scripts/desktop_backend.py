@@ -55,6 +55,8 @@ DEFAULT_PREFERENCES = {
     "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
+    "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
+    "desktopShapeSpeed": 1.0, "desktopShapeStyle": "mixed", "desktopShapeRotation": True,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
@@ -303,6 +305,12 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
     if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key == "desktopShapeRotation" and type(value) is bool: return value
+    if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
+    if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value
+    if key in {"desktopShapeScale", "desktopShapeOpacity", "desktopShapeSpeed"} and type(value) in (int, float) and math.isfinite(value):
+        low, high = {"desktopShapeScale": (.5, 2), "desktopShapeOpacity": (.02, .6), "desktopShapeSpeed": (.1, 3)}[key]
+        if low <= value <= high: return float(value)
     if key == "lyricsMode" and value in ("scroll", "line"): return value
     if key == "notificationIdleAnimation" and type(value) is bool: return value
     if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value

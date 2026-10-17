@@ -7,7 +7,7 @@ import "../components"
 import "../services"
 
 Variants {
-    model: ShellState.preferences.desktopShapes === true && ActivityState.hasMedia ? Quickshell.screens : []
+    model: ShellState.preferences.desktopShapes === true ? Quickshell.screens : []
     delegate: PanelWindow {
         required property var modelData
         screen: modelData
@@ -22,10 +22,14 @@ Variants {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         MediaAmbient {
             anchors.fill: parent
-            playing: ActivityState.playing
+            playing: true
             shapesEnabled: true
-            shapeScale: Math.max(1, Math.min(4, Math.min(width, height) / 360))
-            shapeOpacity: .14
+            shapeScale: Math.max(1, Math.min(4, Math.min(width, height) / 360)) * (ShellState.preferences.desktopShapeScale ?? 1)
+            shapeOpacity: ShellState.preferences.desktopShapeOpacity ?? .14
+            shapeCount: ShellState.preferences.desktopShapeCount ?? 4
+            shapeStyle: ShellState.preferences.desktopShapeStyle || "mixed"
+            motionSpeed: ShellState.preferences.desktopShapeSpeed ?? 1
+            rotateShapes: ShellState.preferences.desktopShapeRotation !== false
         }
     }
 }

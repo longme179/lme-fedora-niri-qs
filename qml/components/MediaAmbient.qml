@@ -12,6 +12,10 @@ Item {
     property bool shapesEnabled: ShellState.preferences.mediaShapes !== false
     property real shapeScale: 1
     property real shapeOpacity: .09
+    property int shapeCount: 4
+    property string shapeStyle: "mixed"
+    property real motionSpeed: 1
+    property bool rotateShapes: true
     readonly property bool animating: playing && visible && width > 0 && height > 0 && Theme.animations && shapesEnabled && (Window.window?.visible ?? false)
     objectName: "mediaAmbient"
     clip: true
@@ -26,25 +30,25 @@ Item {
                     property real progressY: (index * .37 + .2) % 1
                     readonly property real vx: (index % 2 ? -1 : 1) * (5 + index * 2)
                     readonly property real vy: (index % 2 ? 1 : -1) * (4 + index)
-                    width: (48 + index * 14) * root.shapeScale; height: width
+                    width: (48 + (index % 4) * 14) * root.shapeScale; height: width
                     x: progressX * (root.width + width) - width
                     y: progressY * (root.height + height) - height
                     rotation: index * 57
-                    shape: ["flower", "circle", "square"][index % 3]
-                    color: [Theme.accent, Theme.pink, Theme.cyan, Theme.yellow][index]
+                    shape: root.shapeStyle === "mixed" ? ["flower", "circle", "square"][index % 3] : root.shapeStyle
+                    color: [Theme.accent, Theme.pink, Theme.cyan, Theme.yellow][index % 4]
                     opacity: root.shapeOpacity
             }
-            Repeater { id: shapes; model: 4; delegate: DriftingShape {} }
+            Repeater { id: shapes; model: root.shapeCount; delegate: DriftingShape {} }
             FrameAnimation {
                 running: root.animating
                 onTriggered: {
-                    const dt = Math.min(frameTime, .05);
+                    const dt = Math.min(frameTime, .05) * root.motionSpeed;
                     for (let i = 0; i < shapes.count; i++) {
                         const shape = shapes.itemAt(i) as DriftingShape;
                         if (!shape) continue;
                         shape.progressX = (shape.progressX + shape.vx * dt / (root.width + shape.width) + 1) % 1;
                         shape.progressY = (shape.progressY + shape.vy * dt / (root.height + shape.height) + 1) % 1;
-                        shape.rotation = (shape.rotation + (i % 2 ? -7 : 9) * dt) % 360;
+                        if (root.rotateShapes) shape.rotation = (shape.rotation + (i % 2 ? -7 : 9) * dt) % 360;
                     }
                 }
             }

@@ -314,15 +314,27 @@ Settings → Top bar → Click and scroll actions stores per-module `barGestures
 
 Settings → Appearance provides `mediaControls` (seek/shuffle/repeat), `mediaStability` (brief cosmetic metadata retention) and `mediaShapes` (ambient Material polygons). Seek supports click/drag and keyboard arrows/Home/End when the player supports MPRIS seeking. Shuffle/repeat require writable player support; unavailable controls are disabled. Repeat cycles Off → All → One → Off. Shapes stop while hidden, paused or animations are disabled; the same settings apply to Activity Island and Control Center.
 
-Settings → Desktop widgets → Floating media shapes controls `desktopShapes`
+Settings → Desktop widgets → Floating wallpaper shapes controls `desktopShapes`
 (default `false`, included in portable presets). This reuses the media card's
 ambient shapes at a larger size on each connected display, above the wallpaper
 and below application windows, with an empty input region and no reserved space.
-It is independent of `desktopEnabled` and `mediaShapes`. A paused player leaves
-the shapes still; disabling animations also stops them. Closing all MPRIS players
-or turning the option off removes the surfaces. No additional packages, audio
-capture or wallpaper changes are required. These are decorative shapes, not
-audio-reactive Cava bars.
+It is independent of `desktopEnabled`, `mediaShapes` and media playback: enabled
+shapes always drift, including when no player is connected. Turning the option
+off destroys the surfaces completely. Disabling global animations keeps the
+shapes visible and still. The same page saves these portable visual settings:
+
+| Preference | Default | Range / choices |
+| --- | --- | --- |
+| `desktopShapeCount` | `4` | 1–12 shapes |
+| `desktopShapeScale` | `1` | 0.5–2× the size fitted to each output |
+| `desktopShapeOpacity` | `0.14` | 0.02–0.6 (2–60%) |
+| `desktopShapeSpeed` | `1` | 0.1–3× translation and rotation speed |
+| `desktopShapeStyle` | `mixed` | `mixed`, `flower`, `circle`, `square` |
+| `desktopShapeRotation` | `true` | Spin while drifting; off preserves the current angle |
+
+Colors follow the current theme. Shape count and size are bounded; no extra
+packages, audio capture or wallpaper changes are required. These are decorative
+shapes, not audio-reactive Cava bars.
 
 Settings → Behavior → Bluetooth pairing controls `bluetoothPairing`. Native pairing needs Fedora's `python3-gobject-base`. The Gio agent runs only while Devices is open, retains no entered PIN/passkey on disk, and leaves other applications' default agents alone. A successful Pair is followed by Connect; if connecting fails the device remains paired and the error is shown.
 

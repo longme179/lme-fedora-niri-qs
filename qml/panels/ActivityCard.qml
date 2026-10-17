@@ -57,6 +57,7 @@ ColumnLayout {
                 }
             }
             MediaActions { Layout.fillWidth: true; player: ActivityState.player; prefix: "activity" }
+            LyricsView { Layout.fillWidth: true; player: ActivityState.player }
         }
     }
     Rectangle {

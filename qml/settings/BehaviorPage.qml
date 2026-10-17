@@ -7,6 +7,12 @@ import "../theme"
 ColumnLayout {
     spacing: 20
     SettingsCard {
+        title: "Lyrics"
+        description: "Open Lyrics in either media card. Player metadata and local .lrc files are used first; LRCLIB results are cached. Online lookup sends track title, artist, album and duration to lrclib.net only while lyrics are open."
+        PreferenceSwitch { title: "Show lyrics controls"; preference: "lyricsEnabled" }
+        PreferenceSwitch { title: "Online lyrics · LRCLIB"; detail: "Optional network lookup; cached and local lyrics work offline"; preference: "lyricsOnline" }
+    }
+    SettingsCard {
         title: "Bluetooth pairing"
         description: "Scan and pair from Control center → Devices, including PIN and passkey confirmation. The agent runs only while the Devices panel is open. Requires python3-gobject-base (Gio/GLib)."
         PreferenceSwitch { title: "Pair Bluetooth devices in the shell"; detail: "External device settings remain available"; preference: "bluetoothPairing" }

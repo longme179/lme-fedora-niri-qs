@@ -315,3 +315,9 @@ Settings → Top bar → Click and scroll actions stores per-module `barGestures
 Settings → Appearance provides `mediaControls` (seek/shuffle/repeat), `mediaStability` (brief cosmetic metadata retention) and `mediaShapes` (ambient Material polygons). Seek supports click/drag and keyboard arrows/Home/End when the player supports MPRIS seeking. Shuffle/repeat require writable player support; unavailable controls are disabled. Repeat cycles Off → All → One → Off. Shapes stop while hidden, paused or animations are disabled; the same settings apply to Activity Island and Control Center.
 
 Settings → Behavior → Bluetooth pairing controls `bluetoothPairing`. Native pairing needs Fedora's `python3-gobject-base`. The Gio agent runs only while Devices is open, retains no entered PIN/passkey on disk, and leaves other applications' default agents alone. A successful Pair is followed by Connect; if connecting fails the device remains paired and the error is shown.
+
+## Synchronized lyrics
+
+Open Lyrics in Activity Island or the Control Center media card. Player-provided lyrics and a `.lrc` sidecar beside a local media file are checked first. Settings → Behavior → Lyrics can enable LRCLIB lookup; online access is off by default and sends only track title, artist, album and duration when lyrics are open. Positive results are cached for 14 days, missing results for six hours, with at most 128 cache entries. The cache is under `$XDG_CACHE_HOME/lme-shell/lyrics` (normally `~/.cache/lme-shell/lyrics`). Network lookup has a seven-second timeout and response/line limits.
+
+Synchronized lines follow playback; clicking a line seeks when supported. Scrolling suspends following until Follow is pressed. Plain lyrics and players without timing remain readable. Closing lyrics cancels its helper; no background lookup/timer continues. Some browser videos provide a channel rather than a song artist, and LRCLIB may have no match.

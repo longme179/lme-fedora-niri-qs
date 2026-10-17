@@ -222,3 +222,7 @@ Gesture defaults reference [Noctalia widget_gesture_defaults.cpp](https://github
 ## Native Bluetooth pairing
 
 The pairing prompt flow references [DMS BluetoothPairingModal.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Modals/BluetoothPairingModal.qml) and [bluez/agent.go](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/core/internal/server/bluez/agent.go) (MIT). The Python Gio agent and QML controls are original implementations of the [BlueZ Agent1](https://bluez.readthedocs.io/en/latest/agent-api/) and AgentManager1 APIs. LME registers a KeyboardDisplay agent only for its own Pair calls and does not request default-agent ownership. No DMS Go daemon is bundled.
+
+## Synchronized lyrics
+
+Lyric subscription/cancellation, bounded metadata settling and follow/manual-scroll behavior reference [DMS LyricsService.qml](https://github.com/AvengeMedia/DankMaterialShell/blob/8e690022f1a7c47b73aef2def4ac8be97641ada8/quickshell/Services/LyricsService.qml), `LyricsController.qml`, `LyricsOverlay.qml` and `core/internal/server/lyrics/handlers.go` (MIT; existing DMS license retained). LME's Python LRC parser/cache and Qt Quick view are original and do not require the DMS/dankgo daemon. Optional online results come from [LRCLIB](https://lrclib.net); lyrics remain attributed to their provider.

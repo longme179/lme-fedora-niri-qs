@@ -239,6 +239,7 @@ Item {
                 MediaActions { Layout.fillWidth: true; player: root.player; prefix: "control" }
                 AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying }
                 MediaProgress { objectName: "controlMediaProgress"; Layout.fillWidth: true; player: root.player }
+                LyricsView { Layout.fillWidth: true; player: root.player }
                 LiquidComboBox {
                     id: playerSelector
                     objectName: "controlPlayerSelector"

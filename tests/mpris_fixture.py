@@ -20,6 +20,9 @@ values = {
                                     'mpris:trackid': V('o', '/track/1'), 'mpris:length': V('x', 120000000)}),
              **{name: V('b', True) for name in ['CanGoNext', 'CanGoPrevious', 'CanPlay', 'CanPause', 'CanSeek', 'CanControl']}}
 }
+if '--lyrics' in sys.argv:
+    values[PLAYER]['Metadata'] = V('a{sv}', {key: values[PLAYER]['Metadata'].lookup_value(key, None) for key in values[PLAYER]['Metadata'].unpack()} | {'xesam:asText': V('s', '[00:00.00] Opening line\n[00:30.00] Current line\n[00:35.00] Last line')})
+
 if '--no-controls' in sys.argv:
     values[PLAYER]['CanControl'] = V('b', False)
     values[PLAYER]['CanSeek'] = V('b', False)

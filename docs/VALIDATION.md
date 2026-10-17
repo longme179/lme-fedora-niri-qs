@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Synchronized lyrics — 2026-10-17
+
+Parser/cache checks cover fractional/multiple timestamps, translations at identical times, offsets, plain text, oversized/expanded data, local/embedded precedence, offline and negative caches, instrumental tracks and corrupt data. A real private MPRIS/QML fixture loads embedded LRC, follows seek while paused, closes/reopens and clears lyrics on track change. Changed QML passes lint. LRCLIB catalogue coverage and timing of real browser players remain provider/player-dependent.
+
 ## Media interaction review — 2026-10-17
 
 Final validation: `scripts/check.sh` completed **285 tests: 248 passed, 37 skipped**, with the private MPRIS, Bluetooth, Activity and polling-UI opt-ins enabled. All 19 changed QML files pass focused lint without diagnostics; Bash syntax, demo state and diff whitespace checks pass. Whole-tree lint has zero errors and the same 40 toolchain warnings as baseline. No Bluetooth helper remains after panel shutdown.

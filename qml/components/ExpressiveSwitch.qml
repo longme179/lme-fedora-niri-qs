@@ -26,7 +26,7 @@ Switch {
             x: Math.max(4, Math.min(parent.width - width - 4, Theme.springMotion ? positionMotion.value : targetX))
             y: (parent.height - height) / 2
             color: root.checked ? Theme.switchThumb : Theme.muted
-            Text { anchors.centerIn: parent; text: "✓"; visible: root.checked; color: Theme.accent; font.pixelSize: 15; font.family: Theme.fontFamily; font.bold: true }
+            ShellText { anchors.centerIn: parent; text: "✓"; visible: root.checked; color: Theme.accent; font.pixelSize: 15; font.family: Theme.fontFamily; font.bold: true }
             Behavior on x { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
             Behavior on width { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
         }

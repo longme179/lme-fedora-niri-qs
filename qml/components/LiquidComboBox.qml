@@ -15,7 +15,7 @@ ComboBox {
     hoverEnabled: true
     font.family: Theme.buttonFamily
     font.pixelSize: Theme.bodySize - 1
-    palette.button: Theme.fieldFill
+    palette.button: Theme.liquidGlass ? Theme.buttonFill : Theme.fieldFill
     palette.buttonText: Theme.fieldText
     palette.text: Theme.fieldText
     palette.base: Theme.panel
@@ -35,7 +35,7 @@ ComboBox {
     }
 
     TapHandler { onPressedChanged: if (pressed) { feedback.originX=point.position.x; feedback.originY=point.position.y; } }
-    contentItem: Text {
+    contentItem: ShellText {
         text: root.displayText
         textFormat: Text.PlainText
         color: root.enabled ? Theme.fieldText : Theme.muted
@@ -84,7 +84,7 @@ ComboBox {
             color: option.highlighted || option.hovered ? Theme.alpha(Theme.accent, 0.24) : root.currentIndex === option.index ? Theme.alpha(Theme.accent, 0.12) : "transparent"
             Behavior on color { ColorMotion {} }
         }
-        contentItem: Text {
+        contentItem: ShellText {
             text: option.text
             textFormat: Text.PlainText
             color: !option.enabled ? Theme.muted : root.currentIndex === option.index ? Theme.accent : Theme.text

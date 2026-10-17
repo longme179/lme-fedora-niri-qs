@@ -52,7 +52,8 @@ Item {
         background: Rectangle {
             MotionValue { id: tileRadius; target: tile.active ? 24 : 16 }
             radius: Theme.springMotion ? tileRadius.value : tile.active ? 24 : 16
-            color: tile.active ? Theme.mix(Theme.panel, tile.accent, tile.hovered ? 0.38 : 0.28) : Theme.surfaceContainerHigh
+            color: tile.active ? Theme.liquidGlass ? Theme.alpha(tile.accent, tile.hovered ? .12 : .08)
+                : Theme.mix(Theme.panel, tile.accent, tile.hovered ? 0.38 : 0.28) : Theme.surfaceContainerHigh
             border.color: tile.activeFocus ? tile.accent : tile.active ? Theme.alpha(tile.accent, 0.48) : Theme.border
             border.width: 1
             opacity: root.editing || tile.enabled ? 1 : 0.5
@@ -65,13 +66,13 @@ Item {
             ShellIcon { name: tile.iconName; color: tile.active ? tile.accent : Theme.text; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Layout.alignment: Qt.AlignHCenter }
             ColumnLayout {
                 Layout.fillWidth: true; Layout.preferredWidth: 1; spacing: 4
-                Text { Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; horizontalAlignment: tile.width < 150 ? Text.AlignHCenter : Text.AlignLeft; text: tile.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: tile.width < 150 ? 12 : 14; font.weight: Font.Bold }
-                Text { visible: tile.width >= 150; Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+                ShellText { Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; horizontalAlignment: tile.width < 150 ? Text.AlignHCenter : Text.AlignLeft; text: tile.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: tile.width < 150 ? 12 : 14; font.weight: Font.Bold }
+                ShellText { visible: tile.width >= 150; Layout.fillWidth: true; text: tile.detail; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
             }
         }
     }
 
-    component Caption: Text {
+    component Caption: ShellText {
         color: Theme.muted
         font.family: Theme.fontFamily
         font.pixelSize: 12
@@ -89,7 +90,7 @@ Item {
                 Layout.fillWidth: true
                 ColumnLayout {
                     spacing: 4
-                    Text { text: Qt.formatDateTime(root.now, "hh:mm"); color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 32; font.weight: Font.Bold }
+                    ShellText { text: Qt.formatDateTime(root.now, "hh:mm"); color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 32; font.weight: Font.Bold }
                     Caption { text: Qt.locale("en_US").toString(root.now, "dddd, MMMM d") }
                 }
                 Item { Layout.fillWidth: true }
@@ -229,12 +230,12 @@ Item {
                         color: Theme.panel
                         clip: true
                         Image { anchors.fill: parent; source: root.mediaDisplay ? root.mediaDisplay.artUrl : ""; retainWhileLoading: true; sourceSize.width: 96; sourceSize.height: 96; fillMode: Image.PreserveAspectCrop; asynchronous: true }
-                        Text { anchors.centerIn: parent; visible: !root.mediaDisplay || !root.mediaDisplay.artUrl; text: "♫"; color: Theme.pink; font.pixelSize: 26 }
+                        ShellText { anchors.centerIn: parent; visible: !root.mediaDisplay || !root.mediaDisplay.artUrl; text: "♫"; color: Theme.pink; font.pixelSize: 26 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 4
-                        Text { Layout.fillWidth: true; text: root.mediaDisplay ? root.mediaDisplay.title || root.mediaDisplay.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
+                        ShellText { Layout.fillWidth: true; text: root.mediaDisplay ? root.mediaDisplay.title || root.mediaDisplay.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
                         Caption { Layout.fillWidth: true; text: root.mediaDisplay ? root.mediaDisplay.artist || root.mediaDisplay.identity : "Play media in an app"; textFormat: Text.PlainText; elide: Text.ElideRight }
                     }
                 }
@@ -272,21 +273,21 @@ Item {
                         Layout.preferredWidth: Math.max(60, (resources.width - 12) / 3)
                         spacing: 5
                         Caption { text: "CPU" }
-                        Text { text: root.numeric(ShellState.system.cpu, "%"); color: Theme.cyan; font.family: Theme.monoFamily; font.pixelSize: 17 }
+                        ShellText { text: root.numeric(ShellState.system.cpu, "%"); color: Theme.cyan; font.family: Theme.monoFamily; font.pixelSize: 17 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredWidth: Math.max(60, (resources.width - 12) / 3)
                         spacing: 5
                         Caption { text: "RAM" }
-                        Text { text: root.numeric(ShellState.system.memoryPercent, "%"); color: Theme.purple; font.family: Theme.monoFamily; font.pixelSize: 17 }
+                        ShellText { text: root.numeric(ShellState.system.memoryPercent, "%"); color: Theme.purple; font.family: Theme.monoFamily; font.pixelSize: 17 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredWidth: Math.max(60, (resources.width - 12) / 3)
                         spacing: 5
                         Caption { text: "Battery" }
-                        Text { text: root.battery.available ? root.numeric(root.battery.percent, "%") + (root.battery.charging ? " +" : "") : "—"; color: Theme.green; font.family: Theme.monoFamily; font.pixelSize: 17 }
+                        ShellText { text: root.battery.available ? root.numeric(root.battery.percent, "%") + (root.battery.charging ? " +" : "") : "—"; color: Theme.green; font.family: Theme.monoFamily; font.pixelSize: 17 }
                     }
                 }
                 Caption {

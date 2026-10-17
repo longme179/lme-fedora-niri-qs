@@ -48,7 +48,7 @@ Item {
         spacing: 16
         RowLayout {
             Layout.fillWidth: true
-            Text { text: "Notifications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 23; font.weight: Font.Bold }
+            ShellText { text: "Notifications"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 23; font.weight: Font.Bold }
             Item { Layout.fillWidth: true }
             IconButton { iconName: "settings"; tooltip: "Notification settings"; onClicked: ShellState.openSettingsPage("notifications") }
             LiquidButton { text: "×"; Accessible.name: "Close notifications"; onClicked: ShellState.closePanels(); palette.button: Theme.surface; palette.buttonText: Theme.text }
@@ -63,8 +63,8 @@ Item {
                 anchors.margins: 14
                 ColumnLayout {
                     spacing: 3
-                    Text { text: "Do not disturb"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
-                    Text { text: "Keep notifications in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+                    ShellText { text: "Do not disturb"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
+                    ShellText { text: "Keep notifications in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
                 }
                 Item { Layout.fillWidth: true }
                 ExpressiveSwitch {
@@ -91,7 +91,7 @@ Item {
         }
         RowLayout {
             Layout.fillWidth: true
-            Text { text: root.filtered.length + " in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+            ShellText { text: root.filtered.length + " in history"; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
             LiquidButton { text: "Clear all"; enabled: Notifications.count > 0; onClicked: Notifications.dismissAll(); palette.button: Theme.surface; palette.buttonText: Theme.pink }
         }
@@ -137,8 +137,8 @@ Item {
                 anchors.centerIn: parent
                 width: parent.width - 30
                 spacing: 12
-                Text { width: parent.width; text: root.query ? "No matching notifications" : "All caught up"; horizontalAlignment: Text.AlignHCenter; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 20; font.weight: Font.Bold }
-                Text { width: parent.width; text: "New notifications will appear here."; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
+                ShellText { width: parent.width; text: root.query ? "No matching notifications" : "All caught up"; horizontalAlignment: Text.AlignHCenter; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 20; font.weight: Font.Bold }
+                ShellText { width: parent.width; text: "New notifications will appear here."; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
         }
     }

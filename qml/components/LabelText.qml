@@ -1,6 +1,6 @@
 import QtQuick
 import "../theme"
-Text {
+ShellText {
     id: root
     property bool heading: false
     // QFont notifies as a group; reading its weight in the family binding loops.

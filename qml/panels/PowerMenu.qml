@@ -48,10 +48,10 @@ Item {
         }
         contentItem: RowLayout {
             spacing: 12
-            Text { text: powerButton.symbol; color: powerButton.accent; font.family: Theme.fontFamily; font.pixelSize: 20; Layout.preferredWidth: 28; horizontalAlignment: Text.AlignHCenter }
-            Text { text: powerButton.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14 }
+            ShellText { text: powerButton.symbol; color: powerButton.accent; font.family: Theme.fontFamily; font.pixelSize: 20; Layout.preferredWidth: 28; horizontalAlignment: Text.AlignHCenter }
+            ShellText { text: powerButton.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14 }
             Item { Layout.fillWidth: true }
-            Text { text: "›"; color: Theme.muted; font.pixelSize: 22 }
+            ShellText { text: "›"; color: Theme.muted; font.pixelSize: 22 }
         }
     }
 
@@ -65,8 +65,8 @@ Item {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 3
-                Text { text: root.pendingAction ? root.pendingLabel + "?" : "Take a break"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold }
-                Text { text: root.pendingAction ? "Confirm to continue." : "Your session, your pace."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
+                ShellText { text: root.pendingAction ? root.pendingLabel + "?" : "Take a break"; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 24; font.weight: Font.Bold }
+                ShellText { text: root.pendingAction ? "Confirm to continue." : "Your session, your pace."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 13 }
             }
             Item { Layout.fillWidth: true }
             LiquidButton { text: "×"; Accessible.name: "Close power menu"; onClicked: ShellState.closePanels(); palette.button: Theme.surface; palette.buttonText: Theme.text }
@@ -95,7 +95,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 18
                 spacing: 16
-                Text {
+                ShellText {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     text: root.pendingAction === "suspend" ? "Your session will stay open while the laptop sleeps." : "Save your work before continuing. Open applications may close."
@@ -128,6 +128,6 @@ Item {
             }
         }
         Item { Layout.fillHeight: true; visible: !root.pendingAction }
-        Text { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Session actions run through Fedora’s user session and logind."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
+        ShellText { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Session actions run through Fedora’s user session and logind."; color: Theme.muted; font.family: Theme.fontFamily; font.pixelSize: 12 }
     }
 }

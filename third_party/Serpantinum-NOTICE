@@ -11,6 +11,8 @@ Adapted files:
 
 LME changes: local/theme paths, optional source texture, transparent hybrid body,
 bounded wallpaper refraction at the rim, and premultiplied highlight coverage.
+LME's clear mode removes the body lift/sheen and narrows/reduces rim refraction
+to avoid a gray veil over the live backdrop.
 The real application backdrop remains compositor-owned; no live desktop capture
 is performed. The surrounding lifecycle/neutral-theme integration is LME code.
 

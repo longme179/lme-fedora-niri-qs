@@ -310,6 +310,14 @@ reads those same saved values again. There is no backup/restore cycle and no
 bulk preference rewrite. Fonts, sizes, bar placement, module layouts, per-island
 corner geometry, density, features and motion preferences continue to apply.
 
+Liquid surfaces use near-clear fills rather than opaque gray Material plates.
+Active tiles keep a faint status tint and selected tabs retain a translucent
+highlight. The optical layer has a clear center and a narrow refractive rim.
+Display labels, headings, bar text, button captions and menu text use Qt's thin
+black glyph outline in Liquid mode; Smoked keeps its original text rendering.
+Editable fields retain native Qt input rendering, selection and IME behavior,
+with a dark translucent fill for readable input on bright backdrops.
+
 The material adds rounded refraction, dispersion and pointer highlights to
 shared panel, card and button backgrounds; text and input remain separate.
 It composes with the existing popup spring/Jelly-v2 effect. Native niri blur

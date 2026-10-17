@@ -88,7 +88,7 @@ GlassPanel {
         }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: tabGrid.implicitHeight
-            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.currentTab) as LiquidButton : null; fill: Theme.accent }
+            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.currentTab) as LiquidButton : null; fill: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent }
         GridLayout {
             id: tabGrid; anchors.fill: parent; columnSpacing: 5; rowSpacing: 5
             columns: 3
@@ -102,8 +102,8 @@ GlassPanel {
                     text: modelData
                     selected: Theme.animatedTabs && root.currentTab === index; selectionFill: false
                     Accessible.role: Accessible.PageTab; Accessible.selected: root.currentTab === index
-                    palette.button: root.currentTab === index && !Theme.animatedTabs ? Theme.accent : Theme.surface
-                    palette.buttonText: root.currentTab === index ? Theme.background : Theme.text
+                    palette.button: root.currentTab === index && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
+                    palette.buttonText: root.currentTab === index && !Theme.liquidGlass ? Theme.background : Theme.text
                     onClicked: root.currentTab = index
                 }
             }

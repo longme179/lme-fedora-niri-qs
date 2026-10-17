@@ -198,7 +198,8 @@ Choose **Appearance → Shell name** to give your desktop a name of your own.
 **Appearance → Surface style → Liquid glass** switches to neutral, translucent
 surfaces with refractive edges and pointer highlights. Turn it off to return to
 your saved colors and opacity. Fonts, layout, corner shapes and motion keep
-their settings. Enable the niri blur configuration above for live blur;
+their settings. Clear fills and thin black text outlines keep labels readable
+over the backdrop. Enable the niri blur configuration above for live blur;
 [rendering details and limits](docs/CONFIGURATION.md#surface-style) explain the
 wallpaper-based edge effect and software fallback.
 

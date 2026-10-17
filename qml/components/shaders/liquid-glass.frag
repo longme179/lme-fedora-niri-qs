@@ -221,15 +221,15 @@ void main() {
     vec3 tcol = mix(tintColor.rgb, vec3(0.5), neutralK);
     float tAmt = tintAmount * mix(1.0, 0.6, neutralK);
     float dark = 1.0 - clamp(dot(tcol, vec3(0.2126, 0.7152, 0.0722)) * 2.0, 0.0, 1.0);
-    float lift = mix(mix(0.07, 0.04, dark), mix(0.03, 0.02, dark), clear) * (1.0 - 0.85 * nest);
-    float sheen = (1.0 - ty) * mix(0.03, 0.02, clear) * (1.0 - 0.8 * nest);
+    float lift = mix(mix(0.07, 0.04, dark), 0.0, clear) * (1.0 - 0.85 * nest);
+    float sheen = (1.0 - ty) * 0.03 * (1.0 - clear) * (1.0 - 0.8 * nest);
     vec3 light = vec3(edgeHi + men + sheen + near * 0.015 * rim + energy * 0.03);
     light += fringe;
     light += vec3(lift) * mix(1.0, smoothstep(0.0, 1.0, length(dG) * 0.5), clear);
 
     float tA = clamp(tAmt * (0.7 + 0.6 * l), 0.0, 1.0);
     // Keep the real compositor backdrop visible; wallpaper refraction is confined to the rim.
-    float lensA = 0.24 * edgeSource * smoothstep(0.0, 1.0, length(dG) * 0.5);
+    float lensA = 0.16 * edgeSource * smoothstep(0.0, 1.0, length(dG) * 0.5);
     vec3 opaqueRgb = mix(col, tcol, tA);
     vec3 clearRgb = col * lensA * (1.0 - tA) + tcol * tA;
     float clearA = lensA * (1.0 - tA) + tA;

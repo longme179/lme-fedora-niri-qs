@@ -103,7 +103,7 @@ Item {
             Rectangle {
                 visible: ShellState.statusMessage.length > 0
                 Layout.fillWidth: true; implicitHeight: status.implicitHeight + 24; radius: 16
-                color: ShellState.statusError ? Theme.mix(Theme.panel, Theme.red, 0.2) : Theme.primaryContainer
+                color: ShellState.statusError ? Theme.liquidGlass ? Theme.alpha(Theme.red, .12) : Theme.mix(Theme.panel, Theme.red, 0.2) : Theme.primaryContainer
                 LabelText { id: status; anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12; text: ShellState.statusMessage; textFormat: Text.PlainText; wrapMode: Text.Wrap }
             }
             Rectangle {

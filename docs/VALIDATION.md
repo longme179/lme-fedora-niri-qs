@@ -1,5 +1,27 @@
 # Validation and platform limits
 
+## Clearer Liquid surfaces and outlined labels — 2026-10-18
+
+`scripts/check.sh` completed **323 tests: 322 passed, one Matugen skip**, with
+the expanded private Wayland suites below. Bash syntax and the demo snapshot
+passed. Lint covers **130 QML files: zero errors, 57 existing warnings**. The
+changed shader was rebuilt and rendered through Mesa OpenGL in private Sway.
+
+New checks verify near-clear active/inactive tile fills, translucent selected
+tabs with readable text, outlined labels across Control Center, and restoration
+of normal text when switching back to Smoked. Pixel assertions on a white
+backdrop confirm that the black glyph outline actually renders and disappears
+in Smoked mode. Activity Island and Control Center captures were inspected.
+Existing checks still cover real rim refraction, missing wallpapers, corner
+clipping, spring reversal/resize and texture release. Final input-contrast
+adjustments were checked again with all eight Liquid regressions, including
+native keyboard entry, and 18 capture/Night Light checks also pass after those
+adjustments. Text fields/editors keep Qt input rendering and a dark translucent
+fill. No new runtime dependency or per-label shader was added.
+
+Target niri blur, GPU frame pacing and power use on the user's Radeon/RTX laptop
+remain unmeasured; the existing wallpaper-rim rendering limits still apply.
+
 ## Optional Liquid glass — 2026-10-17
 
 `scripts/check.sh` completed **321 tests: 320 passed, one skipped**, with the

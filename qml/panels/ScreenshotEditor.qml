@@ -133,7 +133,7 @@ Item {
                 placeholderText: languages.model.length ? "Choose Extract text to recognize the edited image. Processing stays on this machine." : "Install tesseract and language packs to extract selectable text. Processing stays on this machine."
                 placeholderTextColor: Theme.muted
                 color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: Theme.bodySize
-                background: Rectangle { radius: 14; color: Theme.surfaceContainer }
+                background: Rectangle { radius: 14; color: Theme.liquidGlass ? Theme.fieldFill : Theme.surfaceContainer }
             }
         }
     }

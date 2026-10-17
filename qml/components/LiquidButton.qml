@@ -44,7 +44,7 @@ Button {
         GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: root.hovered; pressed: root.down; visible: !root.flat }
     }
     LiquidFeedback { objectName: "liquidFeedback"; z: -.5; hovered: root.hovered; pressed: root.down; originX: root.pressX; originY: root.pressY; radius: root.plate ? root.plate.radius : root.cornerRadius }
-    contentItem: Text {
+    contentItem: ShellText {
         text: root.text
         textFormat: Text.PlainText
         color: root.palette.buttonText

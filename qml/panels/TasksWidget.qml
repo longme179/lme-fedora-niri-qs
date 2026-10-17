@@ -27,7 +27,7 @@ ColumnLayout {
             palette.placeholderText: Theme.muted
             selectionColor: Theme.accent; selectedTextColor: Theme.background
             font.family: Theme.fontFamily; font.pixelSize: 13
-            background: Rectangle { color: Theme.surface; radius: 12; border.width: 1; border.color: entry.activeFocus ? Theme.accent : Theme.border }
+            background: Rectangle { color: Theme.liquidGlass ? Theme.fieldFill : Theme.surface; radius: 12; border.width: 1; border.color: entry.activeFocus ? Theme.accent : Theme.border }
             onAccepted: root.add()
         }
         LiquidButton { text: "Add"; enabled: entry.text.trim().length > 0 && root.tasks.length < 100 && !ShellState.pendingActions.setting; onClicked: root.add() }

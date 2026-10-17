@@ -130,6 +130,91 @@ class LiquidNativeCase(unittest.TestCase):
 ''', {'QT_QPA_PLATFORM': 'wayland'})
         self.assertEqual(result, dict(fallback=True, enabled=True, restored=True))
 
+    def test_glass_tiles_and_selected_tabs_stay_clear_and_all_labels_restore_their_style(self):
+        result = self.run_qml('import QtTest\nimport "qml/components"\nimport "qml/panels"\nimport "qml/services"\nimport "qml/theme"', '''
+    FloatingWindow { implicitWidth:1000;implicitHeight:1000
+        ControlCenter { id:center;anchors.fill:parent }
+        LabelText { id:label;text:"Outlined label" }
+        ExpressiveField { id:entry;width:250;y:60;text:"Editable input" }
+        TestCase { id:mouse;when:false }
+    }
+    property int phase:0
+    property int ticks:0
+    property int age:0
+    property var checks:({})
+    function labels(item) {
+        const result=[];
+        if(item.styleColor!==undefined && item.style!==undefined && item.text!==undefined) result.push(item);
+        for(const child of item.children || []) result.push(...labels(child));
+        return result;
+    }
+    function plate(item) {
+        if(item.plate) return item.plate;
+        for(const child of item.children || []) { const found=plate(child);if(found) return found; }
+        return null;
+    }
+    Timer { interval:100;running:true;repeat:true;onTriggered: {
+        if(++fixture.ticks>90) { fixture.finish({timeout:fixture.phase});return; }
+        if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        if(fixture.phase===0) { fixture.checks.normal=label.style===Text.Normal;ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
+        else if(fixture.phase===1 && Theme.liquidGlass) {
+            if(++fixture.age<5) return;
+            const wifi=mouse.findChild(center,"controlTile-wifi"),power=mouse.findChild(center,"controlTile-power");
+            if(!wifi || !power || !fixture.plate(wifi) || !fixture.plate(power)) return;
+            fixture.checks.clear=fixture.plate(wifi).color.a<=.12 && fixture.plate(power).color.a<.04
+                && Theme.panelFill.a<.04 && Theme.cardFill.a<.04 && Theme.surface.a<.04;
+            const indicator=mouse.findChild(center,"controlTabIndicator");
+            fixture.checks.selection=indicator.fill.a<.2 && indicator.targetItem.palette.buttonText===Theme.text;
+            const text=fixture.labels(center);
+            fixture.checks.outlined=text.length>35 && text.every(item=>item.style===Text.Outline && item.styleColor.toString()==="#cc000000");
+            mouse.mouseClick(entry,entry.width/2,entry.height/2);
+            mouse.keyClick(Qt.Key_A,Qt.ControlModifier);
+            for(const key of [Qt.Key_1,Qt.Key_2,Qt.Key_3]) mouse.keyClick(key);
+            fixture.checks.input=entry.text==="123" && entry.background.color.a>.6;
+            ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
+        } else if(fixture.phase===2 && !Theme.liquidGlass) {
+            fixture.checks.restored=label.style===Text.Normal && fixture.labels(center).every(item=>item.style===Text.Normal);
+            fixture.finish(fixture.checks);
+        }
+    }}
+''', {'QT_QPA_PLATFORM': 'wayland'})
+        self.assertEqual(result, dict(normal=True, clear=True, selection=True, outlined=True, input=True, restored=True))
+
+    def test_black_glyph_outline_renders_on_a_white_backdrop_and_disappears_in_smoked(self):
+        try:
+            from PIL import Image
+        except ImportError:
+            self.skipTest('Pillow is required for rendered pixels')
+        if not shutil.which('grim'):
+            self.skipTest('grim is required for rendered pixels')
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_qml('import Quickshell.Io\nimport "qml/components"\nimport "qml/services"', '''
+    FloatingWindow { color:"white";implicitWidth:900;implicitHeight:700
+        LabelText { anchors.centerIn:parent;text:"Glass text 0123";color:"white";font.pixelSize:24 }
+    }
+    property int phase:0
+    property int ticks:0
+    Process { id:shot;command:["grim",SHOTS+"/liquid.png"];onExited:code=> {
+        if(fixture.phase===1) { ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++; }
+        else fixture.finish({captured:code===0});
+    }}
+    Timer { interval:100;repeat:true;running:true;onTriggered: {
+        if(++fixture.ticks>90) { fixture.finish({timeout:fixture.phase});return; }
+        if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        if(fixture.phase===0) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
+        else if(fixture.phase===1 && fixture.ticks>8 && !shot.running) shot.running=true;
+        else if(fixture.phase===2 && fixture.ticks>12 && !shot.running) { shot.command=["grim",SHOTS+"/smoked.png"];fixture.phase++;shot.running=true; }
+    }}
+'''.replace('SHOTS',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
+            self.assertEqual(result, dict(captured=True))
+            def dark_pixels(name):
+                image=Image.open(Path(directory)/name).convert('RGB')
+                x,y=image.width//2,image.height//2
+                pixels=image.load()
+                return sum(max(pixels[col,row])<160 for row in range(y-30,y+30) for col in range(x-150,x+150))
+            self.assertGreater(dark_pixels('liquid.png'), 250, 'White glyphs need a visible thin dark outline on white')
+            self.assertEqual(dark_pixels('smoked.png'), 0, 'Smoked typography must retain its previous rendering')
+
     def test_shared_texture_resize_motion_reversal_hidden_and_repeated_teardown(self):
         result = self.run_qml('import QtTest\nimport "qml/components"\nimport "qml/services"\nimport "qml/theme"', '''
     FloatingWindow { implicitWidth:900; implicitHeight:800

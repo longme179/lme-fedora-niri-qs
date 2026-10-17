@@ -10,8 +10,8 @@ ColumnLayout {
     spacing: 22
     RowLayout {
         Layout.fillWidth: true
-        LiquidButton { text: "Focus timer"; Layout.fillWidth: true; palette.button: !root.stopwatch ? Theme.accent : Theme.surface; palette.buttonText: !root.stopwatch ? Theme.background : Theme.text; onClicked: root.stopwatch = false }
-        LiquidButton { text: "Stopwatch"; Layout.fillWidth: true; palette.button: root.stopwatch ? Theme.accent : Theme.surface; palette.buttonText: root.stopwatch ? Theme.background : Theme.text; onClicked: root.stopwatch = true }
+        LiquidButton { text: "Focus timer"; Layout.fillWidth: true; palette.button: !root.stopwatch ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface; palette.buttonText: !root.stopwatch && !Theme.liquidGlass ? Theme.background : Theme.text; onClicked: root.stopwatch = false }
+        LiquidButton { text: "Stopwatch"; Layout.fillWidth: true; palette.button: root.stopwatch ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface; palette.buttonText: root.stopwatch && !Theme.liquidGlass ? Theme.background : Theme.text; onClicked: root.stopwatch = true }
     }
     LiquidComboBox {
         visible: !root.stopwatch

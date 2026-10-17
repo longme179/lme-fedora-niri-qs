@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Ambient media shapes — 2026-10-17
+
+Four Material polygons use LME geometry, with no new QML/C++ plugin. Native QML checks confirm movement while visible/playing, frozen coordinates while paused, unloading while hidden/disabled, and no animation with reduced motion. The toggle is portable and participates in appearance profiles. Two focused checks and changed-file lint pass. Radeon frame-time/power measurements are not available in this cloud environment.
+
 ## Stable media cards — 2026-10-17
 
 QML checks cover partial metadata retention, coherent title/artwork replacement, the 500 ms metadata grace, 250 ms player-loss grace, eventual clearing, immediate cross-player switching and disabled mode. Transport/capability guards remain bound to the live player. Artwork uses Qt 6.8 retainWhileLoading with bounded thumbnails. The two new focused tests and changed-file QML lint pass; the three MPRIS control checks remain green. Hardware/browser-specific metadata sequences are not exhaustive.

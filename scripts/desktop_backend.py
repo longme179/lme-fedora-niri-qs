@@ -301,7 +301,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "notificationIdleAnimation" and type(value) is bool: return value
     if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
     if key == "notificationOpacity" and type(value) in (int, float) and math.isfinite(value) and .6 <= value <= 1: return float(value)

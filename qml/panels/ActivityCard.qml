@@ -27,6 +27,7 @@ ColumnLayout {
     Rectangle {
         Layout.fillWidth: true; implicitHeight: mediaContent.implicitHeight + 28
         radius: 22; color: Theme.surfaceContainerHigh
+        MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: ActivityState.playing }
         ColumnLayout {
             id: mediaContent
             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }

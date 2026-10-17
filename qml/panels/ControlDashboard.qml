@@ -210,6 +210,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: media.implicitHeight + 28
+            MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: ShellState.demo ? ActivityState.demoPlaying : !!root.player && root.player.isPlaying }
             radius: Theme.smallRadius
             color: Theme.surface
             ColumnLayout {

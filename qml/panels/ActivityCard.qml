@@ -35,7 +35,7 @@ ColumnLayout {
                 Layout.fillWidth: true; spacing: 12
                 Rectangle {
                     width: 62; height: 62; radius: 18; color: Theme.tertiaryContainer; clip: true
-                    Image { anchors.fill: parent; source: ActivityState.artwork; sourceSize.width: 124; sourceSize.height: 124; asynchronous: true; fillMode: Image.PreserveAspectCrop }
+                    Image { anchors.fill: parent; source: ActivityState.artwork; retainWhileLoading: true; sourceSize.width: 124; sourceSize.height: 124; asynchronous: true; fillMode: Image.PreserveAspectCrop }
                     ShellIcon { visible: !ActivityState.artwork; anchors.centerIn: parent; width: 28; height: 28; name: "media"; color: Theme.cyan }
                 }
                 ColumnLayout {

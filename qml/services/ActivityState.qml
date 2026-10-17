@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Services.Mpris
+import "../components"
 
 QtObject {
     id: root
@@ -8,11 +9,13 @@ QtObject {
     property bool demoPlaying: true
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
     readonly property var player: players.find(p => p.dbusName === preferredPlayer) || players.find(p => p.isPlaying) || players[0] || null
+    property MediaPresentation presentation: MediaPresentation { player: root.player; enabled: ShellState.preferences.mediaStability !== false }
+    readonly property var display: presentation.current
     readonly property bool hasMedia: ShellState.demo || player !== null
     readonly property bool playing: ShellState.demo ? demoPlaying : player ? player.isPlaying : false
-    readonly property string track: ShellState.demo ? "A little more space" : player ? player.trackTitle || player.identity : "No player connected"
-    readonly property string artist: ShellState.demo ? ShellState.shellName + " Sessions" : player ? player.trackArtist || player.identity : "Open a music or video application"
-    readonly property string artwork: ShellState.demo ? "" : player ? player.trackArtUrl : ""
+    readonly property string track: ShellState.demo ? "A little more space" : display ? display.title || display.identity : "No player connected"
+    readonly property string artist: ShellState.demo ? ShellState.shellName + " Sessions" : display ? display.artist || display.identity : "Open a music or video application"
+    readonly property string artwork: ShellState.demo ? "" : display ? display.artUrl : ""
     readonly property bool canPlay: ShellState.demo || !!(player && player.canTogglePlaying)
     readonly property bool canPrevious: ShellState.demo || !!(player && player.canGoPrevious)
     readonly property bool canNext: ShellState.demo || !!(player && player.canGoNext)

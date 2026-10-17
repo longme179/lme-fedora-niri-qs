@@ -1,5 +1,9 @@
 # Validation and platform limits
 
+## Stable media cards — 2026-10-17
+
+QML checks cover partial metadata retention, coherent title/artwork replacement, the 500 ms metadata grace, 250 ms player-loss grace, eventual clearing, immediate cross-player switching and disabled mode. Transport/capability guards remain bound to the live player. Artwork uses Qt 6.8 retainWhileLoading with bounded thumbnails. The two new focused tests and changed-file QML lint pass; the three MPRIS control checks remain green. Hardware/browser-specific metadata sequences are not exhaustive.
+
 ## Extended media controls — 2026-10-17
 
 Native MPRIS checks exercised pointer click/drag seeking, deferred seek during dragging, keyboard seeking, writable Shuffle and all three LoopStatus states. The private player logs confirm actual SetPosition/property writes. Unsupported controls are guarded and the feature is a boolean portable preference. All three focused tests passed; the existing five Activity/media/timer lifecycle checks also passed on private Sway, including a Chromium-like player without Position. Changed QML passes lint. Real browser/player capability differences remain dependent on their MPRIS implementation.

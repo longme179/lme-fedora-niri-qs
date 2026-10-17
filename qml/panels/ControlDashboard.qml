@@ -22,6 +22,8 @@ Item {
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
     property string selectedPlayerName: ""
     readonly property var player: players.find(item => item.dbusName === selectedPlayerName) || players.find(item => item.isPlaying) || players[0] || null
+    MediaPresentation { id: mediaPresentation; player: root.player; enabled: ShellState.preferences.mediaStability !== false }
+    readonly property var mediaDisplay: mediaPresentation.current
     readonly property date now: clock.date
     property bool editing: false
     property alias grid: quickGrid
@@ -223,14 +225,14 @@ Item {
                         radius: 10
                         color: Theme.panel
                         clip: true
-                        Image { anchors.fill: parent; source: root.player ? root.player.trackArtUrl : ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
-                        Text { anchors.centerIn: parent; visible: !root.player || !root.player.trackArtUrl; text: "♫"; color: Theme.pink; font.pixelSize: 26 }
+                        Image { anchors.fill: parent; source: root.mediaDisplay ? root.mediaDisplay.artUrl : ""; retainWhileLoading: true; sourceSize.width: 96; sourceSize.height: 96; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                        Text { anchors.centerIn: parent; visible: !root.mediaDisplay || !root.mediaDisplay.artUrl; text: "♫"; color: Theme.pink; font.pixelSize: 26 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 4
-                        Text { Layout.fillWidth: true; text: root.player ? root.player.trackTitle || root.player.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
-                        Caption { Layout.fillWidth: true; text: root.player ? root.player.trackArtist || root.player.identity : "Play media in an app"; textFormat: Text.PlainText; elide: Text.ElideRight }
+                        Text { Layout.fillWidth: true; text: root.mediaDisplay ? root.mediaDisplay.title || root.mediaDisplay.identity : "Nothing playing"; textFormat: Text.PlainText; elide: Text.ElideRight; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Bold }
+                        Caption { Layout.fillWidth: true; text: root.mediaDisplay ? root.mediaDisplay.artist || root.mediaDisplay.identity : "Play media in an app"; textFormat: Text.PlainText; elide: Text.ElideRight }
                     }
                 }
                 MediaActions { Layout.fillWidth: true; player: root.player; prefix: "control" }

@@ -330,8 +330,8 @@ Edit on desktop raises the widgets above applications and opens a small toolbar.
 
 The `desktopEnabled` and `desktopWidgets` preferences are included in export/import. Widget patches merge individual fields under the settings file lock, so a drag cannot overwrite a concurrent visibility/output edit. Moving a widget does not rewrite its saved dimensions when the output clips it. Resizing keeps the top-left corner fixed where space permits; unrelated setting updates do not clear an active gesture. Removing a notes widget leaves its note intact. The niri blur include now also matches `lme-desktop`; update that include if your installation is a copy.
 
-## Connected popup surfaces
+## Popup motion
 
-Settings → Appearance → **Connected popups** enables a soft surface that expands from the clicked module and contracts back to it. It follows top/bottom placement, independent bar islands and the clicked output. The source stays fixed during closure; opening another panel does not redirect the old one. The connector detaches as the panel expands and is unloaded after settling. Keyboard/IPC openings use the existing edge animation; reduced motion skips the morph.
+Popups slide in from the screen edge and close through the same edge. Activity Island uses the bar edge. Spring motion preserves velocity when opening is interrupted by closing or reversed; changing the size of an open Island keeps its existing spring. Settings → Appearance offers Smooth, Expressive and Jelly presets, speed and bounce. Reduced motion skips the travel.
 
-This uses the included Qt shader with no new package. Qt's software renderer uses a simpler Canvas connection rather than the shader's smooth union. To return to the previous popup motion, disable `connectedPopups`; the switch is included in appearance profiles and portable presets.
+The former connected-surface animation and its switch have been removed. Existing settings, appearance profiles and imported presets/backups ignore `connectedPopups` while retaining the other customizations; no reset is needed.

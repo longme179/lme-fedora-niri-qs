@@ -8,7 +8,7 @@ import operator
 from pathlib import Path
 import re
 
-MOTION_DEFAULTS = {"connectedPopups": True, "springMotion": True, "shapeMorph": True, "animatedTabs": True, "pointerRipple": True, "mediaWave": True, "mediaShapes": True, "motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
+MOTION_DEFAULTS = {"springMotion": True, "shapeMorph": True, "animatedTabs": True, "pointerRipple": True, "mediaWave": True, "mediaShapes": True, "motionPreset": "expressive", "motionSpeed": 1.0, "motionBounce": .35}
 THEME_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / 'config/theme-tokens.json').read_text())
 THEME_DEFAULTS = {"themeOverrides": {}, "fontOverrides": {}, "fontSize": 14}
 PALETTE_DOCUMENT = json.loads((Path(__file__).resolve().parents[1] / 'config/palettes.json').read_text())
@@ -33,7 +33,7 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
 def appearance_profile(value, validate):
-    if not isinstance(value, dict) or set(value) - {"name", *APPEARANCE_KEYS} or not {"name", "accent", "opacity", "density", "animations"} <= set(value):
+    if not isinstance(value, dict) or set(value) - {"name", "connectedPopups", *APPEARANCE_KEYS} or not {"name", "accent", "opacity", "density", "animations"} <= set(value):
         raise ValueError("Invalid appearance profile")
     name = value["name"]
     if not isinstance(name, str) or not 1 <= len(name.strip()) <= 40 or any(ord(c) < 32 for c in name):

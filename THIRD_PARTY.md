@@ -230,7 +230,3 @@ Lyric subscription/cancellation, bounded metadata settling and follow/manual-scr
 ## Desktop widget canvas
 
 Per-output records, edit mode and dragging reference [iNiR DesktopWidgetLayout.qml](https://github.com/snowarch/iNiR/blob/48cdcecb0f6089cfbb7019054602eab28e154b3b/services/DesktopWidgetLayout.qml) and `AbstractOverlayWidget.qml` (GPL-3.0 with the retained iNiR NOTICE). LME's implementation is original, uses normalized positions and atomic per-widget field patches, and reuses its own notes/media controls. Each widget is a bounded native layer surface rather than a desktop-sized input overlay.
-
-## Connected popup geometry
-
-`qml/components/shaders/connected-popup.frag` adapts the rounded-box signed distance and circular smooth-min functions from [Caelestia Blobs/blob.frag](https://github.com/caelestia-dots/shell/blob/a3a8fe59aba2c0048ab02dc817748678f96076ff/plugin/src/Caelestia/Blobs/shaders/blob.frag) (GPL-3.0; full license retained in `third_party/Caelestia-LICENSE`). [BlobPopup.qml](https://github.com/caelestia-dots/shell/blob/a3a8fe59aba2c0048ab02dc817748678f96076ff/modules/nexus/common/BlobPopup.qml) informed the source/popup surface relationship. LME uses its existing spring, theme and loaders with a two-surface shader, a bounded temporary neck and a simpler Canvas fallback. The compiled shader is included and can be rebuilt with `bash scripts/build-shaders.sh`; Caelestia's C++ plugin is not required.

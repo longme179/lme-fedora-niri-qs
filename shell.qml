@@ -101,7 +101,6 @@ ShellRoot {
             ActivityIsland { id: activityIsland; z: 2 }
             SlideLoader {
                 id: panelLoader
-                originRect: ShellState.popupAnchor
                 exitToEdge: true
                 readonly property bool centered: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind)
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"

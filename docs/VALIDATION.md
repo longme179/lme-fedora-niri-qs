@@ -1,5 +1,11 @@
 # Validation and platform limits
 
+## Restored edge popup motion — 2026-10-17
+
+The full private suite completes **300 tests: 269 passed, 31 skipped**, plus Bash syntax checks and the demo snapshot. Native bar clicks verify the first Control Center and Activity Island frame starts outside the actual output with opaque content. Motion checks cover all four edges, top/bottom Island placement, reversal without reset, prompt closure, resize while open, repeated openings and reduced motion. Legacy settings/import regressions preserve colors, fonts and appearance profiles while dropping the retired connected-surface flag. Focused changed-control lint has no errors; ShellState retains two existing ExitStatus metadata warnings. The connected-surface checks below describe the preceding implementation, now removed.
+
+Private Sway/Qt 6.8.2/Quickshell 0.3.2 validates lifecycle and geometry. Fedora/niri blur composition and perceived motion on the 120 Hz target display still need a hardware check.
+
 ## Activity media layout and desktop canvas audit — 2026-10-17
 
 Final validation completed **302 tests: 271 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Native media/Activity, desktop, lyrics, Bluetooth, polling and popup-motion checks were enabled. Whole-tree QML lint reports zero errors and the same 57 warnings as the preceding revision; ordinary changed controls pass focused lint without diagnostics. The native Activity render was inspected after the layout fix.

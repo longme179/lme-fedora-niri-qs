@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "../theme"
 
 QtObject {
     id: root
@@ -34,9 +33,6 @@ QtObject {
     property bool wifiOpen: false
     property real activityAnchorX: -1
     property real activityAnchorWidth: 180
-    property rect popupAnchor: Qt.rect(-1, -1, 0, 0)
-    property rect nextBarAnchor: Qt.rect(-1, -1, 0, 0)
-    property int barAnchorSerial: 0
     property int controlTab: 0
     property bool stayAwake: false
     onStayAwakeChanged: if (backendReady && !settingsApp) run("idleInhibit", {value: stayAwake})
@@ -69,17 +65,6 @@ QtObject {
         return focused && focused.title ? focused.title : root.shellName;
     }
 
-    function armBarOrigin(item, screen, windowInfo) {
-        const point = item.mapToItem(null, 0, 0);
-        const screenHeight = screen ? screen.height : windowInfo ? windowInfo.screen.height : 0;
-        const left = windowInfo ? Theme.barSideMargin : 0;
-        const top = windowInfo ? Theme.barBottom ? screenHeight - Theme.barTopMargin - Theme.barHeight : Theme.barTopMargin : 0;
-        nextBarAnchor = Qt.rect(point.x + left, point.y + top, item.width, item.height);
-        return ++barAnchorSerial;
-    }
-    function clearBarOrigin(serial) {
-        if (serial === barAnchorSerial) nextBarAnchor = Qt.rect(-1, -1, 0, 0);
-    }
     function closePanels() {
         launcherOpen = false; controlOpen = false; notificationsOpen = false;
         powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false; wifiOpen = false;
@@ -94,8 +79,6 @@ QtObject {
         if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
-        if (!wasOpen) popupAnchor = nextBarAnchor;
-        nextBarAnchor = Qt.rect(-1, -1, 0, 0);
         if (screen) panelScreen = screen;
         if (name !== "activity") panelKind = name;
         root[key] = !wasOpen;

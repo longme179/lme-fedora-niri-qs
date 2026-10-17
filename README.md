@@ -60,7 +60,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications with [appearance controls](docs/NOTIFICATIONS.md) and a rotating Material emblem; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
-| **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups can expand from the clicked module with a soft connecting surface. |
+| **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
 | **Themes and fonts** | Per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes with scheme, light/dark and contrast controls. |
 
 ## Installation
@@ -199,7 +199,7 @@ Choose **Appearance → Shell name** to give your desktop a name of your own.
 
 | Page | Customize |
 | --- | --- |
-| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets, connected popup surfaces and bar/popup blur |
+| **Appearance** | Shell display name, accent, smoked glass opacity, density, profiles, spring/morph motion, Smooth/Expressive/Jelly presets and bar/popup blur |
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |

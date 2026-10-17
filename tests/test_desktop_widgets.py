@@ -52,6 +52,7 @@ class DesktopWidgetQmlCase(unittest.TestCase):
     property int ticks: 0
     property var checks: ({})
     property var initial: null
+    property var resizeOrigin: []
     DesktopWidgetWindow { id: widget; widgetId:"clock-a"; screenInfo:Quickshell.screens[0] }
     TestCase { id: pointer; when:false }
     function find(item,name) { if(item.objectName===name)return item;for(const child of item.children || []){const found=find(child,name);if(found)return found;}return null; }
@@ -71,15 +72,121 @@ class DesktopWidgetQmlCase(unittest.TestCase):
             pointer.mousePress(grip,12,12);pointer.mouseMove(grip,65,40);pointer.mouseRelease(grip,65,40);fixture.phase++;
         }else if(fixture.phase===4 && DesktopState.widgets["clock-a"].x!==fixture.initial.x){
             fixture.checks.moved=true;
+            fixture.resizeOrigin=[widget.margins.left,widget.margins.top];
             const corner=fixture.find(widget.contentItem,"desktopResize-clock-a");
             pointer.mousePress(corner,10,10);pointer.mouseMove(corner,65,60);pointer.mouseRelease(corner,65,60);fixture.phase++;
         }else if(fixture.phase===5 && DesktopState.widgets["clock-a"].width>320){
             fixture.checks.resized=true;DesktopState.patch("clock-a",{interactive:false});DesktopState.editing=false;fixture.phase++;
-        }else if(fixture.phase===6 && DesktopState.widgets["clock-a"].interactive===false){
+        }else if(fixture.phase===6 && DesktopState.widgets["clock-a"].interactive===false && widget.width===DesktopState.widgets["clock-a"].width && widget.height===DesktopState.widgets["clock-a"].height){
+            fixture.checks.anchored=Math.abs(widget.margins.left-fixture.resizeOrigin[0])<=1 && Math.abs(widget.margins.top-fixture.resizeOrigin[1])<=1;
             fixture.checks.clickthrough=widget.mask.item===null;
             fixture.checks.returned=widget.WlrLayershell.layer===WlrLayer.Bottom;
             fixture.finish(fixture.checks);
         }
     }}
 ''',{'QT_QPA_PLATFORM':'wayland'})
-        self.assertEqual(result,dict(below=True,overlay=True,moved=True,resized=True,clickthrough=True,returned=True))
+        self.assertEqual(result,dict(below=True,overlay=True,moved=True,resized=True,anchored=True,clickthrough=True,returned=True))
+
+    def test_resize_stays_anchored_and_small_viewports_preserve_valid_saved_sizes(self):
+        result=self.run_qml('import "qml/panels"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property var origin: []
+    property var checks: ({})
+    QtObject { id: dimensions; property int width: 1920; property int height: 1080 }
+    DesktopWidgetWindow {
+        id: widget; widgetId: "one"; screenInfo: dimensions; screen: Quickshell.screens[0]
+    }
+    Timer { interval: 120; repeat: true; running: true; onTriggered: {
+        if (++fixture.ticks>70) { fixture.finish({timeout:fixture.phase}); return; }
+        if (!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        const card=widget.contentItem.children[0];
+        if (fixture.phase===0) {
+            ShellState.run("setting",{key:"desktopWidgets",value:{one:{type:"clock",output:"primary",x:.2,y:.3,width:320,height:220,enabled:true,interactive:true}}}); fixture.phase++;
+        } else if (fixture.phase===1 && widget.width===320) {
+            fixture.origin=[widget.margins.left,widget.margins.top]; card.resizeBy(100,80); fixture.phase++;
+        } else if (fixture.phase===2 && widget.width===420 && widget.height===300) {
+            widget.commit(); fixture.phase++;
+        } else if (fixture.phase===3 && widget.record.width===420) {
+            fixture.checks.anchored=Math.abs(widget.margins.left-fixture.origin[0])<=1 && Math.abs(widget.margins.top-fixture.origin[1])<=1;
+            dimensions.height=180; fixture.phase++;
+        } else if (fixture.phase===4 && widget.height<180) {
+            card.moveBy(20,0); widget.commit(); fixture.phase++;
+        } else if (fixture.phase===5) {
+            fixture.checks.moveSaved=ShellState.lastResult.ok;
+            fixture.checks.keptSize=widget.record.width===420 && widget.record.height===300;
+            card.resizeBy(0,10); widget.commit(); fixture.phase++;
+        } else if (fixture.phase===6) {
+            fixture.checks.smallResizeSaved=ShellState.lastResult.ok && widget.record.height>=180;
+            dimensions.height=1080; fixture.phase++;
+        } else if (fixture.phase===7) { fixture.checks.restoredSize=widget.height===widget.record.height; fixture.finish(fixture.checks); }
+    } }
+''',{'QT_QPA_PLATFORM':'wayland'})
+        self.assertEqual(result,dict(anchored=True,moveSaved=True,keptSize=True,smallResizeSaved=True,restoredSize=True))
+
+    def test_canvas_retains_instances_and_layout_through_visibility_and_output_changes(self):
+        result=self.run_qml('import QtTest\nimport "qml/panels"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property var original: null
+    property var checks: ({})
+    DesktopCanvas { id: canvas }
+    TestResult { id: probe }
+    function corner() { return probe.findChild(canvas,"desktopResize-one"); }
+    Timer { interval: 120; repeat: true; running: true; onTriggered: {
+        if (++fixture.ticks>80) { fixture.finish({timeout:fixture.phase}); return; }
+        if (!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        if (fixture.phase===0) {
+            ShellState.run("setting",{key:"desktopEnabled",value:true}); fixture.phase++;
+        } else if (fixture.phase===1) {
+            ShellState.run("setting",{key:"desktopWidgets",value:{one:{type:"clock",output:"primary",x:.2,y:.3,width:320,height:220,enabled:true,interactive:true}}}); fixture.phase++;
+        } else if (fixture.phase===2 && fixture.corner()) {
+            fixture.original=fixture.corner(); DesktopState.patch("one",{x:.7}); fixture.phase++;
+        } else if (fixture.phase===3 && DesktopState.widgets.one.x===.7) {
+            fixture.checks.stable=fixture.corner()===fixture.original;
+            DesktopState.patch("one",{enabled:false}); fixture.phase++;
+        } else if (fixture.phase===4 && !fixture.corner()) {
+            fixture.checks.hidden=true; DesktopState.patch("one",{enabled:true,output:"unplugged-output"}); fixture.phase++;
+        } else if (fixture.phase===5 && DesktopState.widgets.one.output==="unplugged-output") {
+            fixture.checks.disconnected=!fixture.corner() && DesktopState.widgets.one.x===.7;
+            DesktopState.patch("one",{output:"primary"}); fixture.phase++;
+        } else if (fixture.phase===6 && fixture.corner()) {
+            fixture.checks.returned=DesktopState.widgets.one.x===.7;
+            DesktopState.editing=true; ShellState.run("setting",{key:"desktopEnabled",value:false}); fixture.phase++;
+        } else if (fixture.phase===7 && !DesktopState.enabled && !fixture.corner()) {
+            fixture.checks.disabled=!DesktopState.editing;
+            ShellState.run("setting",{key:"desktopEnabled",value:true}); fixture.phase++;
+        } else if (fixture.phase===8 && fixture.corner()) {
+            fixture.checks.restored=DesktopState.widgets.one.x===.7;
+            DesktopState.patch("one",""); fixture.phase++;
+        } else if (fixture.phase===9 && !fixture.corner() && !DesktopState.widgets.one) fixture.finish(fixture.checks);
+    } }
+''',{'QT_QPA_PLATFORM':'wayland'})
+        self.assertEqual(result,dict(stable=True,hidden=True,disconnected=True,returned=True,disabled=True,restored=True))
+
+    def test_setting_update_does_not_reset_geometry_during_a_pointer_gesture(self):
+        result=self.run_qml('import QtTest\nimport "qml/panels"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property var held: []
+    DesktopWidgetWindow { id: widget; widgetId:"one"; screenInfo:Quickshell.screens[0] }
+    TestCase { id: pointer; when:false }
+    Timer { interval:120; repeat:true; running:true; onTriggered: {
+        if (++fixture.ticks>60) { fixture.finish({timeout:fixture.phase}); return; }
+        if (!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        if (fixture.phase===0) {
+            DesktopState.editing=true;
+            ShellState.run("setting",{key:"desktopWidgets",value:{one:{type:"clock",output:"primary",x:.2,y:.3,width:320,height:220,enabled:true,interactive:true}}}); fixture.phase++;
+        } else if (fixture.phase===1 && widget.width===320) {
+            const grip=pointer.findChild(widget.contentItem,"desktopDrag-one");
+            pointer.mousePress(grip,12,12); widget.draftX=460; widget.draftY=350;
+            fixture.held=[widget.draftX,widget.draftY]; DesktopState.patch("one",{interactive:false}); fixture.phase++;
+        } else if (fixture.phase===2 && widget.record.interactive===false) {
+            const kept=widget.draftX===fixture.held[0] && widget.draftY===fixture.held[1];
+            const grip=pointer.findChild(widget.contentItem,"desktopDrag-one");
+            const pressed=grip.pressed; pointer.mouseRelease(grip,12,12);
+            fixture.finish({kept,pressed});
+        }
+    } }
+''',{'QT_QPA_PLATFORM':'wayland'})
+        self.assertEqual(result,dict(kept=True,pressed=True))

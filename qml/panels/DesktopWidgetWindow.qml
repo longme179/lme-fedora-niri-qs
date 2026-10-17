@@ -34,15 +34,26 @@ PanelWindow {
     mask: Region { item: root.record.interactive || DesktopState.editing ? card : null; radius: 24 }
     BackgroundEffect.blurRegion: ShellState.barBlurEnabled ? blur : null
     Region { id: blur; item: card; radius: 24 }
-    onRecordKeyChanged: { draftX=NaN;draftY=NaN;draftWidth=NaN;draftHeight=NaN; }
+    // Unrelated settings can arrive while a drag still owns the pointer.
+    onRecordKeyChanged: if (!card?.manipulating) { draftX=NaN;draftY=NaN;draftWidth=NaN;draftHeight=NaN; }
     function commit() {
-        DesktopState.patch(widgetId,{x:Math.max(0,Math.min(1,left/Math.max(1,screenInfo.width-implicitWidth))),
-            y:Math.max(0,Math.min(1,(top-topInset)/Math.max(1,usableHeight-implicitHeight))),width:Math.round(implicitWidth),height:Math.round(implicitHeight)});
+        const values={x:Math.max(0,Math.min(1,left/Math.max(1,screenInfo.width-implicitWidth))),
+            y:Math.max(0,Math.min(1,(top-topInset)/Math.max(1,usableHeight-implicitHeight)))};
+        // Moving on a smaller output must not replace saved sizes with clipped dimensions.
+        if (Number.isFinite(draftWidth)) values.width=Math.round(draftWidth);
+        if (Number.isFinite(draftHeight)) values.height=Math.round(draftHeight);
+        DesktopState.patch(widgetId,values);
     }
     DesktopCard {
         id: card; anchors.fill: parent; widgetId: root.widgetId; record: root.record
         onMoveBy: (dx,dy) => { root.draftX=Math.max(0,Math.min(root.screenInfo.width-root.width,root.left+dx));root.draftY=Math.max(root.topInset,Math.min(root.screenInfo.height-root.bottomInset-root.height,root.top+dy)); }
-        onResizeBy: (dx,dy) => { root.draftWidth=Math.max(180,Math.min(1200,root.screenInfo.width,root.implicitWidth+dx));root.draftHeight=Math.max(180,Math.min(1200,root.usableHeight,root.implicitHeight+dy)); }
+        onResizeBy: (dx,dy) => {
+            // Freeze the top-left corner before changing normalized geometry.
+            if (!Number.isFinite(root.draftX)) root.draftX=root.left;
+            if (!Number.isFinite(root.draftY)) root.draftY=root.top;
+            root.draftWidth=Math.max(180,Math.min(1200,root.screenInfo.width,root.implicitWidth+dx));
+            root.draftHeight=Math.max(180,Math.min(1200,root.usableHeight,root.implicitHeight+dy));
+        }
         onCommitted: root.commit()
     }
 }

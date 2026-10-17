@@ -12,6 +12,7 @@ GlassPanel {
     required property string widgetId
     required property var record
     property bool editing: DesktopState.editing
+    readonly property bool manipulating: grip.pressed || resizeGrip.pressed
     signal moveBy(real dx, real dy)
     signal resizeBy(real dx, real dy)
     signal committed()
@@ -50,6 +51,7 @@ GlassPanel {
         }
     }
     MouseArea {
+        id: resizeGrip
         visible: root.editing; objectName: "desktopResize-" + root.widgetId
         anchors.right: parent.right; anchors.bottom: parent.bottom; width: 28; height: 28
         property point previous: Qt.point(0,0)

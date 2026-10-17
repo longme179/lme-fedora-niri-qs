@@ -8,6 +8,7 @@ import "../components"
 import "../theme"
 
 Scope {
+    DesktopAmbient {}
     Variants {
         model: DesktopState.enabled ? Quickshell.screens : []
         delegate: Scope {

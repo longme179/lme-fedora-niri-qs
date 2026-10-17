@@ -9,6 +9,11 @@ ColumnLayout {
     id: root; spacing: 20
     readonly property var outputs: ["primary",...Quickshell.screens.map(screen=>screen.name)]
     SettingsCard {
+        title: "Floating wallpaper shapes"
+        description: "Material shapes drift above your wallpaper and below application windows on each display. They use your theme colors and let clicks pass through."
+        PreferenceSwitch { title: "Floating media shapes"; detail: "Show while a media player is connected; pause motion when playback stops or animations are disabled. Independent of desktop widgets and media-card shapes."; preference: "desktopShapes" }
+    }
+    SettingsCard {
         title: "Desktop widgets"
         description: "Place clock, notes and media on your desktop. Edit mode brings widgets above apps while arranging them; Done returns them below apps. Notes share your existing Quick notes buffer."
         PreferenceSwitch { title: "Enable desktop widgets"; detail: "Keep widgets below application windows outside Edit mode"; preference: "desktopEnabled" }

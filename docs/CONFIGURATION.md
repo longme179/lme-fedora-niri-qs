@@ -314,6 +314,16 @@ Settings → Top bar → Click and scroll actions stores per-module `barGestures
 
 Settings → Appearance provides `mediaControls` (seek/shuffle/repeat), `mediaStability` (brief cosmetic metadata retention) and `mediaShapes` (ambient Material polygons). Seek supports click/drag and keyboard arrows/Home/End when the player supports MPRIS seeking. Shuffle/repeat require writable player support; unavailable controls are disabled. Repeat cycles Off → All → One → Off. Shapes stop while hidden, paused or animations are disabled; the same settings apply to Activity Island and Control Center.
 
+Settings → Desktop widgets → Floating media shapes controls `desktopShapes`
+(default `false`, included in portable presets). This reuses the media card's
+ambient shapes at a larger size on each connected display, above the wallpaper
+and below application windows, with an empty input region and no reserved space.
+It is independent of `desktopEnabled` and `mediaShapes`. A paused player leaves
+the shapes still; disabling animations also stops them. Closing all MPRIS players
+or turning the option off removes the surfaces. No additional packages, audio
+capture or wallpaper changes are required. These are decorative shapes, not
+audio-reactive Cava bars.
+
 Settings → Behavior → Bluetooth pairing controls `bluetoothPairing`. Native pairing needs Fedora's `python3-gobject-base`. The Gio agent runs only while Devices is open, retains no entered PIN/passkey on disk, and leaves other applications' default agents alone. A successful Pair is followed by Connect; if connecting fails the device remains paired and the error is shown.
 
 ## Synchronized lyrics

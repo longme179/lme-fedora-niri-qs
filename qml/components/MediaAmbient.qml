@@ -9,13 +9,16 @@ import "../theme"
 Item {
     id: root
     property bool playing: false
-    readonly property bool animating: playing && visible && width > 0 && height > 0 && Theme.animations && ShellState.preferences.mediaShapes !== false && (Window.window?.visible ?? false)
+    property bool shapesEnabled: ShellState.preferences.mediaShapes !== false
+    property real shapeScale: 1
+    property real shapeOpacity: .09
+    readonly property bool animating: playing && visible && width > 0 && height > 0 && Theme.animations && shapesEnabled && (Window.window?.visible ?? false)
     objectName: "mediaAmbient"
     clip: true
     Loader {
         id: layer
         anchors.fill: parent
-        active: root.visible && ShellState.preferences.mediaShapes !== false
+        active: root.visible && root.shapesEnabled
         sourceComponent: Item {
             component DriftingShape: MorphShape {
                     required property int index
@@ -23,13 +26,13 @@ Item {
                     property real progressY: (index * .37 + .2) % 1
                     readonly property real vx: (index % 2 ? -1 : 1) * (5 + index * 2)
                     readonly property real vy: (index % 2 ? 1 : -1) * (4 + index)
-                    width: 48 + index * 14; height: width
+                    width: (48 + index * 14) * root.shapeScale; height: width
                     x: progressX * (root.width + width) - width
                     y: progressY * (root.height + height) - height
                     rotation: index * 57
                     shape: ["flower", "circle", "square"][index % 3]
                     color: [Theme.accent, Theme.pink, Theme.cyan, Theme.yellow][index]
-                    opacity: .09
+                    opacity: root.shapeOpacity
             }
             Repeater { id: shapes; model: 4; delegate: DriftingShape {} }
             FrameAnimation {

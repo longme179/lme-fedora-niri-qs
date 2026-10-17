@@ -225,6 +225,12 @@ backups. [Configuration guide](docs/CONFIGURATION.md).
 
 ### Desktop widgets
 
+For floating wallpaper shapes, enable **Settings → Desktop widgets → Floating
+media shapes**. Theme-colored Material shapes drift behind apps on every display
+while media plays. They freeze when playback pauses or animations are disabled,
+disappear when no player is connected, and never intercept clicks. This option
+starts off and is independent of the widgets and media-card shapes.
+
 The canvas starts disabled. To set it up:
 
 1. Open **Settings → Desktop widgets**, enable it, then choose **Add clock**, **Add notes** or **Add media**.

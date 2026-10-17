@@ -1,5 +1,31 @@
 # Validation and platform limits
 
+## Floating wallpaper shapes — 2026-10-17
+
+`scripts/check.sh` completed **313 tests: 312 passed, one skipped**, with the
+native desktop, media, lyrics, motion, polling, Bluetooth, Settings, clipboard,
+annotation/OCR, authentication, idle and display-watchdog checks enabled. The
+skip requires a real Matugen binary. Bash syntax and the demo snapshot passed.
+Whole-tree lint covers **125 QML files: zero errors, 57 existing warnings**;
+MediaAmbient, DesktopAmbient and DesktopPage pass focused lint without warnings.
+
+New regressions exercise strict boolean validation, saved settings and portable
+presets, full-output geometry, empty input regions, no keyboard focus or reserved
+space, playback/pause, reduced motion, independent media-card/widget toggles and
+surface destruction/recreation. A native Chromium-style MPRIS fixture also
+checks no-player startup, pause, disconnect and reconnect.
+
+A separate private-Sway check rendered the shapes, delivered a real virtual
+pointer click to the wallpaper beneath them and confirmed an opaque application
+covers them. Adding a second output, changing its scale to 2, disabling and
+reenabling it, then turning the feature off preserved screen-sized surfaces and
+released them when no longer needed. Rendered images were inspected; the test
+log contains no QML runtime errors. Tests use Quickshell 0.3.2 / Qt 6.8.2 and
+software rendering. GPU frame pacing, niri-specific layer behavior and the
+owner's wallpaper have not been checked on the target laptop. The motion guard
+does not detect application occlusion; enabled shapes can keep animating behind
+an opaque app while music plays. No additional packages were installed.
+
 ## Whole-shell stability and Jelly-v2 — 2026-10-17
 
 The baseline completed **305 tests: 274 passed, 31 skipped**. Expanded validation then enabled native clipboard, annotation/OCR, authentication, idle, Settings/personalization, Control Center drag/drop and detached display-watchdog suites in addition to media, lyrics, desktop, Bluetooth, polling and motion. The final run completes **310 tests: 309 passed, one skipped**, plus Bash syntax and the demo snapshot. The skipped test needs an actual Matugen binary; mocked Matugen v3/v4 and native palette UI checks pass. Whole-tree lint covers 124 QML files with **zero errors and 57 existing warnings**; changed motion/Island/settings components pass focused lint without diagnostics.

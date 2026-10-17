@@ -7,6 +7,7 @@ import "../theme"
 
 SlideLoader {
     id: root
+    originRect: ShellState.popupAnchor
     property bool expanded: ShellState.activityOpen && !ShellState.authenticationActive
     readonly property real expansion: progress
     readonly property real compactWidth: Math.max(54, ShellState.activityAnchorWidth)
@@ -19,14 +20,14 @@ SlideLoader {
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
     visible: mounted
-    width: Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion
-    height: Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion
+    width: Theme.springMotion || connected ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion
+    height: Theme.springMotion || connected ? heightSpring.value : 30 + (expandedHeight - 30) * expansion
     x: Math.max(14, Math.min((parent ? parent.width : width) - width - 14, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
     y: Theme.barBottom && parent ? parent.height - Theme.barTopMargin - 6 - height : Theme.barTopMargin + 6
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }
-    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted }
+    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted && (!root.connected || root.progress >= .99) }
+    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted && (!root.connected || root.progress >= .99) }
     content: GlassPanel { role: "islandFill";
         implicitHeight: card.implicitHeight + 76
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true

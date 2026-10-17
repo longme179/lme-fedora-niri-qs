@@ -1,5 +1,15 @@
 # Validation and platform limits
 
+## Lyrics, desktop and popup integration — 2026-10-17
+
+The full private validation command completes **298 tests: 267 passed, 31 skipped**, plus Bash syntax and the demo backend snapshot. Enabled native suites include lyrics, desktop widgets, media controls, Activity, Bluetooth, controlled polling and popup motion. The connected-popup check also verifies spring resizing after the Island has opened. Ordinary changed components/pages pass focused lint without diagnostics; whole-tree lint reports zero errors and 57 warnings, including existing demo typing diagnostics and Quickshell native-window/attached-type/ExitStatus metadata limitations. New desktop layer windows were exercised at runtime. No runtime package was added or installed.
+
+## Connected popup surfaces — 2026-10-17
+
+Focused checks cover source geometry, reversal without progress reset, repeated openings, frozen closing anchors, spring resizing while open, prompt unloading, disabled mode, reduced motion and top/bottom bar offsets. A private Wayland test clicks the actual root-shell bar and opens both Control Center and Activity Island, then verifies settled backgrounds and closure. Both software rendering and OpenGL/RHI lifecycle checks pass; the compiled shader also rendered sample frames without shader/pipeline errors. Ordinary changed QML controls pass focused lint without diagnostics.
+
+On the target machine, click different modules on each output, open/close quickly, switch between connected/island bar styles and test both bar edges. Compare with Connected popups off and Animations off. Check that background blur fades normally, text remains sharp after settling and the source/connector is absent when fully closed. Cloud tests use private Sway with Qt 6.8.2/Quickshell 0.3.2; Fedora/niri blur composition, scaled multi-monitor placement and Radeon 120 Hz frame pacing remain unverified. The Canvas fallback intentionally has simpler joins than the GPU shader.
+
 ## Desktop widget canvas — 2026-10-17
 
 Validation covers bounded schemas/portable presets, atomic per-field edits from stale writers, deletion without resurrection and demo isolation. A private Wayland test verifies bottom/overlay layer transitions, pointer-driven move/resize and an empty input mask in click-through mode. Native resize commits the requested dimensions instead of waiting for a compositor configure event. niri multi-monitor hotplug/scale changes and compositor blur need target-machine checks.

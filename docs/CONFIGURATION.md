@@ -329,3 +329,9 @@ Settings → Desktop widgets enables the canvas and adds clock, notes or media w
 Edit on desktop raises the widgets above applications and opens a small toolbar. Drag a widget's header grip or resize its lower-right corner. Focus the grip and use arrows (Shift for 1-pixel steps) for keyboard movement. Done returns widgets below application windows. Non-interactive widgets pass clicks through; Edit restores access. Add the Desktop widgets module in Settings → Top bar or run `quickshell -c gpt ipc call shell desktopEdit` to toggle Edit. The desktop does not reserve application space.
 
 The `desktopEnabled` and `desktopWidgets` preferences are included in export/import. Widget patches merge individual fields under the settings file lock, so a drag cannot overwrite a concurrent visibility/output edit. Removing a notes widget leaves its note intact. The niri blur include now also matches `lme-desktop`; update that include if your installation is a copy.
+
+## Connected popup surfaces
+
+Settings → Appearance → **Connected popups** enables a soft surface that expands from the clicked module and contracts back to it. It follows top/bottom placement, independent bar islands and the clicked output. The source stays fixed during closure; opening another panel does not redirect the old one. The connector detaches as the panel expands and is unloaded after settling. Keyboard/IPC openings use the existing edge animation; reduced motion skips the morph.
+
+This uses the included Qt shader with no new package. Qt's software renderer uses a simpler Canvas connection rather than the shader's smooth union. To return to the previous popup motion, disable `connectedPopups`; the switch is included in appearance profiles and portable presets.

@@ -110,6 +110,7 @@ ColumnLayout {
         PreferenceSwitch { title: "Moving media shapes"; detail: "Subtle Material shapes while the media card is visible and playing"; preference: "mediaShapes" }
         PreferenceSwitch { title: "Wavy media progress"; detail: "Animate media timelines in Activity Island and Control Center while playing"; preference: "mediaWave" }
         PreferenceSwitch { title: "Pointer-origin ripple"; detail: "Press waves start at the pointer and clip to rounded corners"; preference: "pointerRipple" }
+        PreferenceSwitch { title: "Connected popups"; detail: "Grow anchored bar popups from their button with a soft geometric connection"; preference: "connectedPopups" }
         PreferenceSwitch { title: "Spring motion"; detail: "Keep momentum through hover, toggles, tabs and popup reversals"; preference: "springMotion" }
         RowLayout {
             Layout.fillWidth: true

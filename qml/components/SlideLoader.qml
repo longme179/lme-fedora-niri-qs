@@ -1,5 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import "../theme"
+import "../services"
 
 Loader {
     id: root
@@ -7,6 +9,20 @@ Loader {
     property Component content
     property Component retainedContent
     property string direction: "right"
+    property rect originRect: Qt.rect(-1, -1, 0, 0)
+    // Freeze the source while closing, even if a different popup opens meanwhile.
+    property rect openingOrigin: Qt.rect(-1, -1, 0, 0)
+    readonly property bool connected: Theme.animations && ShellState.preferences.connectedPopups !== false && openingOrigin.width > 0 && openingOrigin.height > 0
+    readonly property real morph: Math.max(0, Math.min(1, progress))
+    property Scale connectedScale: Scale {
+        origin.x: root.width / 2; origin.y: root.height / 2
+        xScale: root.openingOrigin.width / Math.max(1, root.width) + (1 - root.openingOrigin.width / Math.max(1, root.width)) * root.morph
+        yScale: root.openingOrigin.height / Math.max(1, root.height) + (1 - root.openingOrigin.height / Math.max(1, root.height)) * root.morph
+    }
+    property Translate connectedTravel: Translate {
+        x: (root.openingOrigin.x + root.openingOrigin.width / 2 - root.x - root.width / 2) * (1 - root.morph)
+        y: (root.openingOrigin.y + root.openingOrigin.height / 2 - root.y - root.height / 2) * (1 - root.morph)
+    }
     property bool exitToEdge: false
     property bool animateResize: true
     property string exitEdge: "nearest"
@@ -29,19 +45,38 @@ Loader {
     sourceComponent: retainedContent
     Behavior on width { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
     Behavior on height { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
-    transform: [
-        Translate { x: root.offsetX; y: root.offsetY },
-        Scale {
+    property Translate legacyTravel: Translate { x: root.offsetX; y: root.offsetY }
+    property Scale legacyScale: Scale {
             origin.x: root.direction === "right" ? root.width : root.width / 2
             origin.y: root.direction === "down" ? 0 : root.height / 2
             xScale: 1 - (1 - root.progress) * Theme.deformation
             yScale: 1 + (1 - root.progress) * Theme.deformation
+    }
+    transform: connected ? [connectedScale, connectedTravel] : [legacyTravel, legacyScale]
+    readonly property bool morphing: connected && mounted && (transitioning || progress < .999)
+    Binding {
+        target: root.item as GlassPanel; property: "connectedSurface"; value: true
+        when: root.morphing; restoreMode: Binding.RestoreBindingOrValue
+    }
+    Binding {
+        target: root.item as Item; property: "opacity"; value: Math.max(0, Math.min(1, (root.morph - .2) / .65))
+        when: root.connected; restoreMode: Binding.RestoreBindingOrValue
+    }
+    Loader {
+        parent: root.parent; z: root.z - .1
+        active: root.morphing
+        sourceComponent: ConnectedSurface {
+            originRect: root.openingOrigin
+            popupRect: Qt.rect(root.x, root.y, root.width, root.height)
+            progress: root.morph
+            fill: Theme.alpha(Theme.tokenColor((root.item as GlassPanel)?.role || "panelFill"), Theme.panelOpacity)
+            popupRadius: (root.item as GlassPanel)?.radius || Theme.radius
         }
-    ]
+    }
     function finishClose() {
         if (shown || !mounted) return;
         // Off-screen content need not wait for the spring's sub-pixel settling tail.
-        if (exitToEdge ? !outsideViewport && transitioning : transitioning) return;
+        if (connected ? progress > .02 && transitioning : exitToEdge ? !outsideViewport && transitioning : transitioning) return;
         mounted = false;
         motion.stop(); exitMotionX.stop(); exitMotionY.stop();
         spring.snapTo(0); exitSpringX.snapTo(0); exitSpringY.snapTo(0);
@@ -51,7 +86,7 @@ Loader {
     }
     function edgeOffset() {
         let dx = 0, dy = 0;
-        if (exitToEdge && parent) {
+        if (exitToEdge && !connected && parent) {
             const gaps = [x, parent.width - x - width, y, parent.height - y - height];
             const forced = ["left", "right", "top", "bottom"].indexOf(exitEdge);
             if (travelEdge < 0) travelEdge = forced >= 0 ? forced : gaps.indexOf(Math.min(...gaps));
@@ -65,7 +100,7 @@ Loader {
         return {x: dx, y: dy};
     }
     function moveExit(open) {
-        const offset = open ? {x: 0, y: 0} : edgeOffset();
+        const offset = open || connected ? {x: 0, y: 0} : edgeOffset();
         exitMotionX.stop(); exitMotionY.stop();
         if (Theme.springMotion) { exitSpringX.retarget(offset.x); exitSpringY.retarget(offset.y); }
         else if (Theme.animations) { exitMotionX.to = offset.x; exitMotionY.to = offset.y; exitMotionX.start(); exitMotionY.start(); }
@@ -87,6 +122,7 @@ Loader {
         if (!Theme.animations) { progress = to; if (to === 0) mounted = false; return; }
         motion.to = to; motion.start();
     }
+    onProgressChanged: if (!shown && connected && progress <= .02) Qt.callLater(finishClose)
     onOutsideViewportChanged: if (outsideViewport) Qt.callLater(finishClose)
     function replay() {
         if (Theme.springMotion) spring.snapTo(0); else progress = 0;
@@ -97,9 +133,9 @@ Loader {
         }
         move(shown ? 1 : 0);
     }
-    onShownChanged: if (initialized) { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
+    onShownChanged: if (initialized) { if (shown) { openingOrigin = originRect; retainedContent = content; } if (shown || mounted) move(shown ? 1 : 0); }
     onContentChanged: if (initialized && shown) { retainedContent = content; if (!mounted) move(1); }
-    Component.onCompleted: { initialized = true; if (shown) { retainedContent = content; move(1); } }
+    Component.onCompleted: { initialized = true; if (shown) { openingOrigin = originRect; retainedContent = content; move(1); } }
     onLoaded: {
         const panel = item as Item;
         if (panel && shown) panel.forceActiveFocus();

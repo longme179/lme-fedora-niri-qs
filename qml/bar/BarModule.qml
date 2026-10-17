@@ -26,8 +26,8 @@ Loader {
     y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launcher", "overview", "tray", "notifications", "settings", "clipboard", "power", "desktop"].includes(moduleId) ? actionComponent : statusComponent
-    ModuleGestures { anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo }
-    Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
+    ModuleGestures { id: gestures; anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo; windowInfo: root.windowInfo }
+    Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { gestures.armOrigin(); gestures.releaseOrigin(); return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
     Component {
         id: activityComponent
         ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget; function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } }
@@ -102,7 +102,7 @@ Loader {
         id: titleComponent
         Item {
             implicitWidth: Math.min(titleMetrics.width + 16, Math.max(0, root.titleBudget))
-            TapHandler { onTapped: BarGestures.perform(root.moduleId, "left", root.screenInfo) }
+            TapHandler { onTapped: { gestures.armOrigin(); BarGestures.perform(root.moduleId, "left", root.screenInfo); gestures.releaseOrigin(); } }
             TextMetrics { id: titleMetrics; text: titleText.text; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight }
             LabelText {
                 id: titleText

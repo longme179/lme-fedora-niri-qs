@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add synchronized lyrics to media panels with embedded/local LRC support, a bounded disk cache and opt-in LRCLIB lookup. Follow playback or scroll manually without background polling when hidden.
+- Add an optional desktop canvas with per-output clock, notes and media widgets. Persist drag/resize edits independently; support click-through mode and preserve disconnected-output layouts.
+- Connect bar-opened popups to their source through a temporary soft surface. Reuse spring momentum, freeze the closing source, unload the shader when settled and retain edge/reduced-motion fallbacks.
+
 - Blur beneath the actual bar glass on supported niri, matching the connected
   bar or independent island corners and leaving gaps clear. Add a separate,
   default-on Bar blur preference with preset/backup support.

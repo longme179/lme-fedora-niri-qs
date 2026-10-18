@@ -1,5 +1,61 @@
 # Validation and platform limits
 
+## Liquid popup frame work and native surface size — 2026-10-18
+
+QML profiling identified repeated scan conversion and per-button ancestor
+bindings during Jelly-v2. The shared blur component now caches the unwarped
+outline, samples each affine mapping once, reuses scanline buffers and publishes
+at most one deformed mask after Qt's animation step, before scene-graph sync.
+Glass materials sample their final scene transforms at the same point instead
+of rebuilding ancestor dependency chains. Hidden/resting masks release their
+delegates; no idle animation driver is added.
+
+Niri's non-xray implementation captures a texture for the native surface, even
+when the requested blur region is small. Liquid's main overlay now reserves
+the destination and flight envelope in a smaller surface, keeping its original
+output-coordinate layout. Blur and Jelly remain on that same surface; a
+separate, input-aware surface carries the full-screen dim layer. In the real
+Control Center fixture this reduces the native allocation from **1916 × 1053
+to 796 × 964**, about **62% fewer pixels**. Smoked keeps its full-screen route.
+Blur passes, optical shader, texture resolution, mesh, spring and strain limits
+are unchanged.
+
+A controlled single-popup 600 × 900 Control Center benchmark on nested niri
+26.04 / Mesa software OpenGL measured median Qt animation-step intervals of
+**74.9 → 55.3 ms**, with the 95th percentile **120.2 → 73.7 ms**. These are
+laboratory timing observations, not hardware FPS or GPU-utilization readings.
+In particular, a multi-window FrameAnimation can follow another window's clock
+while the popup render thread waits; its tick rate is not a presentation-rate
+measurement. The owner's log confirms OpenGL and 8.33 ms vsync, but does not
+identify the rendering GPU.
+
+The expanded private Wayland `scripts/check.sh` run completed **343 tests:
+342 passed, one optional real Matugen check skipped**. Bash syntax and the demo
+backend snapshot passed. The new 20-frame regression applies multiple position
+changes, rotation, scale and spring retargets, then checks the blur mask and
+optical coordinates against the current frame, coalesced publication and idle
+release. Existing pixel coverage and edge-tolerance assertions are retained.
+Real pointer clicks test the bounded Control Center and outside-click closure;
+bottom-bar placement, switching to Launcher, nested menu registration and
+Liquid/Smoked restoration are covered too. The strengthened menu flight check
+also passed after the full run.
+
+Native niri checks at scales 1 and 2 still blur the application below the actual
+Control Center, leave outside edges unchanged, restore the application after
+closing and display Settings. Eight deformed-mask cases retain the earlier
+9–12% inside-edge energy / unchanged-outside results. A separate native run opens
+and closes Control Center, Launcher, notifications, clipboard, Wi-Fi, overview,
+tray and power with both top and bottom bar placement: all 16 cases reach their
+settled state, fit their reserved surface, release the scrim and log no QML errors.
+`qmllint` checked **132 QML
+files: zero errors, 67 warnings**. Five additional diagnostics concern the same
+incomplete Quickshell PanelWindow/margins type metadata; the new native surface
+and margins were exercised at runtime.
+
+Actual Radeon/RTX frame presentation, GPU load, power use and multi-output
+hardware behavior remain unmeasured. No driver, GPU selection or niri blur
+configuration changes were made.
+
 ## Popup rendering cost and GitHub updates — 2026-10-18
 
 The local Jelly-v2 mask now scans only polygon edges crossing each row, merges

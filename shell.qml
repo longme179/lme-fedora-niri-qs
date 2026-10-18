@@ -78,10 +78,51 @@ ShellRoot {
     }
     LazyLoader { active: !root.preview; component: DesktopCanvas {} }
     PanelWindow {
+        id: liquidScrim
+        screen: overlay.screen
+        visible: overlay.visible && ShellState.liquidBlurEnabled
+        anchors { top: true; bottom: true; left: true; right: true }
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.namespace: "lme-overlay"
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        mask: Region { item: ShellState.panelOpen ? liquidScrim.contentItem : null }
+        MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
+    }
+    PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
         visible: !root.preview && (ShellState.panelOpen || activityIsland.visible || panelLoader.active) && !ShellState.authenticationActive
-        anchors { top: true; bottom: true; left: true; right: true }
+        // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.
+        readonly property rect viewport: {
+            const w = screen ? screen.width : 1920, h = screen ? screen.height : 1080;
+            if (!ShellState.liquidBlurEnabled) return Qt.rect(0, 0, w, h);
+            const frames = [];
+            function reserve(x, y, width, height, edge) {
+                const px = (edge < 2 ? width * .25 : 0) + 32;
+                const py = (edge >= 2 ? height * .25 : 0) + 32;
+                frames.push({left: edge === 0 ? 0 : x - px, right: edge === 1 ? w : x + width + px,
+                    top: edge === 2 ? 0 : y - py, bottom: edge === 3 ? h : y + height + py});
+            }
+            if (activityIsland.mounted) {
+                const width = activityIsland.expandedWidth, height = activityIsland.expandedHeight;
+                const anchor = ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : w / 2;
+                const x = Math.max(activityIsland.sideInset, Math.min(w - width - activityIsland.sideInset, anchor - width / 2));
+                reserve(x, Theme.barBottom ? h - activityIsland.edgeInset - height : activityIsland.edgeInset,
+                    width, height, Theme.barBottom ? 3 : 2);
+            }
+            if (panelLoader.mounted) reserve(panelLoader.x, panelLoader.y, panelLoader.width, panelLoader.height, panelLoader.travelEdge);
+            if (!frames.length) return Qt.rect(0, 0, w, h);
+            const left = Math.max(0, Math.floor(Math.min(...frames.map(r => r.left))));
+            const top = Math.max(0, Math.floor(Math.min(...frames.map(r => r.top))));
+            return Qt.rect(left, top, Math.max(1, Math.min(w, Math.ceil(Math.max(...frames.map(r => r.right)))) - left),
+                Math.max(1, Math.min(h, Math.ceil(Math.max(...frames.map(r => r.bottom)))) - top));
+        }
+        anchors { top: true; left: true }
+        margins { top: viewport.y; left: viewport.x }
+        implicitWidth: viewport.width
+        implicitHeight: viewport.height
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -94,9 +135,11 @@ ShellRoot {
         // Closing visuals must not block another bar click or the application beneath.
         mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
         WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        PopupBackdrop { anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13 }
+        PopupBackdrop { parent: ShellState.liquidBlurEnabled ? liquidScrim.contentItem : overlay.contentItem; anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: ["launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13 }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
+            x: -overlay.viewport.x
+            y: -overlay.viewport.y
             width: overlay.screen ? overlay.screen.width : overlay.width
             height: overlay.screen ? overlay.screen.height : overlay.height
             focus: true

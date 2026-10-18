@@ -336,6 +336,18 @@ tapered silhouette using inset two-pixel bands. Identical adjoining bands are
 merged and native regions are reused during flight. The mask returns to a single
 rounded region at rest; no frame timer, desktop capture or extra shader is added.
 The clear-interior shader path preserves lighting without unused lens calculations.
+Mask geometry is published after Qt's animation step and before scene-graph
+synchronization, so interrupted springs share the same frame with their blur.
+Glass sampling uses final scene transforms at that point too, instead of
+watching every ancestor property on every button. Neither path adds an idle
+animation driver.
+
+With native Liquid blur, the main popup surface reserves its destination and
+travel envelope rather than the whole output. Its layout still uses output
+coordinates, while a separate surface handles the full-screen dim layer and
+outside clicks. This reduces niri's intermediate blur texture area without
+lowering blur passes, shader resolution, deformation or motion quality. Smoked
+keeps the full-screen surface and its saved global blur preference.
 
 Include the updated `config/niri/popup-blur.kdl` **after generic background-effect
 rules**: later matching niri rules take precedence. If you copied its rules manually,

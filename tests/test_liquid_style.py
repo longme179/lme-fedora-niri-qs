@@ -170,12 +170,20 @@ class LiquidNativeCase(unittest.TestCase):
             const region=overlay.BackgroundEffect.blurRegion;
             return JSON.stringify({ready:ShellState.backendReady,liquid:Theme.liquidGlass,
                 local:region===glassPopupBlur,full:region===popupBlurRegion,visible:overlay.visible,
-                panel:panelLoader.progress,island:activityIsland.progress,width:overlay.width,height:overlay.height,
-                areas:glassPopupBlur.regions.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height,radius:r.radius})),
+                scrim:liquidScrim.visible,bottom:Theme.barBottom,editing:!!(panelLoader.item && panelLoader.item.editing),
+                panel:panelLoader.progress,island:activityIsland.progress,width:overlay.screen.width,height:overlay.screen.height,
+                nativeWidth:overlay.width,nativeHeight:overlay.height,
+                areas:glassPopupBlur.regions.map(r=>({x:r.x+overlay.viewport.x,y:r.y+overlay.viewport.y,width:r.width,height:r.height,radius:r.radius})),
                 popups:GlassState.popupsFor(overlay).length,registered:GlassState.popupRegions.length});
         }
         function fixtureStyle(style:string): void { ShellState.run("setting",{key:"surfaceStyle",value:style}); }
-        function fixtureMenu(open:bool): void {
+        function fixtureBottom(): void { ShellState.run("setting",{key:"barEdge",value:"bottom"}); }
+        function fixtureEditTarget(): string {
+            function find(item) {if(!item) return null;if(item.objectName==="controlEdit") return item;for(const child of item.children || []) {const found=find(child);if(found) return found;}return null;}
+            const button=find(panelLoader.item),point=button.mapToItem(overlay.contentItem,button.width/2,button.height/2);
+            return JSON.stringify({x:point.x+overlay.viewport.x,y:point.y+overlay.viewport.y});
+        }
+        function fixtureMenu(open:bool): string {
             function find(item) {
                 if(!item) return null;
                 if(item.popup && item.textAt) return item;
@@ -183,7 +191,11 @@ class LiquidNativeCase(unittest.TestCase):
                 return null;
             }
             const combo=find(panelLoader.item);
-            if(combo) { if(open) combo.popup.open();else combo.popup.close(); }
+            if(!combo) return "{}";
+            if(open) combo.popup.open();else combo.popup.close();
+            const menu=combo.popup,point=menu.parent.mapToItem(overlay.contentItem,menu.x,menu.y);
+            return JSON.stringify({x:point.x+overlay.viewport.x,y:point.y+overlay.viewport.y,width:menu.width,height:menu.height,
+                dx:menu.travelX,dy:menu.travelY,viewport:overlay.viewport});
         }''',1)
             entry=root/'shell.qml';entry.write_text(source)
             env=dict(os.environ,LME_SHELL_DEMO='1',XDG_CONFIG_HOME=str(root/'home'),XDG_DATA_HOME=str(root/'data'),XDG_STATE_HOME=str(root/'state'))
@@ -206,20 +218,50 @@ class LiquidNativeCase(unittest.TestCase):
                     ipc('fixtureStyle','liquid')
                     state=wait(lambda s:s.get('local') and s['areas'][1]['width']>300)
                     panel=state['areas'][1]
+                    self.assertLess(state['nativeWidth'],state['width']*.8)
                     self.assertGreater(panel['x'],state['width']*.3)
                     self.assertLess(panel['width'],state['width']*.7)
                     self.assertLessEqual(panel['height'],state['height'])
                     self.assertGreater(panel['radius'],0)
                     self.assertEqual(state['areas'][0]['width'],0)
+                    self.assertTrue(state['scrim'])
+                    pointer=os.environ.get('LME_TEST_POINTER')
+                    if pointer and Path(pointer).is_file():
+                        point=json.loads(ipc('fixtureEditTarget'))
+                        for editing in (True,False):
+                            subprocess.run([pointer,str(round(point['x'])),str(round(point['y']))],env=env,check=True,timeout=5)
+                            wait(lambda s:s.get('editing') is editing)
                     ipc('fixtureMenu','true')
                     state=wait(lambda s:s.get('popups')==1 and len(s['areas'])==3)
                     self.assertGreater(state['areas'][2]['width'],0)
+                    flight=json.loads(ipc('fixtureMenu','true'))
+                    if flight['dx']<0:
+                        self.assertLess(flight['x']+flight['dx']+flight['width'],0)
+                        self.assertEqual(flight['viewport']['x'],0)
+                    elif flight['dx']>0:
+                        self.assertGreater(flight['x']+flight['dx'],state['width'])
+                        self.assertEqual(flight['viewport']['x']+flight['viewport']['width'],state['width'])
+                    elif flight['dy']<0:
+                        self.assertLess(flight['y']+flight['dy']+flight['height'],0)
+                        self.assertEqual(flight['viewport']['y'],0)
+                    else:
+                        self.assertGreater(flight['y']+flight['dy'],state['height'])
+                        self.assertEqual(flight['viewport']['y']+flight['viewport']['height'],state['height'])
                     ipc('fixtureMenu','false');wait(lambda s:s.get('registered')==0)
-                    ipc('close');wait(lambda s:not s.get('visible') and all(r['width']==0 for r in s['areas']))
+                    if pointer and Path(pointer).is_file():
+                        subprocess.run([pointer,'20','500'],env=env,check=True,timeout=5)
+                    else: ipc('close')
+                    wait(lambda s:not s.get('visible') and not s.get('scrim') and all(r['width']==0 for r in s['areas']))
                     ipc('toggle','activity')
                     state=wait(lambda s:s.get('local') and s.get('island')==1 and s['areas'][0]['width']>300)
                     self.assertEqual(state['areas'][1]['width'],0)
+                    self.assertLess(state['nativeWidth'],state['width']*.7)
                     self.assertLess(state['areas'][0]['width'],state['width']*.7)
+                    top=state['areas'][0]['y']
+                    ipc('fixtureBottom')
+                    wait(lambda s:s.get('bottom') and s['areas'][0]['y']>top+50)
+                    ipc('toggle','launcher')
+                    wait(lambda s:s.get('panel')==1 and s['areas'][0]['width']==0 and s['areas'][1]['width']>300)
                     ipc('fixtureStyle','smoked');wait(lambda s:s.get('full') and not s.get('local'))
                     ipc('close');wait(lambda s:not s.get('visible') and s.get('registered')==0)
                     log.seek(0);output=log.read()

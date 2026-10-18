@@ -8,6 +8,9 @@ ShaderEffect {
     id: root
 
     property real sourceAvailable: 0
+    property real brightness: 1
+    property real feather: 1
+    property real smearing: 1
     property variant src
     property real topLeftRadius: 0
     property real topRightRadius: 0

@@ -3,6 +3,7 @@ SettingsView 1.0 SettingsView.qml
 SettingsCard 1.0 SettingsCard.qml
 PreferenceSwitch 1.0 PreferenceSwitch.qml
 AppearancePage 1.0 AppearancePage.qml
+LiquidGlassSettings 1.0 LiquidGlassSettings.qml
 TopBarPage 1.0 TopBarPage.qml
 WallpaperPage 1.0 WallpaperPage.qml
 DisplayPage 1.0 DisplayPage.qml

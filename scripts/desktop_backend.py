@@ -49,10 +49,11 @@ from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from settings_transfer import export_document, read_document, document
+from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
 
 
 DEFAULT_PREFERENCES = {
-    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90, "surfaceStyle": "smoked",
+    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90, "surfaceStyle": "smoked", "liquidGlass": GLASS_DEFAULTS,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
@@ -291,6 +292,7 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
@@ -472,10 +474,17 @@ class Preferences:
             pass
 
     def set(self, key: str, value: Any, token: str | None = None) -> None:
-        self.update({key: (widget_patch(token,value) if key == "desktopWidgets" else theme_token(key, token, value)) if token is not None else value}, token=token)
+        if token is not None:
+            if not isinstance(token, str): raise ValueError('Invalid setting token')
+            value = {token:value} if key == 'liquidGlass' else widget_patch(token,value) if key == 'desktopWidgets' else theme_token(key,token,value)
+        self.update({key:value}, token=token)
 
     def update(self, values: dict[str, Any], token: str | None = None, backup: bool = False) -> Path | None:
-        values = {key: desktop_widgets(value, partial=True) if key == "desktopWidgets" and token is not None else validate_preference(key, value) for key, value in values.items()}
+        values = dict(values)
+        for key, value in values.items():
+            if token is not None and key == 'liquidGlass': values[key] = validate_glass(value, partial=True)
+            elif token is not None and key == 'desktopWidgets': values[key] = desktop_widgets(value, partial=True)
+            else: values[key] = validate_preference(key, value)
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         # Serialize the app and shell's writers, including task updates.
         lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
@@ -1212,7 +1221,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1326,7 +1335,8 @@ class DesktopBackend:
                 if key == 'desktopWidgets':
                     self.preferences.values[key] = merge_widgets(self.preferences.values[key],widget_patch(request['token'],request.get('value')),request['token'])
                     return 'Desktop widget saved'
-                delta = theme_token(key, request['token'], request.get('value'))
+                if not isinstance(request['token'], str): raise ValueError('Invalid setting token')
+                delta = validate_glass({request['token']:request.get('value')}, partial=True) if key == 'liquidGlass' else theme_token(key, request['token'], request.get('value'))
                 current = dict(self.preferences.values[key]); current.pop(request['token'], None); current.update(delta)
                 self.preferences.values[key] = current
             else: self.preferences.values[key] = validate_preference(key, request.get("value"))
@@ -1411,7 +1421,7 @@ class DesktopBackend:
             ident=validate_preference('palettePreset',request.get('id'))
             colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
             self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
-        elif action in {"recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
+        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
@@ -1500,6 +1510,8 @@ class DesktopBackend:
         if action == "keybindRefresh":
             self.keybinds = read_keybinds(self.preferences.values["niriConfigPath"])
             return "Keybindings refreshed"
+        if action == "glassBlurApply":
+            return apply_blur(self.preferences.path.parent, self.preferences.values["liquidGlass"])
         if action == "platformRefresh":
             self.platform = self.compositor_features()
             return "Compositor version checked"

@@ -205,6 +205,23 @@ bar blur remains independently configurable. The
 [rendering details and limits](docs/CONFIGURATION.md#surface-style) explain the
 wallpaper-based edge effect and software fallback.
 
+In **Appearance → Liquid glass material**, choose a tint with the color picker
+or a hex code, then adjust brightness, tint opacity, lens blur, feather, smearing
+and rim width/highlights. These settings stay separate from your Smoked theme.
+**Reset glass** restores the original material.
+
+To change the real backdrop blur, adjust its passes/spread and click **Save niri
+blur snippet**. Include the generated file once, after `popup-blur.kdl`:
+
+```kdl
+include "~/.config/lme-shell/liquid-blur.kdl"
+```
+
+Run `niri validate` after adding the include. Later saves reload automatically.
+Use your `XDG_CONFIG_HOME` path if different. Niri controls blur strength globally,
+so this also affects other windows requesting blur and Smoked mode. Lens blur
+only softens the refractive rim; higher backdrop blur values cost more GPU time.
+
 ![LME Settings showing popup blur, spring motion, shape morphing and animation presets](https://github.com/user-attachments/assets/5a87fa0e-b7d2-47a4-968b-f78510552d0a)
 
 | Page | Customize |

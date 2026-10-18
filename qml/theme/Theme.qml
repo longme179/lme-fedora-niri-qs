@@ -7,7 +7,15 @@ import "../services"
 QtObject {
     id: root
     readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
-    readonly property color glassBase: "#f0081420"
+    property var glassControls: ({})
+    readonly property var glass: Object.assign(Object.keys(glassControls).reduce((values, key) => {
+        values[key] = glassControls[key].default; return values;
+    }, {}), ShellState.preferences.liquidGlass || {})
+    property FileView glassFile: FileView {
+        path: Quickshell.shellPath("config/liquid-glass.json")
+        onLoaded: root.glassControls = JSON.parse(text())
+    }
+    readonly property color glassBase: glass.tint || "#f0081420"
     readonly property var glassColors: ({
         background:"#151b23", panel:glassBase, surface:"#0cffffff", text:"#ffffff", muted:"#e5ebf5", border:"#66ffffff",
         purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
@@ -116,7 +124,7 @@ QtObject {
     readonly property int activityPopupMaxHeight: ShellState.preferences.activityPopupMaxHeight ?? 0
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
-    readonly property real panelOpacity: liquidGlass ? .65 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
+    readonly property real panelOpacity: liquidGlass ? glass.opacity ?? .65 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42

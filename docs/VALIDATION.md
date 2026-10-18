@@ -1,5 +1,41 @@
 # Validation and platform limits
 
+## Separate Liquid material controls — 2026-10-18
+
+`config/liquid-glass.json` supplies the control labels, bounds and defaults to
+both the backend and Settings. The `liquidGlass` preference merges field edits
+under the existing writer lock, survives restarts and transfers in presets or
+backups. It does not overwrite Material preferences or appearance profiles.
+The shared glass layer exposes tint, opacity, brightness, lens blur, feather,
+smearing, rim width and highlights without adding textures, layers or timers.
+
+The expanded private Wayland `scripts/check.sh` run completed **352 tests:
+351 passed, one optional real Matugen check skipped**. Bash syntax and the demo
+snapshot passed. The focused updater/glass suites were repeated after final
+status and opacity corrections. Six glass-control checks cover invalid hex,
+booleans, huge/non-finite/out-of-range numbers, independent concurrent writers,
+persistence/export/reset, real hex/picker/slider input and Smoked restoration.
+Ten OpenGL screenshots exercise individual shader controls and half-opacity
+dimming; foreground text stays white and the dimmed rim respects group opacity.
+The default shader comparison across six sizes/hover/press cases has **zero
+pixel difference** from the previous revision.
+
+The opt-in niri snippet is written atomically only after its button is clicked;
+demo actions do not write it. User-owned files and symlinks are refused. Native
+niri 26.04 validates the include and observes later writes: application edge
+energy beneath a glass panel changes from **27.73 to 4.96** for passes/spread
+1/0.5 versus 4/8, then returns to **27.73** after restoration. This verifies real
+compositor blur and automatic include reload, rather than wallpaper-only blur.
+Strength is compositor-wide, including Smoked and other requesting clients.
+
+Native Control Center checks at scales 1 and 2 retain sharp outside pixels,
+blur the application beneath the surface, restore it on close and open the
+actual Settings window. A visual check confirms the new card fits and scrolls.
+`qmllint` reports **133 files, zero errors, 67 existing type-metadata warnings**.
+No packages, drivers or installed desktop settings were changed. Radeon/RTX
+presentation FPS and multi-output hardware behavior remain unmeasured; larger
+blur and rim settings can cost more GPU time.
+
 ## Git source-install recovery — 2026-10-18
 
 The updater now identifies ZIP/source directories and Git folders without a

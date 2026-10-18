@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Recover ZIP and uncommitted Git installations through an explicit Git-updates button. Keep the original source as a backup, preserve startup paths and preferences, and clear stale HEAD errors.
+- Add independent Liquid glass tint, brightness, opacity, lens blur and rim feather/smearing/width/highlight controls. Preserve the default rendering, include them in shared presets, and expose an opt-in niri blur snippet with compositor-wide scope.
+
 - Audit native UI lifecycle and reject runtime assignment/binding-loop diagnostics in QML regressions. Fix Bluetooth Scan reading an undefined power state before the first backend snapshot.
 
 - Add opt-in Jelly-v2 popup motion: velocity-driven spring deformation, bowed/tapered mesh surfaces, bounded native-window rendering and a software fallback. Keep edge entry/exit and release the effect layer after settling.

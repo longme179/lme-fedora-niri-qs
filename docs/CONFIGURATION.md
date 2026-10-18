@@ -318,6 +318,23 @@ without an outline in Liquid mode; Smoked restores their original colors.
 A neutral dark outer tint keeps white text readable over bright applications;
 inner cards remain translucent. This tint applies only in Liquid and does not
 change the saved Smoked palette or opacity.
+The independent `liquidGlass` preference stores tint (`#RRGGBB` or alpha-first
+`#AARRGGBB`), tint opacity, brightness, lens blur, feather, smearing, rim strength
+and width. Their defaults/ranges are in `config/liquid-glass.json`; presets and
+backups include them. Field edits merge under the shared preferences lock.
+Resetting glass preserves all Material preferences and does not change a saved
+niri snippet. Brightness dims backgrounds in the existing shader pass; feather
+controls rim softness, while smearing scales its refraction. No new texture,
+render layer or animation loop is added for these controls.
+
+True background blur belongs to niri. Its protocol exposes a region rather than
+per-window blur strength. The separate passes/spread controls write
+`$XDG_CONFIG_HOME/lme-shell/liquid-blur.kdl` only when **Save niri blur snippet**
+is clicked. Include it after `popup-blur.kdl`, then run `niri validate`; subsequent
+saves use niri's normal include reload. This changes compositor-wide blur in
+both surface styles. Existing unmarked files and symlinks are not replaced.
+Preferences restore the original passes/spread when reset, but the snippet
+needs to be saved again to apply them. No niri configuration is edited silently.
 Editable fields retain native Qt input rendering, selection and IME behavior,
 with a dark translucent fill behind white input text.
 

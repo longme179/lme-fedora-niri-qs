@@ -66,7 +66,7 @@ Item {
         id: fallback
         Rectangle {
             radius: root.radius
-            color: "transparent"; border.width: 1; border.color: "#60ffffff"
+            color: Qt.rgba(0, 0, 0, 1 - (Theme.glass.brightness ?? 1)); border.width: 1; border.color: "#60ffffff"
             topLeftRadius: root.topLeftRadius < 0 ? root.radius : root.topLeftRadius
             topRightRadius: root.topRightRadius < 0 ? root.radius : root.topRightRadius
             bottomLeftRadius: root.bottomLeftRadius < 0 ? root.radius : root.bottomLeftRadius
@@ -85,8 +85,11 @@ Item {
             bottomRightRadius: root.bottomRightRadius < 0 ? root.radius : root.bottomRightRadius
             cursorPos: pointer.hovered ? pointer.point.position : Qt.point(width / 2, height / 2)
             hover: root.hoverAmount; energy: root.pressAmount
-            tintAmount: 0; clear: 1; frost: .9; dispersion: .025; rim: .38
-            bezel: Math.max(2, Math.min(8, Math.min(width, height) * .14))
+            tintAmount: 0; clear: 1; frost: .9 * (Theme.glass.blur ?? 1); dispersion: .025; rim: .38 * (Theme.glass.rim ?? 1)
+            brightness: Theme.glass.brightness ?? 1
+            feather: Theme.glass.feather ?? 1
+            smearing: Theme.glass.smearing ?? 1
+            bezel: Math.max(2, Math.min(8, Math.min(width, height) * .14)) * (Theme.glass.edgeWidth ?? 1)
         }
     }
 }

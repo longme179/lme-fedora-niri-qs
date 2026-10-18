@@ -37,6 +37,9 @@ layout(std140, binding = 0) uniform buf {
     vec4 sampleBounds;
     float unpremul;
     float sourceAvailable;
+    float brightness;
+    float feather;
+    float smearing;
 };
 
 layout(binding = 1) uniform sampler2D src;
@@ -102,6 +105,10 @@ float blurLod(float rad, int taps) {
 }
 
 vec3 blurredAt(vec2 p, float rad, float lod, int taps) {
+    if (rad <= 0.0) {
+        vec4 pixel = fetchLod4(p, 0.0);
+        return pixel.a > 0.0001 ? pixel.rgb / pixel.a : vec3(0.0);
+    }
     float R = max(rad, 0.5) * 1.5;
     float rot = ign(gl_FragCoord.xy) * 6.2831853;
     vec4 acc = vec4(0.0);
@@ -125,6 +132,12 @@ vec3 spectrum(float x) {
 vec2 displacement(vec3 normal, float index, float travel) {
     vec3 r = refract(vec3(0.0, 0.0, -1.0), normal, 1.0 / index);
     return r.xy / max(-r.z, 0.2) * travel;
+}
+
+// A black veil in the existing pass dims native blur without capturing apps or text.
+vec4 dimGlass(vec4 color, float coverage) {
+    float dim = 1.0 - brightness;
+    return vec4(color.rgb * brightness, color.a + dim * max(0.0, coverage * qt_Opacity - color.a));
 }
 
 void main() {
@@ -152,7 +165,7 @@ void main() {
         vec2 cursorDir = cd > 0.001 ? delta / cd : normalize(lightDir);
         float facing = -normalize(mix(normalize(lightDir), cursorDir, hover * 0.4)).y;
         float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-        float edgeHi = (exp(-t / 1.1) * (0.18 + 0.78 * spec) + exp(-t / 5.0) * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
+        float edgeHi = (exp(-t / (1.1 * feather)) * (0.18 + 0.78 * spec) + exp(-t / (5.0 * feather)) * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
         float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
         float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
         vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03);
@@ -165,7 +178,7 @@ void main() {
         vec3 rgb = min(light, vec3(alpha));
         float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
         rgb += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
-        fragColor = vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity;
+        fragColor = dimGlass(vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity, coverage);
         return;
     }
     vec2 g = vec2(0.0, -1.0);
@@ -193,7 +206,7 @@ void main() {
     float wobble = sin(dot(p, vec2(0.11, 0.09)) + t * 0.35) * 0.5 + 0.5;
     float warpK = 1.0 + 0.644 * motion + 0.368 * energy;
     vec2 warp = (-g * edgeFall * bz * (0.294 + 0.11 * wobble) + vec2(-g.y, g.x) * edgeFall * bz * 0.092 * (wobble - 0.5)) * warpK;
-    vec2 dG = displacement(normal, ior, th) + warp;
+    vec2 dG = (displacement(normal, ior, th) + warp) * smearing;
     float spread = dispersion * (0.35 + 1.2 * edgeFall) * (1.0 + 2.2 * motion + 0.55 * energy);
     vec2 dR = dG * (1.0 + spread);
     vec2 dB = dG * (1.0 - spread);
@@ -229,8 +242,8 @@ void main() {
     vec2 L = normalize(mix(normalize(lightDir), cursorDir, hover * 0.4));
     float facing = dot(g, L);
     float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-    float hair = exp(-t / 1.1);
-    float wide = exp(-t / 5.0);
+    float hair = exp(-t / (1.1 * feather));
+    float wide = exp(-t / (5.0 * feather));
     float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
     float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
     float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
@@ -274,5 +287,5 @@ void main() {
 
     float a = coverage * qt_Opacity;
     float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
-    fragColor = vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity);
+    fragColor = dimGlass(vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity), coverage);
 }

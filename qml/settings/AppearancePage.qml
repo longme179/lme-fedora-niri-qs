@@ -26,6 +26,7 @@ ColumnLayout {
             text: "Glass blurs only the area beneath each panel or popup on niri 26.04+. Full-screen popup blur and palette controls are paused. Fonts, layout, corners and motion still apply."
         }
     }
+    LiquidGlassSettings {}
     SettingsCard {
         title: "Shell name"
         description: "Your display name in Settings, the bar's empty-window title and shell notifications."

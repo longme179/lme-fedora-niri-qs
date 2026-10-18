@@ -485,7 +485,8 @@ class LiquidNativeCase(unittest.TestCase):
             backend.Preferences(config/'lme-shell/settings.json').set('wallpaper', str(wallpaper))
             result = self.run_qml('import Quickshell.Io\nimport "qml/components"\nimport "qml/services"\nimport "qml/theme"', '''
     FloatingWindow { color:"#21c548"; implicitWidth:1000; implicitHeight:800
-        GlassMaterial { id:glass;anchors.centerIn:parent;width:400;height:300;radius:50;topLeftRadius:-1;topRightRadius:-1;bottomLeftRadius:-1;bottomRightRadius:-1 }
+        // Isolate texture/refraction from whatever pointer position the preceding UI test left.
+        GlassMaterial { id:glass;enabled:false;anchors.centerIn:parent;width:400;height:300;radius:50;topLeftRadius:-1;topRightRadius:-1;bottomLeftRadius:-1;bottomRightRadius:-1 }
     }
     property int ticks:0
     property int phase:0

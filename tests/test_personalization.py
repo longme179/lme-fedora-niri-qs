@@ -305,7 +305,8 @@ ShellRoot {
                     self.assertEqual([w['pid'] for w in windows()],[first])
                     subprocess.run(['swaymsg','[pid='+str(first)+']','kill'],env=env,check=True,capture_output=True)
                     wait(lambda:not windows());self.assertEqual(root_ipc('toggle','control').returncode,0)
-                    time.sleep(.5);click(output['width']-102,102);wait(lambda:len(windows())==1)
+                    # At .5x speed, the 920ms entrance must finish before clicking its destination coordinates.
+                    time.sleep(1.6);click(output['width']-102,102);wait(lambda:len(windows())==1)
                     self.assertEqual(root_ipc('toggle','settings').returncode,0);time.sleep(.2)
                     self.assertEqual(len(windows()),1)
                     current=windows()[0]['pid']

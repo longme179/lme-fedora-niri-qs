@@ -92,6 +92,7 @@ ShellRoot {
     property var lastToastClose: ({})
     property var lastCloseSample: null
     property bool reverseAtFrame: false
+    property bool reverseMenuAtFrame: false
     property bool alternate: false
     Component.onCompleted: Quickshell.watchFiles = false
     OSDWindow { id: osd; screenInfo: Quickshell.screens[0] }
@@ -114,6 +115,12 @@ ShellRoot {
             }
         }
     }
+    function openMenu(open) {
+        const before = menu.progress, mounted = menu.mounted;
+        if (open) menu.open(); else menu.close();
+        lastMenuChange = {before, after: menu.progress, mounted,
+            bounds: menu.background.mapToItem(window.contentItem, 0, 0, menu.background.width, menu.background.height)};
+    }
     FloatingWindow {
         id: window; fullscreen: true; color: Theme.background
         PopupBackdrop { id: backdrop; anchors.fill: parent; shown: popup.shown || island.expanded
@@ -126,6 +133,10 @@ ShellRoot {
         ActivityIsland { id: island
             onOffsetYChanged: if (!expanded && mounted && fixture.islandCloseDy === 0 && Math.abs(offsetY) > 1) fixture.islandCloseDy = offsetY }
         MotionPopup { id: menu; x: 400; y: 320; width: 260; height: 200
+            onProgressChanged: if (fixture.reverseMenuAtFrame && progress > 0 && progress < 1) {
+                fixture.reverseMenuAtFrame = false;
+                fixture.openMenu(true);
+            }
             onPositionedChanged: if (positioned) fixture.lastMenuEntry = background.mapToItem(window.contentItem, 0, 0, background.width, background.height)
             background: GlassPanel {}
             contentItem: LabelText { text: "Motion menu" } }
@@ -177,11 +188,9 @@ ShellRoot {
         function activity(open: bool): void { if (!open) fixture.islandCloseDy = 0; ShellState.activityOpen = open; }
         function setOsd(open: bool): void { if (open) OSDManager.show("Volume", 42); else osd.open = false; }
         function menuOpen(open: bool): void {
-            const before = menu.progress, mounted = menu.mounted;
-            if (open) menu.open(); else menu.close();
-            fixture.lastMenuChange = {before, after: menu.progress, mounted,
-                bounds: menu.background.mapToItem(window.contentItem, 0, 0, menu.background.width, menu.background.height)};
+            fixture.openMenu(open);
         }
+        function menuReverse(): void { fixture.lastMenuChange = {}; fixture.reverseMenuAtFrame = true; menu.close(); }
         function toast(count: int): void {
             Notifications.history = Array.from({length: count}, (_, i) => ({id: "toast-" + i, appName: "Motion test", summary: "Toast " + i,
                 body: "Notification body", actions: [{identifier: "default", text: "Open"}], active: true, popup: true, timestamp: Date.now()}));
@@ -307,9 +316,12 @@ ShellRoot {
                         menu_state = wait(lambda s: bool(s["lastMenuEntry"]))
                         self.assertLess(menu_state["lastMenuEntry"]["bottom"], 0, "A menu must start above the screen, not fade in at its destination")
                         wait(lambda s: s["menuProgress"] == 1)
-                        ipc("menuOpen", "false"); time.sleep(.04); ipc("menuOpen", "true")
-                        changed = json.loads(ipc("state"))["lastMenuChange"]
+                        # Reopen on a closing frame; process-start/IPC latency must not decide whether exit has finished.
+                        ipc("menuReverse")
+                        changed = wait(lambda s: bool(s["lastMenuChange"]))["lastMenuChange"]
                         self.assertTrue(changed["mounted"])
+                        self.assertGreater(changed["before"], 0)
+                        self.assertLess(changed["before"], 1)
                         self.assertAlmostEqual(changed["before"], changed["after"], delta=.001)
                         wait(lambda s: s["menuProgress"] == 1)
                         ipc("menuOpen", "false"); wait(lambda s: not s["menuVisible"] and not s["menuMounted"])

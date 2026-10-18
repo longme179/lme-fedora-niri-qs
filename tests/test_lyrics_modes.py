@@ -34,10 +34,15 @@ class LyricsModesQmlCase(unittest.TestCase):
             try:
                 result = self.run_qml('import "qml/services"', '''
     property int ticks: 0
+    property int phase: 0
     Timer { interval: 30; running: true; repeat: true; onTriggered: {
         const engine=ActivityState.lyrics;
         if (++fixture.ticks>160) { fixture.finish({timeout:true}); return; }
-        if(engine.currentLine===2) fixture.finish({title:ActivityState.title,position:ActivityState.player.position});
+        // Start the measured cue crossing after loading; QML startup is not playback latency.
+        if(fixture.phase===0 && engine.lyricData.status==="ready" && ActivityState.player) {
+            ActivityState.player.position=34;fixture.phase=1;
+        } else if(fixture.phase===1 && engine.currentLine===1) fixture.phase=2;
+        else if(fixture.phase===2 && engine.currentLine===2) fixture.finish({title:ActivityState.title,position:ActivityState.player.position});
     } }
 ''', {'LME_SHELL_DEMO':'0','LME_SHELL_BACKEND_DEMO':'1'})
                 self.assertEqual(result.get('title'),'Last line')

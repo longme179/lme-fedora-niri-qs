@@ -143,6 +143,31 @@ void main() {
 
     float t = max(-dist, 0.0);
     float bz = max(bezel, 1.0) * 1.45;
+    // Clear interiors do not sample the lens. Preserve lighting, skip refraction.
+    if (clear >= 1.0 && tintAmount == 0.0 && t > max(bz + 2.0, bz * 1.5)) {
+        vec2 delta = cursor - itemSize * 0.5 - p;
+        float cd = length(delta);
+        float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
+        float near = hover * exp(-cd * cd / (2.0 * reach * reach));
+        vec2 cursorDir = cd > 0.001 ? delta / cd : normalize(lightDir);
+        float facing = -normalize(mix(normalize(lightDir), cursorDir, hover * 0.4)).y;
+        float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
+        float edgeHi = (exp(-t / 1.1) * (0.18 + 0.78 * spec) + exp(-t / 5.0) * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
+        float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
+        float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
+        vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03);
+        if (t < bz * 2.5) {
+            float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
+            float phase = -0.45 * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
+            light += (spectrum(phase) - 0.5) * exp(-fb * fb) * (0.018 + 0.036 * spec) * rim * (1.0 + 3.0 * motion);
+        }
+        float alpha = min(0.65, max(light.r, max(light.g, light.b)));
+        vec3 rgb = min(light, vec3(alpha));
+        float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
+        rgb += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
+        fragColor = vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity;
+        return;
+    }
     vec2 g = vec2(0.0, -1.0);
     if (t < bz + 2.0) {
         const vec2 e = vec2(0.75, 0.0);

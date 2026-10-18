@@ -36,6 +36,7 @@ class JellyGeometryCase(unittest.TestCase):
         function contains(x,y) { return bands.some(b=>x>=b.x && x<b.x+b.width && y>=b.y && y<b.y+b.height); }
         const clipped=Jelly.strips(polygon.map(p=>({x:p.x-10,y:p.y-10})),30,20);
         const outside=Jelly.strips(polygon.map(p=>({x:p.x-100,y:p.y+100})),60,40);
+        const compact=Jelly.strips([{x:0,y:0},{x:500,y:0},{x:500,y:900},{x:0,y:900}],500,900);
         let identity=true;
         for(const p of [{x:0,y:0},{x:400,y:300},{x:131,y:57}]) for(const horizontal of [true,false]) {
             const q=Jelly.warp(p,400,300,0,horizontal,false);
@@ -43,10 +44,11 @@ class JellyGeometryCase(unittest.TestCase):
         }
         fixture.finish({cutout:!contains(30,10),filled:contains(10,10) && contains(50,10) && contains(30,30),
             clipped:clipped.length>0 && clipped.every(b=>b.x>=0 && b.y>=0 && b.x+b.width<=30 && b.y+b.height<=20),
-            outside:outside.length===0,empty:Jelly.strips([],60,40).length===0,identity:identity});
+            outside:outside.length===0,empty:Jelly.strips([],60,40).length===0,identity:identity,
+            compact:compact.length===1 && compact[0].height===900});
     }}
 ''')
-        self.assertEqual(result,{key:True for key in ('cutout','filled','clipped','outside','empty','identity')})
+        self.assertEqual(result,{key:True for key in ('cutout','filled','clipped','outside','empty','identity','compact')})
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_MOTION_UI')=='1','private Wayland motion checks')
@@ -132,7 +134,7 @@ class JellyQmlCase(unittest.TestCase):
     Process { id:shot;command:["grim","SHOTS"+"/"+fixture.index+".png"]
         onExited:code=> {
             if(code!==0) { fixture.finish({captureFailed:code});return; }
-            fixture.masks.push(region.regions.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height})));
+            fixture.masks.push(region.regions.filter(r=>r.width>0 && r.height>0).map(r=>({x:r.x,y:r.y,width:r.width,height:r.height})));
             fixture.index++;fixture.age=0;
             const fluid=fixture.effect();
             if(fixture.index===1) fluid.velocity=-9000;
@@ -162,7 +164,7 @@ class JellyQmlCase(unittest.TestCase):
             self.assertTrue(result['masks'].pop()['released'])
             for index,bands in enumerate(result['masks']):
                 with self.subTest(index=index):
-                    self.assertGreater(len(bands),80)
+                    self.assertGreater(len(bands),8)
                     image=Image.open(Path(directory)/f'{index}.png').convert('RGB')
                     red=image.getchannel('R').point(lambda v:255 if v>200 else 0)
                     green=image.getchannel('G').point(lambda v:255 if v<90 else 0)

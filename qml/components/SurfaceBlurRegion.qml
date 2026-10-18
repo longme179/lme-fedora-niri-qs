@@ -66,9 +66,15 @@ Region {
             return owner.mapToItem(hostWindow.contentItem, point.x, point.y);
         }), hostWindow.width, hostWindow.height);
     }
+    property int bandCapacity: 0
+    onStripsChanged: {
+        if (!active || !warps.length) bandCapacity = 0;
+        else if (strips.length > bandCapacity) bandCapacity = Math.ceil(strips.length / 32) * 32;
+    }
     readonly property Instantiator bands: Instantiator {
         active: root.active && root.warps.length > 0
-        model: root.strips.length
+        // Numeric model changes rebuild delegates; reuse a bounded pool during flight.
+        model: root.bandCapacity
         delegate: Region {
             required property int index
             readonly property var band: root.strips[index]

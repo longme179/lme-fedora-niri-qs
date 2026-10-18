@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Refine Liquid pointer lighting with localized rim highlights, a soft opposite reflection and velocity-preserving tracking. Fade from the last pointer position and stop its motion drivers when hidden, resting or motion is disabled.
 - Recover ZIP and uncommitted Git installations through an explicit Git-updates button. Keep the original source as a backup, preserve startup paths and preferences, and clear stale HEAD errors.
 - Add independent Liquid glass tint, brightness, opacity, lens blur and rim feather/smearing/width/highlight controls. Preserve the default rendering, include them in shared presets, and expose an opt-in niri blur snippet with compositor-wide scope.
 

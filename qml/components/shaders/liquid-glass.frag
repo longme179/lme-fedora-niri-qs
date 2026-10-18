@@ -140,6 +140,23 @@ vec4 dimGlass(vec4 color, float coverage) {
     return vec4(color.rgb * brightness, color.a + dim * max(0.0, coverage * qt_Opacity - color.a));
 }
 
+// Local rim glint and a softer opposite reflection share the existing lighting bands.
+vec4 reflectPointer(vec4 color, vec2 p, float hair, float wide, float coverage) {
+    if (hover <= 0.0 || rim <= 0.0) return color;
+    float reach = clamp(min(itemSize.x, itemSize.y) * 0.55, 28.0, 150.0);
+    vec2 axes = vec2(reach * 1.2, reach);
+    vec2 center = cursor - itemSize * 0.5;
+    vec2 delta = (p - center) / axes;
+    vec2 opposite = (p + center * 0.75) / axes;
+    float spot = 1.0 / (1.0 + 2.0 * dot(delta, delta));
+    float echo = 1.0 / (1.0 + 2.0 * dot(opposite, opposite));
+    spot *= spot; echo *= echo;
+    float edge = (0.38 * spot + 0.06 * echo) * hair + 0.065 * spot * wide;
+    float shine = clamp(hover * rim * (edge + 0.012 * spot), 0.0, 0.9);
+    float cap = coverage * qt_Opacity;
+    return vec4(color.rgb * (1.0 - shine) + vec3(shine * cap), color.a + shine * max(0.0, cap - color.a));
+}
+
 void main() {
     vec2 p = qt_TexCoord0 * itemSize - itemSize * 0.5;
     float dist = sdf(p);
@@ -165,7 +182,9 @@ void main() {
         vec2 cursorDir = cd > 0.001 ? delta / cd : normalize(lightDir);
         float facing = -normalize(mix(normalize(lightDir), cursorDir, hover * 0.4)).y;
         float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-        float edgeHi = (exp(-t / (1.1 * feather)) * (0.18 + 0.78 * spec) + exp(-t / (5.0 * feather)) * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
+        float hair = exp(-t / (1.1 * feather));
+        float wide = exp(-t / (5.0 * feather));
+        float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
         float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
         float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
         vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03);
@@ -178,7 +197,8 @@ void main() {
         vec3 rgb = min(light, vec3(alpha));
         float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
         rgb += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
-        fragColor = dimGlass(vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity, coverage);
+        vec4 base = vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity;
+        fragColor = dimGlass(reflectPointer(base, p, hair, wide, coverage), coverage);
         return;
     }
     vec2 g = vec2(0.0, -1.0);
@@ -287,5 +307,6 @@ void main() {
 
     float a = coverage * qt_Opacity;
     float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
-    fragColor = dimGlass(vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity), coverage);
+    vec4 base = vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity);
+    fragColor = dimGlass(reflectPointer(base, p, hair, wide, coverage), coverage);
 }

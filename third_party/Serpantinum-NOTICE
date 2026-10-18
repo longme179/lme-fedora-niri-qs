@@ -17,6 +17,10 @@ The clear-interior fast path preserves lighting while skipping unused lens math.
 Separate LME glass controls adjust rim feather/width, refraction spread, lens
 frost and highlights. A premultiplied black veil dims glass in the existing pass;
 their neutral defaults retain the previous appearance and rendering lifecycle.
+LME's pointer-local rim/soft opposite reflection uses the existing light bands,
+with premultiplied source-over coverage to retain lens color and group opacity.
+Pointer coordinates follow LME's existing spring engine and fade at the last
+position; no extra texture fetches, render layers or idle motion are added.
 The real application backdrop remains compositor-owned; no live desktop capture
 is performed. The surrounding lifecycle/neutral-theme integration is LME code.
 

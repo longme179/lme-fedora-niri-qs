@@ -1,5 +1,48 @@
 # Validation and platform limits
 
+## Pointer-responsive Liquid reflections — 2026-10-18
+
+Glass now adds a localized rim glint and a softer opposite reflection in its
+existing fragment pass. The white reflection uses premultiplied coverage so it
+does not flatten lens colors or break group-opacity fades. No texture samples,
+render layers, blur passes or settings keys were added. The resting material
+strips in the panel/pill/button comparison remain pixel-identical.
+
+Pointer coordinates use the existing spring engine with critical damping and
+retain velocity on retarget. Initial entry starts at the actual pointer; exit
+and disable-after-click keep the last point through the fade. Coordinate mapping
+shares the material's existing render callback, including when its parent moves
+under a stationary pointer. Springs stop at rest, when hidden or with reduced
+motion. Spring-off tracking remains immediate; the software fallback stays
+static. Real pointer-event, input, idle-driver and screenshot checks cover these
+cases, rounded clipping, text contrast and half-opacity compositing.
+
+A native niri 26.04/Mesa software-OpenGL replay used external Wayland pointer
+motion during repeated popup entry/exit. In baseline → changed → baseline order,
+Quickshell used 12.32 → 11.15 → 12.52 all-thread CPU seconds and niri used
+24.64 → 24.95 → 26.87, over 18.83 → 17.48 → 17.66 seconds of wall time.
+Renderer-call CPU medians stayed around 1 ms and peak native mask delegates
+stayed at 160. These observations show no consistent increase beyond run
+variation; they are not hardware GPU timings or presentation FPS. Animation
+driver intervals vary considerably even between unchanged baselines and are
+not used as an FPS measurement.
+
+The menu-reversal fixture now reopens on a closing frame rather than assuming
+IPC plus an external sleep completes before exit. Its position/mount assertions
+are retained and now also require an intermediate progress value. The Settings
+gear fixture allows its deliberately slow entrance to settle before clicking
+fixed destination coordinates. No production popup or Settings routing changed.
+
+The final expanded private Wayland `scripts/check.sh` run completed **354 tests:
+353 passed, one optional real Matugen check skipped**. Bash syntax and the demo
+snapshot passed. The 22 focused Liquid, hover, popup and Settings launch checks
+also passed. `qmllint` checked **133 QML files: zero errors, 67 existing
+type-metadata warnings**. The new disable-after-click regression failed before
+the final fade guard and passes with it.
+
+Hardware Radeon/RTX frame presentation and multi-output behavior remain
+unmeasured. No packages, drivers or installed desktop configuration changed.
+
 ## Separate Liquid material controls — 2026-10-18
 
 `config/liquid-glass.json` supplies the control labels, bounds and defaults to

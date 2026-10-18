@@ -326,6 +326,13 @@ Resetting glass preserves all Material preferences and does not change a saved
 niri snippet. Brightness dims backgrounds in the existing shader pass; feather
 controls rim softness, while smearing scales its refraction. No new texture,
 render layer or animation loop is added for these controls.
+Interactive lighting uses localized rim highlights and a faint opposite
+reflection. The existing spring engine follows the pointer, keeps its velocity
+when direction changes and retains the last point while fading out. The two
+coordinate springs stop when settled or hidden; pointer mapping shares the
+material's existing per-frame callback. Disabling Animations removes interactive
+lighting; disabling Spring motion keeps immediate pointer tracking. Software
+rendering keeps the existing static fallback. No settings migration is needed.
 
 True background blur belongs to niri. Its protocol exposes a region rather than
 per-window blur strength. The separate passes/spread controls write

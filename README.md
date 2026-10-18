@@ -209,6 +209,8 @@ In **Appearance → Liquid glass material**, choose a tint with the color picker
 or a hex code, then adjust brightness, tint opacity, lens blur, feather, smearing
 and rim width/highlights. These settings stay separate from your Smoked theme.
 **Reset glass** restores the original material.
+Highlights follow the pointer with a short spring response and fade from its
+last position. Rim strength, feather and brightness also shape these reflections.
 
 To change the real backdrop blur, adjust its passes/spread and click **Save niri
 blur snippet**. Include the generated file once, after `popup-blur.kdl`:

@@ -1,5 +1,50 @@
 # Validation and platform limits
 
+## Deforming local blur and darker Liquid surfaces — 2026-10-18
+
+Local blur now follows Jelly-v2's rounded, bent and tapered silhouette instead
+of sliding as an undeformed rectangle. Scan conversion uses the same 16×16
+triangle mesh as the vertex shader. Inset two-logical-pixel bands exist only
+while GPU deformation is active; the mask returns to one rounded region at
+rest and is released on hide, unload or leaving Liquid. Software rendering
+continues to use the existing scale transform without applying the warp twice.
+
+A native pixel regression compares the region against the rendered shader on
+both axes, positive/negative strain, bounded deformation and asymmetric
+corners. It requires over 97% coverage and rejects protrusion beyond a two-pixel
+antialias allowance. Geometry checks cover concave cutouts, viewport clipping,
+empty/off-screen shapes and the identity transform. Lifecycle regressions also
+cover closing/reopening, switching presets and reduced motion in software and
+OpenGL.
+
+Actual niri 26.04 blur was checked separately at scales 1 and 2 on a fine-grid
+application: high-frequency edge energy within all eight deformed masks fell
+to 9–12% of baseline, while the area outside the silhouette retained 100%.
+The application and actual background layer used deliberately different images.
+Settings and notification toasts were then tested with xray enabled, the current
+non-xray rules, and after reopening. Xray reproduced wallpaper bleed-through;
+`xray false` restored blur of the application. The include must follow generic
+background-effect rules because later matches win. The Wayland protocol does
+not let the client override this compositor setting.
+
+Liquid's shared outer tint is darker, including bars and toasts; inner cards,
+refraction and white typography remain translucent. A real Settings window over
+a white application produced an empty background gutter around RGB 105/112/120,
+with about 5.0:1 contrast to white text at that sampled location. This is a
+specific pixel check, not a contrast guarantee for every control or wallpaper.
+Saved Smoked colors and opacity are unchanged.
+
+`scripts/check.sh` completed **328 tests: 327 passed, one optional real Matugen
+skip**, with the expanded private Wayland suites enabled. Bash syntax and the
+demo backend snapshot passed. `qmllint` checked **131 QML files: zero errors,
+61 warnings** (unchanged from the preceding revision). The niri fragment also
+passes `niri validate`.
+
+The compositor checks use nested Wayland and Mesa software OpenGL. Radeon/RTX
+frame pacing, power use and long-session performance remain unmeasured. The
+wallpaper-only rim and niri's experimental non-xray limitations still apply;
+see [Surface style](CONFIGURATION.md#surface-style).
+
 ## Local frosted Liquid surfaces and white text — 2026-10-18
 
 Liquid now blurs the area beneath each rounded panel or popup, instead of
@@ -34,8 +79,8 @@ inspected. The floating Settings window was also inspected, including the rule
 that prevents niri's focus-ring backing from filling its transparent body.
 The updated niri fragment passes `niri validate`.
 
-Radeon/RTX frame pacing and power use remain unmeasured. The wallpaper-only rim,
-in-window menu and nonlinear Jelly mask limits are documented in
+Radeon/RTX frame pacing and power use remain unmeasured. The wallpaper-only rim
+and in-window menu limits are documented in
 [Surface style](CONFIGURATION.md#surface-style).
 
 ## Black Liquid text and paused popup blur — 2026-10-18

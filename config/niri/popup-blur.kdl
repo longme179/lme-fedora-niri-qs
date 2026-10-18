@@ -1,6 +1,8 @@
 // Optional: niri >= 26.04. Merge/include only on a supported niri build.
 // The shell requests blur for glass surfaces and optional full-screen popup overlays.
 // xray=false includes application windows in the blur, rather than wallpaper only.
+// Include this file AFTER generic background-effect rules. Later matching
+// rules win; older snippets may cover the bar/overlay but omit Settings/toasts.
 // Non-xray effects are experimental in niri and may disappear during
 // window open/close animations or while dragging tiled windows.
 layer-rule {

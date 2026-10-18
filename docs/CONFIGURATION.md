@@ -315,6 +315,9 @@ Active tiles keep a faint status tint and selected tabs retain a translucent
 highlight. The optical layer has a clear center and a narrow refractive rim.
 Display labels, headings, bar text, button captions and menu text turn white
 without an outline in Liquid mode; Smoked restores their original colors.
+A neutral dark outer tint keeps white text readable over bright applications;
+inner cards remain translucent. This tint applies only in Liquid and does not
+change the saved Smoked palette or opacity.
 Editable fields retain native Qt input rendering, selection and IME behavior,
 with a dark translucent fill behind white input text.
 
@@ -328,11 +331,15 @@ closing or hiding a surface releases its region. The surrounding desktop stays
 sharp. The saved `popupBlur` preference controls full-screen blur in Smoked mode
 and remains unchanged in Liquid. Popup dimming and motion remain active; bar
 blur keeps its separate switch.
-During Jelly-v2's nonlinear shader deformation, the native blur mask uses the
-surface's rounded item bounds; it does not reproduce the warped mesh exactly.
+During Jelly-v2 motion, the native blur region follows the shader's bent and
+tapered silhouette using inset two-pixel bands. It returns to a single rounded
+region at rest; no frame timer, desktop capture or extra shader is added.
 
-Include the updated `config/niri/popup-blur.kdl`. If you copied its rules manually,
+Include the updated `config/niri/popup-blur.kdl` **after generic background-effect
+rules**: later matching niri rules take precedence. If you copied its rules manually,
 merge the `notifications`/`osd` namespaces and Settings window rule as well.
+Niri defaults to xray blur if no matching rule explicitly sets `xray false`;
+the Wayland blur protocol cannot override that compositor policy.
 The Settings rule also disables niri's solid focus-ring backing inside the
 transparent window, leaving the frame itself available.
 No package is added. Without compositor support, tint and edge highlights remain

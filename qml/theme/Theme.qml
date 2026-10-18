@@ -7,18 +7,19 @@ import "../services"
 QtObject {
     id: root
     readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
+    readonly property color glassBase: "#f0081420"
     readonly property var glassColors: ({
-        background:"#151b23", panel:"#4d122230", surface:"#0cffffff", text:"#ffffff", muted:"#e5ebf5", border:"#66ffffff",
+        background:"#151b23", panel:glassBase, surface:"#0cffffff", text:"#ffffff", muted:"#e5ebf5", border:"#66ffffff",
         purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
         primaryContainer:"#20ffffff", secondaryContainer:"#08ffffff", tertiaryContainer:"#08ffffff",
         surfaceContainer:"#0cffffff", surfaceContainerHigh:"#0cffffff", onPrimary:"#151b23",
         buttonFill:"#10ffffff", buttonHover:"#20ffffff", buttonPressed:"#30ffffff", buttonSelected:"#38ffffff",
         buttonText:"#ffffff", iconColor:"#ffffff", iconHover:"#33ffffff",
         fieldFill:"#52101c28", fieldText:"#ffffff", switchTrack:"#d7e7f5", switchThumb:"#273442",
-        sliderTrack:"#18ffffff", sliderFill:"#d7e7f5", barFill:"#08ffffff", barBorder:"#55ffffff",
+        sliderTrack:"#18ffffff", sliderFill:"#d7e7f5", barFill:glassBase, barBorder:"#55ffffff",
         barText:"#ffffff", barMuted:"#e5ebf5", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#ffffff",
-        panelFill:"#4d122230", cardFill:"#0cffffff", controlFill:"#4d122230", launcherFill:"#4d122230", islandFill:"#4d122230", settingsFill:"#4d122230",
-        notificationFill:"#4d122230", notificationTitle:"#ffffff", notificationBody:"#e5ebf5", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
+        panelFill:glassBase, cardFill:"#0cffffff", controlFill:glassBase, launcherFill:glassBase, islandFill:glassBase, settingsFill:glassBase,
+        notificationFill:glassBase, notificationTitle:"#ffffff", notificationBody:"#e5ebf5", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
     })
     property var custom: ({})
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})
@@ -104,7 +105,7 @@ QtObject {
     readonly property int notificationMargin: ShellState.preferences.notificationMargin ?? 14
     readonly property int notificationRadius: ShellState.preferences.notificationRadius ?? 28
     readonly property int notificationPadding: ShellState.preferences.notificationPadding ?? 16
-    readonly property real notificationOpacity: liquidGlass ? .58 : ShellState.preferences.notificationOpacity ?? .90
+    readonly property real notificationOpacity: liquidGlass ? panelOpacity : ShellState.preferences.notificationOpacity ?? .90
     readonly property int notificationBorderWidth: liquidGlass ? 1 : ShellState.preferences.notificationBorderWidth ?? 1
     readonly property int notificationTitleSize: ShellState.preferences.notificationTitleSize ?? 14
     readonly property int notificationBodySize: ShellState.preferences.notificationBodySize ?? 13
@@ -115,7 +116,7 @@ QtObject {
     readonly property int activityPopupMaxHeight: ShellState.preferences.activityPopupMaxHeight ?? 0
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
-    readonly property real panelOpacity: liquidGlass ? .55 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
+    readonly property real panelOpacity: liquidGlass ? .65 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42

@@ -1,5 +1,29 @@
 # Troubleshooting
 
+## Liquid glass shows wallpaper through an application
+
+Niri's default blur uses xray: it samples the wallpaper even when an application
+is behind the glass. On niri 26.04+, include the current
+`config/niri/popup-blur.kdl` **after other background-effect rules**, then run
+`niri validate`. Replace `lme-shell` with your installed config name if different:
+
+```kdl
+include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
+```
+
+If you merged an earlier snippet manually, keep `xray false` in both its layer
+rule (including `lme-notifications`) and window rule (`lme-shell-settings`).
+Changing the shell's display name does not change these identifiers. Later
+matching rules can override this setting. The shell requests a blur region;
+only niri decides whether that region samples applications or wallpaper.
+No wallpaper fallback is drawn across panel bodies.
+
+Test with Settings over a window whose colors differ from your wallpaper, then
+close/reopen it and trigger a notification. The glass should soften the window
+beneath it; the area outside the glass should remain sharp. Non-xray blur is
+experimental in niri 26.04 and can temporarily disappear during compositor-owned
+window opening/closing animations.
+
 Start with `./scripts/doctor.sh` inside the target niri session, then run
 `quickshell -c lme-shell` from a terminal to read startup errors.
 

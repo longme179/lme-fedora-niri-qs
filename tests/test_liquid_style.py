@@ -60,7 +60,7 @@ class LiquidThemeCase(unittest.TestCase):
             fixture.checks.collapsed=Theme.barCornerRadius("topLeft",-16,"left")===0 && Theme.barCornerRadius("topRight",0,"left")===0;
             ShellState.run("setting",{key:"surfaceStyle",value:"liquid"}); fixture.phase++;
         } else if(fixture.phase===1 && Theme.liquidGlass) {
-            fixture.checks.neutral=Theme.text.toString()==="#ffffff" && Theme.accent.toString()==="#d7e7f5" && Theme.panelOpacity===.55 && bar.fill===Theme.barFill && bar.border.width===1;
+            fixture.checks.neutral=Theme.text.toString()==="#ffffff" && Theme.accent.toString()==="#d7e7f5" && Theme.panelOpacity===.65 && bar.fill===Theme.barFill && bar.border.width===1;
             fixture.checks.allRoles=Theme.catalog.colors.every(group=>group.tokens.every(key=>!!Theme.glassColors[key]));
             fixture.checks.kept=Theme.fontFamily==="DejaVu Sans" && Theme.bodySize===17 && Theme.motionPreset==="jelly-v2" && bar.topLeftRadius===0 && bar.topRightRadius===16;
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"}); fixture.phase++;
@@ -320,7 +320,7 @@ class LiquidNativeCase(unittest.TestCase):
             const wifi=mouse.findChild(center,"controlTile-wifi"),power=mouse.findChild(center,"controlTile-power");
             if(!wifi || !power || !fixture.plate(wifi) || !fixture.plate(power)) return;
             fixture.checks.frosted=fixture.plate(wifi).color.a<=.12 && fixture.plate(power).color.a<.1
-                && Theme.panelFill.a>.25 && Theme.panelFill.a<.35 && Theme.cardFill.a<.1 && Theme.surface.a<.1;
+                && Theme.panelFill.a>.9 && Theme.panelFill.a*Theme.panelOpacity<.7 && Theme.cardFill.a<.1 && Theme.surface.a<.1;
             const indicator=mouse.findChild(center,"controlTabIndicator");
             fixture.checks.selection=indicator.fill.a<.3 && indicator.targetItem.palette.buttonText===Theme.text;
             const text=fixture.labels(center);

@@ -175,6 +175,10 @@ For **live blur behind the bar and popups** on niri 26.04+, also add:
 include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
 ```
 
+Place this include **after other background-effect rules**. Use the current file:
+older manually copied snippets may omit Settings and notification toasts. Niri
+defaults to wallpaper-only xray blur when no matching rule disables it.
+
 **Settings → Appearance** has separate **Blur behind the bar** and
 **Blur behind popups** switches, both enabled by default. Then validate:
 

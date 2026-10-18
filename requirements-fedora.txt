@@ -5,6 +5,8 @@
 # locally. Upstream also documents the errornointernet/quickshell COPR fallback.
 
 [required-shell]
+# User-triggered GitHub updates in Settings > About (Git checkout installations).
+git
 quickshell
 python3
 # Gio/GLib for the on-demand BlueZ pairing agent (no GTK UI dependency).

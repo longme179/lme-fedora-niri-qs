@@ -332,8 +332,10 @@ sharp. The saved `popupBlur` preference controls full-screen blur in Smoked mode
 and remains unchanged in Liquid. Popup dimming and motion remain active; bar
 blur keeps its separate switch.
 During Jelly-v2 motion, the native blur region follows the shader's bent and
-tapered silhouette using inset two-pixel bands. It returns to a single rounded
-region at rest; no frame timer, desktop capture or extra shader is added.
+tapered silhouette using inset two-pixel bands. Identical adjoining bands are
+merged and native regions are reused during flight. The mask returns to a single
+rounded region at rest; no frame timer, desktop capture or extra shader is added.
+The clear-interior shader path preserves lighting without unused lens calculations.
 
 Include the updated `config/niri/popup-blur.kdl` **after generic background-effect
 rules**: later matching niri rules take precedence. If you copied its rules manually,
@@ -445,3 +447,25 @@ Jelly-v2 retains the popup's edge-slide spring and drives a separate damped shap
 The Qt software renderer uses area-preserving scale feedback. OSD/toast surfaces normalize the effect into their existing native bounds so their edges stay visible. Off-screen closure does not wait for the shape spring's settling tail. The effect layer is enabled only while deforming, then removed; text returns to its normal render path at rest. The compiled vertex/fragment shaders ship in the repo; rebuilding them is optional with `bash scripts/build-shaders.sh` and Qt's `qsb` tool. No new runtime package is required.
 
 Design/implementation references inspected: [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/) (continuous position/velocity under interruptions), [Qt ShaderEffect](https://doc.qt.io/qt-6/qml-qtquick-shadereffect.html), [Qt Item layers](https://doc.qt.io/qt-6/qml-qtquick-item.html#item-layers) (transient texture cost) and [GridMesh](https://doc.qt.io/qt-6/qml-qtquick-gridmesh.html). The shape model and shaders are original LME code.
+
+## GitHub updates
+
+Open **Settings → About → Shell updates**. **Check for updates** fetches
+`origin/main`; **Update shell** fetches again and applies a fast-forward only.
+The checkout must be on `main` with no tracked/untracked changes. Local commits,
+divergence, a missing remote or a ZIP/source installation produce an actionable
+message. Commit or stash edits yourself before retrying. No reset, automatic
+stash/rebase, branch switch, merge hook or package transaction is run.
+
+The updater uses the configured `origin` (including your own fork), without
+modifying its URL. It runs as your user, with noninteractive Git authentication
+and bounded command timeouts. Its detached worker and lock survive QML reloads;
+closing Settings does not interrupt an update. Atomic status files under
+`$XDG_STATE_HOME/lme-shell/update-*.json` are scoped to the canonical checkout.
+Only an active operation polls local status; idle checks do not contact GitHub.
+A stopped worker is detected and can be retried.
+
+After updating, close Settings and restart the existing shell instance to load
+all backend/shader changes. Use the commands in [Updates](../README.md#updates),
+adjusting the config name if you use `gpt`. New package requirements still need
+`setup.sh`; GUI updates never run sudo/DNF. Demo/preview mode disables updates.

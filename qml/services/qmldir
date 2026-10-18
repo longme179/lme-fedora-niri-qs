@@ -12,3 +12,4 @@ singleton ControlRegistry 1.0 ControlRegistry.qml
 singleton BluetoothState 1.0 BluetoothState.qml
 singleton DesktopState 1.0 DesktopState.qml
 singleton GlassState 1.0 GlassState.qml
+singleton UpdateState 1.0 UpdateState.qml

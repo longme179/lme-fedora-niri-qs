@@ -1,5 +1,52 @@
 # Validation and platform limits
 
+## Popup rendering cost and GitHub updates — 2026-10-18
+
+The local Jelly-v2 mask now scans only polygon edges crossing each row, merges
+identical adjoining bands and reuses native Region delegates during motion.
+The two-pixel inset geometry and rounded mask at rest are unchanged. Liquid's
+clear-interior shader path skips unused lens calculations; the refractive rim
+and lighting remain intact. Old/new shader screenshots across six surface sizes
+and hover/press combinations produced zero pixel difference in that fixture.
+
+A repeated 600 × 900 Control Center open/close benchmark, with Liquid and
+Jelly-v2 at 1920 × 1080, measured transition frame times as follows:
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Median frame time | 69.1 ms | 25.6 ms |
+| 95th percentile | 178.1 ms | 35.8 ms |
+| Maximum native mask delegates | 450 | 192 |
+
+This measures the render pipeline under Mesa software OpenGL on private
+Wayland, not hardware GPU utilization or laptop FPS. Native niri 26.04 checks
+at scales 1 and 2 still pass all eight bent-mask cases: high-frequency edge
+energy inside falls to 9–12% of baseline; outside remains unchanged. Existing
+pixel regressions retain their >97% mask coverage and outside-edge tolerance.
+Hidden/resting surfaces release the pooled delegates.
+
+Eight updater tests use real temporary Git repositories and cover checking,
+fast-forwarding, clean-branch requirements, local edits during fetch, divergence,
+locking, interrupted status, unavailable Git/remotes and credential redaction.
+The native About-page test clicks both buttons and closes its Quickshell process
+during fetch; the detached update completes and the checkout reaches the target
+commit. Preferences are preserved and merge hooks are not executed. A separate
+clean copy also fetched and fast-forwarded successfully from the actual GitHub
+remote. No system packages or installed desktop configuration were changed.
+
+The expanded private Wayland `scripts/check.sh` run completed **342 tests:
+341 passed, one optional real Matugen check skipped**. Bash syntax and the demo
+backend snapshot passed. The double-speed lyrics latency fixture now seeks
+after QML/lyrics readiness, excluding process startup from its measurement;
+the existing 35.0–35.5 second cue-position bound is retained. Production lyrics
+code is unchanged. `qmllint` checked **132 QML files: zero errors, 62 warnings**.
+One additional warning is the existing Quickshell `QProcess::ExitStatus` metadata
+limitation on the new updater handler; its runtime path was exercised.
+
+Radeon/RTX frame pacing, GPU load and power use still need measurement on the
+owner's Fedora session. Git updates apply source only; restart both shell and
+Settings afterward and review new package requirements separately.
+
 ## Combined Fedora installation — 2026-10-18
 
 `scripts/setup.sh` reuses the package, configuration-link, Settings launcher and

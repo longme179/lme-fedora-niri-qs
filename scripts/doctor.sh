@@ -29,6 +29,7 @@ else
     required quickshell quickshell
 fi
 required python3 python3
+optional git 'GitHub updates in Settings > About: git'
 if /usr/bin/python3 -c 'from gi.repository import Gio, GLib' >/dev/null 2>&1; then
     printf 'OK       Gio/GLib for native Bluetooth pairing\n'
 else

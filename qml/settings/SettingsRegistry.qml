@@ -16,7 +16,7 @@ QtObject {
         {key: "idle", title: "Idle and sleep", icon: "battery", description: "Timeouts that follow your charger", keywords: "laptop ac battery display lock suspend sleep swayidle awake"},
         {key: "keybinds", title: "Keyboard shortcuts", icon: "applications", description: "Your niri keybindings at a glance", keywords: "keybind bindings cheatsheet hotkey keys keyboard config includes search"},
         {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "terminal applications preferences recording audio system microphone bluetooth pair pin passkey lyrics lrc lrclib cache follow transcript current line island"},
-        {key: "about", title: "About", icon: "bell", description: "Your desktop and its contributors", keywords: "version license requirements credits inir"}
+        {key: "about", title: "About", icon: "bell", description: "Your desktop and its contributors", keywords: "update upgrade github git commit version license requirements credits inir"}
     ]
     function page(key) { return pages.find(p => p.key === key) || pages[0]; }
     function search(query) {

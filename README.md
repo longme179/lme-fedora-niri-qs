@@ -316,6 +316,14 @@ workspace board. The Settings keybind viewer reads your niri config and includes
 
 ## Updates
 
+In **Settings → About → Shell updates**, click **Check for updates**, then
+**Update shell**. This fetches `origin/main` and fast-forwards a clean `main`
+checkout. Local edits, untracked files and divergent commits block the update;
+they are never reset or stashed automatically. The job continues if Settings
+closes or Quickshell reloads. Restart the shell and Settings after it completes.
+Git is required; ZIP installations use the manual route below. Package changes
+are reviewed separately through `setup.sh`.
+
 For a Git checkout tracking `main`, run from the permanent source directory:
 
 ```bash

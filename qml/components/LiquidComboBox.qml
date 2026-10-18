@@ -119,6 +119,7 @@ ComboBox {
             radius: Theme.smallRadius
             border.width: 1
             border.color: Theme.border
+            GlassMaterial { anchors.fill: parent; radius: parent.radius }
         }
         contentItem: ListView {
             id: menuList

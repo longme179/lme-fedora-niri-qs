@@ -8,7 +8,7 @@ Text {
     Binding {
         target: root
         property: "color"
-        value: "#000000"
+        value: "#ffffff"
         when: Theme.liquidGlass
         restoreMode: Binding.RestoreBindingOrValue
     }

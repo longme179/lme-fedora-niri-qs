@@ -78,7 +78,10 @@ ColumnLayout {
         closePolicy: Popup.CloseOnEscape
         onOpened: password.forceActiveFocus()
         onClosed: { password.text = ""; reveal.checked = false; root.selectedNetwork = null; }
-        background: Rectangle { radius: 24; color: Theme.panel; border.width: 1; border.color: Theme.border }
+        background: Rectangle {
+            radius: 24; color: Theme.panel; border.width: 1; border.color: Theme.border
+            GlassMaterial { anchors.fill: parent; radius: parent.radius }
+        }
         contentItem: ColumnLayout {
             spacing: 16
             LabelText { text: "Connect to " + (root.selectedNetwork ? root.selectedNetwork.ssid : "Wi-Fi"); font.weight: Font.Bold; font.pixelSize: 20; Layout.fillWidth: true; wrapMode: Text.Wrap }

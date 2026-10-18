@@ -310,21 +310,35 @@ reads those same saved values again. There is no backup/restore cycle and no
 bulk preference rewrite. Fonts, sizes, bar placement, module layouts, per-island
 corner geometry, density, features and motion preferences continue to apply.
 
-Liquid surfaces use near-clear fills rather than opaque gray Material plates.
+Liquid surfaces use translucent cool tints rather than opaque gray Material plates.
 Active tiles keep a faint status tint and selected tabs retain a translucent
 highlight. The optical layer has a clear center and a narrow refractive rim.
-Display labels, headings, bar text, button captions and menu text turn black
+Display labels, headings, bar text, button captions and menu text turn white
 without an outline in Liquid mode; Smoked restores their original colors.
 Editable fields retain native Qt input rendering, selection and IME behavior,
-with a light translucent fill behind black input text.
+with a dark translucent fill behind white input text.
 
 The material adds rounded refraction, dispersion and pointer highlights to
 shared panel, card and button backgrounds; text and input remain separate.
-It composes with the existing popup spring/Jelly-v2 effect. Full-screen blur
-behind panels and authentication popups is disabled while Liquid is active;
-the saved `popupBlur` preference applies again in Smoked mode. Popup dimming
-and motion remain active. Local bar blur is independent and still requires
-`config/niri/popup-blur.kdl` on niri 26.04+.
+It composes with the existing popup spring/Jelly-v2 effect. On niri 26.04+,
+Liquid automatically requests local blur beneath rounded panels and popups,
+including authentication, notifications, OSD and Settings. Regions follow
+ancestor transforms, resize and visibility changes without a polling timer;
+closing or hiding a surface releases its region. The surrounding desktop stays
+sharp. The saved `popupBlur` preference controls full-screen blur in Smoked mode
+and remains unchanged in Liquid. Popup dimming and motion remain active; bar
+blur keeps its separate switch.
+During Jelly-v2's nonlinear shader deformation, the native blur mask uses the
+surface's rounded item bounds; it does not reproduce the warped mesh exactly.
+
+Include the updated `config/niri/popup-blur.kdl`. If you copied its rules manually,
+merge the `notifications`/`osd` namespaces and Settings window rule as well.
+The Settings rule also disables niri's solid focus-ring backing inside the
+transparent window, leaving the frame itself available.
+No package is added. Without compositor support, tint and edge highlights remain
+available, but they do not blur applications. In-window menus use translucent
+plates for separation; compositor blur samples surfaces behind the shell window,
+not widgets drawn within that same window.
 This is a hybrid effect: a bounded wallpaper image supplies the thin refractive
 rim, **not live application refraction**. No desktop screenshots or capture
 permissions are used. Wallpaper crossfades and moved floating Settings windows

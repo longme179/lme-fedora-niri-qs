@@ -8,17 +8,17 @@ QtObject {
     id: root
     readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
     readonly property var glassColors: ({
-        background:"#151b23", panel:"#08141b23", surface:"#04ffffff", text:"#000000", muted:"#000000", border:"#55ffffff",
+        background:"#151b23", panel:"#4d122230", surface:"#0cffffff", text:"#ffffff", muted:"#e5ebf5", border:"#66ffffff",
         purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
         primaryContainer:"#20ffffff", secondaryContainer:"#08ffffff", tertiaryContainer:"#08ffffff",
-        surfaceContainer:"#06ffffff", surfaceContainerHigh:"#06ffffff", onPrimary:"#000000",
-        buttonFill:"#04ffffff", buttonHover:"#10ffffff", buttonPressed:"#18ffffff", buttonSelected:"#28ffffff",
-        buttonText:"#000000", iconColor:"#f5f8fc", iconHover:"#33ffffff",
-        fieldFill:"#a6ffffff", fieldText:"#000000", switchTrack:"#d7e7f5", switchThumb:"#273442",
+        surfaceContainer:"#0cffffff", surfaceContainerHigh:"#0cffffff", onPrimary:"#151b23",
+        buttonFill:"#10ffffff", buttonHover:"#20ffffff", buttonPressed:"#30ffffff", buttonSelected:"#38ffffff",
+        buttonText:"#ffffff", iconColor:"#ffffff", iconHover:"#33ffffff",
+        fieldFill:"#52101c28", fieldText:"#ffffff", switchTrack:"#d7e7f5", switchThumb:"#273442",
         sliderTrack:"#18ffffff", sliderFill:"#d7e7f5", barFill:"#08ffffff", barBorder:"#55ffffff",
-        barText:"#000000", barMuted:"#000000", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#000000",
-        panelFill:"#08ffffff", cardFill:"#06ffffff", controlFill:"#08ffffff", launcherFill:"#08ffffff", islandFill:"#08ffffff", settingsFill:"#08ffffff",
-        notificationFill:"#08ffffff", notificationTitle:"#000000", notificationBody:"#000000", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
+        barText:"#ffffff", barMuted:"#e5ebf5", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#ffffff",
+        panelFill:"#4d122230", cardFill:"#0cffffff", controlFill:"#4d122230", launcherFill:"#4d122230", islandFill:"#4d122230", settingsFill:"#4d122230",
+        notificationFill:"#4d122230", notificationTitle:"#ffffff", notificationBody:"#e5ebf5", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
     })
     property var custom: ({})
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})

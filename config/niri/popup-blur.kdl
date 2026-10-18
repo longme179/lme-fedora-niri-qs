@@ -1,10 +1,18 @@
 // Optional: niri >= 26.04. Merge/include only on a supported niri build.
-// The shell requests blur for visible popup overlays and bar surfaces.
+// The shell requests blur for glass surfaces and optional full-screen popup overlays.
 // xray=false includes application windows in the blur, rather than wallpaper only.
 // Non-xray effects are experimental in niri and may disappear during
 // window open/close animations or while dragging tiled windows.
 layer-rule {
-    match namespace="^lme-(bar|overlay|authentication|desktop)$"
+    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"
+    background-effect {
+        xray false
+    }
+}
+window-rule {
+    match app-id="^lme-shell-settings$"
+    // Keep niri's focus-ring backing from filling the transparent window.
+    draw-border-with-background false
     background-effect {
         xray false
     }

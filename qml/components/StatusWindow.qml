@@ -20,6 +20,8 @@ PanelWindow {
     color: "transparent"; exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay; WlrLayershell.namespace: "lme-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+    SurfaceBlurRegion { id: glassBlur; surface: transition.item as Item }
     mask: Region { item: root.shown ? root.contentItem : null }
     function retain() { if (ShellState.statusMessage) { message = ShellState.statusMessage; error = ShellState.statusError; } }
     Component.onCompleted: retain()

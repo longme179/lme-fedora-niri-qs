@@ -15,8 +15,9 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "lme-authentication"
-    BackgroundEffect.blurRegion: visible && ShellState.popupBlurEnabled ? authBlurRegion : null
+    BackgroundEffect.blurRegion: !visible ? null : ShellState.liquidBlurEnabled ? glassBlur : ShellState.popupBlurEnabled ? authBlurRegion : null
     Region { id: authBlurRegion; item: root.contentItem }
+    SurfaceBlurRegion { id: glassBlur; surface: dialog.contentDialog }
     mask: Region { item: root.pending ? root.contentItem : null }
     WlrLayershell.keyboardFocus: pending ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     onPendingChanged: {

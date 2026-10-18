@@ -6,6 +6,12 @@ import "../components"
 QtObject {
     id: root
     property var backdrops: []
+    property var popupRegions: []
+    function watchPopup(region, enabled) {
+        if (enabled && !popupRegions.includes(region)) popupRegions = [...popupRegions, region];
+        else if (!enabled && popupRegions.includes(region)) popupRegions = popupRegions.filter(item => item !== region);
+    }
+    function popupsFor(window) { return popupRegions.filter(region => region.hostWindow === window); }
     property Component factory: Component { GlassBackdrop {} }
     function acquire(window) {
         if (!window || !window.contentItem) return null;

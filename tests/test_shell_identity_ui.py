@@ -20,6 +20,7 @@ class ShellIdentityCase(unittest.TestCase):
             shutil.copytree(repo/'scripts', root/'scripts')
             for name in ('qml', 'config', 'assets'): (root/name).symlink_to(repo/name, target_is_directory=True)
             source = (repo/'qml/settings/SettingsApplication.qml').read_text().replace('"../services"', '"qml/services"')
+            source = source.replace('"../components"', '"qml/components"')
             source = 'import "qml/settings"\n' + source
             source = source.replace('    id: root\n', '''    id: root
     Component.onCompleted: Quickshell.watchFiles = false

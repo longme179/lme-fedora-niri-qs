@@ -2,6 +2,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import Quickshell
 import "../theme"
 
 Popup {
@@ -15,6 +16,7 @@ Popup {
     property real travelY: 0
     readonly property real progress: Theme.springMotion ? spring.value : curveProgress
     readonly property Item surface: background ? background.parent : contentItem ? contentItem.parent : null
+    readonly property Region glassBlurRegion: SurfaceBlurRegion { surface: root.positioned ? root.background : null; popup: true }
     opacity: positioned ? 1 : 0
     popupType: Popup.Item
     MotionValue {

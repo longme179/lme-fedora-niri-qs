@@ -24,6 +24,8 @@ PanelWindow {
     color: "transparent"; exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay; WlrLayershell.namespace: "lme-osd"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+    SurfaceBlurRegion { id: glassBlur; surface: transition.item as Item }
     Timer { id: timeout; interval: 1600; onTriggered: root.open=false }
     Item {
         width: root.implicitWidth; height: root.implicitHeight

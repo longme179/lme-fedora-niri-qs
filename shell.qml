@@ -86,8 +86,11 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
-        BackgroundEffect.blurRegion: visible && ShellState.popupBlurEnabled ? popupBlurRegion : null
+        BackgroundEffect.blurRegion: !visible ? null : ShellState.liquidBlurEnabled ? glassPopupBlur : ShellState.popupBlurEnabled ? popupBlurRegion : null
         Region { id: popupBlurRegion; item: overlay.contentItem }
+        Region { id: glassPopupBlur; regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }
+        SurfaceBlurRegion { id: islandBlur; surface: activityIsland.panel }
+        SurfaceBlurRegion { id: panelBlur; surface: panelLoader.item as Item }
         // Closing visuals must not block another bar click or the application beneath.
         mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
         WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

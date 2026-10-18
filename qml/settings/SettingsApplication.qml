@@ -1,6 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
+import "../components"
 import "../services"
 
 ShellRoot {
@@ -20,6 +22,9 @@ ShellRoot {
         implicitWidth: 1100; implicitHeight: 780
         minimumSize: Qt.size(800, 600)
         color: "transparent"
+        BackgroundEffect.blurRegion: window.visible && ShellState.liquidBlurEnabled ? glassBlur : null
+        Region { id: glassBlur; regions: [bodyBlur, ...GlassState.popupsFor(window)] }
+        SurfaceBlurRegion { id: bodyBlur; surface: view; radius: 28 }
         // Keep native window-manager close consistent with Escape and the close button.
         onClosed: Qt.quit()
         SettingsView { id: view; anchors.fill: parent; page: SettingsRegistry.page(Quickshell.env("LME_SETTINGS_PAGE") || "appearance").key; onCloseRequested: Qt.quit() }

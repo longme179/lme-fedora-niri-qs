@@ -26,6 +26,8 @@ PanelWindow {
     color: "transparent"; exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay; WlrLayershell.namespace: "lme-notifications"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+    Region { id: glassBlur; regions: GlassState.popupsFor(root) }
     mask: Region { item: root.accepting && Notifications.popups.length ? root.contentItem : null }
     ListModel { id: toastModel }
     function remove(id) {
@@ -72,6 +74,7 @@ PanelWindow {
                 required property bool present
                 readonly property var entry: root.entries[identifier] || ({appName: "", summary: "", body: "", actions: []})
                 readonly property Item panel: item as Item
+                readonly property Region glassBlurRegion: SurfaceBlurRegion { surface: toast.panel; popup: true }
                 width: toastColumn.width
                 height: panel ? panel.implicitHeight : 0
                 // Shared height limits must take effect together when another card arrives.

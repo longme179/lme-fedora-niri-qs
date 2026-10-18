@@ -93,7 +93,7 @@ Item {
             bottomRightRadius: root.bottomRightRadius < 0 ? root.radius : root.bottomRightRadius
             cursorPos: pointer.hovered ? pointer.point.position : Qt.point(width / 2, height / 2)
             hover: root.hoverAmount; energy: root.pressAmount
-            tintAmount: 0; clear: 1; frost: .35; dispersion: .025; rim: .3
+            tintAmount: 0; clear: 1; frost: .9; dispersion: .025; rim: .38
             bezel: Math.max(2, Math.min(8, Math.min(width, height) * .14))
         }
     }

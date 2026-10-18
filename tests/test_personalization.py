@@ -180,8 +180,8 @@ ShellRoot {
         repo = Path(__file__).resolve().parents[1]; entry = repo/'upgrades-demo.qml'
         with tempfile.TemporaryDirectory() as config, tempfile.TemporaryFile(mode='w+') as log:
             env = {**os.environ, 'LME_TEST_UPGRADES': '1', 'XDG_CONFIG_HOME': config}
-            # Keep the seat keyboard present; device removal clears Qt focus in headless Sway.
-            keyboard=subprocess.Popen(['wtype','-s','60000'],env=env)
+            # Seed a valid keymap; an empty virtual keyboard clears Qt focus when another device exits.
+            keyboard=subprocess.Popen(['wtype','-k','F24','-s','60000'],env=env)
             time.sleep(.15)
             process = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
             def ipc(method, *args):

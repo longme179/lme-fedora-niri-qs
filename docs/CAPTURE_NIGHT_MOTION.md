@@ -139,8 +139,10 @@ keeps applications and the bar visible in the blurred background, with the
 popup sharp. Merge the global blur block if one already exists. Native non-xray
 blur remains an experimental compositor feature.
 
-Liquid glass pauses this full-screen blur; the saved preference applies again
-when switching back to Smoked. Local bar blur remains independent.
+Liquid glass replaces this full-screen blur with local regions beneath rounded
+panels and popups; the saved preference applies again when switching back to
+Smoked. Local bar blur remains independent. Merge the updated blur fragment if
+you previously copied its layer rules manually.
 
 
 Recording audio choices now persist between popup openings and shell restarts.

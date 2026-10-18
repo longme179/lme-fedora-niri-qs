@@ -1,5 +1,43 @@
 # Validation and platform limits
 
+## Local frosted Liquid surfaces and white text — 2026-10-18
+
+Liquid now blurs the area beneath each rounded panel or popup, instead of
+leaving its body clear or blurring the entire desktop. White text, cool
+translucent tints and softer refractive rims replace the black typography below.
+Saved palettes, fonts, layout and the Smoked full-screen blur preference remain
+intact. No feature from the supplied visual references was added.
+
+`scripts/check.sh` completed **326 tests: 325 passed, one optional Matugen skip**
+with the expanded private Wayland suites below. Bash syntax and the demo
+snapshot passed. The final menu-background adjustment was followed by **17
+passing UI regressions**, covering Liquid, popup motion, Settings font/color
+input, launch/reuse and Wi-Fi/notification flows. Lint covers **131 QML files:
+zero errors, 61 warnings**. The four additional warnings concern the same
+incomplete Quickshell `BackgroundEffect.blurRegion` type metadata as existing
+attachments; their runtime paths were exercised.
+
+New checks cover local region selection in the real shell, rounded corners,
+ancestor translation/scale, reparenting, hidden/transparent surfaces, menu
+registration and teardown, switching back to Smoked, native white-text pixels
+and retained input/color bindings. The relocated Settings fixture includes the
+new component import. Its keyboard test now seeds a valid persistent keymap,
+preventing Qt focus loss when transient virtual keyboards disconnect.
+
+Actual compositor blur was rendered on **niri 26.04**, using a signature-verified
+Fedora 42 package under nested Wayland with Mesa software OpenGL. A separate
+application supplied a fine grid behind the shell. At scales **1 and 2**, edge
+differences inside the panel fell to **8.6% and 6.6%** of baseline; outside stayed
+at **87%**, consistent with dimming rather than blur. Closing restored the sharp
+background. Control Center and Activity Island captures at both scales were
+inspected. The floating Settings window was also inspected, including the rule
+that prevents niri's focus-ring backing from filling its transparent body.
+The updated niri fragment passes `niri validate`.
+
+Radeon/RTX frame pacing and power use remain unmeasured. The wallpaper-only rim,
+in-window menu and nonlinear Jelly mask limits are documented in
+[Surface style](CONFIGURATION.md#surface-style).
+
 ## Black Liquid text and paused popup blur — 2026-10-18
 
 Liquid labels, headings, button captions, menus and input text now use black

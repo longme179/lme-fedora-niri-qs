@@ -195,12 +195,12 @@ with the shell, even when the shell is stopped.
 
 Choose **Appearance → Shell name** to give your desktop a name of your own.
 
-**Appearance → Surface style → Liquid glass** switches to neutral, translucent
-surfaces with refractive edges and pointer highlights. Turn it off to return to
-your saved colors and opacity. Fonts, layout, corner shapes and motion keep
-their settings. Text turns black without an outline. Full-screen popup blur
-is paused in Liquid glass; switching back restores your saved blur preference.
-Bar blur remains independently configurable. The
+**Appearance → Surface style → Liquid glass** combines a frosted backdrop,
+refractive edges and white text. On niri 26.04+, blur follows the rounded panel
+or popup; the surrounding desktop stays sharp. Include the blur configuration
+above. Turn Liquid off to return to your saved colors, opacity and full-screen
+blur preference. Fonts, layout, corner shapes and motion keep their settings;
+bar blur remains independently configurable. The
 [rendering details and limits](docs/CONFIGURATION.md#surface-style) explain the
 wallpaper-based edge effect and software fallback.
 

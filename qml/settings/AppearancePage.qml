@@ -10,7 +10,7 @@ ColumnLayout {
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
     SettingsCard {
         title: "Surface style"
-        description: "Liquid glass uses neutral colors and refractive edges. Your saved palette, accent, opacity and element colors stay unchanged; switch back to restore them."
+        description: "Liquid glass combines a frosted backdrop, refractive edges and white text. Your saved palette, accent, opacity and element colors stay unchanged; switch back to restore them."
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Liquid glass"; Layout.fillWidth: true; font.weight: Font.Medium }
@@ -23,7 +23,7 @@ ColumnLayout {
         }
         LabelText {
             visible: Theme.liquidGlass; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted
-            text: "Palette controls and full-screen popup blur are paused. Fonts, layout, corners and motion still apply. Bar blur remains available."
+            text: "Glass blurs only the area beneath each panel or popup on niri 26.04+. Full-screen popup blur and palette controls are paused. Fonts, layout, corners and motion still apply."
         }
     }
     SettingsCard {
@@ -148,7 +148,7 @@ ColumnLayout {
         title: "Glass and motion"
         PreferenceSwitch {
             title: "Blur behind popups"; preference: "popupBlur"; enabled: !Theme.liquidGlass
-            detail: Theme.liquidGlass ? "Paused in Liquid glass. Your saved preference applies in Smoked mode."
+            detail: Theme.liquidGlass ? "Full-screen blur is paused; each glass panel has its own local blur. Your saved preference applies in Smoked mode."
                 : "Full-screen compositor blur for Island and shell panels. Requires niri 26.04+ and the popup-blur config fragment."
         }
         PreferenceSwitch { title: "Blur behind the bar"; detail: "Blur through the bar's glass, following each island and its corners. Uses the same niri 26.04+ config fragment."; preference: "barBlur" }

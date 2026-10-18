@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import "../theme"
 import "../services"
@@ -52,19 +53,49 @@ Region {
     }
     readonly property bool active: bounds.width > 0 && bounds.height > 0
     readonly property var warps: elasticities.filter(effect => effect && effect.rendering && !effect.software)
-    readonly property var strips: {
-        if (!active || !warps.length) return [];
-        void bounds;
+    readonly property var contour: {
+        if (!active) return [];
         const radii = ["topRightRadius", "bottomRightRadius", "bottomLeftRadius", "topLeftRadius"].map(name => plate && plate[name] >= 0 ? plate[name] : plate ? plate.radius : Theme.radius);
-        return Jelly.strips(Jelly.outline(surface.width, surface.height, radii).map(point => {
-            let owner = surface;
-            for (const effect of warps) {
-                point = owner.mapToItem(effect.surface, point.x, point.y);
-                point = Jelly.warp(point, effect.surface.width, effect.surface.height, effect.strain, effect.horizontal, effect.bounded);
-                owner = effect.surface;
+        return Jelly.outline(surface.width, surface.height, radii);
+    }
+    readonly property var deformation: warps.map(effect => [effect.strain, effect.horizontal, effect.bounded, effect.surface.width, effect.surface.height])
+    readonly property var renderWindow: surface ? surface.Window.window : null
+    property var strips: []
+    property bool dirty: false
+    function invalidate() {
+        if (!active || !warps.length) { dirty = false; if (strips.length) strips = []; }
+        else { dirty = true; if (renderWindow) renderWindow.update(); }
+    }
+    function mapping(from, to) {
+        const a = from.mapToItem(to, 0, 0), b = from.mapToItem(to, 1, 0), c = from.mapToItem(to, 0, 1);
+        return [a.x, a.y, b.x - a.x, b.y - a.y, c.x - a.x, c.y - a.y];
+    }
+    function mapped(point, matrix) {
+        return {x: matrix[0] + point.x * matrix[2] + point.y * matrix[4], y: matrix[1] + point.x * matrix[3] + point.y * matrix[5]};
+    }
+    function rebuild() {
+        if (!dirty) return;
+        dirty = false;
+        const matrices = [];
+        let owner = surface;
+        for (const effect of warps) { matrices.push(mapping(owner, effect.surface)); owner = effect.surface; }
+        const finalMap = mapping(owner, hostWindow.contentItem);
+        strips = Jelly.strips(contour.map(point => {
+            for (let i = 0; i < warps.length; ++i) {
+                const d = deformation[i];
+                point = Jelly.warp(mapped(point, matrices[i]), d[3], d[4], d[0], d[1], d[2]);
             }
-            return owner.mapToItem(hostWindow.contentItem, point.x, point.y);
+            return mapped(point, finalMap);
         }), hostWindow.width, hostWindow.height);
+    }
+    onBoundsChanged: invalidate()
+    onContourChanged: invalidate()
+    onDeformationChanged: invalidate()
+    onRenderWindowChanged: invalidate()
+    readonly property Connections frames: Connections {
+        target: root.renderWindow
+        // All springs have advanced here; publish one matching mask before this frame's sync.
+        function onAfterAnimating() { root.rebuild(); }
     }
     property int bandCapacity: 0
     onStripsChanged: {

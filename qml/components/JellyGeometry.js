@@ -62,23 +62,21 @@ function scanlines(points) {
     edges.sort((a, b) => a.top - b.top);
     let cursor = 0, active = [];
     // Scan in increasing y: only the edges crossing this row need evaluation.
-    return function(y) {
+    return function(y, hits) {
+        hits.length = 0;
         while (cursor < edges.length && edges[cursor].top <= y) active.push(edges[cursor++]);
-        active = active.filter(edge => edge.bottom > y);
-        const hits = active.map(edge => edge.x + (y - edge.top) * edge.slope).sort((a, b) => a - b);
-        const result = [];
-        for (let i = 0; i + 1 < hits.length; i += 2) result.push([hits[i], hits[i + 1]]);
-        return result;
+        let count = 0;
+        for (let i = 0; i < active.length; ++i) {
+            const edge = active[i];
+            if (edge.bottom <= y) continue;
+            active[count++] = edge;
+            hits.push(edge.x + (y - edge.top) * edge.slope);
+        }
+        active.length = count;
+        if (hits.length === 2) {
+            if (hits[0] > hits[1]) [hits[0], hits[1]] = [hits[1], hits[0]];
+        } else hits.sort((a, b) => a - b);
     };
-}
-
-function intersect(a, b) {
-    const result = [];
-    for (const x of a) for (const y of b) {
-        const left = Math.max(x[0], y[0]), right = Math.min(x[1], y[1]);
-        if (right > left) result.push([left, right]);
-    }
-    return result;
 }
 
 function strips(points, width, height) {
@@ -86,17 +84,28 @@ function strips(points, width, height) {
     const result = [], top = Math.max(0, Math.ceil(Math.min(...points.map(p => p.y))));
     const bottom = Math.min(height, Math.floor(Math.max(...points.map(p => p.y))));
     const spans = scanlines(points);
+    const topHits = [], middleHits = [], bottomHits = [];
     let previous = [];
     // Inset two-logical-pixel bands stay inside the antialiased silhouette.
     for (let y = top; y < bottom; y += 2) {
         const h = Math.min(2, bottom - y);
-        let row = intersect(spans(y + .001), spans(y + h / 2));
-        row = intersect(row, spans(y + h - .001));
+        spans(y + .001, topHits);
+        spans(y + h / 2, middleHits);
+        spans(y + h - .001, bottomHits);
         const current = [];
-        for (const span of row) {
-            const left = Math.max(0, Math.ceil(span[0] + .5)), right = Math.min(width, Math.floor(span[1] - .5));
+        let a = 0, b = 0, c = 0;
+        while (a + 1 < topHits.length && b + 1 < middleHits.length && c + 1 < bottomHits.length) {
+            const end = Math.min(topHits[a + 1], middleHits[b + 1], bottomHits[c + 1]);
+            const left = Math.max(0, Math.ceil(Math.max(topHits[a], middleHits[b], bottomHits[c]) + .5));
+            const right = Math.min(width, Math.floor(end - .5));
+            if (topHits[a + 1] <= end) a += 2;
+            if (middleHits[b + 1] <= end) b += 2;
+            if (bottomHits[c + 1] <= end) c += 2;
             if (right <= left) continue;
-            const match = previous.find(band => band.x === left && band.width === right - left && band.y + band.height === y);
+            let match = null;
+            for (const band of previous) {
+                if (band.x === left && band.width === right - left && band.y + band.height === y) { match = band; break; }
+            }
             if (match) { match.height += h; current.push(match); }
             else { const band = {x: left, y: y, width: right - left, height: h}; result.push(band); current.push(band); }
         }

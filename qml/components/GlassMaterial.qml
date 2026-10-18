@@ -18,7 +18,6 @@ Item {
     readonly property var hostWindow: Window.window
     readonly property bool active: Theme.liquidGlass && visible && width > 0 && height > 0 && !!hostWindow && hostWindow.visible
     property var backdrop: null
-    property var geometryItems: []
     property real hoverAmount: active && Theme.animations && (hovered || pointer.hovered) ? 1 : 0
     property real pressAmount: active && Theme.animations && pressed ? 1 : 0
     objectName: "glassMaterial"
@@ -26,43 +25,36 @@ Item {
     Behavior on pressAmount { enabled: root.active && Theme.animations; NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
     function updateBackdrop() {
         if (backdrop && (!active || software || backdrop.hostWindow !== hostWindow)) { GlassState.release(backdrop); backdrop = null; }
-        if (active && !software) { trackGeometry(); if (!backdrop) backdrop = GlassState.acquire(hostWindow); }
-        else geometryItems = [];
+        if (active && !software && !backdrop) backdrop = GlassState.acquire(hostWindow);
     }
     onActiveChanged: updateBackdrop()
     onSoftwareChanged: updateBackdrop()
-    function trackGeometry() {
-        const items = [];
-        for (let item = root; item; item = item.parent) {
-            items.push(item);
-            for (const transform of item.transform) items.push(transform);
-        }
-        geometryItems = items;
-    }
     onParentChanged: Qt.callLater(updateBackdrop)
     onHostWindowChanged: updateBackdrop()
     Component.onCompleted: updateBackdrop()
     Component.onDestruction: if (backdrop) GlassState.release(backdrop)
-    readonly property rect sampleRect: {
-        if (!backdrop) return Qt.rect(0, 0, 1, 1);
-        // Track ancestor transforms without a per-button timer or frame loop.
-        for (const item of geometryItems) {
-            if (!item) continue;
-            if (item.x !== undefined) void item.x;
-            if (item.y !== undefined) void item.y;
-            if (item.width !== undefined) void item.width;
-            if (item.height !== undefined) void item.height;
-            if (item.scale !== undefined) void item.scale;
-            if (item.rotation !== undefined) void item.rotation;
-            if (item.xScale !== undefined) void item.xScale;
-            if (item.yScale !== undefined) void item.yScale;
-        }
+    readonly property var sampleInputs: backdrop ? [backdrop.windowOrigin, backdrop.cropRect, backdrop.outputWidth, backdrop.outputHeight] : null
+    property rect sampleRect: Qt.rect(0, 0, 1, 1)
+    readonly property var renderWindow: Window.window
+    function invalidateSample() {
+        if (!backdrop) sampleRect = Qt.rect(0, 0, 1, 1);
+        else if (renderWindow) renderWindow.update();
+    }
+    onSampleInputsChanged: invalidateSample()
+    onRenderWindowChanged: invalidateSample()
+    function updateSample() {
+        if (!active || !backdrop) return;
         const a = root.mapToItem(null, 0, 0);
         const b = root.mapToItem(null, width, height);
         const origin = backdrop.windowOrigin;
         const crop = backdrop.cropRect;
-        return Qt.rect(crop.x + (origin.x + a.x) / backdrop.outputWidth * crop.width, crop.y + (origin.y + a.y) / backdrop.outputHeight * crop.height,
+        sampleRect = Qt.rect(crop.x + (origin.x + a.x) / backdrop.outputWidth * crop.width, crop.y + (origin.y + a.y) / backdrop.outputHeight * crop.height,
             (b.x - a.x) / backdrop.outputWidth * crop.width, (b.y - a.y) / backdrop.outputHeight * crop.height);
+    }
+    Connections {
+        target: root.active ? root.renderWindow : null
+        // Sample the final scene transform once per rendered frame, without ancestor bindings.
+        function onAfterAnimating() { root.updateSample(); }
     }
     HoverHandler { id: pointer; enabled: root.active && Theme.animations }
     Loader {

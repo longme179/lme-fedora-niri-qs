@@ -55,6 +55,67 @@ class JellyGeometryCase(unittest.TestCase):
 class JellyQmlCase(unittest.TestCase):
     run_qml=qml_tests.LocalQmlCase.run_qml
 
+    def test_blur_and_optics_use_final_transforms_once_before_the_same_frame_sync(self):
+        result=self.run_qml('import QtQuick.Window\nimport "qml/components"\nimport "qml/services"\nimport "qml/theme"\nimport "qml/components/JellyGeometry.js" as Jelly', '''
+    property int phase:0
+    property int ticks:0
+    property int moves:0
+    property int publishes:0
+    property int age:0
+    property bool sameFrame:true
+    property bool mapped:true
+    property bool coalesced:true
+    property var extraPublishes:[]
+    property var observer:null
+    FloatingWindow { id:window;implicitWidth:1100;implicitHeight:800
+        Item { id:group;x:100;y:80;transform:Scale {xScale:1.1;yScale:.9}
+            SlideLoader { id:panel;x:200;y:180;width:200;height:160;shown:false;exitToEdge:true;exitEdge:"left"
+                content:Rectangle {radius:32;topLeftRadius:9;bottomRightRadius:48;GlassMaterial {id:glass;objectName:"frameGlass";anchors.fill:parent}}
+            }
+        }
+    }
+    SurfaceBlurRegion { id:region;surface:panel.item as Item;onStripsChanged:fixture.publishes++ }
+    function effect() {for(const child of panel.children) if(child.objectName==="popupElasticity") return child;return null;}
+    function checkFrame() {
+        if(phase!==3 || !moves) return;
+        const fluid=effect(), plate=panel.item;
+        const expected=Jelly.strips(Jelly.outline(plate.width,plate.height,[32,48,32,9]).map(point=>{
+            point=plate.mapToItem(panel,point.x,point.y);
+            point=Jelly.warp(point,panel.width,panel.height,fluid.strain,fluid.horizontal,fluid.bounded);
+            return panel.mapToItem(window.contentItem,point.x,point.y);
+        }),window.width,window.height);
+        sameFrame=sameFrame && JSON.stringify(region.strips)===JSON.stringify(expected);
+        coalesced=coalesced && publishes<=1;
+        if(publishes>1) extraPublishes.push({frame:moves,count:publishes});
+        publishes=0;
+        const material=plate.children.find(item=>item.objectName==="frameGlass"), backdrop=material.backdrop;
+        const a=material.mapToItem(null,0,0),b=material.mapToItem(null,material.width,material.height),crop=backdrop.cropRect,origin=backdrop.windowOrigin;
+        const rect=Qt.rect(crop.x+(origin.x+a.x)/backdrop.outputWidth*crop.width,crop.y+(origin.y+a.y)/backdrop.outputHeight*crop.height,
+            (b.x-a.x)/backdrop.outputWidth*crop.width,(b.y-a.y)/backdrop.outputHeight*crop.height);
+        mapped=mapped && ["x","y","width","height"].every(key=>Math.abs(material.sampleRect[key]-rect[key])<.0000001);
+        if(moves===20) phase=4;
+    }
+    FrameAnimation {running:fixture.phase===3;onTriggered:{
+        fixture.moves++;
+        group.x=100+fixture.moves*1.31;group.x+=.37;
+        group.y=80+fixture.moves*.73;group.rotation=fixture.moves*.17;
+        fixture.effect().velocity=fixture.moves%2?1800:-1800;
+    }}
+    Timer {interval:40;running:true;repeat:true;onTriggered:{
+        if(++fixture.ticks>180) {fixture.finish({timeout:fixture.phase});return;}
+        if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
+        if(fixture.phase===0) {ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});ShellState.run("setting",{key:"motionPreset",value:"jelly-v2"});fixture.phase++;}
+        else if(fixture.phase===1 && Theme.liquidGlass && Theme.motionPreset==="jelly-v2") {panel.shown=true;fixture.phase++;}
+        else if(fixture.phase===2 && panel.progress===1 && !fixture.effect().rendering) {
+            fixture.observer=Qt.createQmlObject('import QtQuick; Connections {target:null;property var receiver;function onAfterAnimating(){receiver.checkFrame();}}',fixture);
+            fixture.observer.receiver=fixture;fixture.observer.target=window.contentItem.Window.window;fixture.publishes=0;fixture.phase++;
+        } else if(fixture.phase===4) {fixture.effect().velocity=0;fixture.phase++;}
+        else if(fixture.phase===5 && !fixture.effect().rendering) {fixture.publishes=0;fixture.phase++;}
+        else if(fixture.phase===6 && ++fixture.age>8) fixture.finish({frames:fixture.moves,sameFrame:fixture.sameFrame,mapped:fixture.mapped,coalesced:fixture.coalesced?true:fixture.extraPublishes,idle:fixture.publishes===0 && region.regions.length===0});
+    }}
+''',{'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl','LIBGL_ALWAYS_SOFTWARE':'1'})
+        self.assertEqual(result,dict(frames=20,sameFrame=True,mapped=True,coalesced=True,idle=True))
+
     def test_shader_renders_a_bowed_silhouette_and_fits_tight_native_bounds(self):
         try: from PIL import Image
         except ImportError: self.skipTest('Pillow is required to inspect rendered pixels')

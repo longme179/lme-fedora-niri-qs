@@ -65,7 +65,7 @@ xdg-desktop-portal
 xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
 gnome-keyring
-# Optional wallpaper daemon. Check repository availability before installing.
+# Optional wallpaper daemon; --optional installs it when available from enabled repositories.
 # Upstream: https://codeberg.org/LGFae/awww.git (client and awww-daemon).
 awww
 # Optional screenshot annotation and recording-region selection.

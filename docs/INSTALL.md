@@ -4,6 +4,70 @@ The supported target is an existing niri 25.11+ Wayland session on Fedora 44. In
 and run the shell as your normal desktop user. Use `sudo` only for package
 installation; running Quickshell as root breaks access to the user's session.
 
+## Quick setup
+
+For the complete shell and recommended feature tools, use the combined installer.
+Keep the checkout in a permanent directory and run it as your desktop user:
+
+```bash
+sudo dnf install git python3
+mkdir -p ~/src
+git clone https://github.com/longme179/lme-fedora-niri-qs.git ~/src/lme-fedora-niri-qs
+cd ~/src/lme-fedora-niri-qs
+
+./scripts/setup.sh            # Preview; no changes.
+./scripts/setup.sh --install  # Apply; sudo/DNF prompt when needed.
+```
+
+`setup.sh` calls the existing installers in order:
+
+1. Check config/launcher destinations for conflicts before installing packages.
+2. Install niri, Quickshell, Qt/fonts and required desktop integrations, plus the
+   recommended tools listed below. `awww` is included if installed or available
+   from enabled repositories. DNF errors stop the setup.
+3. Link `~/.config/quickshell/lme-shell` to this checkout.
+4. Register **LME Shell Settings** in the application launcher.
+5. Print the startup, keybinding and blur includes to review in your niri config.
+
+It respects `XDG_CONFIG_HOME` and `XDG_DATA_HOME`. It preserves your saved shell
+preferences and backs up existing install targets only when `--replace` is used.
+Running it again retains the same link/launcher; package updates still use DNF.
+The installer does not edit niri config automatically because duplicate shortcuts,
+startup commands and existing blur blocks must be resolved in your own config.
+
+Optional flags (combine as needed):
+
+```bash
+# Allow the documented third-party Quickshell repository only when necessary.
+./scripts/setup.sh --install --copr
+
+# Preserve and replace a previous shell config or launcher.
+./scripts/setup.sh --install --replace
+
+# Also install the Lenovo charging helper; sudo prompts separately if needed.
+./scripts/setup.sh --install --charge-helper
+```
+
+Do not run the whole script with sudo: that would target root's desktop files.
+`--charge-helper` installs the root-owned helper only; it does not change the
+current charge mode. See [CHARGING.md](CHARGING.md) for firmware limitations.
+
+Finish [niri startup and keybindings](#4-add-niri-startup-and-keybindings), including
+the optional blur setup at the end of this guide. If niri was newly installed,
+log out and select its session at the login screen first. A custom session/login
+manager must already be configured to launch niri; this installer does not replace it.
+Inside niri, run `niri validate`, `./scripts/doctor.sh`, then `./scripts/start.sh`
+once. Stop the test instance before logging out/in to test autostart.
+
+The package helper uses enabled Fedora repositories. It does not install GPU
+drivers, replace your power-profile provider or enable extra sources without
+`--copr`. Missing `awww` needs the source setup below. Hardware codecs depend on
+your FFmpeg/driver build: `ffmpeg-free` does not guarantee NVENC availability.
+A successful package transaction alone does not verify these hardware features.
+
+The remaining sections describe the same steps individually, custom paths and
+feature-specific requirements.
+
 ## 1. Packages
 
 The complete categorized list is [requirements-fedora.txt](../requirements-fedora.txt).
@@ -78,9 +142,10 @@ unrelated Qt build with the distribution's Quickshell binary.
 Optional helpers include `swaylock` for locking, `pavucontrol` for advanced
 sound routing, `network-manager-applet` for connection editing, `blueman` for
 pairing, `libnotify` for notification tests, and `awww` for wallpaper changes.
-Check `dnf repoquery --available awww` before installing the optional wallpaper
-daemon. It is excluded from the automated package transaction because availability
-may depend on your enabled repositories. `playerctl` is useful for media keys;
+The `--optional` package transaction includes `awww` if installed or available
+from enabled repositories. If it is absent, setup prints a notice and the other
+features can still be installed; follow [Wallpaper and charging](#wallpaper-and-charging).
+`playerctl` is useful for media keys;
 the shell's media panel uses Quickshell's native MPRIS support.
 
 LME Shell now starts its own **Polkit authentication agent** and glass password
@@ -333,8 +398,32 @@ Build requirements include Rust/Cargo, `pkgconf-pkg-config`, `lz4-devel`,
 `wayland-devel` and `wayland-protocols-devel`. `libxkbcommon-devel` may also be
 needed by the Wayland development environment. `scdoc` is optional for man pages.
 Build with `cargo build --locked --release`, then install both binaries on PATH.
-The automated Fedora package installer excludes awww because repository
-availability varies. No extra package repository is enabled automatically.
+The automated Fedora package installer checks for `awww` with `--optional`
+and includes it when available. Otherwise install from upstream; no wallpaper
+repository or source-build toolchain is enabled automatically.
+
+For a source install, these commands build the pinned upstream `v0.12.1` tag
+as your user and place both binaries in `~/.local/bin`. Choose a new source
+directory if `~/src/awww` already exists:
+
+```bash
+(
+    set -e
+    sudo dnf install git rust cargo pkgconf-pkg-config lz4-devel \
+        wayland-devel wayland-protocols-devel libxkbcommon-devel
+    mkdir -p ~/src
+    git clone --depth 1 --branch v0.12.1 https://codeberg.org/LGFae/awww.git ~/src/awww
+    cd ~/src/awww
+    cargo build --locked --release
+    install -Dm755 target/release/awww ~/.local/bin/awww
+    install -Dm755 target/release/awww-daemon ~/.local/bin/awww-daemon
+)
+command -v awww awww-daemon
+```
+
+If the final check cannot find them, ensure `~/.local/bin` is on your session's
+PATH and log out/in before starting LME. This path must be available to niri,
+not just added in a terminal window.
 
 Settings starts the daemon when applying an image. The startup wrapper does the
 same when restoring one on login. Do not run a second wallpaper daemon for the

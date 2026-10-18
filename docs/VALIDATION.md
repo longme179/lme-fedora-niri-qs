@@ -1,5 +1,20 @@
 # Validation and platform limits
 
+## Combined Fedora installation — 2026-10-18
+
+`scripts/setup.sh` reuses the package, configuration-link, Settings launcher and
+optional charge-helper installers. Six isolated tests cover read-only preview,
+repeat installation, backup/replacement, saved preferences, package failure,
+conditional `awww` selection, repository lookup errors and explicit COPR opt-in.
+File installation uses the real helpers in temporary directories; sudo/RPM/DNF
+and the privileged charging step use stubs and do not change the host system.
+
+`scripts/check.sh` completed **334 tests: 263 passed, 71 opt-in checks skipped**.
+Bash syntax and the demo backend snapshot passed. No QML or rendering code was
+changed, so the private Wayland suites were not rerun. The upstream `v0.12.1`
+awww tag resolves to the commit documented in INSTALL.md. Actual Fedora DNF
+transactions and the Fedora source-build commands remain unverified here.
+
 ## Deforming local blur and darker Liquid surfaces — 2026-10-18
 
 Local blur now follows Jelly-v2's rounded, bent and tapered silhouette instead

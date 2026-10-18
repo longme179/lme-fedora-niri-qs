@@ -34,7 +34,7 @@ while (($#)); do
     shift
 done
 
-packages=(quickshell python3 python3-gobject-base qt6-qtbase qt6-qtdeclarative qt6-qtwayland
+packages=(niri quickshell python3 python3-gobject-base qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     qt6-qtsvg qt6-qtimageformats google-roboto-fonts google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-utils pipewire-pulseaudio
     wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard)
@@ -54,6 +54,9 @@ printf ' %q' sudo dnf install "${packages[@]}"
 printf '\n'
 if "$copr"; then
     printf 'Conditional fallback: sudo dnf copr enable errornointernet/quickshell\n'
+fi
+if "$optional"; then
+    printf 'Also install awww when installed or available from enabled repositories; otherwise see docs/INSTALL.md.\n'
 fi
 if ! "$install"; then
     printf 'Preview only. Use --install to run these commands on Fedora.\n'
@@ -96,6 +99,22 @@ else
     fi
     printf 'Enabling the upstream-documented third-party Quickshell COPR.\n'
     sudo dnf copr enable errornointernet/quickshell
+fi
+if "$optional"; then
+    awww_available=false
+    if rpm -q awww >/dev/null 2>&1; then
+        awww_available=true
+    else
+        if ! package_query="$(dnf --quiet repoquery --available --qf '%{name}' awww)"; then
+            printf 'Error: awww repository lookup failed. Resolve the DNF error and retry.\n' >&2
+            exit 1
+        fi
+        while IFS= read -r package_name; do
+            if [[ "$package_name" == awww ]]; then awww_available=true; fi
+        done <<< "$package_query"
+    fi
+    if "$awww_available"; then packages+=(awww);
+    else printf 'awww is not in enabled repositories. Ensure awww and awww-daemon are installed separately; see docs/INSTALL.md.\n' >&2; fi
 fi
 sudo dnf install "${packages[@]}"
 printf 'Packages installed. Run scripts/doctor.sh inside your niri session.\n'

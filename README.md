@@ -80,12 +80,12 @@ supports niri 25.11+. LME supplies the desktop interface; niri manages windows.
 | Fedora desktop services | NetworkManager, BlueZ, PipeWire/WirePlumber and an existing power-profile provider |
 
 [requirements-fedora.txt](requirements-fedora.txt) groups packages by purpose.
-It is a **DNF package list** for the installation helper. Install niri before
-running the helper; GPU drivers are managed separately.
+It is a **DNF package list**, not a Python requirements file. The setup helper
+also installs niri; use your existing Fedora login/session setup and GPU drivers.
 
 ### 1. Keep a permanent checkout
 
-Install Git with `sudo dnf install git` if needed, then run:
+Install Git and Python with `sudo dnf install git python3` if needed, then run:
 
 ```bash
 mkdir -p ~/src
@@ -98,61 +98,58 @@ and extract it into a permanent directory. Run the following commands from
 that source directory, and keep it after installation: the installed shell
 links to it.
 
-### 2. Review and install packages
+### 2. Install the shell and its tools
 
-Run these as your normal desktop user, inside Fedora:
+Run as your normal desktop user, **without `sudo` in front of the script**:
 
 ```bash
-# Preview the proposed DNF command; no packages are installed.
-./scripts/install-fedora.sh --optional
+# Preview everything; no packages or files are changed.
+./scripts/setup.sh
 
-# Install required and recommended packages; DNF asks before its transaction.
-./scripts/install-fedora.sh --install --optional
+# Install packages, link the shell and add Settings to the app launcher.
+./scripts/setup.sh --install
 ```
 
-`--optional` includes tools for locking, idle profiles, OCR, Night Light,
-recording, audio spectrum and external annotation, plus recommended applications.
+The installer uses DNF and asks for your administrator password when needed.
+It includes core and recommended tools: fonts, clipboard history, locking,
+Night Light, OCR/annotation, recording, audio visualization, Material palettes
+and display mirroring. It installs `awww` when available from your enabled
+repositories; otherwise it points to the [wallpaper setup steps](docs/INSTALL.md#wallpaper-and-charging).
 Keep your working TuneD/tuned-ppd or power-profiles-daemon provider.
 
-<details>
-<summary><strong>Quickshell is missing from my enabled repositories</strong></summary>
+| Option | Use it when… |
+| --- | --- |
+| `--copr` | Quickshell is unavailable; you have reviewed the [Quickshell COPR](https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/) and want to allow it as a fallback |
+| `--replace` | An older config or Settings launcher already exists; preserve it in a timestamped backup before replacing it |
+| `--charge-helper` | You want to install the privileged helper for Lenovo battery charging controls |
 
-Review the [errornointernet/quickshell COPR](https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/)
-and its Fedora 44 build. This flag allows the installer to enable that source
-only when Quickshell is unavailable:
+Options can be combined, for example:
 
 ```bash
-./scripts/install-fedora.sh --install --optional --copr
+./scripts/setup.sh --install --copr --charge-helper
 ```
 
-See the [repository availability guide](docs/INSTALL.md#quickshell-repository-availability)
-for more details.
+The shell links to this checkout, so keep it in place. Preferences in
+`~/.config/lme-shell` are preserved. Setup prints the niri integration steps;
+it leaves your existing keybindings, GPU setup and desktop services in place.
+For individual package/link installers, see [the full guide](docs/INSTALL.md).
 
-</details>
+### 3. Test inside niri
 
-### 3. Link the shell, add Settings and try it
+If niri is new to this system, log out and choose **niri** in your login screen
+first. Inside that session:
 
 ```bash
-./scripts/install.sh
-./scripts/install-settings.sh
 ./scripts/doctor.sh
 ./scripts/start.sh
 ```
 
-| Command | What it does |
-| --- | --- |
-| `install.sh` | Links `~/.config/quickshell/lme-shell` to this source directory |
-| `install-settings.sh` | Adds **LME Shell Settings** to the application launcher |
-| `doctor.sh` | Reports missing tools and session integration without changing system state |
-| `start.sh` | Restores saved wallpaper/confirmed display settings and starts Quickshell |
+`doctor.sh` reports missing tools and session integration. `start.sh` restores
+your saved wallpaper/display settings and launches the shell. Keep the terminal
+open while testing; Ctrl+C stops that instance. Start it only if LME is not
+already running.
 
-The two install scripts support `--dry-run`. If an existing target needs
-replacement, `--replace` preserves it in a backup. Your niri configuration and
-saved preferences stay separate. Keep the terminal open while testing; Ctrl+C
-stops this shell instance.
-
-To explore a windowed demo with sample data and no saved changes or desktop
-actions, use `./scripts/start.sh --preview`.
+To explore a windowed demo with sample data, use `./scripts/start.sh --preview`.
 
 ### 4. Integrate with niri
 
@@ -284,7 +281,7 @@ the supplied title/artist; a YouTube channel or video title may not identify a s
 
 | Feature | What to install or configure |
 | --- | --- |
-| **Wallpaper** | Install `awww` **and** `awww-daemon` from a trusted available source; the package helper does not install them. [Setup](docs/INSTALL.md#wallpaper-and-charging) · [Upstream](https://codeberg.org/LGFae/awww) |
+| **Wallpaper** | Setup installs `awww` when available from enabled repositories; verify that both `awww` and `awww-daemon` are present. [Setup](docs/INSTALL.md#wallpaper-and-charging) · [Upstream](https://codeberg.org/LGFae/awww) |
 | **Material palette / Audio spectrum** | `matugen` / `cava`. Cava runs for visible, playing media cards, with 60 fps and reduced smoothing. |
 | **External display mirroring** | `wl-mirror` (Fedora: `sudo dnf install wl-mirror`). Connect and enable both outputs, then use Settings → Displays or Control Center → Devices. Choose Source/Destination and Start mirror; Stop closes only LME’s mirror window. [Setup and hardware checks](docs/MIRRORING.md). |
 | **Recording** | `wf-recorder`, compatible FFmpeg/`ffprobe`; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
@@ -327,10 +324,11 @@ quickshell -c lme-shell kill
 ./scripts/start.sh
 ```
 
-Restart Settings as well. If an update adds dependencies, rerun the package
-helper to review and install them. For a release ZIP installation,
-extract the new version to a permanent directory and rerun both install scripts
-with `--replace` to update their targets while keeping backups.
+Restart Settings as well. If an update adds dependencies, use `./scripts/setup.sh`
+to preview and `./scripts/setup.sh --install` to install them. For a release ZIP
+installation, extract into a permanent directory and run
+`./scripts/setup.sh --install --replace` to update the default targets with backups.
+Custom config names use the individual installers below.
 
 <details>
 <summary><strong>I use a configuration named gpt</strong></summary>

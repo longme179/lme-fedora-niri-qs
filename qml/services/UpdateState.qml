@@ -19,7 +19,7 @@ Singleton {
         } catch (error) { console.warn("Invalid updater status"); }
     }
     function run(action) {
-        if (ShellState.demo || request.running || !["inspect", "check", "update"].includes(action)) return;
+        if (ShellState.demo || request.running || !["inspect", "check", "update", "bootstrap"].includes(action)) return;
         if (action !== "inspect" && busy) return;
         request.command = ["python3", Quickshell.shellPath("scripts/shell_update.py"), action];
         request.running = true;

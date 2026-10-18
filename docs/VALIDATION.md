@@ -1,5 +1,24 @@
 # Validation and platform limits
 
+## Git source-install recovery — 2026-10-18
+
+The updater now identifies ZIP/source directories and Git folders without a
+valid HEAD commit, including an unborn `master` with no remote. It persists the
+new source status so FileView cannot restore an earlier raw HEAD error.
+The explicit Enable Git updates action clones official `main` into a sibling
+directory and reuses `install.sh --replace` to keep a timestamped source backup
+and preserve the original startup path through a link. Existing histories,
+tracked edits, untracked files and divergent branches retain their guards.
+
+Eleven updater checks cover real local Git remotes, detached bootstrap after
+moving its own source, network failures, destination collisions, stale status,
+backups, separate preferences, merge-hook suppression and the existing About
+page update buttons. A separate real About-page fixture starts with the owner's
+unborn-master/no-remote layout and a saved fatal HEAD error; clicking Enable Git
+updates completes the migration, preserves a personal file in the backup and
+reads the updated state through the new canonical source path. No installed
+desktop files or system packages were changed by these checks.
+
 ## Liquid popup frame work and native surface size — 2026-10-18
 
 QML profiling identified repeated scan conversion and per-button ancestor

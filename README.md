@@ -321,8 +321,32 @@ In **Settings → About → Shell updates**, click **Check for updates**, then
 checkout. Local edits, untracked files and divergent commits block the update;
 they are never reset or stashed automatically. The job continues if Settings
 closes or Quickshell reloads. Restart the shell and Settings after it completes.
-Git is required; ZIP installations use the manual route below. Package changes
-are reviewed separately through `setup.sh`.
+Git is required. For a ZIP installation, including a folder with `git init` but
+no commits, click **Enable Git updates**. The updater clones the official `main`
+branch into a sibling folder ending in `-git`, preserves your original source
+as `.backup-<timestamp>-<pid>`, and links the old path to the new checkout. Keep
+the new folder; your existing startup path still works. A failed download leaves
+the original installation in place. Existing Git histories are never replaced.
+Package changes are reviewed separately through `setup.sh`.
+
+<details>
+<summary><strong>My older install reports “ambiguous argument HEAD”</strong></summary>
+
+`git init` creates a Git folder, but does not download commits or configure
+`origin`. If **Enable Git updates** is missing, run the current updater once:
+
+```bash
+curl --fail --location https://raw.githubusercontent.com/longme179/lme-fedora-niri-qs/main/scripts/shell_update.py --output /tmp/lme-shell-updater.py
+python3 /tmp/lme-shell-updater.py bootstrap --repo ~/.config/quickshell/lme-shell
+```
+
+The second command starts the backup-and-clone job described above. Read its
+status with `python3 /tmp/lme-shell-updater.py inspect --repo ~/.config/quickshell/lme-shell`.
+Wait for `"stage": "updated"`, then restart the shell and Settings. Substitute
+your installed path if it differs. Do not delete the helper while the job runs.
+This route never replaces a checkout that already has a valid commit.
+
+</details>
 
 For a Git checkout tracking `main`, run from the permanent source directory:
 

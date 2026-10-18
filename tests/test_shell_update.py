@@ -8,7 +8,7 @@ import tempfile
 import time
 import unittest
 from unittest.mock import patch
-from shell_update import ShellUpdate
+from shell_update import ShellUpdate, SOURCE_URL
 
 
 @unittest.skipUnless(shutil.which('git'), 'Git is required')
@@ -128,6 +128,10 @@ class ShellUpdateCase(unittest.TestCase):
         for content in ('[1,2]', 'not json'):
             self.updater.path.write_text(content)
             self.assertEqual(self.updater.inspect()['stage'], 'idle')
+            self.assertEqual(self.updater.read()['stage'], 'idle')
+        (self.client/'shell.qml').write_text('local edit')
+        self.assertEqual(self.updater.inspect()['stage'], 'blocked')
+        self.assertEqual(self.updater.read()['stage'], 'blocked')
 
     def test_network_failure_and_zip_installation_report_errors(self):
         self.git(self.client, 'remote', 'set-url', 'origin', str(self.root/'missing.git'))
@@ -146,6 +150,60 @@ class ShellUpdateCase(unittest.TestCase):
         self.assertNotIn('secret', str(error.exception))
         with patch('shell_update.subprocess.run', side_effect=FileNotFoundError), self.assertRaisesRegex(ValueError, 'Install git'):
             self.updater.git('status')
+
+    def test_unborn_and_zip_installations_convert_without_losing_source_or_preferences(self):
+        scripts = self.source/'scripts'; scripts.mkdir()
+        shutil.copy2(Path(__file__).resolve().parents[1]/'scripts/install.sh', scripts/'install.sh')
+        self.commit(self.source); self.git(self.source, 'push')
+        for unborn in (False, True):
+            folder = self.root/('unborn' if unborn else 'zip source'); folder.mkdir()
+            (folder/'shell.qml').write_text('personal source')
+            (folder/'custom.txt').write_text('keep this')
+            if unborn: self.git(folder, 'init', '--initial-branch=master')
+            updater = ShellUpdate(folder, self.root/'state')
+            updater.write(updater.state('blocked', 'fatal: ambiguous argument HEAD'))
+            state = updater.inspect()
+            self.assertEqual(state['stage'], 'source'); self.assertTrue(state['canBootstrap'])
+            self.assertEqual(updater.read(), state)
+            self.assertNotIn('fatal:', state['message'])
+            prefs = self.root/'settings.json'; prefs.write_text('{"opacity":0.81}')
+            with patch('shell_update.SOURCE_URL', self.remote.as_uri()): result = updater.bootstrap()
+            self.assertEqual(result['stage'], 'updated')
+            self.assertTrue(folder.is_symlink())
+            self.assertEqual(self.git(folder, 'status', '--porcelain'), '')
+            backup, = self.root.glob(folder.name+'.backup-*')
+            self.assertEqual((backup/'custom.txt').read_text(), 'keep this')
+            self.assertEqual((backup/'shell.qml').read_text(), 'personal source')
+            self.assertEqual(prefs.read_text(), '{"opacity":0.81}')
+            self.assertEqual(ShellUpdate(folder, self.root/'state').inspect()['stage'], 'updated')
+
+    def test_bootstrap_network_failure_collision_and_committed_checkouts_are_safe(self):
+        folder = self.root/'zip'; folder.mkdir(); (folder/'shell.qml').write_text('personal source')
+        updater = ShellUpdate(folder, self.root/'state')
+        with patch('shell_update.SOURCE_URL', str(self.root/'missing.git')), self.assertRaises(ValueError): updater.bootstrap()
+        self.assertEqual((folder/'shell.qml').read_text(), 'personal source')
+        self.assertFalse(list(self.root.glob('.zip-clone-*')))
+        (self.root/'zip-git').mkdir()
+        with self.assertRaisesRegex(ValueError, 'already exists'): updater.bootstrap()
+        self.assertEqual(self.updater.launch('bootstrap')['stage'], 'blocked')
+        self.assertFalse(list(self.root.glob('installed shell.backup-*')))
+
+    def test_detached_bootstrap_survives_source_replacement(self):
+        project = Path(__file__).resolve().parents[1]
+        scripts = self.source/'scripts'; scripts.mkdir()
+        for name in ('shell_update.py', 'install.sh'): shutil.copy2(project/'scripts'/name, scripts/name)
+        self.commit(self.source); self.git(self.source, 'push')
+        folder = self.root/'zip'; folder.mkdir(); (folder/'shell.qml').write_text('original')
+        (folder/'scripts').mkdir(); shutil.copy2(project/'scripts/shell_update.py', folder/'scripts/shell_update.py')
+        updater = ShellUpdate(folder, self.root/'state')
+        env = {'GIT_CONFIG_COUNT':'1', 'GIT_CONFIG_KEY_0':'url.'+self.remote.as_uri()+'.insteadOf', 'GIT_CONFIG_VALUE_0':SOURCE_URL}
+        with patch.dict(os.environ, env), patch('shell_update.__file__', str(folder/'scripts/shell_update.py')):
+            updater.launch('bootstrap')
+            self.updater = updater
+            state = self.wait()
+        self.assertEqual(state['stage'], 'updated', state)
+        self.assertTrue(folder.is_symlink())
+        self.assertEqual(ShellUpdate(folder, self.root/'state').inspect()['stage'], 'updated')
 
     @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'private Wayland update controls')
     def test_update_buttons_and_worker_survive_the_settings_process_exiting(self):

@@ -34,6 +34,12 @@ ColumnLayout {
             LiquidButton { objectName: "checkUpdates"; text: "Check for updates"; enabled: UpdateState.ready && !UpdateState.busy && !ShellState.demo; onClicked: UpdateState.run("check") }
             LiquidButton { objectName: "applyUpdate"; text: "Update shell"; enabled: !UpdateState.busy && UpdateState.state.canUpdate === true && !ShellState.demo; onClicked: UpdateState.run("update") }
         }
+        LabelText {
+            visible: UpdateState.state.canBootstrap === true
+            text: "Create a Git checkout at " + (UpdateState.state.checkout || "") + ". The current source folder will be preserved as a backup and replaced with a link. Saved preferences stay separate."
+            Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted
+        }
+        LiquidButton { objectName: "bootstrapUpdates"; visible: UpdateState.state.canBootstrap === true; text: "Enable Git updates"; enabled: !UpdateState.busy && !ShellState.demo; onClicked: UpdateState.run("bootstrap") }
         LabelText { text: "Updates require a clean main branch and use fast-forward only. No reset, stash or package installation is performed. Restart the shell and Settings after updating."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
     }
     SettingsCard {

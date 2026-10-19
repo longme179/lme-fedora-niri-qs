@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Avoid a second shell success toast when connecting or disconnecting Bluetooth devices. Keep application notifications, connection errors and device-state updates intact.
+
 - Reclaim abandoned Gowall preview sessions using ownership leases; keep previews in other running instances, bound cache-lock waits and clean owned previews on close. Preserve exported/applied images and prune legacy unleased jobs only after 24 hours.
 
 - Cancel owned command process groups and reject new commands during backend shutdown. Supervise Gowall even if Quickshell kills its backend directly; preserve detached Launchpad jobs, large stdin payloads, command error redaction and clipboard pipe handling.

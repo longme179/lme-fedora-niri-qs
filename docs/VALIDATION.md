@@ -1,5 +1,49 @@
 # Validation and platform limits
 
+## Audit follow-up fixes — 2026-10-20
+
+`scripts/check.sh` passed **416 tests: 331 passed, 85 opt-in checks skipped**,
+plus Bash syntax and the demo snapshot. `qmllint` scanned **141 QML files with
+zero errors and 67 existing metadata warnings**. The native notification check
+and standalone Settings checks below were run separately on private Wayland.
+
+Settings now unregisters its niri event-stream pipe before closing it. The
+regression exercises three Liquid/Smoked cycles, EOF/reconnect, subsequent
+commands and child cleanup. Standalone Settings also completed three native
+Wayland/OpenGL cycles with the same backend PID and no restart or QML errors.
+
+Local notifications use independent sequence-suffixed IDs. A same-timestamp
+burst checks that hiding/dismissing one leaves the other intact. Bluetooth
+connection/disconnection successes no longer create an extra shell status toast;
+failures remain visible, pending state clears, and Blueman notifications are
+neither muted nor removed. The native notification layout/lifecycle test passed.
+
+AC detection excludes device-scoped power supplies in both adapter and fallback
+paths. Tests cover a charging/full mouse, a device-scoped USB source and valid
+or unavailable laptop-adapter readings.
+
+Owned commands can be canceled on shutdown, with bounded process-group cleanup.
+Gowall additionally uses the existing Linux parent-death supervision pattern
+so Quickshell destroying its backend cannot leave the upscaler running. Actual
+backend SIGTERM/SIGKILL and Quickshell process-destruction tests use a fake
+Gowall with real child/grandchild processes, including children ignoring TERM.
+Detached Launchpad jobs remain running in their ownership test. Input, including
+large slow-reader payloads, uses anonymous RAM-backed stdin rather than retrying
+partial pipe writes; normal output, exit errors, redaction and wl-copy's pipe
+exception are covered.
+
+Gowall cache sessions hold ownership leases. Tests cover normal close,
+crash/restart, two active instances, failed-preview retention, export/apply
+survival, symlinks, a held cache guard and concurrent generate/close. Abandoned
+leased sessions are reclaimed on the next cache initialization. Legacy or
+interrupted markerless directories are removed only after 24 hours. Waiting
+for the shared cache lock is bounded at 0.5 seconds.
+
+Real Bluetooth connection delivery and real Gowall/GPU upscaling remain untested
+here. Abrupt-kill checks assert that no owned process remains running; adopted
+zombies are reaped by the session's init, rather than by a backend that has been
+killed. The native UI host is private Sway, not the user's niri session.
+
 ## Liquid rim optics — 2026-10-20
 
 The shared glass shader now uses an exact rounded-box normal for ordinary

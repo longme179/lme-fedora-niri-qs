@@ -177,7 +177,7 @@ QtObject {
                 if (!next.lastResult.pending) delete pending[next.lastResult.action];
                 pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

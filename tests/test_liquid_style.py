@@ -368,11 +368,13 @@ class LiquidNativeCase(unittest.TestCase):
             const text=fixture.labels(center);
             fixture.checks.white=text.length>35 && text.every(item=>item.style===Text.Normal && item.color.toString()==="#ffffff")
                 && label.color.toString()==="#ffffff" && lateLabel.item.color.toString()==="#ffffff";
-            mouse.mouseClick(entry,entry.width/2,entry.height/2);
+            // QtTest input can run a nested event loop; prevent this timer from replaying the same phase.
+            fixture.phase=2;
+            mouse.mouseClick(entry,entry.width/2,entry.height/2,Qt.LeftButton,Qt.NoModifier,150);
             mouse.keyClick(Qt.Key_A,Qt.ControlModifier);
             for(const key of [Qt.Key_1,Qt.Key_2,Qt.Key_3]) mouse.keyClick(key);
             fixture.checks.input=entry.text==="123" && entry.color.toString()==="#ffffff" && entry.background.color.a>.3 && entry.background.color.r<.15;
-            ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
+            ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});
         } else if(fixture.phase===2 && !Theme.liquidGlass) {
             fixture.checks.restored=label.style===Text.Normal && label.color.toString()==="#446688" && fixture.labels(center).every(item=>item.style===Text.Normal);
             fixture.labelColor="#668844";fixture.phase++;

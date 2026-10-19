@@ -4,6 +4,7 @@
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import Quickshell.Io
 import "qml/services"
@@ -19,6 +20,8 @@ ShellRoot {
     Component.onCompleted: if (Quickshell.env("LME_TEST_UPGRADES") !== "1") Qt.quit()
     FloatingWindow {
         id: window
+        property int renderedFrames: 0
+        Connections { target:window.contentItem.Window.window; function onFrameSwapped() { window.renderedFrames++; } }
         implicitWidth: 1280; implicitHeight: 900; fullscreen: true; title: "LME Upgrades Fixture"; color: Theme.background
         Loader {
             id: view
@@ -126,7 +129,11 @@ ShellRoot {
                 if (position.y < p.contentY || position.y + item.height > p.contentY + p.height)
                     p.contentY = Math.max(0, Math.min(p.contentHeight - p.height, position.y - 20));
             }
-            const point = item.mapToGlobal(item.width / 2, item.height / 2); return JSON.stringify({x: Math.round(point.x), y: Math.round(point.y)});
+            let ready = item.visible && item.enabled && item.width > 0 && item.height > 0;
+            for (let p = item.parent; p; p = p.parent) if (p.transitioning === true) ready = false;
+            const point = item.mapToGlobal(item.width / 2, item.height / 2);
+            if (window.contentItem.Window.window) window.contentItem.Window.window.update();
+            return JSON.stringify({x: Math.round(point.x), y: Math.round(point.y), ready:ready, frame:window.renderedFrames});
         }
         function screenshot(path: string): void { view.grabToImage(result => result.saveToFile(path)); }
         function seedNotifications(): void { Notifications.local("Timer complete", "Take a short break."); Notifications.history = [{id: "example-mail", appName: "Mail", summary: "Project update", body: "The review is ready.", timestamp: Date.now(), urgency: 1, active: false, popup: false, actions: [], transient: false}, ...Notifications.history]; }

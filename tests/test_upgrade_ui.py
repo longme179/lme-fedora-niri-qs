@@ -68,8 +68,14 @@ class UpgradeInterfaceCase(unittest.TestCase):
                     time.sleep(.1)
                 log.seek(0); raise AssertionError('UI state did not settle: ' + str(state) + '\n' + log.read())
             def click(name):
-                point = json.loads(ipc('position', name)); self.assertIn('x', point, name)
-                time.sleep(.06)
+                deadline = time.monotonic()+4
+                previous = None
+                while time.monotonic()<deadline:
+                    point = json.loads(ipc('position', name)); self.assertIn('x', point, name)
+                    if point.get('ready') and previous and point['frame']>previous['frame'] and (point['x'],point['y'])==(previous['x'],previous['y']): break
+                    previous = point
+                    time.sleep(.03)
+                else: self.fail('Click target did not settle: '+name)
                 subprocess.run([pointer, str(point['x']), str(point['y'])], check=True, timeout=4)
             def type_text(text):
                 subprocess.run(['wtype', '-s', '200', '-M', 'ctrl', '-k', 'a', '-m', 'ctrl', text], check=True, env=env, timeout=4)

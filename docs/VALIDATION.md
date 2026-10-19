@@ -1,5 +1,60 @@
 # Validation and platform limits
 
+## Selected controls and custom button glass — 2026-10-19
+
+Default `scripts/check.sh`: **378 tests, 294 passed, 84 opt-in checks skipped**;
+Bash syntax and the demo snapshot passed. The nine focused contrast/material,
+selection-lens, tab geometry, pointer-lighting, input and texture-lifecycle checks
+also passed on private Wayland. `qmllint`: **134 files, zero errors, 67 existing
+metadata warnings**. Python compilation and whitespace checks passed.
+
+The expanded run is **not fully green**: **372 passed, four failures, one error,
+one optional Matugen skip**, out of 378 tests. The remaining cases concern initial
+bar IPC timeout, BlueZ startup readiness, a popup-close wall-time deadline,
+spring-settling sampling and the long Settings keyboard-input flow. An untouched
+`710b11c` replay also hit the same initial bar IPC timeout and popup-close deadline;
+its Settings flow failed to receive an earlier profile-name edit. BlueZ readiness
+passed in isolation. These results do not prove every expanded failure has the
+same cause or erase the failures; no deadlines or assertions were relaxed to
+obtain a green result. They remain broader validation limits for this environment.
+
+Selected/filled buttons keep their preferred foreground when it reaches a 4.5:1
+contrast ratio against the estimated plate; otherwise they use black or white.
+Opaque light/dark, midgray and saturated fills are checked numerically. Alpha
+plates use the panel tint as an estimate, and material-backed controls account
+for glass brightness. This is not a guarantee against every live application
+behind a transparent surface. Flat controls do not inherit material dimming.
+
+Ordinary Liquid labels keep their white-text behavior. Contrast-managed button
+labels opt out explicitly, including Agenda, Calendar's current day, Settings
+navigation, workspace pills and notification actions. No font or saved theme
+preferences are rewritten. Existing spring motion and input handlers are retained.
+
+The button owns one shared material parented to its background, so a custom
+background no longer removes glass. Power's alpha calculation now retains the
+surface color's alpha rather than replacing it with 55% opaque white. The
+duplicate quick-tile material is removed. Dropdown triggers get the same glass;
+raw color swatches, flat hit areas and transparent resting bar controls retain
+their intended appearance. No per-button capture or additional blur pass is added.
+
+The native OpenGL case covers all five Power actions, Agenda/Calendar selection,
+custom backgrounds, dropdowns, raw swatches, flat/transparent exclusions,
+brightness changes, one shared backdrop, hiding/reopening and Smoked restoration.
+A captured Power/Control Center frame was visually checked: selected text is dark
+on the pale Calendar/tab fill, Power plates are transparent with visible rims,
+and labels fit their controls. The private Sway/Mesa session does not reproduce
+the owner's niri compositor blur or Radeon/RTX presentation performance.
+
+Input validation keeps its existing assertions and 15-second deadline. A 150 ms
+QtTest click, longer than its timer interval, reproduced reentrant input and
+premature phase changes before the guard. The test now advances its phase before
+entering QtTest's nested event loop and retains that delayed click as a regression.
+The broad Settings fixture also waits for stable positions across rendered frames
+and completed parent motion before sending a real pointer click. Its four-second
+interaction budgets and functional assertions remain unchanged. A previous broad
+run's four-second IPC timeout did not recur in the focused Settings replay; its
+original cause was not established.
+
 ## Selection lens, wallpaper playback and launcher ranking — 2026-10-19
 
 Expanded private Wayland `scripts/check.sh` completed **376 tests: 375 passed,

@@ -66,6 +66,9 @@ class BarPopupEntryCase(unittest.TestCase):
             source = (repo/'shell.qml').read_text().replace('id: root\n', '''id: root
     property var fixtureBar: null
     property var fixtureEntry: ({})
+    property bool fixtureGrowing: false
+    property real fixturePreviousHeight: 0
+    property bool fixtureIntermediate: false
     function captureEntry(popup) {
         const bounds=popup.mapToItem(overlay.contentItem,0,0,popup.width,popup.height);
         fixtureEntry={outside:bounds.right<0 || bounds.left>overlay.screen.width || bounds.bottom<0 || bounds.top>overlay.screen.height,
@@ -73,14 +76,21 @@ class BarPopupEntryCase(unittest.TestCase):
     }
     Connections { target: panelLoader; function onShownChanged() { if (panelLoader.shown) Qt.callLater(() => root.captureEntry(panelLoader)); } }
     Connections { target: activityIsland; function onShownChanged() { if (activityIsland.shown) Qt.callLater(() => root.captureEntry(activityIsland)); } }
+    Connections { target: activityIsland; function onHeightChanged() {
+        if (root.fixtureGrowing && activityIsland.height>root.fixturePreviousHeight+1 && activityIsland.height<activityIsland.expandedHeight-1)
+            root.fixtureIntermediate=true;
+    } }
 ''', 1)
             source = source.replace('id: bar; anchors.fill:', 'id: bar; Component.onCompleted: root.fixtureBar = bar; anchors.fill:', 1)
             source = source.replace('target: "shell"', '''target: "shell"
         function fixtureStatus(): string { return JSON.stringify({ready:ShellState.backendReady && !!root.fixtureBar,
             control:ShellState.controlOpen, activity:ShellState.activityOpen, mounted:panelLoader.mounted || activityIsland.mounted,
             progress:ShellState.activityOpen ? activityIsland.progress : panelLoader.progress,
-            height:activityIsland.height, targetHeight:activityIsland.expandedHeight, entry:root.fixtureEntry}); }
-        function fixtureGrow(): void { activityIsland.item.implicitHeight += 140; }
+            height:activityIsland.height, targetHeight:activityIsland.expandedHeight, resizedInFlight:root.fixtureIntermediate, entry:root.fixtureEntry}); }
+        function fixtureGrow(): void {
+            root.fixturePreviousHeight=activityIsland.height; root.fixtureGrowing=true; root.fixtureIntermediate=false;
+            activityIsland.item.implicitHeight += 140;
+        }
         function fixturePoint(module: string): string {
             function find(item) { if (item.moduleId===module && item.item) return item; for (const child of item.children || []) { const hit=find(child); if (hit) return hit; } return null; }
             const item=find(root.fixtureBar);
@@ -113,7 +123,8 @@ class BarPopupEntryCase(unittest.TestCase):
                         self.assertEqual(state['entry'],dict(outside=True,edge=edge,opacity=1,contentOpacity=1))
                         if panel == 'activity':
                             before=state['height']; ipc('fixtureGrow')
-                            wait(lambda s:before+1<s['height']<s['targetHeight']-1)
+                            # Observe intermediate spring values inside QML; an IPC round-trip can outlast the resize.
+                            wait(lambda s:s.get('resizedInFlight') and s['targetHeight']>before+1)
                             wait(lambda s:abs(s['height']-s['targetHeight'])<.1)
                         ipc('close'); wait(lambda s:not s.get('mounted',True))
                     log.seek(0); output=log.read()

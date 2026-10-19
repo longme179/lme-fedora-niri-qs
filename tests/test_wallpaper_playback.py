@@ -35,7 +35,7 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         self.preferences.set('wallpaperOutputs',None,token='eDP-1')
         self.assertEqual(self.preferences.values['wallpaperOutputs'],{'HDMI-A-1':a})
         saved=self.preferences.path.read_bytes()
-        for key,value in [('wallpaperPlaylist',[a]*501),('wallpaperPlaylist',['relative.png']),('wallpaperPlaylist',['/bad\0.png']),('wallpaperPlaylistInterval',True),('wallpaperPlaylistInterval',29),('wallpaperPlaylistInterval',86401),('wallpaperOutputs',{'--help':a}),('wallpaperTransition','invalid'),('wallpaperTransition',[]),('wallpaperTransitionDuration',float('nan'))]:
+        for key,value in [('wallpaperPlaylist',[a]*501),('wallpaperPlaylist',['relative.png']),('wallpaperPlaylist',['/bad\0.png']),('wallpaperPlaylistInterval',True),('wallpaperPlaylistInterval',29),('wallpaperPlaylistInterval',86401),('wallpaperOutputs',{'--help':a}),('wallpaperTransition','invalid'),('wallpaperTransition',[]),('wallpaperTransitionDuration',float('nan')),('wallpaperTransitionDuration',float('inf')),('wallpaperTransitionDuration',10**1000)]:
             with self.subTest(key=key,value=value),self.assertRaises(ValueError): self.preferences.set(key,value)
         self.assertEqual(self.preferences.path.read_bytes(),saved)
         preset=document(self.preferences.values,'preset')['settings']

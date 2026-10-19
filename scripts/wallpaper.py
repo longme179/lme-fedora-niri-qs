@@ -3,7 +3,6 @@
 from pathlib import Path
 from contextlib import contextmanager
 import fcntl
-import math
 import os
 import random
 import re
@@ -41,7 +40,7 @@ def validate(key,value):
     if key=='wallpaperPlaylistInterval' and type(value) is int and 30<=value<=86400: return value
     if key=='wallpaperPlaylistOutput': return output_name(value,shared=True)
     if key=='wallpaperTransition' and isinstance(value,str) and value in TRANSITIONS: return value
-    if key=='wallpaperTransitionDuration' and type(value) in (int,float) and math.isfinite(value) and .1<=value<=10: return float(value)
+    if key=='wallpaperTransitionDuration' and type(value) in (int,float) and .1<=value<=10: return float(value)
     if key=='wallpaperPlaylist' and isinstance(value,list) and len(value)<=500:
         paths=list(dict.fromkeys(image_path(path) for path in value))
         if sum(len(path.encode('utf-8')) for path in paths)<=128*1024: return paths

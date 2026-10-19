@@ -438,15 +438,14 @@ class BackendCase(Fixture, unittest.TestCase):
         self.assertFalse((self.root / "unsafe").exists())
 
     def test_command_runner_reports_missing_timeout_and_exit_status(self):
-        with patch.object(backend.shutil, "which", return_value="/usr/bin/true"):
-            runner = backend.CommandRunner()
-        with patch.object(backend.subprocess, "run", side_effect=subprocess.TimeoutExpired("wpctl", 3)):
-            with self.assertRaisesRegex(backend.CommandError, "timed out"):
-                runner.run("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
-        completed = subprocess.CompletedProcess(["wpctl"], 7, "", "No session")
-        with patch.object(backend.subprocess, "run", return_value=completed) as command:
+        runner = backend.CommandRunner()
+        runner.commands['wpctl'] = sys.executable
+        self.assertEqual(runner.run('wpctl', '-c', 'print("Ready")'), 'Ready')
+        with self.assertRaisesRegex(backend.CommandError, "timed out"):
+            runner.run("wpctl", '-c', 'import time; time.sleep(10)', timeout=.03)
+        with patch.object(backend.subprocess, "Popen", wraps=subprocess.Popen) as command:
             with self.assertRaisesRegex(backend.CommandError, "failed \\(7\\): No session"):
-                runner.run("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "40%")
+                runner.run("wpctl", '-c', 'import sys; sys.stderr.write("No session"); sys.exit(7)')
             self.assertIsInstance(command.call_args.args[0], list)
             self.assertNotIn("shell", command.call_args.kwargs)
         runner.commands["wpctl"] = None
@@ -456,11 +455,10 @@ class BackendCase(Fixture, unittest.TestCase):
 
     def test_command_errors_strip_terminal_colors_before_truncation_and_redact_input(self):
         runner = backend.CommandRunner()
-        runner.commands['matugen'] = '/usr/bin/true'
-        completed = subprocess.CompletedProcess(['matugen'], 1, '', '\x1b[91mMultiple source colors\x1b[0m\n\x1b[1;33mprivate input\x1b[0m')
-        with patch.object(backend.subprocess, 'run', return_value=completed):
-            with self.assertRaises(backend.CommandError) as caught:
-                runner.run('matugen', 'image', input='private input')
+        runner.commands['matugen'] = sys.executable
+        error = '\x1b[91mMultiple source colors\x1b[0m\n\x1b[1;33mprivate input\x1b[0m'
+        with self.assertRaises(backend.CommandError) as caught:
+            runner.run('matugen', '-c', 'import sys,time; time.sleep(.15); sys.stderr.write('+repr(error)+'); sys.exit(1)', input='private input')
         self.assertIn('Multiple source colors', str(caught.exception))
         self.assertIn('[redacted]', str(caught.exception))
         self.assertNotIn('\x1b', str(caught.exception))

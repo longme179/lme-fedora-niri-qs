@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cancel owned command process groups and reject new commands during backend shutdown. Supervise Gowall even if Quickshell kills its backend directly; preserve detached Launchpad jobs, large stdin payloads, command error redaction and clipboard pipe handling.
+
 - Ignore device-scoped power supplies when detecting laptop AC power, including the status fallback used when adapter readings are unavailable.
 
 - Give local notifications a sequence-based ID suffix, so notices created in the same millisecond can be dismissed independently.

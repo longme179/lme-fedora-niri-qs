@@ -128,10 +128,9 @@ class UpgradesCase(Fixture, unittest.TestCase):
         self.assertFalse(live.feature_jobs)
 
     def test_password_never_appears_in_command_error(self):
-        runner = backend.CommandRunner(); runner.commands["nmcli"] = "/usr/bin/nmcli"
-        result = subprocess.CompletedProcess([], 1, "", "Failed: secret-value")
-        with patch("desktop_backend.subprocess.run", return_value=result):
-            with self.assertRaises(backend.CommandError) as error: runner.run("nmcli", "--ask", input="secret-value\n")
+        runner = backend.CommandRunner(); runner.commands["nmcli"] = sys.executable
+        with self.assertRaises(backend.CommandError) as error:
+            runner.run("nmcli", '-c', 'import sys; sys.stderr.write("Failed: secret-value"); sys.exit(1)', input="secret-value\n")
         self.assertNotIn("secret-value", str(error.exception))
 
     def test_demo_new_features_do_not_mutate_disk_or_hardware(self):

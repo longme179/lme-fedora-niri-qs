@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a local Launchpad for named binaries and Bash scripts, background/terminal dispatch, per-command logs and launcher search. Expose an optional top bar module and an editor in Shell utilities; keep commands out of portable appearance presets.
+
 - Keep all Liquid labels white, including selected tabs, calendar dates and close buttons on hover. Remove automatic black/white foreground switching; preserve Smoked colors and the shared glass material.
 - Keep the shared glass material when a button supplies its own background. Fix Power's opaque gray fill, cover dropdown triggers, and preserve raw color swatches and intentionally flat hit areas. Reuse existing spring/hover behavior and remove the duplicate tile material.
 - Keep a complete multiword app-name match ahead of more frequently launched apps with longer matching names.

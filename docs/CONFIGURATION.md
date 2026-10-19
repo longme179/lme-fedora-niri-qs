@@ -567,3 +567,23 @@ After updating, close Settings and restart the existing shell instance to load
 all backend/shader changes. Use the commands in [Updates](../README.md#updates),
 adjusting the config name if you use `gpt`. New package requirements still need
 `setup.sh`; GUI updates never run sudo/DNF. Demo/preview mode disables updates.
+
+## Launchpad
+
+Open **Settings → Shell utilities → Launchpad**, or add the Launchpad module in
+**Top bar**. Add a name, executable with quoted arguments or an explicit Bash
+script, optional absolute working directory, and background/terminal mode.
+Entries are searchable in the application launcher; no favorites are involved.
+Executable mode does not expand shell variables or pipes. Use Bash for those.
+
+Background output is saved to `$XDG_STATE_HOME/lme-shell/launchpad/ID.log`
+(default `~/.local/state/lme-shell/launchpad/ID.log`), replaced on the next run.
+The panel reports running/exit status for commands launched by that backend.
+Up to eight commands can run concurrently; repeated runs of the same active
+entry are rejected. Commands continue after shell exit. Terminal commands use
+the configured terminal's `-e` convention and wait for Enter after completion.
+
+Names, commands and working directories live in `launchpadEntries` inside
+`settings.json`. Per-entry saves merge with concurrent writers. Backups include
+commands; portable appearance presets exclude them. Importing or saving never
+runs a command. Review commands before pressing Run.

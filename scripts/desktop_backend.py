@@ -52,6 +52,7 @@ from settings_transfer import export_document, read_document, document
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
+from launchpad import Launchpad, entries as launchpad_entries
 
 
 DEFAULT_PREFERENCES = {
@@ -69,7 +70,7 @@ DEFAULT_PREFERENCES = {
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
-    "wallpaperFolder": "", **WALLPAPER_DEFAULTS, "launcherRanking": True,
+    "wallpaperFolder": "", **WALLPAPER_DEFAULTS, "launcherRanking": True, "launchpadEnabled": True, "launchpadEntries": {},
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "notificationWidth": 380, "notificationPosition": "bar", "notificationMargin": 14,
     "notificationRadius": 28, "notificationPadding": 16, "notificationOpacity": .90,
@@ -89,7 +90,7 @@ DEFAULT_PREFERENCES = {
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
@@ -298,6 +299,8 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
     if key == "glassSelection" and type(value) is bool: return value
+    if key == 'launchpadEntries': return launchpad_entries(value)
+    if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
@@ -389,7 +392,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "desktopWidgets": return desktop_widgets(value)
     if key == "barGestures":
         actions = {"default", "none", "control", "audio", "devices", "agenda", "system", "wifi", "notifications", "activity",
-                   "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
+                   "launchpad", "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
                    "volumeUp", "volumeDown", "mediaToggle", "mediaNext", "mediaPrevious", "workspaceNext", "workspacePrevious"}
         gestures = {"left", "right", "middle", "scrollUp", "scrollDown"}
         if (isinstance(value, dict) and set(value) <= BAR_MODULES
@@ -481,7 +484,7 @@ class Preferences:
     def set(self, key: str, value: Any, token: str | None = None) -> None:
         if token is not None:
             if not isinstance(token, str): raise ValueError('Invalid setting token')
-            value = ({} if value is None else {token:value}) if key == 'wallpaperOutputs' else {token:value} if key == 'liquidGlass' else widget_patch(token,value) if key == 'desktopWidgets' else theme_token(key,token,value)
+            value = ({} if value is None else {token:value}) if key in ('wallpaperOutputs','launchpadEntries') else {token:value} if key == 'liquidGlass' else widget_patch(token,value) if key == 'desktopWidgets' else theme_token(key,token,value)
             if key == 'wallpaperOutputs':
                 if not token: raise ValueError('A display name is required')
                 validate_wallpaper('wallpaperPlaylistOutput',token)
@@ -570,6 +573,7 @@ class DesktopBackend:
         self.feature_jobs = {}
         self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.launcher_history = LauncherHistory()
+        self.launchpad = Launchpad()
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
         self.palette_preview = {"colors": {}, "path": ""}
@@ -1028,7 +1032,7 @@ class DesktopBackend:
                 "monitor": self.monitor.state if self.monitor_enabled else {}}
 
     def feature_snapshot(self):
-        return {"preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+        return {"launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "displays": self.displays,
@@ -1217,7 +1221,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1288,7 +1292,7 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action == "imageAnnotate": pass
+        elif action in ("imageAnnotate", "launchpadRun"): pass
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
@@ -1328,12 +1332,12 @@ class DesktopBackend:
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
             if 'token' in request:
-                if key == 'wallpaperOutputs':
+                if key in ('wallpaperOutputs','launchpadEntries'):
                     token=request['token']
-                    validate_wallpaper('wallpaperOutputs',{token:request.get('value') or '/preview.png'})
+                    if key=='wallpaperOutputs': validate_wallpaper('wallpaperOutputs',{token:request.get('value') or '/preview.png'})
                     current=dict(self.preferences.values[key]); current.pop(token,None)
-                    if request.get('value') is not None: current.update(validate_wallpaper(key,{token:request['value']}))
-                    self.preferences.values[key]=validate_wallpaper(key,current)
+                    if request.get('value') is not None: current.update(validate_preference(key,{token:request['value']}))
+                    self.preferences.values[key]=validate_preference(key,current)
                     return 'Display wallpaper saved'
                 if key == 'desktopWidgets':
                     self.preferences.values[key] = merge_widgets(self.preferences.values[key],widget_patch(request['token'],request.get('value')),request['token'])
@@ -1658,6 +1662,9 @@ class DesktopBackend:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
             return "State refreshed"
+        if action == 'launchpadRun':
+            if not self.preferences.values['launchpadEnabled']: raise ValueError('Launchpad is disabled')
+            return self.launchpad.run(request.get('id'),self.preferences.values['launchpadEntries'],self.preferences.values['terminal'],request.get('mode'))
         if action == "launch":
             app_id = request.get("id")
             if not isinstance(app_id, str) or app_id not in self.applications.entries:

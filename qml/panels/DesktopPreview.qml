@@ -34,16 +34,17 @@ Item {
         objectName: "desktopPanel"
         exitToEdge: true
         readonly property Item panel: item as Item
-        readonly property bool centered: ["launcher", "power", "overview", "settings", "clipboard"].includes(ShellState.panelKind)
+        readonly property bool centered: ["launchpad", "launcher", "power", "overview", "settings", "clipboard"].includes(ShellState.panelKind)
         direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
         shown: ShellState.panelOpen && !ShellState.activityOpen
-        content: ShellState.panelKind === "launcher" ? launcher : ShellState.panelKind === "control" ? control
+        content: ShellState.panelKind === "launchpad" ? launchpad : ShellState.panelKind === "launcher" ? launcher : ShellState.panelKind === "control" ? control
                          : ShellState.panelKind === "notifications" ? notifications : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : ShellState.panelKind === "clipboard" ? clipboard : power
         width: panel ? Math.min(panel.implicitWidth, root.width - 32) : 400
         height: panel ? Math.min(panel.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
         y: centered ? (root.height - height) / 2 : Theme.barBottom ? root.height - height - Theme.panelTopMargin : Theme.panelTopMargin
     }
+    Component { id: launchpad; LaunchpadPanel {} }
     Component { id: launcher; Launcher {} }
     Component { id: control; ControlCenter {} }
     Component { id: notifications; NotificationCenter {} }

@@ -10,6 +10,7 @@ QtObject {
         {key: "nightLight", title: "Night Light", icon: "weather-sun", description: "Softer light after sunset", keywords: "blue gamma warm temperature schedule sunrise sunset wlsunset"},
         {key: "desktop", title: "Desktop widgets", icon: "overview", description: "Clock, notes and media on your desktop", keywords: "canvas drag resize widget output screen edit"},
         {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "playlist shuffle pause interval transition display output background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
+        {key: "utilities", title: "Shell utilities", icon: "applications", description: "Your commands and image tools", keywords: "launchpad scripts bash commands binary background terminal gowall upscale palette awww wallpaper"},
         {key: "weather", title: "Weather", icon: "weather-sun", description: "Local conditions, wherever you are", keywords: "location city automatic ip forecast celsius fahrenheit temperature"},
         {key: "notifications", title: "Notifications", icon: "bell", description: "Messages with room to breathe", keywords: "popup toast appearance width position padding radius border opacity title body color font idle animation rotation cloud"},
         {key: "clipboard", title: "Clipboard", icon: "clipboard", description: "Text and images, ready when you need them", keywords: "history capture copy paste image pin"},

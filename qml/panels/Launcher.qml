@@ -29,12 +29,14 @@ Item {
         const windows = (ShellState.niri.windows || []).filter(w => [w.title || "", w.app_id || ""].join(" ").toLowerCase().includes(text)).map(w => ({kind: "window", id: "window-" + w.id, windowId: w.id, name: w.title || w.app_id || "Window", detail: "Open window · workspace " + (((ShellState.niri.workspaces || []).find(ws => ws.id === w.workspace_id) || {}).idx || "—"), icon: ShellState.windowIcon(w)}));
         if (mode === "windows") return windows;
         const apps = Search.apps(text, ShellState.apps, ShellState.preferences.launcherRanking === false ? {} : ShellState.launcherUsage).map(a => ({kind: "app", id: a.id, name: a.name, detail: a.genericName || a.comment || "Launch application", icon: ShellState.appIcon(a.icon)}));
-        return [...apps, ...(text ? windows : [])];
+        const commands=ShellState.preferences.launchpadEnabled===false ? [] : Search.apps(text,Object.keys(ShellState.preferences.launchpadEntries || {}).map(id=>Object.assign({id:id},ShellState.preferences.launchpadEntries[id]))).map(entry=>({kind:"launchpad",id:"launchpad-"+entry.id,commandId:entry.id,name:entry.name,detail:"Launchpad · "+(entry.terminal ? "Terminal" : "Background"),icon:ShellState.appIcon("utilities-terminal")}));
+        return [...apps, ...commands, ...(text ? windows : [])];
     }
     function activate(index) {
         const item = results[index];
         if (!item) return;
         if (item.kind === "app") ShellState.run("launch", {id: item.id});
+        else if (item.kind === "launchpad") ShellState.run("launchpadRun",{id:item.commandId});
         else if (item.kind === "window") ShellState.run("focusWindow", {id: item.windowId});
         else if (item.kind === "file") ShellState.run("fileOpen", {path: item.path});
         else ShellState.run("copyText", {text: item.value});

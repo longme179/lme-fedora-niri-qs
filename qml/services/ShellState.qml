@@ -22,6 +22,7 @@ QtObject {
     readonly property bool liquidBlurEnabled: !demo && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     property string panelKind: "control"
+    property bool launchpadOpen: false
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool notificationsOpen: false
@@ -42,7 +43,7 @@ QtObject {
     property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
+    readonly property bool panelOpen: launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -68,7 +69,7 @@ QtObject {
     }
 
     function closePanels() {
-        launcherOpen = false; controlOpen = false; notificationsOpen = false;
+        launchpadOpen = false; launcherOpen = false; controlOpen = false; notificationsOpen = false;
         powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false; wifiOpen = false;
     }
     function togglePanel(name, screen) {
@@ -78,7 +79,7 @@ QtObject {
             return;
         }
         const key = name + "Open";
-        if (!["launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
+        if (!["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
@@ -87,7 +88,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
+        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
         closePanels(); settingsPage = page;
         if (demo) { panelKind = "settings"; settingsOpen = true; }
         else if (!settingsProcess.running) settingsProcess.running = true;

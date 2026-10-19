@@ -5,6 +5,7 @@ QtObject {
     readonly property var zones: ["left", "center", "right"]
     readonly property var defaults: ({left: ["launcher", "overview", "workspaces"], center: ["activity"], right: ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]})
     readonly property var modules: [
+        {id: "launchpad", title: "Launchpad", detail: "Your scripts and binaries", icon: "applications"},
         {id: "launcher", title: "Applications", detail: "Application launcher", icon: "applications"},
         {id: "overview", title: "Overview", detail: "niri overview and workspace board", icon: "overview"},
         {id: "workspaces", title: "Workspaces", detail: "Workspace switcher", icon: "overview"},

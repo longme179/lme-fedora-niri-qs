@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Ignore device-scoped power supplies when detecting laptop AC power, including the status fallback used when adapter readings are unavailable.
+
 - Give local notifications a sequence-based ID suffix, so notices created in the same millisecond can be dismissed independently.
 
 - Unregister niri event-stream pipes before closing them. Keep Settings alive through repeated Liquid/Smoked switches and stream reconnects, and reap the stream child on shutdown.

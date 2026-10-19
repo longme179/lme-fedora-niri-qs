@@ -730,7 +730,7 @@ class DesktopBackend:
         return {"niriVersion": version, "popupBlurSupported": bool(release and tuple(map(int, release.groups())) >= (26, 4))}
 
     def ac_online(self):
-        supplies = list((self.sysfs / "class/power_supply").glob("*"))
+        supplies = [p for p in (self.sysfs / "class/power_supply").glob("*") if self.read(p / "scope") != "Device"]
         online = [self.read(p / "online") for p in supplies if self.read(p / "type") != "Battery"]
         if any(v in {"0", "1"} for v in online): return "1" in online
         statuses = [self.read(p / "status") for p in supplies if self.read(p / "type") == "Battery"]

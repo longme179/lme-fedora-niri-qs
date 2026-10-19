@@ -70,6 +70,25 @@ class LaptopCase(Fixture, unittest.TestCase):
         self.assertFalse(self.make_backend().ac_online())
         (supplies/'AC/online').write_text('1'); self.assertTrue(self.make_backend().ac_online())
 
+    def test_peripheral_charging_and_device_supplies_do_not_select_ac_profile(self):
+        self.put('sys/class/power_supply/BAT0/type', 'Battery')
+        self.put('sys/class/power_supply/BAT0/scope', 'System')
+        self.put('sys/class/power_supply/BAT0/status', 'Discharging')
+        self.put('sys/class/power_supply/mouse/type', 'Battery')
+        self.put('sys/class/power_supply/mouse/scope', 'Device')
+        live = self.make_backend()
+        for status in ('Charging', 'Full'):
+            self.put('sys/class/power_supply/mouse/status', status)
+            with self.subTest(status=status): self.assertFalse(live.ac_online())
+        self.put('sys/class/power_supply/device-charger/type', 'USB')
+        self.put('sys/class/power_supply/device-charger/scope', 'Device')
+        self.put('sys/class/power_supply/device-charger/online', '1')
+        for online, expected in (('0', False), ('1', True), ('unknown', False)):
+            self.put('sys/class/power_supply/AC/type', 'Mains')
+            self.put('sys/class/power_supply/AC/online', online)
+            with self.subTest(online=online):
+                self.assertEqual(live.battery()['acOnline'], expected)
+
     def test_settings_reads_live_idle_status_without_starting_another_daemon(self):
         path=str(Path(backend.__file__).resolve().parents[1]/"shell.qml")
         state={'source':'ac','running':True,'available':True,'paused':True,'error':'Example error'}

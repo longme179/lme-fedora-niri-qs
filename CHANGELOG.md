@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unregister niri event-stream pipes before closing them. Keep Settings alive through repeated Liquid/Smoked switches and stream reconnects, and reap the stream child on shutdown.
+
 - Refine Liquid's directional rim with exact rounded-box normals, a narrower caustic and shallow inner shading that separates glass from bright apps. Preserve clear interiors, white labels and the existing texture/render-pass budget.
 
 - Show connected peripheral batteries in Control Center → Devices, with a saved alert switch and 5–50% threshold in Behavior. Preserve unknown/0% readings, merge Bluetooth/kernel duplicates and prevent repeated alerts across reconnects within a shell session. Keep device batteries out of the laptop battery aggregate.

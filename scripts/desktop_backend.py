@@ -1976,7 +1976,10 @@ def main(argv: list[str] | None = None) -> int:
     def close_event_stream():
         nonlocal event_process
         if event_process is None: return
-        if event_process.stdout: event_process.stdout.close()
+        if event_process.stdout:
+            try: selector.unregister(event_process.stdout)
+            except (KeyError, ValueError): pass
+            event_process.stdout.close()
         if event_process.poll() is None:
             event_process.terminate()
             try: event_process.wait(timeout=1)
@@ -2062,8 +2065,8 @@ def main(argv: list[str] | None = None) -> int:
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)
-        selector.close()
         close_event_stream()
+        selector.close()
 
 
 if __name__ == "__main__":

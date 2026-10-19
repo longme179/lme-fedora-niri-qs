@@ -10,8 +10,8 @@ texture sample, render pass or continuous animation was introduced. Existing
 white foregrounds, tint/brightness/feather controls and Smoked mode are preserved.
 The tracked Qt shader binary was rebuilt from the modified source.
 
-Nine opt-in private Wayland/OpenGL checks passed: three pointer/pixel cases and
-six glass-control cases. They cover moving rim highlights, spring retargeting,
+Nine focused checks passed: five private Wayland/OpenGL pointer, pixel and UI
+cases, plus four backend glass-control cases. They cover moving rim highlights, spring retargeting,
 idle/hidden cleanup, unchanged clear centers, corners, bright/dark backgrounds,
 zero brightness, group opacity and preference boundaries. Before/after renders
 were inspected. Full-suite and QML lint results are recorded below.
@@ -39,8 +39,9 @@ disconnect/removal, adapter coverage, cache reuse, battery property changes and
 portable preference validation. Three QML regressions cover alert latching,
 5-point recovery hysteresis, charging, reconnects, disabled alerts, unknown
 readings, bounded session state, batched notifications, DND and demo/Settings
-isolation. Device names wrap at narrow widths. Seven private BlueZ protocol/UI
-tests and the existing polling/backend regressions passed.
+isolation. Device names wrap at narrow widths. Seven Bluetooth cases passed,
+including five native protocol/UI cases on a private bus and two validation
+cases, alongside the existing polling/backend regressions.
 
 The combined feature tree passed `scripts/check.sh`: **399 tests, 314 passed,
 85 opt-in checks skipped**, plus Bash syntax and the demo backend snapshot.

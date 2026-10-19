@@ -386,9 +386,10 @@ plates for separation; compositor blur samples surfaces behind the shell window,
 not widgets drawn within that same window.
 This is a hybrid effect: a bounded wallpaper image supplies the thin refractive
 rim, **not live application refraction**. No desktop screenshots or capture
-permissions are used. Wallpaper crossfades and moved floating Settings windows
-are not tracked exactly: the rim uses the saved image and assumes floating
-windows are centered. Layer-shell panels follow their output and margins.
+permissions are used. The rim uses the saved image rather than capturing a
+wallpaper transition. Floating windows follow niri's reported layout; an unknown
+or ambiguous window falls back to centered sampling. Settings watches geometry
+only in Liquid mode. Layer-shell panels follow their output and margins.
 
 Each visible GPU window shares one wallpaper texture, decoded at half logical
 resolution, capped at 1280 × 720. There are no per-button capture/poll timers;

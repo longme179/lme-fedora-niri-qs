@@ -978,6 +978,8 @@ class DesktopBackend:
                 outputs=self.display_control.outputs() if self.mirror.child else None,
                 enabled=self.preferences.values['mirroringEnabled'])
         if self.settings_only:
+            # Only Liquid floating windows need compositor coordinates for their rim sampler.
+            self.niri = self.niri_state() if self.preferences.values['surfaceStyle'] == 'liquid' else {"available": False, "windows": [], "workspaces": []}
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -1933,6 +1935,8 @@ def main(argv: list[str] | None = None) -> int:
             selector.register(sys.stdin, selectors.EVENT_READ, "input")
         while True:
             changed = False
+            if args.settings and backend.preferences.values['surfaceStyle'] != 'liquid' and event_process is not None:
+                close_event_stream()
             if not args.demo and event_process is None and backend.niri["available"] and time.monotonic() >= next_event_retry:
                 try:
                     event_process = subprocess.Popen(

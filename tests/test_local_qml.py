@@ -28,11 +28,21 @@ ShellRoot {
         console.log("LOCAL_QML_RESULT " + JSON.stringify(value));
         Qt.quit();
     }
-''' + body + '\n}')
+''' + body + '''
+    Timer {
+        interval: 2000; running: true; repeat: true
+        onTriggered: {
+            const state = typeof ShellState === "undefined" ? null : ShellState;
+            console.log("LOCAL_QML_HEALTH " + JSON.stringify({phase:fixture.phase, ticks:fixture.ticks,
+                ready:state ? state.backendReady : null, pending:state ? state.pendingActions : null}));
+        }
+    }
+}''')
             env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", LME_SHELL_DEMO="1",
                        XDG_CONFIG_HOME=str(root / "home"), XDG_STATE_HOME=str(root / "state"),
                        XDG_DATA_HOME=str(root / "data"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"))
             env.update(environment or {})
+            env.setdefault("QSG_INFO", "1")
             try:
                 result = subprocess.run(["quickshell", "-p", str(entry)], env=env, capture_output=True, text=True, timeout=15)
             except subprocess.TimeoutExpired as error:

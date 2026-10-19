@@ -1,11 +1,14 @@
 """Gowall CLI adapter: isolated outputs, explicit preview/export/apply."""
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+import fcntl
 import os
 import re
 import shlex
 import shutil
 import tempfile
+from threading import Lock
+import time
 import uuid
 from wallpaper import image_path
 
@@ -49,6 +52,53 @@ class ImageUtilities:
         self.runner,self.wallpapers,self.launchpad=runner,wallpapers,launchpad
         self.state={'themes':[],'images':[],'colors':[],'operation':'','log':''}
         self.directory=None
+        self.session=None;self.owner=None;self.closed=False;self.lock=Lock()
+
+    def cache(self):
+        if self.session is not None: return self.session
+        cache=Path(os.environ.get('XDG_CACHE_HOME',Path.home()/'.cache'))/'lme-shell/gowall'
+        cache.mkdir(parents=True,exist_ok=True,mode=0o700)
+        with os.fdopen(os.open(cache/'.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600),'r+b') as guard:
+            deadline=time.monotonic()+.5
+            while True:
+                try: fcntl.flock(guard,fcntl.LOCK_EX|fcntl.LOCK_NB);break
+                except BlockingIOError:
+                    if time.monotonic()>=deadline: raise ValueError('Gowall cache is busy. Try again shortly.')
+                    time.sleep(.02)
+            for path in cache.iterdir():
+                if path.is_symlink() or not path.is_dir(): continue
+                try:
+                    if path.name.startswith('session-'):
+                        try: descriptor=os.open(path/'.owner',os.O_RDWR|os.O_NOFOLLOW)
+                        except FileNotFoundError:
+                            if time.time()-path.stat().st_mtime>=86400: shutil.rmtree(path)
+                            continue
+                        with os.fdopen(descriptor,'r+b') as owner:
+                            try: fcntl.flock(owner,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                            except BlockingIOError: continue
+                            shutil.rmtree(path)
+                    # Old versions have no ownership lease; allow a day for their jobs to finish.
+                    elif path.name.startswith('job-') and time.time()-path.stat().st_mtime>=86400:
+                        shutil.rmtree(path)
+                except OSError: pass
+            session=Path(tempfile.mkdtemp(prefix='session-',dir=cache))
+            owner=None
+            try:
+                owner=(session/'.owner').open('xb')
+                fcntl.flock(owner,fcntl.LOCK_EX)
+            except BaseException:
+                if owner: owner.close()
+                shutil.rmtree(session,ignore_errors=True)
+                raise
+            self.session,self.owner=session,owner
+        return self.session
+
+    def close(self):
+        with self.lock:
+            self.closed=True
+            if self.session: shutil.rmtree(self.session,ignore_errors=True)
+            if self.owner: self.owner.close();self.owner=None
+            self.session=self.directory=None
 
     def themes(self):
         output=self.runner.run('gowall','list',timeout=10,input='')
@@ -62,15 +112,18 @@ class ImageUtilities:
         return paths
 
     def generate(self,request):
+        with self.lock:
+            if self.closed: raise ValueError('Image utilities are closing')
+            return self._generate(request)
+
+    def _generate(self,request):
         paths=self.sources(request.get('paths'))
         operation=request.get('operation');options=request.get('options',{})
         if not isinstance(options,dict): raise ValueError('Invalid gowall options')
         # Validate every option before creating output or invoking gowall.
         for path in paths: command(operation,path,'/preview.png',options)
         self.runner.executable('gowall')
-        cache=Path(os.environ.get('XDG_CACHE_HOME',Path.home()/'.cache'))/'lme-shell/gowall'
-        cache.mkdir(parents=True,exist_ok=True,mode=0o700)
-        directory=Path(tempfile.mkdtemp(prefix='job-',dir=cache));images=[];colors=[];logs=[]
+        directory=Path(tempfile.mkdtemp(prefix='job-',dir=self.cache()));images=[];colors=[];logs=[]
         try:
             for index,source in enumerate(paths):
                 output=directory/(str(index)+'-'+Path(source).stem[:100]+'.png')

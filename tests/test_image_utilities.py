@@ -1,6 +1,11 @@
 """Gowall adapter contracts and safe preview/export/apply lifecycle."""
+import fcntl
 import os
 from pathlib import Path
+import subprocess
+import sys
+import threading
+import time
 import unittest
 from unittest.mock import patch
 from image_utilities import ImageUtilities, command, OPERATIONS
@@ -16,6 +21,7 @@ class ImageUtilitiesCase(Fixture,unittest.TestCase):
         runner=Images({('gowall','list'):'\x1b[31mdracula\x1b[0m\nrose-pine\nnord\n'},available={'gowall'})
         live=self.make_backend(runner)
         self.addCleanup(live.feature_executor.shutdown,wait=True,cancel_futures=True)
+        self.addCleanup(live.image_utilities.close)
         return live,live.image_utilities
 
     def test_options_build_real_cli_flags_without_shell_expansion(self):
@@ -75,3 +81,86 @@ class ImageUtilitiesCase(Fixture,unittest.TestCase):
         demo=backend.DesktopBackend(demo=True,preferences=self.preferences)
         with patch('subprocess.Popen') as spawn:
             self.assertTrue(demo.handle(dict(action='gowallGenerate',paths=['/no.png']))['ok']);spawn.assert_not_called()
+
+    def test_close_removes_owned_previews_and_preserves_exports_and_applied_wallpaper(self):
+        live,tool=self.tool();source=self.put('original.png','original')
+        request=dict(paths=[str(source)],operation='palette')
+        with patch.dict(os.environ,XDG_CACHE_HOME=str(self.root/'cache'),XDG_DATA_HOME=str(self.root/'data')):
+            tool.state=tool.generate(request)
+            preview=Path(tool.state['images'][0]['path']);session=tool.session
+            exported=self.root/'export.png';tool.save(str(preview),str(exported))
+            with patch.object(live.wallpapers,'apply',return_value='Applied') as apply:
+                tool.apply(str(preview),'eDP-1');applied=Path(apply.call_args.args[0])
+            tool.close();tool.close()
+            self.assertFalse(session.exists());self.assertFalse(preview.exists())
+            self.assertTrue(exported.is_file());self.assertTrue(applied.is_file());self.assertTrue(source.is_file())
+            with self.assertRaisesRegex(ValueError,'closing'):tool.generate(request)
+
+    def test_active_instances_keep_separate_previews_and_reclaim_crashed_session(self):
+        live,tool=self.tool();other_live,other=self.tool();source=self.put('original.png','original')
+        request=dict(paths=[str(source)],operation='invert')
+        with patch.dict(os.environ,XDG_CACHE_HOME=str(self.root/'cache')):
+            tool.state=tool.generate(request);first=Path(tool.state['images'][0]['path'])
+            other.state=other.generate(request);second=Path(other.state['images'][0]['path'])
+            self.assertTrue(first.is_file());self.assertTrue(second.is_file());self.assertNotEqual(tool.session,other.session)
+            code='from image_utilities import ImageUtilities; from pathlib import Path; import os; tool=ImageUtilities(None,None,None); cache=tool.cache(); (cache/"orphan.png").write_bytes(b"preview"); print(cache,flush=True); os._exit(0)'
+            crashed=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True,timeout=3,
+                                   env={**os.environ,'PYTHONPATH':str(Path(backend.__file__).parent)})
+            self.assertEqual(crashed.returncode,0,crashed.stderr)
+            orphan=Path(crashed.stdout.strip());self.assertTrue((orphan/'orphan.png').exists())
+            fresh_live,fresh=self.tool();fresh.state=fresh.generate(request)
+            self.assertFalse(orphan.exists());self.assertTrue(first.is_file());self.assertTrue(second.is_file())
+            tool.close();self.assertFalse(first.exists());self.assertTrue(second.is_file())
+
+    def test_legacy_cache_cleanup_is_conservative_and_does_not_follow_symlinks(self):
+        live,tool=self.tool();source=self.put('original.png','original')
+        cache=self.root/'cache/lme-shell/gowall';cache.mkdir(parents=True)
+        old=cache/'job-old';old.mkdir();(old/'preview.png').write_bytes(b'old preview')
+        os.utime(old,(time.time()-90000,time.time()-90000))
+        recent=cache/'job-recent';recent.mkdir();(recent/'preview.png').write_bytes(b'recent preview')
+        outside=self.root/'outside';outside.mkdir();(outside/'keep.png').write_bytes(b'keep')
+        (cache/'session-link').symlink_to(outside,target_is_directory=True)
+        partial=cache/'session-interrupted';partial.mkdir();os.utime(partial,(time.time()-90000,time.time()-90000))
+        fresh_partial=cache/'session-fresh';fresh_partial.mkdir()
+        with patch.dict(os.environ,XDG_CACHE_HOME=str(self.root/'cache')):
+            tool.state=tool.generate(dict(paths=[str(source)],operation='invert'))
+        self.assertFalse(old.exists());self.assertFalse(partial.exists())
+        self.assertTrue(recent.is_dir());self.assertTrue(fresh_partial.is_dir())
+        self.assertTrue((outside/'keep.png').is_file());self.assertTrue((cache/'session-link').is_symlink())
+
+    def test_held_cache_guard_does_not_block_shutdown(self):
+        live,tool=self.tool();source=self.put('original.png','original')
+        cache=self.root/'cache/lme-shell/gowall';cache.mkdir(parents=True)
+        errors=[];entered=threading.Event();prepare=tool.cache
+        def blocked_cache(): entered.set();return prepare()
+        def generate():
+            try:tool.generate(dict(paths=[str(source)],operation='invert'))
+            except ValueError as error:errors.append(str(error))
+        with patch.dict(os.environ,XDG_CACHE_HOME=str(self.root/'cache')),(cache/'.lock').open('a+b') as guard,patch.object(tool,'cache',side_effect=blocked_cache):
+            fcntl.flock(guard,fcntl.LOCK_EX)
+            worker=threading.Thread(target=generate);worker.start()
+            try:
+                self.assertTrue(entered.wait(timeout=2))
+                started=time.monotonic();tool.close();worker.join(timeout=2)
+                self.assertFalse(worker.is_alive());self.assertLess(time.monotonic()-started,1.5)
+                self.assertEqual(len(errors),1);self.assertIn('busy',errors[0])
+            finally:worker.join(timeout=2)
+
+    def test_close_waits_for_generate_before_removing_its_cache(self):
+        live,tool=self.tool();source=self.put('original.png','original')
+        started=threading.Event();release=threading.Event();results=[]
+        original=tool.runner.run
+        def run(*args,**kwargs):
+            started.set();release.wait(timeout=3)
+            return original(*args,**kwargs)
+        with patch.dict(os.environ,XDG_CACHE_HOME=str(self.root/'cache')),patch.object(tool.runner,'run',side_effect=run):
+            worker=threading.Thread(target=lambda:results.append(tool.generate(dict(paths=[str(source)],operation='invert'))))
+            worker.start()
+            try:
+                self.assertTrue(started.wait(timeout=2))
+                close=threading.Thread(target=tool.close);close.start()
+                release.set();worker.join(timeout=2);close.join(timeout=2)
+                self.assertFalse(worker.is_alive());self.assertFalse(close.is_alive())
+                self.assertEqual(len(results),1)
+                self.assertFalse(Path(results[0]['images'][0]['path']).exists())
+            finally:release.set();worker.join(timeout=3)

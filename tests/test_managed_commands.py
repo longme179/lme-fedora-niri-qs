@@ -134,6 +134,7 @@ while True: time.sleep(.05)
         self.assertFalse(any((Path('/proc')/str(pid)).exists() for pid in owned), 'Gowall descendants were not reaped')
         for line in stdout.splitlines(): self.assertTrue(json.loads(line)['lastResult'].get('pending', False))
         self.assertFalse(list((self.root/'cache/lme-shell/gowall').glob('job-*')))
+        self.assertFalse(list((self.root/'cache/lme-shell/gowall').glob('session-*')))
 
 
 if __name__ == '__main__': unittest.main()

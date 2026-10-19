@@ -2121,6 +2121,7 @@ def main(argv: list[str] | None = None) -> int:
         backend.wallpapers.close()
         backend.weather.close()
         backend.runner.close()
+        backend.image_utilities.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)
         close_event_stream()

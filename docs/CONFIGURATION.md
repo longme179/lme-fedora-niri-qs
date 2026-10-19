@@ -79,6 +79,34 @@ Unavailable tray, media and battery modules automatically hide. Removing the
 Settings module does not remove access through Super+Comma or the app launcher.
 
 Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper in Settings.
+
+In **Wallpaper → Display and transition**, choose **Shared background** or a
+display. Applying a shared image preserves display overrides. **Use shared image**
+removes an override after successfully applying the shared image. Disconnected
+display assignments stay saved and are restored when that display reconnects.
+The Liquid rim sampler uses the image assigned to its window's current display.
+The shell palette remains global; changing a display image does not automatically
+regenerate a palette.
+
+Add selected/shown images under **Wallpaper playlist**, reorder with the arrows
+and enable playback. One playlist targets either the shared background or the
+chosen display. Ordered playback wraps; shuffle avoids the current image when
+alternatives exist. Deleted images are skipped, failed decodes try up to ten
+alternatives, and a single already-active image is left alone. Failed commands
+keep the previous saved assignment. Pause/resume retains the remaining interval
+within the running shell; restarting starts a fresh interval. Sleep/resume skips
+missed changes rather than replaying them. The timer runs in the main shell;
+Settings can be closed. With playback disabled/paused there is no playlist
+polling process. `start.sh --no-wallpaper` also disables automatic restoration
+and playback for that run; manual changes remain available.
+
+Transitions use the existing `awww` daemon: fade, wipe, wave, grow, outer,
+directional slides, simple, none or random. Duration is 0.1–10 seconds (simple
+uses awww's own step-based fade). Disabling shell animations forces instantaneous
+changes without changing the saved transition. No extra desktop shader is used.
+The image list, target display and assignments are included in backups but
+excluded from portable presets; interval, playback switches and transition choices
+are portable. The playlist is limited to 500 paths/128 KiB of path text.
 Both Settings and the startup wrapper probe `awww query`, start `awww-daemon`
 if necessary, wait for readiness, then call `awww img`. The selected path is
 saved only after a successful apply. Restoration preserves the saved path and

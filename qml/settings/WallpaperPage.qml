@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import Quickshell
 import "../components"
 import "../services"
 import "../theme"
@@ -10,7 +11,12 @@ ColumnLayout {
     id: root
     spacing: 20
     readonly property var palette: ShellState.snapshot.palettePreview || {colors:{},path:""}
-    readonly property string palettePath: selectedPath || ShellState.preferences.wallpaper || ""
+    readonly property string targetOutput: ShellState.preferences.wallpaperPlaylistOutput || ""
+    readonly property var outputs: ["",...new Set([...Quickshell.screens.map(s=>s.name),...Object.keys(ShellState.preferences.wallpaperOutputs || {}),...(targetOutput ? [targetOutput] : [])])]
+    readonly property string currentWallpaper: (ShellState.preferences.wallpaperOutputs || {})[targetOutput] || ShellState.preferences.wallpaper || ""
+    readonly property string palettePath: selectedPath || currentWallpaper
+    readonly property var transitions: ShellState.snapshot.wallpaperTransitions || ["fade"]
+    readonly property bool wallpaperBusy: !!ShellState.pendingActions.wallpaper || !!ShellState.pendingActions.wallpaperResetOutput || !!ShellState.pendingActions.wallpaperNext
     readonly property var schemes: Theme.paletteSchemes
     readonly property bool previewMatches: palette.path === palettePath && ["paletteScheme", "paletteMode", "paletteContrast"].every(key => palette[key] === ShellState.preferences[key])
     property string query: ""
@@ -34,6 +40,32 @@ ColumnLayout {
         nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"]
         fileMode: FileDialog.OpenFile
         onAccepted: { const url = selectedFile.toString(); if (url.startsWith("file://")) root.selectedPath = decodeURIComponent(url.substring(7)); }
+    }
+    SettingsCard {
+        title:"Display and transition"
+        description:"A shared background is used unless a display has its own image. Playlist playback uses this target too."
+        RowLayout {
+            Layout.fillWidth:true
+            LabelText { text:"Apply to" }
+            LiquidComboBox {
+                objectName:"wallpaperOutput"; Layout.fillWidth:true
+                model:root.outputs.map(name=>name || "Shared background")
+                currentIndex:Math.max(0,root.outputs.indexOf(root.targetOutput))
+                enabled:!root.wallpaperBusy && !ShellState.pendingActions.setting
+                Accessible.name:"Wallpaper display target"
+                onActivated:ShellState.run("setting",{key:"wallpaperPlaylistOutput",value:root.outputs[currentIndex]})
+            }
+            LiquidButton { text:"Use shared image"; visible:!!root.targetOutput && !!(ShellState.preferences.wallpaperOutputs || {})[root.targetOutput]; enabled:!root.wallpaperBusy && !!ShellState.preferences.wallpaper; onClicked:ShellState.run("wallpaperResetOutput",{output:root.targetOutput}) }
+        }
+        RowLayout {
+            Layout.fillWidth:true
+            LabelText { text:"Transition"; Layout.fillWidth:true }
+            LiquidComboBox { objectName:"wallpaperTransition"; model:root.transitions.map(t=>Theme.tokenTitle(t)); currentIndex:Math.max(0,root.transitions.indexOf(ShellState.preferences.wallpaperTransition || "fade")); Accessible.name:"Wallpaper transition"; onActivated:ShellState.run("setting",{key:"wallpaperTransition",value:root.transitions[currentIndex]}) }
+        }
+        LabelText { text:"Duration · "+Number(ShellState.preferences.wallpaperTransitionDuration || 3).toFixed(1)+" s"; font.weight:Font.Bold }
+        LiquidSlider { id:duration; objectName:"wallpaperDuration"; Layout.fillWidth:true; from:.1; to:10; stepSize:.1; Accessible.name:"Wallpaper transition duration"; onMoved:if(!pressed) ShellState.run("setting",{key:"wallpaperTransitionDuration",value:Math.round(value*10)/10}); onPressedChanged:if(!pressed) ShellState.run("setting",{key:"wallpaperTransitionDuration",value:Math.round(value*10)/10}) }
+        Binding { target:duration; property:"value"; value:ShellState.preferences.wallpaperTransitionDuration || 3; when:!duration.pressed; restoreMode:Binding.RestoreNone }
+        LabelText { text:"Transitions are instant when animations are off. Simple uses awww's step-based fade instead of this duration."; color:Theme.muted; wrapMode:Text.Wrap; Layout.fillWidth:true }
     }
     SettingsCard {
         title: "Wallpaper library"
@@ -69,6 +101,7 @@ ColumnLayout {
             LabelText { anchors.centerIn: parent; width: parent.width - 20; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; visible: !root.entries.length; text: ShellState.pendingActions.wallpaperScan ? "Scanning images…" : root.query ? "No matching images" : "Choose a folder to browse your wallpapers."; color: Theme.muted }
         }
     }
+    WallpaperPlaylistSettings { selectedPath:root.selectedPath; entries:root.entries }
     SettingsCard {
         title: "Material palette from wallpaper"
         enabled: !Theme.liquidGlass
@@ -105,11 +138,11 @@ ColumnLayout {
         title: "Your backdrop"
         Rectangle {
             Layout.fillWidth: true; Layout.preferredHeight: 240; radius: 20; color: Theme.surfaceContainer; clip: true
-            Image { anchors.fill: parent; source: root.selectedPath ? "file://" + encodeURI(root.selectedPath).replace(/#/g, "%23").replace(/\?/g, "%3F") : ShellState.preferences.wallpaper ? "file://" + encodeURI(ShellState.preferences.wallpaper).replace(/#/g, "%23").replace(/\?/g, "%3F") : "../../assets/wallpapers/liquid-dracula.png"; sourceSize.width: 900; asynchronous: true; fillMode: Image.PreserveAspectCrop }
+            Image { anchors.fill: parent; source: root.palettePath ? "file://" + root.palettePath.split("/").map(encodeURIComponent).join("/") : "../../assets/wallpapers/liquid-dracula.png"; sourceSize.width: 900; asynchronous: true; fillMode: Image.PreserveAspectCrop }
         }
-        LabelText { text: root.selectedPath || ShellState.preferences.wallpaper || "Bundled Dracula wallpaper"; color: Theme.muted; Layout.fillWidth: true; elide: Text.ElideMiddle }
+        LabelText { text: root.palettePath || "Bundled Dracula wallpaper"; color: Theme.muted; Layout.fillWidth: true; elide: Text.ElideMiddle }
         RowLayout {
-            LiquidButton { text: ShellState.pendingActions.wallpaper ? "Applying…" : "Apply wallpaper"; enabled: root.selectedPath.length > 0 && ShellState.backendReady && !ShellState.pendingActions.wallpaper; onClicked: ShellState.run("wallpaper", {path: root.selectedPath}) }
+            LiquidButton { text: root.wallpaperBusy ? "Applying…" : "Apply wallpaper"; enabled: root.selectedPath.length > 0 && ShellState.backendReady && !root.wallpaperBusy && !ShellState.pendingActions.setting; onClicked: ShellState.run("wallpaper", {path: root.selectedPath,output:root.targetOutput}) }
             LiquidButton { text: "Choose an image…"; onClicked: chooser.open() }
         }
     }

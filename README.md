@@ -57,6 +57,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
 | **Lyrics** | Choose a scrolling transcript or current line, follow playback by default, and show synchronized lines on Activity Island. Embedded/local LRC and cache work offline; LRCLIB lookup is optional. |
 | **Desktop canvas** | Place clock, notes and media widgets per display. Drag and resize in Edit mode, then keep them below apps or make them click-through. |
+| **Wallpaper playback** | Build an ordered or shuffled playlist, pause/resume, set an interval and choose awww transitions. Use a shared image or independent images per display; keep assignments for disconnected displays. |
 | **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications with [appearance controls](docs/NOTIFICATIONS.md) and a rotating Material emblem; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
@@ -232,7 +233,7 @@ only softens the refractive rim; higher backdrop blur values cost more GPU time.
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
-| **Wallpaper / Weather** | Image library, palette preview, automatic/manual location and units |
+| **Wallpaper / Weather** | Image library, playlists, transitions, per-display images, palette preview, automatic/manual location and units |
 | **Desktop widgets** | Add clock/notes/media, choose an output, enable click-through and arrange widgets in Edit mode |
 | **Behavior** | Lyrics and online lookup, Bluetooth pairing, privacy, OSD layout, notes, file search, recording, external editor and settings transfer |
 | **Keyboard shortcuts / Clipboard** | Search niri bindings; configure history and image capture |

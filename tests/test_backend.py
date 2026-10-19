@@ -429,6 +429,8 @@ class BackendCase(Fixture, unittest.TestCase):
         live = self.make_backend(runner)
         path = self.put("images/picture $(touch unsafe);.png", "image fixture")
         self.assertTrue(live.handle({"action": "wallpaper", "path": str(path)})["ok"])
+        live.feature_jobs['wallpaper'].exception(timeout=2);live.finish_features()
+        self.assertTrue(live.last_result['ok'],live.last_result)
         self.assertEqual(runner.calls[-1][2], str(path))
         self.assertEqual(self.preferences.values["wallpaper"], str(path))
         self.assertFalse((self.root / "unsafe").exists())

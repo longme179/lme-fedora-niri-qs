@@ -251,6 +251,25 @@ remain independent. GPLv3 section 13 allows the GPL/AGPL combination; the copied
 files retain AGPL and the combined work follows AGPLv3's interaction requirements.
 No new runtime library or external service is required.
 
+The selection-lens treatment also references Serpantinum's
+[`GlassLens.qml`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/reusables/display/GlassLens.qml).
+LME retains its existing DMS-derived spring edges, reuses its shared glass
+material and does not copy the restartable easing or backdrop discovery engine.
+
+## Wallpaper playlist references
+
+Playlist scheduling/selection behavior was reviewed against end4-pC's
+[`Background.qml`](https://github.com/pctrade/end4-pC/blob/4de3f593cb220194fd2f87c1e344b775482ad9aa/modules/ii/background/Background.qml)
+and `services/Wallpapers.qml` (GPLv3; license retained in [LICENSE](LICENSE)).
+Per-output targeting and transition behavior also reference Serpantinum's
+[`WallpaperEngine.qml`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/wallpaper/WallpaperEngine.qml)
+(AGPL-3.0-or-later). LME's Python scheduler and Settings integration are original;
+no upstream renderer, video player, scripts, shader or installer is copied.
+Rendering stays in the existing awww daemon. Its CLI was checked against
+`LGFae/awww` revision `25ea4fd7a42359379da9ddadedda1c477caa4ae0` (`doc/awww-img.1.scd`
+and `doc/awww-query.1.scd`); query parsing supports both namespace-prefixed and
+legacy output lines.
+
 ## Jelly-v2 motion references
 
 The original LME `PopupElasticity.qml` and `popup-jelly.vert`/`.frag` use documented Qt Quick ShaderEffect, GridMesh and Item Layer APIs. Motion design follows the continuity principles described in [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/). No Apple or Qt implementation source was copied. The existing spring integrator retains the DCommon MIT attribution above; LME's deformation model/shaders use GPL-3.0-or-later.

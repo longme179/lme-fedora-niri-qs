@@ -50,6 +50,7 @@ from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from settings_transfer import export_document, read_document, document
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
+from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 
 
 DEFAULT_PREFERENCES = {
@@ -67,7 +68,7 @@ DEFAULT_PREFERENCES = {
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
-    "wallpaperFolder": "",
+    "wallpaperFolder": "", **WALLPAPER_DEFAULTS,
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "notificationWidth": 380, "notificationPosition": "bar", "notificationMargin": 14,
     "notificationRadius": 28, "notificationPadding": 16, "notificationOpacity": .90,
@@ -292,6 +293,7 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
     if key == "glassSelection" and type(value) is bool: return value
@@ -477,7 +479,10 @@ class Preferences:
     def set(self, key: str, value: Any, token: str | None = None) -> None:
         if token is not None:
             if not isinstance(token, str): raise ValueError('Invalid setting token')
-            value = {token:value} if key == 'liquidGlass' else widget_patch(token,value) if key == 'desktopWidgets' else theme_token(key,token,value)
+            value = ({} if value is None else {token:value}) if key == 'wallpaperOutputs' else {token:value} if key == 'liquidGlass' else widget_patch(token,value) if key == 'desktopWidgets' else theme_token(key,token,value)
+            if key == 'wallpaperOutputs':
+                if not token: raise ValueError('A display name is required')
+                validate_wallpaper('wallpaperPlaylistOutput',token)
         self.update({key:value}, token=token)
 
     def update(self, values: dict[str, Any], token: str | None = None, backup: bool = False) -> Path | None:
@@ -498,6 +503,7 @@ class Preferences:
                 else:
                     merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
                     values[key] = merged
+                    if key == 'wallpaperOutputs': values[key] = validate_wallpaper(key,values[key])
             backup_path = self.path.parent / ("settings-before-import-" + str(time.time_ns()) + ".json") if backup else None
             if backup_path: write_json(backup_path, document(self.values,"backup"))
             self._write({**self.values, **values})
@@ -560,6 +566,7 @@ class DesktopBackend:
         self.charge_job = None
         self.feature_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="lme-feature")
         self.feature_jobs = {}
+        self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
         self.palette_preview = {"colors": {}, "path": ""}
@@ -986,6 +993,9 @@ class DesktopBackend:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
         self.niri = self.niri_state()
+        if self.manage_idle and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
+            job=self.wallpapers.due(item.get('output') for item in self.niri['workspaces'] if item.get('output'))
+            if job: self.start_feature('wallpaperCycle',job)
         # Window/focus event bursts must not cause expensive hardware probes.
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
@@ -1017,7 +1027,7 @@ class DesktopBackend:
     def feature_snapshot(self):
         return {"preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
-                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "displays": self.displays,
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
                 "nightLight": self.night_state, "capture": self.capture.state}
 
@@ -1055,6 +1065,7 @@ class DesktopBackend:
                 if action == "fileSearch": self.file_search = value; message = "File search completed"
                 elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
                 elif action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
+                elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
                     token, content = value
                     if self.capture.state.get('token') == token: self.capture.state['ocrText'] = content
@@ -1097,6 +1108,7 @@ class DesktopBackend:
         if hasattr(self, "_demo_state"):
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
+            self._demo_state['wallpaperTransitions'] = WALLPAPER_TRANSITIONS
             self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
                 monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
@@ -1177,33 +1189,10 @@ class DesktopBackend:
         self.charge_job = None
         self.system_cache = None
 
-    def apply_wallpaper(self, raw: Any, save: bool = True, animate: bool = True) -> str:
+    def apply_wallpaper(self, raw: Any, save: bool = True, animate: bool = True, output: str = '') -> str:
         if self.demo:
             raise ValueError("Wallpaper commands are disabled in demo mode")
-        if not isinstance(raw, str):
-            raise ValueError("A wallpaper file path is required")
-        path = Path(raw).expanduser().resolve()
-        if not path.is_file() or path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}:
-            raise ValueError("Select an existing PNG, JPEG, WebP, GIF, or BMP wallpaper")
-        self.runner.executable("awww")
-        try:
-            self.runner.run("awww", "query", timeout=1)
-        except CommandError:
-            self.runner.spawn([self.runner.executable("awww-daemon")])
-            deadline = time.monotonic() + 4
-            while True:
-                try:
-                    self.runner.run("awww", "query", timeout=1)
-                    break
-                except CommandError:
-                    if time.monotonic() >= deadline:
-                        raise CommandError("awww-daemon did not become ready. Check your Wayland session.")
-                    time.sleep(0.1)
-        self.runner.run("awww", "img", str(path), "--transition-type",
-                        "fade" if animate and self.preferences.values["animations"] else "none", timeout=15)
-        if save:
-            self.preferences.set("wallpaper", str(path))
-        return "Wallpaper updated"
+        return self.wallpapers.apply(raw,output,save=save,animate=animate)
 
     @staticmethod
     def percentage(value: Any, minimum: int = 0) -> int:
@@ -1224,7 +1213,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1335,6 +1324,13 @@ class DesktopBackend:
             if not isinstance(key, str) or key == "wallpaper":
                 raise ValueError("Use the wallpaper action to change wallpaper")
             if 'token' in request:
+                if key == 'wallpaperOutputs':
+                    token=request['token']
+                    validate_wallpaper('wallpaperOutputs',{token:request.get('value') or '/preview.png'})
+                    current=dict(self.preferences.values[key]); current.pop(token,None)
+                    if request.get('value') is not None: current.update(validate_wallpaper(key,{token:request['value']}))
+                    self.preferences.values[key]=validate_wallpaper(key,current)
+                    return 'Display wallpaper saved'
                 if key == 'desktopWidgets':
                     self.preferences.values[key] = merge_widgets(self.preferences.values[key],widget_patch(request['token'],request.get('value')),request['token'])
                     return 'Desktop widget saved'
@@ -1414,7 +1410,16 @@ class DesktopBackend:
             if not isinstance(value, str):
                 raise ValueError("A wallpaper file path is required")
             path = str(Path(value).expanduser().resolve())
-            self.preferences.values["wallpaper"] = validate_preference("wallpaper", path)
+            if request.get('output'):
+                changes=validate_wallpaper('wallpaperOutputs',{request['output']:path})
+                self.preferences.values['wallpaperOutputs']={**self.preferences.values['wallpaperOutputs'],**changes}
+            else: self.preferences.values["wallpaper"] = validate_preference("wallpaper", path)
+        elif action == 'wallpaperNext':
+            if not self.preferences.values['wallpaperPlaylist']: raise ValueError('The playlist is empty')
+        elif action == 'wallpaperResetOutput':
+            output=request.get('output')
+            validate_wallpaper('wallpaperOutputs',{output:'/preview.png'})
+            self.preferences.values['wallpaperOutputs']={k:v for k,v in self.preferences.values['wallpaperOutputs'].items() if k!=output}
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
@@ -1760,8 +1765,12 @@ class DesktopBackend:
         if action in {"suspend", "reboot", "poweroff"}:
             run("systemctl", action)
             return f"{action.capitalize()} requested"
-        if action == "wallpaper":
-            return self.apply_wallpaper(request.get("path"))
+        if action in {'wallpaper','wallpaperNext','wallpaperResetOutput'}:
+            if any(key.startswith('wallpaper') for key in self.feature_jobs): raise ValueError('A wallpaper change is already running')
+            if action=='wallpaper': job=lambda: self.apply_wallpaper(request.get('path'),output=request.get('output',''))
+            elif action=='wallpaperNext': job=lambda: self.wallpapers.advance(request.get('output'))
+            else: job=lambda: self.wallpapers.reset_output(request.get('output'))
+            return self.start_feature(action,job)
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
@@ -1998,6 +2007,7 @@ def main(argv: list[str] | None = None) -> int:
         backend.capture.close()
         backend.recorder.close()
         backend.mirror.close()
+        backend.wallpapers.close()
         backend.weather.close()
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)

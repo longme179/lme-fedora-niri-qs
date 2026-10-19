@@ -45,6 +45,7 @@ while (($#)); do
     esac
     shift
 done
+if ! "$restore_wallpaper"; then export LME_NO_WALLPAPER=1; fi
 qs_binary="$(command -v quickshell || command -v qs || true)"
 if [[ -z "$qs_binary" ]]; then
     printf 'Error: Quickshell is missing. See docs/INSTALL.md.\n' >&2

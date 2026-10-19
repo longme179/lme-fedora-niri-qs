@@ -35,6 +35,14 @@ class ManualExecutor:
 
 
 class WallpaperCase(Fixture, unittest.TestCase):
+    def wallpaper_result(self,live,path):
+        live.feature_executor.shutdown(wait=True)
+        live.feature_executor=ManualExecutor()
+        result=live.handle({'action':'wallpaper','path':str(path)})
+        self.assertTrue(result.get('pending'),result)
+        live.feature_executor.complete();live.finish_features()
+        return live.last_result
+
     def test_missing_daemon_starts_once_and_waits_before_applying(self):
         class StartingRunner(FakeRunner):
             def run(self, name, *args, **kwargs):
@@ -46,7 +54,7 @@ class WallpaperCase(Fixture, unittest.TestCase):
         live = self.make_backend(runner)
         path = self.put('images/wallpaper.png', 'fixture')
         with patch.object(backend.time, 'sleep'):
-            result = live.handle({'action': 'wallpaper', 'path': str(path)})
+            result = self.wallpaper_result(live,path)
         self.assertTrue(result['ok'], result)
         self.assertEqual(runner.spawns, [['/usr/bin/awww-daemon']])
         self.assertEqual(runner.calls[-1], ('awww', 'img', str(path), '--transition-type', 'fade'))
@@ -58,7 +66,7 @@ class WallpaperCase(Fixture, unittest.TestCase):
         path = self.put('images/a.png', 'fixture')
         command = ('awww', 'img', str(path), '--transition-type', 'fade')
         runner.responses[command] = backend.CommandError('Image decoding failed')
-        self.assertFalse(live.handle({'action': 'wallpaper', 'path': str(path)})['ok'])
+        self.assertFalse(self.wallpaper_result(live,path)['ok'])
         self.assertFalse(self.preferences.path.exists())
         live.apply_wallpaper(str(path), save=False, animate=False)
         self.assertEqual(runner.calls[-1][-1], 'none')
@@ -70,7 +78,7 @@ class WallpaperCase(Fixture, unittest.TestCase):
             runner = FakeRunner({('awww', 'query'): backend.CommandError('No socket')}, available=tools)
             live = self.make_backend(runner)
             with patch.object(backend.time, 'monotonic', side_effect=[0, 5]), patch.object(backend.time, 'sleep'):
-                result = live.handle({'action': 'wallpaper', 'path': str(path)})
+                result = self.wallpaper_result(live,path)
             self.assertFalse(result['ok'])
             self.assertFalse(any(call[1] == 'img' for call in runner.calls))
             self.assertFalse(self.preferences.path.exists())

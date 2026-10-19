@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add ordered/shuffled wallpaper playlists with pause/resume, intervals and awww transitions. Preserve independent display images, restore them after reconnect, and share the same per-output image with Liquid's rim sampler. Wallpaper jobs run in the existing executor with a cross-process lock; no second renderer or polling loop is added.
 - Add an optional refractive selection lens to Settings and Control Center tabs. Reuse the existing velocity-preserving spring edges, shared glass backdrop and press feedback; leave Smoked selection unchanged.
 - Follow niri's floating-window geometry for Liquid rim sampling instead of assuming Settings is centered. Keep geometry tracking off in Smoked and add native-fixture progress diagnostics without relaxing test deadlines.
 - Refine Liquid pointer lighting with localized rim highlights, a soft opposite reflection and velocity-preserving tracking. Fade from the last pointer position and stop its motion drivers when hidden, resting or motion is disabled.

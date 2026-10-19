@@ -43,7 +43,8 @@ Image {
     objectName: "glassBackdrop"
     visible: false
     width: outputWidth; height: outputHeight
-    source: ShellState.preferences.wallpaper ? "file://" + ShellState.preferences.wallpaper.split("/").map(part => encodeURIComponent(part)).join("/")
+    readonly property string wallpaperPath: (ShellState.preferences.wallpaperOutputs || {})[output ? output.name : ""] || ShellState.preferences.wallpaper || ""
+    source: wallpaperPath ? "file://" + wallpaperPath.split("/").map(part => encodeURIComponent(part)).join("/")
         : ShellState.demo ? Qt.resolvedUrl("../../assets/wallpapers/liquid-dracula.png") : ""
     sourceSize: Qt.size(Math.max(1, Math.round(outputWidth * resolution)), Math.max(1, Math.round(outputHeight * resolution)))
     fillMode: Image.PreserveAspectCrop

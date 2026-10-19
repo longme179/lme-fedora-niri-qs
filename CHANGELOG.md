@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Give local notifications a sequence-based ID suffix, so notices created in the same millisecond can be dismissed independently.
+
 - Unregister niri event-stream pipes before closing them. Keep Settings alive through repeated Liquid/Smoked switches and stream reconnects, and reap the stream child on shutdown.
 
 - Refine Liquid's directional rim with exact rounded-box normals, a narrower caustic and shallow inner shading that separates glass from bright apps. Preserve clear interiors, white labels and the existing texture/render-pass budget.

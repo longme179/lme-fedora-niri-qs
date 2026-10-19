@@ -28,12 +28,13 @@ function apps(query, apps, usage) {
         const x = usage[a.id] || {}, y = usage[b.id] || {};
         return (y.score || 0) - (x.score || 0) || (y.last || 0) - (x.last || 0) || a.name.localeCompare(b.name);
     }
-    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean).slice(0, 8);
+    const phrase = query.toLowerCase().trim();
+    const terms = phrase.split(/\s+/).filter(Boolean).slice(0, 8);
     if (!terms.length) return apps.slice().sort(byUsage);
     return apps.map(app => {
         const name = app.name.toLowerCase();
         const other = [app.genericName || "", app.comment || "", ...(app.keywords || [])].join(" ").toLowerCase();
         const scores = terms.map(t => score(t, name, other));
-        return {app: app, score: scores.some(s => s < 0) ? -1 : scores.reduce((a, b) => a + b, 0)};
-    }).filter(item => item.score >= 0).sort((a, b) => b.score - a.score || byUsage(a.app, b.app)).map(item => item.app);
+        return {app: app, exact: name === phrase, score: scores.some(s => s < 0) ? -1 : scores.reduce((a, b) => a + b, 0)};
+    }).filter(item => item.score >= 0).sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score || byUsage(a.app, b.app)).map(item => item.app);
 }

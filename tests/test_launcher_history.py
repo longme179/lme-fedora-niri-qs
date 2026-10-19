@@ -111,12 +111,13 @@ class SearchUsageCase(unittest.TestCase):
         const usage={prefix:{score:900,last:30},exact:{score:90,last:10},other:{score:90,last:20}};
         const ids=q=>Search.apps(q,apps,usage).map(a=>a.id);
         const text=ids("terminal"),empty=ids(""),plain=Search.apps("",apps).map(a=>a.id);
+        const phrase=Search.apps(" VISUAL Studio ",[{id:"base",name:"Visual Studio"},{id:"extension",name:"Visual Studio Code"}],{extension:{score:900,last:100}}).map(a=>a.id);
         const next=Object.assign({},ShellState.snapshot,{launcherUsage:usage});ShellState.accept(JSON.stringify(next));
         const before=ShellState.launcherUsage;ShellState.accept(JSON.stringify(next));
-        fixture.finish({text,empty,plain,stable:ShellState.launcherUsage===before,sourceUnchanged:apps[0].id==="exact"});
+        fixture.finish({text,empty,plain,phrase,stable:ShellState.launcherUsage===before,sourceUnchanged:apps[0].id==="exact"});
     }}
 ''')
-        self.assertEqual(result,dict(text=['exact','prefix'],empty=['prefix','other','exact'],plain=['other','exact','prefix'],stable=True,sourceUnchanged=True))
+        self.assertEqual(result,dict(text=['exact','prefix'],empty=['prefix','other','exact'],plain=['other','exact','prefix'],phrase=['base','extension'],stable=True,sourceUnchanged=True))
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI')=='1','private launcher usage checks')

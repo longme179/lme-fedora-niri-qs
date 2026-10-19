@@ -18,7 +18,9 @@ ColumnLayout {
                 required property int index
                 Layout.fillWidth: true
                 text: modelData
-                palette.button: root.tab === index ? Theme.accent : Theme.surface
+                selected: root.tab === index
+                selectionColor: Theme.accent
+                palette.button: Theme.surface
                 palette.buttonText: root.tab === index ? Theme.background : Theme.text
                 onClicked: root.tab = index
             }

@@ -42,14 +42,14 @@ Item {
         }
         background: Rectangle {
             radius: Theme.smallRadius
-            color: powerButton.hovered ? Theme.surface : Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.55)
+            color: powerButton.hovered ? Theme.surface : Theme.alpha(Theme.surface, 0.55)
             border.color: powerButton.activeFocus ? powerButton.accent : Theme.border
             border.width: 1
         }
         contentItem: RowLayout {
             spacing: 12
             ShellText { text: powerButton.symbol; color: powerButton.accent; font.family: Theme.fontFamily; font.pixelSize: 20; Layout.preferredWidth: 28; horizontalAlignment: Text.AlignHCenter }
-            ShellText { text: powerButton.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14 }
+            ShellText { text: powerButton.label; glassText: false; color: powerButton.foreground; font.family: Theme.fontFamily; font.pixelSize: 14 }
             Item { Layout.fillWidth: true }
             ShellText { text: "›"; color: Theme.muted; font.pixelSize: 22 }
         }

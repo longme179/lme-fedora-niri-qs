@@ -104,6 +104,7 @@ ColumnLayout {
                 model: [Theme.purple, Theme.pink, Theme.cyan, Theme.green, Theme.yellow]
                 delegate: LiquidButton {
                     id: accentChoice
+                    glassBackground: false
                     required property var modelData
                     Layout.preferredWidth: 48; Layout.preferredHeight: 48
                     Accessible.name: "Set accent " + modelData

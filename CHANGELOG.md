@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve selected/filled button text contrast without overriding ordinary Liquid labels. Respect the displayed fill and saved text color, with black/white fallback; apply it to Agenda, Calendar, workspace pills and Settings navigation.
+- Keep the shared glass material when a button supplies its own background. Fix Power's opaque gray fill, cover dropdown triggers, and preserve raw color swatches and intentionally flat hit areas. Reuse existing spring/hover behavior and remove the duplicate tile material.
 - Keep a complete multiword app-name match ahead of more frequently launched apps with longer matching names.
 - Reject oversized wallpaper transition numbers before float conversion. Record popup resize intermediates inside QML so slow IPC reads cannot miss the spring trajectory; keep off-screen entry and settling assertions. Wait for both travel and deformation to settle before checking Jelly layer release.
 - Audit queued wallpaper playback: recheck pause/disable/target changes before starting a scheduled job, validate canonical symlink targets and preserve the current image when all alternatives fail. Ignore malformed launch-history IDs and keep history serialization errors from failing successful launches. Native pixel comparisons wait for a submitted frame after image-state changes.

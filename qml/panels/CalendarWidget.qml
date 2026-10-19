@@ -29,13 +29,16 @@ ColumnLayout {
         Repeater {
             model: 42
             delegate: Rectangle {
+                id: dayCell
+                objectName: "calendarDay-" + day
                 required property int index
                 readonly property int day: index - root.firstDay + 1
                 readonly property bool valid: day >= 1 && day <= root.dayCount
                 readonly property bool isToday: valid && day === root.today.getDate() && root.month.getMonth() === root.today.getMonth() && root.month.getFullYear() === root.today.getFullYear()
                 Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.preferredHeight: 48
                 radius: 14; color: isToday ? Theme.accent : valid ? Theme.surface : "transparent"
-                LabelText { anchors.centerIn: parent; text: parent.valid ? parent.day : ""; color: parent.isToday ? Theme.background : Theme.text }
+                GlassMaterial { anchors.fill: parent; radius: parent.radius; visible: dayCell.isToday }
+                LabelText { anchors.centerIn: parent; text: dayCell.valid ? dayCell.day : ""; glassText: !dayCell.isToday; color: dayCell.isToday ? Theme.contrastingText(Theme.accent, Theme.background, true) : Theme.text }
             }
         }
     }

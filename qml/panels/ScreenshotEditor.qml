@@ -55,6 +55,7 @@ Item {
                 model: [Theme.red, Theme.yellow, Theme.cyan, Theme.green, Theme.purple, Theme.text]
                 delegate: LiquidButton {
                     id: colorButton; required property var modelData
+                    glassBackground: false
                     Layout.preferredWidth: 28; Layout.preferredHeight: 28; padding: 0; enabled: !root.busy
                     Accessible.name: "Ink color " + modelData
                     background: Rectangle { radius: 10; color: colorButton.modelData; border.width: root.ink.toString() === color.toString() ? 2 : 0; border.color: Theme.background }

@@ -443,6 +443,18 @@ edges and adds optical lift while travelling or pressed; foreground text and
 input stay independent. Disable it in Liquid glass material to restore the
 plain indicator. Smoked selection and the animation switches retain their behavior.
 
+Selected and filled controls retain their configured text color when it has
+sufficient contrast; otherwise they use black or white. The calculation follows
+the displayed fill, including Liquid brightness. Transparent fills use the panel
+tint as an estimate, rather than capturing the live desktop. Ordinary Liquid
+labels remain white. Agenda/Calendar, Settings navigation, workspace pills and
+the shared button controls use this treatment.
+
+Buttons with custom backgrounds inherit the same glass material as standard
+buttons. Power actions and dropdown triggers therefore retain the refractive
+rim; color swatches keep their exact colors and intentionally flat hit areas
+stay flat. These are component changes, without new saved preferences.
+
 Each visible GPU window shares one wallpaper texture, decoded at half logical
 resolution, capped at 1280 × 720. There are no per-button capture/poll timers;
 texture sampling is confined to the rim. Hiding/destroying the last consumer or

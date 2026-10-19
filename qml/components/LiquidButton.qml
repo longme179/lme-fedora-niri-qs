@@ -6,9 +6,14 @@ Button {
     id: root
     property bool selected: checked
     property bool selectionFill: true
+    property color selectionColor: Theme.buttonSelected
+    property bool glassBackground: !flat && (selected || !plate || plate.color.a > 0)
     property real cornerRadius: height / 2
     readonly property Rectangle plate: background as Rectangle
     readonly property bool semanticFill: !Qt.colorEqual(palette.button, Theme.buttonFill)
+    readonly property color textFill: selected && !selectionFill ? selectionColor : plate ? plate.color : palette.button
+    readonly property color foreground: selected || semanticFill
+        ? Theme.contrastingText(textFill, palette.buttonText, glassBackground) : palette.buttonText
     implicitWidth: Math.max(36, contentItem.implicitWidth + leftPadding + rightPadding)
     implicitHeight: 40
     leftPadding: 16
@@ -33,7 +38,7 @@ Button {
     Behavior on scale { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
     background: Rectangle {
         radius: Theme.springMotion ? radiusMotion.value : root.radiusTarget
-        color: root.selected ? (root.selectionFill ? Theme.buttonSelected : "transparent")
+        color: root.selected ? (root.selectionFill ? root.selectionColor : "transparent")
             : root.down ? root.semanticFill ? Qt.lighter(root.palette.button, 1.14) : Theme.buttonPressed
             : root.hovered ? root.semanticFill ? Qt.lighter(root.palette.button, 1.08) : Theme.buttonHover
             : root.palette.button
@@ -41,13 +46,20 @@ Button {
         border.color: Theme.accent
         Behavior on color { ColorMotion {} }
         Behavior on radius { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
-        GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: root.hovered; pressed: root.down; visible: !root.flat && (!root.selected || root.selectionFill || !Theme.glassSelection) }
+    }
+    GlassMaterial {
+        parent: root.background
+        anchors.fill: parent
+        radius: root.plate ? root.plate.radius : root.cornerRadius
+        hovered: root.hovered; pressed: root.down
+        visible: !!root.background && root.glassBackground && (!root.selected || root.selectionFill || !Theme.glassSelection)
     }
     LiquidFeedback { objectName: "liquidFeedback"; z: -.5; hovered: root.hovered; pressed: root.down; originX: root.pressX; originY: root.pressY; radius: root.plate ? root.plate.radius : root.cornerRadius }
     contentItem: ShellText {
         text: root.text
         textFormat: Text.PlainText
-        color: root.palette.buttonText
+        glassText: false
+        color: root.foreground
         font: root.font
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

@@ -31,6 +31,7 @@ ComboBox {
         border.color: root.visualFocus ? Theme.accent : Theme.alpha(Theme.border, root.enabled ? 0.65 : 0.35)
         Behavior on color { ColorMotion {} }
         Behavior on radius { MotionAnimation {} }
+        GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: root.hovered; pressed: root.down }
         LiquidFeedback { id: feedback; hovered: root.hovered; pressed: root.down; radius: parent.radius }
     }
 

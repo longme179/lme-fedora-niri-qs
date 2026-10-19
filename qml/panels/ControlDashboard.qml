@@ -59,7 +59,6 @@ Item {
             opacity: root.editing || tile.enabled ? 1 : 0.5
             Behavior on radius { enabled: !Theme.springMotion && Theme.animations; MotionAnimation {} }
             Behavior on color { ColorMotion {} }
-            GlassMaterial { anchors.fill: parent; radius: parent.radius; hovered: tile.hovered; pressed: tile.down }
         }
         contentItem: GridLayout {
             columns: tile.width < 150 ? 1 : 2; rowSpacing: 5; columnSpacing: 10

@@ -13,6 +13,7 @@ AbstractButton {
     property bool active: false
     readonly property Rectangle plate: background as Rectangle
     property color accentColor: Theme.accent
+    readonly property color foreground: active ? Theme.contrastingText(Theme.primaryContainer, accentColor) : Theme.iconColor
     implicitWidth: 36
     implicitHeight: 36
     padding: 0
@@ -45,14 +46,15 @@ AbstractButton {
             width: root.iconSize; height: root.iconSize
             visible: root.iconName.length > 0
             name: root.iconName
-            color: root.active ? root.accentColor : Theme.iconColor
+            color: root.foreground
             Behavior on color { ColorMotion {} }
         }
         LabelText {
             anchors.fill: parent
             visible: root.iconName.length === 0
             text: root.glyph || root.text
-            color: root.active ? root.accentColor : Theme.iconColor
+            glassText: !root.active
+            color: root.foreground
             Behavior on color { ColorMotion {} }
             font.pixelSize: root.glyphSize
             horizontalAlignment: Text.AlignHCenter

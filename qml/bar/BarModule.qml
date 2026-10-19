@@ -78,6 +78,9 @@ Loader {
                         leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0; hoverEnabled: true
                         Behavior on width { MotionAnimation {} }
                         Accessible.name: "Workspace " + (modelData.name || modelData.idx)
+                        selected: modelData.is_focused
+                        selectionColor: Theme.workspaceActive
+                        palette.buttonText: modelData.is_focused ? Theme.workspaceText : Theme.barMuted
                         background: Rectangle {
                             radius: workspace.modelData.is_focused ? 12 : 15
                             color: workspace.modelData.is_focused ? Theme.workspaceActive : workspace.hovered ? Theme.barHover : "transparent"
@@ -87,7 +90,7 @@ Loader {
                         }
                         contentItem: LabelText {
                             text: workspace.modelData.name || workspace.modelData.idx
-                            color: workspace.modelData.is_focused ? Theme.workspaceText : Theme.barMuted
+                            glassText: false; color: workspace.foreground
                             font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                         }

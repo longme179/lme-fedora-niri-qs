@@ -101,6 +101,7 @@ GlassPanel {
                     Layout.preferredWidth: 1
                     text: modelData
                     selected: Theme.animatedTabs && root.currentTab === index; selectionFill: false
+                    selectionColor: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent
                     Accessible.role: Accessible.PageTab; Accessible.selected: root.currentTab === index
                     palette.button: root.currentTab === index && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
                     palette.buttonText: root.currentTab === index && !Theme.liquidGlass ? Theme.background : Theme.text

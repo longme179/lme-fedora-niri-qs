@@ -1,5 +1,81 @@
 # Validation and platform limits
 
+## Selection lens, wallpaper playback and launcher ranking — 2026-10-19
+
+Expanded private Wayland `scripts/check.sh` completed **376 tests: 375 passed,
+one optional real Matugen check skipped**. Bash syntax and the demo backend
+snapshot passed. The three earlier native-QML timeout cases completed within
+their unchanged deadlines; the intermittent timeout's original cause was not
+reproduced. `qmllint` checked **134 QML files: zero errors, 67 existing
+type-metadata warnings**. Python compilation and whitespace checks passed.
+
+After that full run, a follow-up launcher case reproduced a multiword-name tie:
+usage put “Visual Studio Code” before an exact “Visual Studio” query. Complete
+name matching now precedes the per-word score and usage tie-breaker. The eight
+launcher/history/search checks, including native click dispatch, passed after
+this correction; the new regression failed before it. Other application code
+is unchanged since the full run.
+
+The selection lens adds the shared glass material to the existing stretching
+plate. Its four spring edges retain their response and velocity on reversal;
+there is no additional geometric animation or backdrop renderer. The native
+OpenGL fixture covers travel, reversal, press, opt-out, reduced motion and texture
+release. Smoked selection keeps its previous appearance.
+
+Wallpaper playback uses the existing backend executor and `awww` daemon. Tests
+cover ordered/shuffled advancement, missing/corrupt/single images, pause/resume,
+sleep gaps, transition arguments, disabled motion, disconnected outputs,
+reconnect restoration, concurrent writers and shutdown. Queued automatic jobs
+recheck pause, enable and target preferences before applying an image. Failure
+to decode every alternative preserves the current image. Image validation follows
+symlinks and rejects invalid canonical targets; oversized/non-finite duration
+values are also rejected without damaging saved preferences. Three private
+Wayland checks exercise the actual Settings
+controls, list edits and per-output rim source.
+
+Launch history is local and bounded; only successful command dispatches count.
+Tests cover seven-day score decay, restart, concurrent writers, corrupt and
+oversized data, private atomic writes, history clearing and disabled recording.
+History-write failure leaves a successful launch successful. QML/native launcher
+checks retain exact-name priority, stable snapshots and the existing non-app
+search modes. No favorites or focused-window duration tracker was added.
+
+Liquid floating-window rim sampling now uses niri's window geometry when it can
+identify one window on the relevant output. A native niri 26.04 replay moved the
+test window to `(100, 140)` and `(500, 280)`; the shared sampler reported those
+exact coordinates. Missing/ambiguous geometry retains the centered fallback.
+Settings subscribes to the existing niri event stream only in Liquid mode.
+
+The audit also corrected test synchronization races without changing
+production animation or relaxing deadlines/pixel assertions. Glass captures now
+wait for a submitted frame after image status changes. Popup-resize observations
+are recorded inside QML so an IPC round-trip cannot miss an intermediate spring
+value. Six repeated pixel captures and five repeated native popup-entry/resize/
+close checks passed after these corrections. Phase/backend/frame diagnostics
+remain available for the earlier intermittent 15-second QML fixture timeouts.
+Layer-release checks wait for both travel and Jelly deformation to stop; the
+deformation has its own spring and can outlast positional settling. Five repeated
+native texture/reversal/teardown checks passed with this readiness condition.
+
+Manual checks on the installed desktop:
+
+1. In Liquid mode, switch Settings/Control Center tabs rapidly, reverse direction
+   mid-flight, then disable Refractive selection or Animations. Check that the
+   selected label stays readable and Smoked restores its normal selection.
+2. Add three images in Wallpaper settings. Try order/shuffle, a 30-second interval,
+   pause across an interval and Next while paused. Assign an external display its
+   own image, change the shared image, then reconnect that display. Check that its
+   assignment and the Liquid rim image agree.
+3. Launch apps from LME, reopen an empty launcher query and type another app's
+   exact name. Disable usage ranking, then clear history from Behavior settings.
+   Normal name search should still work and private usage should be gone.
+
+No packages or installed desktop configuration were changed. Actual `awww`
+transitions and physical display hotplug were not run in this cloud environment;
+their command/state paths were tested with controlled runners and the current
+upstream CLI source was inspected. The native GL checks use Mesa software
+rendering, not the owner's Radeon/RTX hardware or a 120 Hz presentation budget.
+
 ## Pointer-responsive Liquid reflections — 2026-10-18
 
 Glass now adds a localized rim glint and a softer opposite reflection in its

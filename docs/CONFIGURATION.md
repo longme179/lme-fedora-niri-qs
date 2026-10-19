@@ -110,7 +110,8 @@ are portable. The playlist is limited to 500 paths/128 KiB of path text.
 Both Settings and the startup wrapper probe `awww query`, start `awww-daemon`
 if necessary, wait for readiness, then call `awww img`. The selected path is
 saved only after a successful apply. Restoration preserves the saved path and
-uses an instant transition. Settings uses a fade when Motion is enabled.
+uses an instant transition. Manual changes and playlist playback use the selected
+transition when Motion is enabled.
 Use the bundled PNG or your own raster image; the SVG is editable artwork.
 Install both binaries from [awww upstream](https://codeberg.org/LGFae/awww.git).
 

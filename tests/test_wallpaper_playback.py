@@ -146,6 +146,32 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
                 # Explicit Next is independent of the automatic playback switch.
                 live.wallpapers.advance('');self.assertEqual(self.preferences.values['wallpaper'],b)
 
+    def test_saver_pauses_playlist_and_transitions_without_rewriting_saved_preferences(self):
+        live=self.controller();a=str(self.put('a.png','a'));b=str(self.put('b.png','b'))
+        self.preferences.update({'wallpaper':a,'wallpaperPlaylist':[a,b],'wallpaperPlaylistEnabled':True,
+                                 'wallpaperPlaylistInterval':30, 'wallpaperTransition':'wave'})
+        self.assertIsNone(live.wallpapers.due({'eDP-1'},now=0))
+        saved=self.preferences.path.read_bytes()
+        live.wallpapers.power_saving=True
+        self.assertIsNone(live.wallpapers.due({'eDP-1'},now=10))
+        self.assertIsNone(live.wallpapers.due({'eDP-1'},now=1000))
+        self.assertEqual(live.runner.calls,[])
+        self.assertEqual(self.preferences.path.read_bytes(),saved)
+        live.wallpapers.power_saving=False
+        self.assertIsNone(live.wallpapers.due({'eDP-1'},now=1001))
+        self.assertEqual(live.wallpapers.deadline,1021)
+        queued=live.wallpapers.due({'eDP-1'},now=1022)
+        live.wallpapers.power_saving=True
+        self.assertEqual(queued(),'')
+        self.assertEqual(live.runner.calls,[])
+        live.wallpapers.apply(b,save=False)
+        self.assertIn('--transition-type', live.runner.calls[-1])
+        self.assertIn('none',live.runner.calls[-1])
+        self.assertEqual(self.preferences.path.read_bytes(),saved)
+        live.wallpapers.power_saving=False
+        live.wallpapers.apply(a,save=False)
+        self.assertIn('wave',live.runner.calls[-1])
+
     def test_symlinks_are_validated_after_resolution_and_reload_without_losing_playlist(self):
         image=self.put('actual.jpg','image');link=self.root/'link.png';link.symlink_to(image)
         self.preferences.set('wallpaperPlaylist',[str(link)])

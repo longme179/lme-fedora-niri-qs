@@ -16,7 +16,7 @@ Item {
     property string movingId: ""
     property bool dragging: false
     property var proposed: null
-    readonly property var saved: ShellState.preferences.controlGrid || ({columns: 4, rows: 8, tiles: []})
+    readonly property var saved: ShellState.preferences.controlGrid || ({columns: 4, rows: Math.max(8, ...tiles.map(tile => tile.row + 1)), tiles: []})
     readonly property var configuration: draft || saved
     readonly property int columns: configuration.columns || 4
     readonly property int rows: configuration.rows || 4

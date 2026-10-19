@@ -7,6 +7,54 @@ import "../theme"
 ColumnLayout {
     spacing: 20
     SettingsCard {
+        id: saver
+        readonly property var state: ShellState.snapshot.batterySaver || {}
+        title: "Battery saver"
+        description: "Temporarily use opaque Material surfaces, no blur or animations, displays at up to 1920 × 1080 / 60 Hz, and your available power-saving profile. Turning it off restores your previous shell, display, brightness and power settings. Unsupported hardware is reported below."
+        RowLayout {
+            Layout.fillWidth: true; spacing: 20
+            LabelText {
+                Layout.fillWidth: true; wrapMode: Text.Wrap
+                text: saver.state.busy ? "Applying changes…" : ShellState.batterySaverActive ? "Battery saver is on" : "Use battery saver"
+            }
+            ExpressiveSwitch {
+                objectName: "batterySaverSwitch"
+                checked: ShellState.batterySaverActive
+                enabled: ShellState.backendReady && !saver.state.busy && !ShellState.pendingActions.batterySaver
+                Accessible.name: "Battery saver"
+                onToggled: {
+                    const requested = checked;
+                    checked = Qt.binding(() => ShellState.batterySaverActive);
+                    ShellState.run("batterySaver", {enabled: requested});
+                }
+            }
+        }
+        LabelText { text: "Starting brightness · " + (ShellState.preferences.batterySaverBrightness ?? 70) + "%" }
+        LiquidSlider {
+            objectName: "batterySaverBrightness"
+            Layout.fillWidth: true; from: 1; to: 100; stepSize: 1
+            value: ShellState.preferences.batterySaverBrightness ?? 70
+            enabled: ShellState.backendReady && !ShellState.pendingActions.setting
+            onMoved: if (!pressed) ShellState.run("setting", {key: "batterySaverBrightness", value: Math.round(value)})
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "batterySaverBrightness", value: Math.round(value)})
+            Accessible.name: "Battery saver starting brightness"
+        }
+        LabelText {
+            Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted
+            text: "Applied once when battery saver starts. You can still change brightness normally while it is on. The audio spectrum and animated shapes pause; saved appearance preferences stay unchanged."
+        }
+        LabelText {
+            visible: !!saver.state.error
+            text: saver.state.error || ""; color: Theme.red; textFormat: Text.PlainText
+            Layout.fillWidth: true; wrapMode: Text.Wrap
+        }
+        LabelText {
+            visible: (saver.state.warnings || []).length > 0
+            text: (saver.state.warnings || []).join("\n"); color: Theme.yellow; textFormat: Text.PlainText
+            Layout.fillWidth: true; wrapMode: Text.Wrap
+        }
+    }
+    SettingsCard {
         title: "Lyrics"
         description: "Open Lyrics in a media card. Player metadata and local .lrc files are used first; LRCLIB results are cached. Online lookup sends track title, artist, album and duration to lrclib.net while a lyrics view is open or Activity Island displays lyrics during playback."
         PreferenceSwitch { title: "Enable lyrics"; detail: "Display synchronized or plain lyrics in media cards"; preference: "lyricsEnabled" }

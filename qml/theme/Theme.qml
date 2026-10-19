@@ -6,7 +6,8 @@ import "../services"
 
 QtObject {
     id: root
-    readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
+    readonly property bool batterySaver: ShellState.batterySaverActive
+    readonly property bool liquidGlass: !batterySaver && ShellState.preferences.surfaceStyle === "liquid"
     readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false
     property var glassControls: ({})
     readonly property var glass: Object.assign(Object.keys(glassControls).reduce((values, key) => {
@@ -46,7 +47,12 @@ QtObject {
             catch (error) { console.warn("Palette catalog could not be loaded:", error); }
         }
     }
-    function colorFor(key, fallback) { return liquidGlass ? glassColors[key] || fallback : overrides[key] || generated[key] || fallback; }
+    function solid(color) { const value = Qt.color(color); return Qt.rgba(value.r, value.g, value.b, 1); }
+    function colorFor(key, fallback) {
+        const value = liquidGlass ? glassColors[key] || fallback : overrides[key] || generated[key] || fallback;
+        return batterySaver && (["background", "panel", "surface", "primaryContainer", "secondaryContainer", "tertiaryContainer",
+            "surfaceContainer", "surfaceContainerHigh"].includes(key) || key.endsWith("Fill")) ? solid(value) : value;
+    }
     function tokenColor(key) { return root[key]; }
     function tokenTitle(key) { return key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()); }
     function settingsEqual(a, b) {
@@ -114,7 +120,7 @@ QtObject {
     readonly property int notificationMargin: ShellState.preferences.notificationMargin ?? 14
     readonly property int notificationRadius: ShellState.preferences.notificationRadius ?? 28
     readonly property int notificationPadding: ShellState.preferences.notificationPadding ?? 16
-    readonly property real notificationOpacity: liquidGlass ? panelOpacity : ShellState.preferences.notificationOpacity ?? .90
+    readonly property real notificationOpacity: batterySaver ? 1 : liquidGlass ? panelOpacity : ShellState.preferences.notificationOpacity ?? .90
     readonly property int notificationBorderWidth: liquidGlass ? 1 : ShellState.preferences.notificationBorderWidth ?? 1
     readonly property int notificationTitleSize: ShellState.preferences.notificationTitleSize ?? 14
     readonly property int notificationBodySize: ShellState.preferences.notificationBodySize ?? 13
@@ -125,7 +131,7 @@ QtObject {
     readonly property int activityPopupMaxHeight: ShellState.preferences.activityPopupMaxHeight ?? 0
     readonly property color islandFill: colorFor("islandFill", panelFill)
     readonly property color settingsFill: colorFor("settingsFill", panelFill)
-    readonly property real panelOpacity: liquidGlass ? glass.opacity ?? .65 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
+    readonly property real panelOpacity: batterySaver ? 1 : liquidGlass ? glass.opacity ?? .65 : ShellState.preferences.opacity === undefined ? 0.90 : ShellState.preferences.opacity
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42
@@ -154,7 +160,7 @@ QtObject {
     readonly property int cardPadding: compact ? 14 : 20
     readonly property int cardSpacing: compact ? 10 : 16
     readonly property string monoFamily: fontFor("mono")
-    readonly property bool animations: ShellState.preferences.animations !== false
+    readonly property bool animations: !batterySaver && ShellState.preferences.animations !== false
     readonly property bool pointerRipple: ShellState.preferences.pointerRipple !== false
     readonly property bool animatedTabs: ShellState.preferences.animatedTabs !== false
     readonly property bool mediaWave: ShellState.preferences.mediaWave !== false

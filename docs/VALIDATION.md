@@ -1,5 +1,58 @@
 # Validation and platform limits
 
+## Battery saver — 2026-10-20
+
+`scripts/check.sh` passed **454 tests: 368 passed, 86 opt-in checks skipped**,
+plus Bash syntax and the demo snapshot. **20 targeted checks passed** on private
+Sway, including tile clicks, the Settings switch/brightness control, desktop
+shape teardown/restoration and canvas move invariants. `qmllint` scanned all
+**141 QML files with zero errors and 67 existing metadata warnings**.
+
+Fake-hardware tests cover exact raw backlight restoration, fractional refresh,
+scale/position, missing/disabled/new outputs, unavailable profiles, interrupted
+apply, corrupt journals, shared Settings/shell locks, queued action conflicts,
+partial restore/retry and compositor-session changes. Startup display restore
+cannot undo an active saver. Expired display previews do not block it forever.
+A fake Cava with delayed shutdown covers 20 rapid saver reversals; intentional
+stops restart cleanly instead of becoming a visualizer failure.
+
+Battery saver applies temporary shell overrides rather than rewriting saved
+appearance preferences. Its hardware journal records original values before
+changing them and retains pending restores when a device or service is
+unavailable. Only affected resources are restored; normal brightness controls
+remain available while the saver is active. The starting cap defaults to 70%
+and does not brighten a screen already below it.
+
+Display changes use modes reported by niri at or below 1920 × 1080 / 60 Hz,
+without increasing existing resolution or refresh, preserving scale and position.
+Unsupported outputs are reported, custom modes
+are not generated, and hotplugged displays are not automatically recapped.
+Temporary niri output overrides belong to their compositor session; restore
+data from a previous session must not be applied to a new one. Display previews
+and saver activation must not compete. Recording startup is serialized with saver
+transitions; an active recording blocks toggling until it is stopped. The existing power-profile interface is
+used for TuneD/tuned-ppd and power-profiles-daemon.
+
+Target-laptop checks, not yet verified on physical hardware:
+
+1. Note the current display modes, brightness, power profile and appearance. Turn
+   Battery saver on from its Control Center tile, then open Settings. Confirm
+   opaque Material surfaces, no shell blur/motion and the reported hardware
+   changes. Verify the UI remains usable on each display.
+2. Change brightness with a media key or slider. It must stay at the new level
+   until changed again; the starting cap must not run repeatedly. Test activation
+   both above and below the configured cap.
+3. Turn the switch off and verify the original affected resources and saved
+   appearance return. Repeat across a shell/Settings restart.
+4. Disconnect an affected external display before restoring. The pending restore
+   must remain visible and retry after reconnection; a newly connected output
+   must not be silently capped. Confirm that a display preview blocks activation.
+
+The shell cannot guarantee power savings or disable effects in other programs.
+Niri IPC exposes temporary output controls, but no general runtime switch for
+compositor-wide blur or animations. Actual laptop power use, physical mode
+switching, backlight authorization and GPU behavior require the checks above.
+
 ## Audit follow-up fixes — 2026-10-20
 
 `scripts/check.sh` passed **416 tests: 331 passed, 85 opt-in checks skipped**,

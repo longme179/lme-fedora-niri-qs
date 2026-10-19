@@ -162,6 +162,14 @@
       "cols": 1,
       "col": 3,
       "row": 7
+    },
+    {
+      "id": "batterySaver",
+      "title": "Battery saver",
+      "icon": "battery",
+      "cols": 1,
+      "col": 0,
+      "row": 8
     }
   ]
 }

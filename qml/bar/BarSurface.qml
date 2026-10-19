@@ -13,7 +13,7 @@ GlassPanel {
         bottomRightRadius: Math.round(root.bottomRightRadius)
     }
     property string zone: ""
-    readonly property color fill: Theme.liquidGlass ? Theme.barFill : style.fillColor || Theme.barFill
+    readonly property color fill: Theme.batterySaver ? Theme.solid(style.fillColor || Theme.barFill) : Theme.liquidGlass ? Theme.barFill : style.fillColor || Theme.barFill
     readonly property var style: zone ? Theme.islandStyle(zone) : ({})
     objectName: "barSurface"
     role: "barFill"

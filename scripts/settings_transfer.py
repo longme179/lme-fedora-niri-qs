@@ -16,7 +16,7 @@ PORTABLE = set(APPEARANCE_KEYS) | {
     'barGestures','barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barBorderWidth','barCorners','barIslandStyles','barFontSize','barLayout','barBlur',
     'desktopEnabled','desktopShapes','desktopWidgets','lyricsEnabled','lyricsOnline','lyricsMode','lyricsFollow','activityLyrics','bluetoothPairing','mediaStability','mediaControls','mirroringEnabled','recordingEnabled','recordingEncoder','recordingAudio','recordingFormat','recordingCodec','recordingFps','recordingBitrate','captureEditor','fileSearchEnabled','quickNotes','audioVisualizer','osdEnabled','osdPosition','osdLayout','osdMargin','controlLayout','controlWidth','popupBlur','fontPicker','colorPicker','privacyIndicators','dndWhileSharing',
     'controlGrid','batteryDetails','weatherAutoLocation','weatherUnit','activityEnabled','clipboardEnabled','clipboardImages','clipboardLimit',
-    'peripheralBatteryAlerts','peripheralBatteryThreshold',
+    'peripheralBatteryAlerts','peripheralBatteryThreshold','batterySaverBrightness',
     'nightLightMode','nightLightTemperature','nightLightStart','nightLightEnd',
 }
 

@@ -62,6 +62,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Wallpaper playback** | Build an ordered or shuffled playlist, pause/resume, set an interval and choose awww transitions. Use a shared image or independent images per display; keep assignments for disconnected displays. |
 | **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications with [appearance controls](docs/NOTIFICATIONS.md) and a rotating Material emblem; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
+| **Battery saver** | A reversible Control Center toggle for opaque Material surfaces, reduced motion, supported display modes up to 1080p/60 Hz, a starting brightness cap and the system's power-saving profile. |
 | **Device batteries** | Headphone, mouse and keyboard battery readings in Control Center → Devices, with configurable low-battery alerts. Uses BlueZ and kernel readings; devices that do not report a percentage stay marked as unavailable. |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
@@ -238,7 +239,7 @@ only softens the refractive rim; higher backdrop blur values cost more GPU time.
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
 | **Wallpaper / Weather** | Image library, playlists, transitions, per-display images, palette preview, automatic/manual location and units |
 | **Desktop widgets** | Add clock/notes/media, choose an output, enable click-through and arrange widgets in Edit mode |
-| **Behavior** | Lyrics and online lookup, Bluetooth pairing, privacy, OSD layout, notes, file search, recording, external editor and settings transfer |
+| **Behavior** | Battery saver, lyrics and online lookup, Bluetooth pairing, privacy, OSD layout, notes, file search, recording, external editor and settings transfer |
 | **Keyboard shortcuts / Clipboard** | Search niri bindings; configure history and image capture |
 
 Jump to a page with `./scripts/settings.sh --page topbar`. Use
@@ -255,6 +256,39 @@ device IDs and tasks. Import validates fields and backs up
 current settings. Private backups include personal settings and should stay
 private. Clipboard/notification history and notes are separate from settings
 backups. [Configuration guide](docs/CONFIGURATION.md).
+
+### Battery saver
+
+Turn on **Battery saver** in the Control Center canvas or **Settings → Behavior**.
+If its tile is hidden in an existing layout, enable it in **Settings → Control
+center**, then place it using the canvas's Edit mode.
+
+While enabled, LME uses opaque Material surfaces and stops its blur, animations,
+audio spectrum and floating shapes. Your saved Liquid glass, colors, transparency
+and motion preferences stay unchanged and return when you turn Battery saver off.
+
+For active displays above 1920 × 1080 or 60 Hz, LME selects a supported mode at or
+below those limits, keeping scale and position. Displays already below the limits
+stay unchanged. It does not invent custom modes or automatically recap displays
+connected later. Finish any display preview before enabling Battery saver, and
+stop screen recording before toggling it. Wallpaper playlists pause temporarily;
+manual wallpaper changes use no transition.
+
+The starting brightness cap defaults to **70%** and is adjustable in Behavior.
+It lowers brightness once if needed; it never raises a dimmer screen. Brightness
+keys and sliders remain available afterward. The system power profile switches
+to `power-saver` when supported by the existing TuneD/tuned-ppd or
+power-profiles-daemon service; no provider replacement is needed.
+
+Turning Battery saver off restores the display, backlight and power values it
+changed. A separate restore journal retains the original values through shell
+restarts. If a device or service is unavailable during restore, Settings shows
+the error and keeps the pending values: reconnect the device or service, then
+turn the switch off again to retry. A new niri session discards its predecessor's
+temporary display overrides; turn Battery saver off and on to cap the new session.
+Keep `battery-saver.json` beside your settings local; it is not part of shared presets.
+LME's effects are controlled here; application and niri animations remain under
+their own configuration.
 
 ### Desktop widgets
 

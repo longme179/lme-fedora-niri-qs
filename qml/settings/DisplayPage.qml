@@ -42,6 +42,11 @@ ColumnLayout {
         }
     }
     Timer { interval: 3000; repeat: true; running: root.visible; onTriggered: { root.now = Date.now(); if (ShellState.backendReady && !ShellState.pendingActions.displayRefresh) ShellState.run("displayRefresh"); } }
+    SettingsCard {
+        visible: ShellState.batterySaverActive
+        title: "Battery saver controls display modes"
+        description: "Resolution and refresh rate are temporarily limited. Turn off Battery saver in Behavior before applying another display layout."
+    }
     SettingsCard { MirrorControls { Layout.fillWidth: true } }
     SettingsCard {
         title: "Arrange displays"
@@ -102,7 +107,7 @@ ColumnLayout {
             ExpressiveField { Layout.fillWidth: true; text: root.selected ? String(root.selected.y) : "0"; validator: IntValidator { bottom: -32768; top: 32768 } enabled: !root.testing; Accessible.name: "Display Y position"; onEditingFinished: if (acceptableInput) root.patch({y: Number(text)}) }
         }
         RowLayout {
-            LiquidButton { text: "Apply & test"; enabled: root.dirty && !root.testing && ShellState.backendReady; onClicked: ShellState.run("displayApply", {layout: root.drafts}) }
+            LiquidButton { text: "Apply & test"; enabled: !ShellState.batterySaverActive && root.dirty && !root.testing && ShellState.backendReady; onClicked: ShellState.run("displayApply", {layout: root.drafts}) }
             LiquidButton { text: "Discard edits"; enabled: root.dirty && !root.testing; onClicked: root.resetDrafts() }
         }
     }

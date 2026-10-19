@@ -55,6 +55,7 @@ from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from image_utilities import ImageUtilities
+from battery_saver import BatterySaver, brightness_state
 
 
 DEFAULT_PREFERENCES = {
@@ -63,7 +64,7 @@ DEFAULT_PREFERENCES = {
     "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
     "desktopShapeSpeed": 1.0, "desktopShapeStyle": "mixed", "desktopShapeRotation": True,
-    "peripheralBatteryAlerts": True, "peripheralBatteryThreshold": 20,
+    "peripheralBatteryAlerts": True, "peripheralBatteryThreshold": 20, "batterySaverBrightness": 70,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
@@ -364,6 +365,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == 'launcherRanking' and type(value) is bool: return value
     if key == 'peripheralBatteryAlerts' and type(value) is bool: return value
     if key == 'peripheralBatteryThreshold' and type(value) is int and 5 <= value <= 50: return value
+    if key == 'batterySaverBrightness' and type(value) is int and 1 <= value <= 100: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name
@@ -674,6 +676,11 @@ class DesktopBackend:
         self.power_cache = None
         self.last_power_sample = 0.0
         self.power_profile_provider: tuple[str, ...] | None = None
+        self.battery_saver = BatterySaver(self.runner, self.preferences.path.parent / 'battery-saver.json',
+            outputs=self.display_control.outputs, read_brightness=lambda: self.brightness(raw=True),
+            set_brightness=self.restore_brightness, read_profile=self.power_profile,
+            profiles=self.power_profiles, set_profile=self.set_power_profile)
+        self.battery_saver_state = {"active": False, "busy": False, "error": "", "warnings": []}
         self.result_sequence = 0
         self.result_unemitted = False
         self.last_result = {"ok": True, "action": "ready", "message": "Backend ready", "sequence": 0}
@@ -957,7 +964,7 @@ class DesktopBackend:
             return {"available": False, "volume": None, "muted": False}
         return {"available": True, "volume": round(value * 100), "muted": "[MUTED]" in (output or "")}
 
-    def brightness(self) -> dict[str, Any]:
+    def brightness(self, *, raw=False) -> dict[str, Any] | None:
         devices = list((self.sysfs / "class/backlight").glob("*"))
         # Keep brightnessctl's device selection when more than one backlight exists.
         if len(devices) == 1:
@@ -965,16 +972,34 @@ class DesktopBackend:
                 current = int(self.read(devices[0] / "brightness") or "")
                 maximum = int(self.read(devices[0] / "max_brightness") or "")
                 if maximum > 0 and 0 <= current <= maximum:
+                    if raw: return {"device": devices[0].name, "current": current, "maximum": maximum}
                     return {"available": True, "percent": round(current * 100 / maximum)}
             except ValueError:
                 pass
         output = self.try_run("brightnessctl", "--class=backlight", "-m")
         # Backlight-only class excludes keyboard and wireless status LEDs.
         for line in (output or "").splitlines():
+            if raw:
+                fields = line.split(',')
+                try:
+                    if len(fields) == 5 and fields[1] == 'backlight':
+                        return brightness_state({"device": fields[0], "current": int(fields[2]), "maximum": int(fields[4])})
+                except ValueError:
+                    continue
+                continue
             match = re.search(r",([0-9]+)%,", line)
             if match:
                 return {"available": True, "percent": min(100, int(match[1]))}
-        return {"available": False, "percent": None}
+        return None if raw else {"available": False, "percent": None}
+
+    def restore_brightness(self, value):
+        value = brightness_state(value)
+        device = value['device']
+        if device in ('.', '..') or '/' in device or not (self.sysfs / 'class/backlight' / device).is_dir():
+            raise ValueError('The saved backlight is no longer available')
+        maximum = self.read(self.sysfs / 'class/backlight' / device / 'max_brightness')
+        if maximum != str(value['maximum']): raise ValueError('The backlight range changed; restoration was not applied')
+        self.runner.run('brightnessctl', '--class=backlight', '--device', device, 'set', str(value['current']))
 
     def read_power_profile(self, provider: tuple[str, ...]) -> str | None:
         if provider[0] == "dbus":
@@ -998,9 +1023,10 @@ class DesktopBackend:
         # this standard API, so neither swapping the provider nor its CLI is
         # required. Keep the working endpoint first on later samples.
         candidates = [("dbus", *service) for service in POWER_PROFILE_SERVICES] + [("cli",)]
-        if self.power_profile_provider in candidates:
-            candidates.remove(self.power_profile_provider)
-            candidates.insert(0, self.power_profile_provider)
+        current_provider = self.power_profile_provider
+        if current_provider in candidates:
+            candidates.remove(current_provider)
+            candidates.insert(0, current_provider)
         for provider in candidates:
             value = self.read_power_profile(provider)
             if value is not None:
@@ -1021,6 +1047,47 @@ class DesktopBackend:
         order = ['power-saver', 'balanced', 'performance']
         return [profile for profile in order if profile in advertised] if advertised else order
 
+    def set_power_profile(self, value):
+        if value not in POWER_PROFILES: raise ValueError('Invalid power profile')
+        current = self.power_profile()
+        provider = self.power_profile_provider
+        if current is None or provider is None:
+            raise CommandError('No compatible power-profile service is available')
+        if provider[0] == 'dbus':
+            self.runner.run('busctl', '--system', 'set-property', *provider[1:], 'ActiveProfile', 's', value, timeout=30)
+        else:
+            self.runner.run('powerprofilesctl', 'set', value, timeout=30)
+        return f'Power profile: {value}'
+
+    def saver_snapshot(self):
+        previous = self.battery_saver_state
+        if not self.demo: self.battery_saver_state = self.battery_saver.snapshot()
+        if previous['active'] != self.battery_saver_state['active'] or previous['busy'] and not self.battery_saver_state['busy']:
+            self.system_cache = None
+            self.power_cache = None
+        self.wallpapers.power_saving = self.battery_saver_state['active']
+        return dict(self.battery_saver_state)
+
+    def saver_preflight(self, enabled, state):
+        if self.recording().get('active') or 'recordStart' in self.feature_jobs:
+            raise ValueError('Stop screen recording before changing Battery saver')
+        if enabled and not (state or {}).get('active'):
+            preview = self.display_control.snapshot()['preview']
+            deadline = preview.get('deadline', time.time())
+            if type(deadline) not in (int, float) or not math.isfinite(deadline):
+                raise ValueError('The display preview has an invalid deadline')
+            if preview.get('status') in {'applying', 'pending', 'reverting'} and time.time() < deadline + 5:
+                raise ValueError('Confirm or revert the display preview before enabling Battery saver')
+
+    def toggle_battery_saver(self, enabled):
+        self.preferences.reload()
+        state = self.battery_saver.toggle(enabled, brightness_target=self.preferences.values['batterySaverBrightness'],
+                                          preflight=self.saver_preflight)
+        self.battery_saver_state = state
+        self.wallpapers.power_saving = state['active']
+        if state['error']: raise ValueError(state['error'])
+        return 'Battery saver ' + ('enabled' if state['active'] else 'disabled; previous settings restored')
+
     def niri_state(self) -> dict[str, Any]:
         workspaces = self.try_run("niri", "msg", "--json", "workspaces")
         windows = self.try_run("niri", "msg", "--json", "windows")
@@ -1040,6 +1107,7 @@ class DesktopBackend:
         if self.demo:
             return self.demo_snapshot()
         self.preferences.reload()
+        self.saver_snapshot()
         # Emit each input acknowledgement before a completed background job
         # replaces lastResult. Otherwise a fast charge job could hide another
         # action's acknowledgement and leave its QML button pending forever.
@@ -1058,7 +1126,7 @@ class DesktopBackend:
                 enabled=self.preferences.values['mirroringEnabled'])
         if self.settings_only:
             # Only Liquid floating windows need compositor coordinates for their rim sampler.
-            self.niri = self.niri_state() if self.preferences.values['surfaceStyle'] == 'liquid' else {"available": False, "windows": [], "workspaces": []}
+            self.niri = self.niri_state() if self.preferences.values['surfaceStyle'] == 'liquid' and not self.battery_saver_state['active'] else {"available": False, "windows": [], "workspaces": []}
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()
@@ -1097,7 +1165,7 @@ class DesktopBackend:
                 "monitor": self.monitor.state if self.monitor_enabled else {}}
 
     def feature_snapshot(self):
-        return {"imageUtilities": dict(self.image_utilities.state), "launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+        return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), "launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
@@ -1153,6 +1221,9 @@ class DesktopBackend:
                 if action == "wallpaperScan": self.wallpaper_library = {**self.wallpaper_library, "error": str(error)[:400]}
             del self.feature_jobs[action]
             if action in {"recordStart", "recordStop"}: self.privacy_cache = None
+            if action == 'batterySaver':
+                self.power_cache = None
+                self.displays = self.display_control.snapshot()
             self.system_cache = None
             # Deliver each completion separately so every pending QML action clears.
             break
@@ -1182,6 +1253,7 @@ class DesktopBackend:
 
     def demo_snapshot(self) -> dict[str, Any]:
         if hasattr(self, "_demo_state"):
+            self._demo_state['batterySaver'] = self.saver_snapshot()
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
             self._demo_state['wallpaperTransitions'] = WALLPAPER_TRANSITIONS
@@ -1293,7 +1365,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1301,6 +1373,7 @@ class DesktopBackend:
                                     "sequence": self.result_sequence}
                 if action == "calculate": self.last_result.update(query=request.get("query"), message=calculate(request.get("query")))
                 return dict(self.last_result)
+            self.saver_snapshot()
             if action in {"refresh", "micMute", "recordStart", "recordStop", "mirrorStart", "mirrorStop"}:
                 self.privacy_cache = None
             if action in {"refresh", "controlsRefresh", "bluetoothToggle", "bluetoothDevice"}: self.bluetooth_cache = None
@@ -1326,7 +1399,10 @@ class DesktopBackend:
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
         system = state["system"]
-        if action == "wifiWatch":
+        if action == 'batterySaver':
+            if type(request.get('enabled')) is not bool: raise ValueError('Battery saver must be enabled or disabled')
+            self.battery_saver_state = {"active": request['enabled'], "busy": False, "error": "", "warnings": []}
+        elif action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             self.wifi_watching = request["enabled"]
         elif action == "controlsRefresh": pass
@@ -1527,6 +1603,12 @@ class DesktopBackend:
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
         run = self.runner.run
+        if action == 'batterySaver':
+            enabled = request.get('enabled')
+            if type(enabled) is not bool: raise ValueError('Battery saver must be enabled or disabled')
+            state = self.saver_snapshot()
+            self.saver_preflight(enabled, state)
+            return self.start_feature(action, lambda: self.toggle_battery_saver(enabled))
         if action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
             if self.settings_only:
                 if action != 'mirrorRefresh':
@@ -1620,13 +1702,18 @@ class DesktopBackend:
             self.idle_control.paused = request["value"]
             return "Idle paused" if request["value"] else "Idle resumed"
         if action == "recordStart":
+            if 'batterySaver' in self.feature_jobs or self.saver_snapshot()['busy']:
+                raise ValueError('Wait for Battery saver to finish before recording')
             if not self.preferences.values["recordingEnabled"]: raise ValueError("Screen recording is disabled")
             niri=self.niri_state()
             outputs={w.get("output") for w in niri["workspaces"] if w.get("output")}
             output=request.get("output")
             if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
             prefs=dict(self.preferences.values)
-            return self.start_feature(action,lambda:self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"]))
+            def record():
+                with self.battery_saver.guard(allow_active=True):
+                    return self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"])
+            return self.start_feature(action,record)
         if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
@@ -1698,7 +1785,9 @@ class DesktopBackend:
             self.displays = self.display_control.snapshot()
             return "Displays refreshed"
         if action == "displayApply":
-            self.display_control.start(request.get("layout"))
+            if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
+            with self.battery_saver.guard():
+                self.display_control.start(request.get("layout"))
             self.displays = self.display_control.snapshot()
             return "Display preview requested; confirm within 20 seconds"
         if action in {"displayConfirm", "displayRevert"}:
@@ -1842,19 +1931,9 @@ class DesktopBackend:
             run("busctl", "--system", "call", "org.bluez", path, "org.bluez.Device1", "Connect" if connected else "Disconnect", timeout=15.0)
             return "Bluetooth device " + ("connected" if connected else "disconnected")
         if action == "powerProfile":
-            value = request.get("value")
-            if value not in POWER_PROFILES:
-                raise ValueError("Invalid power profile")
-            if self.power_profile() is None or self.power_profile_provider is None:
-                raise CommandError("No compatible power-profile service is available")
-            provider = self.power_profile_provider
-            if provider[0] == "dbus":
-                # An active local session is normally authorized by polkit;
-                # allow a bounded interaction if the administrator changed it.
-                run("busctl", "--system", "set-property", *provider[1:], "ActiveProfile", "s", value, timeout=30.0)
-            else:
-                run("powerprofilesctl", "set", value, timeout=30.0)
-            return f"Power profile: {value}"
+            if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
+            with self.battery_saver.guard():
+                return self.set_power_profile(request.get('value'))
         if action == "lock":
             self.runner.executable("swaylock")
             return self.start_feature(action, self.lock_session)
@@ -1998,18 +2077,25 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("Wallpaper restoration is disabled in demo mode")
     backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
     if args.restore_displays:
-        saved = backend.preferences.values["displayLayout"]
-        if not saved: return 0
-        outputs = backend.display_control.outputs()
-        original = current_layout(outputs)
-        compatible = []
-        for item in saved:
-            try: compatible.extend(validate_layout([item], outputs))
-            except ValueError: continue
-        if not compatible: return 0
-        try: apply_layout(compatible, backend.runner.run)
+        if backend.saver_snapshot()['active']:
+            print('Displays: Battery saver is active; keeping current modes', file=sys.stderr)
+            return 0
+        try:
+            with backend.battery_saver.guard():
+                saved = backend.preferences.values["displayLayout"]
+                if not saved: return 0
+                outputs = backend.display_control.outputs()
+                original = current_layout(outputs)
+                compatible = []
+                for item in saved:
+                    try: compatible.extend(validate_layout([item], outputs))
+                    except ValueError: continue
+                if not compatible: return 0
+                try: apply_layout(compatible, backend.runner.run)
+                except (CommandError, ValueError, OSError):
+                    if original: apply_layout(original, backend.runner.run, best_effort=True)
+                    raise
         except (CommandError, ValueError, OSError) as error:
-            if original: apply_layout(original, backend.runner.run, best_effort=True)
             print("Displays: " + str(error), file=sys.stderr)
             return 1
         return 0
@@ -2056,7 +2142,7 @@ def main(argv: list[str] | None = None) -> int:
             selector.register(sys.stdin, selectors.EVENT_READ, "input")
         while True:
             changed = False
-            if args.settings and backend.preferences.values['surfaceStyle'] != 'liquid' and event_process is not None:
+            if args.settings and (backend.preferences.values['surfaceStyle'] != 'liquid' or backend.battery_saver_state['active']) and event_process is not None:
                 close_event_stream()
             if not args.demo and event_process is None and backend.niri["available"] and time.monotonic() >= next_event_retry:
                 try:

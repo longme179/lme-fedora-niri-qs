@@ -25,10 +25,10 @@ CONTROL_MODULES = tuple(item['id'] for item in [*CONTROL_CATALOG['cards'], *CONT
 DEFAULT_CONTROL_LAYOUT = [{'id': item['id'], 'enabled': True, 'size': item.get('size', 'full' if item.get('cols', 0) >= 4 else 'half')}
                           for item in [*CONTROL_CATALOG['cards'], *CONTROL_TILES]]
 CONTROL_SPANS = {tile['id']: tile['cols'] for tile in CONTROL_TILES}
-DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': 8, 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
+DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': max(8, 1 + max(tile['row'] for tile in CONTROL_TILES)), 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
 LEGACY_CONTROL_MODULES = {'weather', 'charging', 'wifi', 'bluetooth', 'microphone', 'dnd', 'stayAwake', 'motion', 'nightLight',
                           'sliders', 'powerProfile', 'media', 'resources', 'capture', 'overview'}
-LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power'}
+LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power', 'batterySaver'}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
@@ -99,7 +99,7 @@ def control_layout(value):
                 or type(item['enabled']) is not bool or item['size'] not in ('half', 'full')):
             raise ValueError('Invalid control module')
         seen.add(item['id']); result.append(dict(item))
-    if seen in (set(CONTROL_MODULES) - {'nightLight'}, LEGACY_CONTROL_MODULES - {'nightLight'}):
+    if seen in (set(CONTROL_MODULES) - {'nightLight'}, set(CONTROL_MODULES) - {'nightLight', 'batterySaver'}, LEGACY_CONTROL_MODULES - {'nightLight'}):
         result.append({'id': 'nightLight', 'enabled': True, 'size': 'half'}); seen.add('nightLight')
     if seen == LEGACY_CONTROL_MODULES:
         actions_enabled = next(item['enabled'] for item in result if item['id'] == 'capture')
@@ -108,6 +108,8 @@ def control_layout(value):
             ids = ('volume', 'micLevel', 'brightness') if item['id'] == 'sliders' else ('capture', 'captureScreen', 'captureArea', 'captureWindow') if item['id'] == 'capture' else (item['id'],)
             migrated.extend({**item, 'id': id} for id in ids)
         result = [*migrated, {'id': 'settings', 'enabled': actions_enabled, 'size': 'half'}, {'id': 'power', 'enabled': actions_enabled, 'size': 'half'}]
+    if {item['id'] for item in result} == set(CONTROL_MODULES) - {'batterySaver'}:
+        result.append({'id': 'batterySaver', 'enabled': True, 'size': 'half'})
     if {item['id'] for item in result} != set(CONTROL_MODULES):
         raise ValueError('The layout must include every control module exactly once')
     return result
@@ -129,7 +131,7 @@ def control_grid(value):
         cells = {(tile['row'], col) for col in range(tile['col'], tile['col'] + CONTROL_SPANS[tile['id']])}
         if occupied & cells: raise ValueError('Quick controls cannot overlap')
         occupied |= cells; seen.add(tile['id']); result.append(dict(tile))
-    if seen not in (set(CONTROL_SPANS), LEGACY_GRID_IDS): raise ValueError('Include every quick control exactly once')
+    if seen not in (set(CONTROL_SPANS), set(CONTROL_SPANS) - {'batterySaver'}, LEGACY_GRID_IDS): raise ValueError('Include every quick control exactly once')
     rows = value['rows']
     # Add new controls in vacant cells, growing downward without shifting saved positions.
     for tile in CONTROL_TILES:

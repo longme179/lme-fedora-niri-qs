@@ -4,11 +4,12 @@ import "../services"
 import "../theme"
 Item {
     id: root
-    visible: ShellState.preferences.audioVisualizer === true
+    readonly property bool spectrumEnabled: !ShellState.batterySaverActive && ShellState.preferences.audioVisualizer === true
+    visible: spectrumEnabled
     property bool playing: false
     readonly property bool wanted: visible && playing && ShellState.preferences.audioVisualizer === true && !ShellState.demo
     property bool subscribed: false
-    implicitHeight: ShellState.preferences.audioVisualizer === true ? 38 : 0
+    implicitHeight: spectrumEnabled ? 38 : 0
     function sync() { if (wanted===subscribed) return; if(wanted) VisualizerState.addRef(); else VisualizerState.removeRef(); subscribed=wanted; }
     onWantedChanged: sync()
     Component.onCompleted: sync()

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add a reversible Battery saver switch and Control Center canvas tile. Temporarily
+  use opaque Material surfaces without shell blur, motion, spectrum or floating
+  shapes; cap supported active display modes at 1080p/60 Hz, apply a configurable
+  one-time brightness cap and use the existing power-saving profile. Preserve
+  saved preferences and journal changed hardware values for restore/retry. Keep
+  startup display restore and recording from racing transitions; resume Cava
+  correctly after rapid toggles.
+
 - Avoid a second shell success toast when connecting or disconnecting Bluetooth devices. Keep application notifications, connection errors and device-state updates intact.
 
 - Reclaim abandoned Gowall preview sessions using ownership leases; keep previews in other running instances, bound cache-lock waits and clean owned previews on close. Preserve exported/applied images and prune legacy unleased jobs only after 24 hours.

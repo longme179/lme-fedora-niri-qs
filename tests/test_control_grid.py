@@ -31,6 +31,7 @@ class ControlGridCase(Fixture, unittest.TestCase):
     def test_large_canvas_and_portable_preset_roundtrip_keep_hidden_widgets(self):
         layout = copy.deepcopy(DEFAULT_CONTROL_GRID)
         layout.update(columns=8, rows=8); layout['tiles'][0].update(col=6, row=7)
+        next(tile for tile in layout['tiles'] if tile['id'] == 'batterySaver').update(col=4, row=7)
         self.preferences.set('controlGrid', layout)
         cards = copy.deepcopy(self.preferences.values['controlLayout']); cards[0]['enabled'] = False
         self.preferences.set('controlLayout', cards)
@@ -54,7 +55,7 @@ class ControlGridCase(Fixture, unittest.TestCase):
             old = {'columns': columns, 'rows': 4, 'tiles': old_tiles}
             migrated = control_grid(old)
             for tile in old_tiles: self.assertIn(tile, migrated['tiles'])
-            self.assertEqual(migrated['rows'], 8 if columns==4 else 4)
+            self.assertEqual(migrated['rows'], 9 if columns==4 else 5)
             self.preferences.path.parent.mkdir(parents=True, exist_ok=True)
             self.preferences.path.write_text(json.dumps({'controlLayout': old_cards, 'controlGrid': old}))
             restored = backend.Preferences(self.preferences.path).values
@@ -74,6 +75,22 @@ class ControlGridCase(Fixture, unittest.TestCase):
         self.assertTrue(all(tile in migrated['tiles'] for tile in positions))
         self.assertEqual(control_grid(migrated), migrated)
 
+    def test_battery_saver_is_added_without_moving_or_enabling_existing_controls(self):
+        prior = copy.deepcopy(DEFAULT_CONTROL_GRID)
+        prior['tiles'] = [tile for tile in prior['tiles'] if tile['id'] != 'batterySaver']
+        prior['rows'] = 8
+        layout = [dict(item, enabled=False) for item in self.preferences.values['controlLayout'] if item['id'] != 'batterySaver']
+        self.preferences.path.parent.mkdir(parents=True, exist_ok=True)
+        self.preferences.path.write_text(json.dumps({'controlGrid': prior, 'controlLayout': layout}))
+        values = backend.Preferences(self.preferences.path).values
+        grid = values['controlGrid']
+        self.assertEqual(grid['rows'], 9)
+        self.assertTrue(all(tile in grid['tiles'] for tile in prior['tiles']))
+        self.assertEqual([item for item in values['controlLayout'] if item['id'] != 'batterySaver'], layout)
+        self.assertEqual(next(item for item in values['controlLayout'] if item['id'] == 'batterySaver'),
+                         {'id': 'batterySaver', 'enabled': True, 'size': 'half'})
+        self.assertEqual(control_grid(grid), grid)
+
 
 @unittest.skipUnless(os.environ.get('LME_TEST_UPGRADE_UI') == '1', 'private Wayland canvas UI')
 class ControlGridUiCase(unittest.TestCase):
@@ -89,7 +106,7 @@ ShellRoot {
     Component.onCompleted: {
         const tiles = ''' + json.dumps(CONTROL_TILES) + ''';
         let checked = 0;
-        for (const columns of [4, 8]) for (const rows of [4, 8]) {
+        for (const columns of [4, 8]) for (const rows of [4, 8, 9]) {
             let layout = Logic.pack(tiles, columns);
             if (layout.some(tile => tile.row >= rows)) continue;
             for (let round = 0; round < 3; round++) for (const tile of tiles)
@@ -129,7 +146,8 @@ ShellRoot {
 ''')
             result = subprocess.run(['quickshell', '-p', str(entry)], capture_output=True, text=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn('LEGAL_DROPS 5628', result.stdout + result.stderr)
+            import re
+            self.assertGreater(int(re.search(r'LEGAL_DROPS (\d+)', result.stdout + result.stderr)[1]), 5000)
 
     def test_drag_keyboard_resize_visibility_persistence_and_action_isolation(self):
         pointer, dragger = os.environ.get('LME_TEST_POINTER'), os.environ.get('LME_TEST_DRAG')

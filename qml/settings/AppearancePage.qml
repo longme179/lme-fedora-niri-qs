@@ -9,6 +9,12 @@ ColumnLayout {
     Component.onCompleted: if (ShellState.backendReady) ShellState.run("platformRefresh")
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
     SettingsCard {
+        visible: ShellState.batterySaverActive
+        title: "Battery saver is on"
+        description: "Opaque Material surfaces and reduced motion temporarily override your saved appearance. Turn off Battery saver in Behavior to restore Liquid glass, transparency and animations."
+        LiquidButton { text: "Open Battery saver settings"; onClicked: ShellState.openSettingsPage("behavior") }
+    }
+    SettingsCard {
         title: "Surface style"
         description: "Liquid glass combines a frosted backdrop, refractive edges and white text. Your saved palette, accent, opacity and element colors stay unchanged; switch back to restore them."
         RowLayout {
@@ -17,7 +23,7 @@ ColumnLayout {
             ExpressiveSwitch {
                 objectName: "surfaceStyle"; Accessible.name: "Liquid glass"
                 checked: Theme.liquidGlass
-                enabled: ShellState.backendReady && !ShellState.pendingActions.setting
+                enabled: ShellState.backendReady && !ShellState.batterySaverActive && !ShellState.pendingActions.setting
                 onToggled: ShellState.run("setting", {key: "surfaceStyle", value: checked ? "liquid" : "smoked"})
             }
         }
@@ -148,6 +154,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Glass and motion"
+        enabled: !ShellState.batterySaverActive
         PreferenceSwitch {
             title: "Blur behind popups"; preference: "popupBlur"; enabled: !Theme.liquidGlass
             detail: Theme.liquidGlass ? "Full-screen blur is paused; each glass panel has its own local blur. Your saved preference applies in Smoked mode."

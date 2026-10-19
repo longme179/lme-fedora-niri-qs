@@ -102,7 +102,8 @@ Item {
                 components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
                     stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
-                    volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule, settings: settingsModule, power: powerModule})
+                    volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
+                    batterySaver: batterySaverModule, settings: settingsModule, power: powerModule})
             }
             LiquidButton { visible: root.editing; text: "Reset grid"; enabled: quickGrid.ready; onClicked: quickGrid.reset() }
             GridLayout {
@@ -176,7 +177,19 @@ Item {
     }
     Component {
         id: motionModule
-        Tile { label: "Motion"; iconName: "refresh"; detail: Theme.animations ? Theme.motionPreset[0].toUpperCase() + Theme.motionPreset.slice(1) + " · " + Theme.motionSpeed.toFixed(1) + "×" : "Reduced motion"; active: Theme.animations; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
+        Tile { label: "Motion"; iconName: "refresh"; detail: ShellState.batterySaverActive ? "Managed by Battery saver" : Theme.animations ? Theme.motionPreset[0].toUpperCase() + Theme.motionPreset.slice(1) + " · " + Theme.motionSpeed.toFixed(1) + "×" : "Reduced motion"; active: Theme.animations; enabled: !ShellState.batterySaverActive; onClicked: ShellState.run("setting", {key: "animations", value: !Theme.animations}) }
+    }
+    Component {
+        id: batterySaverModule
+        Tile {
+            objectName: "batterySaverTile"
+            label: "Battery saver"; iconName: "battery"; accent: Theme.green
+            readonly property var state: ShellState.snapshot.batterySaver || {}
+            active: ShellState.batterySaverActive
+            detail: state.busy ? "Applying changes…" : state.error ? "Needs attention · Settings" : active ? "Saving power" : "Normal settings"
+            enabled: ShellState.backendReady && !state.busy && !ShellState.pendingActions.batterySaver
+            onClicked: ShellState.run("batterySaver", {enabled: !ShellState.batterySaverActive})
+        }
     }
     Component {
         id: nightLightModule
@@ -200,7 +213,7 @@ Item {
             active: profile >= 0 && ShellState.system.powerProfile !== "balanced"
             accent: ShellState.system.powerProfile === "power-saver" ? Theme.green : Theme.pink
             detail: ({"power-saver": "Power saver", balanced: "Balanced", performance: "Performance"})[ShellState.system.powerProfile] || "Unavailable"
-            enabled: profile >= 0 && profiles.length > 1 && !ShellState.pendingActions.powerProfile
+            enabled: !ShellState.batterySaverActive && profile >= 0 && profiles.length > 1 && !ShellState.pendingActions.powerProfile
             onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]})
         }
     }

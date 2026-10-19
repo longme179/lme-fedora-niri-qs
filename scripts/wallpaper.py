@@ -100,6 +100,7 @@ class Wallpapers:
         self.connected=None
         self.cursor=None
         self.closed=False
+        self.power_saving=False
 
     @contextmanager
     def operation(self):
@@ -143,7 +144,7 @@ class Wallpapers:
         if not output and p['wallpaperOutputs'] and not outputs:
             raise ValueError('awww did not report its displays; existing wallpapers were kept')
         if targets or not output and not p['wallpaperOutputs']:
-            args=image_arguments(path,p,animate)
+            args=image_arguments(path,p,animate and not self.power_saving)
             if targets: args+=['--outputs',','.join(targets)]
             if self.closed: raise ValueError('Wallpaper operation was cancelled')
             self.runner.run('awww',*args,timeout=15)
@@ -165,7 +166,7 @@ class Wallpapers:
     def advance(self,output=None,automatic=False):
         with self.operation():
             p=self.preferences.values
-            if automatic and (not p['wallpaperPlaylistEnabled'] or p['wallpaperPlaylistPaused'] or p['wallpaperPlaylistOutput']!=output): return ''
+            if automatic and (self.power_saving or not p['wallpaperPlaylistEnabled'] or p['wallpaperPlaylistPaused'] or p['wallpaperPlaylistOutput']!=output): return ''
             return self._advance(output)
 
     def _advance(self,output):
@@ -205,7 +206,7 @@ class Wallpapers:
         if signature!=self.signature:
             self.signature=signature; self.cursor=None; self.remaining=None; self.deadline=None
             self.retry_at=0
-        paused=p['wallpaperPlaylistPaused']
+        paused=p['wallpaperPlaylistPaused'] or self.power_saving
         if not p['wallpaperPlaylistEnabled'] or not p['wallpaperPlaylist']:
             self.deadline=None; self.remaining=None
         elif paused:

@@ -41,6 +41,7 @@ sys.path.insert(0, {str(Path(__file__).resolve().parent)!r})
 from test_backend import backend as b
 class Runner:
     def available(self, name): return name == 'niri'
+    def close(self): pass
     def executable(self, name):
         with Path({str(events_path)!r}).open('a') as log:
             log.write(json.dumps(dict(kind='attempt', at=time.monotonic()))+'\\n')

@@ -53,7 +53,7 @@ from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass,
 
 
 DEFAULT_PREFERENCES = {
-    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90, "surfaceStyle": "smoked", "liquidGlass": GLASS_DEFAULTS,
+    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90, "surfaceStyle": "smoked", "liquidGlass": GLASS_DEFAULTS, "glassSelection": True,
     "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
     "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
@@ -294,6 +294,7 @@ class Applications:
 def validate_preference(key: str, value: Any) -> Any:
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
+    if key == "glassSelection" and type(value) is bool: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name

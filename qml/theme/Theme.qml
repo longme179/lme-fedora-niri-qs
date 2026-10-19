@@ -7,6 +7,7 @@ import "../services"
 QtObject {
     id: root
     readonly property bool liquidGlass: ShellState.preferences.surfaceStyle === "liquid"
+    readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false
     property var glassControls: ({})
     readonly property var glass: Object.assign(Object.keys(glassControls).reduce((values, key) => {
         values[key] = glassControls[key].default; return values;

@@ -391,6 +391,12 @@ wallpaper transition. Floating windows follow niri's reported layout; an unknown
 or ambiguous window falls back to centered sampling. Settings watches geometry
 only in Liquid mode. Layer-shell panels follow their output and margins.
 
+**Refractive selection** (`glassSelection`, default `true`) adds a shared glass
+lens to the moving Settings/Control Center indicator. It keeps the same spring
+edges and adds optical lift while travelling or pressed; foreground text and
+input stay independent. Disable it in Liquid glass material to restore the
+plain indicator. Smoked selection and the animation switches retain their behavior.
+
 Each visible GPU window shares one wallpaper texture, decoded at half logical
 resolution, capped at 1280 × 720. There are no per-button capture/poll timers;
 texture sampling is confined to the rim. Hiding/destroying the last consumer or

@@ -13,6 +13,7 @@ SettingsCard {
     visible: Theme.liquidGlass
     title: "Liquid glass material"
     description: "These controls apply to glass backgrounds across the shell. Text stays white. Your Smoked palette and element overrides stay separate. Changes save automatically; Reset restores the original glass."
+    PreferenceSwitch { title: "Refractive selection"; detail: "A glass lens follows the selected tab or Settings page"; preference: "glassSelection" }
     property string error: ""
     function save(key, value) { ShellState.run("setting", {key:"liquidGlass", token:key, value:value}); }
     RowLayout {

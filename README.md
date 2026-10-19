@@ -54,7 +54,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Assign left/right/middle click and scroll actions per module. Includes workspace switching and a tray dropdown. |
 | **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Set maximum pill/popup dimensions in Appearance. Audio visualization uses Cava; media cards share the same controls. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
-| **Launcher** | Fuzzy app search, calculator, emoji, open windows and file/folder search. |
+| **Launcher** | Fuzzy app search with optional local usage ranking, calculator, emoji, open windows and file/folder search. Exact matches keep priority; usage history can be disabled or cleared. |
 | **Lyrics** | Choose a scrolling transcript or current line, follow playback by default, and show synchronized lines on Activity Island. Embedded/local LRC and cache work offline; LRCLIB lookup is optional. |
 | **Desktop canvas** | Place clock, notes and media widgets per display. Drag and resize in Edit mode, then keep them below apps or make them click-through. |
 | **Wallpaper playback** | Build an ordered or shuffled playlist, pause/resume, set an interval and choose awww transitions. Use a shared image or independent images per display; keep assignments for disconnected displays. |
@@ -443,7 +443,7 @@ geometry and recording workflow adaptations are modified for LME; copyright,
 licenses and the iNiR notice are retained.
 
 LME's original code is **GPL-3.0-or-later**, with retained GPL-3.0-only terms in
-adapted upstream components. The optional Liquid renderer adapts
+adapted upstream components. The optional Liquid renderer and local launch-score decay adapt
 [Serpantinum](https://github.com/ilyamiro/serpantinum) by Illia Miroshnichenko,
 under **AGPL-3.0-or-later**. GPLv3 section 13 permits this combination; the
 combined work follows AGPLv3's interaction requirements while individual files

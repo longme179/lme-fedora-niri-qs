@@ -28,7 +28,7 @@ Item {
         if (mode === "emoji") return emoji.filter(e => (e.name + " " + e.keywords).includes(text)).slice(0, 100).map(e => ({kind: "copy", id: e.emoji, name: e.emoji + "  " + e.name, detail: "Copy emoji", value: e.emoji}));
         const windows = (ShellState.niri.windows || []).filter(w => [w.title || "", w.app_id || ""].join(" ").toLowerCase().includes(text)).map(w => ({kind: "window", id: "window-" + w.id, windowId: w.id, name: w.title || w.app_id || "Window", detail: "Open window · workspace " + (((ShellState.niri.workspaces || []).find(ws => ws.id === w.workspace_id) || {}).idx || "—"), icon: ShellState.windowIcon(w)}));
         if (mode === "windows") return windows;
-        const apps = Search.apps(text, ShellState.apps).map(a => ({kind: "app", id: a.id, name: a.name, detail: a.genericName || a.comment || "Launch application", icon: ShellState.appIcon(a.icon)}));
+        const apps = Search.apps(text, ShellState.apps, ShellState.preferences.launcherRanking === false ? {} : ShellState.launcherUsage).map(a => ({kind: "app", id: a.id, name: a.name, detail: a.genericName || a.comment || "Launch application", icon: ShellState.appIcon(a.icon)}));
         return [...apps, ...(text ? windows : [])];
     }
     function activate(index) {

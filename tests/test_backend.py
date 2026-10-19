@@ -54,9 +54,11 @@ class Fixture:
         self.preferences = backend.Preferences(self.root / "config/settings.json")
 
     def make_backend(self, runner=None, demo=False):
-        return backend.DesktopBackend(runner=runner or FakeRunner(), preferences=self.preferences,
+        live = backend.DesktopBackend(runner=runner or FakeRunner(), preferences=self.preferences,
                                       apps=backend.Applications([]), proc=self.root / "proc",
                                       sysfs=self.root / "sys", demo=demo, weather_fetch=False)
+        live.launcher_history.path = self.root / 'state/launcher.json'
+        return live
 
     def put(self, relative, text):
         path = self.root / relative

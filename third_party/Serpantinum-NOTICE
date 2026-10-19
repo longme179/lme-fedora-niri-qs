@@ -29,6 +29,13 @@ src/quickshell/reusables/display/GlassLens.qml at
 87d3b92730d40da432b125865c67059695b6e1c6. StretchIndicator keeps its existing
 DMS-derived spring edges and adds the shared LME glass material/press lift.
 
+Launch-score decay:
+src/quickshell/launcher/app_rank.py at
+87d3b92730d40da432b125865c67059695b6e1c6 -> scripts/launcher_history.py.
+The adapted seven-day decay and per-launch weight remain AGPL-3.0-or-later.
+LME adds bounded daily records, atomic private writes, locking, validation and
+local error reporting; no focus-time SQLite database or tracking daemon is used.
+
 These adapted files remain AGPL-3.0-or-later. LME's GPLv3-covered portions retain
 their licenses; combining the renderers follows GPLv3/AGPLv3 section 13, including
 the AGPL remote-network source requirements when applicable to the combination.

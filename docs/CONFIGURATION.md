@@ -114,6 +114,23 @@ uses an instant transition. Settings uses a fade when Motion is enabled.
 Use the bundled PNG or your own raster image; the SVG is editable artwork.
 Install both binaries from [awww upstream](https://codeberg.org/LGFae/awww.git).
 
+## Launcher usage ranking
+
+**Behavior → Launcher app ranking** controls `launcherRanking` (default `true`).
+Only successful app-command dispatches through LME are counted. Empty searches
+use frequency with seven-day decay and recent-launch tie-breaking; typed queries
+keep exact/prefix/fuzzy matching ahead of that usage score. Files, windows,
+calculator and emoji retain their existing behavior.
+
+History lives in `$XDG_STATE_HOME/lme-shell/launcher.json` (normally
+`~/.local/state/lme-shell/launcher.json`), with private atomic writes, a limit of
+256 apps and 60 days of daily counts. No window titles or active-app duration
+are tracked. Disabling ranking also stops recording and restores normal search
+ordering. **Clear launch history** removes the saved counts, including when
+ranking is off. History is excluded from settings presets/backups; only the
+ranking switch is portable. Corrupt history falls back to normal ordering;
+history write errors do not prevent an app from launching.
+
 ## Weather
 
 The Control Center automatically detects an approximate city through

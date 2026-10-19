@@ -9,13 +9,13 @@ QtObject {
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
         {key: "nightLight", title: "Night Light", icon: "weather-sun", description: "Softer light after sunset", keywords: "blue gamma warm temperature schedule sunrise sunset wlsunset"},
         {key: "desktop", title: "Desktop widgets", icon: "overview", description: "Clock, notes and media on your desktop", keywords: "canvas drag resize widget output screen edit"},
-        {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
+        {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "playlist shuffle pause interval transition display output background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
         {key: "weather", title: "Weather", icon: "weather-sun", description: "Local conditions, wherever you are", keywords: "location city automatic ip forecast celsius fahrenheit temperature"},
         {key: "notifications", title: "Notifications", icon: "bell", description: "Messages with room to breathe", keywords: "popup toast appearance width position padding radius border opacity title body color font idle animation rotation cloud"},
         {key: "clipboard", title: "Clipboard", icon: "clipboard", description: "Text and images, ready when you need them", keywords: "history capture copy paste image pin"},
         {key: "idle", title: "Idle and sleep", icon: "battery", description: "Timeouts that follow your charger", keywords: "laptop ac battery display lock suspend sleep swayidle awake"},
         {key: "keybinds", title: "Keyboard shortcuts", icon: "applications", description: "Your niri keybindings at a glance", keywords: "keybind bindings cheatsheet hotkey keys keyboard config includes search"},
-        {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "terminal applications preferences recording audio system microphone bluetooth pair pin passkey lyrics lrc lrclib cache follow transcript current line island"},
+        {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "launcher ranking usage history clear frequency recent terminal applications preferences recording audio system microphone bluetooth pair pin passkey lyrics lrc lrclib cache follow transcript current line island"},
         {key: "about", title: "About", icon: "bell", description: "Your desktop and its contributors", keywords: "update upgrade github git commit version license requirements credits inir"}
     ]
     function page(key) { return pages.find(p => p.key === key) || pages[0]; }

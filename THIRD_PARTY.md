@@ -270,6 +270,15 @@ Rendering stays in the existing awww daemon. Its CLI was checked against
 and `doc/awww-query.1.scd`); query parsing supports both namespace-prefixed and
 legacy output lines.
 
+## Launcher usage ranking
+
+`scripts/launcher_history.py` adapts the launch-count decay in Serpantinum's
+[`app_rank.py`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/launcher/app_rank.py),
+copyright (C) 2026 Illia Miroshnichenko, **AGPL-3.0-or-later**. Its header and
+[Serpantinum notice](third_party/Serpantinum-NOTICE) identify the adaptation.
+LME adds a private bounded atomic store and preserves textual matching before
+usage ranking. No focus-tracking daemon or application-title history is imported.
+
 ## Jelly-v2 motion references
 
 The original LME `PopupElasticity.qml` and `popup-jelly.vert`/`.frag` use documented Qt Quick ShaderEffect, GridMesh and Item Layer APIs. Motion design follows the continuity principles described in [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/). No Apple or Qt implementation source was copied. The existing spring integrator retains the DCommon MIT attribution above; LME's deformation model/shaders use GPL-3.0-or-later.

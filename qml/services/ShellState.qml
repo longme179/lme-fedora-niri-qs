@@ -12,6 +12,7 @@ QtObject {
     readonly property bool backendDemo: demo || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
     property var snapshot: ({apps: [], niri: {available: false, windows: [], workspaces: []}, system: {}, preferences: {language: "en", animations: true, opacity: 0.90, accent: "#9580ff"}})
     readonly property var apps: snapshot.apps || []
+    readonly property var launcherUsage: snapshot.launcherUsage || ({})
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
     readonly property var system: snapshot.system || {}
     readonly property var weather: snapshot.weather || {}
@@ -147,6 +148,7 @@ QtObject {
             // Keep delegate identities stable between polls, especially during a drag.
             if (draggingWindow || JSON.stringify(next.niri) === JSON.stringify(niri)) next.niri = niri;
             if (JSON.stringify(next.apps) === JSON.stringify(apps)) next.apps = apps;
+            if (JSON.stringify(next.launcherUsage || {}) === JSON.stringify(launcherUsage)) next.launcherUsage = launcherUsage;
             if (JSON.stringify(next.preferences) === JSON.stringify(preferences)) next.preferences = preferences;
             snapshot = next;
             const wasReady = backendReady;

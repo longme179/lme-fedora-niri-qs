@@ -44,7 +44,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Open source"
-        description: "GPL-3.0-or-later, with retained upstream licenses and an AGPL-3.0-or-later Liquid renderer. No proprietary Dracula Pro assets are bundled."
+        description: "GPL-3.0-or-later, with retained upstream licenses and AGPL-3.0-or-later glass rendering and launch-score code. No proprietary Dracula Pro assets are bundled."
         LabelText { text: "Optional Liquid glass adapts Serpantinum by Illia Miroshnichenko. Source, license and changes are recorded in THIRD_PARTY.md and third_party/Serpantinum-NOTICE."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
         LabelText { text: "See README.md, requirements-fedora.txt and docs/INSTALL.md in the checkout for packages and installation. docs/INIR_PORT.md describes the reference features and their scope."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
     }

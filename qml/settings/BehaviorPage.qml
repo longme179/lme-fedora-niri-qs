@@ -125,6 +125,13 @@ ColumnLayout {
         LiquidButton { text: "Save search folders"; onClicked: ShellState.run("setting",{key:"fileSearchRoots",value:fileFolders.text.split(";").map(p=>p.trim()).filter(Boolean)}) }
     }
     SettingsCard {
+        title: "Launcher app ranking"
+        description: "Bring frequently and recently launched apps forward. Exact name matches keep priority. Only launches from this shell are counted locally; no window-use tracking or favorites."
+        PreferenceSwitch { title: "Rank by usage"; detail: "Seven-day decay, up to 60 days of history"; preference:"launcherRanking" }
+        LiquidButton { objectName:"launcherHistoryClear"; text:"Clear launch history"; enabled:ShellState.backendReady && !ShellState.pendingActions.launcherHistoryClear; onClicked:ShellState.run("launcherHistoryClear") }
+        LabelText { visible:!!ShellState.snapshot.launcherHistoryError; text:ShellState.snapshot.launcherHistoryError || ""; color:Theme.yellow; wrapMode:Text.Wrap; Layout.fillWidth:true }
+    }
+    SettingsCard {
         title: "Default terminal"
         description: "Executable name only, for example kitty or foot."
         RowLayout {

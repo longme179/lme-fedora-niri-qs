@@ -51,6 +51,7 @@ from battery_info import battery_details, aggregate as aggregate_batteries
 from settings_transfer import export_document, read_document, document
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
+from launcher_history import LauncherHistory
 
 
 DEFAULT_PREFERENCES = {
@@ -68,7 +69,7 @@ DEFAULT_PREFERENCES = {
     "accent": "#9580ff", "wallpaper": "",
     "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
     "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
-    "wallpaperFolder": "", **WALLPAPER_DEFAULTS,
+    "wallpaperFolder": "", **WALLPAPER_DEFAULTS, "launcherRanking": True,
     "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
     "notificationWidth": 380, "notificationPosition": "bar", "notificationMargin": 14,
     "notificationRadius": 28, "notificationPadding": 16, "notificationOpacity": .90,
@@ -297,6 +298,7 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
     if key == "glassSelection" and type(value) is bool: return value
+    if key == 'launcherRanking' and type(value) is bool: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name
@@ -567,6 +569,7 @@ class DesktopBackend:
         self.feature_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="lme-feature")
         self.feature_jobs = {}
         self.wallpapers = Wallpapers(self.runner,self.preferences)
+        self.launcher_history = LauncherHistory()
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
         self.palette_preview = {"colors": {}, "path": ""}
@@ -1026,6 +1029,7 @@ class DesktopBackend:
 
     def feature_snapshot(self):
         return {"preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+                "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
@@ -1213,7 +1217,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1314,7 +1318,7 @@ class DesktopBackend:
             state["calculator"] = {"query": request.get("query"), "result": calculate(request.get("query")), "error": ""}
         elif action == "copyText":
             if not isinstance(request.get("text"), str): raise ValueError("Text is required")
-        elif action == "notificationSave": pass
+        elif action in ('notificationSave','launcherHistoryClear'): pass
         elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             if action in {"wifiConnect", "wifiSaved"}:
                 system["network"].update(connected=True, ssid=request.get("ssid", "Home Wi-Fi"))
@@ -1670,7 +1674,11 @@ class DesktopBackend:
                 run("gio", "launch", app["path"])
             else:
                 self.runner.spawn(list(app["argv"]))
+            if self.preferences.values['launcherRanking']: self.launcher_history.record(app_id)
             return f"Launched {app['name']}"
+        if action == 'launcherHistoryClear':
+            self.launcher_history.clear()
+            return 'Launcher usage history cleared'
         if action == "focusWindow":
             run("niri", "msg", "action", "focus-window", "--id", self.identifier(request.get("id")))
             return "Window focused"

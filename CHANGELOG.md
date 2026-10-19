@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refine Liquid's directional rim with exact rounded-box normals, a narrower caustic and shallow inner shading that separates glass from bright apps. Preserve clear interiors, white labels and the existing texture/render-pass budget.
+
 - Show connected peripheral batteries in Control Center → Devices, with a saved alert switch and 5–50% threshold in Behavior. Preserve unknown/0% readings, merge Bluetooth/kernel duplicates and prevent repeated alerts across reconnects within a shell session. Keep device batteries out of the laptop battery aggregate.
 
 - Add Gowall image utilities with installed-theme search, batch palette previews, 2×–4× upscale, color extraction and basic image effects. Export PNGs exclusively or keep a durable copy before applying a wallpaper; setup downloads stay in gowall's explicit terminal prompt.

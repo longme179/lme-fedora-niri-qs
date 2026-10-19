@@ -60,6 +60,18 @@ vec2 boxHalf() {
     return box.z > 0.0 ? box.zw : itemSize * 0.5;
 }
 
+// The ordinary rounded box has an exact normal; fillets keep the general SDF below.
+vec2 cardNormal(vec2 p) {
+    p -= box.xy;
+    vec2 halfSize = boxHalf() - glassPad;
+    float r = p.x > 0.0 ? (p.y > 0.0 ? radii.z : radii.y) : (p.y > 0.0 ? radii.w : radii.x);
+    vec2 q = abs(p) - halfSize + min(r, min(halfSize.x, halfSize.y));
+    vec2 outward = max(q, vec2(0.0));
+    vec2 side = vec2(p.x < 0.0 ? -1.0 : 1.0, p.y < 0.0 ? -1.0 : 1.0);
+    return dot(outward, outward) > 1e-8 ? normalize(outward) * side
+        : (q.x > q.y ? vec2(side.x, 0.0) : vec2(0.0, side.y));
+}
+
 float sdfCard(vec2 p) {
     return sdRoundBox(p - box.xy, boxHalf() - glassPad, radii);
 }
@@ -134,10 +146,11 @@ vec2 displacement(vec3 normal, float index, float travel) {
     return r.xy / max(-r.z, 0.2) * travel;
 }
 
-// A black veil in the existing pass dims native blur without capturing apps or text.
-vec4 dimGlass(vec4 color, float coverage) {
-    float dim = 1.0 - brightness;
-    return vec4(color.rgb * brightness, color.a + dim * max(0.0, coverage * qt_Opacity - color.a));
+// A shallow inner bevel separates clear glass from bright apps in the same pass.
+vec4 shadeGlass(vec4 color, float coverage, float bevelShade) {
+    float transmission = brightness * (1.0 - bevelShade);
+    return vec4(color.rgb * transmission,
+        color.a + (1.0 - transmission) * max(0.0, coverage * qt_Opacity - color.a));
 }
 
 // Local rim glint and a softer opposite reflection share the existing lighting bands.
@@ -173,49 +186,50 @@ void main() {
 
     float t = max(-dist, 0.0);
     float bz = max(bezel, 1.0) * 1.45;
+    vec2 g = cardNormal(p);
+    if (fillet.z > 0.0 && t < bz + 2.0) {
+        const vec2 e = vec2(0.75, 0.0);
+        vec2 grad = vec2(sdf(p + e.xy) - sdf(p - e.xy), sdf(p + e.yx) - sdf(p - e.yx));
+        if (length(grad) > 0.0001) g = normalize(grad);
+    }
+    vec2 toCursor = cursor - itemSize * 0.5 - p;
+    float cd = length(toCursor);
+    float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
+    float near = hover * exp(-cd * cd / (2.0 * reach * reach));
+    vec2 cursorDir = cd > 0.001 ? toCursor / cd : normalize(lightDir);
+    vec2 L = normalize(mix(normalize(lightDir), cursorDir, hover * 0.4));
+    float facing = dot(g, L);
+    float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
+    float hair = exp(-t / (1.1 * feather));
+    float wide = exp(-t / (5.0 * feather));
+    float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
+    float mx = (t - bz * 0.45) / (bz * 0.12 * feather + 0.8);
+    float men = exp(-mx * mx) * 0.09 * (0.35 + spec) * rim;
+    float bevelShade = 0.0;
+    vec3 fringe = vec3(0.0);
+    if (t < bz * 2.5) {
+        float shoulder = (t - bz * 0.85) / (bz * 0.18 * feather + 0.75);
+        bevelShade = clamp(exp(-shoulder * shoulder) * 0.30 * rim
+            * (0.45 + 0.55 * max(-facing, 0.0)) * (1.0 - 0.7 * nest), 0.0, 0.35);
+        float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
+        float phase = dot(g, vec2(0.7, 0.45)) * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
+        fringe = (spectrum(phase) - 0.5) * exp(-fb * fb) * (0.018 + 0.036 * spec) * rim * (1.0 + 3.0 * motion);
+    }
+    vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03) + fringe;
     // Clear interiors do not sample the lens. Preserve lighting, skip refraction.
     if (clear >= 1.0 && tintAmount == 0.0 && t > max(bz + 2.0, bz * 1.5)) {
-        vec2 delta = cursor - itemSize * 0.5 - p;
-        float cd = length(delta);
-        float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
-        float near = hover * exp(-cd * cd / (2.0 * reach * reach));
-        vec2 cursorDir = cd > 0.001 ? delta / cd : normalize(lightDir);
-        float facing = -normalize(mix(normalize(lightDir), cursorDir, hover * 0.4)).y;
-        float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-        float hair = exp(-t / (1.1 * feather));
-        float wide = exp(-t / (5.0 * feather));
-        float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
-        float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
-        float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
-        vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03);
-        if (t < bz * 2.5) {
-            float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
-            float phase = -0.45 * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
-            light += (spectrum(phase) - 0.5) * exp(-fb * fb) * (0.018 + 0.036 * spec) * rim * (1.0 + 3.0 * motion);
-        }
         float alpha = min(0.65, max(light.r, max(light.g, light.b)));
         vec3 rgb = min(light, vec3(alpha));
         float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
         rgb += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
         vec4 base = vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity;
-        fragColor = dimGlass(reflectPointer(base, p, hair, wide, coverage), coverage);
+        fragColor = shadeGlass(reflectPointer(base, p, hair, wide, coverage), coverage, bevelShade);
         return;
     }
-    vec2 g = vec2(0.0, -1.0);
-    if (t < bz + 2.0) {
-        const vec2 e = vec2(0.75, 0.0);
-        vec2 grad = vec2(sdf(p + e.xy) - sdf(p - e.xy), sdf(p + e.yx) - sdf(p - e.yx));
-        if (length(grad) > 0.0001) g = normalize(grad);
-    }
-
     float u = clamp(t / bz, 0.0, 1.0);
     float om = 1.0 - u;
     float om4 = om * om * om * om;
     float slope = min((om * om * om) / pow(max(1.0 - om4, 1e-3), 0.75), 7.0);
-    vec2 toCursor = cursor - itemSize * 0.5 - p;
-    float cd = length(toCursor);
-    float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
-    float near = hover * exp(-cd * cd / (2.0 * reach * reach));
     float sigma = reach * 0.5;
     float bulgeH = hover * exp(-cd * cd / (2.0 * sigma * sigma)) * 0.35 * (1.0 + 1.4 * morph + 1.2 * motion) * thickness * (1.0 - 0.5 * nest);
     vec2 bulge = bulgeH * toCursor / (sigma * sigma);
@@ -258,22 +272,6 @@ void main() {
     col *= 1.0 - (1.0 - nest) * 0.06 * exp(-t / 6.0) * clamp(g.y, 0.0, 1.0);
     col *= 1.0 - (1.0 - nest) * 0.025 * exp(-t / (bz * 0.45));
 
-    vec2 cursorDir = cd > 0.001 ? toCursor / cd : normalize(lightDir);
-    vec2 L = normalize(mix(normalize(lightDir), cursorDir, hover * 0.4));
-    float facing = dot(g, L);
-    float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-    float hair = exp(-t / (1.1 * feather));
-    float wide = exp(-t / (5.0 * feather));
-    float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
-    float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
-    float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
-    vec3 fringe = vec3(0.0);
-    if (t < bz * 2.5) {
-        float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
-        float fringeBand = exp(-fb * fb);
-        float fringePhase = dot(g, vec2(0.7, 0.45)) * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
-        fringe = (spectrum(fringePhase) - 0.5) * fringeBand * (0.018 + 0.036 * spec) * rim * (1.0 + 3.0 * motion);
-    }
     float chroma = max(tintColor.r, max(tintColor.g, tintColor.b)) - min(tintColor.r, min(tintColor.g, tintColor.b));
     float neutralK = 1.0 - smoothstep(0.10, 0.18, chroma);
     vec3 tcol = mix(tintColor.rgb, vec3(0.5), neutralK);
@@ -281,8 +279,7 @@ void main() {
     float dark = 1.0 - clamp(dot(tcol, vec3(0.2126, 0.7152, 0.0722)) * 2.0, 0.0, 1.0);
     float lift = mix(mix(0.07, 0.04, dark), 0.0, clear) * (1.0 - 0.85 * nest);
     float sheen = (1.0 - ty) * 0.03 * (1.0 - clear) * (1.0 - 0.8 * nest);
-    vec3 light = vec3(edgeHi + men + sheen + near * 0.015 * rim + energy * 0.03);
-    light += fringe;
+    light += vec3(sheen);
     light += vec3(lift) * mix(1.0, smoothstep(0.0, 1.0, length(dG) * 0.5), clear);
 
     float tA = clamp(tAmt * (0.7 + 0.6 * l), 0.0, 1.0);
@@ -308,5 +305,5 @@ void main() {
     float a = coverage * qt_Opacity;
     float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
     vec4 base = vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity);
-    fragColor = dimGlass(reflectPointer(base, p, hair, wide, coverage), coverage);
+    fragColor = shadeGlass(reflectPointer(base, p, hair, wide, coverage), coverage, bevelShade);
 }

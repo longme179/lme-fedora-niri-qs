@@ -139,3 +139,49 @@ class GlassHoverCase(unittest.TestCase):
             expected=Image.blend(images[1],Image.new('RGB',images[1].size,'#21303c'),.5)
             diff=ImageChops.difference(images[3],expected).crop((x,y,x+320,y+60))
             self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'reflection must follow group opacity')
+
+    def test_bevel_has_depth_on_bright_apps_and_preserves_clear_body_and_group_opacity(self):
+        try:
+            from PIL import Image, ImageChops, ImageStat
+        except ImportError:
+            self.skipTest('Pillow is required for rendered pixels')
+        if not shutil.which('grim'): self.skipTest('grim is required for rendered pixels')
+        with tempfile.TemporaryDirectory() as directory:
+            result=self.run_qml('import Quickshell.Io\nimport "qml/components"', '''
+    property int phase:0
+    property int age:0
+    FloatingWindow { fullscreen:true;color:"#21303c"
+        Repeater { model:["#f4f4f4","#18232f"]
+            Rectangle { required property int index;required property string modelData
+                x:200+index*800;y:120;width:650;height:480;color:modelData
+                GlassOptics { x:100;y:80;width:420;height:320
+                    sourceAvailable:0;clear:1;tintAmount:0;bezel:8;frost:.9
+                    rim:fixture.phase===0 ? 0 : .38
+                    brightness:fixture.phase===2 ? 0 : 1
+                    opacity:fixture.phase===3 ? .5 : 1
+                    topLeftRadius:56;topRightRadius:8;bottomLeftRadius:56;bottomRightRadius:8
+                }
+            }
+        }
+    }
+    Process { id:shot;onExited:code=> {
+        if(code!==0) { fixture.finish({captureError:code});return; }
+        fixture.age=0;if(++fixture.phase===4) fixture.finish({captured:4});
+    }}
+    Timer { interval:60;repeat:true;running:true;onTriggered: {
+        if(!shot.running && ++fixture.age>=4) { shot.command=["grim",DIR+"/"+fixture.phase+".png"];shot.running=true; }
+    }}
+'''.replace('DIR',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
+            self.assertEqual(result,dict(captured=4))
+            images=[Image.open(Path(directory)/f'{i}.png').convert('RGB') for i in range(4)]
+            for x,background in ((300,(244,244,244)),(1100,(24,35,47))):
+                self.assertEqual(images[1].getpixel((x+210,300)),background,'the glass body must stay transparent')
+                self.assertEqual(images[1].getpixel((x+2,202)),background,'large rounded corners must stay clear')
+                self.assertEqual(images[2].getpixel((x+210,300)),(0,0,0),'zero brightness must remain opaque black')
+                expected=Image.blend(images[1],images[0],.5)
+                diff=ImageChops.difference(images[3],expected).crop((x,200,x+420,520))
+                self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'the bevel must follow group opacity')
+            bright_inner=[sum(images[1].getpixel((310+i,360))) for i in range(-2,3)]
+            self.assertLess(min(bright_inner),3*244-20,'bright backdrops need a shallow dark inner bevel')
+            dark_edge=[sum(images[1].getpixel((1310,200+i))) for i in range(5)]
+            self.assertGreater(max(dark_edge),sum((24,35,47))+35,'dark backdrops need a visible refractive rim')

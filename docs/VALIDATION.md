@@ -1,5 +1,30 @@
 # Validation and platform limits
 
+## Liquid rim optics — 2026-10-20
+
+The shared glass shader now uses an exact rounded-box normal for ordinary
+surfaces, retaining the general SDF fallback for fillets. A narrow caustic and
+shallow inner bevel strengthen the edge over light and dark backgrounds.
+Deep clear interiors skip the added bevel Gaussian; no extra backdrop capture,
+texture sample, render pass or continuous animation was introduced. Existing
+white foregrounds, tint/brightness/feather controls and Smoked mode are preserved.
+The tracked Qt shader binary was rebuilt from the modified source.
+
+Nine opt-in private Wayland/OpenGL checks passed: three pointer/pixel cases and
+six glass-control cases. They cover moving rim highlights, spring retargeting,
+idle/hidden cleanup, unchanged clear centers, corners, bright/dark backgrounds,
+zero brightness, group opacity and preference boundaries. Before/after renders
+were inspected. Full-suite and QML lint results are recorded below.
+
+A matched Control Center/Jelly-v2 benchmark ran five transitions per run in
+before/after/after/before order with identical nonshader QML and 160 blur
+subregions. Warm runs measured **20.31 ms median / 28.75 ms p95 before** versus
+**20.00 ms / 24.66 ms after**. Earlier cold runs were slower (26.53/54.31 and
+21.57/45.03 ms). This is evidence against a regression on this private Sway and
+Mesa llvmpipe host, not a promised speedup or FPS target on the user's Radeon.
+Native niri compositor blur and real GPU performance remain to be checked on
+the target laptop.
+
 ## Peripheral batteries — 2026-10-20
 
 Control Center → Devices now lists connected Bluetooth and kernel device

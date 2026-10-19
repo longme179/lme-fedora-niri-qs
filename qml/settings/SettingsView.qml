@@ -136,7 +136,7 @@ Item {
             }
         }
     }
-    Component { id: utilitiesPage; UtilitiesPage {} }
+    Component { id: utilitiesPage; UtilitiesPage { onWallpaperRequested:root.navigate("wallpaper") } }
     Component { id: desktopPage; DesktopPage {} }
     Component { id: appearancePage; AppearancePage {} }
     Component { id: barPage; TopBarPage {} }

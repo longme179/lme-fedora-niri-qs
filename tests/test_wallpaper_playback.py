@@ -3,13 +3,16 @@ import copy
 import unittest
 from unittest.mock import patch
 from test_backend import Fixture, FakeRunner, backend
-from wallpaper import query_outputs
+from wallpaper import query_outputs, query_images, image_arguments
 from settings_transfer import document
 
 QUERY='awww-daemon: eDP-1: 1920x1080, scale: 1, currently displaying: image: /old.png\nHDMI-A-1: 1920x1080, scale: 1, currently displaying: color: 000000'
 
 
 class WallpaperPlaybackCase(Fixture, unittest.TestCase):
+    def img(self,path,output,animate=True):
+        return ('awww',*image_arguments(path,self.preferences.values,animate),'--outputs',output)
+
     def controller(self):
         live=self.make_backend(FakeRunner({('awww','query'):QUERY},available={'awww'}))
         self.addCleanup(live.feature_executor.shutdown,wait=True,cancel_futures=True)
@@ -45,11 +48,13 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
 
     def test_query_formats_targeting_shared_overrides_and_disconnected_restore(self):
         self.assertEqual(query_outputs(QUERY),{'eDP-1','HDMI-A-1'})
+        self.assertEqual(query_outputs(': HEADLESS-1: 1920x1080, scale: 1'),{'HEADLESS-1'})
+        self.assertEqual(query_images(': HEADLESS-1: 1920x1080, scale: 1, currently displaying: image: /a b.png'),{'HEADLESS-1':'/a b.png'})
         live=self.controller();a=str(self.put('a.png','a'));b=str(self.put('b.png','b'))
         self.preferences.set('wallpaperOutputs',b,token='HDMI-A-1')
         result=self.complete(live,dict(action='wallpaper',path=a))
         self.assertTrue(result['ok'],result)
-        self.assertEqual(live.runner.calls[-1],('awww','img',a,'--transition-type','fade','--outputs','eDP-1'))
+        self.assertEqual(live.runner.calls[-1],self.img(a,'eDP-1'))
         result=self.complete(live,dict(action='wallpaper',path=a,output='DP-3'))
         self.assertTrue(result['ok'],result)
         self.assertIn('disconnected',result['message'])
@@ -59,7 +64,7 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         self.assertIsNone(live.wallpapers.due({'eDP-1'},now=0))
         live.runner.responses[('awww','query')]=QUERY+'\nDP-3: 800x600, scale: 1, currently displaying: color: 000000'
         job=live.wallpapers.due({'eDP-1','DP-3'},now=1);self.assertIsNotNone(job);job()
-        self.assertIn(('awww','img',a,'--transition-type','none','--outputs','DP-3'),live.runner.calls)
+        self.assertIn(self.img(a,'DP-3',False),live.runner.calls)
         self.assertIsNone(live.wallpapers.due({'eDP-1','DP-3'},now=2))
         self.assertTrue(self.complete(live,dict(action='wallpaperResetOutput',output='HDMI-A-1'))['ok'])
         self.assertNotIn('HDMI-A-1',self.preferences.values['wallpaperOutputs'])
@@ -67,7 +72,7 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
     def test_order_shuffle_missing_single_and_decode_failure_keep_good_image(self):
         live=self.controller();a=str(self.put('a.png','a'));b=str(self.put('b.png','b'));c=str(self.put('c.png','c'))
         self.preferences.update({'wallpaper':a,'wallpaperPlaylist':[a,str(self.root/'missing.png'),b,c]})
-        live.runner.responses[('awww','img',b,'--transition-type','fade','--outputs','HDMI-A-1,eDP-1')]=backend.CommandError('Bad image')
+        live.runner.responses[self.img(b,'HDMI-A-1,eDP-1')]=backend.CommandError('Bad image')
         self.assertTrue(self.complete(live,dict(action='wallpaperNext'))['ok'])
         self.assertEqual(self.preferences.values['wallpaper'],c)
         self.preferences.set('wallpaperPlaylistShuffle',True)
@@ -102,7 +107,7 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         live=self.controller();a=str(self.put('a.png','a'));b=str(self.put('b.png','b'))
         self.preferences.update({'wallpaperTransition':'wave','wallpaperTransitionDuration':1.2})
         live.wallpapers.apply(a,output='eDP-1')
-        self.assertEqual(live.runner.calls[-1][-2:],('--transition-duration','1.2'))
+        self.assertEqual(live.runner.calls[-1][live.runner.calls[-1].index('--transition-duration')+1],'1.2')
         self.preferences.set('animations',False);live.wallpapers.apply(a)
         self.assertIn('none',live.runner.calls[-1])
         with live.wallpapers.operation():
@@ -110,7 +115,7 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Another wallpaper'): other.wallpapers.apply(b)
         self.assertEqual(self.preferences.values['wallpaper'],a)
         before=copy.deepcopy(self.preferences.values)
-        live.runner.responses[('awww','img',b,'--transition-type','none','--outputs','eDP-1')]=backend.CommandError('Failed')
+        live.runner.responses[self.img(b,'eDP-1',False)]=backend.CommandError('Failed')
         self.assertFalse(self.complete(live,dict(action='wallpaper',path=b,output='eDP-1'))['ok'])
         self.assertEqual(self.preferences.values,before)
         live.wallpapers.close();calls=list(live.runner.calls)
@@ -149,3 +154,33 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         before=self.preferences.path.read_bytes()
         with self.assertRaises(ValueError): self.preferences.set('wallpaperPlaylist',[str(link)])
         self.assertEqual(self.preferences.path.read_bytes(),before)
+
+    def test_other_backend_transition_is_not_cancelled_by_restore(self):
+        image=str(self.put('new image.png','image'));old=str(self.put('old.png','old'))
+        self.preferences.set('wallpaper',old)
+        shell=self.controller();shell.wallpapers.due({'eDP-1'},now=0)
+        settings=self.controller()
+        self.assertTrue(self.complete(settings,dict(action='wallpaper',path=image))['ok'])
+        self.preferences.reload()
+        shell.runner.responses[('awww','query')]='awww-daemon: eDP-1: 1920x1080, scale: 1, currently displaying: image: '+image
+        job=shell.wallpapers.due({'eDP-1'},now=1);self.assertIsNotNone(job);job()
+        self.assertEqual(shell.wallpapers.applied['eDP-1'],image)
+        self.assertFalse(any(call[1]=='img' for call in shell.runner.calls))
+        self.assertIsNone(shell.wallpapers.due({'eDP-1'},now=2))
+        # A daemon displaying another image still receives a real restore.
+        shell.runner.responses[('awww','query')]=QUERY
+        shell.wallpapers.restore(['eDP-1'])
+        self.assertIn(self.img(image,'eDP-1',False),shell.runner.calls)
+        self.assertEqual(query_images('DP-1: 100x100, currently displaying: image: /a b.png'),{'DP-1':'/a b.png'})
+
+    def test_awww_options_are_explicit_validated_and_survive_export(self):
+        live=self.controller();image=str(self.put('a.png','a'))
+        values={'wallpaperTransition':'wave','wallpaperTransitionFps':120,'wallpaperTransitionAngle':90,
+                'wallpaperTransitionPosition':'top-right','wallpaperTransitionBezier':'0.2,0,0.2,1',
+                'wallpaperTransitionWave':'30,40','wallpaperResize':'fit','wallpaperFilter':'Mitchell','wallpaperFillColor':'#112233'}
+        self.preferences.update(values);live.wallpapers.apply(image)
+        args=live.runner.calls[-1];flags=dict(zip(args[3::2],args[4::2]))
+        for flag,value in {'--transition-duration':'3.0','--transition-fps':'120','--transition-step':'90','--fill-color':'112233','--resize':'fit','--filter':'Mitchell','--transition-wave':'30,40'}.items(): self.assertEqual(flags[flag],value)
+        for key in values: self.assertIn(key,document(self.preferences.values,'preset')['settings'])
+        for key,value in [('wallpaperTransitionFps',0),('wallpaperTransitionFps',True),('wallpaperTransitionWave','nan,1'),('wallpaperTransitionBezier','1,2,3,4'),('wallpaperResize','invalid'),('wallpaperFillColor','red')]:
+            with self.subTest(key=key),self.assertRaises(ValueError): self.preferences.set(key,value)

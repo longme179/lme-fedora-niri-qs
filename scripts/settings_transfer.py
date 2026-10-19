@@ -9,6 +9,7 @@ PORTABLE = set(APPEARANCE_KEYS) | {
     'shellName','surfaceStyle','liquidGlass','glassSelection',
     'wallpaperPlaylistEnabled','wallpaperPlaylistPaused','wallpaperPlaylistShuffle','wallpaperPlaylistInterval','wallpaperTransition','wallpaperTransitionDuration',
     'launcherRanking','launchpadEnabled',
+    'wallpaperTransitionFps','wallpaperTransitionStep','wallpaperTransitionAngle','wallpaperTransitionPosition','wallpaperTransitionBezier','wallpaperTransitionWave','wallpaperResize','wallpaperFilter','wallpaperFillColor',
     'desktopShapeCount','desktopShapeScale','desktopShapeOpacity','desktopShapeSpeed','desktopShapeStyle','desktopShapeRotation',
     'notificationWidth','notificationPosition','notificationMargin','notificationRadius','notificationPadding','notificationOpacity',
     'notificationBorderWidth','notificationTitleSize','notificationBodySize','notificationIdleAnimation','notificationIdleSpeed',

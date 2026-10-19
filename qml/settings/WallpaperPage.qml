@@ -67,6 +67,7 @@ ColumnLayout {
         Binding { target:duration; property:"value"; value:ShellState.preferences.wallpaperTransitionDuration || 3; when:!duration.pressed; restoreMode:Binding.RestoreNone }
         LabelText { text:"Transitions are instant when animations are off. Simple uses awww's step-based fade instead of this duration."; color:Theme.muted; wrapMode:Text.Wrap; Layout.fillWidth:true }
     }
+    AwwwSettings { Layout.fillWidth:true }
     SettingsCard {
         title: "Wallpaper library"
         description: "Browse a folder and search image names. awww applies the selected image."

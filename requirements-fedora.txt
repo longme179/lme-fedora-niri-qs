@@ -97,3 +97,12 @@ slurp
 
 # Optional external-display mirroring (Fedora repositories):
 wl-mirror
+
+[optional-image-studio]
+# Gowall v0.2.4: upstream binary, not installed automatically by setup.sh.
+# https://github.com/Achno/gowall/releases
+gowall
+# Upscale additionally needs Vulkan and gowall's Real-ESRGAN model setup.
+# Use Shell utilities > Gowall > Setup in terminal for gowall's own download prompt.
+vulkan-loader
+mesa-vulkan-drivers

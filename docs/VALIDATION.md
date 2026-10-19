@@ -1,5 +1,46 @@
 # Validation and platform limits
 
+## Launchpad, Gowall and awww controls — 2026-10-19
+
+Default `scripts/check.sh`: **390 tests, 306 passed, 84 opt-in checks skipped**;
+Bash syntax and demo snapshot checks passed. After final audit guards for partial
+exports, PNG output and relative Launchpad executables, all **11 affected
+backend/QML cases passed again**. Python compilation and whitespace checks
+passed. `qmllint`: **139 QML files, zero errors, 67 metadata warnings**.
+
+Launchpad tests cover atomic per-entry merges, rename/delete, private backup
+versus portable preset behavior, payload limits, literal arguments, explicit
+Bash, background logs/exit status, relative working directories, terminal argv,
+duplicate active runs, disabled/demo execution, editor persistence and launcher
+search. Actual Quickshell `shell.qml` loaded on private Wayland and opened,
+closed and reopened Launchpad. `settings.qml` opened Shell utilities and its
+captured layout was checked. Logs contain no QML type/reference/assignment or
+binding-loop errors. The manual IPC probe initially ran before configuration
+loading completed; waiting for `Configuration Loaded` resolved that startup
+probe. No production timeout or existing assertion was relaxed.
+
+The Gowall adapter is checked against the real **v0.2.4** command source, with
+backend fixtures for batch output, every supported operation's arguments,
+validation, failure retention, exclusive export, partial-write cleanup,
+durable wallpaper copies and explicit terminal setup. The UI test invokes a
+local CLI fixture through the real JSON backend, loads themes, generates a
+valid PNG preview and persists an awww FPS edit. It does **not** verify image
+quality, real Gowall processing or Vulkan/Real-ESRGAN execution. An official
+binary was downloaded outside the repository; this cloud's read-only home
+prevented its config initialization. No user system packages or models were
+installed.
+
+A real **awww 0.12.1** daemon ran on the private Wayland output. The test applied
+an initial PNG, started a two-second wave with explicit FPS/Bezier/resize flags,
+and reconciled a second backend without sending an instant replacement.
+Both the empty namespace prefix and target image were checked against its real
+query output. Regressions cover missing/changed images, independent outputs,
+reconnect, playlists, reduced motion, validation and saved transition options.
+The daemon started with `--no-cache`, avoiding its cached restoration race.
+The private Sway session cannot verify native niri blur, physical refresh rate
+or Radeon/RTX visual performance. The earlier expanded-suite limits below were
+not re-audited as part of this feature work.
+
 ## White Liquid labels — 2026-10-19
 
 The automatic foreground contrast change described in the earlier entry below

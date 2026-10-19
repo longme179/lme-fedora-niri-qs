@@ -2,7 +2,7 @@
 """LME shell's unprivileged JSON-lines backend (Python standard library only).
 
 Every output line is a complete state snapshot. Input lines are objects such as
-{"action":"volume","value":45}. Commands never go through a shell. --demo is
+{"action":"volume","value":45}. System commands never go through a shell; user-authored Launchpad Bash is explicit. --demo is
 explicitly isolated from the live machine; --once performs read-only sampling.
 """
 
@@ -53,6 +53,7 @@ from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass,
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
+from image_utilities import ImageUtilities
 
 
 DEFAULT_PREFERENCES = {
@@ -94,7 +95,7 @@ BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "re
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffprobe", "ffmpeg", "pactl", "slurp", "satty", "swappy",
+    "gowall", "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "matugen", "wf-recorder", "ffprobe", "ffmpeg", "pactl", "slurp", "satty", "swappy",
 )
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
@@ -574,6 +575,8 @@ class DesktopBackend:
         self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.launcher_history = LauncherHistory()
         self.launchpad = Launchpad()
+        self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
+        self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
         self.displays = {"outputs": [], "preview": {}}
         self.palette_preview = {"colors": {}, "path": ""}
@@ -1032,10 +1035,10 @@ class DesktopBackend:
                 "monitor": self.monitor.state if self.monitor_enabled else {}}
 
     def feature_snapshot(self):
-        return {"launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+        return {"imageUtilities": dict(self.image_utilities.state), "launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
-                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "displays": self.displays,
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
                 "nightLight": self.night_state, "capture": self.capture.state}
 
@@ -1072,6 +1075,9 @@ class DesktopBackend:
                 value = job.result()
                 if action == "fileSearch": self.file_search = value; message = "File search completed"
                 elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
+                elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
+                elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
+                elif action == "wallpaperStatus": self.wallpaper_daemon=value; message="Wallpaper daemon checked"
                 elif action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
                 elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
@@ -1117,6 +1123,8 @@ class DesktopBackend:
             self._demo_state["preferences"] = dict(self.preferences.values)
             self._demo_state["lastResult"] = dict(self.last_result)
             self._demo_state['wallpaperTransitions'] = WALLPAPER_TRANSITIONS
+            self._demo_state['imageUtilities']=dict(self.image_utilities.state)
+            self._demo_state['wallpaperDaemon']=self.wallpaper_daemon
             self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
                 monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
@@ -1221,7 +1229,7 @@ class DesktopBackend:
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action:
                 raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
+            if self.settings_only and action not in {"gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
                 raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 self.perform_demo(action, request)
@@ -1292,7 +1300,10 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action in ("imageAnnotate", "launchpadRun"): pass
+        elif action in ("imageAnnotate", "launchpadRun", "wallpaperEnsure"): pass
+        elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
+        elif action.startswith("gowall"): pass
+        elif action == "wallpaperStatus": self.wallpaper_daemon={"available":True,"running":True,"query":"eDP-1: 1920x1080 · demo wallpaper","error":""}
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action == "idleRefresh":
             self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
@@ -1599,6 +1610,24 @@ class DesktopBackend:
             backup=self.preferences.update(values,backup=True)
             return "Imported settings. Previous settings: " + str(backup)
         if action.startswith("appearance"): return self.appearance_action(action, request)
+        if action in ('gowallThemes','gowallGenerate','gowallSave','gowallApply','gowallSetup'):
+            if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
+            if action=='gowallThemes': operation=self.image_utilities.themes
+            elif action=='gowallGenerate': operation=lambda:self.image_utilities.generate(request)
+            elif action=='gowallSave': operation=lambda:self.image_utilities.save(request.get('path'),request.get('destination'))
+            elif action=='gowallApply': operation=lambda:self.image_utilities.apply(request.get('path'),request.get('output',''))
+            else: return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
+            return self.start_feature(action,operation)
+        if action == "wallpaperStatus":
+            def status():
+                try: return {"available":self.runner.available('awww'),"running":True,"query":self.runner.run('awww','query',timeout=2),"error":""}
+                except RuntimeError as exc: return {"available":self.runner.available('awww'),"running":False,"query":"","error":str(exc)}
+            return self.start_feature(action,status)
+        if action == "wallpaperEnsure":
+            def ensure():
+                self.wallpapers.ready()
+                return "Wallpaper daemon ready"
+            return self.start_feature(action,ensure)
         if action == "wallpaperScan":
             return self.start_feature(action, lambda: wallpaper_library(request.get("folder")))
         if action == "displayRefresh":

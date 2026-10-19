@@ -282,3 +282,21 @@ usage ranking. No focus-tracking daemon or application-title history is imported
 ## Jelly-v2 motion references
 
 The original LME `PopupElasticity.qml` and `popup-jelly.vert`/`.frag` use documented Qt Quick ShaderEffect, GridMesh and Item Layer APIs. Motion design follows the continuity principles described in [Apple WWDC23 · Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/). No Apple or Qt implementation source was copied. The existing spring integrator retains the DCommon MIT attribution above; LME's deformation model/shaders use GPL-3.0-or-later.
+
+## Launchpad and image utilities references
+
+Launchpad's search integration was reviewed against end4-pC
+[`SearchItem.qml`](https://github.com/pctrade/end4-pC/blob/4de3f593cb220194fd2f87c1e344b775482ad9aa/modules/ii/overview/SearchItem.qml)
+and `SearchBar.qml` (GPLv3); LME reuses its own launcher and Python process/store
+helpers. No end4 source was copied for this feature.
+
+The original Gowall wrapper follows [Achno/gowall v0.2.4](https://github.com/Achno/gowall/tree/v0.2.4)
+`cmd/{convert,upscale,effects,extract,root}.go`. Gowall is MIT licensed, copyright
+Achno, and runs as an optional separate executable; no Go implementation or
+model is bundled. Initial inspection also used revision
+`c82cbaff70270345f7b739e7c8b86aac513cacfd`.
+
+The awww adapter was checked against LGFae/awww revision
+`25ea4fd7a42359379da9ddadedda1c477caa4ae0` (GPLv3), particularly
+`client/src/cli.rs`, `daemon/src/animations.rs` and `common/src/ipc/types.rs`,
+and exercised with awww 0.12.1. No awww renderer or daemon code is copied.

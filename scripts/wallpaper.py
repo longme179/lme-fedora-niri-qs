@@ -3,6 +3,7 @@
 from pathlib import Path
 from contextlib import contextmanager
 import fcntl
+import math
 import os
 import random
 import re
@@ -12,7 +13,10 @@ TRANSITIONS = ('fade','wipe','wave','grow','outer','left','right','top','bottom'
 EXTENSIONS = {'.png','.jpg','.jpeg','.webp','.gif','.bmp'}
 DEFAULTS = {'wallpaperPlaylist':[], 'wallpaperPlaylistEnabled':False, 'wallpaperPlaylistPaused':False,
             'wallpaperPlaylistShuffle':False, 'wallpaperPlaylistInterval':300, 'wallpaperPlaylistOutput':'',
-            'wallpaperTransition':'fade', 'wallpaperTransitionDuration':3.0, 'wallpaperOutputs':{}}
+            'wallpaperTransition':'fade', 'wallpaperTransitionDuration':3.0, 'wallpaperOutputs':{},
+            'wallpaperTransitionFps':60, 'wallpaperTransitionStep':2, 'wallpaperTransitionAngle':45,
+            'wallpaperTransitionPosition':'center', 'wallpaperTransitionBezier':'0.54,0,0.34,0.99', 'wallpaperTransitionWave':'20,20',
+            'wallpaperResize':'crop', 'wallpaperFilter':'Lanczos3', 'wallpaperFillColor':'#000000'}
 
 
 def output_name(value, shared=False):
@@ -38,6 +42,18 @@ def image_path(value):
 def validate(key,value):
     if key in {'wallpaperPlaylistEnabled','wallpaperPlaylistPaused','wallpaperPlaylistShuffle'} and type(value) is bool: return value
     if key=='wallpaperPlaylistInterval' and type(value) is int and 30<=value<=86400: return value
+    if key in ('wallpaperTransitionFps','wallpaperTransitionStep','wallpaperTransitionAngle') and type(value) is int:
+        low,high={'wallpaperTransitionFps':(10,240),'wallpaperTransitionStep':(1,255),'wallpaperTransitionAngle':(0,360)}[key]
+        if low<=value<=high: return value
+    choices={'wallpaperResize':('crop','fit','stretch','no'),'wallpaperFilter':('Nearest','Bilinear','CatmullRom','Mitchell','Lanczos3'),
+             'wallpaperTransitionPosition':('center','top','bottom','left','right','top-left','top-right','bottom-left','bottom-right')}
+    if key in choices and isinstance(value,str) and value in choices[key]: return value
+    if key=='wallpaperFillColor' and isinstance(value,str) and re.fullmatch(r'#[a-fA-F0-9]{6}',value): return value.lower()
+    if key in ('wallpaperTransitionBezier','wallpaperTransitionWave') and isinstance(value,str) and len(value)<=80:
+        try: parts=[float(x) for x in value.split(',')]
+        except ValueError: parts=[]
+        size,low,high=(4,0,1) if key=='wallpaperTransitionBezier' else (2,1,500)
+        if len(parts)==size and all(math.isfinite(x) and low<=x<=high for x in parts): return ','.join(format(x,'g') for x in parts)
     if key=='wallpaperPlaylistOutput': return output_name(value,shared=True)
     if key=='wallpaperTransition' and isinstance(value,str) and value in TRANSITIONS: return value
     if key=='wallpaperTransitionDuration' and type(value) in (int,float) and .1<=value<=10: return float(value)
@@ -51,7 +67,24 @@ def validate(key,value):
 
 def query_outputs(text):
     # Both legacy "OUTPUT: WxH" and current "NAMESPACE: OUTPUT: WxH" are supported.
-    return set(re.findall(r'^(?:[^:\n]+:\s*)?([A-Za-z0-9][A-Za-z0-9_.-]*):\s*\d+x\d+\b',text,re.MULTILINE))
+    return set(re.findall(r'^(?:[^:\n]*:\s*)?([A-Za-z0-9][A-Za-z0-9_.-]*):\s*\d+x\d+\b',text,re.MULTILINE))
+
+
+def query_images(text):
+    return {name:path.strip() for name,path in re.findall(r'^(?:[^:\n]*:\s*)?([A-Za-z0-9][A-Za-z0-9_.-]*):\s*\d+x\d+[^\n]*?currently displaying:\s*image:\s*(.+)$',text,re.MULTILINE)}
+
+
+def image_arguments(path,p,animate=True):
+    transition=p['wallpaperTransition'] if animate and p['animations'] else 'none'
+    args=['img',str(path),'--transition-type',transition,'--resize',p['wallpaperResize'],
+          '--filter',p['wallpaperFilter'],'--fill-color',p['wallpaperFillColor'][1:]]
+    if transition!='none':
+        args+=['--transition-fps',str(p['wallpaperTransitionFps']), '--transition-step',str(p['wallpaperTransitionStep'] if transition=='simple' else 90)]
+        if transition!='simple':
+            args+=['--transition-duration',str(p['wallpaperTransitionDuration']), '--transition-angle',str(p['wallpaperTransitionAngle']),
+                   '--transition-pos',p['wallpaperTransitionPosition'],'--transition-bezier',p['wallpaperTransitionBezier'],
+                   '--transition-wave',p['wallpaperTransitionWave']]
+    return args
 
 
 class Wallpapers:
@@ -83,7 +116,7 @@ class Wallpapers:
         try: return self.runner.run('awww','query',timeout=1)
         except RuntimeError:
             if self.closed: raise ValueError('Wallpaper operation was cancelled')
-            self.runner.spawn([self.runner.executable('awww-daemon')])
+            self.runner.spawn([self.runner.executable('awww-daemon'),'--no-cache'])
         deadline=time.monotonic()+4
         while not self.closed:
             try: return self.runner.run('awww','query',timeout=1)
@@ -110,11 +143,8 @@ class Wallpapers:
         if not output and p['wallpaperOutputs'] and not outputs:
             raise ValueError('awww did not report its displays; existing wallpapers were kept')
         if targets or not output and not p['wallpaperOutputs']:
-            transition=p['wallpaperTransition'] if animate and p['animations'] else 'none'
-            args=['img',str(path),'--transition-type',transition]
+            args=image_arguments(path,p,animate)
             if targets: args+=['--outputs',','.join(targets)]
-            if transition not in ('none','simple') and p['wallpaperTransitionDuration']!=3:
-                args+=['--transition-duration',str(p['wallpaperTransitionDuration'])]
             if self.closed: raise ValueError('Wallpaper operation was cancelled')
             self.runner.run('awww',*args,timeout=15)
             self.applied={**self.applied,**{name:str(path) for name in targets}}
@@ -201,9 +231,12 @@ class Wallpapers:
 
     def restore(self,outputs):
         with self.operation():
+            # Another backend may have just started this transition; don't cancel it.
+            displayed=query_images(self.ready())
             for name in outputs:
                 path=self.current(name)
-                if path: self._apply(path,name,save=False,animate=False)
+                if path and displayed.get(name)==str(Path(path).resolve()): self.applied[name]=path
+                elif path: self._apply(path,name,save=False,animate=False)
         return ''
 
     def close(self):

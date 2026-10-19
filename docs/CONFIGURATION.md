@@ -587,3 +587,61 @@ Names, commands and working directories live in `launchpadEntries` inside
 `settings.json`. Per-entry saves merge with concurrent writers. Backups include
 commands; portable appearance presets exclude them. Importing or saving never
 runs a command. Review commands before pressing Run.
+
+## Gowall image studio
+
+Open **Settings → Shell utilities**. Install `gowall` separately from
+[its upstream releases](https://github.com/Achno/gowall/releases); the adapter
+targets **v0.2.4** and does not change your gowall config or install packages.
+Click **Load themes** to include both bundled and user-defined gowall themes.
+Choose up to 24 images, select a theme and click **Generate preview**. Originals
+are read only. Batch output can be inspected one image at a time, saved with
+**Save PNG…**, or applied with **Use as wallpaper**. Existing files are never
+overwritten; choose a new export filename.
+
+Operations include palette conversion, 2×/3×/4× upscale, extraction of 2–16
+colors per image, brightness, contrast, saturation, grayscale, invert, pixelate
+and resize. Brightness is a multiplier (0.1–10); contrast/saturation use -99–99;
+pixelation accepts 1–25; resize uses `WIDTHxHEIGHT`. Extraction shows up to 64
+unique colors for a batch. Shell theme palettes remain independent of image
+processing.
+
+Upscale requires Vulkan and gowall's Real-ESRGAN setup. On first use, select an
+image and click **Setup in terminal…**. Gowall opens in your configured terminal
+and asks before downloading its binary/models. This also performs that first
+upscale using gowall's configured output folder. Return to LME and Generate
+preview for subsequent work. Background generation supplies EOF to prompts and
+never sends `--yes`. Each upscale can take up to ten minutes per image; other
+operations have a two-minute per-image timeout and run in the existing worker
+pool. The UI stays responsive and reports command failures.
+
+Previews live under `$XDG_CACHE_HOME/lme-shell/gowall` (normally
+`~/.cache/lme-shell/gowall`). The backend replaces its previous preview after a
+successful new operation; a failed operation preserves the last preview. Tool
+previews are not restored after Settings restarts. **Use as wallpaper** first
+copies the selected PNG to `$XDG_DATA_HOME/lme-shell/wallpapers`, then calls the
+shared wallpaper controller. Changing or clearing a preview therefore does not
+delete an applied wallpaper. Choose its display target in **Wallpaper**.
+
+## Awww controls and transitions
+
+**Settings → Wallpaper → Awww engine** exposes transition FPS (10–240), Simple
+fade step (1–255), wipe/wave angle, circle origin, Bezier coordinates, wave
+dimensions, image sizing, resampling and padding color. Transition type and
+duration remain above this card. These saved options are included in presets
+and backups and apply to manual changes, playlists and Gowall wallpapers.
+The default transition is a three-second fade at 60 FPS. **None**, disabled
+shell animations and display restoration are immediate. Simple uses its step
+rather than duration; a larger step looks more abrupt. Bezier coordinates accept
+four values between 0 and 1; wave dimensions accept two values between 1 and
+500. Padding uses `#RRGGBB`.
+
+Use **Check daemon** for current outputs/images, or **Start if needed**. The
+shell leaves an existing daemon running. A daemon started by LME uses
+`--no-cache`: LME restores its own saved assignments rather than racing awww's
+cached auto-restore. Query parsing includes the empty namespace prefix emitted
+by awww 0.12.1. When the Settings app has already applied the desired image,
+the shell updates its local record without sending an instant restore that
+would cancel the transition. No continuous awww polling was added. If your
+niri config starts awww-daemon separately, add `--no-cache` there as well when
+LME owns wallpaper restoration.

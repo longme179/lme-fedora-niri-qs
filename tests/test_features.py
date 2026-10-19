@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
+from wallpaper import image_arguments
 from test_backend import backend, Fixture, FakeRunner
 from charge_control import ChargeControl
 from weather import WeatherClient, location, fetch_json
@@ -56,20 +57,20 @@ class WallpaperCase(Fixture, unittest.TestCase):
         with patch.object(backend.time, 'sleep'):
             result = self.wallpaper_result(live,path)
         self.assertTrue(result['ok'], result)
-        self.assertEqual(runner.spawns, [['/usr/bin/awww-daemon']])
-        self.assertEqual(runner.calls[-1], ('awww', 'img', str(path), '--transition-type', 'fade'))
+        self.assertEqual(runner.spawns, [['/usr/bin/awww-daemon','--no-cache']])
+        self.assertEqual(runner.calls[-1], ('awww', *image_arguments(str(path),self.preferences.values)))
         self.assertEqual(self.preferences.values['wallpaper'], str(path))
 
     def test_apply_failure_does_not_save_and_restore_does_not_change_preferences(self):
         runner = FakeRunner(available={'awww'})
         live = self.make_backend(runner)
         path = self.put('images/a.png', 'fixture')
-        command = ('awww', 'img', str(path), '--transition-type', 'fade')
+        command = ('awww', *image_arguments(str(path),self.preferences.values))
         runner.responses[command] = backend.CommandError('Image decoding failed')
         self.assertFalse(self.wallpaper_result(live,path)['ok'])
         self.assertFalse(self.preferences.path.exists())
         live.apply_wallpaper(str(path), save=False, animate=False)
-        self.assertEqual(runner.calls[-1][-1], 'none')
+        self.assertEqual(runner.calls[-1][runner.calls[-1].index('--transition-type')+1], 'none')
         self.assertFalse(self.preferences.path.exists())
 
     def test_missing_daemon_and_unready_daemon_do_not_save(self):

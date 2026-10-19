@@ -24,6 +24,7 @@ def entries(value):
             except ValueError as exc: raise ValueError('Command quotes are incomplete') from exc
             if not argv or not argv[0]: raise ValueError('Choose an executable')
         result[key]=dict(name=name.strip(),command=command,kind=kind,terminal=terminal,cwd=cwd)
+    if sum(len(item["command"].encode("utf-8"))+len(item["name"].encode("utf-8"))+len(item["cwd"].encode("utf-8")) for item in result.values())>256*1024: raise ValueError("Launchpad commands exceed 256 KiB")
     return result
 
 
@@ -48,11 +49,12 @@ class Launchpad:
         if mode not in (None,'background','terminal'): raise ValueError('Choose background or terminal')
         argv=['/bin/bash','-c',entry['command']] if entry['kind']=='bash' else shlex.split(entry['command'])
         argv[0]=os.path.expanduser(argv[0])
+        cwd=Path(entry['cwd']).expanduser() if entry['cwd'] else Path.home()
+        if not cwd.is_dir(): raise ValueError('The working directory no longer exists')
+        if '/' in argv[0] and not Path(argv[0]).is_absolute(): argv[0]=str(cwd/argv[0])
         executable=shutil.which(argv[0])
         if not executable: raise ValueError('Executable unavailable: '+argv[0])
         argv[0]=executable
-        cwd=Path(entry['cwd']).expanduser() if entry['cwd'] else Path.home()
-        if not cwd.is_dir(): raise ValueError('The working directory no longer exists')
         in_terminal=entry['terminal'] if mode is None else mode=='terminal'
         if in_terminal:
             program=shutil.which(terminal)

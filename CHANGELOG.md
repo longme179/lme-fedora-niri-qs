@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add Gowall image utilities with installed-theme search, batch palette previews, 2×–4× upscale, color extraction and basic image effects. Export PNGs exclusively or keep a durable copy before applying a wallpaper; setup downloads stay in gowall's explicit terminal prompt.
+- Expose awww FPS, Bezier, direction/origin, wave, scaling/filter and padding controls. Parse empty namespace prefixes in 0.12.1, prevent another backend from cancelling a transition during restore, and disable cache auto-restore only when starting an owned daemon.
+
 - Add a local Launchpad for named binaries and Bash scripts, background/terminal dispatch, per-command logs and launcher search. Expose an optional top bar module and an editor in Shell utilities; keep commands out of portable appearance presets.
 
 - Keep all Liquid labels white, including selected tabs, calendar dates and close buttons on hover. Remove automatic black/white foreground switching; preserve Smoked colors and the shared glass material.

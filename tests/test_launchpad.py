@@ -23,6 +23,7 @@ class LaunchpadCase(Fixture,unittest.TestCase):
         self.assertIn('launchpadEntries',document(self.preferences.values,'backup')['settings'])
         self.preferences.set('launchpadEntries',None,token='one')
         self.assertEqual(set(backend.Preferences(self.preferences.path).values['launchpadEntries']),{'two'})
+        with self.assertRaises(ValueError): entries({str(i):self.entry('a'*16000) for i in range(20)})
 
     def test_invalid_entries_do_not_replace_saved_commands(self):
         for value in ([],{'bad/id':self.entry()}, {'a':self.entry('"bad')},{'a':{**self.entry(),'kind':'python'}},{'a':{**self.entry(),'cwd':'relative'}},{'a':{**self.entry(),'terminal':1}}):
@@ -46,6 +47,10 @@ class LaunchpadCase(Fixture,unittest.TestCase):
             job=tool.snapshot()['two'];self.assertEqual(job['exitCode'],7)
             from pathlib import Path
             self.assertEqual(Path(job['log']).read_text(),'from-bash')
+            script=work/'relative-script';script.write_text('#!/bin/sh\nprintf relative');script.chmod(0o700)
+            tool.run('relative',{'relative':{**self.entry('./relative-script'),'cwd':str(work)}},'missing')
+            while tool.snapshot()['relative']['running'] and time.monotonic()<deadline: time.sleep(.02)
+            self.assertEqual(Path(tool.snapshot()['relative']['log']).read_text(),'relative')
 
     def test_terminal_wrapper_cwd_missing_tools_and_duplicate_run(self):
         from unittest.mock import Mock

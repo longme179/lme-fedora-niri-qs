@@ -57,6 +57,7 @@ if "$copr"; then
 fi
 if "$optional"; then
     printf 'Also install awww when installed or available from enabled repositories; otherwise see docs/INSTALL.md.\n'
+    printf 'Optional Gowall image studio: install gowall from upstream separately; see docs/CONFIGURATION.md.\n'
 fi
 if ! "$install"; then
     printf 'Preview only. Use --install to run these commands on Fedora.\n'

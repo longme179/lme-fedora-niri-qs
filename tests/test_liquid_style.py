@@ -483,7 +483,7 @@ class LiquidNativeCase(unittest.TestCase):
             Image.new('RGB', (400, 800), (220, 45, 150)).save(wallpaper)
             config = Path(directory)/'config'
             backend.Preferences(config/'lme-shell/settings.json').set('wallpaper', str(wallpaper))
-            result = self.run_qml('import Quickshell.Io\nimport "qml/components"\nimport "qml/services"\nimport "qml/theme"', '''
+            result = self.run_qml('import Quickshell.Io\nimport QtQuick.Window\nimport "qml/components"\nimport "qml/services"\nimport "qml/theme"', '''
     FloatingWindow { color:"#21c548"; implicitWidth:1000; implicitHeight:800
         // Isolate texture/refraction from whatever pointer position the preceding UI test left.
         GlassMaterial { id:glass;enabled:false;anchors.centerIn:parent;width:400;height:300;radius:50;topLeftRadius:-1;topRightRadius:-1;bottomLeftRadius:-1;bottomRightRadius:-1 }
@@ -492,6 +492,10 @@ class LiquidNativeCase(unittest.TestCase):
     property int phase:0
     property bool encoded:false
     property bool cropped:false
+    property int frames:0
+    property int readyFrame:-1
+    property int errorFrame:-1
+    Connections { target:glass.Window.window; function onFrameSwapped() { fixture.frames++; } }
     Process { id:shot; command:["grim",SHOT]; onExited:code=> {
         if(fixture.phase===1) {
             fixture.encoded=decodeURIComponent(String(glass.backdrop.source)).endsWith("glass wallpaper #1.png");
@@ -503,8 +507,15 @@ class LiquidNativeCase(unittest.TestCase):
         if(++fixture.ticks>110) { fixture.finish({timeout:fixture.phase}); return; }
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
         if(fixture.phase===0) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"}); fixture.phase++; }
-        else if(fixture.phase===1 && glass.backdrop && glass.backdrop.status===Image.Ready && fixture.ticks>12 && !shot.running) shot.running=true;
-        else if(fixture.phase===2 && glass.backdrop.status===Image.Error && !shot.running) { shot.command=["grim",MISSING]; shot.running=true; fixture.phase++; }
+        else if(fixture.phase===1 && glass.backdrop && glass.backdrop.status===Image.Ready && fixture.ticks>12 && !shot.running) {
+            if(fixture.readyFrame<0) { fixture.readyFrame=fixture.frames;glass.Window.window.update(); }
+            else if(fixture.frames>fixture.readyFrame) shot.running=true;
+        }
+        else if(fixture.phase===2 && glass.backdrop.status===Image.Error && !shot.running) {
+            // Image status changes before its new uniforms reach the native surface.
+            if(fixture.errorFrame<0) { fixture.errorFrame=fixture.frames;glass.Window.window.update(); }
+            else if(fixture.frames>fixture.errorFrame) { shot.command=["grim",MISSING];shot.running=true;fixture.phase++; }
+        }
     }}
 '''.replace('SHOT', json.dumps(str(Path(directory)/'glass.png'))).replace('MISSING', json.dumps(str(Path(directory)/'missing.png'))),
                                   {'QT_QPA_PLATFORM': 'wayland', 'QT_QUICK_BACKEND': 'rhi', 'QSG_RHI_BACKEND': 'opengl', 'XDG_CONFIG_HOME': str(config)})

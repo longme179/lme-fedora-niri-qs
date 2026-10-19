@@ -45,6 +45,9 @@ class HistoryCase(unittest.TestCase):
         day=datetime.fromtimestamp(NOW,timezone.utc).date().isoformat()
         self.path.write_text(json.dumps({'schema':1,'apps':{'overflow':{'last':10**1000,'days':{day:1}}}}))
         self.history.stamp=None;self.assertEqual(self.history.snapshot(now=NOW),{})
+        self.path.write_text(json.dumps({'schema':1,'apps':{'bad\ud800':{'last':NOW,'days':{day:1}}}}))
+        self.history.record('valid.desktop',now=NOW)
+        self.assertEqual(set(self.history.snapshot(now=NOW)),{'valid.desktop'})
 
     def test_app_cap_and_disabled_reads_do_not_create_state(self):
         with patch.object(self.history,'read',side_effect=AssertionError('Disabled history read')):
@@ -86,8 +89,9 @@ class LaunchIntegrationCase(Fixture,unittest.TestCase):
         with patch.object(live.runner,'spawn',side_effect=backend.CommandError('Cannot launch')):
             self.assertFalse(live.handle(dict(action='launch',id='app.desktop'))['ok'])
         self.assertFalse(live.launcher_history.path.exists())
-        with patch('launcher_history.write_json',side_effect=PermissionError('Read-only state')):
-            self.assertTrue(live.handle(dict(action='launch',id='app.desktop'))['ok'])
+        for error in (PermissionError('Read-only state'),ValueError('Invalid cached encoding')):
+            with self.subTest(error=type(error).__name__),patch('launcher_history.write_json',side_effect=error):
+                self.assertTrue(live.handle(dict(action='launch',id='app.desktop'))['ok'])
         self.assertIn('could not be saved',live.feature_snapshot()['launcherHistoryError'])
         demo=self.make_backend(demo=True)
         app=demo.demo_snapshot()['apps'][0]['id']

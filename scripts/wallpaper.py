@@ -26,10 +26,14 @@ def image_path(value):
     if not isinstance(value,str) or not value or len(value)>4096 or any(ord(c)<32 for c in value):
         raise ValueError('Choose a wallpaper image path')
     path=Path(value).expanduser()
-    if not path.is_absolute() or path.suffix.lower() not in EXTENSIONS:
+    if not path.is_absolute():
         raise ValueError('Choose an absolute PNG, JPEG, WebP, GIF, or BMP path')
-    try: return str(path.resolve())
+    try: path=path.resolve()
     except RuntimeError as exc: raise ValueError('Wallpaper path contains a symlink loop') from exc
+    text=str(path)
+    if path.suffix.lower() not in EXTENSIONS or len(text)>4096 or any(ord(c)<32 or 0xd800<=ord(c)<=0xdfff for c in text):
+        raise ValueError('Choose an absolute PNG, JPEG, WebP, GIF, or BMP path')
+    return text
 
 
 def validate(key,value):
@@ -98,7 +102,7 @@ class Wallpapers:
 
     def _apply(self,raw,output='',save=True,animate=True):
         output=output_name(output,shared=True)
-        path=Path(image_path(raw)).resolve()
+        path=Path(image_path(raw))
         if not path.is_file(): raise ValueError('Select an existing wallpaper image')
         outputs=query_outputs(self.ready())
         p=self.preferences.values
@@ -129,8 +133,11 @@ class Wallpapers:
             self.preferences.set('wallpaperOutputs',None,token=output)
         return 'Display uses the shared wallpaper'
 
-    def advance(self,output=None):
-        with self.operation(): return self._advance(output)
+    def advance(self,output=None,automatic=False):
+        with self.operation():
+            p=self.preferences.values
+            if automatic and (not p['wallpaperPlaylistEnabled'] or p['wallpaperPlaylistPaused'] or p['wallpaperPlaylistOutput']!=output): return ''
+            return self._advance(output)
 
     def _advance(self,output):
         p=self.preferences.values
@@ -145,7 +152,7 @@ class Wallpapers:
         else:
             previous=self.cursor[1] if self.cursor and self.cursor[0]==output and self.cursor[2]==current else current
             index=(paths.index(previous)+1)%len(paths) if previous in paths else 0
-            choices=paths[index:]+paths[:index]
+            choices=[path for path in paths[index:]+paths[:index] if path!=current]
         error='No wallpaper could be applied'
         for path in choices[:10]:
             self.cursor=(output,path,current)
@@ -190,7 +197,7 @@ class Wallpapers:
         if self.deadline is not None and now>=self.deadline:
             self.deadline=now+p['wallpaperPlaylistInterval']
             if p['wallpaperPlaylistOutput'] and p['wallpaperPlaylistOutput'] not in outputs: return None
-            return self.advance
+            return lambda output=p['wallpaperPlaylistOutput']: self.advance(output,automatic=True)
         return None
 
     def restore(self,outputs):

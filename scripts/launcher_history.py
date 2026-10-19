@@ -40,7 +40,7 @@ class LauncherHistory:
         if not isinstance(raw,dict) or type(raw.get('schema')) is not int or raw['schema']!=1 or not isinstance(raw.get('apps'),dict): return {}
         result={}
         for app,item in list(raw['apps'].items())[:MAX_APPS*2]:
-            if not isinstance(app,str) or not 1<=len(app)<=512 or any(ord(c)<32 for c in app) or not isinstance(item,dict): continue
+            if not isinstance(app,str) or not 1<=len(app)<=512 or any(ord(c)<32 or 0xd800<=ord(c)<=0xdfff for c in app) or not isinstance(item,dict): continue
             last=item.get('last');days=item.get('days')
             if type(last) not in (int,float) or not 0<=last<=253402300799 or not isinstance(days,dict): continue
             valid={}
@@ -53,7 +53,7 @@ class LauncherHistory:
         return dict(sorted(result.items(),key=lambda entry:entry[1]['last'],reverse=True)[:MAX_APPS])
 
     def record(self,app,now=None):
-        if not isinstance(app,str) or not 1<=len(app)<=512 or any(ord(c)<32 for c in app): return
+        if not isinstance(app,str) or not 1<=len(app)<=512 or any(ord(c)<32 or 0xd800<=ord(c)<=0xdfff for c in app): return
         now=time.time() if now is None else now
         today=datetime.fromtimestamp(now,timezone.utc).date()
         try:
@@ -65,7 +65,7 @@ class LauncherHistory:
                 apps=dict(sorted(apps.items(),key=lambda entry:entry[1]['last'],reverse=True)[:MAX_APPS])
                 write_json(self.path,{'schema':1,'apps':apps})
             self.error='';self.stamp=None
-        except OSError as exc:
+        except (OSError,ValueError) as exc:
             # Launch already succeeded; history failure must not turn it into a launch failure.
             self.error='Usage history could not be saved: '+str(exc)[:180]
 

@@ -76,6 +76,9 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         active=self.preferences.values['wallpaper'];self.preferences.set('wallpaperPlaylist',[active]);live.runner.calls.clear()
         live.wallpapers.advance()
         self.assertEqual(live.runner.calls,[])
+        self.preferences.update({'wallpaperPlaylist':[active,b],'wallpaperPlaylistShuffle':False})
+        self.assertFalse(self.complete(live,dict(action='wallpaperNext'))['ok'])
+        self.assertEqual(self.preferences.values['wallpaper'],active)
         self.preferences.set('wallpaperPlaylist',[str(self.root/'gone.png')])
         self.assertFalse(self.complete(live,dict(action='wallpaperNext'))['ok'])
         self.assertEqual(self.preferences.values['wallpaper'],active)
@@ -125,3 +128,24 @@ class WallpaperPlaybackCase(Fixture, unittest.TestCase):
         live.wallpapers.close();live.feature_executor.complete();live.finish_features()
         self.assertFalse(live.last_result['ok'])
         self.assertFalse(self.preferences.path.exists());self.assertEqual(live.runner.calls,[])
+
+    def test_queued_cycle_rechecks_pause_disable_and_output_before_starting(self):
+        for change in ({'wallpaperPlaylistPaused':True},{'wallpaperPlaylistEnabled':False},{'wallpaperPlaylistOutput':'HDMI-A-1'}):
+            with self.subTest(change=change):
+                live=self.controller();a=str(self.put('a.png','a'));b=str(self.put('b.png','b'))
+                self.preferences.update({'wallpaper':a,'wallpaperOutputs':{},'wallpaperPlaylist':[a,b],'wallpaperPlaylistEnabled':True,'wallpaperPlaylistPaused':False,'wallpaperPlaylistOutput':'','wallpaperPlaylistInterval':30})
+                self.assertIsNone(live.wallpapers.due({'eDP-1'},now=0))
+                job=live.wallpapers.due({'eDP-1'},now=31);self.assertIsNotNone(job)
+                self.preferences.update(change);self.assertEqual(job(),'')
+                self.assertEqual(live.runner.calls,[]);self.assertEqual(self.preferences.values['wallpaper'],a)
+                # Explicit Next is independent of the automatic playback switch.
+                live.wallpapers.advance('');self.assertEqual(self.preferences.values['wallpaper'],b)
+
+    def test_symlinks_are_validated_after_resolution_and_reload_without_losing_playlist(self):
+        image=self.put('actual.jpg','image');link=self.root/'link.png';link.symlink_to(image)
+        self.preferences.set('wallpaperPlaylist',[str(link)])
+        self.assertEqual(backend.Preferences(self.preferences.path).values['wallpaperPlaylist'],[str(image)])
+        bad=self.put('not-image.txt','text');link.unlink();link.symlink_to(bad)
+        before=self.preferences.path.read_bytes()
+        with self.assertRaises(ValueError): self.preferences.set('wallpaperPlaylist',[str(link)])
+        self.assertEqual(self.preferences.path.read_bytes(),before)

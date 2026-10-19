@@ -38,7 +38,7 @@ ColumnLayout {
                 Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.preferredHeight: 48
                 radius: 14; color: isToday ? Theme.accent : valid ? Theme.surface : "transparent"
                 GlassMaterial { anchors.fill: parent; radius: parent.radius; visible: dayCell.isToday }
-                LabelText { anchors.centerIn: parent; text: dayCell.valid ? dayCell.day : ""; glassText: !dayCell.isToday; color: dayCell.isToday ? Theme.contrastingText(Theme.accent, Theme.background, true) : Theme.text }
+                LabelText { anchors.centerIn: parent; text: dayCell.valid ? dayCell.day : ""; color: dayCell.isToday ? Theme.background : Theme.text }
             }
         }
     }

@@ -1,35 +1,7 @@
-"""Selected foreground contrast and glass on custom button backgrounds."""
+"""White Liquid labels and glass on custom button backgrounds."""
 import os
-import shutil
 import unittest
 import test_local_qml as qml_tests
-
-
-@unittest.skipUnless(shutil.which('quickshell'), 'Quickshell is required')
-class ButtonContrastCase(unittest.TestCase):
-    run_qml = qml_tests.LocalQmlCase.run_qml
-
-    def test_light_dark_saturated_and_midgray_plates_keep_readable_text(self):
-        result = self.run_qml('import "qml/theme"', '''
-    Component.onCompleted: Qt.callLater(() => {
-        const colors=[Qt.rgba(1,1,1,1),Qt.rgba(0,0,0,1),Qt.rgba(.5,.5,.5,1),
-            Qt.rgba(1,0,0,1),Qt.rgba(0,1,0,1),Qt.rgba(0,0,1,1)];
-        const rows=colors.map(fill=>{
-            const fg=Theme.contrastingText(fill,Qt.rgba(1,1,1,1));
-            return {background:[fill.r,fill.g,fill.b],foreground:[fg.r,fg.g,fg.b]};
-        });
-        const cyan=Qt.rgba(0,1,1,1);
-        fixture.finish({rows,kept:Qt.colorEqual(Theme.contrastingText(colors[1],cyan),cyan),
-            translucent:Qt.colorEqual(Theme.contrastingText(Qt.rgba(1,1,1,.1),Qt.rgba(1,1,1,1)),Qt.rgba(1,1,1,1))});
-    })
-''')
-        def luminance(rgb):
-            linear = [v/12.92 if v <= .04045 else ((v+.055)/1.055)**2.4 for v in rgb]
-            return sum(a*b for a,b in zip(linear, (.2126,.7152,.0722)))
-        for row in result['rows']:
-            bg, fg = luminance(row['background']), luminance(row['foreground'])
-            self.assertGreaterEqual((max(bg,fg)+.05)/(min(bg,fg)+.05), 4.5)
-        self.assertTrue(result['kept']); self.assertTrue(result['translucent'])
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'private OpenGL button checks')
@@ -47,6 +19,8 @@ class ButtonMaterialCase(unittest.TestCase):
         LiquidButton { id:bare;x:200;y:620;text:"Transparent";background:Rectangle { color:"transparent" } }
         LiquidButton { id:swatch;x:20;y:680;glassBackground:false;background:Rectangle { color:"#ff0080" } }
         LiquidComboBox { id:combo;x:20;y:740;model:["One","Two"] }
+        IconButton { id:closeIcon;x:220;y:740;glyph:"×";tooltip:"Close";active:true }
+        LiquidButton { id:closeButton;x:280;y:740;text:"×";palette.button:Theme.surface }
         ShellText { id:plain;text:"White label";color:"red" }
         TestCase { id:probe;when:false }
     }
@@ -72,24 +46,34 @@ class ButtonMaterialCase(unittest.TestCase):
             fixture.checks.combo=fixture.glass(combo.background).length===1 && fixture.glass(combo.background)[0].active;
             fixture.checks.exclusions=!fixture.glass(flat)[0].active && !fixture.glass(bare)[0].active
                 && !fixture.glass(swatch)[0].active && swatch.background.color.toString()==="#ff0080";
-            const tab=fixture.items(agenda,i=>i.text==="Calendar" && i.foreground!==undefined)[0];
             const day=probe.findChild(agenda,"calendarDay-"+new Date().getDate());
-            const label=fixture.items(day,i=>i.glassText!==undefined)[0];
-            fixture.checks.selection=selected.contentItem.color.toString()==="#000000" && tab.contentItem.color===Theme.background
-                && label.color===Theme.background && fixture.glass(day)[0].active && plain.color.toString()==="#ffffff";
+            const label=fixture.items(day,i=>i.text===String(new Date().getDate()))[0];
+            const tabs=fixture.items(agenda,i=>["Calendar","To do","Timer","Notes"].includes(i.text) && i.selected!==undefined);
+            fixture.checks.selection=selected.contentItem.color.toString()==="#ffffff" && flat.contentItem.color.toString()==="#ffffff"
+                && tabs.length===4 && tabs.every(b=>b.contentItem.color.toString()==="#ffffff")
+                && label.color.toString()==="#ffffff" && fixture.glass(day)[0].active && plain.color.toString()==="#ffffff";
             ShellState.run("setting",{key:"liquidGlass",token:"brightness",value:.2});fixture.phase++;
         } else if(fixture.phase===3 && Theme.glass.brightness===.2) {
-            fixture.checks.dimmed=selected.contentItem.color.toString()==="#ffffff" && flat.contentItem.color.toString()==="#000000";
+            fixture.checks.dimmed=selected.contentItem.color.toString()==="#ffffff" && flat.contentItem.color.toString()==="#ffffff";
+            ShellState.run("setting",{key:"liquidGlass",token:"tint",value:"#ffffff"});fixture.phase++;
+        } else if(fixture.phase===4 && Theme.glass.tint==="#ffffff") {
+            fixture.phase++;
+            probe.mouseMove(closeButton,closeButton.width/2,closeButton.height/2);
+        } else if(fixture.phase===5 && closeButton.hovered) {
+            const glyph=fixture.items(closeIcon,i=>i.text==="×")[0];
+            const buttons=fixture.items(window.contentItem,i=>i.text!==undefined && i.selected!==undefined && i.contentItem && i.contentItem.color!==undefined);
+            fixture.checks.whiteHover=glyph.color.toString()==="#ffffff" && closeButton.contentItem.color.toString()==="#ffffff"
+                && buttons.length>10 && buttons.every(b=>b.contentItem.color.toString()==="#ffffff");
             window.visible=false;fixture.phase++;
-        } else if(fixture.phase===4 && !GlassState.backdrops.length) {
+        } else if(fixture.phase===6 && !GlassState.backdrops.length) {
             fixture.checks.released=true;window.visible=true;fixture.phase++;
-        } else if(fixture.phase===5 && GlassState.backdrops.length===1) {
+        } else if(fixture.phase===7 && GlassState.backdrops.length===1) {
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
-        } else if(fixture.phase===6 && !Theme.liquidGlass && !GlassState.backdrops.length) {
+        } else if(fixture.phase===8 && !Theme.liquidGlass && !GlassState.backdrops.length) {
             fixture.checks.restored=plain.color.toString()==="#ff0000" && !fixture.glass(custom)[0].active
                 && Math.abs(fixture.items(power,i=>i.actionName!==undefined)[0].background.color.a-.55)<.01;
             fixture.finish(fixture.checks);
         }
     }}
 ''', {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
-        self.assertEqual(result, dict(power=True,custom=True,combo=True,exclusions=True,selection=True,dimmed=True,released=True,restored=True))
+        self.assertEqual(result, dict(power=True,custom=True,combo=True,exclusions=True,selection=True,dimmed=True,whiteHover=True,released=True,restored=True))

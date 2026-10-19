@@ -11,9 +11,6 @@ Button {
     property real cornerRadius: height / 2
     readonly property Rectangle plate: background as Rectangle
     readonly property bool semanticFill: !Qt.colorEqual(palette.button, Theme.buttonFill)
-    readonly property color textFill: selected && !selectionFill ? selectionColor : plate ? plate.color : palette.button
-    readonly property color foreground: selected || semanticFill
-        ? Theme.contrastingText(textFill, palette.buttonText, glassBackground) : palette.buttonText
     implicitWidth: Math.max(36, contentItem.implicitWidth + leftPadding + rightPadding)
     implicitHeight: 40
     leftPadding: 16
@@ -58,8 +55,7 @@ Button {
     contentItem: ShellText {
         text: root.text
         textFormat: Text.PlainText
-        glassText: false
-        color: root.foreground
+        color: root.palette.buttonText
         font: root.font
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

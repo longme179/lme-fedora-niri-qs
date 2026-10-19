@@ -49,7 +49,7 @@ Item {
         contentItem: RowLayout {
             spacing: 12
             ShellText { text: powerButton.symbol; color: powerButton.accent; font.family: Theme.fontFamily; font.pixelSize: 20; Layout.preferredWidth: 28; horizontalAlignment: Text.AlignHCenter }
-            ShellText { text: powerButton.label; glassText: false; color: powerButton.foreground; font.family: Theme.fontFamily; font.pixelSize: 14 }
+            ShellText { text: powerButton.label; color: Theme.text; font.family: Theme.fontFamily; font.pixelSize: 14 }
             Item { Layout.fillWidth: true }
             ShellText { text: "›"; color: Theme.muted; font.pixelSize: 22 }
         }

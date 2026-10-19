@@ -443,12 +443,9 @@ edges and adds optical lift while travelling or pressed; foreground text and
 input stay independent. Disable it in Liquid glass material to restore the
 plain indicator. Smoked selection and the animation switches retain their behavior.
 
-Selected and filled controls retain their configured text color when it has
-sufficient contrast; otherwise they use black or white. The calculation follows
-the displayed fill, including Liquid brightness. Transparent fills use the panel
-tint as an estimate, rather than capturing the live desktop. Ordinary Liquid
-labels remain white. Agenda/Calendar, Settings navigation, workspace pills and
-the shared button controls use this treatment.
+Liquid labels stay white in selected, unselected, hovered and pressed states,
+including close buttons. Background brightness does not recolor text. Switching
+to Smoked restores each control's configured text color.
 
 Buttons with custom backgrounds inherit the same glass material as standard
 buttons. Power actions and dropdown triggers therefore retain the refractive

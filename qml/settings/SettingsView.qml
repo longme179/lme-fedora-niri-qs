@@ -79,8 +79,8 @@ Item {
                                 }
                                 contentItem: RowLayout {
                                     spacing: 12
-                                    ShellIcon { name: nav.modelData.icon; color: nav.selected ? nav.foreground : Theme.muted; width: 20; height: 20 }
-                                    LabelText { text: nav.text; glassText: !nav.selected; color: nav.selected ? nav.foreground : Theme.text; Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.WordWrap; font.pixelSize: Math.min(Theme.bodySize, 16); font.weight: nav.selected ? Font.Bold : Font.Medium }
+                                    ShellIcon { name: nav.modelData.icon; color: nav.selected ? Theme.accent : Theme.muted; width: 20; height: 20 }
+                                    LabelText { text: nav.text; Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.WordWrap; font.pixelSize: Math.min(Theme.bodySize, 16); font.weight: nav.selected ? Font.Bold : Font.Medium }
                                 }
                             }
                         }

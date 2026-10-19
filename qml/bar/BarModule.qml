@@ -90,7 +90,7 @@ Loader {
                         }
                         contentItem: LabelText {
                             text: workspace.modelData.name || workspace.modelData.idx
-                            glassText: false; color: workspace.foreground
+                            color: workspace.palette.buttonText
                             font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; font.weight: Theme.barFontWeight
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                         }

@@ -77,7 +77,7 @@ GlassPanel {
                         text: modelData.text || modelData.identifier
                         width: Math.min(implicitWidth, actions.width)
                         implicitHeight: Math.max(40, contentItem.implicitHeight + topPadding + bottomPadding)
-                        contentItem: LabelText { text: action.text; glassText: false; font: action.font; color: action.foreground; wrapMode: Text.Wrap; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                        contentItem: LabelText { text: action.text; font: action.font; color: action.palette.buttonText; wrapMode: Text.Wrap; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                         onClicked: root.actionRequested(modelData.identifier)
                     }
                 }

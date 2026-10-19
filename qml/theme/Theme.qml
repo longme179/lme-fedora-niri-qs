@@ -184,18 +184,6 @@ QtObject {
     }
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity * color.a); }
     function mix(a, b, amount) { return Qt.rgba(a.r * (1 - amount) + b.r * amount, a.g * (1 - amount) + b.g * amount, a.b * (1 - amount) + b.b * amount, 1); }
-    function luminance(color) {
-        function linear(c) { return c <= .04045 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }
-        return .2126 * linear(color.r) + .7152 * linear(color.g) + .0722 * linear(color.b);
-    }
-    function contrastingText(fill, preferred, material) {
-        // Translucent plates use the panel tint as a stable estimate, without desktop capture.
-        const base = mix(panel, fill, fill.a), brightness = liquidGlass && material ? glass.brightness ?? 1 : 1;
-        const background = Qt.rgba(base.r * brightness, base.g * brightness, base.b * brightness, 1);
-        const bg = luminance(background), fg = luminance(mix(background, preferred, preferred.a));
-        if ((Math.max(bg, fg) + .05) / (Math.min(bg, fg) + .05) >= 4.5) return preferred;
-        return (bg + .05) / .05 > 1.05 / (bg + .05) ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1);
-    }
     function loadPalette() {
         try {
             const value = JSON.parse(palette.text());

@@ -1,5 +1,28 @@
 # Validation and platform limits
 
+## White Liquid labels — 2026-10-19
+
+The automatic foreground contrast change described in the earlier entry below
+has been removed at the owner's request. Liquid labels remain white for selected
+and unselected controls, hover and press, including close glyphs. Smoked restores
+the original color bindings. The custom-background glass fixes remain in place;
+no preferences, shader parameters or animation behavior are changed.
+
+Default `scripts/check.sh` completed **377 tests: 293 passed, 84 opt-in checks
+skipped**, plus Bash syntax and demo snapshot checks. The removed test covered
+the discarded contrast helper. The updated OpenGL material/white-label case,
+selection-lens checks and existing input/color-restoration case passed. The tab
+geometry case timed out on backend readiness during the concurrent run, then
+passed in isolation without changing its assertions or deadline. An initial
+larger material fixture also timed out; the focused fixture retains the actual
+Agenda, calendar, Power, close-button hover and texture lifecycle checks.
+
+`qmllint` checked **127 QML files under `qml/`: zero errors, 42 metadata
+warnings**. The Power/Control Center capture was visually checked: labels,
+Calendar/current-day text and close glyphs are white. This private Wayland/Mesa
+session does not validate niri blur or physical Radeon/RTX performance. The
+expanded suite's earlier failures below were not re-audited in this correction.
+
 ## Selected controls and custom button glass — 2026-10-19
 
 Default `scripts/check.sh`: **378 tests, 294 passed, 84 opt-in checks skipped**;

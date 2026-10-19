@@ -154,6 +154,11 @@ QtObject {
             snapshot = next;
             const wasReady = backendReady;
             backendReady = true; restartAttempts = 0;
+            if (!demo && !settingsApp) {
+                const low = PeripheralBatteries.check(system.peripheralBatteries || [], preferences.peripheralBatteryAlerts !== false,
+                    preferences.peripheralBatteryThreshold);
+                if (low.length) Notifications.local("Device battery low", low.map(device => device.name + " · " + Math.round(device.percentage) + "%").join("\n"));
+            }
             if (!wasReady && stayAwake && !settingsApp) run("idleInhibit", {value: true});
             if (oldAudio && next.system.audio && oldAudio.available && next.system.audio.available
                     && (oldAudio.volume !== next.system.audio.volume || oldAudio.muted !== next.system.audio.muted)) {

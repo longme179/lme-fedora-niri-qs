@@ -1,5 +1,36 @@
 # Validation and platform limits
 
+## Peripheral batteries — 2026-10-20
+
+Control Center → Devices now lists connected Bluetooth and kernel device
+batteries. Behavior settings control alerts and their 5–50% threshold (20%
+default). BlueZ `Battery1` percentages share the existing five-second Bluetooth
+snapshot; kernel `power_supply` devices are read in that same refresh, with no
+new process or dependency. Bluetooth and kernel records merge by device ID.
+Device-scoped batteries are excluded from the laptop battery aggregate.
+
+Five backend regressions cover 0%, invalid/absent readings, identity merging,
+disconnect/removal, adapter coverage, cache reuse, battery property changes and
+portable preference validation. Three QML regressions cover alert latching,
+5-point recovery hysteresis, charging, reconnects, disabled alerts, unknown
+readings, bounded session state, batched notifications, DND and demo/Settings
+isolation. Device names wrap at narrow widths. Seven private BlueZ protocol/UI
+tests and the existing polling/backend regressions passed.
+
+The combined feature tree passed `scripts/check.sh`: **399 tests, 314 passed,
+85 opt-in checks skipped**, plus Bash syntax and the demo backend snapshot.
+`qmllint` scanned **141 QML files: zero errors, 67 existing metadata warnings**.
+Private Wayland/OpenGL checks opened, closed and reopened Devices in Smoked and
+Liquid styles and changed the saved threshold without QML type/reference,
+assignment or binding-loop diagnostics.
+
+Hardware readings and delivery through the user's real Bluetooth adapter remain
+untested here. Some devices never expose battery percentages; those display
+“Battery not reported” rather than estimates. Non-Bluetooth support requires a
+driver exporting `power_supply` with `scope=Device`. Alert latches persist across
+backend/device reconnects within a shell process; a newly started shell can warn
+again if a device is already low. Alerts follow the normal DND/history rules.
+
 ## Launchpad, Gowall and awww controls — 2026-10-19
 
 Default `scripts/check.sh`: **390 tests, 306 passed, 84 opt-in checks skipped**;

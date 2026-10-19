@@ -11,6 +11,7 @@ import re
 import signal
 import sys
 import uuid
+from peripheral_battery import bluetooth_device
 
 AGENT_PATH = '/org/lme/Shell/BluetoothAgent'
 AGENT_XML = '''<node><interface name="org.bluez.Agent1">
@@ -87,7 +88,8 @@ class BluetoothAgent:
         elif iface == 'org.freedesktop.DBus.Properties' and name == 'PropertiesChanged':
             target, changes, invalidated = params.unpack()
             relevant = {'org.bluez.Adapter1': {'Powered', 'Alias', 'Discovering'},
-                        'org.bluez.Device1': {'Alias', 'Name', 'Address', 'Paired', 'Connected'}}
+                        'org.bluez.Device1': {'Alias', 'Name', 'Address', 'Icon', 'Paired', 'Connected'},
+                        'org.bluez.Battery1': {'Percentage'}}
             if not (set(changes) | set(invalidated)) & relevant.get(target, set()): return
             props = self.objects.setdefault(path, {}).setdefault(target, {}); props.update(changes)
             for key in invalidated: props.pop(key, None)
@@ -108,8 +110,7 @@ class BluetoothAgent:
         for path, interfaces in self.objects.items():
             props = interfaces.get('org.bluez.Device1')
             if props is not None and path.startswith(self.adapter + '/dev_'):
-                result.append(dict(path=path, name=props.get('Alias') or props.get('Name') or props.get('Address', 'Bluetooth device'),
-                                   address=props.get('Address', ''), paired=bool(props.get('Paired')), connected=bool(props.get('Connected'))))
+                result.append(bluetooth_device(path, interfaces, lambda properties, key, default: properties.get(key, default)))
         return sorted(result, key=lambda d: (not d['connected'], not d['paired'], d['name'].casefold(), d['path']))
 
     def publish(self):

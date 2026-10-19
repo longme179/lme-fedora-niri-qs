@@ -108,6 +108,13 @@ Settings transfer references DMS backup validation/rollback workflow (`core/inte
 
 Battery health/power/ETA presentation references Noctalia `battery_widget.cpp` / `upower_service.cpp` at 8504aff8 (MIT). LME retains its Linux sysfs backend, with original unit-aware calculation and explicit unavailable values.
 
+Peripheral battery behavior was reviewed against end4-pC's
+[`services/PeripheralBattery.qml`](https://github.com/pctrade/end4-pC/blob/4de3f593cb220194fd2f87c1e344b775482ad9aa/services/PeripheralBattery.qml)
+and `services/BluetoothStatus.qml` at `4de3f593cb220194fd2f87c1e344b775482ad9aa`
+(GPLv3). No source was copied: LME reuses its existing BlueZ snapshot and Linux
+`power_supply` reads, with session-local warning latches. No UPower or Hyprland
+dependency is introduced.
+
 OSD placement/output lifecycle references DMS `DOSD.qml` / `OSDManager.qml` (6640a943, MIT) and Noctalia `osd_overlay.cpp` (8504aff8, MIT). LME reuses its spring loader, theme and backend events.
 
 The Cava visualizer lifecycle/configuration references DMS `CavaService.qml` at 6640a943 (MIT). The Python stdlib bridge and ref-counted QML integration are original; Cava is an external runtime package.

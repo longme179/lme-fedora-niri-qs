@@ -31,6 +31,20 @@ ColumnLayout {
         PreferenceSwitch { title: "Pair Bluetooth devices in the shell"; detail: "External device settings remain available"; preference: "bluetoothPairing" }
     }
     SettingsCard {
+        title: "Device batteries"
+        description: "Headphones, mice and keyboards appear in Control center → Devices when BlueZ or the kernel reports their battery. A device without a reading shows no estimated percentage. Alerts respect Do Not Disturb."
+        PreferenceSwitch { title: "Low device battery alerts"; detail: "Warn once per low-battery cycle; reconnecting does not repeat an alert in this shell session"; preference: "peripheralBatteryAlerts" }
+        LabelText { text: "Low battery threshold · " + (ShellState.preferences.peripheralBatteryThreshold || 20) + "%" }
+        LiquidSlider {
+            objectName: "peripheralBatteryThreshold"
+            Layout.fillWidth: true; from: 5; to: 50; stepSize: 1
+            value: ShellState.preferences.peripheralBatteryThreshold || 20
+            onMoved: if (!pressed) ShellState.run("setting", {key: "peripheralBatteryThreshold", value: Math.round(value)})
+            onPressedChanged: if (!pressed) ShellState.run("setting", {key: "peripheralBatteryThreshold", value: Math.round(value)})
+            Accessible.name: "Low device battery threshold"
+        }
+    }
+    SettingsCard {
         title: "Privacy and media"
         description: "PipeWire capture activity and niri screen casts. Direct V4L2 camera access outside PipeWire is not detected."
         PreferenceSwitch { title: "Quick notes"; detail: "An autosaved text buffer in Control Center → Agenda"; preference: "quickNotes" }

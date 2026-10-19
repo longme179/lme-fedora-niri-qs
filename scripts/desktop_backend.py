@@ -48,6 +48,7 @@ from file_search import roots as search_roots, search as search_files
 from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
+from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
 from settings_transfer import export_document, read_document, document
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
@@ -62,6 +63,7 @@ DEFAULT_PREFERENCES = {
     "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
     "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
     "desktopShapeSpeed": 1.0, "desktopShapeStyle": "mixed", "desktopShapeRotation": True,
+    "peripheralBatteryAlerts": True, "peripheralBatteryThreshold": 20,
     "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
     "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
     "captureEditor": "auto",
@@ -303,6 +305,8 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == 'launchpadEntries': return launchpad_entries(value)
     if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value
+    if key == 'peripheralBatteryAlerts' and type(value) is bool: return value
+    if key == 'peripheralBatteryThreshold' and type(value) is int and 5 <= value <= 50: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name
@@ -607,6 +611,7 @@ class DesktopBackend:
         self.privacy_cache = None
         self.last_privacy_sample = 0.0
         self.bluetooth_cache = None
+        self.peripheral_cache = []
         self.last_bluetooth_sample = 0.0
         self.sampled_bluetooth_adapter = None
         self.power_cache = None
@@ -690,7 +695,7 @@ class DesktopBackend:
 
     def battery(self) -> dict[str, Any]:
         supplies = self.sysfs / "class/power_supply"
-        batteries = [p for p in sorted(supplies.glob("*")) if self.read(p / "type") == "Battery"]
+        batteries = [p for p in sorted(supplies.glob("*")) if self.read(p / "type") == "Battery" and self.read(p / "scope") != "Device"]
         capacities: list[float] = []
         charging = False
         for battery in batteries:
@@ -810,7 +815,7 @@ class DesktopBackend:
 
     def bluetooth(self) -> dict[str, Any]:
         blocks = self.bluetooth_blocks()
-        result = {"available": False, "enabled": False, "adapters": [], "devices": [], "adapter": "",
+        result = {"available": False, "enabled": False, "adapters": [], "devices": [], "batteries": [], "adapter": "",
                   "softBlocked": any(item["soft"] for item in blocks), "hardBlocked": any(item["hard"] for item in blocks)}
         objects = self.bluez_objects()
         if objects is not None:
@@ -824,15 +829,14 @@ class DesktopBackend:
             preferred = self.preferences.values["bluetoothAdapter"]
             selected = next((item for item in result["adapters"] if item["path"] == preferred), None)
             selected = selected or next(iter(result["adapters"]), None)
-            if selected:
-                result.update(available=True, enabled=selected["enabled"], adapter=selected["path"])
-                for path, interfaces in sorted(objects.items()):
-                    device = interfaces.get("org.bluez.Device1") if isinstance(interfaces, dict) else None
-                    if not isinstance(device, dict) or not path.startswith(selected["path"] + "/dev_"):
-                        continue
-                    if self.bluez_value(device, "Paired", False) or self.bluez_value(device, "Connected", False):
-                        result["devices"].append({"path": path, "name": self.bluez_value(device, "Alias", "Bluetooth device"),
-                                                  "connected": self.bluez_value(device, "Connected", False) is True})
+            if selected: result.update(available=True, enabled=selected["enabled"], adapter=selected["path"])
+            for path, interfaces in sorted(objects.items()):
+                props = interfaces.get("org.bluez.Device1") if isinstance(interfaces, dict) else None
+                if not isinstance(props, dict): continue
+                device = bluetooth_device(path, interfaces, self.bluez_value)
+                if not (device['paired'] or device['connected']): continue
+                result['batteries'].append(device)
+                if selected and path.startswith(selected['path'] + '/dev_'): result['devices'].append(device)
             return result
         output = self.try_run("bluetoothctl", "show")
         if output is not None and re.search(r"^\s*Controller\s", output, re.MULTILINE):
@@ -1021,12 +1025,13 @@ class DesktopBackend:
         adapter = self.preferences.values["bluetoothAdapter"]
         if self.bluetooth_cache is None or adapter != self.sampled_bluetooth_adapter or time.monotonic() - self.last_bluetooth_sample >= 5:
             self.bluetooth_cache = self.bluetooth()
+            self.peripheral_cache = merge_batteries(self.bluetooth_cache['batteries'], kernel_batteries(self.sysfs, self.read))
             self.sampled_bluetooth_adapter = adapter
             self.last_bluetooth_sample = time.monotonic()
         if self.power_cache is None or time.monotonic() - self.last_power_sample >= 5:
             self.power_cache = {"powerProfile": self.power_profile(), "powerProfiles": self.power_profiles()}
             self.last_power_sample = time.monotonic()
-        self.system_cache.update(bluetooth=self.bluetooth_cache, **self.power_cache)
+        self.system_cache.update(bluetooth=self.bluetooth_cache, peripheralBatteries=self.peripheral_cache, **self.power_cache)
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
             self.monitor.sample(self.system_cache)
@@ -1157,7 +1162,9 @@ class DesktopBackend:
                                    "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": True, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:01"}, {"ssid": "Guest", "strength": 62, "connected": False, "secured": True, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:02"}]},
                        "bluetooth": {"available": True, "enabled": True, "softBlocked": False, "hardBlocked": False, "adapter": "/org/bluez/hci0",
                                      "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": True}],
-                                     "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "name": "Headphones", "connected": True}]},
+                                     "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "id": "bluetooth:AA:BB:CC:DD:EE:FF", "name": "Headphones", "kind": "headphones", "connected": True, "percentage": 58, "charging": None}]},
+                       "peripheralBatteries": [{"id": "bluetooth:AA:BB:CC:DD:EE:FF", "name": "Headphones", "kind": "headphones", "connected": True, "percentage": 58, "charging": None},
+                                               {"id": "power_supply:demo-keyboard", "name": "Wireless keyboard", "kind": "keyboard", "connected": True, "percentage": 18, "charging": False}],
                        "audio": {"available": True, "volume": 42, "muted": False}, "microphone": {"available": True, "volume": 60, "muted": False},
                        "brightness": {"available": True, "percent": 65}, "powerProfile": "balanced", "powerProfiles": ["power-saver", "balanced", "performance"],
                        "charging": {"available": True, "canSet": True, "kind": "threshold", "mode": "conservation",

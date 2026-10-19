@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show connected peripheral batteries in Control Center → Devices, with a saved alert switch and 5–50% threshold in Behavior. Preserve unknown/0% readings, merge Bluetooth/kernel duplicates and prevent repeated alerts across reconnects within a shell session. Keep device batteries out of the laptop battery aggregate.
+
 - Add Gowall image utilities with installed-theme search, batch palette previews, 2×–4× upscale, color extraction and basic image effects. Export PNGs exclusively or keep a durable copy before applying a wallpaper; setup downloads stay in gowall's explicit terminal prompt.
 - Expose awww FPS, Bezier, direction/origin, wave, scaling/filter and padding controls. Parse empty namespace prefixes in 0.12.1, prevent another backend from cancelling a transition during restore, and disable cache auto-restore only when starting an owned daemon.
 

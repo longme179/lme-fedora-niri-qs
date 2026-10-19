@@ -96,6 +96,7 @@ Flickable {
             }
         }
         LabelText { visible: !root.devices.length; text: root.nativePairing ? "No devices found. Make your device discoverable, then scan." : "No paired devices. Open device settings to pair a new device."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        PeripheralBatteryList { Layout.fillWidth: true }
         RowLayout {
             Layout.fillWidth: true
             LiquidButton { text: "External device settings"; Layout.fillWidth: true; onClicked: ShellState.run("openSettings", {target: "bluetooth"}) }

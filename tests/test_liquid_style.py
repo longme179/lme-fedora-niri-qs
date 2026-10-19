@@ -452,7 +452,8 @@ class LiquidNativeCase(unittest.TestCase):
             slide.shown=true; slide.width=650;
             fixture.checks.retained=GlassState.backdrops[0]===fixture.shared && slide.mounted;
             fixture.age=0; fixture.phase++;
-        } else if(fixture.phase===5 && slide.progress===1 && !slide.transitioning) {
+        // Jelly's deformation spring can finish after the positional travel spring.
+        } else if(fixture.phase===5 && slide.progress===1 && !slide.transitioning && !mouse.findChild(slide,"popupElasticity").rendering) {
             fixture.checks.settled=slide.offsetY===0 && slide.layer.effect!==null && !slide.layer.enabled;
             const button=mouse.findChild(slide.item,"glassAction");
             mouse.mouseClick(button,button.width/2,button.height/2);

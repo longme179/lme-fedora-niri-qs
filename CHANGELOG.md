@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Reject oversized wallpaper transition numbers before float conversion. Record popup resize intermediates inside QML so slow IPC reads cannot miss the spring trajectory; keep off-screen entry and settling assertions.
+- Reject oversized wallpaper transition numbers before float conversion. Record popup resize intermediates inside QML so slow IPC reads cannot miss the spring trajectory; keep off-screen entry and settling assertions. Wait for both travel and deformation to settle before checking Jelly layer release.
 - Audit queued wallpaper playback: recheck pause/disable/target changes before starting a scheduled job, validate canonical symlink targets and preserve the current image when all alternatives fail. Ignore malformed launch-history IDs and keep history serialization errors from failing successful launches. Native pixel comparisons wait for a submitted frame after image-state changes.
 - Rank launcher apps by local recency/frequency with seven-day decay, preserving exact/prefix match priority. Add opt-out and clear-history controls; retain at most 256 apps/60 days, without favorites or window tracking.
 - Add ordered/shuffled wallpaper playlists with pause/resume, intervals and awww transitions. Preserve independent display images, restore them after reconnect, and share the same per-output image with Liquid's rim sampler. Wallpaper jobs run in the existing executor with a cross-process lock; no second renderer or polling loop is added.

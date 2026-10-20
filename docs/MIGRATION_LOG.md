@@ -307,3 +307,67 @@ The small timing variation is not a performance claim. M4 must compare its Clipb
 8. After saver restoration completes, start/stop a short recording and verify playback/audio and absence of a saver-busy error.
 
 Physical GPU/glass/Jelly rendering, real display modes/hotplug, backlight, Bluetooth and suspend were not verified here. These remain **needs real-session check**. Stop after M1 for owner review.
+
+## M2 — A7 shared content contracts — 2026-10-20
+
+Baseline: merged `main` at `a962cf255af21446150e146e8ca36d0f8d8493d8`. Review branch: `refactor/m2-shared-content`. M2 only; M3 remains blocked by the unresolved G3 baseline failure unless the owner explicitly accepts it.
+
+### Commits, scope and characterization
+
+1. `e760d3a` — tests only: add five `test_infrastructure.ContentContractsCase` tests and extend the G4 harness to include the requested `test_capture_night` module with native opt-in enabled. All five new tests and the required gates passed on unchanged production before this commit. Existing assertions were not edited; M1's SharedContractsCase remains byte-identical.
+2. `7fea618` — extraction only: four production files, +18/−13 lines. Move the exact MAX_TEXT assignment and image_type function from clipboard.py to flat scripts/content_types.py; redirect backend and capture imports. Keep clipboard.py's old names as direct compatibility exports.
+3. Documentation — this log and README's shared-infrastructure paths.
+
+Characterization covers:
+
+- Exact 1,048,576-byte text limit: ASCII and multibyte UTF-8 accepted at the boundary, rejected at +1 byte; stored content and revision remain unchanged on rejection. Backend copyText also retains empty-text handling, type rejection, exact error text and wl-copy argv/stdin.
+- PNG, JPEG, GIF87a/GIF89a, BMP and WebP MIME/suffix recognition, including minimal accepted headers and trailing payloads. Properly truncated/unsupported headers retain the exact `Unsupported clipboard image format` ValueError, without inserting history or exporting files.
+- Annotation uses the same classifier, suffix, copy bytes, source preservation and launch message; malformed PNG still yields `Expected a PNG image` before export. Non-PNG fixtures characterize signature sniffing, not successful decoding in a real external editor.
+
+Moved function/assignment source and every retained top-level class/function in clipboard.py, desktop_backend.py and screen_capture.py were checked against the passing characterization baseline. The bodies are byte-identical. The new module retains `from __future__ import annotations`, so annotation strings/signatures also remain unchanged. MAX_IMAGE and capture-specific limits stay with their features.
+
+### Before / after gates
+
+Use the existing isolated harness, unchanged except for the explicitly expanded G4 test list:
+
+```bash
+./scripts/run-gates.sh --env-file /workspace/.lme-dev/env.sh \
+  --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m2-before \
+  --gates G0,G1,G2,G4
+./scripts/run-gates.sh --env-file /workspace/.lme-dev/env.sh \
+  --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m2-after \
+  --gates G0,G1,G2,G4
+```
+
+Before: main production plus the new tests/harness tuple. After: `7fea618`. Both commands returned 0. Each invocation uses a fresh private Sway/Wayland, private D-Bus and disposable XDG config/state/data/cache/runtime, as described in M0; no real niri config or running shell is touched. Qt RHI/OpenGL uses Mesa software rendering, not a physical GPU. SDK/machine details remain as recorded in M0; OCR uses Tesseract 5.5.0 with eng.
+
+G0/G1/G2 commands and opt-ins are unchanged from the M0 matrix. M2 G4 runs `python3 -m unittest -v test_clipboard.NativeClipboardCase test_clipboard.ClipboardInterfaceCase test_image_annotation_ui.AnnotationInterfaceCase test_capture_night`, setting `LME_TEST_CLIPBOARD_NATIVE=1`, `LME_TEST_CLIPBOARD_UI=1`, `LME_TEST_ANNOTATION_UI=1`, **`LME_TEST_CAPTURE_UI=1`**, with the private click/drag/right-click helpers. Thus the extra capture tests run in the same session sequentially, without silently skipping their native cases. Historical M0/M1 G4 counts above remain evidence for their original narrower command.
+
+| Gate | Before pass/fail/skip | After pass/fail/skip | Before test wall s | After test wall s |
+| --- | --- | --- | ---: | ---: |
+| G0 | 396/0/87 | 396/0/87 | 99.631 | 79.739 |
+| G1 | 3/0/0 | 3/0/0 | 14.632 | 15.156 |
+| G2 | 4/0/0 | 4/0/0 | 74.933 | 55.306 |
+| G4 | 23/0/0 | 23/0/0 | 43.110 | 39.172 |
+
+G0 is **completed-with-skips**, not all tests passed: its 87 skipped names/reasons are exactly the M0 list above, confirmed before and after. G1/G2/G4 have **zero skips**. Both G0 lint runs covered 141 QML files: 0 errors / 67 existing warnings. Lint wall time: 32.986s before / 27.437s after; total G0 command + lint: 132.617s / 107.176s. Timings are observations, not a performance claim.
+
+G4's 23 passes comprise 5 native/UI Clipboard/annotation tests plus **18 test_capture_night tests (16 unit + 2 native)**, before and after. Native coverage includes drawing, undo/redo, flattened redaction, PNG export, real clipboard round trips, real OCR, editor close/reopen and screenshot-to-annotation routing. External Satty/Swappy launchers and niri screenshot acquisition use fixtures/fakes; this does not verify those applications or a real niri capture session. G1/G2 also ran preview open/close and standalone Settings/Gear/first-visible-frame checks.
+
+Evidence: `/workspace/.lme-dev/m2-{before,after}/{G0,G1,G2,G4}.{log,json}`, `summary.json`, `machine.json`, `qmllint.log`. Recorded per-gate JSON contains the exact resolved commands and environment. Production unchanged for the before run; no required gate failed after extraction, so no revert was needed.
+
+### Dependency check, adapters and retirement
+
+An additional isolated subprocess used the live harness's private environment, blocked imports of both clipboard and sqlite3, then imported desktop_backend, screen_capture and content_types successfully. It checked the bound, image classification and postponed annotations; after removing the import blocker, it checked identity of all Clipboard/backend/capture aliases. Result: passed; `m2-after/content-dependency-probe.log`. Backend and screenshot no longer depend on Clipboard's implementation or load its SQLite dependency merely to access shared content helpers.
+
+| Existing import facade | Target | Retirement condition |
+| --- | --- | --- |
+| `clipboard.MAX_TEXT`, `clipboard.image_type` | `content_types.MAX_TEXT`, `.image_type` | Keep for current worker globals, tests and external callers. Removal requires owner approval of a public import API change (D3) and migration of all repository/fixture/external references, including Clipboard's own uses. Zero new consumers alone is insufficient. |
+| `desktop_backend.MAX_TEXT` | `content_types.MAX_TEXT` | Retain the existing public name (D3); retire only with owner approval and migration of all internal/fixture/external references. |
+| `screen_capture.image_type` | `content_types.image_type` | Same D3 approval and zero-reference condition; current annotation code still uses this name. |
+
+These are direct aliases with exact object identity, not wrappers. Legacy facade imports in test_clipboard/test_ports and the characterization suite deliberately remain exercised. The only observed introspection difference is image_type's defining module/traceback location changing from clipboard to content_types. No exercised action, rejection/message, settings, history format, byte limit, capture/editor behavior or UI behavior changed. No external dependencies, QML, schema, polling/cache/power policy or directory reorganization changed. Installer/fixture consumers already link/copy the complete scripts directory, so no packaging change was necessary.
+
+Rollback: `git revert 7fea618`; keep the characterization tests and expanded G4 harness, which also passed before extraction. This restores old imports and helper ownership together without data migration. No M3 work or G3 assertion changes were made. M3 requires a separate authorization after G3 is resolved or explicitly accepted.
+
+Physical GPU/glass/Jelly appearance, real niri capture, real external annotation applications and laptop hardware remain **needs real-session check**. Stop after M2 for review.

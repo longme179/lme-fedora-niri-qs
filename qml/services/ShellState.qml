@@ -38,6 +38,8 @@ QtObject {
     property real activityAnchorX: -1
     property real activityAnchorWidth: 180
     property int controlTab: 0
+    readonly property string controlTabId: ControlRegistry.tabForIndex(controlTab).id || ""
+    function selectControlTab(id) { controlTab = ControlRegistry.indexForId(id); }
     property bool stayAwake: false
     onStayAwakeChanged: if (backendReady && !settingsApp) run("idleInhibit", {value: stayAwake})
     property bool draggingWindow: false

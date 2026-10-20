@@ -97,6 +97,70 @@ class BatterySaverCase(unittest.TestCase):
         restarted.toggle(False)
         self.assertEqual(self.light["current"], 837)
 
+    def test_nominal_60hz_modes_keep_the_exact_driver_timing_and_restore_120hz(self):
+        for refresh in (59940, 60000, 60003, 60059, 60499):
+            with self.subTest(refresh=refresh):
+                self.panel['modes'][0]['refresh'] = 120002
+                self.panel['modes'][1]['refresh'] = refresh
+                self.panel['current'] = self.panel['modes'][0]
+                self.calls.clear()
+                self.assertEqual(self.controller.toggle(True)['error'], '')
+                self.assertEqual(self.panel['current']['refresh'], refresh)
+                self.assertIn(('niri', 'msg', 'output', 'eDP-1', 'mode', f'1920x1080@{refresh / 1000:.3f}'), self.calls)
+                self.assertFalse(self.controller.toggle(False)['active'])
+                self.assertEqual(self.panel['current']['refresh'], 120002)
+
+    def test_an_existing_nominal_60hz_mode_is_kept_and_higher_rates_are_not_misclassified(self):
+        self.panel['modes'][1]['refresh'] = 60003
+        self.panel['current'] = self.panel['modes'][1]
+        state = self.controller.toggle(True)
+        self.assertFalse(any('no supported lower mode' in warning for warning in state['warnings']))
+        self.assertFalse(any(call[0] == 'niri' for call in self.calls))
+        self.controller.toggle(False)
+        for refresh in (60500, 61000, 75000):
+            with self.subTest(refresh=refresh):
+                self.panel['modes'][1]['refresh'] = refresh
+                self.panel['current'] = self.panel['modes'][0]
+                self.calls.clear()
+                state = self.controller.toggle(True)
+                self.assertTrue(any('no supported lower mode' in warning for warning in state['warnings']))
+                self.assertEqual(self.panel['current']['refresh'], 120000)
+                self.assertFalse(any(call[0] == 'niri' for call in self.calls))
+                self.controller.toggle(False)
+
+    def test_accepted_but_ignored_display_commands_are_reported_and_keep_restore_data(self):
+        self.controller.runner = SimpleNamespace(run=lambda *args: self.calls.append(args))
+        with patch('battery_saver.time.monotonic', side_effect=[0, 2]):
+            state = self.controller.toggle(True)
+        self.assertIn('did not confirm', state['error'])
+        self.assertTrue(state['active'])
+        self.assertEqual(read_json(self.path, {})['pending']['displays'], ['eDP-1'])
+        self.assertFalse(self.controller.toggle(False)['active'])
+
+    def test_an_ignored_restore_keeps_the_display_pending_until_it_is_confirmed(self):
+        self.controller.toggle(True)
+        self.controller.runner = SimpleNamespace(run=lambda *args: self.calls.append(args))
+        with patch('battery_saver.time.monotonic', side_effect=[0, 2]):
+            state = self.controller.toggle(False)
+        self.assertTrue(state['active'])
+        self.assertIn('did not confirm', state['error'])
+        self.assertEqual(read_json(self.path, {})['pending']['displays'], ['eDP-1'])
+        self.controller.runner = SimpleNamespace(run=self.run_hardware)
+        self.assertFalse(self.controller.toggle(False)['active'])
+
+    def test_mode_readback_tolerates_a_delayed_compositor_update(self):
+        before = copy.deepcopy(self.outputs)
+        count = 0
+        def outputs():
+            nonlocal count
+            count += 1
+            return copy.deepcopy(before if count == 2 else self.outputs)
+        self.controller.outputs = outputs
+        with patch('battery_saver.time.sleep') as wait:
+            self.assertEqual(self.controller.toggle(True)['error'], '')
+        self.assertGreaterEqual(count, 3)
+        wait.assert_called_once_with(.1)
+
     def test_only_modified_resources_are_restored_and_low_brightness_is_never_raised(self):
         self.panel["current"] = self.panel["modes"][1]
         self.light["current"] = 300

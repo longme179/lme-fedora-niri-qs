@@ -1,5 +1,31 @@
 # Validation and platform limits
 
+## Battery saver fractional refresh fix — 2026-10-20
+
+The reported panel exposes 120002 and 60003 mHz modes. The old strict 60000 mHz
+filter rejected the latter and left the screen at 120.002 Hz. Regression tests
+reproduce that failure before the fix and now check the complete action path:
+120.002 Hz → 60.003 Hz → 120.002 Hz, preserving scale and position.
+
+Nominal 60 Hz accepts advertised timings below 60.5 Hz and sends their exact
+millihertz-derived value to niri. Tests cover 59.94, 60, 60.003, 60.059 and 60.499
+Hz, reject 60.5/61/75 Hz as saver candidates, and preserve already-low modes.
+Mode changes and restores have a bounded readback check during the action; there
+is no added steady-state polling. Delayed updates are tolerated, ignored requests
+report an error, and unconfirmed restores retain the recovery journal. Unsupported
+panels report limitations without forcing a custom mode.
+
+`scripts/check.sh` passed **462 tests: 376 passed, 86 opt-in checks skipped**,
+plus Bash syntax and the demo snapshot. The native Control Center tile → Settings
+→ brightness target → off round trip passed separately on private Sway. Python
+syntax and diff whitespace checks passed. No QML or shader code changed.
+
+Hardware detection uses niri's advertised modes and the existing generic Linux
+backlight/power-profile APIs. No laptop-brand whitelist is involved, but a driver
+must expose a suitable mode and control interface. Physical switching on the
+owner's laptop remains unverified in the cloud; the supplied mode data was used
+for the regression fixture.
+
 ## Battery saver — 2026-10-20
 
 `scripts/check.sh` passed **454 tests: 368 passed, 86 opt-in checks skipped**,

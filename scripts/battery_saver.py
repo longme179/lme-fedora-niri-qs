@@ -8,8 +8,12 @@ import json
 import math
 import os
 from pathlib import Path
+import time
 
 from display_control import apply_layout, current_layout, locked, validate_layout, write_json
+
+# Allow nominal 60 Hz EDID timings below 60.5 Hz; send the exact timing to niri.
+MAX_REFRESH_MILLIHZ = 60_500
 
 
 def brightness_state(value):
@@ -144,13 +148,13 @@ class BatterySaver:
         try:
             outputs = self.outputs()
             for item in current_layout(outputs):
-                if item["width"] <= 1920 and item["height"] <= 1080 and item["refresh"] <= 60000:
+                if item["width"] <= 1920 and item["height"] <= 1080 and item["refresh"] < MAX_REFRESH_MILLIHZ:
                     continue
                 output = next(output for output in outputs if output["name"] == item["name"])
                 modes = [mode for mode in output["modes"]
                          if mode["width"] <= min(item["width"], 1920)
                          and mode["height"] <= min(item["height"], 1080)
-                         and mode["refresh"] <= min(item["refresh"], 60000)]
+                         and mode["refresh"] <= item["refresh"] and mode["refresh"] < MAX_REFRESH_MILLIHZ]
                 if not modes:
                     warnings.append(f'{item["name"]}: no supported lower mode within 1920 × 1080 / 60 Hz')
                     continue
@@ -196,7 +200,7 @@ class BatterySaver:
         errors = []
         for item in desired:
             try:
-                apply_layout([item], self.runner.run)
+                self._apply_display(item)
             except (RuntimeError, OSError, ValueError) as exc:
                 errors.append(f'{item["name"]}: {exc}')
         if pending["brightness"]:
@@ -211,6 +215,19 @@ class BatterySaver:
                 errors.append(f"Power profile: {exc}")
         state["error"] = "; ".join(errors)[:2000]
         write_json(self.path, state)
+
+    def _apply_display(self, item):
+        apply_layout([item], self.runner.run)
+        deadline = time.monotonic() + 1
+        while True:
+            output = next((output for output in self.outputs() if output['name'] == item['name']), None)
+            current = output.get('current') if output else None
+            if current and all(current[key] == item[key] for key in ('width', 'height', 'refresh')):
+                return
+            if time.monotonic() >= deadline:
+                actual = f'{current["width"]} × {current["height"]} @ {current["refresh"] / 1000:g} Hz' if current else 'unavailable'
+                raise ValueError(f'niri did not confirm {item["width"]} × {item["height"]} @ {item["refresh"] / 1000:g} Hz (current: {actual})')
+            time.sleep(.1)
 
     def _restore(self, state):
         original, pending = state["original"], state["pending"]
@@ -233,7 +250,7 @@ class BatterySaver:
                 try:
                     validate_layout([item], outputs)
                     if item not in current_layout(outputs):
-                        apply_layout([item], self.runner.run)
+                        self._apply_display(item)
                     pending["displays"].remove(item["name"])
                     write_json(self.path, state)
                 except (RuntimeError, OSError, ValueError) as exc:

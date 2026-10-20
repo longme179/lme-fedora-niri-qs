@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Recognize fractional nominal 60 Hz display timings in Battery saver, including
+  60.003 Hz panels previously left at 120 Hz. Send the exact advertised timing,
+  confirm mode changes and restores, and retain recovery data if niri ignores a
+  request. Report partial hardware support instead of an unconditional success.
+
 - Add a reversible Battery saver switch and Control Center canvas tile. Temporarily
   use opaque Material surfaces without shell blur, motion, spectrum or floating
   shapes; cap supported active display modes at 1080p/60 Hz, apply a configurable

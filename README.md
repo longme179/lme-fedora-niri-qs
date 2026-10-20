@@ -269,7 +269,10 @@ and motion preferences stay unchanged and return when you turn Battery saver off
 
 For active displays above 1920 × 1080 or 60 Hz, LME selects a supported mode at or
 below those limits, keeping scale and position. Displays already below the limits
-stay unchanged. It does not invent custom modes or automatically recap displays
+stay unchanged. Nominal 60 Hz modes may have fractional timings such as 60.003 Hz;
+LME uses the exact driver timing and confirms it after switching. This works from
+the driver's reported modes rather than a laptop-brand list. Unsupported modes
+are reported. It does not invent custom modes or automatically recap displays
 connected later. Finish any display preview before enabling Battery saver, and
 stop screen recording before toggling it. Wallpaper playlists pause temporarily;
 manual wallpaper changes use no transition.

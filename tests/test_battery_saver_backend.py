@@ -110,6 +110,47 @@ class BatterySaverBackendCase(Fixture, unittest.TestCase):
         self.assertEqual(self.live.brightness(raw=True)["current"], 837)
         self.assertEqual(self.hardware.profile, "performance")
 
+    def test_lenovo_driver_timings_switch_to_60003_mhz_and_restore_120002_mhz(self):
+        output = self.hardware.outputs['eDP-1']
+        output['modes'] = [dict(width=1920, height=1080, refresh_rate=rate) for rate in (120002, 60003)]
+        output['modes'] += [dict(width=width, height=height, refresh_rate=120002)
+                            for width, height in ((1680, 1050), (1280, 1024), (1280, 720), (640, 480))]
+        output['logical'].update(scale=1.0, x=1280, y=0)
+        self.assertTrue(self.complete(self.live, True)['ok'])
+        self.assertEqual(output['current_mode'], 1)
+        self.assertIn(('niri', 'msg', 'output', 'eDP-1', 'mode', '1920x1080@60.003'), self.hardware.calls)
+        self.assertEqual(self.live.displays['outputs'][0]['current']['refresh'], 60003)
+        self.assertTrue(self.complete(self.live, False)['ok'])
+        self.assertEqual(output['current_mode'], 0)
+        self.assertIn(('niri', 'msg', 'output', 'eDP-1', 'mode', '1920x1080@120.002'), self.hardware.calls)
+        self.assertEqual(output['logical'], {'scale': 1.0, 'x': 1280, 'y': 0})
+
+    def test_ignored_mode_changes_report_an_action_error_and_keep_the_original(self):
+        original = self.hardware.run
+        def ignore(name, *args, **kwargs):
+            if name == 'niri' and args[:2] == ('msg', 'output'):
+                self.hardware.calls.append((name, *args))
+                return 'Output was found; settings applied'
+            return original(name, *args, **kwargs)
+        with patch.object(self.hardware, 'run', side_effect=ignore):
+            reply = self.complete(self.live, True)
+        self.assertFalse(reply['ok'])
+        self.assertIn('did not confirm', reply['message'])
+        self.assertTrue(self.live.saver_snapshot()['active'])
+        saved = json.loads(self.live.battery_saver.path.read_text())
+        self.assertEqual(saved['original']['displays'][0]['refresh'], 120000)
+        self.assertEqual(saved['pending']['displays'], ['eDP-1'])
+        self.assertTrue(self.complete(self.live, False)['ok'])
+
+    def test_unsupported_panels_report_limitations_without_forcing_a_custom_mode(self):
+        self.hardware.outputs['eDP-1']['modes'] = self.hardware.outputs['eDP-1']['modes'][:1]
+        reply = self.complete(self.live, True)
+        self.assertTrue(reply['ok'])
+        self.assertIn('limitations', reply['message'])
+        self.assertTrue(self.live.saver_snapshot()['warnings'])
+        self.assertFalse(any(call[:3] == ('niri', 'msg', 'output') for call in self.hardware.calls))
+        self.assertTrue(self.complete(self.live, False)['ok'])
+
     def test_startup_restore_keeps_saver_modes_and_respects_a_transition_lock(self):
         self.preferences.set('displayLayout', [{'name': 'eDP-1', 'width': 1920, 'height': 1080,
             'refresh': 120000, 'scale': 1.25, 'x': 0, 'y': 30}])

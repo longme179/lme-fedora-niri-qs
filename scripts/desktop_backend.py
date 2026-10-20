@@ -1086,6 +1086,7 @@ class DesktopBackend:
         self.battery_saver_state = state
         self.wallpapers.power_saving = state['active']
         if state['error']: raise ValueError(state['error'])
+        if state['active'] and state['warnings']: return 'Battery saver enabled with limitations; see Settings → Behavior'
         return 'Battery saver ' + ('enabled' if state['active'] else 'disabled; previous settings restored')
 
     def niri_state(self) -> dict[str, Any]:

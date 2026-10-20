@@ -1,0 +1,36 @@
+test_named_env_mapping_and_invalid_name_falls_back_to_controls (test_navigation.TabContractCase.test_named_env_mapping_and_invalid_name_falls_back_to_controls) ... ok
+test_order_numeric_mapping_and_invalid_numeric_fallback (test_navigation.TabContractCase.test_order_numeric_mapping_and_invalid_numeric_fallback) ... ok
+test_quick_notes_visibility_and_agenda_legacy_fallback (test_navigation.TabContractCase.test_quick_notes_visibility_and_agenda_legacy_fallback) ... FAIL
+test_refresh_and_mark_read_guards_keep_the_existing_conditions (test_navigation.TabContractCase.test_refresh_and_mark_read_guards_keep_the_existing_conditions) ... ok
+test_gesture_targets_monitor_shortcut_keyboard_and_selection (test_navigation.NativeTabCase.test_gesture_targets_monitor_shortcut_keyboard_and_selection) ... NAVIGATION_ORDER ["Controls", "Audio", "Devices", "Agenda", "Notifications", "System"]
+ok
+test_routes_with_reordered_and_inserted_test_catalog_entries (test_navigation.NativeTabCase.test_routes_with_reordered_and_inserted_test_catalog_entries) ... NAVIGATION_ORDER ["Controls", "Audio", "Test page", "System", "Agenda", "Devices", "Notifications"]
+ok
+
+======================================================================
+FAIL: test_quick_notes_visibility_and_agenda_legacy_fallback (test_navigation.TabContractCase.test_quick_notes_visibility_and_agenda_legacy_fallback)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_navigation.py", line 58, in test_quick_notes_visibility_and_agenda_legacy_fallback
+    with session() as p:
+         ^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/navigation_fixture.py", line 161, in session
+    if error in content: raise AssertionError(content)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError:   INFO: Launching config: "/tmp/tmp7hwb4vee/shell.qml"
+  INFO: Shell ID: "2197aae9cee9a0d30cc3a2936937d2d5" Path ID "2197aae9cee9a0d30cc3a2936937d2d5"
+  INFO: Saving logs to "/workspace/.lme-dev/m3/refactor-navigation/runtime/quickshell/by-id/l2314k78nt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  INFO: Configuration Loaded
+  WARN: This plugin does not support setting window masks
+  WARN scene: @qml/panels/Agenda.qml[24:-1]: TypeError: Value is undefined and could not be converted to an object
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 20.309s
+
+FAILED (failures=1)

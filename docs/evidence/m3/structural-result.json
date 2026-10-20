@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "check": "after-only catalog structure",
+  "controlOrder": [
+    "system",
+    "devices",
+    "controls",
+    "audio",
+    "test-page",
+    "agenda",
+    "notifications"
+  ],
+  "agendaOrder": [
+    "timer",
+    "notes",
+    "calendar",
+    "tasks"
+  ],
+  "legacyRoundTrips": true,
+  "insertedPage": true,
+  "forwardAndReverseKeyboard": true,
+  "hiddenNotesSelectionPreserved": true
+}

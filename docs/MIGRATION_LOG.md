@@ -1,6 +1,6 @@
 # Migration evidence
 
-Scope: M0 baseline, merged M1/M2 and G3 baseline triage. M3 and later are not started.
+Scope: M0 baseline, merged M1/M2 and G3 correction, plus the M3 review branch. M4 and later are not started.
 
 ## M0 baseline — 2026-10-20
 
@@ -530,3 +530,84 @@ Opt-in gates drift when a product change lands without running the relevant opt-
 Proposal only: add a pre-merge summary to `run-gates.sh` that compares changed paths with the merge base of main, maps relevant control-grid/ControlCenter/test paths to the existing G3 gate, and prints selected versus recommended-but-unrun gates with a copyable rerun command. Keep G0's skipped tests visible; do not present G0 alone as native UI validation. Reuse the existing gate tuples, run nothing automatically and require no new dependency. No reminder logic, new CLI option or CI workflow was implemented in this task.
 
 **STOP after G3 resolution. M3 still requires separate owner authorization.** Physical niri/GPU behavior was not checked; these runs use private software-rendered Sway. Other migration gates are not implied by this green G3 result.
+
+## M3 — A4 stable tab IDs — 2026-10-20
+
+Authorized scope: M3 only, after the G3 fix was merged. Baseline main: `f0840d361944820a0395ed0132d9f54a8b331602`. Review branch: `refactor/m3-stable-tab-ids`; no push to main. M4+, descriptor loading, backend domains, polling/cache/power policy and directory restructuring were not started.
+
+### Commit boundaries and implementation
+
+1. `697f2be` — characterization only: add `test_navigation.TabContractCase`, `NativeTabCase` and their private fixture; include both classes in G3's existing test tuple. All required before gates below ran against unchanged production. Existing test assertions/timeouts were not edited. A final extra blank line in the new test file was removed before committing; its AST was unchanged from the passing run.
+2. `db6ab78` — refactor only: seven production/catalog files, +126/−26 lines. Extend `config/control-grid.json` and `ControlRegistry`; route ControlCenter, Agenda, BarGestures and the dashboard monitor shortcut through tab IDs. No settings keys, imports/CLI facades, persistence formats, tools or dependencies change.
+3. Documentation/evidence — this record and its attached logs/metadata.
+
+The existing control catalog now includes `tabs` and `agendaTabs`. Each entry has `id`, `title`, `entry` and a fixed `legacyIndex`; optional metadata retains `refresh`, `markRead`, numeric `fallback` and the Notes `setting` gate. Production order remains Controls/Audio/Devices/Agenda/Notifications/System and Calendar/To do/Timer/Notes. The new stable Agenda IDs are `calendar`, `tasks`, `timer`, `notes`.
+
+`entry` names reference the hosts' existing inline QML Components, rather than introducing a second registry, generated UI or asynchronous URL loaders. This preserves `ControlDashboard { editing: ... }`, `NotificationCenter { embedded: true }`, ownership and initial properties. Buttons bind the descriptor object for their lifetime; they do not look up a potentially removed item by its old array index.
+
+ControlRegistry retains its old cards/tiles/titles/defaults interfaces and adds `tabForIndex`, `indexForId`, `positionForIndex`, `visibleAgendaTabs`. `legacyIndex` is independent of presentation order. Feature callbacks pass IDs; the registry translates at the integer compatibility boundary, while `positionForIndex` derives the indicator/keyboard index from the rendered order. Existing FileView reads block for initial tab metadata, so the first loader/entry hook has an identity; no new timer, watch cadence or backend instance was added.
+
+### Characterization coverage and development failures
+
+The four contract tests execute real QML offscreen/software: current Control Center order; number→page/selection and named env→number mapping; invalid env and integer behavior; initialized/visible/backend-ready refresh guards; refresh on Controls/Devices only and read clearing on Notifications; Agenda numeric fallback and Quick notes visibility. The two Wayland native tests use the private pointer/keyboard helpers to verify concrete Audio/Devices/Agenda/System gesture targets, the separate System monitor button, the selection indicator and Ctrl+Tab.
+
+One native case supplies reordered/inserted catalog metadata. Before refactoring the old host ignores that extra metadata, so it characterizes the same public routing contract; afterward its log shows the real seven-tab rendered order, with the same destination assertions passing. An additional **after-only** probe explicitly asserts catalog consumption, reordered Control Center/Agenda models, ID/legacy round trips, the inserted page, forward/reverse keyboard movement and Notes hiding. That probe is not claimed as a before characterization. [structural result](evidence/m3/structural-result.json), [probe source](evidence/m3/structural.py.txt).
+
+Failed draft checks were retained and were not counted as passing baseline:
+
+- Before the test commit, the first five-case draft had two failures and one error; the next had one failure and one error. These were fixture errors: matching the Bluetooth tile instead of the Devices page, native pointer coordinates obscured by the bar position/window decoration, and the reserved `show` CLI subcommand. Only the new helper/setup was corrected; no existing assertion or production code changed. Final navigation characterization: 6/0/0. Raw attempts remain at `/workspace/.lme-dev/m3/{characterization,characterization-final,navigation-ready}`.
+- The first uncommitted refactor candidate failed Navigation (5 passed / 1 failed / 0 skipped): hiding Notes destroyed a delegate that still indexed the shortened model, producing an Agenda TypeError. The **entire seven-file candidate was restored to the passing test commit**, then rebuilt with object-bound delegates. No failed production commit or fix-forward commit remains. Tests stayed unchanged; replacement Navigation was 6/0/0, followed by the complete after gates. [Failed candidate output](evidence/m3/reverted-candidate-Navigation.txt).
+
+### Reproduce and before/after gates
+
+```bash
+/workspace/.lme-dev/m3/run.sh --env-file /workspace/.lme-dev/env.sh \
+  --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m3/before \
+  --gates G0,G1,G2,G3,G6
+# Repeat with a fresh --output /workspace/.lme-dev/m3/after for the refactor.
+```
+
+The external `run.sh` copies the existing disposable-session bootstrap, changing only checkout/self/driver paths. Its driver imports `migration_checks`, selects **only** `test_polling_ui.NativePollingCase` for G6 with `LME_TEST_POLLING_UI=1`, then calls the existing main. The repository's default G6/Launchpad list and `scripts/run-gates.sh` are unchanged. Thus the narrowed G6 is explicitly the authorized polling regression, not a claim that Launchpad ran.
+
+G0/G1/G2 flags/commands are the existing M0 matrix. M3 G3 is `python3 -m unittest -v test_control_grid.ControlGridUiCase test_upgrade_ui.UpgradeInterfaceCase test_bar_gestures.BarGestureQmlCase test_navigation.TabContractCase test_navigation.NativeTabCase`, with `LME_TEST_UPGRADE_UI=1`. Its 14 tests comprise the eight pre-existing tests plus four contract/two native navigation checks. Default G0 runs those four contracts but skips the two native additions.
+
+Each invocation uses disposable XDG config/state/data/cache/runtime, a private D-Bus, owned headless Sway, nonexistent system-bus/niri sockets and the private pointer helpers. Machine for both runs: AMD EPYC 9V74, 5 visible logical CPUs, Linux 6.18.55 / Debian 13, Quickshell 0.3.2 (`4f508be`), Qt 6.8.2, Sway 1.10.1. Sway uses pixman; native QML uses RHI/OpenGL with Mesa software. Existing BarGestureQmlCase and the new contract class use offscreen/software explicitly. No real niri, settings, user session or hardware was touched.
+
+| Gate | Before pass/fail/skip | After pass/fail/skip | Before command wall s | After command wall s |
+| --- | --- | --- | ---: | ---: |
+| G0 | 400/0/89 | 400/0/89 | 72.386 | 74.117 |
+| G1 | 3/0/0 | 3/0/0 | 12.073 | 11.168 |
+| G2 | 4/0/0 | 4/0/0 | 40.158 | 39.039 |
+| G3 (expanded) | 14/0/0 | 14/0/0 | 80.461 | 80.319 |
+| G6 (polling only) | 1/0/0 | 1/0/0 | 20.052 | 20.046 |
+
+Both commands exited 0. G0 is **completed-with-skips**, not all tests passed: 89 names/reasons are identical before/after, comprising the existing M0 inventory of 87 plus the two new `NativeTabCase` methods (reason: `private Wayland navigation checks`). G1/G2/G3/G6 have zero skips. Whole-tree qmllint checks 141 files in each run: **0 errors / 67 existing warnings**, taking 17.340s before / 17.553s after. No timing improvement is claimed. G1/G2 cover actual preview startup/panel close and native standalone Settings/Gear/first-frame reuse. G4/G5 and other opt-in hardware suites were not run as separate gates.
+
+Before evidence is production main plus the new tests; after evidence is the candidate later committed unchanged as `db6ab78`. Its run metadata still names HEAD `697f2be` because the production commit was created **after** successful verification. Saved SHA-256 hashes pin each tested production file to the committed content. Characterization files/assertions did not change after their commit. [Commands, environments, skip inventory and source hashes](evidence/m3/gates.json), [before G3](evidence/m3/before-G3.txt), [after G3](evidence/m3/after-G3.txt). All raw per-gate logs/JSON, lint output and machine metadata remain under `/workspace/.lme-dev/m3/{before,after}`.
+
+### Compatibility, observed behavior and retirement
+
+No behavior difference was found in the exercised contracts. In particular, two existing quirks are deliberately retained: unknown named env tabs fall back to Controls, while out-of-range integer tabs render System without a selected tab; disabling Quick notes hides its button but leaves an already-selected Notes editor open. Invalid Agenda integers retain the Timer fallback. The characterization tests pin these behaviors rather than mixing bug fixes into this refactor.
+
+| Adapter | Retained contract / retirement condition |
+| --- | --- |
+| `ShellState.controlTab` integer | Fixed 0–5 mapping remains; `controlTabId` and `selectControlTab(id)` expose ID access. This is a public D3 facade: no removal scheduled; removal requires owner-approved API change and migration of external/internal consumers. |
+| `ControlCenter.currentTab` integer and synchronization bridge | Existing `test_local_qml` and navigation fixtures still write it; keep the bridge. Internal raw writes may be replaced only after all non-compatibility fixtures/callers migrate to IDs and the public adapter remains separately tested. |
+| `Agenda.tab` integer | Legacy 0–3 mapping, including invalid/hidden Notes behavior, remains alongside `selectTab(id)`. Same fixture/API approval condition; no removal in M3. |
+| Named `LME_SHELL_CONTROL_TAB` | Existing lowercase names, integer mapping and unknown-name fallback remain. Permanent env facade under D3; no retirement planned. |
+
+The numeric fixture write in `test_polling_ui` is also unchanged. Remaining production numeric writes are conversions/synchronization at these boundaries; the BarGestures and System monitor callbacks no longer hard-code destination numbers. No settings/data migration or public IPC/CLI/env/import removal is required. No README layout/path change was needed.
+
+Rollback: `git revert db6ab78` restores catalog/QML routing together. Keep `697f2be` and the expanded G3 list: they also passed on baseline production. Settings, notes and histories need no conversion.
+
+### Laptop checklist — needs real-session check
+
+1. Open all six Control Center tabs; verify the same order, content and selected indicator, including Ctrl+Tab / Ctrl+Shift+Tab wrap.
+2. Configure bar actions for Audio, Devices, Agenda and System; verify each concrete destination across close/reopen.
+3. From Controls, click the separate System monitor button, then return to Controls.
+4. Open/close Devices, change adapter/device and reconnect services; verify controls respond after actions and reconnect.
+5. Visit all Agenda pages; edit Notes and toggle Quick notes off/on, confirming the existing open-editor behavior and saved content.
+6. Open/reuse/reopen standalone Settings through Gear; inspect both Smoked and Liquid glass on the real GPU.
+7. In an isolated preview, try the named control-tab env for Agenda/System and an unknown name; verify the same targets/fallback.
+
+Physical niri/GPU appearance, Bluetooth/backlight/suspend and long-session behavior remain **needs real-session check**. **STOP after M3; M4 and later remain unauthorized.**

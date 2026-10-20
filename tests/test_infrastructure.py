@@ -10,8 +10,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import clipboard
 import display_control
-from test_backend import backend
+import screen_capture
+from test_backend import backend, Fixture, FakeRunner
 
 
 class SharedContractsCase(unittest.TestCase):
@@ -158,3 +160,102 @@ print(json.dumps(dict(calls=calls, state=display_control.read_json(path, {}))))
         self.assertEqual(data['calls'][0], ['niri', 'msg', 'output', 'eDP-test', 'mode', '1920x1080@60.003'])
         self.assertEqual(data['calls'][3], ['niri', 'msg', 'output', 'eDP-test', 'mode', '1920x1080@120.002'])
         self.assertEqual(len(data['calls']), 6)
+
+
+class ContentContractsCase(Fixture, unittest.TestCase):
+    """Pin Clipboard's shared content contracts before the M2 extraction."""
+    FORMATS = (
+        (b'\x89PNG\r\n\x1a\n', 'image/png', 'png'),
+        (b'\xff\xd8\xff', 'image/jpeg', 'jpg'),
+        (b'GIF87a', 'image/gif', 'gif'),
+        (b'GIF89a', 'image/gif', 'gif'),
+        (b'BM', 'image/bmp', 'bmp'),
+        (b'RIFF\x00\x00\x00\x00WEBP', 'image/webp', 'webp'),
+    )
+
+    def history(self):
+        history = clipboard.History(self.root/'history')
+        self.addCleanup(history.db.close)
+        return history
+
+    def test_exact_text_byte_bound_and_history_rejections(self):
+        self.assertEqual(clipboard.MAX_TEXT, 1_048_576)
+        self.assertEqual(backend.MAX_TEXT, clipboard.MAX_TEXT)
+        history = self.history()
+        for text in ('a'*1_048_576, 'é'*524_288):
+            data = text.encode('utf-8')
+            self.assertEqual(len(data), 1_048_576)
+            ident = history.store('text', data)
+            self.assertEqual(history.item(ident)['data'], data)
+        revision = history.revision
+        for data in (b'a'*1_048_577, ('é'*524_288+'a').encode('utf-8')):
+            with self.subTest(bytes=len(data)), self.assertRaises(ValueError) as caught:
+                history.store('text', data)
+            self.assertEqual(str(caught.exception), 'Clipboard item exceeds the size limit')
+        self.assertEqual(history.revision, revision)
+        self.assertEqual(len(history.entries()), 2)
+
+    def test_copy_text_uses_the_same_utf8_bound_and_exact_error(self):
+        runner = FakeRunner(available={'wl-copy'})
+        live = self.make_backend(runner)
+        self.addCleanup(live.feature_executor.shutdown, wait=True)
+        self.addCleanup(live.charge_executor.shutdown, wait=True)
+        self.addCleanup(live.weather.close)
+        with patch.object(runner, 'run', return_value='') as run:
+            for text in ('a'*1_048_576, 'é'*524_288, ''):
+                run.reset_mock()
+                self.assertEqual(live.perform('copyText', {'text': text}), 'Copied')
+                run.assert_called_once_with('wl-copy', '--type', 'text/plain;charset=utf-8', input=text)
+            for text in (None, False, 1, [], {}, 'a'*1_048_577, 'é'*524_288+'a'):
+                run.reset_mock()
+                with self.assertRaises(ValueError) as caught: live.perform('copyText', {'text': text})
+                self.assertEqual(str(caught.exception), 'Invalid copy text')
+                run.assert_not_called()
+
+    def test_image_signatures_minimal_headers_and_payloads(self):
+        for header, mime, suffix in self.FORMATS:
+            for data in (header, header+b'\x00payload\xff'):
+                with self.subTest(mime=mime, data=data):
+                    self.assertEqual(clipboard.image_type(data), (mime, suffix))
+        self.assertIs(screen_capture.image_type, clipboard.image_type)
+
+    def test_image_rejections_keep_the_exact_error_and_history_intact(self):
+        bad = [b'', b'not an image', b'<svg/>', b'RIFFWEBP', b'RIFF0000WAVE', b'RIFF0000webp']
+        for header, _, _ in self.FORMATS:
+            bad.extend(header[:size] for size in range(1, len(header)))
+        history = self.history()
+        for data in bad:
+            with self.subTest(data=data), self.assertRaises(ValueError) as caught:
+                clipboard.image_type(data)
+            self.assertEqual(str(caught.exception), 'Unsupported clipboard image format')
+            if data:
+                with self.assertRaises(ValueError) as caught: history.store('image', data)
+                self.assertEqual(str(caught.exception), 'Unsupported clipboard image format')
+        self.assertEqual(history.entries(), [])
+        self.assertEqual(history.revision, 0)
+        self.assertEqual(list(history.images.iterdir()), [])
+
+    def test_annotation_recognition_and_rejection_before_export(self):
+        from test_clipboard import PNG
+        runner = FakeRunner(available={'swappy'})
+        with patch('screen_capture.pictures_directory', return_value=self.root/'Pictures'):
+            for index, (header, mime, suffix) in enumerate(self.FORMATS):
+                data = PNG if mime == 'image/png' else header+b'payload'
+                source = self.root/('image-'+str(index))
+                source.write_bytes(data)
+                message = screen_capture.annotate_image(runner, 'auto', str(source))
+                binary, flag, target = runner.spawns[-1]
+                self.assertEqual((binary, flag), ('/usr/bin/swappy', '-f'))
+                self.assertEqual(Path(target).suffix, '.'+suffix)
+                self.assertEqual(Path(target).read_bytes(), data)
+                self.assertEqual(source.read_bytes(), data)
+                self.assertEqual(message, 'Opened swappy · image copy saved at '+target)
+            saved = list((self.root/'Pictures/Screenshots').iterdir())
+            for data, error in ((b'<svg/>', 'Unsupported clipboard image format'),
+                                (b'\x89PNG\r\n\x1a\n', 'Expected a PNG image')):
+                source = self.root/'invalid'; source.write_bytes(data)
+                with self.assertRaises(ValueError) as caught:
+                    screen_capture.annotate_image(runner, 'auto', str(source))
+                self.assertEqual(str(caught.exception), error)
+            self.assertEqual(len(runner.spawns), len(self.FORMATS))
+            self.assertEqual(list((self.root/'Pictures/Screenshots').iterdir()), saved)

@@ -211,7 +211,8 @@ ShellRoot {
                 click('controlGridColumns');subprocess.run(['wtype','-s','200','-k','Down','-k','Return'],env=env,check=True)
                 large=wait(lambda s:s.get('ready') and s.get('columns')==8);valid(large)
                 if large['rows'] != 8:
-                    click('controlGridRows');subprocess.run(['wtype','-s','200','-k','Down','-k','Return'],env=env,check=True)
+                    direction = 'Up' if large['rows'] > 8 else 'Down'
+                    click('controlGridRows');subprocess.run(['wtype','-s','200','-k',direction,'-k','Return'],env=env,check=True)
                 wait(lambda s:s.get('ready') and s.get('rows')==8)
                 click('controlTile-dnd')
                 for row in range(4,8):

@@ -10,7 +10,7 @@ import time
 import threading
 import uuid
 from urllib.parse import unquote, urlsplit
-from clipboard import image_type
+from content_types import image_type
 
 PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
 

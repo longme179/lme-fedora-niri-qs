@@ -1,5 +1,6 @@
 """Battery-saver round trips with fake niri, backlight and profile providers."""
 import copy
+import fcntl
 import json
 from pathlib import Path
 import sys
@@ -300,6 +301,31 @@ class BatterySaverCase(unittest.TestCase):
         self.make_controller().toggle(True)
         self.assertEqual(self.calls, calls)
         self.assertFalse(self.make_controller().snapshot()["busy"])
+
+    def test_concurrent_status_readers_do_not_report_a_transition(self):
+        self.controller.toggle(True)
+        self.controller.toggle(False)
+        reading, release = threading.Event(), threading.Event()
+        flock = fcntl.flock
+        result = []
+
+        def pause_reader(stream, operation):
+            flock(stream, operation)
+            if threading.current_thread() is reader:
+                reading.set()
+                release.wait(2)
+
+        reader = threading.Thread(target=lambda: result.append(self.make_controller().snapshot()))
+        with patch('battery_saver.fcntl.flock', side_effect=pause_reader):
+            reader.start()
+            try:
+                self.assertTrue(reading.wait(2))
+                self.assertFalse(self.controller.snapshot()['busy'])
+            finally:
+                release.set()
+                reader.join(3)
+        self.assertFalse(reader.is_alive())
+        self.assertEqual(result[0]['active'], False)
 
     def test_invalid_target_or_boolean_does_not_touch_hardware_or_create_journal(self):
         for enabled, target in [(1, 70), (True, False), (True, float("nan")), (True, 0), (True, 101)]:

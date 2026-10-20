@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Avoid false Battery saver conflicts when starting a recording after restore.
+  Share status-read locks and briefly retry guarded writes while a status probe
+  finishes; continue rejecting overlapping hardware transitions.
+
 - Open Settings with its saved appearance from the first visible frame. Wait for
   the initial theme/runtime snapshot and theme resources before creating the view,
   detect Liquid blur support before mapping, and reuse queued Gear requests during

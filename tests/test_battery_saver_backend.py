@@ -1,5 +1,7 @@
 """Exercise the public saver action using fake hardware and real restore journals."""
 import json
+import fcntl
+import threading
 import time
 import unittest
 from unittest.mock import patch
@@ -316,6 +318,44 @@ class BatterySaverBackendCase(Fixture, unittest.TestCase):
                     self.assertFalse(result["ok"])
                     self.assertIn("Battery saver", result["message"])
             self.assertEqual(self.hardware.calls, [])
+
+    def test_recording_after_saver_off_survives_a_settings_status_probe(self):
+        self.assertTrue(self.complete(self.live, True)['ok'])
+        self.assertTrue(self.complete(self.live, False)['ok'])
+        executor = self.manual_executor()
+        self.live.niri_state = lambda: {'available': True, 'workspaces': [{'output': 'eDP-1'}]}
+        other = self.configure(self.make_backend(self.hardware))
+        other.settings_only = True
+        reading, release = threading.Event(), threading.Event()
+        flock = fcntl.flock
+
+        def pause_reader(stream, operation):
+            try:
+                flock(stream, operation)
+            except BlockingIOError:
+                release.set()
+                raise
+            if threading.current_thread() is reader:
+                reading.set()
+                release.wait(2)
+
+        reader = threading.Thread(target=other.saver_snapshot)
+        with patch.object(self.live.recorder, 'start', return_value='Recording requested') as start:
+            reply = self.live.handle({'action': 'recordStart', 'mode': 'output', 'output': 'eDP-1'})
+            self.assertTrue(reply.get('pending'), reply)
+            with patch('battery_saver.fcntl.flock', side_effect=pause_reader):
+                reader.start()
+                try:
+                    self.assertTrue(reading.wait(2))
+                    executor.complete()
+                    self.live.finish_features()
+                    self.assertTrue(self.live.last_result['ok'], self.live.last_result)
+                    start.assert_called_once()
+                finally:
+                    release.set()
+                    reader.join(3)
+        self.assertFalse(reader.is_alive())
+        self.assertFalse(self.live.saver_snapshot()['active'])
 
     def test_cross_backend_activation_and_finished_transition_invalidate_system_caches(self):
         other = self.configure(self.make_backend(self.hardware))

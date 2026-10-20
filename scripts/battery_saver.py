@@ -89,7 +89,7 @@ class BatterySaver:
             try:
                 with open(lock_path, "a", encoding="utf-8") as stream:
                     try:
-                        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        fcntl.flock(stream, fcntl.LOCK_SH | fcntl.LOCK_NB)
                     except BlockingIOError:
                         busy = True
             except OSError:
@@ -113,10 +113,16 @@ class BatterySaver:
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         with open(self.path.with_suffix(".lock"), "a", encoding="utf-8") as stream:
             os.chmod(stream.name, 0o600)
-            try:
-                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError as exc:
-                raise ValueError("Battery saver is changing settings; wait for it to finish") from exc
+            # Let concurrent status probes finish without waiting on a long hardware transition.
+            deadline = time.monotonic() + .25
+            while True:
+                try:
+                    fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError as exc:
+                    if time.monotonic() >= deadline:
+                        raise ValueError("Battery saver is changing settings; wait for it to finish") from exc
+                    time.sleep(.01)
             state = self._load()
             if state and state["active"] and not allow_active:
                 raise ValueError("Turn off Battery saver before changing display modes or the power profile")

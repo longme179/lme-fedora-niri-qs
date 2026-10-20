@@ -44,7 +44,7 @@ from niri_keybinds import read_keybinds
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
-from clipboard import MAX_TEXT
+from content_types import MAX_TEXT
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
 from file_search import roots as search_roots, search as search_files

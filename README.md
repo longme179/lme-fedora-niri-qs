@@ -472,8 +472,9 @@ Native UI checks require a private Wayland session. See [validation details](doc
 for test coverage and hardware-specific limitations.
 
 Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses,
-tool lookup and errors) and `scripts/storage.py` (private JSON writes and file locks).
-The original backend and display imports remain available for compatibility.
+tool lookup and errors), `scripts/storage.py` (private JSON writes and file locks),
+and `scripts/content_types.py` (the text byte limit and image signature recognition).
+The original backend, display and Clipboard imports remain available for compatibility.
 Use `./scripts/run-gates.sh` for isolated migration checks; the
 [migration log](docs/MIGRATION_LOG.md) lists prerequisites, commands and results.
 

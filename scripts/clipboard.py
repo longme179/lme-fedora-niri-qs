@@ -17,7 +17,8 @@ import time
 import shutil
 import tempfile
 
-MAX_TEXT = 1024 * 1024
+from content_types import MAX_TEXT, image_type
+
 MAX_IMAGE = 8 * 1024 * 1024
 MAX_TOTAL = 64 * 1024 * 1024
 MAX_PINS = 20
@@ -25,16 +26,6 @@ MAX_PINS = 20
 
 def history_directory() -> Path:
     return Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "lme-shell/clipboard"
-
-
-def image_type(data: bytes) -> tuple[str, str]:
-    for prefix, mime, suffix in [(b"\x89PNG\r\n\x1a\n", "image/png", "png"),
-                                 (b"\xff\xd8\xff", "image/jpeg", "jpg"),
-                                 (b"GIF87a", "image/gif", "gif"), (b"GIF89a", "image/gif", "gif"),
-                                 (b"BM", "image/bmp", "bmp")]:
-        if data.startswith(prefix): return mime, suffix
-    if data.startswith(b"RIFF") and data[8:12] == b"WEBP": return "image/webp", "webp"
-    raise ValueError("Unsupported clipboard image format")
 
 
 class History:

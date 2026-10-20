@@ -453,6 +453,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |
+| [Architecture](docs/ARCHITECTURE.md) / [Migration log](docs/MIGRATION_LOG.md) | Approved module boundaries, staged refactors and before/after checks |
 
 ## Help and development
 
@@ -469,6 +470,12 @@ Pair new Bluetooth devices from Control Center → Devices, including PIN and pa
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.
 Native UI checks require a private Wayland session. See [validation details](docs/VALIDATION.md)
 for test coverage and hardware-specific limitations.
+
+Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses,
+tool lookup and errors) and `scripts/storage.py` (private JSON writes and file locks).
+The original backend and display imports remain available for compatibility.
+Use `./scripts/run-gates.sh` for isolated migration checks; the
+[migration log](docs/MIGRATION_LOG.md) lists prerequisites, commands and results.
 
 ## Credits and license
 

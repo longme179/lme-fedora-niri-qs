@@ -1,0 +1,7 @@
+"""External subset driver; reuse repository gate runner without editing it."""
+import os
+import migration_checks as gates
+
+gates.GATES['ControlGridUiCase'] = (['UPGRADE_UI'], ['test_control_grid.ControlGridUiCase'])
+os.environ['LME_GATE_SET'] = 'ControlGridUiCase'
+raise SystemExit(gates.main())

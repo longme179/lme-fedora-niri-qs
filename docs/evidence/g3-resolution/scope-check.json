@@ -1,0 +1,8 @@
+{
+  "test_commit": "26cdec08ac21475340add7173b3006381b8e4d96",
+  "only_changed_file": "tests/test_control_grid.py",
+  "exact_approved_diff_checked": true,
+  "assertion_calls_unchanged": 49,
+  "timeouts_unchanged": true,
+  "production_unchanged": true
+}

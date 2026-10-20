@@ -1,0 +1,243 @@
+$ ['git', 'log', '--format=%h %ad %s', '--date=iso', '-S', '"row": 8', '--', 'config/control-grid.json']
+19d7899 2026-10-19 19:00:25 +0000 feat: add reversible battery saver mode and canvas control
+
+$ ['git', 'log', '--format=%h %ad %s', '--date=iso', '-S', 'choices:', '--', 'qml/panels/ControlCenter.qml']
+2478872 2026-10-13 11:51:14 +0000 feat: add independent slider and action tiles with stable card models
+
+$ ['git', 'blame', '-L', '165,173', 'c0d747e', '--', 'config/control-grid.json']
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 165)     },
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 166)     {
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 167)       "id": "batterySaver",
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 168)       "title": "Battery saver",
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 169)       "icon": "battery",
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 170)       "cols": 1,
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 171)       "col": 0,
+19d7899a (Hoàng Long 2026-10-19 19:00:25 +0000 172)       "row": 8
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 173)     }
+
+$ ['git', 'blame', '-L', '79,85', 'c0d747e', '--', 'qml/panels/ControlCenter.qml']
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 79)                 objectName: "controlGridRows"
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 80)                 readonly property var choices: [...new Set([8, ...((ShellState.preferences.controlGrid || {}).columns === 8 ? [4] : []), (ShellState.preferences.controlGrid || {}).rows || 8])].sort((a, b) => a - b)
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 81)                 model: choices.map(rows => rows + " rows")
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 82)                 currentIndex: Math.max(0, choices.indexOf((ShellState.preferences.controlGrid || {}).rows || 8))
+c72e7858 (Hoàng Long 2026-10-13 00:42:11 +0000 83)                 enabled: !ShellState.pendingActions.setting
+c72e7858 (Hoàng Long 2026-10-13 00:42:11 +0000 84)                 Accessible.name: "Control canvas rows"
+2478872f (Hoàng Long 2026-10-13 11:51:14 +0000 85)                 onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, choices[currentIndex])
+
+$ ['git', 'show', '--unified=0', '19d7899', '--', 'config/control-grid.json', 'scripts/desktop_features.py', 'tests/test_control_grid.py']
+commit 19d7899a1a1ed61873809eaab04e027350467196
+Author: Hoàng Long <longkimhoang179@gmail.com>
+Date:   Mon Oct 19 19:00:25 2026 +0000
+
+    feat: add reversible battery saver mode and canvas control
+
+diff --git a/config/control-grid.json b/config/control-grid.json
+index 7720070..e83c146 100644
+--- a/config/control-grid.json
++++ b/config/control-grid.json
+@@ -164,0 +165,8 @@
++    },
++    {
++      "id": "batterySaver",
++      "title": "Battery saver",
++      "icon": "battery",
++      "cols": 1,
++      "col": 0,
++      "row": 8
+diff --git a/scripts/desktop_features.py b/scripts/desktop_features.py
+index 8a85e5a..c58bade 100644
+--- a/scripts/desktop_features.py
++++ b/scripts/desktop_features.py
+@@ -28 +28 @@ CONTROL_SPANS = {tile['id']: tile['cols'] for tile in CONTROL_TILES}
+-DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': 8, 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
++DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': max(8, 1 + max(tile['row'] for tile in CONTROL_TILES)), 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
+@@ -31 +31 @@ LEGACY_CONTROL_MODULES = {'weather', 'charging', 'wifi', 'bluetooth', 'microphon
+-LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power'}
++LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power', 'batterySaver'}
+@@ -102 +102 @@ def control_layout(value):
+-    if seen in (set(CONTROL_MODULES) - {'nightLight'}, LEGACY_CONTROL_MODULES - {'nightLight'}):
++    if seen in (set(CONTROL_MODULES) - {'nightLight'}, set(CONTROL_MODULES) - {'nightLight', 'batterySaver'}, LEGACY_CONTROL_MODULES - {'nightLight'}):
+@@ -110,0 +111,2 @@ def control_layout(value):
++    if {item['id'] for item in result} == set(CONTROL_MODULES) - {'batterySaver'}:
++        result.append({'id': 'batterySaver', 'enabled': True, 'size': 'half'})
+@@ -132 +134 @@ def control_grid(value):
+-    if seen not in (set(CONTROL_SPANS), LEGACY_GRID_IDS): raise ValueError('Include every quick control exactly once')
++    if seen not in (set(CONTROL_SPANS), set(CONTROL_SPANS) - {'batterySaver'}, LEGACY_GRID_IDS): raise ValueError('Include every quick control exactly once')
+diff --git a/tests/test_control_grid.py b/tests/test_control_grid.py
+index f4aa83d..3d20a97 100644
+--- a/tests/test_control_grid.py
++++ b/tests/test_control_grid.py
+@@ -33,0 +34 @@ class ControlGridCase(Fixture, unittest.TestCase):
++        next(tile for tile in layout['tiles'] if tile['id'] == 'batterySaver').update(col=4, row=7)
+@@ -57 +58 @@ class ControlGridCase(Fixture, unittest.TestCase):
+-            self.assertEqual(migrated['rows'], 8 if columns==4 else 4)
++            self.assertEqual(migrated['rows'], 9 if columns==4 else 5)
+@@ -76,0 +78,16 @@ class ControlGridCase(Fixture, unittest.TestCase):
++    def test_battery_saver_is_added_without_moving_or_enabling_existing_controls(self):
++        prior = copy.deepcopy(DEFAULT_CONTROL_GRID)
++        prior['tiles'] = [tile for tile in prior['tiles'] if tile['id'] != 'batterySaver']
++        prior['rows'] = 8
++        layout = [dict(item, enabled=False) for item in self.preferences.values['controlLayout'] if item['id'] != 'batterySaver']
++        self.preferences.path.parent.mkdir(parents=True, exist_ok=True)
++        self.preferences.path.write_text(json.dumps({'controlGrid': prior, 'controlLayout': layout}))
++        values = backend.Preferences(self.preferences.path).values
++        grid = values['controlGrid']
++        self.assertEqual(grid['rows'], 9)
++        self.assertTrue(all(tile in grid['tiles'] for tile in prior['tiles']))
++        self.assertEqual([item for item in values['controlLayout'] if item['id'] != 'batterySaver'], layout)
++        self.assertEqual(next(item for item in values['controlLayout'] if item['id'] == 'batterySaver'),
++                         {'id': 'batterySaver', 'enabled': True, 'size': 'half'})
++        self.assertEqual(control_grid(grid), grid)
++
+@@ -92 +109 @@ ShellRoot {
+-        for (const columns of [4, 8]) for (const rows of [4, 8]) {
++        for (const columns of [4, 8]) for (const rows of [4, 8, 9]) {
+@@ -132 +149,2 @@ ShellRoot {
+-            self.assertIn('LEGAL_DROPS 5628', result.stdout + result.stderr)
++            import re
++            self.assertGreater(int(re.search(r'LEGAL_DROPS (\d+)', result.stdout + result.stderr)[1]), 5000)
+
+$ ['git', 'show', '--unified=0', '2478872', '--', 'qml/panels/ControlCenter.qml']
+commit 2478872fcfc1bc3ddb4ea6c14e2f0b9a06e27943
+Author: Hoàng Long <longkimhoang179@gmail.com>
+Date:   Tue Oct 13 11:51:14 2026 +0000
+
+    feat: add independent slider and action tiles with stable card models
+
+diff --git a/qml/panels/ControlCenter.qml b/qml/panels/ControlCenter.qml
+index 6589bd7..4ae6d4c 100644
+--- a/qml/panels/ControlCenter.qml
++++ b/qml/panels/ControlCenter.qml
+@@ -71,2 +71,4 @@ GlassPanel {
+-                objectName: "controlGridRows"; model: ["4 rows", "8 rows"]
+-                currentIndex: (ShellState.preferences.controlGrid || {}).rows === 8 ? 1 : 0
++                objectName: "controlGridRows"
++                readonly property var choices: [...new Set([8, ...((ShellState.preferences.controlGrid || {}).columns === 8 ? [4] : []), (ShellState.preferences.controlGrid || {}).rows || 8])].sort((a, b) => a - b)
++                model: choices.map(rows => rows + " rows")
++                currentIndex: Math.max(0, choices.indexOf((ShellState.preferences.controlGrid || {}).rows || 8))
+@@ -75 +77 @@ GlassPanel {
+-                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, currentIndex ? 8 : 4)
++                onActivated: if (dashboard.item) (dashboard.item as ControlDashboard).grid.resize((ShellState.preferences.controlGrid || {}).columns || 4, choices[currentIndex])
+
+$ ['gh', 'api', 'repos/longme179/lme-fedora-niri-qs/actions/runs?per_page=5', '--jq', '{total_count, runs: [.workflow_runs[] | {head_sha,name,conclusion,created_at}]}']
+{"runs":[],"total_count":0}
+
+$ git show 19d7899:docs/VALIDATION.md (first 57 lines)
+# Validation and platform limits
+
+## Battery saver — 2026-10-20
+
+`scripts/check.sh` passed **454 tests: 368 passed, 86 opt-in checks skipped**,
+plus Bash syntax and the demo snapshot. **20 targeted checks passed** on private
+Sway, including tile clicks, the Settings switch/brightness control, desktop
+shape teardown/restoration and canvas move invariants. `qmllint` scanned all
+**141 QML files with zero errors and 67 existing metadata warnings**.
+
+Fake-hardware tests cover exact raw backlight restoration, fractional refresh,
+scale/position, missing/disabled/new outputs, unavailable profiles, interrupted
+apply, corrupt journals, shared Settings/shell locks, queued action conflicts,
+partial restore/retry and compositor-session changes. Startup display restore
+cannot undo an active saver. Expired display previews do not block it forever.
+A fake Cava with delayed shutdown covers 20 rapid saver reversals; intentional
+stops restart cleanly instead of becoming a visualizer failure.
+
+Battery saver applies temporary shell overrides rather than rewriting saved
+appearance preferences. Its hardware journal records original values before
+changing them and retains pending restores when a device or service is
+unavailable. Only affected resources are restored; normal brightness controls
+remain available while the saver is active. The starting cap defaults to 70%
+and does not brighten a screen already below it.
+
+Display changes use modes reported by niri at or below 1920 × 1080 / 60 Hz,
+without increasing existing resolution or refresh, preserving scale and position.
+Unsupported outputs are reported, custom modes
+are not generated, and hotplugged displays are not automatically recapped.
+Temporary niri output overrides belong to their compositor session; restore
+data from a previous session must not be applied to a new one. Display previews
+and saver activation must not compete. Recording startup is serialized with saver
+transitions; an active recording blocks toggling until it is stopped. The existing power-profile interface is
+used for TuneD/tuned-ppd and power-profiles-daemon.
+
+Target-laptop checks, not yet verified on physical hardware:
+
+1. Note the current display modes, brightness, power profile and appearance. Turn
+   Battery saver on from its Control Center tile, then open Settings. Confirm
+   opaque Material surfaces, no shell blur/motion and the reported hardware
+   changes. Verify the UI remains usable on each display.
+2. Change brightness with a media key or slider. It must stay at the new level
+   until changed again; the starting cap must not run repeatedly. Test activation
+   both above and below the configured cap.
+3. Turn the switch off and verify the original affected resources and saved
+   appearance return. Repeat across a shell/Settings restart.
+4. Disconnect an affected external display before restoring. The pending restore
+   must remain visible and retry after reconnection; a newly connected output
+   must not be silently capped. Confirm that a display preview blocks activation.
+
+The shell cannot guarantee power savings or disable effects in other programs.
+Niri IPC exposes temporary output controls, but no general runtime switch for
+compositor-wide blur or animations. Actual laptop power use, physical mode
+switching, backlight authorization and GPU behavior require the checks above.
+
+## Audit follow-up fixes — 2026-10-20
+
+
+$ git show 2478872:docs/VALIDATION.md (first 25 lines)
+# Validation and platform limits
+
+## Independent slider/actions and stable card models — 2026-10-13
+
+`scripts/check.sh` passed **215 tests, no skips**, with all private Wayland
+opt-ins and the checksum-verified portable Matugen 4.2.0 enabled. Changed QML
+passed qmllint without warnings; Python compilation, Bash syntax, demo state
+and diff checks passed. No system package was installed.
+
+Native QML exercises **5,628 cell scenarios**, accepting empty/matching-size
+drops and rejecting incompatible ones while checking that unrelated controls
+never move. Real pointer tests move speaker/microphone levels to 100% and
+brightness to its 1% minimum, mute both channels, cycle the three demo profiles,
+block actions in Edit mode, toggle independent visibility in Settings and open
+the Power menu through its optional bar module. Hardware commands remain mocked
+in that action test. Existing backend tests verify actual command arguments;
+new fixtures verify two-profile capability discovery through D-Bus and CLI.
+
+A private real Settings backend verifies persistence, card-order/size changes
+leaving grid coordinates untouched, and the same card QObject instances after
+a canvas move. Migration checks preserve old visibility, all eleven saved tile
+positions, colors/fonts through unchanged preferences, and scattered layouts
+that need extra rows. Updated 480 px and 900 px views were rendered and inspected.
+
+Live Fedora speaker/mic/backlight and power-profile cycling still need the
+
+Original Battery saver full-check log (matching test lines):
+test_drag_keyboard_resize_visibility_persistence_and_action_isolation (test_control_grid.ControlGridUiCase.test_drag_keyboard_resize_visibility_persistence_and_action_isolation) ... skipped 'private Wayland canvas UI'
+test_qml_fixed_cells_do_not_reflow_unrelated_controls (test_control_grid.ControlGridUiCase.test_qml_fixed_cells_do_not_reflow_unrelated_controls) ... skipped 'private Wayland canvas UI'
+test_slider_mute_profile_actions_and_optional_power_bar_module (test_control_grid.ControlGridUiCase.test_slider_mute_profile_actions_and_optional_power_bar_module) ... skipped 'private Wayland canvas UI'
+
+Original targeted native validation (full output):
+test_blur_regions_are_disabled_in_both_styles_and_restore_saved_flags (test_battery_saver_qml.BatterySaverVisualCase.test_blur_regions_are_disabled_in_both_styles_and_restore_saved_flags) ... ok
+test_canvas_tile_settings_switch_and_brightness_round_trip (test_battery_saver_qml.BatterySaverVisualCase.test_canvas_tile_settings_switch_and_brightness_round_trip) ... ok
+test_spectrum_resumes_after_fast_saver_reversals_without_spurious_errors (test_battery_saver_qml.BatterySaverVisualCase.test_spectrum_resumes_after_fast_saver_reversals_without_spurious_errors) ... ok
+test_visual_policy_is_opaque_stops_motion_and_restores_saved_preferences (test_battery_saver_qml.BatterySaverVisualCase.test_visual_policy_is_opaque_stops_motion_and_restores_saved_preferences) ... ok
+test_qml_fixed_cells_do_not_reflow_unrelated_controls (test_control_grid.ControlGridUiCase.test_qml_fixed_cells_do_not_reflow_unrelated_controls) ... ok
+test_action_round_trip_preserves_preferences_exports_and_invalidates_readbacks (test_battery_saver_backend.BatterySaverBackendCase.test_action_round_trip_preserves_preferences_exports_and_invalidates_readbacks) ... ok
+test_activation_reads_the_latest_brightness_target_from_settings (test_battery_saver_backend.BatterySaverBackendCase.test_activation_reads_the_latest_brightness_target_from_settings) ... ok
+test_active_saver_blocks_display_previews_and_manual_power_profile_changes (test_battery_saver_backend.BatterySaverBackendCase.test_active_saver_blocks_display_previews_and_manual_power_profile_changes) ... ok
+test_async_partial_failure_reports_error_keeps_restore_data_and_supports_retry (test_battery_saver_backend.BatterySaverBackendCase.test_async_partial_failure_reports_error_keeps_restore_data_and_supports_retry) ... ok
+test_cross_backend_activation_and_finished_transition_invalidate_system_caches (test_battery_saver_backend.BatterySaverBackendCase.test_cross_backend_activation_and_finished_transition_invalidate_system_caches) ... ok
+test_expired_preview_does_not_block_saver_forever (test_battery_saver_backend.BatterySaverBackendCase.test_expired_preview_does_not_block_saver_forever) ... ok
+test_invalid_requests_and_corrupt_journal_do_not_mutate_hardware (test_battery_saver_backend.BatterySaverBackendCase.test_invalid_requests_and_corrupt_journal_do_not_mutate_hardware) ... ok
+test_off_during_recording_rejects_without_changing_restore_journal (test_battery_saver_backend.BatterySaverBackendCase.test_off_during_recording_rejects_without_changing_restore_journal) ... ok
+test_other_backend_lock_blocks_conflicting_actions_without_waiting (test_battery_saver_backend.BatterySaverBackendCase.test_other_backend_lock_blocks_conflicting_actions_without_waiting) ... ok
+test_pending_preview_and_active_or_queued_recording_reject_enable_before_work_starts (test_battery_saver_backend.BatterySaverBackendCase.test_pending_preview_and_active_or_queued_recording_reject_enable_before_work_starts) ... ok
+test_preflight_rechecks_conflicts_when_queued_worker_eventually_starts (test_battery_saver_backend.BatterySaverBackendCase.test_preflight_rechecks_conflicts_when_queued_worker_eventually_starts) ... ok
+test_queued_saver_blocks_conflicting_actions_before_worker_starts (test_battery_saver_backend.BatterySaverBackendCase.test_queued_saver_blocks_conflicting_actions_before_worker_starts) ... ok
+test_raw_backlight_uses_cli_selected_device_with_multiple_backlights_and_checks_restore_bounds (test_battery_saver_backend.BatterySaverBackendCase.test_raw_backlight_uses_cli_selected_device_with_multiple_backlights_and_checks_restore_bounds) ... ok
+test_settings_backend_observes_and_restores_shared_journal_after_main_backend_restart (test_battery_saver_backend.BatterySaverBackendCase.test_settings_backend_observes_and_restores_shared_journal_after_main_backend_restart) ... ok
+test_startup_restore_keeps_saver_modes_and_respects_a_transition_lock (test_battery_saver_backend.BatterySaverBackendCase.test_startup_restore_keeps_saver_modes_and_respects_a_transition_lock) ... Displays: Battery saver is active; keeping current modes
+Displays: Battery saver is changing settings; wait for it to finish
+ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 7.070s
+
+OK

@@ -1,0 +1,11 @@
+--- scripts/run-gates.sh (unchanged)
++++ external run-control-grid.sh (execution copy)
+@@ -4 +4 @@
+-repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
++repo_dir="/workspace/lme-fedora-niri-qs"
+@@ -49 +49 @@
+-    exec dbus-run-session -- bash "$repo_dir/scripts/run-gates.sh" --inside
++    exec dbus-run-session -- bash "/workspace/.lme-dev/g3-resolution/run-control-grid.sh" --inside
+@@ -82 +82 @@
+-python3 "$repo_dir/tests/migration_checks.py"
++python3 "/workspace/.lme-dev/g3-resolution/driver.py"

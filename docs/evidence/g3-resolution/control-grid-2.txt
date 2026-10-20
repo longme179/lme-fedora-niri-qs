@@ -1,0 +1,8 @@
+test_drag_keyboard_resize_visibility_persistence_and_action_isolation (test_control_grid.ControlGridUiCase.test_drag_keyboard_resize_visibility_persistence_and_action_isolation) ... ok
+test_qml_fixed_cells_do_not_reflow_unrelated_controls (test_control_grid.ControlGridUiCase.test_qml_fixed_cells_do_not_reflow_unrelated_controls) ... ok
+test_slider_mute_profile_actions_and_optional_power_bar_module (test_control_grid.ControlGridUiCase.test_slider_mute_profile_actions_and_optional_power_bar_module) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 24.765s
+
+OK

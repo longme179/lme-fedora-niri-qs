@@ -1,0 +1,62 @@
+{
+  "diagnostic_not_gate": true,
+  "before": {
+    "ready": true,
+    "editing": true,
+    "columns": 8,
+    "rows": 9,
+    "savedRows": 9,
+    "choices": [
+      4,
+      8,
+      9
+    ],
+    "currentIndex": 2,
+    "highlightedIndex": -1,
+    "popup": false
+  },
+  "after_down": {
+    "ready": true,
+    "editing": true,
+    "columns": 8,
+    "rows": 9,
+    "savedRows": 9,
+    "choices": [
+      4,
+      8,
+      9
+    ],
+    "currentIndex": 2,
+    "highlightedIndex": -1,
+    "popup": false
+  },
+  "after_up": {
+    "ready": true,
+    "editing": true,
+    "columns": 8,
+    "rows": 8,
+    "savedRows": 8,
+    "choices": [
+      4,
+      8
+    ],
+    "currentIndex": 1,
+    "highlightedIndex": -1,
+    "popup": false
+  },
+  "after_restart": {
+    "ready": true,
+    "editing": false,
+    "columns": 8,
+    "rows": 8,
+    "savedRows": 8,
+    "choices": [
+      4,
+      8
+    ],
+    "currentIndex": 1,
+    "highlightedIndex": -1,
+    "popup": false
+  },
+  "scope": "Private Sway/D-Bus and disposable settings; unchanged product, instrumented temporary QML copy"
+}

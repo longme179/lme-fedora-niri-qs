@@ -1,6 +1,6 @@
-# M0 / M1 migration evidence
+# Migration evidence
 
-Scope: M0 baseline and M1 (A7 shared runner/persistence) only. M2 and later are not started.
+Scope: M0 baseline, merged M1/M2 and G3 baseline triage. M3 and later are not started.
 
 ## M0 baseline — 2026-10-20
 
@@ -371,3 +371,85 @@ These are direct aliases with exact object identity, not wrappers. Legacy facade
 Rollback: `git revert 7fea618`; keep the characterization tests and expanded G4 harness, which also passed before extraction. This restores old imports and helper ownership together without data migration. No M3 work or G3 assertion changes were made. M3 requires a separate authorization after G3 is resolved or explicitly accepted.
 
 Physical GPU/glass/Jelly appearance, real niri capture, real external annotation applications and laptop hardware remain **needs real-session check**. Stop after M2 for review.
+
+## Known baseline failures — G3 triage — 2026-10-20
+
+**Status: G3 remains red, pending approval of a test-input correction. The owner has not accepted this failure. M3 remains unauthorized.** No production, harness, test or assertion changes were made during triage; the branch records documentation/evidence only.
+
+Baseline: merged `main` at `054862690bb666fffa78cb2085c3ab44b502f74c` (M2 merge). Branch: `fix/g3-baseline`. All five attempts ran sequentially against that unchanged commit, before documentation edits. HEAD and a clean diff against main were checked before each attempt.
+
+### Command, environment and repeated results
+
+```bash
+for attempt in 1 2 3 4 5
+do
+  ./scripts/run-gates.sh --env-file /workspace/.lme-dev/env.sh \
+    --pointer-dir /workspace/.lme-dev \
+    --output "/workspace/.lme-dev/g3-triage-main-$attempt" --gates G3
+done
+```
+
+The resolved command is `python3 -m unittest -v test_control_grid.ControlGridUiCase test_upgrade_ui.UpgradeInterfaceCase test_bar_gestures.BarGestureQmlCase`, with `PYTHONPATH=tests:scripts` and `LME_TEST_UPGRADE_UI=1`. Each attempt starts a fresh owned Sway/D-Bus with disposable XDG directories and nonexistent system-bus/niri sockets; the M0 isolation/environment table applies. No real session or config is used. Required click/drag/right-click helpers and wtype are present. No test was skipped and no substitute gate was used.
+
+Current machine: Intel Xeon Platinum 8573C, 5 visible logical CPUs, Linux 6.18.55 / Debian 13; Quickshell 0.3.2 (`4f508be`), Qt 6.8.2, Sway 1.10.1. This CPU differs from the historical M0 machine. Sway uses headless/pixman at 1920×1080 scale 1; Qt uses RHI/OpenGL with Mesa llvmpipe. `BarGestureQmlCase` explicitly overrides Qt to offscreen/software through `LocalQmlCase.run_qml`; its input is QtTest injection, not the native pointer helper. Those tests ran, but do not establish physical-GPU or native Wayland bar-input correctness.
+
+| Attempt | Passed | Failed | Skipped | Gate command wall s | Harness wall s | Exit | Full unedited output |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | 7 | 1 | 0 | 71.406 | 71.630 | 1 | [run-1.txt](evidence/g3-baseline/run-1.txt) |
+| 2 | 7 | 1 | 0 | 75.112 | 75.299 | 1 | [run-2.txt](evidence/g3-baseline/run-2.txt) |
+| 3 | 7 | 1 | 0 | 69.526 | 69.731 | 1 | [run-3.txt](evidence/g3-baseline/run-3.txt) |
+| 4 | 7 | 1 | 0 | 65.891 | 66.035 | 1 | [run-4.txt](evidence/g3-baseline/run-4.txt) |
+| 5 | 7 | 1 | 0 | 65.824 | 66.003 | 1 | [run-5.txt](evidence/g3-baseline/run-5.txt) |
+
+Gate wall time is the harness measurement around the unittest subprocess, not the shorter unittest-reported duration. Harness wall includes session bootstrap/cleanup. [runs.json](evidence/g3-baseline/runs.json) retains the resolved per-attempt command/environment, baseline SHA, counts, durations and SHA-256 hashes of the byte-identical copied outputs.
+
+Across 40 test executions: **35 passed, 5 failed, 0 skipped**. The same test failed 5/5 times; all other seven tests passed 5/5. This is repeatable in this environment, with no observed flakiness in these five samples; it is not a claim about every renderer/session.
+
+Supplementary documentation check: the same harness with `--output /workspace/.lme-dev/g3-triage-docs-check --gates G0` ran `./scripts/check.sh`: **396 passed / 0 failed / 87 skipped**, 64.808s, exit 0, **completed-with-skips**. All 87 skipped names/reasons exactly match the M2-after list and the M0 inventory above. qmllint checked 141 files: 0 errors / 67 existing warnings, 17.014s. G0 leaves the native grid/UI opt-ins off, so its skipped tests do not resolve or replace G3. Raw G0 command/env/skip evidence remains at that output path; no additional gate was claimed green.
+
+### Exact failure and classification: (b) test defect
+
+Only failing test:
+`test_control_grid.ControlGridUiCase.test_drag_keyboard_resize_visibility_persistence_and_action_isolation`.
+`UpgradeInterfaceCase` (3 tests) and `BarGestureQmlCase` (2 tests) have no failures. The other two `ControlGridUiCase` tests also pass.
+
+At this baseline's `tests/test_control_grid.py:213–215`, the test opens the row selector, always sends **Down, Return**, then waits for `s.get('ready') and s.get('rows') == 8`. After ten seconds the wait helper at line 179 raises `AssertionError(str(current) + '\n' + log.read())`. This is the failing assertion; the later `assertEqual(value['rows'], 8)` at line 222 is never reached. Every failure records `ready=True`, `columns=8`, `rows=9`, `saved.rows=9`; the complete state, traceback and QML log are preserved in each output above.
+
+Evidence for a test-input error rather than an environment limitation or product defect:
+
+- `scripts/desktop_features.py:28` derives the default rows from the tile catalog. `config/control-grid.json:167–172` places Battery saver at zero-based row 8, so the default is nine rows at four columns; expanding to eight columns preserves the saved nine-row height (`ControlGrid.qml:70–73`).
+- `qml/panels/ControlCenter.qml:79–85` sorts the row choices and selects the saved row count. At this point they are `[4, 8, 9]`, with index 2 selected. Down at the last entry cannot select 8; Up selects the preceding entry.
+- Before the timeout, the unchanged test successfully performs pointer drag/swap, invalid-drop rejection, keyboard Right movement and keyboard selection of eight columns. The backend is ready and the saved state agrees with the UI.
+- A separate inspection used a temporary copy of the existing demo fixture with a read-only IPC accessor for the real row selector. In a fresh private Sway/D-Bus, Down/Return retained 9; Up/Return selected and saved 8; restarting the fixture retained eight columns/eight rows. The real QML components/backend were unchanged. The same `unknown keymap format: 0` warnings occurred while input succeeded; these warnings do not explain this timeout.
+
+The inspection is **diagnostic evidence, not a passing G3 run**: it did not execute the remainder of the failing test. [row-probe.json](evidence/g3-baseline/row-probe.json) contains before/after/restart state; [row-probe-qml.txt](evidence/g3-baseline/row-probe-qml.txt) includes the renderer and complete QML log. [row-probe.py.txt](evidence/g3-baseline/row-probe.py.txt) preserves the external inspection script; it is not an installed test/helper or production code.
+
+### Proposed remedy — NOT applied, awaiting owner approval
+
+Only change the navigation input so it moves toward 8 in the sorted choices, including a saved count below 8. Do not change assertions, timeouts, defaults, product behavior or skips; do not mark this test expected-failure.
+
+```diff
+--- a/tests/test_control_grid.py
++++ b/tests/test_control_grid.py
+@@
+                 if large['rows'] != 8:
+-                    click('controlGridRows');subprocess.run(['wtype','-s','200','-k','Down','-k','Return'],env=env,check=True)
++                    direction = 'Up' if large['rows'] > 8 else 'Down'
++                    click('controlGridRows');subprocess.run(['wtype','-s','200','-k',direction,'-k','Return'],env=env,check=True)
+                 wait(lambda s:s.get('ready') and s.get('rows')==8)
+```
+
+After approval, apply this test-only diff and rerun the complete G3 set with the same isolation/flags, including all statements after the former timeout. No corrected-test gate has run yet, and no green result is inferred from the diagnostic. If a later assertion then fails, triage it separately before any further change.
+
+### Overlap with M3 and remaining protection
+
+**There is overlap through ControlCenter/ControlDashboard composition**, although the failing operation is grid-height selection, not tab routing. M3 will replace positional routing in ControlCenter, Agenda, BarGestures and ControlDashboard. File/line references below are verified at `0548626`.
+
+| Area | Coverage while G3 is red |
+| --- | --- |
+| Aborted grid test | Steps/assertions at 216–238 and 242–244 never execute: keyboard movement to rows 4–7 and legal bounds; positive scroll at 220; reset retains eight rows at 221–222; card reorder/size does not move tiles at 228; hiding Wi-Fi preserves layout at 231–232; Done re-enables DND actions at 233–234; close/reopen retains layout/visibility and clears edit mode at 235–238; final QML error checks at 242–244. These would no longer guard a composition/lifecycle regression during M3. Earlier drag/focus/action-isolation checks and finally cleanup at 239–241 still execute. |
+| ControlCenter tab routing | The independent `UpgradeInterfaceCase.test_settings_launcher_wifi_notifications_and_responsive_cards` still passes: `tests/test_upgrade_ui.py:124–126` selects System, verifies three process records and search filtering, then returns to Controls and verifies the monitor state clears. This protection is not lost to the grid test's failure. |
+| BarGestures | Both QML tests still pass for defaults/overrides, mute/DND/scroll, primary opening and suppression. They do **not** assert the exact destination for the explicit `audio/devices/agenda/system` mapping at `qml/bar/BarGestures.qml:52–54`. This is a pre-existing coverage gap, not an assertion bypassed by the grid timeout. |
+| Dashboard monitor shortcut | G3 does **not** click the separate `System monitor` button at `qml/panels/ControlDashboard.qml:320` and assert its destination index. Selecting the System tab is a different path. This is also a pre-existing gap. |
+
+M3's planned new `test_navigation.TabContractCase` / `NativeTabCase` must cover those destination/order/hook contracts when separately authorized. They were not added here. No polling, power policy, production, assertion, harness or dependency changes were made. **STOP: awaiting test-diff approval; M3 stays unauthorized.**

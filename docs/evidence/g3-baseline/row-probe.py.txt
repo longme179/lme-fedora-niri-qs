@@ -1,0 +1,80 @@
+"""Read-only product diagnosis with private fixture copies; this is not G3."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import time
+
+repo=Path(os.environ['LME_GATE_REPO'])
+out=Path(os.environ['LME_GATE_OUTPUT'])
+with tempfile.TemporaryDirectory(prefix='row-probe-',dir=out) as directory:
+    root=Path(directory)
+    for name in ('qml','scripts','config','assets'):(root/name).symlink_to(repo/name,target_is_directory=True)
+    entry=root/'shell.qml'
+    source=(repo/'upgrades-demo.qml').read_text().replace('//@ pragma Env LME_SHELL_DEMO=1\n','')
+    marker='        function controlGridState(): string {'
+    inspector='''        function rowProbe(): string {
+            const grid = root.find(window.contentItem, "controlGrid");
+            const box = root.find(window.contentItem, "controlGridRows");
+            return JSON.stringify(grid && box ? {ready:grid.ready, editing:grid.editing,
+                columns:grid.columns, rows:grid.rows, savedRows:grid.saved.rows,
+                choices:box.choices, currentIndex:box.currentIndex,
+                highlightedIndex:box.highlightedIndex, popup:box.popup.visible} : {});
+        }
+'''
+    assert source.count(marker)==1
+    entry.write_text(source.replace(marker,inspector+marker))
+    env=dict(os.environ,XDG_CONFIG_HOME=str(root/'config-home'),XDG_STATE_HOME=str(root/'state'),
+             LME_TEST_UPGRADES='1',LME_SHELL_DEMO='0',LME_SHELL_SETTINGS='1',QSG_INFO='1')
+    log=(out/'row-probe-qml.txt').open('w+')
+    keyboard=subprocess.Popen(['wtype','-s','60000'],env=env,stdout=log,stderr=log)
+    time.sleep(.15)
+    def launch():return subprocess.Popen(['quickshell','-p',str(entry)],env=env,stdout=log,stderr=log)
+    process=launch()
+    def ipc(method,*args):
+        reply=subprocess.run(['quickshell','-p',str(entry),'ipc','call','upgradesFixture',method,*args],env=env,
+                             capture_output=True,text=True,timeout=4)
+        if reply.returncode:raise ValueError(reply.stderr)
+        return reply.stdout.strip()
+    def wait(predicate):
+        deadline=time.monotonic()+12
+        while time.monotonic()<deadline:
+            try:
+                state=json.loads(ipc('rowProbe'))
+                if predicate(state):return state
+            except ValueError:pass
+            time.sleep(.05)
+        raise AssertionError('Row state did not settle: '+repr(state))
+    def click(name):
+        point=json.loads(ipc('position',name))
+        time.sleep(.15)
+        subprocess.run([env['LME_TEST_POINTER'],str(point['x']),str(point['y'])],env=env,check=True,timeout=4)
+    def keys(*names):
+        argv=['wtype','-s','200']
+        for name in names:argv.extend(['-k',name])
+        subprocess.run(argv,env=env,check=True,timeout=4)
+    try:
+        wait(lambda s:s.get('ready'))
+        ipc('navigate','control','appearance')
+        click('controlEdit');wait(lambda s:s.get('ready') and s.get('editing'))
+        click('controlGridColumns');keys('Down','Return')
+        before=wait(lambda s:s.get('ready') and s.get('columns')==8)
+        assert before['rows']==9 and before['choices']==[4,8,9] and before['currentIndex']==2,before
+        click('controlGridRows');keys('Down','Return')
+        down=wait(lambda s:s.get('ready') and not s.get('popup'))
+        assert down['rows']==down['savedRows']==9 and down['currentIndex']==2,down
+        click('controlGridRows');keys('Up','Return')
+        up=wait(lambda s:s.get('ready') and s.get('rows')==8 and s.get('savedRows')==8 and not s.get('popup'))
+        process.terminate();process.wait(timeout=6);process=launch()
+        reopened=wait(lambda s:s.get('ready') and s.get('rows')==8 and s.get('columns')==8)
+        result=dict(diagnostic_not_gate=True,before=before,after_down=down,after_up=up,after_restart=reopened,
+                    scope='Private Sway/D-Bus and disposable settings; unchanged product, instrumented temporary QML copy')
+        (out/'row-probe.json').write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps(result),flush=True)
+    finally:
+        if process.poll() is None:process.terminate();process.wait(timeout=6)
+        keyboard.terminate();keyboard.wait(timeout=3)
+        log.flush();log.seek(0);text=log.read();log.close()
+    for error in ('ReferenceError','TypeError','Binding loop','Unable to assign','Failed to load configuration'):
+        assert error not in text,error

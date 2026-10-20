@@ -6,8 +6,12 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
-    Component.onCompleted: if (ShellState.backendReady) ShellState.run("platformRefresh")
-    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("platformRefresh"); } }
+    function refreshPlatform() {
+        const version = (ShellState.snapshot.platform || {}).niriVersion;
+        if (ShellState.backendReady && (!version || version === "Not checked")) ShellState.run("platformRefresh");
+    }
+    Component.onCompleted: root.refreshPlatform()
+    Connections { target: ShellState; function onBackendReadyChanged() { root.refreshPlatform(); } }
     SettingsCard {
         visible: ShellState.batterySaverActive
         title: "Battery saver is on"

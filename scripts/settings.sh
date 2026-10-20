@@ -33,6 +33,8 @@ if [[ "${LME_SHELL_DEMO:-}" == 1 ]]; then entry="$repo_dir/settings-demo.qml"; f
 # Quickshell 0.3.2 can return status 0 for an IPC error; require the window's reply.
 if opened="$("$qs_binary" -p "$entry" ipc call settings openPage "$page" 2>/dev/null)"; then
     if [[ "$opened" != true ]]; then
+        # Reuse a cold instance that has queued the page and is still loading its appearance.
+        if [[ "$("$qs_binary" -p "$entry" ipc call settings startupPending 2>/dev/null || true)" == true ]]; then exit 0; fi
         printf 'Settings did not confirm a visible window; restarting this Settings instance.\n' >&2
         "$qs_binary" -p "$entry" kill >&2
         # IPC acknowledges shutdown before the instance necessarily exits.

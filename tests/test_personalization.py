@@ -72,7 +72,7 @@ import json, os, sys
 args = sys.argv[1:]
 with open(os.environ['QS_CALLS'], 'a') as log: log.write(json.dumps(args)+'\\n')
 if 'ipc' in args:
-    reply = os.environ['QS_REPLY']
+    reply = os.environ.get('QS_STARTUP', 'false') if args[-1] == 'startupPending' else os.environ['QS_REPLY']
     if reply == 'missing': print('Function not found.')
     elif reply != 'void': print(reply)
 elif 'kill' in args:
@@ -93,8 +93,16 @@ else: print(json.dumps(args))
                 if reply == 'true':
                     self.assertEqual(len(recorded), 1)
                 else:
-                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'kill'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
+                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'startupPending'], ['-p', str(repo/'settings-demo.qml'), 'kill'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
                     self.assertIn('restarting', result.stderr)
+        calls.write_text('')
+        loading = subprocess.run(['bash', str(repo/'scripts/settings.sh'), '--page', 'elements'],
+            env={**env, 'QS_REPLY': 'false', 'QS_STARTUP': 'true'}, capture_output=True, text=True, timeout=5)
+        self.assertEqual(loading.returncode, 0, loading.stderr)
+        recorded = [json.loads(line) for line in calls.read_text().splitlines()]
+        self.assertEqual(recorded, [['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'openPage', 'elements'],
+                                   ['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'startupPending']])
+        self.assertNotIn('restarting', loading.stderr)
         calls.write_text('')
         delayed = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_LIST_DELAY': '1'}, capture_output=True, text=True, timeout=5)
         self.assertEqual(delayed.returncode, 0, delayed.stderr)
@@ -103,7 +111,7 @@ else: print(json.dumps(args))
         calls.write_text('')
         result = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_KILL_FAIL': '1'}, capture_output=True, text=True, timeout=5)
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(calls.read_text().splitlines()), 2, 'Do not spawn a duplicate when stopping the stale Settings instance fails')
+        self.assertEqual(len(calls.read_text().splitlines()), 3, 'Do not spawn a duplicate when stopping the stale Settings instance fails')
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'opt-in private Wayland personalization and Settings launch')
@@ -113,6 +121,8 @@ class NativePersonalizationCase(unittest.TestCase):
         for target in ('settings', 'oldSettings'):
             with self.subTest(target=target), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary); shutil.copytree(repo/'scripts', root/'scripts')
+                shutil.copytree(repo/'config', root/'config')
+                (root/'assets').symlink_to(repo/'assets', target_is_directory=True)
                 (root/'qml').symlink_to(repo/'qml', target_is_directory=True)
                 entry = root/'settings.qml'
                 entry.write_text('''//@ pragma UseQApplication

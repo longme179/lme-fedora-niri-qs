@@ -103,6 +103,35 @@ class SettingsCase(unittest.TestCase):
         self.assertFalse(self.path.exists())
         self.assertEqual(runner.calls, [])
 
+    def test_liquid_settings_initial_snapshot_includes_blur_capability_on_any_page(self):
+        preferences = backend.Preferences(self.path)
+        preferences.set('surfaceStyle', 'liquid')
+        runner = FakeRunner({('niri', '--version'): 'niri 26.04',
+            ('niri', 'msg', '--json', 'windows'): '[]', ('niri', 'msg', '--json', 'workspaces'): '[]'})
+        app = backend.DesktopBackend(runner=runner, preferences=preferences, settings_only=True, weather_fetch=False)
+        self.addCleanup(app.feature_executor.shutdown, wait=True)
+        self.addCleanup(app.charge_executor.shutdown, wait=True)
+        self.assertTrue(app.snapshot()['platform']['popupBlurSupported'])
+        self.assertTrue(app.snapshot()['platform']['popupBlurSupported'])
+        self.assertEqual(runner.calls.count(('niri', '--version')), 1)
+
+    def test_saver_defers_glass_detection_until_its_override_is_restored(self):
+        preferences = backend.Preferences(self.path)
+        preferences.set('surfaceStyle', 'liquid')
+        runner = FakeRunner({('niri', '--version'): 'niri 26.04',
+            ('niri', 'msg', '--json', 'windows'): '[]', ('niri', 'msg', '--json', 'workspaces'): '[]'})
+        app = backend.DesktopBackend(runner=runner, preferences=preferences, settings_only=True, weather_fetch=False)
+        self.addCleanup(app.feature_executor.shutdown, wait=True)
+        self.addCleanup(app.charge_executor.shutdown, wait=True)
+        app.battery_saver.toggle(True)
+        state = app.snapshot()
+        self.assertTrue(state['batterySaver']['active'])
+        self.assertFalse(state['platform']['popupBlurSupported'])
+        self.assertNotIn(('niri', '--version'), runner.calls)
+        app.battery_saver.toggle(False)
+        self.assertTrue(app.snapshot()['platform']['popupBlurSupported'])
+        self.assertEqual(runner.calls.count(('niri', '--version')), 1)
+
     def test_desktop_entry_install_is_idempotent_and_preserves_existing_entry(self):
         script = Path(__file__).resolve().parents[1] / "scripts/install-settings.sh"
         target = Path(self.temp.name) / "applications/settings.desktop"

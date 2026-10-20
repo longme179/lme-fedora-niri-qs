@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Open Settings with its saved appearance from the first visible frame. Wait for
+  the initial theme/runtime snapshot and theme resources before creating the view,
+  detect Liquid blur support before mapping, and reuse queued Gear requests during
+  startup. Keep the existing window through backend reconnects.
+
 - Recognize fractional nominal 60 Hz display timings in Battery saver, including
   60.003 Hz panels previously left at 120 Hz. Send the exact advertised timing,
   confirm mode changes and restores, and retain recovery data if niri ignores a

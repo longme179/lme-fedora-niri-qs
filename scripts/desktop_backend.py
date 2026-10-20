@@ -1127,7 +1127,9 @@ class DesktopBackend:
                 enabled=self.preferences.values['mirroringEnabled'])
         if self.settings_only:
             # Only Liquid floating windows need compositor coordinates for their rim sampler.
-            self.niri = self.niri_state() if self.preferences.values['surfaceStyle'] == 'liquid' and not self.battery_saver_state['active'] else {"available": False, "windows": [], "workspaces": []}
+            liquid = self.preferences.values['surfaceStyle'] == 'liquid' and not self.battery_saver_state['active']
+            if liquid and self.platform['niriVersion'] == 'Not checked': self.platform = self.compositor_features()
+            self.niri = self.niri_state() if liquid else {"available": False, "windows": [], "workspaces": []}
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan()

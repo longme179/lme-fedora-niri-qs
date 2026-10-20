@@ -1,5 +1,32 @@
 # Validation and platform limits
 
+## Settings first-visible-frame appearance — 2026-10-20
+
+The startup regression delays the backend snapshot by 500 ms and records visible
+frame state. Before the fix, Liquid, customized Smoked and Battery saver all
+exposed the default Material surface, 90% opacity and Roboto before their saved
+state arrived. The fixed window creates its view after theme resources and the
+first snapshot are ready, so controls start with their intended values rather
+than animating from defaults. The snapshot includes the Battery saver override
+and, for Liquid, compositor blur support before opening any Settings page.
+
+Repeated Gear requests queue the latest page in the same loading instance.
+`openPage` still confirms a visible window; a separate `startupPending` reply
+distinguishes an initializing instance from the legacy false-success case. The
+loaded view stays visible across backend reconnects. A stalled initial load shows
+the existing diagnostic interface after a bounded deadline instead of remaining
+hidden indefinitely. No shader, render pass or steady-state polling was added.
+
+`scripts/check.sh` passed **469 tests: 382 passed, 87 opt-in checks skipped**,
+plus Bash syntax and the demo snapshot. Three separate native checks passed on
+private Sway/OpenGL: first-frame state and repeated Gear requests, recovery from
+legacy/missing IPC handlers, and shell-name edits with close/reopen persistence.
+QML lint scanned **141 files with zero errors and 67 existing metadata warnings**.
+
+These checks use Quickshell 0.3.2 / Qt 6.8.2 and Mesa llvmpipe, not the laptop's
+GPU or compositor. Visual timing on the owner's Fedora/niri session remains a
+target-machine check.
+
 ## Battery saver fractional refresh fix — 2026-10-20
 
 The reported panel exposes 120002 and 60003 mHz modes. The old strict 60000 mHz

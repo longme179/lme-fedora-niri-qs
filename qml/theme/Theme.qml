@@ -6,6 +6,7 @@ import "../services"
 
 QtObject {
     id: root
+    readonly property bool ready: glassConfig.settled && palettePresets.settled && tokenCatalog.settled && customPalette.settled
     readonly property bool batterySaver: ShellState.batterySaverActive
     readonly property bool liquidGlass: !batterySaver && ShellState.preferences.surfaceStyle === "liquid"
     readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false
@@ -14,8 +15,15 @@ QtObject {
         values[key] = glassControls[key].default; return values;
     }, {}), ShellState.preferences.liquidGlass || {})
     property FileView glassFile: FileView {
+        id: glassConfig
+        property bool settled: false
         path: Quickshell.shellPath("config/liquid-glass.json")
-        onLoaded: root.glassControls = JSON.parse(text())
+        onLoaded: {
+            try { root.glassControls = JSON.parse(text()); }
+            catch (error) { console.warn("Glass controls could not be loaded:", error); }
+            settled = true;
+        }
+        onLoadFailed: settled = true
     }
     readonly property color glassBase: glass.tint || "#f0081420"
     readonly property var glassColors: ({
@@ -41,11 +49,15 @@ QtObject {
     readonly property var generated: ShellState.preferences.paletteSource === "wallpaper" ? ShellState.preferences.wallpaperPalette || ({})
         : ShellState.preferences.paletteSource === "preset" ? activePreset.colors || ({}) : ({})
     property FileView presetsFile: FileView {
+        id: palettePresets
+        property bool settled: false
         path: Quickshell.shellPath("config/palettes.json")
         onLoaded: {
             try { const data = JSON.parse(text()); root.paletteCatalog = data.palettes; root.paletteSchemes = data.schemes; }
             catch (error) { console.warn("Palette catalog could not be loaded:", error); }
+            settled = true;
         }
+        onLoadFailed: settled = true
     }
     function solid(color) { const value = Qt.color(color); return Qt.rgba(value.r, value.g, value.b, 1); }
     function colorFor(key, fallback) {
@@ -63,8 +75,15 @@ QtObject {
     }
     function fontFor(key) { return fonts[key] || (key === "mono" ? "JetBrains Mono" : key === "body" ? "Roboto" : fontFamily); }
     property FileView catalogFile: FileView {
+        id: tokenCatalog
+        property bool settled: false
         path: Quickshell.shellPath("config/theme-tokens.json")
-        onLoaded: root.catalog = JSON.parse(text())
+        onLoaded: {
+            try { root.catalog = JSON.parse(text()); }
+            catch (error) { console.warn("Theme catalog could not be loaded:", error); }
+            settled = true;
+        }
+        onLoadFailed: settled = true
     }
     readonly property color background: colorFor("background", custom.background || "#22212c")
     readonly property color panel: colorFor("panel", custom.panel || "#2d293d")
@@ -201,12 +220,15 @@ QtObject {
         } catch (error) { console.warn("Custom palette could not be loaded:", error); }
     }
     property FileView palette: FileView {
+        id: customPalette
+        property bool settled: false
         path: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/lme-shell/palette.json"
         watchChanges: true
         printErrors: false
-        onLoaded: root.loadPalette()
+        onLoaded: { root.loadPalette(); settled = true; }
         onFileChanged: reload()
         onLoadFailed: error => {
+            settled = true;
             if (error === FileViewError.FileNotFound) root.custom = {};
             else console.warn("Custom palette could not be read:", FileViewError.toString(error));
         }

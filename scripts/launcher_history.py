@@ -9,7 +9,7 @@ import fcntl
 import json
 import os
 import time
-from display_control import write_json
+from storage import write_json
 
 HALF_LIFE_DAYS=7
 LAUNCH_SECONDS_PER_EVENT=90

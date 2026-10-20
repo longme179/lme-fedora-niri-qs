@@ -12,7 +12,7 @@ import time
 from urllib.error import HTTPError
 from urllib.parse import urlencode, urlsplit, unquote
 from urllib.request import Request, urlopen
-from display_control import write_json
+from storage import write_json
 
 MAX_BYTES = 512 * 1024
 MAX_LINES = 4000

@@ -4,6 +4,18 @@
 **Scope:** current runtime, feature integrations, settings, entry points and validation.  
 **Baseline:** `1f54934`; recording/status-lock correction committed separately as `684f372`.
 
+**Reverified for Phase 1:** `58349e7` (2026-10-20). File inventories, line/byte
+counts, 147 settings, 89 finite live action IDs, 41 Settings-allowed IDs and 62
+constructor fields still match. Corrected imprecise source anchors below and in
+Appendix E. Demo has a separate 196-line dispatch tree: 81 finite IDs, seven more
+live IDs matched through `appearance`/`gowall` prefixes, and no `desktopEdit` match.
+Prefix matching is broader than those seven known IDs; this is not a claim of
+identical live/demo validation. The earlier heuristic QML fallback count is omitted
+because its matching rule was not recorded; it is not a reproducible metric.
+
+**Approved order:** A7 → A4 → A1 → A2 → A3 (one domain pilot, including demo) → A5.
+A6 is deferred; polling, sampling cadence and power policy are outside Phase 1.
+
 ## Summary
 
 LME is a Quickshell/Qt Quick shell, with separate main-shell and Settings processes,
@@ -14,8 +26,9 @@ can be implemented locally but still require several unrelated coordinator edits
 This report ranks seven change-cost problems and records the current contracts;
 it does not propose replacing the shell or changing its appearance.
 
-**Phase boundary:** the audit itself changes documentation only. Phase 1 architecture
-design, Phase 2 refactors, and Phase 3 enforcement scripts await the owner's approval.
+**Phase boundary:** the audit itself changes documentation only. Phase 0 is approved;
+the Phase 1 proposal is in `ARCHITECTURE.md`. Phase 2 refactors and Phase 3 enforcement
+scripts still await the owner's approval.
 The separately requested recording bug fix is not part of a behavior-preserving
 refactor. No feature folders, manifests, settings migrations or new dependencies
 were introduced here.
@@ -71,7 +84,7 @@ GPU preference or recording format was changed.
 | `settings-demo.qml` | Settings with isolated demo state. |
 | `authentication-demo.qml`, `capture-demo.qml`, `native-features-demo.qml`, `upgrades-demo.qml` | Test/demo hosts for real components; their fixture IPC is not the production feature API. |
 | `qml/services/ShellState.qml` | Process-local singleton owning backend JSON-lines transport, pending results, shared snapshots, routing and several feature policies. |
-| `scripts/desktop_backend.py` | 2,221 lines; `DesktopBackend` constructor at 619, snapshot composition at 1107, completion dispatch at 1199, request handling at 1366, live dispatch at 1607, shutdown at 2201. `perform` is 377 lines; demo dispatch is another 196. |
+| `scripts/desktop_backend.py` | 2,221 lines; `DesktopBackend` constructor at 619, snapshot composition at 1107, completion dispatch at 1199, request handling at 1364, live dispatch at 1607, shutdown at 2204. `perform` is 377 lines; separate demo dispatch at 1402 is another 196. |
 | Backend CLI | `--once`, `--demo`, `--settings`, startup wallpaper/display restore, and JSON-lines service loop. Selectors watch stdin/niri; niri changes are coalesced, pending work wakes promptly, request size is bounded. |
 | Worker ownership | Two general workers, one charging worker and a weather worker; owned recorder/mirror/idle/night-light lifecycles. Display rollback has a separate watchdog. QML owns Bluetooth pairing, clipboard, Cava, lyrics and updater helpers. Detached Launchpad/user applications deliberately outlive backend commands. |
 | Persistence | `$XDG_CONFIG_HOME/lme-shell/settings.json`, protected by `settings.lock`; separate saver restore journal, feature data/cache and display-preview runtime state. |
@@ -109,11 +122,13 @@ module/process level; several stable shared helpers are appropriate reuse.
 **Severity:** Significant. **Integration:** feature identity → host registries.
 
 **Evidence:** `BarRegistry.qml:6` and `desktop_backend.py:93` repeat the factory bar
-layout; backend `BAR_MODULES` separately validates IDs. `BarModule.qml:20` selects
+layout; backend `BAR_MODULES` separately validates IDs. `BarModule.qml:27` selects
 renderers/availability independently of metadata. `ControlRegistry.qml:13` reads
-the grid catalog, while `ControlDashboard.qml:30` and `:103` independently map cards
+the grid catalog, while `ControlDashboard.qml:31` and `:102` independently map cards
 and tiles to components. Settings page registration spans `SettingsRegistry.qml:5`,
-`SettingsView.qml:129`, `ShellState.qml:94`, `scripts/settings.sh:23` and `qmldir`.
+`SettingsView.qml:131`, `ShellState.qml:92`, `scripts/settings.sh:19` and `qmldir`.
+Gesture navigation choices at `BarGestures.qml:10` and backend validation at
+`desktop_backend.py:458` also repeat registered route IDs.
 
 **Shared knowledge and effect:** adding a page can make it searchable yet rejected
 by the launch script; adding metadata alone cannot render a new bar module. The
@@ -132,10 +147,9 @@ entries, preview and Settings startup need characterization before changing load
 
 **Evidence:** defaults at `desktop_backend.py:62`, validation at `:358`, portable
 allowlist at `settings_transfer.py:8`, appearance membership in
-`desktop_features.py:11`, and clipboard defaults/limits at `clipboard.py:178`.
+`desktop_features.py:19`, and clipboard defaults/limits at `clipboard.py:178`.
 Recording options/ranges also appear in `BehaviorPage.qml:123` and backend validation.
-There are literal fallback reads for 81 distinct preferences across QML. Those
-include defensive empty/default values and must not all be classified as redundant
+QML fallback reads also include defensive empty/default values; they must not all be classified as redundant
 factory-default definitions.
 
 **Shared knowledge and effect:** a changed range must agree across processes and
@@ -154,8 +168,8 @@ UI simply to remove a few fallback expressions.
 **Severity:** Significant. **Integration:** domain controller → backend lifecycle.
 
 **Evidence:** constructor `desktop_backend.py:619`, snapshot `:1107`, completion
-dispatch `:1199`, Settings allowlist `:1371`, invalidation `:1380`, demo `:1402`, live
-dispatch `:1607`, and shutdown `:2201`. Completion also installs feature-specific
+dispatch `:1199`, Settings allowlist `:1371`, invalidation `:1380`, separate demo tree
+`:1402`, live dispatch `:1607`, and shutdown `:2204`. Completion also installs feature-specific
 capture/image-utility state. There are 89 explicit live action IDs, of which 41 are
 allowed from standalone Settings.
 
@@ -176,8 +190,9 @@ registration is additional structure; avoid migrating every controller in one st
 
 **Evidence:** `ControlCenter.qml:15` has the labels, `:18` another positional list,
 `:19` refreshes tabs 0/2, `:20` marks tab 4 read, and `:116` selects components by
-index. `BarGestures.qml:52` maps audio/devices/agenda/system to numeric positions;
-`ShellState.qml:40` stores an integer. `Agenda.qml` repeats positional dispatch.
+index. `BarGestures.qml:53` maps audio/devices/agenda/system to numeric positions;
+`ControlDashboard.qml:320` writes the monitor index and `ShellState.qml:40` stores
+an integer. `Agenda.qml:15`/`:29` repeat positional labels/dispatch.
 
 **Shared knowledge and effect:** inserting or reordering a tab can silently open a
 different surface or trigger the wrong refresh/read behavior. This is a small but
@@ -192,11 +207,11 @@ wholesale navigation rewrite is not.
 
 **Severity:** Significant. **Integration:** backend protocol → UI routing/presentation.
 
-**Evidence:** `ShellState.qml:47` lists panel flags and visibility consumers, `:73`
-routes panels/pages, `:119` coordinates close-before-capture/record, `:140` transports
-commands, and `:154` combines snapshots with peripheral alerts, OSD, Wi-Fi results,
+**Evidence:** `ShellState.qml:47` lists panel flags and visibility consumers, `:76`
+routes panels/pages, `:121` coordinates close-before-capture/record, `:132` transports
+commands, and `:144` combines snapshots with peripheral alerts, OSD, Wi-Fi results,
 overview fallback and toast suppression. Process recovery/Settings launch follow
-at `:187`. The host geometry in `shell.qml:82` also knows individual popup identities.
+at `:188`. The host geometry in `shell.qml:93` also knows individual popup identities.
 
 **Shared knowledge and effect:** a backend action can require presentation edits in a
 generic transport singleton, including whether it should toast or refresh a specific
@@ -209,6 +224,9 @@ Move policy before moving files. Trade-off: a few explicit hooks are preferable 
 a universal event bus or one backend instance per widget.
 
 ## A6 — Sampling, power policy and lifecycle coordination need explicit ownership
+
+**Status:** Deferred by the owner. Retained as an audit observation; no sampling,
+lifecycle-policy or power-policy redesign belongs to the current migration.
 
 **Severity:** Significant. **Integration:** controls/resource owners → shared snapshots.
 
@@ -391,11 +409,11 @@ Optional `media-keys.kdl`: XF86AudioRaiseVolume/LowerVolume/Mute/MicMute → wpc
 <details>
 <summary>89 explicit live action IDs and allowed Settings context</summary>
 
-| Action | Source line | Allowed in standalone Settings |
+| Action | Handler branch line (including delegated helpers) | Allowed in standalone Settings |
 |---|---:|---|
-| `appearanceApply` | 1991 | yes |
-| `appearanceDelete` | 1991 | yes |
-| `appearanceSave` | 1991 | yes |
+| `appearanceApply` | 2002 | yes |
+| `appearanceDelete` | 2004 | yes |
+| `appearanceSave` | 1997 | yes |
 | `batterySaver` | 1609 | yes |
 | `bluetoothDevice` | 1928 | no |
 | `bluetoothToggle` | 1926 | no |
@@ -475,10 +493,10 @@ Optional `media-keys.kdl`: XF86AudioRaiseVolume/LowerVolume/Mute/MicMute → wpc
 | `weatherSearch` | 1828 | yes |
 | `weatherSelect` | 1837 | yes |
 | `wifiConnect` | 1814 | no |
-| `wifiDisconnect` | 1814 | no |
-| `wifiForget` | 1814 | no |
-| `wifiSaved` | 1814 | no |
-| `wifiScan` | 1814 | no |
+| `wifiDisconnect` | 2021 | no |
+| `wifiForget` | 2024 | no |
+| `wifiSaved` | 2024 | no |
+| `wifiScan` | 2018 | no |
 | `wifiToggle` | 1922 | no |
 | `wifiWatch` | 1674 | no |
 | `workspace` | 1889 | no |

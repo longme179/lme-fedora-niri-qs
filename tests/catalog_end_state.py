@@ -33,7 +33,12 @@ def replace_legacy(root):
                                   ('qml/settings/SettingsView.qml', 'root.currentPage.entry ? catalogPage : ')]:
         path = root/relative; text = path.read_text(); assert expression in text
         path.write_text(text.replace(expression, '', 1))
+    path = root/'scripts/settings.sh'
+    text, count = re.subn(r'^    utilities\|appearance\|.*\) ;;\n', '', path.read_text(), count=1, flags=re.M)
+    assert count == 1
+    path.write_text(text)
     return dict(metadata, mode='replace', total_bars=19, total_pages=16, total_tabs=6,
         limits='Registration/projection cost only. Copied host legacy arrays are removed; original IDs and '
-        'bar/Settings factories remain for comparable first-frame work. Tab factories are not exercised. '
-        'Neither mode models migrated feature bootstrap, schema consumption, workers or real GPU/hardware.')
+        'bar/Settings factories remain for comparable first-frame work. CLI legacy admission is removed too, '
+        'so Settings takes the index-only lookup path. Neither mode models migrated feature bootstrap, '
+        'schema consumption, workers, tab factories or real GPU/hardware.')

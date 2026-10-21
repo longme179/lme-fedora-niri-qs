@@ -70,9 +70,9 @@ malformed/missing/escaping resources, schema key collisions and Settings readine
 Do not edit existing assertions. Existing fixture setup may copy the new helper.
 
 Run G0–G3 and polling-only G6 before/after in private XDG/Wayland/D-Bus sessions.
-Measure five process/cache-cold launches per path using M0's mapped-window method.
-M0's EPYC 7763 is unavailable here (EPYC 9V74); retain historical numbers and measure
-an untouched main copy on this same machine as the paired baseline, explicitly
-labeling this substitute. Measure empty and synthetic catalogs identically.
-Synthetic entries model metadata I/O/validation/projection, not feature execution.
-If projected added median exceeds 50 ms on either path, stop for owner review.
+Review uses 15 warm-cache round-robin runs per variant/path, plus identical-main A/A.
+Keep M0's mapped-window endpoint; report all samples, min/max/IQR and paired A/A noise.
+M0's EPYC 7763 is unavailable; compare untouched main on the current EPYC 9V74.
+Synthetic entries model metadata/projection and extra hybrid rows, not feature execution.
+Targets: empty delta within measured A/A noise; synthetic added median <=50 ms per path.
+If a/b miss, stop for owner review; c and any real conversion need separate approval.

@@ -1,0 +1,176 @@
+test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged (test_feature_catalog.CatalogContractCase.test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged) ... ok
+test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults) ... ok
+test_empty_index_and_disabled_ids_retain_schema_but_hide_ui (test_feature_catalog.CatalogContractCase.test_empty_index_and_disabled_ids_retain_schema_but_hide_ui) ... ok
+test_rejects_duplicate_feature_projection_and_preference_ids (test_feature_catalog.CatalogContractCase.test_rejects_duplicate_feature_projection_and_preference_ids) ... ok
+test_rejects_invalid_version_shapes_and_duplicate_json_keys (test_feature_catalog.CatalogContractCase.test_rejects_invalid_version_shapes_and_duplicate_json_keys) ... ok
+test_rejects_legacy_collisions_even_when_disabled (test_feature_catalog.CatalogContractCase.test_rejects_legacy_collisions_even_when_disabled) ... ok
+test_rejects_mismatched_descriptor_and_executable_metadata (test_feature_catalog.CatalogContractCase.test_rejects_mismatched_descriptor_and_executable_metadata) ... ok
+test_rejects_missing_resources_traversal_absolute_and_symlink_escape (test_feature_catalog.CatalogContractCase.test_rejects_missing_resources_traversal_absolute_and_symlink_escape) ... ok
+test_copied_checkout_disabled_entry_retains_identity_without_ui (test_feature_catalog.NativeCatalogCase.test_copied_checkout_disabled_entry_retains_identity_without_ui) ... ERROR
+test_copied_checkout_injects_bar_page_tab_without_host_edits (test_feature_catalog.NativeCatalogCase.test_copied_checkout_injects_bar_page_tab_without_host_edits) ... ok
+test_settings_descriptor_missing (test_catalog_failures.NativeCatalogFailureCase.test_settings_descriptor_missing) ... ok
+test_settings_duplicate_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_duplicate_id) ... ok
+test_settings_legacy_bar_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_legacy_bar_id) ... ok
+test_settings_legacy_page_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_legacy_page_id) ... FAIL
+test_settings_legacy_tab_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_legacy_tab_id) ... FAIL
+test_settings_malformed_json (test_catalog_failures.NativeCatalogFailureCase.test_settings_malformed_json) ... ok
+test_settings_missing_index (test_catalog_failures.NativeCatalogFailureCase.test_settings_missing_index) ... ok
+test_settings_path_traversal (test_catalog_failures.NativeCatalogFailureCase.test_settings_path_traversal) ... ok
+test_settings_symlink_escape (test_catalog_failures.NativeCatalogFailureCase.test_settings_symlink_escape) ... ok
+test_settings_unsupported_version (test_catalog_failures.NativeCatalogFailureCase.test_settings_unsupported_version) ... ok
+test_settings_validation_timeout (test_catalog_failures.NativeCatalogFailureCase.test_settings_validation_timeout) ... ok
+test_shell_descriptor_missing (test_catalog_failures.NativeCatalogFailureCase.test_shell_descriptor_missing) ... ok
+test_shell_duplicate_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_duplicate_id) ... ok
+test_shell_legacy_bar_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_legacy_bar_id) ... ok
+test_shell_legacy_page_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_legacy_page_id) ... FAIL
+test_shell_legacy_tab_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_legacy_tab_id) ... FAIL
+test_shell_malformed_json (test_catalog_failures.NativeCatalogFailureCase.test_shell_malformed_json) ... ok
+test_shell_missing_index (test_catalog_failures.NativeCatalogFailureCase.test_shell_missing_index) ... ok
+test_shell_path_traversal (test_catalog_failures.NativeCatalogFailureCase.test_shell_path_traversal) ... ok
+test_shell_symlink_escape (test_catalog_failures.NativeCatalogFailureCase.test_shell_symlink_escape) ... ok
+test_shell_unsupported_version (test_catalog_failures.NativeCatalogFailureCase.test_shell_unsupported_version) ... ok
+test_shell_validation_timeout (test_catalog_failures.NativeCatalogFailureCase.test_shell_validation_timeout) ... ok
+
+======================================================================
+ERROR: test_copied_checkout_disabled_entry_retains_identity_without_ui (test_feature_catalog.NativeCatalogCase.test_copied_checkout_disabled_entry_retains_identity_without_ui)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_feature_catalog.py", line 165, in test_copied_checkout_disabled_entry_retains_identity_without_ui
+    with session(native=True, prepare=lambda root: inject(root, False)) as probe:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_fixture.py", line 72, in session
+    with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile(mode='w+') as log:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/tempfile.py", line 950, in __exit__
+    self.cleanup()
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py", line 759, in rmtree
+    _rmtree_safe_fd(stack, onexc)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py", line 703, in _rmtree_safe_fd
+    onexc(func, path, err)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py", line 662, in _rmtree_safe_fd
+    os.rmdir(name, dir_fd=dirfd)
+OSError: [Errno 39] Directory not empty: '/tmp/tmpj4cgl0fz/checkout'
+
+======================================================================
+FAIL: test_settings_legacy_page_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_legacy_page_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 36, in test
+    def test(self): self.check_fault(mode, fault)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 13, in check_fault
+    with session(mode, fault) as probe:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_failure_fixture.py", line 112, in session
+    if error in text: raise AssertionError(text)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Feature catalog: Duplicate settingsPage ID in legacy: appearance
+  INFO: Launching config: "/tmp/tmp46vaamos/checkout/settings-demo.qml"
+  INFO: Shell ID: "437822e2c0eacdf409835b41dbce1f8e" Path ID "437822e2c0eacdf409835b41dbce1f8e"
+  INFO: Saving logs to "/tmp/tmp46vaamos/runtime/quickshell/by-id/rj033al8nt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML SettingsRegistry at @qml/settings/SettingsRegistry.qml[4:1]: Binding loop detected for property "pages":
+qs:@/qs/qml/settings/SettingsRegistry.qml:5:5
+  WARN scene: QML SettingsRegistry at @qml/settings/SettingsRegistry.qml[4:1]: Binding loop detected for property "pages":
+qs:@/qs/qml/settings/SettingsRegistry.qml:5:5
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  WARN qml: Feature catalog: Duplicate settingsPage ID in legacy: appearance
+
+
+======================================================================
+FAIL: test_settings_legacy_tab_id (test_catalog_failures.NativeCatalogFailureCase.test_settings_legacy_tab_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 36, in test
+    def test(self): self.check_fault(mode, fault)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 13, in check_fault
+    with session(mode, fault) as probe:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_failure_fixture.py", line 112, in session
+    if error in text: raise AssertionError(text)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError:   INFO: Launching config: "/tmp/tmptaouvqyk/checkout/settings-demo.qml"
+  INFO: Shell ID: "4f79379fdb3ff2c5f03477dd872c0a6a" Path ID "4f79379fdb3ff2c5f03477dd872c0a6a"
+  INFO: Saving logs to "/tmp/tmptaouvqyk/runtime/quickshell/by-id/xk034al8nt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML ControlRegistry at @qml/services/ControlRegistry.qml[6:1]: Binding loop detected for property "tabs":
+qs:@/qs/qml/services/ControlRegistry.qml:11:5
+  WARN scene: QML ControlRegistry at @qml/services/ControlRegistry.qml[6:1]: Binding loop detected for property "tabs":
+qs:@/qs/qml/services/ControlRegistry.qml:11:5
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  WARN qml: Feature catalog: Duplicate controlTab ID in legacy: audio
+
+
+======================================================================
+FAIL: test_shell_legacy_page_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_legacy_page_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 36, in test
+    def test(self): self.check_fault(mode, fault)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 13, in check_fault
+    with session(mode, fault) as probe:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_failure_fixture.py", line 112, in session
+    if error in text: raise AssertionError(text)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError:   INFO: Launching config: "/tmp/tmphk7wzf2t/checkout/shell.qml"
+  INFO: Shell ID: "42053101f8e9c1991cb4b91da56c21ee" Path ID "42053101f8e9c1991cb4b91da56c21ee"
+  INFO: Saving logs to "/tmp/tmphk7wzf2t/runtime/quickshell/by-id/rx03oal8nt/log.qslog"
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  INFO: Configuration Loaded
+  WARN scene: QML SettingsRegistry at @qml/settings/SettingsRegistry.qml[4:1]: Binding loop detected for property "pages":
+qs:@/qs/qml/settings/SettingsRegistry.qml:5:5
+  WARN scene: QML SettingsRegistry at @qml/settings/SettingsRegistry.qml[4:1]: Binding loop detected for property "pages":
+qs:@/qs/qml/settings/SettingsRegistry.qml:5:5
+  WARN qml: Feature catalog: Duplicate settingsPage ID in legacy: appearance
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+
+
+======================================================================
+FAIL: test_shell_legacy_tab_id (test_catalog_failures.NativeCatalogFailureCase.test_shell_legacy_tab_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 36, in test
+    def test(self): self.check_fault(mode, fault)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 13, in check_fault
+    with session(mode, fault) as probe:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_failure_fixture.py", line 112, in session
+    if error in text: raise AssertionError(text)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError:   INFO: Launching config: "/tmp/tmpf8nn3vps/checkout/shell.qml"
+  INFO: Shell ID: "a5b42c2d804e8537972518aa675096d8" Path ID "a5b42c2d804e8537972518aa675096d8"
+  INFO: Saving logs to "/tmp/tmpf8nn3vps/runtime/quickshell/by-id/py03pal8nt/log.qslog"
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  INFO: Configuration Loaded
+  WARN scene: QML ControlRegistry at @qml/services/ControlRegistry.qml[6:1]: Binding loop detected for property "tabs":
+qs:@/qs/qml/services/ControlRegistry.qml:11:5
+  WARN scene: QML ControlRegistry at @qml/services/ControlRegistry.qml[6:1]: Binding loop detected for property "tabs":
+qs:@/qs/qml/services/ControlRegistry.qml:11:5
+  WARN qml: Feature catalog: Duplicate controlTab ID in legacy: audio
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+  WARN: Cannot enable background effect as ext-background-effect-v1 is not supported by the current compositor.
+
+
+----------------------------------------------------------------------
+Ran 32 tests in 42.115s
+
+FAILED (failures=4, errors=1)

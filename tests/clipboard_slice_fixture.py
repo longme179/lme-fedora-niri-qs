@@ -38,7 +38,7 @@ OBSERVE = '''
                 firstVisible: root.sliceFirstVisible,
                 visible: !!root.sliceSurface && root.sliceSurface.width > 0,
                 progress: root.sliceProgress,
-                page: ShellState.settingsPage,
+                page: ShellState.settingsPage, status: ShellState.statusMessage, panelKind: ShellState.panelKind, panelOpen: ShellState.panelOpen,
                 bars: BarRegistry.modules.map(item => item.id),
                 pages: SettingsRegistry.pages.map(item => item.key),
                 gestures: BarGestures.actions.map(item => item.id),
@@ -114,13 +114,13 @@ class World:
         return self.marker.read_text().splitlines() if self.marker.exists() else []
 
     @contextmanager
-    def launch(self, mode='shell'):
+    def launch(self, mode='shell', page='clipboard'):
         env = dict(self.env)
         if mode in ('demo', 'preview'): env['LME_SHELL_DEMO'] = '1'
         if mode == 'preview': env['LME_SHELL_PREVIEW'] = '1'
         entry = self.root/('settings.qml' if mode == 'settings' else 'shell.qml')
         with tempfile.TemporaryFile(mode='w+') as log:
-            argv = [str(self.root/'scripts/settings.sh'), '--page', 'clipboard'] if mode == 'settings' else ['quickshell', '-p', str(entry)]
+            argv = [str(self.root/'scripts/settings.sh'), '--page', page] if mode == 'settings' else ['quickshell', '-p', str(entry)]
             process = subprocess.Popen(argv, env=env, stdout=log, stderr=log)
             probe = Probe(entry, env, process, log)
             try:

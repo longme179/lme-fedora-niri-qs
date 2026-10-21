@@ -4,7 +4,6 @@ from pathlib import Path
 import shutil
 import tempfile
 
-import migration_startup as startup
 
 
 def synthetic(root, compact=False):
@@ -39,6 +38,7 @@ def synthetic(root, compact=False):
 
 
 def measure():
+    import migration_startup as startup
     original = startup.REPO
     with tempfile.TemporaryDirectory(prefix='synthetic-', dir=startup.OUTPUT) as directory:
         root = Path(directory)/'checkout'
@@ -56,6 +56,7 @@ def measure():
 
 
 if __name__ == '__main__':
+    import migration_startup as startup
     result = measure()
     (startup.OUTPUT/'startup-synthetic.json').write_text(json.dumps(result, indent=2)+'\n')
     print('Synthetic medians: '+str({key: result[key]['median_seconds'] for key in ('preview', 'settings')}), flush=True)

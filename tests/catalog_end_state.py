@@ -37,6 +37,7 @@ def replace_legacy(root):
     text, count = re.subn(r'^    utilities\|appearance\|.*\) ;;\n', '', path.read_text(), count=1, flags=re.M)
     assert count == 1
     path.write_text(text)
+    metadata['json_bytes'] = (root/'config/features.json').stat().st_size + sum((root/item['descriptor']).stat().st_size for item in index['features'])
     return dict(metadata, mode='replace', total_bars=19, total_pages=16, total_tabs=6,
         limits='Registration/projection cost only. Copied host legacy arrays are removed; original IDs and '
         'bar/Settings factories remain for comparable first-frame work. CLI legacy admission is removed too, '

@@ -152,7 +152,9 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         for key, definition in preferences.items():
             identifier(key)
             if key in result['preferences']: raise CatalogError(f'Duplicate setting key: {key}')
-            shape(definition, {'type', 'default', 'min', 'max', 'portable', 'appearance', 'validator'}, {'type', 'default'})
+            shape(definition, {'type', 'default', 'defaultResolver', 'min', 'max', 'portable', 'appearance', 'validator'}, {'type'})
+            if ('default' in definition) == ('defaultResolver' in definition): raise CatalogError('Invalid catalog fields')
+            if 'defaultResolver' in definition: identifier(definition['defaultResolver'])
             if definition['type'] not in ('boolean', 'integer', 'number', 'string', 'object', 'array'):
                 raise CatalogError(f'Invalid setting type: {key}')
             result['preferences'][key] = definition

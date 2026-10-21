@@ -11,7 +11,8 @@ import time
 from catalog_fixture import REPO, inject
 
 FAULTS = ('missing_index', 'malformed_json', 'unsupported_version', 'descriptor_missing',
-          'path_traversal', 'symlink_escape', 'duplicate_id', 'validation_timeout')
+          'path_traversal', 'symlink_escape', 'duplicate_id', 'validation_timeout',
+          'legacy_bar_id', 'legacy_page_id', 'legacy_tab_id')
 OBSERVE = '''
     IpcHandler {
         target: "catalogFailure"
@@ -41,6 +42,12 @@ def damage(root, fault):
         path = root/'qml/bar/CatalogFixture.qml'; path.unlink(); path.symlink_to(outside)
     elif fault == 'duplicate_id':
         data = json.loads(index.read_text()); data['features'] *= 2; index.write_text(json.dumps(data))
+    elif fault.startswith('legacy_'):
+        kind, key, value = {'legacy_bar_id': ('bar', 'id', 'audio'),
+            'legacy_page_id': ('settingsPage', 'key', 'appearance'),
+            'legacy_tab_id': ('controlTab', 'id', 'audio')}[fault]
+        descriptor[kind][key] = value
+        (root/'config/feature-fixture.json').write_text(json.dumps(descriptor))
     elif fault == 'validation_timeout':
         path = root/'scripts/feature_catalog.py'
         source = path.read_text().replace('def document(path):', 'def document(path):\n    __import__("time").sleep(10)')

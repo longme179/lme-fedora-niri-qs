@@ -1,5 +1,4 @@
 {"version":1,"features":[
 {"id":"clipboard","descriptor":"config/clipboard.json","enabled":true,"startup":{"bar":{"id":"clipboard","title":"Clipboard","detail":"Search text and image history","icon":"clipboard","entry":"qml/bar/ClipboardButton.qml","after":"privacy"},"settingsPage":{"key":"clipboard","title":"Clipboard","icon":"clipboard","description":"Text and images, ready when you need them","keywords":"history capture copy paste image pin","entry":"qml/settings/ClipboardPage.qml","after":"notifications"},"panel":{"id":"clipboard","entry":"qml/panels/ClipboardPanel.qml","centered":true,"scrim":0.4},"bootstrap":{"id":"clipboard","entry":"qml/panels/ClipboardFeature.qml"},"gesture":{"id":"clipboard","title":"Clipboard","after":"launchpad"}}},
-{"id":"weather","descriptor":"config/weather.json","enabled":true},
-{"id":"osd","descriptor":"config/osd.json","enabled":true}
+{"id":"weather","descriptor":"config/weather.json","enabled":true}
 ]}

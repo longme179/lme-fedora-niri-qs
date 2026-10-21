@@ -65,7 +65,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput")},
+    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit",)},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -266,7 +266,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "osdEnabled", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value
@@ -284,6 +284,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
         if low <= value <= high: return value
     if key == "osdPosition" and value in ("top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"): return value
     if key == "osdLayout" and value in ("horizontal","vertical"): return value
+    if key == "osdMargin" and type(value) is int and 0 <= value <= 96: return value
     if key == "osdOutput" and isinstance(value,str) and 1 <= len(value) <= 128 and not any(ord(c)<32 for c in value): return value
     if key == "paletteSource" and value in ("dracula","wallpaper","preset"): return value
     if key == "palettePreset" and isinstance(value,str) and value in PALETTE_IDS: return value

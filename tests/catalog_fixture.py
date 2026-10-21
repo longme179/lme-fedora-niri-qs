@@ -34,7 +34,7 @@ ShellRoot {
     IpcHandler {
         target: "catalogFixture"
         function state(): string {
-            return JSON.stringify({bars: BarRegistry.modules, defaults: BarRegistry.defaults,
+            return JSON.stringify({registriesReady: FeatureCatalog.settled, bars: BarRegistry.modules, defaults: BarRegistry.defaults,
                 pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs, agenda: ControlRegistry.agendaTabs,
                 barLoaded: find(bar.item, "injectedBar"), pageLoaded: find(page.item, "injectedPage"),
                 tabLoaded: find(center.item, "injectedTab")});
@@ -86,7 +86,7 @@ def session(native=False, prepare=None):
         process = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
         try:
             probe = Probe(root, entry, env, log)
-            probe.wait(lambda state: len(state['tabs']) >= 6)
+            probe.wait(lambda state: state['registriesReady'] and len(state['tabs']) >= 6)
             yield probe
         finally:
             process.terminate(); process.wait(timeout=6)

@@ -1,0 +1,19 @@
+{
+  "id": "weather",
+  "preferences": {
+    "weatherAutoLocation": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "weatherUnit": {
+      "type": "string",
+      "validator": "weatherUnit",
+      "portable": true,
+      "appearance": false,
+      "default": "celsius"
+    }
+  }
+}

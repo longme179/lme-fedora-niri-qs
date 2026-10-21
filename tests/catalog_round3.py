@@ -19,7 +19,8 @@ from catalog_statistics import compare, describe
 def machine():
     return dict(platform=platform.platform(), cpu=next(line.split(':', 1)[1].strip() for line in
         Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')),
-        cpu_max=Path('/sys/fs/cgroup/cpu.max').read_text().strip(),
+        cpu_max=Path('/sys/fs/cgroup/cpu.max').read_text().strip(), logical_cpus=os.cpu_count(),
+        memory_max=Path('/sys/fs/cgroup/memory.max').read_text().strip(),
         governors=sorted({path.read_text().strip() for path in Path('/sys/devices/system/cpu').glob('cpu*/cpufreq/scaling_governor')}),
         power={str(path): path.read_text().strip() for path in Path('/sys/class/power_supply').glob('*/online')},
         load_average=os.getloadavg(), graphics='Private Sway pixman, Qt RHI/OpenGL Mesa software; no real GPU claim')
@@ -72,7 +73,7 @@ def benchmark(output, revisions, rounds=30):
                         started = time.monotonic_ns()
                         with startup.Launch(kind, 'round-'+str(number), startup.OUTPUT/'cache') as launch:
                             values[label].append(launch.elapsed*1000)
-                        if any(bad in launch.text for bad in ('Failed to load configuration', 'ReferenceError', 'TypeError')):
+                        if any(bad in launch.text for bad in ('Failed to load configuration', 'ReferenceError', 'TypeError', 'Binding loop', 'Failed to start IPC server', 'Feature catalog:')):
                             raise AssertionError(launch.text)
                         revision = next(row for row in revisions if row[0] == label)
                         writer.writerow([kind, number, position, *revision, launch.elapsed*1000, started]); stream.flush()

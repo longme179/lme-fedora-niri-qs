@@ -38,15 +38,20 @@ the reader does not create another legacy catalog or scrape source code.
 
 - Python backend: load/cache metadata once through the reader; validate against
   its existing bar IDs and preference keys. No dispatch/schema/polling changes.
-- QML: one `FeatureCatalog` singleton invokes that same reader once, caches the
-  validated result, and projects through the existing registries. Their merge
+- QML optimization a: one cached async FileView index read, cheap structural
+  parsing, no extra Python reader process. Deep validation stays in Python;
+  nonempty UI entries wait for the existing backend's validation verdict.
+  Descriptor presentation data uses async reads with a bounded startup deadline.
+  If a misses the target, b moves light startup fields into the index; c needs approval.
+  Project through the existing registries. Their merge
   boundary checks collisions with their actual legacy arrays, including disabled
   entries. No per-widget process, file watcher, eval or environment index override.
-- Settings CLI: call the same Python reader with its current legacy page list;
+- Settings CLI/check.sh: deep-validate through the same bounded Python reader;
   keep unknown-page messages/exit codes and existing IPC/visible-window handshake.
-- Standalone Settings waits for catalog completion plus the existing Theme/backend
-  barrier. Catalog errors use console diagnostics and ShellState's existing error
-  banner; show a recoverable window through the existing startup-failure path.
+- While legacy lists exist, a broken/timed-out catalog settles to legacy-only plus
+  console diagnostics and the existing ShellState error banner. Never block legacy
+  pages or treat catalog failure as missing saved appearance. Settings still waits
+  for Theme/backend readiness; openPage()/startupPending() retain their contracts.
 - Keep `BarRegistry.info/clone`, `SettingsRegistry.pages/page/search` and
   `ControlRegistry` APIs. Generic URL-entry fallbacks accept descriptor entries;
   all legacy component factories and specialized bindings remain unchanged.

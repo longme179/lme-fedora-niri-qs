@@ -65,7 +65,6 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit",)},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -363,7 +362,8 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
                 seen.add(module)
             normalized[zone] = list(modules)
         return normalized
-    if key == "animations" and type(value) is bool: return value
+    if key in {"animations", "weatherAutoLocation"} and type(value) is bool:
+        return value
     if key == "weatherLocation":
         return location(value)
     if key == "weatherUnit" and isinstance(value, str) and value in {"celsius", "fahrenheit"}:

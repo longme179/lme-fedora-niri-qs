@@ -89,10 +89,9 @@ def bar_layout():
 
 class Schema:
     """Composition supplies named existing validators/resolvers; JSON never executes code."""
-    def __init__(self, *, legacy_validator=None, validators=None, resolvers=None):
+    def __init__(self, *, legacy_validator=None, resolvers=None):
         self.definitions,self._appearance,self.legacy_keys = metadata()
         self._legacy = legacy_validator
-        self._validators = dict(validators or {})
         self._resolvers = dict(resolvers or {})
 
     def defaults(self, context=None):
@@ -115,7 +114,6 @@ class Schema:
         if name == 'legacy':
             if self._legacy is None: raise ValueError('Legacy validator is not bound')
             return self._legacy(key,value)
-        if name in self._validators: return self._validators[name](value)
         if name == 'boolean' and type(value) is bool: return value
         if name == 'integer' and type(value) is int and definition['min'] <= value <= definition['max']: return value
         raise ValueError(f'Invalid preference: {key}')

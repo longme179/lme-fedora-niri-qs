@@ -6,8 +6,10 @@ import Quickshell.Io
 
 QtObject {
     id: root
-    property bool settled: false
-    property string error: ""
+    property var publication: ({settled: false, error: "", data: {
+        bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}}})
+    readonly property bool settled: publication.settled
+    readonly property string error: publication.error
     readonly property bool ready: settled
     property bool indexLoaded: false
     property var records: []
@@ -17,12 +19,11 @@ QtObject {
     onVerifiedChanged: if (verified) assemble()
     property var requested: []
     signal descriptorLoaded(string id)
-    property var data: ({bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}})
+    readonly property var data: publication.data
     function fail(message) {
         if (error) return;
-        error = "Feature catalog: " + message;
-        data = {bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}};
-        settled = true;
+        publication = {settled: true, error: "Feature catalog: " + message,
+            data: {bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}}};
         console.warn(error);
         ShellState.statusMessage = error;
         ShellState.statusError = true;
@@ -62,7 +63,7 @@ QtObject {
                     if (record.enabled) result[kind].push(item);
                 }
             });
-            data = result; settled = true;
+            publication = {data: result, settled: true, error: ""};
         } catch (exception) { fail(String(exception)); }
     }
     function project(kind, legacy, key, includeDisabled = false) {
@@ -90,7 +91,7 @@ QtObject {
                 for (const item of value.features)
                     if (!item || typeof item.id !== "string" || typeof item.descriptor !== "string" || typeof item.enabled !== "boolean") throw new Error("Invalid index record");
                 root.records = value.features; root.indexLoaded = true; root.assemble();
-                if (!root.records.length) root.settled = true;
+                if (!root.records.length) root.publication = {data: root.data, settled: true, error: ""};
             } catch (exception) { root.fail(String(exception)); }
         }
         onLoadFailed: root.fail("Index could not be read")

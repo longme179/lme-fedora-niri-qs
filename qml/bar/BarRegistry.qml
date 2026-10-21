@@ -5,6 +5,7 @@ import "../services"
 QtObject {
     readonly property var zones: ["left", "center", "right"]
     readonly property var defaults: ({left: ["launcher", "overview", "workspaces"], center: ["activity"], right: ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]})
+    readonly property var knownModules: FeatureCatalog.project("bar", legacyModules, "id", true)
     readonly property var modules: FeatureCatalog.project("bar", legacyModules, "id")
     readonly property var legacyModules: [
         {id: "launchpad", title: "Launchpad", detail: "Your scripts and binaries", icon: "applications"},
@@ -27,7 +28,7 @@ QtObject {
         {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"},
         {id: "clipboard", title: "Clipboard", detail: "Search text and image history", icon: "clipboard"}
     ]
-    function info(id) { return FeatureCatalog.project("bar", legacyModules, "id", true).find(item => item.id === id) || {id: id, title: id, icon: "applications"}; }
+    function info(id) { return knownModules.find(item => item.id === id) || {id: id, title: id, icon: "applications"}; }
     function clone(layout) {
         const value = layout || defaults;
         return {left: value.left.slice(), center: value.center.slice(), right: value.right.slice()};

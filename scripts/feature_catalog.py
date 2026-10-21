@@ -96,6 +96,25 @@ def validate_positions(data, legacy):
                 visited.add(after); after = anchors[after]
 
 
+def legacy_ids(root):
+    """Read the existing registrations until their owners leave the legacy lists."""
+    root = Path(root); result = {}
+    sources = [('bar', 'qml/bar/BarRegistry.qml', 'legacyModules'),
+        ('settingsPage', 'qml/settings/SettingsRegistry.qml', 'legacyPages'),
+        ('gesture', 'qml/bar/BarGestures.qml', 'legacyActions'),
+        ('panel', 'qml/services/ShellState.qml', 'legacyPanels')]
+    for kind, source, field in sources:
+        path = root/source
+        if not path.exists(): continue
+        match = re.search(r'\b' + field + r':\s*\[(.*?)\]', path.read_text(), re.S)
+        if not match: raise CatalogError(f'Missing legacy registration field: {field}')
+        pattern = r'"([A-Za-z][A-Za-z0-9_-]*)"' if kind == 'panel' else r'\b' + KINDS[kind] + r': "([A-Za-z][A-Za-z0-9_-]*)"'
+        result[kind] = re.findall(pattern, match[1])
+    path = root/'config/control-grid.json'
+    if path.exists(): result['controlTab'] = [item['id'] for item in document(path)['tabs']]
+    return result
+
+
 def load_catalog(root=None, *, legacy=None, setting_keys=()):
     root = (Path(root) if root is not None else Path(__file__).resolve().parents[1]).resolve()
     index = document(resource(root, 'config/features.json', '.json'))
@@ -212,14 +231,7 @@ def check_admission(data):
     keys = {record.get('startup', {}).get('settingsPage', {}).get('key') for record in index['features']}
     if any(page['key'] not in keys for page in data['all']['settingsPage']):
         raise CatalogError('Settings pages require startup keys in the index')
-    legacy = {}
-    root = path.parents[1]
-    for kind, source, field in [('bar', 'qml/bar/BarRegistry.qml', 'legacyModules'), ('settingsPage', 'qml/settings/SettingsRegistry.qml', 'legacyPages'), ('gesture', 'qml/bar/BarGestures.qml', 'legacyActions')]:
-        host = root/source
-        if host.exists():
-            body = host.read_text().split(field + ':', 1)[-1].split('\n    ]', 1)[0]
-            legacy[kind] = re.findall(r'\b' + KINDS[kind] + r': "([A-Za-z][A-Za-z0-9_-]*)"', body)
-    validate_legacy(data, legacy)
+    validate_legacy(data, legacy_ids(path.parents[1]))
     if path.read_text(encoding='utf-8') != canonical_index(index):
         raise CatalogError('Noncanonical feature index: require compact records on separate lines and literal first page keys')
 

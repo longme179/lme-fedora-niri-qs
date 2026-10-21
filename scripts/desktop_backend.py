@@ -59,7 +59,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
-from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, validate_legacy
+from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
 
 
 DEFAULT_PREFERENCES = {
@@ -110,7 +110,7 @@ def initialize_catalog():
     if _catalog_initialized: return
     _catalog_initialized = True
     try:
-        FEATURE_CATALOG = validate_legacy(feature_catalog(), {'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
+        FEATURE_CATALOG = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
     except CatalogError as error:
         FEATURE_CATALOG_ERROR = str(error)
         print(f'Feature catalog: {error}', file=sys.stderr)

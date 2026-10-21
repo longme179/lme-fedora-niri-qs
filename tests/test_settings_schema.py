@@ -218,3 +218,33 @@ assert 'schemaPrivate' not in schema.appearance_keys()
 """
         result=self.copied(mutate,code)
         self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_descriptor_can_reference_an_existing_runtime_default_resolver(self):
+        def mutate(root):
+            legacy_path=root/'config/preferences-legacy.json';legacy=json.loads(legacy_path.read_text())
+            definition=legacy['preferences'].pop('recordingFolder')
+            legacy_path.write_text(json.dumps(legacy))
+            path=root/'config/clipboard.json';descriptor=json.loads(path.read_text())
+            descriptor['preferences']['recordingFolder']=definition
+            path.write_text(json.dumps(descriptor))
+        code="""from pathlib import Path
+import feature_catalog as reader
+import desktop_backend as b
+data=reader.load_catalog()
+assert data['preferences']['recordingFolder']['defaultResolver'] == 'recordingFolder'
+assert b.DEFAULT_PREFERENCES['recordingFolder'] == str(Path.home()/'Videos/Recordings')
+"""
+        result=self.copied(mutate,code)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_resolver_declarations_reject_ambiguous_or_non_identifier_names(self):
+        for resolver,keep_default in (('recordingFolder',True),("os.system('bad')",False)):
+            def mutate(root):
+                path=root/'config/clipboard.json';data=json.loads(path.read_text())
+                definition=data['preferences']['clipboardLimit'];definition['defaultResolver']=resolver
+                if not keep_default:definition.pop('default')
+                path.write_text(json.dumps(data))
+            with self.subTest(resolver=resolver):
+                result=self.copied(mutate,'import feature_catalog; feature_catalog.load_catalog()')
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('CatalogError',result.stderr)

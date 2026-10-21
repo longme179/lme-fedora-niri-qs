@@ -7,7 +7,7 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Commits: `169cfc4` archive/state; `9fa207f` tests; `52bbd52` guard;
   this final documentation commit records verification.
 - Archived 184 files with identical SHA-256 contents; no new raw evidence committed.
-- STATE: 56 lines; AGENTS: 79 lines. No shell/backend runtime code changed.
+- STATE: 56 lines; AGENTS: 78 lines. No shell/backend runtime code changed.
 - Characterization before guard: 3 passed, 16 guard contracts N/A (not implemented).
   The additional ES-import contract failed before support; final focused run: 20/0/0.
 - G0 before: not run; this task explicitly requested one final G0 execution only.

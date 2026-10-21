@@ -1,0 +1,7 @@
+test_missing_page_anchor_settles_with_legacy_only_diagnostic (test_catalog_projection_order.NativePositionCase.test_missing_page_anchor_settles_with_legacy_only_diagnostic) ... skipped 'M4b position metadata absent on baseline'
+test_same_anchor_index_order_and_hidden_anchor_descendant (test_catalog_projection_order.NativePositionCase.test_same_anchor_index_order_and_hidden_anchor_descendant) ... skipped 'M4b position metadata absent on baseline'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK (skipped=2)

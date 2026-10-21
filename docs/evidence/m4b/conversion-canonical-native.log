@@ -1,0 +1,21 @@
+Evidence directory: /workspace/.lme-dev/m4b/conversion-canonical-native
+test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history (test_clipboard_entry.NativeEntryCase.test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history) ... ok
+test_demo_preview_clipboard_dispatch_keeps_history_without_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_clipboard_dispatch_keeps_history_without_worker) ... ok
+test_demo_preview_never_start_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_never_start_worker) ... ok
+test_image_click_routes_through_capture_service (test_clipboard_entry.NativeEntryCase.test_image_click_routes_through_capture_service) ... ok
+test_preview_initial_clipboard_env_opens_history_without_worker (test_clipboard_entry.NativeEntryCase.test_preview_initial_clipboard_env_opens_history_without_worker) ... ok
+test_settings_cli_search_reuse_and_first_page_ready_without_worker (test_clipboard_entry.NativeEntryCase.test_settings_cli_search_reuse_and_first_page_ready_without_worker) ... ok
+test_host_registration_removal_and_metadata_only_schema (test_clipboard_withdrawal.ClipboardOwnershipCase.test_host_registration_removal_and_metadata_only_schema) ... ok
+test_disable_preserves_layout_preferences_schema_history_and_reenable (test_clipboard_withdrawal.NativeWithdrawalCase.test_disable_preserves_layout_preferences_schema_history_and_reenable) ... ok
+test_disabled_saved_gesture_ids_remain_valid (test_clipboard_withdrawal.NativeWithdrawalCase.test_disabled_saved_gesture_ids_remain_valid) ... ok
+test_invalid_page_anchor_never_bootstraps_clipboard (test_clipboard_withdrawal.NativeWithdrawalCase.test_invalid_page_anchor_never_bootstraps_clipboard) ... ok
+test_second_entry_needs_only_own_files_and_index_record (test_clipboard_withdrawal.NativeWithdrawalCase.test_second_entry_needs_only_own_files_and_index_record) ... ok
+test_missing_page_anchor_settles_with_legacy_only_diagnostic (test_catalog_projection_order.NativePositionCase.test_missing_page_anchor_settles_with_legacy_only_diagnostic) ... ok
+test_same_anchor_index_order_and_hidden_anchor_descendant (test_catalog_projection_order.NativePositionCase.test_same_anchor_index_order_and_hidden_anchor_descendant) ... ok
+test_nearest_edge_close_reverse_backdrop_and_stroke (test_popup_motion.PopupMotionCase.test_nearest_edge_close_reverse_backdrop_and_stroke) ... ok
+test_real_shell_has_no_idle_ghost_and_seeds_every_fresh_surface (test_popup_motion.PopupMotionCase.test_real_shell_has_no_idle_ghost_and_seeds_every_fresh_surface) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 50.931s
+
+OK

@@ -15,6 +15,7 @@ No M5 schema consumer, worker policy, file move or other feature conversion.
 - Duplicate ownership remains an error, including disabled entries. Remove all
   Clipboard UI/dispatch/bootstrap/CLI/worker-ID legacy registrations together
   with the descriptor/index entry, in one conversion commit.
+- Concrete descriptor: `config/clipboard.json`; component URLs use the QS root alias.
 - Extend the existing reader/singleton for data-only panel, bootstrap and gesture
   metadata; use generic host adapters, without callbacks in JSON. Generic host
   files gain no Clipboard registrations. A second entry needs only its own
@@ -29,9 +30,9 @@ No M5 schema consumer, worker policy, file move or other feature conversion.
   saved IDs, settings/history bytes and inert metadata. Re-enable on next launch;
   the immutable per-process catalog is not made into a live reload system.
 - Preserve public IPC/Super+V, page CLI, gesture routes and capture-owned annotation.
-  Generic infrastructure and its tests precede the atomic Clipboard conversion.
+  Generic infrastructure precedes conversion; legacy IDs are validated before bootstrap.
 - M4a legacy-only expectations must exclude converted ownership after this step;
-  proposed existing-test changes are in M4B_TEST_REVIEW.md and need owner approval.
+  existing-test changes in M4B_TEST_REVIEW.md were approved before application.
   New characterization pins enabled order/behavior on unmodified main; withdrawal
   contracts additionally pin the disabled case after conversion.
 - Startup pre-registration: M4B_STARTUP_PREREG.md. Gates G0–G4, polling-only G6,

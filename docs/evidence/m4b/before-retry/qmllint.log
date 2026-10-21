@@ -1,0 +1,387 @@
+/workspace/lme-fedora-niri-qs/authentication-demo.qml
+/workspace/lme-fedora-niri-qs/capture-demo.qml
+/workspace/lme-fedora-niri-qs/native-features-demo.qml
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:18:84: Unqualified access [unqualified]
+    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(initializeClipboard); } }
+                                                                                   ^^^^^^^^^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:42:66: Unqualified access [unqualified]
+        function controlStatus(): string { return JSON.stringify(mediaStatus("controlMediaProgress")); }
+                                                                 ^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:44:26: Unqualified access [unqualified]
+            const picker=find(surface,control ? "controlPlayerSelector" : "activityPlayerSelector");
+                         ^^^^
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:49:26: Unqualified access [unqualified]
+            const card = find(surface, "activityTimerCard"), timer = find(surface, "activityTimer");
+                         ^^^^
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:57:70: Unqualified access [unqualified]
+            return JSON.stringify({title:ActivityState.title,caption:find(surface,"activityPanelTitle")?.text});
+                                                                     ^^^^
+Warning: /workspace/lme-fedora-niri-qs/native-features-demo.qml:65:28: Unqualified access [unqualified]
+            const button = find(surface, name); if (!button) return "";
+                           ^^^^
+/workspace/lme-fedora-niri-qs/qml/auth/AuthenticationAgent.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/auth/AuthenticationAgent.qml:16:21: Type "AuthFlow" of property "flow" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively. [unresolved-type]
+        flow: agent.flow
+                    ^^^^
+/workspace/lme-fedora-niri-qs/qml/auth/AuthenticationDialog.qml
+/workspace/lme-fedora-niri-qs/qml/auth/AuthenticationWindow.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/auth/AuthenticationWindow.qml:8:1: Type PanelWindow is not creatable. [uncreatable-type]
+PanelWindow {
+^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/auth/AuthenticationWindow.qml:18:22: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+    BackgroundEffect.blurRegion: !visible ? null : ShellState.liquidBlurEnabled ? glassBlur : ShellState.popupBlurEnabled ? authBlurRegion : null
+                     ^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/bar/ActionBarButton.qml
+/workspace/lme-fedora-niri-qs/qml/bar/ActivityButton.qml
+/workspace/lme-fedora-niri-qs/qml/bar/BarGestures.qml
+/workspace/lme-fedora-niri-qs/qml/bar/BarGroup.qml
+/workspace/lme-fedora-niri-qs/qml/bar/BarModule.qml
+/workspace/lme-fedora-niri-qs/qml/bar/BarRegistry.qml
+/workspace/lme-fedora-niri-qs/qml/bar/BarSurface.qml
+/workspace/lme-fedora-niri-qs/qml/bar/ModuleGestures.qml
+/workspace/lme-fedora-niri-qs/qml/components/AnnotationCanvas.qml
+/workspace/lme-fedora-niri-qs/qml/components/AudioVisualizer.qml
+/workspace/lme-fedora-niri-qs/qml/components/BluetoothPairing.qml
+/workspace/lme-fedora-niri-qs/qml/components/ColorMotion.qml
+/workspace/lme-fedora-niri-qs/qml/components/ColorPicker.qml
+/workspace/lme-fedora-niri-qs/qml/components/ControlGrid.qml
+/workspace/lme-fedora-niri-qs/qml/components/ControlSlider.qml
+/workspace/lme-fedora-niri-qs/qml/components/ExpressiveField.qml
+/workspace/lme-fedora-niri-qs/qml/components/ExpressiveSwitch.qml
+/workspace/lme-fedora-niri-qs/qml/components/FontPicker.qml
+/workspace/lme-fedora-niri-qs/qml/components/GlassBackdrop.qml
+/workspace/lme-fedora-niri-qs/qml/components/GlassMaterial.qml
+/workspace/lme-fedora-niri-qs/qml/components/GlassOptics.qml
+/workspace/lme-fedora-niri-qs/qml/components/GlassPanel.qml
+/workspace/lme-fedora-niri-qs/qml/components/HistoryChart.qml
+/workspace/lme-fedora-niri-qs/qml/components/IconButton.qml
+/workspace/lme-fedora-niri-qs/qml/components/LabelText.qml
+/workspace/lme-fedora-niri-qs/qml/components/LiquidButton.qml
+/workspace/lme-fedora-niri-qs/qml/components/LiquidComboBox.qml
+/workspace/lme-fedora-niri-qs/qml/components/LiquidFeedback.qml
+/workspace/lme-fedora-niri-qs/qml/components/LiquidSlider.qml
+/workspace/lme-fedora-niri-qs/qml/components/LyricsSession.qml
+/workspace/lme-fedora-niri-qs/qml/components/LyricsView.qml
+/workspace/lme-fedora-niri-qs/qml/components/MediaActions.qml
+/workspace/lme-fedora-niri-qs/qml/components/MediaAmbient.qml
+/workspace/lme-fedora-niri-qs/qml/components/MediaPresentation.qml
+/workspace/lme-fedora-niri-qs/qml/components/MediaProgress.qml
+/workspace/lme-fedora-niri-qs/qml/components/MirrorControls.qml
+/workspace/lme-fedora-niri-qs/qml/components/MorphShape.qml
+/workspace/lme-fedora-niri-qs/qml/components/MotionAnimation.qml
+/workspace/lme-fedora-niri-qs/qml/components/MotionPopup.qml
+/workspace/lme-fedora-niri-qs/qml/components/MotionValue.qml
+/workspace/lme-fedora-niri-qs/qml/components/NotificationCard.qml
+/workspace/lme-fedora-niri-qs/qml/components/NotificationEmblem.qml
+/workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:8:1: Type PanelWindow is not creatable. [uncreatable-type]
+PanelWindow {
+^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:5: unknown grouped property scope margins. [unqualified]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:5: 'margins' is used but it is not resolved [unresolved-type]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:27:22: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+                     ^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:15: Property "top" does not exist. [missing-property]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+              ^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:62: Property "bottom" does not exist. [missing-property]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+                                                             ^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:112: Property "left" does not exist. [missing-property]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+                                                                                                               ^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/OSDWindow.qml:22:160: Property "right" does not exist. [missing-property]
+    margins { top: (ShellState.preferences.osdMargin ?? 24); bottom: (ShellState.preferences.osdMargin ?? 24); left: (ShellState.preferences.osdMargin ?? 24); right: (ShellState.preferences.osdMargin ?? 24) }
+                                                                                                                                                               ^^^^^
+/workspace/lme-fedora-niri-qs/qml/components/PalettePicker.qml
+/workspace/lme-fedora-niri-qs/qml/components/PopupBackdrop.qml
+/workspace/lme-fedora-niri-qs/qml/components/PopupElasticity.qml
+/workspace/lme-fedora-niri-qs/qml/components/PrivacyIndicator.qml
+/workspace/lme-fedora-niri-qs/qml/components/ShellIcon.qml
+/workspace/lme-fedora-niri-qs/qml/components/ShellText.qml
+/workspace/lme-fedora-niri-qs/qml/components/SlideLoader.qml
+/workspace/lme-fedora-niri-qs/qml/components/SpringMotion.qml
+/workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml:9:1: Type PanelWindow is not creatable. [uncreatable-type]
+PanelWindow {
+^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml:17:27: unknown grouped property scope margins. [unqualified]
+    anchors.bottom: true; margins.bottom: 24
+                          ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml:17:27: 'margins' is used but it is not resolved [unresolved-type]
+    anchors.bottom: true; margins.bottom: 24
+                          ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml:17:35: Property "bottom" does not exist. [missing-property]
+    anchors.bottom: true; margins.bottom: 24
+                                  ^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/components/StatusWindow.qml:23:22: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+                     ^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/components/StretchIndicator.qml
+/workspace/lme-fedora-niri-qs/qml/components/SurfaceBlurRegion.qml
+/workspace/lme-fedora-niri-qs/qml/components/WaveProgress.qml
+/workspace/lme-fedora-niri-qs/qml/components/shapes/ShapeCanvas.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ActivityCard.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ActivityIsland.qml
+/workspace/lme-fedora-niri-qs/qml/panels/Agenda.qml
+/workspace/lme-fedora-niri-qs/qml/panels/AudioMixer.qml
+/workspace/lme-fedora-niri-qs/qml/panels/Bar.qml
+/workspace/lme-fedora-niri-qs/qml/panels/CalendarWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ChargingWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ClipboardPanel.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ControlCenter.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ControlDashboard.qml
+/workspace/lme-fedora-niri-qs/qml/panels/DesktopAmbient.qml
+/workspace/lme-fedora-niri-qs/qml/panels/DesktopCanvas.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopCanvas.qml:23:5: Type PanelWindow is not creatable. [uncreatable-type]
+    PanelWindow {
+    ^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopCanvas.qml:25:31: unknown grouped property scope margins. [unqualified]
+        anchors.bottom: true; margins.bottom: 18
+                              ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopCanvas.qml:25:31: 'margins' is used but it is not resolved [unresolved-type]
+        anchors.bottom: true; margins.bottom: 18
+                              ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopCanvas.qml:25:39: Property "bottom" does not exist. [missing-property]
+        anchors.bottom: true; margins.bottom: 18
+                                      ^^^^^^
+/workspace/lme-fedora-niri-qs/qml/panels/DesktopCard.qml
+/workspace/lme-fedora-niri-qs/qml/panels/DesktopPreview.qml
+/workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:8:1: Type PanelWindow is not creatable. [uncreatable-type]
+PanelWindow {
+^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:26:5: unknown grouped property scope margins. [unqualified]
+    margins.left: Math.round(Math.max(0,Math.min(screenInfo.width-width,left)))
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:26:5: 'margins' is used but it is not resolved [unresolved-type]
+    margins.left: Math.round(Math.max(0,Math.min(screenInfo.width-width,left)))
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:26:13: Property "left" does not exist. [missing-property]
+    margins.left: Math.round(Math.max(0,Math.min(screenInfo.width-width,left)))
+            ^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:27:13: Property "top" does not exist. [missing-property]
+    margins.top: Math.round(Math.max(topInset,Math.min(screenInfo.height-bottomInset-height,top)))
+            ^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/DesktopWidgetWindow.qml:35:22: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+    BackgroundEffect.blurRegion: ShellState.barBlurEnabled ? blur : null
+                     ^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/panels/DeviceControls.qml
+/workspace/lme-fedora-niri-qs/qml/panels/FeatureBootstrap.qml
+/workspace/lme-fedora-niri-qs/qml/panels/Launcher.qml
+/workspace/lme-fedora-niri-qs/qml/panels/LaunchpadEditor.qml
+/workspace/lme-fedora-niri-qs/qml/panels/LaunchpadPanel.qml
+Info: /workspace/lme-fedora-niri-qs/qml/panels/LaunchpadPanel.qml:6:1: Unused import [unused-imports]
+import "../theme"
+^^^^^^
+/workspace/lme-fedora-niri-qs/qml/panels/NotificationCenter.qml
+/workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:10:1: Type PanelWindow is not creatable. [uncreatable-type]
+PanelWindow {
+^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:5: unknown grouped property scope margins. [unqualified]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:5: 'margins' is used but it is not resolved [unresolved-type]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+    ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:15: Property "top" does not exist. [missing-property]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+              ^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:62: Property "bottom" does not exist. [missing-property]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+                                                             ^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:112: Property "left" does not exist. [missing-property]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+                                                                                                               ^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:23:130: Property "right" does not exist. [missing-property]
+    margins { top: Theme.barBottom ? edgeMargin : barMargin; bottom: Theme.barBottom ? barMargin : edgeMargin; left: edgeMargin; right: edgeMargin }
+                                                                                                                                 ^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/panels/NotificationToasts.qml:29:22: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+    BackgroundEffect.blurRegion: visible && ShellState.liquidBlurEnabled ? glassBlur : null
+                     ^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/panels/Overview.qml
+/workspace/lme-fedora-niri-qs/qml/panels/PeripheralBatteryList.qml
+/workspace/lme-fedora-niri-qs/qml/panels/PowerMenu.qml
+/workspace/lme-fedora-niri-qs/qml/panels/QuickNotes.qml
+/workspace/lme-fedora-niri-qs/qml/panels/RecorderWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/ScreenshotEditor.qml
+/workspace/lme-fedora-niri-qs/qml/panels/SettingsPanel.qml
+Info: /workspace/lme-fedora-niri-qs/qml/panels/SettingsPanel.qml:1:1: Unused import [unused-imports]
+import QtQuick
+^^^^^^
+/workspace/lme-fedora-niri-qs/qml/panels/SystemMonitor.qml
+/workspace/lme-fedora-niri-qs/qml/panels/TasksWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/TimerWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/TrayMenu.qml
+/workspace/lme-fedora-niri-qs/qml/panels/WeatherWidget.qml
+/workspace/lme-fedora-niri-qs/qml/panels/WifiPanel.qml
+/workspace/lme-fedora-niri-qs/qml/panels/WifiWidget.qml
+/workspace/lme-fedora-niri-qs/qml/services/ActivityState.qml
+/workspace/lme-fedora-niri-qs/qml/services/BluetoothState.qml
+/workspace/lme-fedora-niri-qs/qml/services/ClipboardState.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/ClipboardState.qml:76:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: {
+        ^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/services/ControlRegistry.qml
+/workspace/lme-fedora-niri-qs/qml/services/DesktopState.qml
+/workspace/lme-fedora-niri-qs/qml/services/FeatureCatalog.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/FeatureCatalog.qml:145:29: Unqualified access [unqualified]
+                if (done || root.error) return;
+                            ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+pragma ComponentBehavior: Bound
+pragma Singleton
+Warning: /workspace/lme-fedora-niri-qs/qml/services/FeatureCatalog.qml:150:42: Unqualified access [unqualified]
+            onLoadFailed: { done = true; root.fail("Descriptor could not be read"); }
+                                         ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+pragma ComponentBehavior: Bound
+pragma Singleton
+Warning: /workspace/lme-fedora-niri-qs/qml/services/FeatureCatalog.qml:152:67: Unqualified access [unqualified]
+                interval: 3000; running: !descriptorFile.done && !root.error
+                                                                  ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+pragma ComponentBehavior: Bound
+pragma Singleton
+Warning: /workspace/lme-fedora-niri-qs/qml/services/FeatureCatalog.qml:153:60: Unqualified access [unqualified]
+                onTriggered: { descriptorFile.done = true; root.fail("Descriptor read timed out; using legacy entries"); }
+                                                           ^^^^
+Info: Set "pragma ComponentBehavior: Bound" in order to use IDs from outer components in nested components.
+pragma ComponentBehavior: Bound
+pragma Singleton
+/workspace/lme-fedora-niri-qs/qml/services/FocusTimer.qml
+/workspace/lme-fedora-niri-qs/qml/services/GlassState.qml
+/workspace/lme-fedora-niri-qs/qml/services/NotesState.qml
+/workspace/lme-fedora-niri-qs/qml/services/Notifications.qml
+/workspace/lme-fedora-niri-qs/qml/services/OSDManager.qml
+/workspace/lme-fedora-niri-qs/qml/services/PeripheralBatteries.qml
+/workspace/lme-fedora-niri-qs/qml/services/PrivacyState.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/PrivacyState.qml:28:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: { root.casts=[]; if (root.watching) { root.retryAllowed=false; retry.restart(); } }
+        ^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/services/ShellState.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/ShellState.qml:210:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: exitCode => {
+        ^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/qml/services/ShellState.qml:225:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: exitCode => {
+        ^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/services/UpdateState.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/UpdateState.qml:34:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: code => {
+        ^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/services/VisualizerState.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/services/VisualizerState.qml:27:9: Type QProcess::ExitStatus of parameter exitStatus in signal  called exited was not found., but is required to compile onExited. Did you add all imports and dependencies? [signal-handler-parameters]
+        onExited: {
+        ^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/settings/AboutPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/AppearancePage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/AwwwSettings.qml
+/workspace/lme-fedora-niri-qs/qml/settings/BehaviorPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/ClipboardPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/ControlLayoutPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/DesktopPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/DisplayPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/ElementsPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/GowallSettings.qml
+Info: /workspace/lme-fedora-niri-qs/qml/settings/GowallSettings.qml:3:1: Unused import [unused-imports]
+import QtQuick.Controls
+^^^^^^
+/workspace/lme-fedora-niri-qs/qml/settings/IdlePage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/KeybindsPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/LiquidGlassSettings.qml
+/workspace/lme-fedora-niri-qs/qml/settings/NightLightPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/NotificationsPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/PreferenceSwitch.qml
+/workspace/lme-fedora-niri-qs/qml/settings/SettingsApplication.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/settings/SettingsApplication.qml:45:26: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+        BackgroundEffect.blurRegion: window.visible && ShellState.liquidBlurEnabled ? glassBlur : null
+                         ^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/settings/SettingsCard.qml
+/workspace/lme-fedora-niri-qs/qml/settings/SettingsRegistry.qml
+/workspace/lme-fedora-niri-qs/qml/settings/SettingsView.qml
+Warning: /workspace/lme-fedora-niri-qs/qml/settings/SettingsView.qml:57:37: Cannot assign binding of type QQuickItem to LiquidButton [incompatible-type]
+                        targetItem: navRepeater.count ? navRepeater.itemAt(SettingsRegistry.search(search.text).findIndex(p => p.key===root.page)) : null
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/qml/settings/TopBarPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/UtilitiesPage.qml
+Info: /workspace/lme-fedora-niri-qs/qml/settings/UtilitiesPage.qml:5:1: Unused import [unused-imports]
+import "../services"
+^^^^^^
+Info: /workspace/lme-fedora-niri-qs/qml/settings/UtilitiesPage.qml:1:1: Unused import [unused-imports]
+import QtQuick
+^^^^^^
+/workspace/lme-fedora-niri-qs/qml/settings/WallpaperPage.qml
+/workspace/lme-fedora-niri-qs/qml/settings/WallpaperPlaylistSettings.qml
+/workspace/lme-fedora-niri-qs/qml/settings/WeatherPage.qml
+/workspace/lme-fedora-niri-qs/qml/theme/Theme.qml
+/workspace/lme-fedora-niri-qs/settings-demo.qml
+/workspace/lme-fedora-niri-qs/settings.qml
+/workspace/lme-fedora-niri-qs/shell.qml
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:64:13: Type PanelWindow is not creatable. [uncreatable-type]
+            PanelWindow {
+            ^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:81:5: Type PanelWindow is not creatable. [uncreatable-type]
+    PanelWindow {
+    ^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:94:5: Type PanelWindow is not creatable. [uncreatable-type]
+    PanelWindow {
+    ^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:17: unknown grouped property scope margins. [unqualified]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:124:9: unknown grouped property scope margins. [unqualified]
+        margins { top: viewport.y; left: viewport.x }
+        ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:17: 'margins' is used but it is not resolved [unresolved-type]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:124:9: 'margins' is used but it is not resolved [unresolved-type]
+        margins { top: viewport.y; left: viewport.x }
+        ^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:27: Property "left" does not exist. [missing-property]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                          ^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:54: Property "right" does not exist. [missing-property]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                                                     ^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:82: Property "top" does not exist. [missing-property]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                                                                                 ^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:68:129: Property "bottom" does not exist. [missing-property]
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
+                                                                                                                                ^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:131:26: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+        BackgroundEffect.blurRegion: !visible ? null : ShellState.liquidBlurEnabled ? glassPopupBlur : ShellState.popupBlurEnabled ? popupBlurRegion : null
+                         ^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:124:19: Property "top" does not exist. [missing-property]
+        margins { top: viewport.y; left: viewport.x }
+                  ^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:124:36: Property "left" does not exist. [missing-property]
+        margins { top: viewport.y; left: viewport.x }
+                                   ^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:74:34: No type found for property "blurRegion". This may be due to a missing import statement or incomplete qmltypes files. [missing-type]
+                BackgroundEffect.blurRegion: visible && ShellState.barBlurEnabled ? bar.blurRegion : null
+                                 ^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:55:102: Member "registered" not found on type "QObject" [missing-property]
+            return ShellState.demo ? "disabled in demo" : authentication.item && authentication.item.registered ? "registered" : "not registered; check the shell log and other session agents";
+                                                                                                     ^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:157:45: Member "implicitWidth" not found on type "QObject" [missing-property]
+                width: item ? Math.min(item.implicitWidth, parent.width - 32) : 400
+                                            ^^^^^^^^^^^^^
+Warning: /workspace/lme-fedora-niri-qs/shell.qml:158:46: Member "implicitHeight" not found on type "QObject" [missing-property]
+                height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : 500
+                                             ^^^^^^^^^^^^^^
+/workspace/lme-fedora-niri-qs/upgrades-demo.qml
+Warning: /workspace/lme-fedora-niri-qs/upgrades-demo.qml:73:74: Member "query" not found on type "QObject" [missing-property]
+                query: root.mode === "launcher" && view.item ? view.item.query : "", results: root.mode === "launcher" && view.item ? view.item.results : [],
+                                                                         ^^^^^
+Warning: /workspace/lme-fedora-niri-qs/upgrades-demo.qml:124:73: Member "connectionPopup" not found on type "QObject" [missing-property]
+            const popup = root.mode === "wifi" && view.item ? view.item.connectionPopup : null;
+                                                                        ^^^^^^^^^^^^^^^

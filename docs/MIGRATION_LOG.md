@@ -1703,3 +1703,254 @@ Do not install synthetic descriptors or overwrite niri configuration.
 6. Try bar audio/network/clock/battery routes, all six Control Center tabs and System monitor; check mark-read and Agenda/Notes visibility.
 7. Test preview for this checkout separately; closing it should leave the live shell/config intact. Check GPU/glass/Jelly appearance for regression.
 8. Review logs for catalog/QML errors; report HEAD, steps, expected/actual result and log/video if something differs. Real reconnect/hardware checks are optional follow-ups, not claimed by VM gates.
+
+## M4b — Clipboard catalog slice — 2026-10-21
+
+Scope: **Clipboard only** on `refactor/m4b-clipboard-descriptor`, based on merged
+main `c46f934`. Accepted M4a `933750f` and that main have identical trees. No M5,
+M6, aggregate c, polling/power-policy change or file move was started. Production
+and measurement head: **`e499284`**. This following commit changes docs/evidence only.
+
+### Contracts and change surface
+
+[The addendum](M4B_DESIGN.md) was committed first in `96a0145` (38 lines then;
+39 after recording the concrete descriptor/approval). The index now contains
+exactly one feature, Clipboard. `after` anchors are validated for identifiers,
+existence, self/cycles and legacy collisions; same-anchor siblings retain index
+order. All IDs are ordered before disabled entries are filtered. Authoring
+`--check` and backend startup read the existing literal legacy registrations;
+QML projections also reject missing anchors/collisions. This temporary reader is
+for the current literal arrays, not a general QML parser; remove it as those
+legacy owners migrate. No competing list is introduced.
+
+Observed order remains exactly the characterized baseline:
+
+| Surface | Clipboard position / evidence |
+| --- | --- |
+| Bar module picker | Last, after Privacy |
+| Default/saved right bar zone | Privacy, Clipboard, Tray, Notifications, Audio, Network, Battery, Clock, Settings |
+| Settings sidebar | Notifications, Clipboard, Idle and sleep |
+| Settings search | Exact frozen result arrays for empty query, clipboard, history, capture, image, pin, copy |
+| Gesture choices | Launchpad, Clipboard, Settings; full 26-ID order unchanged |
+
+The conversion commit removes the Clipboard legacy bar/page/action registrations,
+page qmldir line, shell and preview factories, root start call, ShellState flag
+and allowlists, Settings CLI legacy admission and backend BAR_MODULES literal.
+The [17-file conversion list](evidence/m4b/conversion-files.txt) includes the
+native-demo caller's root qualification; it adds no Clipboard registration to
+SettingsView, ShellState or settings.sh. Their added diff lines contain no
+Clipboard identifier. Default layout arrays and the CLI help text retain their
+existing public/data references. The opt-in native-feature demo remains a
+component fixture, using shared admission/visibility rather than the removed flag.
+
+`ClipboardFeature.qml` calls unchanged `ClipboardState.start()` once in live main;
+Settings/demo/preview do not bootstrap its worker. `ClipboardButton.qml` uses the
+shared ActionBarButton with the existing geometry, active state, gestures and
+screen bindings. Panel factories return the actual Item, preserving blur contour
+and SlideLoader ownership. Component URLs use `root:/`, preserving the same
+service singletons as static imports. Preview queues its initial catalog panel
+until the catalog publication has completed.
+
+`preferenceMetadata` is **inert**: clipboardEnabled/Images/Limit defaults,
+validators, export membership and worker consumers remain legacy. The active
+`preferences` duplicate checks remain strict. A disabled entry keeps IDs valid
+for saved layouts/gestures and retains schema/history/settings bytes; it exposes
+no bar item, popup, page or worker. Re-enable on the next launch. There is no live
+catalog reload system.
+
+[SHA256 proof](evidence/m4b/proof.json) confirms ClipboardState.qml,
+ClipboardPanel.qml, ClipboardPage.qml, clipboard.py, content_types.py, the frozen
+legacy fixture and the Super+V niri fragment are byte-identical to main.
+Backend/capture still import no clipboard.py. Preferences lock/merge/atomic-write
+code is unchanged. Main's total production diff is **21 files, +269/-74 lines**.
+
+The copied-checkout peer test adds four own QML files, its descriptor and one
+index record. Only the index changes among pre-existing checkout files. Its bar,
+popup, Settings page/CLI, gesture validation and main-only bootstrap work without
+host registrations. This is a test-only entry; it is not shipped as another feature.
+
+### Tests first, and failures handled
+
+New enabled-path characterization ran on unmodified production: 3 contracts in
+`4742cb5`, 4 native cases in `36a0eae`, then an import-facade contract and 2 native
+demo/initial-preview cases before their callers changed. The six native entry
+cases passed on the baseline (4+2 runs), with no skips. New position/withdrawal
+capabilities were explicitly N/A before implementation, not reported as passes.
+All five position contracts, ownership contract and twelve new opt-in native
+cases execute in the final gates.
+
+[Owner-approved test changes](M4B_TEST_REVIEW.md) were applied before conversion:
+normalize only routing fields for metadata parity, compare broken-catalog fallback
+to actual remaining legacy ownership, use Weather for legacy CLI admission, and
+preserve shipped entries in injection fixtures. No existing assertion changed
+outside that approved diff; no timeout or frozen fixture changed. Additional
+helper updates wait for the existing catalog barrier, emit the correct fake-backend
+verdict and relocate the popup fixture's completion observation.
+
+Two draft issues were caught before the first conversion commit:
+
+- The generic fixture returned as soon as six legacy tabs existed, before catalog
+  publication. Its readiness predicate now also observes the existing settled
+  barrier, with the same timeout and assertions.
+- Absolute `qs:/physical/path` component URLs created another service singleton
+  namespace. The [copied-fixture diagnostic](evidence/m4b/context-diagnostic.txt)
+  shows different ShellState/ClipboardState objects. Canonical QS root URLs fix
+  this; unchanged native bar, annotation, single-worker and peer-bootstrap checks
+  then passed. No instrumentation or redirect hook entered runtime source.
+
+The first committed conversion **`572f76c` failed gates and was reverted in
+`b48818e`**, before correction. [Full failed outputs](evidence/m4b/reverted-attempt/)
+are retained; they are not green baseline results:
+
+| Gate | Reported P/F/S | Cause |
+| --- | --- | --- |
+| G0 | 434/5/128 | SettingsStartupCase reconnect, first-frame (3 subtests) and repeated-Gear checks; fake backend omitted catalogValidation, so the nonempty catalog never received a verdict before fixture completion |
+| G1 | 2/1/0 | NativeSettingsStartupCase, same fake-backend protocol omission |
+| G2 | 3/1/0 | Same native case/protocol omission |
+| G3 | 53/0/0 | Completed without failure |
+| G4 | 32/2/0 | ClipboardInterfaceCase search/keyboard copy and annotation notification test; native-features-demo still read clipboardOpen, causing undefined-to-bool warning/inactive UI |
+| G6 polling | 1/0/0 | Completed without failure |
+
+The Settings issue was a **fixture protocol limitation**: real emit_snapshot()
+already supplies catalogValidation and the actual-CLI native cases passed. Commit
+`2bc4cb1` adds that field to the delayed fake snapshot; assertions and finish times
+stay unchanged. The demo issue was an **incomplete caller update in the attempted
+refactor**, corrected through shared admission/visibility in `b00eda0`. The restored
+empty-index checkpoint passed all gates before retry. The focused 8-case retry
+(Settings first-frame/reconnect/Gear plus Clipboard UI and annotation) passed,
+then `e499284` converted the complete slice. No fix was stacked onto the failed
+conversion. No existing assertion edit beyond the owner's approved set was needed.
+
+### Gate accounting
+
+Same SDK/machine as M4a: Python 3.12.14, Quickshell 0.3.2 / Qt 6.8.2, private
+Sway 1.10.1 pixman and D-Bus, disposable XDG config/state/data/runtime, private
+virtual pointer/drag helpers and nonexistent system-bus/niri sockets. Real user
+configuration/session was not addressed. Each gate retains its exact command,
+environment, wall time and skipped test names/reasons in its JSON/log evidence.
+
+Counts are **passed/failed/skipped**, followed by seconds. G0 is completed with
+skips, not a fully passed gate. Every listed native gate executed without skips.
+
+| Gate | Main c46f934 | Restored checkpoint b00eda0 | Final e499284 |
+| --- | --- | --- | --- |
+| G0 | 429/0/116; 74.025 | 438/0/129; 76.152 | **439/0/128; 77.416** |
+| G1 | 3/0/0; 10.633 | 3/0/0; 11.309 | **3/0/0; 11.110** |
+| G2 | 4/0/0; 36.596 | 4/0/0; 39.057 | **4/0/0; 39.303** |
+| G3 | 51/0/0; 115.742 | 53/0/0; 121.161 | **53/0/0; 121.498** |
+| G4 | 23/0/0; 31.230 | 29/0/0; 45.132 | **34/0/0; 51.217** |
+| G6 polling only | 1/0/0; 19.964 | 1/0/0; 20.099 | **1/0/0; 20.053** |
+
+[Baseline](evidence/m4b/baseline-main/summary.json),
+[restored checkpoint](evidence/m4b/before-retry/summary.json),
+[final](evidence/m4b/final/summary.json), and
+[intermediate infrastructure runs](evidence/m4b/infrastructure/) preserve accounting.
+The first infrastructure run began on the working tree that became f88c2e7;
+runtime contents were unchanged during it. Later full checkpoints ran committed
+source. The external [bootstrap](evidence/m4b/run.sh.txt) reuses run-gates isolation;
+[final driver](evidence/m4b/driver.py.txt) narrows G6 to polling and adds the new
+G3/G4 cases. Repository run-gates defaults and its Launchpad gate are unchanged.
+
+Default discovery increases **545 -> 567 tests**: ten new default contracts pass;
+twelve new native tests skip because their opt-in flags are unset. All original
+116 default skips remain, with names/reasons in [G0.json](evidence/m4b/final/G0.json).
+The twelve new skips are exactly:
+
+- `test_catalog_projection_order.NativePositionCase`: missing page anchor; same-anchor/hidden-anchor ordering (2), enabled in G3 by LME_TEST_UPGRADE_UI=1.
+- `test_clipboard_entry.NativeEntryCase`: bar/IPC/gesture/capture, demo/preview dispatch, demo/preview worker guard, annotation, initial-preview env, Settings CLI/search/first-frame/reuse (6), enabled in G4 by LME_TEST_CLIPBOARD_UI=1.
+- `test_clipboard_withdrawal.NativeWithdrawalCase`: disable/re-enable/data retention, saved gestures, invalid anchor/no bootstrap, second entry (4), enabled in G4 by LME_TEST_CLIPBOARD_UI=1.
+
+The exact twelve method names/reasons are also in [proof.json](evidence/m4b/proof.json).
+G3's 51 pre-existing cases remain, plus 2 position cases = **53**. G4 retains all
+23 native clipboard/UI/annotation/capture/night cases, adds 6 NativeEntry + 4
+NativeWithdrawal + the ownership contract = **34**. Before the descriptor landed,
+the ownership/withdrawal capabilities were N/A; their default skip count is not a
+claim they ran. The final G0 ownership contract passes. Additional native motion/
+entry/position preflight: [15/15, no skips](evidence/m4b/conversion-canonical-native.log).
+All QML, including touched callers: **146 files, 0 errors, 71 warnings**, same
+warning count as baseline; [qmllint output](evidence/m4b/final/qmllint.log).
+G0 command wall time in the table excludes the separately recorded qmllint phase
+(17.302 s final).
+G5 was not part of the authorized M4b gate set and was not run here.
+
+### Pre-registered startup budget
+
+`96a0145` committed [the pre-registration](M4B_STARTUP_PREREG.md) before production
+changes or cost measurement. One session, seed **241021**, **40 timed rounds per
+arm/path** (240 samples), Settings then preview, randomized arm order each round;
+one excluded warm-up per arm/path. Fresh processes/config/state/data/runtime,
+warm filesystem and persistent per-arm/path cache. User settings.sh --page
+appearance / start.sh --preview; same round-4 Launch, first visible mapped nonzero
+Sway-window endpoint with 20 ms polling. This is not full feature readiness or
+first physical paint. No gates, profiling or builds ran during the session.
+
+Same software-rendered VM: AMD EPYC 9V74, 5 visible CPUs, quota 4 CPUs, 32 GiB limit,
+Linux 6.18.55. Governor and AC/battery state are not exposed. Load averages and
+renderer/machine details before/after are in results.json; shared-host scheduling
+is uncontrolled. No real-GPU or laptop timing is claimed. Main and accepted M4a
+are independent identical-tree A/A arms, not the older pre-M4a main.
+
+All values are ms. CI = percentile 95% **difference of medians**, 20,000 seeded
+**joint round-block bootstrap** resamples. MW is exploratory two-sided Mann-Whitney
+with tie/continuity-corrected normal approximation, not the acceptance rule.
+
+| Path / arm | N | Median | IQR | Min | Max | Delta vs main [95% CI] | Delta vs M4a [95% CI] | MW p vs M4a |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: |
+| Settings / main c46f934 | 40 | 658.72 | 54.46 | 579.10 | 794.18 | 0 [0, 0] | +4.02 [-7.13, +27.28] | .37342 |
+| Settings / M4a 933750f | 40 | 654.69 | 44.01 | 597.88 | 845.38 | -4.02 [-27.28, +7.13] | 0 [0, 0] | 1 |
+| Settings / M4b e499284 | 40 | 673.30 | 56.04 | 602.86 | 870.04 | +14.58 [-6.43, +26.88] | **+18.61 [-2.44, +31.45]** | .10493 |
+| Preview / main c46f934 | 40 | 625.29 | 51.74 | 555.04 | 745.52 | 0 [0, 0] | +9.19 [-17.36, +24.93] | .85871 |
+| Preview / M4a 933750f | 40 | 616.11 | 61.09 | 570.75 | 693.89 | -9.19 [-24.93, +17.36] | 0 [0, 0] | 1 |
+| Preview / M4b e499284 | 40 | 613.49 | 47.49 | 541.91 | 683.89 | -11.80 [-21.98, +17.24] | **-2.61 [-23.49, +22.69]** | .99616 |
+
+**Budget met on both paths.** The pre-registered stop condition is a CI **lower**
+bound exceeding +10 ms versus accepted M4a; Settings lower = -2.435957 ms, preview
+lower = -23.494415 ms. The Settings point estimate is +18.61 ms; this is not a
+claim the overhead is <=10 ms or absent. Its CI spans zero and extends to +31.45.
+No threshold change, selective rerun, outlier removal or synthetic-model
+substitution was used. The A/A CIs include zero. Do not compare medians across
+older sessions or interpret the preview point estimate as an improvement.
+
+[240 raw CSV samples](evidence/m4b/samples.csv),
+[full distributions/CI/machine metadata](evidence/m4b/results.json),
+[session progress](evidence/m4b/startup-session.log),
+[benchmark bootstrap](evidence/m4b/benchmark-run.sh.txt),
+[benchmark driver](evidence/m4b/benchmark-driver.py.txt).
+CSV SHA256: `4a7bb2031910b50f6b9af7553290037c112707fbaa97ce556e22c291e69871f7`.
+Every CSV value, distribution and comparison was independently recomputed from
+stored round blocks using the committed statistics helper; [proof](evidence/m4b/proof.json).
+Neither this endpoint nor demo preview measures real rendering, hardware capture,
+Bluetooth/reconnect or actual Satty; those remain needs real-session check.
+
+### Adapters, retirement and behavior
+
+| Adapter | Retirement condition |
+| --- | --- |
+| ClipboardFeature -> unchanged ClipboardState.start | Keep until an authorized service bootstrap interface preserves exactly main-once and Settings/demo-never behavior, with worker lifecycle/retry characterization still green |
+| ClipboardButton -> shared ActionBarButton | Keep while the local moduleId/screen/gesture adapter is needed; remove only after an equivalent data binding path passes the entry/gesture/geometry checks |
+| Hybrid project/legacy_ids/legacyPanels | Retire each legacy namespace only when its last registration and fixture dependency has migrated; keep public registry/IPC/CLI/env/import APIs |
+| Inert preferenceMetadata + existing defaults/validators/export/worker consumers | M5 approval and parity/lock-merge gates are required before promotion; no consumer moves in M4b |
+| Existing ClipboardState qmldir and content-type aliases | Preserved public facades; retire only after an explicit owner-approved compatibility policy, not automatically during directory moves |
+
+Enabled exercised paths show no UI/order/action/data-format difference from main.
+Intended catalog ownership behavior: disabled/error catalogs withdraw Clipboard,
+while valid disabled entries retain saved IDs and all user data. Unknown/withdrawn
+bar IDs do not render a fallback Media button. Bootstrap is admitted only after
+catalog validation; worker retry/restart and capture policies are unchanged.
+The canonical URL adapter preserves one shared service context; no backend per
+widget, generated UI, event bus, default migration or file move was introduced.
+
+History through e499284: [18 commits including the failed/reverted attempt](evidence/m4b/commits.txt).
+The final docs/evidence commit follows; its hash is reported in the delivery reply.
+No merge or M5 work is authorized by these results.
+
+### Laptop checklist — needs real-session check
+
+1. Confirm the reviewed branch/HEAD, back up its index and launch this checkout with your usual shell procedure.
+2. Use Super+V twice, then the Clipboard bar item and its configured gesture; verify open/close/reopen and the selected indicator.
+3. Search/copy text with the keyboard; close/reopen and confirm history remains.
+4. Click an image and annotate in real Satty; copy from Satty and check the resulting clipboard image.
+5. Open Gear, settings.sh --page clipboard and Settings search; verify one Settings window, correct first appearance and page reuse.
+6. Turn capture off/on in Clipboard Settings; history remains usable and no duplicate worker starts.
+7. Temporarily set the Clipboard index entry enabled=false and restart; bar/popup/page disappear, with saved layout/settings/history retained.
+8. Restore the backed-up index and restart; Clipboard and existing data return. Review logs for catalog/QML errors.

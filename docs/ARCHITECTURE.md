@@ -36,11 +36,10 @@ Examples below are proposed interfaces/data, not files or APIs already implement
 Keep `BarRegistry.info/clone`, `SettingsRegistry.pages/page/search` and `ControlRegistry`
 as the public QML APIs. Replace their duplicated registration arrays incrementally;
 do not keep a new registry running alongside them for the same ID.
-Recommended source: a small bundled index `config/features.json` naming feature
-descriptors in `config/feature-<id>.json`. This extends the existing JSON catalog
-pattern; it is not filesystem plugin discovery or a user-editable command DSL.
+Source: bundled `config/features.json` names explicit descriptors; Clipboard uses
+`config/clipboard.json`. The examples below remain target interfaces; the current
+pilot contract and ordering rules are in [M4B_DESIGN.md](M4B_DESIGN.md).
 One generic reader per process loads/validates/caches descriptors once; widgets do not.
-
 ```json
 {"version":1,"features":[{"id":"clipboard","descriptor":"config/feature-clipboard.json","enabled":true}]}
 ```
@@ -398,4 +397,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only; later evidence and
-authorizations are in MIGRATION_LOG.md. M4b remains unauthorized; D1 acceptance is not merge approval.
+authorizations are in MIGRATION_LOG.md. M4b converts Clipboard only; M5 and later remain unauthorized.

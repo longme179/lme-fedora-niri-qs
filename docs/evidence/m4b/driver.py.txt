@@ -1,0 +1,5 @@
+import migration_checks as g
+g.GATES['G6']=(['POLLING_UI'], ['test_polling_ui.NativePollingCase'])
+g.GATES['G3'][1].append('test_catalog_projection_order')
+g.GATES['G4'][1].extend(['test_clipboard_entry', 'test_clipboard_withdrawal'])
+raise SystemExit(g.main())

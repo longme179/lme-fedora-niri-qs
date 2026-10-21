@@ -1,8 +1,8 @@
-# Proposed existing-test adaptations — unapplied, owner review required
+# Existing-test adaptations — approved by the owner on 2026-10-21
 
 M4a tests assumed every shipped entry was legacy. M4b intentionally removes
 Clipboard from that set; broken/disabled catalogs cannot expose its page or bar.
-Do not edit the expectations below until the owner approves. No timeout change,
+The owner approved the exact expectation updates below before they were applied. No timeout change,
 assertion deletion, replacement of frozen baseline data or default skip is proposed.
 
 1. `test_feature_catalog.CatalogContractCase` metadata parity: continue comparing
@@ -50,3 +50,10 @@ checkout, keeping the test descriptor first for existing compact-fixture setup.
 No original fixture JSON is rewritten. All existing tests still execute under
 their existing opt-in flags, with no new skips. These changes will be tested on
 unmodified production before conversion as well as after it.
+
+Follow-up fixture/caller corrections changed no assertions or timeouts:
+`catalog_fixture.session()` waits for the existing catalog barrier before returning;
+the delayed Settings fake backend includes the existing `catalogValidation` verdict;
+the popup-motion probe samples root completion after bootstrap moved; and the
+opt-in native-feature demo uses shared panel admission/visibility. The failed
+conversion was reverted before applying the latter fixture/caller corrections.

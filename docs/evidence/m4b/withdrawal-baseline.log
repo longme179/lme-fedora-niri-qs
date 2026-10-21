@@ -1,0 +1,8 @@
+test_host_registration_removal_and_metadata_only_schema (test_clipboard_withdrawal.ClipboardOwnershipCase.test_host_registration_removal_and_metadata_only_schema) ... skipped 'M4b descriptor absent on baseline'
+test_disable_preserves_layout_preferences_schema_history_and_reenable (test_clipboard_withdrawal.NativeWithdrawalCase.test_disable_preserves_layout_preferences_schema_history_and_reenable) ... skipped 'private Wayland converted Clipboard withdrawal'
+test_second_entry_needs_only_own_files_and_index_record (test_clipboard_withdrawal.NativeWithdrawalCase.test_second_entry_needs_only_own_files_and_index_record) ... skipped 'private Wayland converted Clipboard withdrawal'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK (skipped=3)

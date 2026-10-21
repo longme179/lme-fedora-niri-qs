@@ -1,0 +1,9 @@
+test_native_first_frame_and_repeated_gear_requests (test_settings_startup.NativeSettingsStartupCase.test_native_first_frame_and_repeated_gear_requests) ... ok
+test_launcher_recovers_legacy_hidden_window_and_missing_ipc_handler (test_personalization.NativePersonalizationCase.test_launcher_recovers_legacy_hidden_window_and_missing_ipc_handler) ... ok
+test_native_color_font_edit_hover_press_reduced_motion_and_bottom_bar (test_personalization.NativePersonalizationCase.test_native_color_font_edit_hover_press_reduced_motion_and_bottom_bar) ... ok
+test_real_shell_under_gpt_symlink_opens_reuses_and_reopens_settings (test_personalization.NativePersonalizationCase.test_real_shell_under_gpt_symlink_opens_reuses_and_reopens_settings) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 38.905s
+
+OK

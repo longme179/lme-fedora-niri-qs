@@ -1,0 +1,15 @@
+test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened (test_catalog_positions.CatalogPositionCase.test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened) ... ok
+test_anchor_validation_including_disabled_self_cycles_and_missing (test_catalog_positions.CatalogPositionCase.test_anchor_validation_including_disabled_self_cycles_and_missing) ... ok
+test_existing_legacy_sources_gate_all_namespaces_before_bootstrap (test_catalog_positions.CatalogPositionCase.test_existing_legacy_sources_gate_all_namespaces_before_bootstrap) ... skipped 'M4b all-namespace legacy adapter absent before extraction'
+test_new_presentation_resources_are_contained_and_metadata_is_inert (test_catalog_positions.CatalogPositionCase.test_new_presentation_resources_are_contained_and_metadata_is_inert) ... ok
+test_startup_extensions_match_descriptor_and_preserve_page_admission (test_catalog_positions.CatalogPositionCase.test_startup_extensions_match_descriptor_and_preserve_page_admission) ... ok
+test_host_registration_removal_and_metadata_only_schema (test_clipboard_withdrawal.ClipboardOwnershipCase.test_host_registration_removal_and_metadata_only_schema) ... skipped 'M4b descriptor absent on baseline'
+test_disable_preserves_layout_preferences_schema_history_and_reenable (test_clipboard_withdrawal.NativeWithdrawalCase.test_disable_preserves_layout_preferences_schema_history_and_reenable) ... skipped 'private Wayland converted Clipboard withdrawal'
+test_disabled_saved_gesture_ids_remain_valid (test_clipboard_withdrawal.NativeWithdrawalCase.test_disabled_saved_gesture_ids_remain_valid) ... skipped 'private Wayland converted Clipboard withdrawal'
+test_invalid_page_anchor_never_bootstraps_clipboard (test_clipboard_withdrawal.NativeWithdrawalCase.test_invalid_page_anchor_never_bootstraps_clipboard) ... skipped 'private Wayland converted Clipboard withdrawal'
+test_second_entry_needs_only_own_files_and_index_record (test_clipboard_withdrawal.NativeWithdrawalCase.test_second_entry_needs_only_own_files_and_index_record) ... skipped 'private Wayland converted Clipboard withdrawal'
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.008s
+
+OK (skipped=6)

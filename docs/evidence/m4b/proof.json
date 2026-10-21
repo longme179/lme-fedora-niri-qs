@@ -1,0 +1,69 @@
+{
+  "source_head": "e499284b83e7a2977a1e01aa7bdb01ba8d134569",
+  "baseline": "c46f934",
+  "accepted_m4a": "933750f",
+  "unchanged_sha256": {
+    "qml/services/ClipboardState.qml": "7bee2c739cd08964658ce1399838cd374741e6859c4e5ba302599c5efc5e5c56",
+    "qml/panels/ClipboardPanel.qml": "3890f7f231ae681df43afb240d2611d3261151fead0ee73b499b041e7d6b6bed",
+    "qml/settings/ClipboardPage.qml": "237e8b887ac1063746b7e967f283e1318f24038f70b4dbded124b616a14f2ca1",
+    "scripts/clipboard.py": "ad7fb62e9a8237b11023e5a02c6f97315e2b834d44f7e6048c0796d9ab32624d",
+    "scripts/content_types.py": "86a0b5ccd0b13d7abe11bff4afb2683409da618e5bf3b3a9c9c8c2be55bc7b39",
+    "tests/fixtures/catalog-legacy.json": "a1f3f6a8767ea5fd0694f498633db848faa361928fea7c283d93c6a3ca14d191",
+    "config/niri/lme-shell.kdl": "582bb1ff98b72b416ab9447aae4c19ab8d6eb48d1fcffd5bf3e0f8c1e44ae77a"
+  },
+  "only_catalog_feature": "clipboard",
+  "new_default_skips": [
+    {
+      "name": "test_catalog_projection_order.NativePositionCase.test_missing_page_anchor_settles_with_legacy_only_diagnostic",
+      "reason": "'private Wayland catalog position checks'"
+    },
+    {
+      "name": "test_catalog_projection_order.NativePositionCase.test_same_anchor_index_order_and_hidden_anchor_descendant",
+      "reason": "'private Wayland catalog position checks'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_demo_preview_clipboard_dispatch_keeps_history_without_worker",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_demo_preview_never_start_worker",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_image_click_routes_through_capture_service",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_preview_initial_clipboard_env_opens_history_without_worker",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_entry.NativeEntryCase.test_settings_cli_search_reuse_and_first_page_ready_without_worker",
+      "reason": "'private Wayland Clipboard slice'"
+    },
+    {
+      "name": "test_clipboard_withdrawal.NativeWithdrawalCase.test_disable_preserves_layout_preferences_schema_history_and_reenable",
+      "reason": "'private Wayland converted Clipboard withdrawal'"
+    },
+    {
+      "name": "test_clipboard_withdrawal.NativeWithdrawalCase.test_disabled_saved_gesture_ids_remain_valid",
+      "reason": "'private Wayland converted Clipboard withdrawal'"
+    },
+    {
+      "name": "test_clipboard_withdrawal.NativeWithdrawalCase.test_invalid_page_anchor_never_bootstraps_clipboard",
+      "reason": "'private Wayland converted Clipboard withdrawal'"
+    },
+    {
+      "name": "test_clipboard_withdrawal.NativeWithdrawalCase.test_second_entry_needs_only_own_files_and_index_record",
+      "reason": "'private Wayland converted Clipboard withdrawal'"
+    }
+  ],
+  "host_conversion_additions_containing_clipboard": [],
+  "raw_samples": 240,
+  "independently_recomputed_all_statistics": true,
+  "csv_sha256": "4a7bb2031910b50f6b9af7553290037c112707fbaa97ce556e22c291e69871f7"
+}

@@ -1,0 +1,8 @@
+test_backend_capture_do_not_import_clipboard_and_ui_uses_shared_layers (test_clipboard_integration.ClipboardContractsCase.test_backend_capture_do_not_import_clipboard_and_ui_uses_shared_layers) ... ok
+test_order_default_layout_search_and_gesture_choices (test_clipboard_integration.ClipboardContractsCase.test_order_default_layout_search_and_gesture_choices) ... ok
+test_preferences_limits_and_content_compatibility_stay_legacy (test_clipboard_integration.ClipboardContractsCase.test_preferences_limits_and_content_compatibility_stay_legacy) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.501s
+
+OK

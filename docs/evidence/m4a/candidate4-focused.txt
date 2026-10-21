@@ -1,0 +1,10 @@
+test_settings_launcher_supports_qs_only_and_keeps_argument_boundaries (test_personalization.PersonalizationCase.test_settings_launcher_supports_qs_only_and_keeps_argument_boundaries) ... ok
+test_backend_reconnect_keeps_the_loaded_window_and_theme (test_settings_startup.SettingsStartupCase.test_backend_reconnect_keeps_the_loaded_window_and_theme) ... ok
+test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme (test_settings_startup.SettingsStartupCase.test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme) ... ok
+test_initial_backend_failure_shows_a_recoverable_window (test_settings_startup.SettingsStartupCase.test_initial_backend_failure_shows_a_recoverable_window) ... ok
+test_repeated_gear_requests_queue_the_last_page_without_restarting (test_settings_startup.SettingsStartupCase.test_repeated_gear_requests_queue_the_last_page_without_restarting) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 11.044s
+
+OK

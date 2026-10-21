@@ -1,6 +1,8 @@
 # Migration evidence
 
-Scope: M0 baseline, merged M1/M2 and G3 correction, plus the M3 review branch. M4 and later are not started.
+Scope: M0 baseline, merged M1–M3 and G3 correction, plus the M4a review branch.
+M4a's infrastructure checks pass, but its measured startup cost exceeds the D1 limit.
+M4b and later remain unauthorized; no real feature has been converted.
 
 ## M0 baseline — 2026-10-20
 
@@ -611,3 +613,189 @@ Rollback: `git revert db6ab78` restores catalog/QML routing together. Keep `697f
 7. In an isolated preview, try the named control-tab env for Agenda/System and an unknown name; verify the same targets/fallback.
 
 Physical niri/GPU appearance, Bluetooth/backlight/suspend and long-session behavior remain **needs real-session check**. **STOP after M3; M4 and later remain unauthorized.**
+
+## M4a — A1 empty catalog infrastructure — 2026-10-21
+
+**Branch:** `refactor/m4a-feature-catalog`, based on merged main `186354a`.
+**Stop condition:** infrastructure checks complete; projected startup cost **fails**
+the proposed 50 ms rule. Do not start M4b or convert Clipboard.
+
+### Commits, contracts and unchanged behavior
+
+1. `15eb3ef`: [M4A_DESIGN.md](M4A_DESIGN.md), 70 lines, committed before code.
+2. `7f1a624`: characterization/contract tests and exact legacy metadata fixture.
+3. `c66a0dc`: reproducible synthetic startup fixture; test-only helper.
+4. `84d0919`: empty index, stdlib reader, cached QML singleton, hybrid projections,
+   generic URL entry adapters, CLI validation and the Settings startup barrier.
+5. The subsequent documentation commit records this evidence and the D1 stop.
+
+`config/features.json` contains **zero** production features. Enabled catalog entries
+append after the unchanged legacy arrays; disabled descriptors retain IDs and schema
+metadata but contribute no UI. The Python reader rejects malformed/duplicate JSON,
+unsupported versions, namespace/key collisions, missing resources, traversal and
+symlink escape (including the index itself). Backend and CLI use that reader;
+QML invokes it once per process, then uses cached data through the existing registries.
+Backend bar validation retains disabled IDs. Preference fragments remain metadata:
+no defaults, validators or settings persistence protocol have migrated.
+
+Empty-catalog bar/page/control/Agenda metadata and default bar layout match the
+pre-change fixture exactly. Existing UI factories, tab order, polling and refresh
+conditions remain. `openPage()` still confirms a visible window; cold requests queue
+until the catalog, Theme and backend are ready. `startupPending()` remains true
+while waiting, and false on the existing recoverable startup-failure path.
+
+**Existing assertions changed: none.** `test_settings_startup.py` setup now copies
+config and, when present, the reader into its isolated stub checkout. Its assertions
+are untouched. `migration_checks.py` adds the new suite to opt-in G3.
+The synthetic helper is excluded from unittest discovery and was exercised by the
+measurement run; it does not change the production catalog.
+
+### Before/after gates
+
+The before run had tests but **unmodified production code**. G0–G3 and polling-only
+G6 used disposable XDG roots, headless Sway and a private D-Bus, no real niri/system
+bus. See [gates.json](evidence/m4a/gates.json) for exact commands, resolved environment,
+per-test skip names/reasons, machine metadata and source hashes.
+
+| Gate | Before pass/fail/skip | After pass/fail/skip | Wall seconds before → after |
+| --- | ---: | ---: | ---: |
+| G0 `./scripts/check.sh` | 402 / 0 / 97 | 408 / 0 / 91 | 71.483 → 74.257 |
+| G1 preview + standalone startup | 3 / 0 / 0 | 3 / 0 / 0 | 10.698 → 11.337 |
+| G2 native personalization/startup | 4 / 0 / 0 | 4 / 0 / 0 | 38.831 → 38.976 |
+| G3 control/upgrade/gestures/navigation | 14 / 0 / 0 | 24 / 0 / 0 | 79.803 → 80.777 |
+| G6 polling regression only | 1 / 0 / 0 | 1 / 0 / 0 | 20.090 → 19.935 |
+
+G0 is **completed with skips**, not an all-tests pass. Before: 89 existing opt-in
+skips, two new native catalog opt-ins, six reader contracts not applicable because
+there was no reader yet. After: the six reader contracts execute, leaving 91 opt-in
+skips. G3 now additionally runs all ten catalog tests, including its two native cases.
+The separate pre-refactor catalog run explicitly recorded **2 pass / 0 fail / 8 skip**
+(return code 1 under the no-opt-in-skips harness policy); it is not reported as green.
+The six new reader and two native injection contracts were unavailable on baseline.
+
+Final native catalog tests use **copied checkouts**, not symlinked implementation
+folders or an environment index override. They prove an injected bar/page/tab loads
+without host edits, a standalone custom Settings page confirms visibility and clears
+startupPending, loaded metadata stays cached after an index edit, and disabled entries
+stay out of UI/CLI. See [after-G3.txt](evidence/m4a/after-G3.txt).
+
+Full qmllint (including touched QML and callers): before **141 files, 0 errors,
+67 warnings**, 16.545 s; after **142 files, 0 errors, 68 warnings**, 18.115 s.
+The additional warning is the SDK's missing `QProcess::ExitStatus` qmltype on the
+new Process exit handler; native tests execute that handler successfully.
+
+The after gate process recorded test-only HEAD `7f1a624` while production was an
+uncommitted candidate; hashes were checked unchanged before committing `84d0919`.
+The later measurement helper commit does not change those verified production bytes.
+Raw evidence: `/workspace/.lme-dev/m4a/{before,after-final,contracts-before}`.
+The committed JSON/text evidence does not depend on those transient paths remaining.
+
+### Failed candidates and rollback
+
+No failed production commit was kept or repaired by stacking fixes. Each failed
+uncommitted candidate was saved outside the checkout, then completely restored to
+the test-only baseline before rebuilding. No existing assertion was weakened.
+
+- Candidate 1: new QML handler used an unbraced `for`; configuration failed to parse.
+- Candidate 2: wrapper Loader assigned read-only implicitWidth/implicitHeight;
+  removed those assignments, using Loader's existing child-size propagation.
+- Candidate 3: G0 was **407 pass / 1 fail / 91 skip**: the existing qs-only PATH test
+  failed because unconditional `python3` lookup returned 127. The run was stopped;
+  that candidate was reverted. The final CLI resolves Python from PATH, falling
+  back to Fedora's `/usr/bin/python3`, preserving the qs-only contract.
+
+Logs: [candidate1](evidence/m4a/candidate1-unit.txt),
+[candidate2](evidence/m4a/candidate2-unit.txt),
+[failed G0](evidence/m4a/failed-candidate3-G0.txt).
+The focused qs-only/startup checks then passed **5/0/0**, followed by the final gates.
+The known G3 baseline failure documented above remains resolved; these reverted
+implementation candidates are not accepted baseline failures.
+
+### D1 startup cost — rule NOT met
+
+M0 used EPYC 7763; that machine is unavailable in this session. **Same-machine-as-M0
+was not achievable**. The explicit substitute is unchanged main `186354a` in a
+separate worktree on this same EPYC 9V74 VM, alongside the empty/synthetic versions.
+Historical M0 is context only, not the control for assigning catalog cost.
+
+Current machine: AMD EPYC 9V74, five visible CPUs, four-CPU quota, 32 GiB limit,
+Linux 6.18.55 / Debian 13, Python 3.12.14, Quickshell 0.3.2 (`4f508be`),
+Qt/qmllint 6.8.2, Sway 1.10.1, headless pixman compositor and Mesa software RHI.
+No physical GPU performance is claimed.
+
+Reuse `migration_startup.measure(5)` without changing its endpoint: fresh process and
+XDG config/state/data/cache/runtime for each sample, monotonic launch to the first
+visible nonzero mapped Sway window, 20 ms polling, no discarded warm-up, OS page
+cache not dropped. Preview uses `start.sh --preview --config migration-checkout`;
+Settings uses `settings.sh --page appearance`, real standalone host with demo backend.
+
+| Batch/configuration | Preview median ms | Settings median ms | Added preview / Settings vs that batch's main |
+| --- | ---: | ---: | ---: |
+| Historical M0, different CPU/code | 902.983 | 950.821 | Not comparable as catalog cost |
+| Initial: unchanged main | 925.656 | 992.604 | — |
+| Initial: empty | 849.475 | 865.191 | −76.181 / −127.413 |
+| Initial: synthetic | 822.168 | 916.774 | −103.488 / −75.830 |
+| Consecutive repeat: unchanged main | 817.971 | 866.760 | — |
+| Consecutive repeat: empty | 823.598 | 913.987 | +5.627 / +47.227 |
+| Consecutive repeat: synthetic | 873.167 | 972.947 | **+55.196 / +106.187** |
+
+Every median is five samples. Initial negative deltas suggested VM/cache/load noise,
+not an optimization; repeat main → empty → synthetic consecutively to investigate.
+**Both batches are retained; no sample or batch was discarded.** The repeat exceeds
+50 ms on both paths, so D1 has not been demonstrated and M4b is blocked. The initial
+batch's empty raw startup logs were overwritten by its synthetic run; their measured
+samples remain. The repeat preserves separate raw logs for every configuration.
+See [startup.json](evidence/m4a/startup.json) for every sample and both comparisons.
+
+Synthetic: **71 enabled inert descriptors**, 24,321 JSON bytes: one per current
+19 bar modules / 16 Settings pages / six control tabs, plus 30 preference fragments.
+Each references one inert Item. Unique synthetic IDs avoid shadowing legacy entries;
+Settings therefore has 16 extra navigation rows, a conservative hybrid overhead.
+It models metadata I/O, validation, subprocess transport and projections; it does
+not execute migrated features, workers/bootstrap, preference consumers or hardware
+rendering. Preview's mapped-window endpoint can precede async catalog completion,
+as M0's endpoint can precede service readiness; this is not first-feature-frame proof.
+No production feature was converted, including in the shipped empty index.
+
+Reproduction: `scripts/run-gates.sh --startup-runs 5` measures the empty index in a
+private session. For the three-way comparison, use that same private bootstrap
+with [measurement-driver.py.txt](evidence/m4a/measurement-driver.py.txt), adapting
+only the untouched-main worktree path. It calls the same M0 function and
+`tests/catalog_measurement.py`; source for the exact bootstrap and polling-only
+selection is stored alongside it. Raw repeat logs: `/workspace/.lme-dev/m4a/cost-repeat`.
+
+**Proposed next decision; NOT implemented:** generate validated QML metadata from the
+JSON at build/install time, keeping JSON authoritative and checking stale artifacts.
+This avoids a QML-side Python subprocess but adds generation/consistency checks.
+An alternative is to carry catalog metadata in the existing backend's first snapshot;
+that removes the extra process but couples registry readiness to backend transport
+and changes its protocol/fixtures. Discuss and approve a revision before implementing
+it; do not start M4b on the strength of the current measurements.
+
+### Adapters and retirement conditions
+
+| Adapter retained/introduced | Exact retirement condition |
+| --- | --- |
+| BarRegistry legacyModules + original specialized BarModule factories | Remove each migrated registration in its approved conversion commit, including the backend legacy ID; retain a factory until its specialized bindings have equivalent coverage. Remove the final legacy branch only after all registrations migrate. |
+| SettingsRegistry legacyPages + SettingsView inline page factories | Remove an entry only with its descriptor and navigation/order parity proof; keep handwritten page UI. Remove the final legacy selector after every page's specialized signals/bindings are covered. |
+| ControlRegistry control-grid tabs + ControlCenter inline components | Remove a legacy entry only when its descriptor replaces it and entry/refresh/mark-read/selection tests pass; control-grid geometry remains authoritative. |
+| CLI legacy page arguments, ShellState legacy page allowlist | Remove each ID together with its descriptor conversion and old exit/message/IPC tests; remove the lists only after the last legacy page migrates. |
+| Backend BAR_MODULES union with all catalog IDs | Remove the corresponding legacy set member in its conversion commit, retain disabled IDs from the catalog. No schema consumers migrate in M4a. |
+| Public registry APIs, integer controlTab and named env facade | Retain per D3. Internal numeric writes may retire only after their fixtures no longer need them; no such change occurs here. |
+
+No user settings/layout files, locks, atomic-write protocol, polling cadence,
+cache policy or power policy changed. Catalog validation errors now have an explicit
+diagnostic/error path; this is new invalid-input handling, not a change for the empty
+valid catalog. Native recovery from a malformed catalog was not separately exercised;
+reader rejection, existing Settings failure recovery and valid-catalog readiness were.
+
+### Laptop checklist (needs real-session check)
+
+1. Start the shell; check the bar's module order and saved layout match main.
+2. Open/close Control Center, Activity Island and Clipboard; check appearance/input.
+3. Gear → Settings; request multiple pages quickly during cold startup, then reopen.
+4. Check saved Liquid/Smoked appearance is present on the first visible Settings frame.
+5. Use bar audio/network/clock/battery actions and the System monitor shortcut.
+6. Switch all six control tabs; confirm notification mark-read and Agenda/Notes visibility.
+7. Close panels, reconnect an audio/Bluetooth device, reopen; confirm existing controls respond.
+8. Review shell/Settings logs for catalog diagnostics; do not install synthetic descriptors.

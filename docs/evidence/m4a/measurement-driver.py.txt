@@ -1,0 +1,14 @@
+import json, os, platform
+from pathlib import Path
+import migration_startup as s
+import catalog_measurement as c
+out=s.OUTPUT
+original=s.REPO
+cpu=next(x.split(':',1)[1].strip() for x in Path('/proc/cpuinfo').read_text().splitlines() if x.startswith('model name'))
+(out/'machine.json').write_text(json.dumps({'cpu':cpu,'logical_cpus':os.cpu_count(),'platform':platform.platform()},indent=2)+'\n')
+for label,repo in [('baseline',Path('/workspace/.lme-dev/m4a/baseline')),('empty',original),('synthetic',original)]:
+    s.OUTPUT=out/label; s.OUTPUT.mkdir()
+    s.REPO=repo
+    result=c.measure() if label=='synthetic' else s.measure(5)
+    (s.OUTPUT/'startup.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(label+': '+str({key:result[key]['median_seconds'] for key in ('preview','settings')}),flush=True)

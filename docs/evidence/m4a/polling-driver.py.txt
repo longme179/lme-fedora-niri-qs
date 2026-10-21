@@ -1,0 +1,3 @@
+import migration_checks as g
+g.GATES['G6']=(['POLLING_UI'], ['test_polling_ui.NativePollingCase'])
+raise SystemExit(g.main())

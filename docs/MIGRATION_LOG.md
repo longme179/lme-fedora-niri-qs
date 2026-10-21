@@ -2,7 +2,8 @@
 
 Scope: M0 baseline, merged M1–M3 and G3 correction, plus the M4a review branch.
 M4a review implements optimizations a/b and native failure recovery; functional gates
-pass, but warm interleaved measurements still do not demonstrate the D1 cost target.
+pass. On 2026-10-21 the owner accepted the measured D1 cost despite the unmet rule;
+the historical round-4 verdict and samples below remain unchanged.
 M4b and later remain unauthorized; no real feature has been converted.
 
 ## M0 baseline — 2026-10-20
@@ -1589,3 +1590,116 @@ Python MISS adapter; old deep reader behavior/rejection text is retained.
 Regression gates green do not authorize merging or waive the red performance
 acceptance. No laptop GPU/display/Bluetooth/backlight/suspend check was performed;
 all native results concern disposable headless Sway/D-Bus/XDG sessions only.
+
+## D1 owner decision and startup budget — 2026-10-21
+
+**D1 resolved: JSON index + descriptors; measured cost accepted by the owner on
+2026-10-21.** This is an explicit owner acceptance of a missed pre-registered
+rule, not a redefinition of that rule and not a claim that round 4 passed it.
+No new samples, statistics, thresholds or production changes accompany this decision.
+The reviewed head is `24cf501`, with production identical to measured `9c3fd38`.
+Stay on `refactor/m4a-feature-catalog`: **no merge, M4b or further optimization**.
+
+Accepted round-4 figures, added median versus main `186354a`:
+
+| Cold-launch path / model | Added median | 95% CI | Original rule |
+| --- | ---: | --- | --- |
+| Settings, empty catalog | +32.2 ms | [+2.0, +44.5] ms | Not met; owner accepts cost |
+| Settings, synthetic replacement | +41.2 ms | [+15.4, +50.8] ms | Not met; owner accepts cost |
+| Preview, empty / replacement | No regression against registered checks | See unchanged round-4 table/raw evidence | Met; do not interpret improvement |
+
+Caveats: software-rendered VM (private Sway pixman, Qt RHI/OpenGL Mesa software),
+warm filesystem/per-arm caches, fresh-process **cold launches only**, and an
+endpoint of the first visible mapped window (20 ms polling), not full feature
+readiness. Settings used **60 timed rounds per arm**; Preview used 30. The result
+does not measure warm Gear/IPC reuse, a cold OS cache or real laptop GPU behavior.
+All 390 samples and the joint round-block bootstrap CIs remain in round-4 evidence.
+
+### Budget for later milestones
+
+Every later milestone re-measures **both Settings and preview cold launch** against
+**the previous accepted head**, recording its exact Git revision. Start with this
+accepted M4a implementation (review head `24cf501`, production `9c3fd38`); a docs-only
+or merge descendant may represent it when the production diff is identical.
+Use the same warm-cache/fresh-process, user-entry-script, mapped-window endpoint,
+randomized interleaved and joint round-block bootstrap CI method. Record sample
+counts, renderer/machine and cache policy so comparisons are reviewable.
+
+If the **95% CI lower bound of the added median cost exceeds 10 ms on either
+path, STOP and ask the owner** before proceeding. Do not silently change the
+baseline, endpoint or threshold. This is a prospective incremental budget; it
+does not make the missed round-4 rule pass retrospectively.
+
+Optional optimizations remain **NOT authorized**:
+
+- Backend validation off the first-snapshot path: approximately **11 ms** of
+  measured validation-owner time (11.32 ms in diagnostic profiling). Moving it
+  can shift a snapshot metric without speeding Settings if the trust barrier
+  still waits. Broken catalog must remain legacy-only plus diagnostic; valid
+  catalogs must not pop in. No scheduling/thread/worker change is approved.
+- Aggregate c: approximately **1.1 ms read/parse budget** (0.59/0.54 ms medians),
+  not a demonstrated startup saving. Required resource/path validation remains;
+  removing reads does not explain the empty-index cost. No aggregate is approved.
+
+### Merge-readiness scope and intended contracts
+
+Remote main and `origin/main` are still `186354a`; merge-base is `186354a`.
+The local `main` ref is older (`0548626`), so review comparisons use the verified
+remote-tracking main. No branch/ref update, rebase or merge was performed.
+The M4a production diff against `origin/main` is **15 files, +432 / -16 lines**;
+this decision commit changes documentation only. `config/features.json` remains
+exactly the 28-byte empty index `{"version":1,"features":[]}\n`.
+
+Runtime source has no scratch profiler imports/hooks, monotonic marker calls,
+preload binaries or scratch output trees. Tracked benchmark/test helpers and raw
+JSON/CSV/log evidence are intentional. Native tests instrument **copied fixtures**
+for fault/projection assertions; these are not installed runtime instrumentation.
+
+On exercised legacy paths with the empty index, no UI/navigation/action behavior
+difference versus the characterized main baseline was found, apart from the
+accepted cold-start cost. Order/defaults, gestures, monitor routing, card editing,
+IPC page reuse/readiness and existing CLI unknown-page messages remain guarded.
+The exact intended additions/contract changes are:
+
+1. Bundled version-1 index/descriptors and projections extend existing registries;
+   legacy entries keep their order, enabled entries append in index order, and
+   disabled entries retain IDs/schema metadata while hiding their UI. The shipped
+   index contains **zero real features**; no schema fragment is consumed yet.
+2. Deep validation rejects invalid versions/shapes, duplicate keys/IDs/preferences,
+   legacy collisions and missing/escaping resources, including disabled entries.
+   A broken/timed-out catalog settles to legacy-only plus the existing diagnostic.
+3. QML loads/caches the index once per process, publishes projections together,
+   gates catalog resources on the backend verdict and joins the Settings startup
+   barrier. Descriptor resources are lazy/bounded. `openPage()` still confirms a
+   visible window and `startupPending()` still reports pending initialization.
+4. Backend startup validates once before preferences, without import-time catalog
+   I/O, and adds `catalogValidation: {error: string}` to emitted snapshots.
+5. `feature_catalog.py --page KEY [LEGACY...]` provides index-only admission;
+   `settings.sh` admits enabled canonical catalog keys with Bash builtins, with
+   Python on MISS. Existing legacy/unknown-page exit codes and messages remain.
+6. Explicit `--check` (also run by `check.sh`) deep-validates and **rejects
+   noncanonical indexes**, unsafe page identifiers and page keys absent from
+   startup metadata. Canonical nonempty indexes have one compact record per line,
+   `id` first and literal `settingsPage.key` first. Runtime old-format readers and
+   Python MISS compatibility remain; this authoring contract is intentionally new.
+
+Final-HEAD G0 and G3 must be executed after this docs-only commit. Their actual
+counts/skips and the complete branch commit list are reported in the verification
+reply; this paragraph does not pre-claim that either gate passed. Prior rounds'
+results remain historical. Laptop acceptance is still the owner's step.
+
+### Laptop checklist briefing — needs real-session check
+
+This is a short manual smoke check on the real Fedora/niri/GPU session before
+merging, not a request to reproduce the 60-round VM benchmark. Use the reviewed
+checkout explicitly so an installed older copy cannot give a misleading result.
+Do not install synthetic descriptors or overwrite niri configuration.
+
+1. Record the branch/HEAD and confirm the index is empty; stop the old shell using your usual method and launch this checkout.
+2. Compare bar order, labels and saved layout; open/close Control Center, Activity Island and Clipboard, checking input and animation.
+3. Open Settings with Gear while using your saved Liquid/Smoked style; the first visible frame should already use that appearance.
+4. Repeat Gear during startup and while Settings is open; expect one Settings window. Route to Clipboard then Appearance with `settings.sh --page ... --daemonize`.
+5. Close and reopen Settings; confirm the requested page and saved appearance, with no hang or duplicate window.
+6. Try bar audio/network/clock/battery routes, all six Control Center tabs and System monitor; check mark-read and Agenda/Notes visibility.
+7. Test preview for this checkout separately; closing it should leave the live shell/config intact. Check GPU/glass/Jelly appearance for regression.
+8. Review logs for catalog/QML errors; report HEAD, steps, expected/actual result and log/video if something differs. Real reconnect/hardware checks are optional follow-ups, not claimed by VM gates.

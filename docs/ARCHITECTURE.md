@@ -1,6 +1,6 @@
 # LME Shell architecture — Phase 1 proposal
 
-**Status:** design for approval; no Phase 2 implementation. **Date:** 2026-10-20.
+**Status at authoring:** design for approval; no Phase 2 implementation. **Date:** 2026-10-20.
 **Source checked:** `58349e7`; corrections recorded in [ARCHITECTURE_AUDIT.md](ARCHITECTURE_AUDIT.md).
 Approved order: **A7 → A4 → A1 → A2 → A3 (ONE domain pilot) → A5**. A6 is deferred.
 Examples below are proposed interfaces/data, not files or APIs already implemented.
@@ -93,7 +93,8 @@ Existing global singleton/type exports remain compatibility facades until M8, if
 
 Registry readiness joins the existing Settings startup barrier before constructing its
 first page; failure uses the existing diagnostic path. Preserve `openPage()` visible-window
-confirmation and `startupPending()`. Additional catalog startup cost is **unmeasured**.
+confirmation and `startupPending()`. Round-4 startup cost was measured and accepted
+by the owner on 2026-10-21; see [MIGRATION_LOG.md](MIGRATION_LOG.md#d1-owner-decision-and-startup-budget--2026-10-21).
 
 ### 2.2 Backend action registry contract, including demo
 
@@ -264,6 +265,11 @@ New `NativeTabCase`/`NativeEntryCase`/`NativeRoutingCase` use `LME_TEST_UPGRADE_
 One behavior-preserving refactor per commit; if gates fail, revert that step rather than
 stacking unrelated fixes. Keep characterization tests that already pass on the baseline.
 
+Startup budget (owner decision, 2026-10-21): each later milestone re-measures Settings
+and preview cold launches against the previous accepted head with the same warm-cache,
+mapped-window and bootstrap-CI method. If the 95% CI lower bound of the added median
+cost exceeds 10 ms on either path, **STOP and ask**. The round-4 rule is not redefined.
+
 ## 6. Ordered migration, adapters and rollback
 
 Sizes estimate production source/metadata touched, excluding tests: S ≤150 lines,
@@ -381,7 +387,7 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 
 | Decision for owner | Recommendation | Alternative / trade-off |
 | --- | --- | --- |
-| D1: metadata source | One JSON index + feature descriptors; existing registries are projections | Keep metadata in QML: fewer reads, but Python/CLI need a generated/checkable counterpart; startup cost of descriptors needs measurement |
+| D1: metadata source — resolved | JSON index + descriptors, cost accepted by the owner on 2026-10-21; existing registries are projections | The pre-registered round-4 rule was not met; the owner accepted the measured cost. Optional optimizations remain unauthorized. |
 | D2: shared content extraction | Include M2 to make Clipboard independently removable | Leave helpers in Clipboard: smaller initial scope, but physical deletion still breaks capture/backend; do not claim slice independence |
 | D3: compatibility lifetime | Keep public IPC/CLI/env/import facades; retire private adapters at each stated zero-caller gate | Timed public deprecation: less legacy surface, breaks external scripts without a release policy |
 | D4: feature withdrawal | Disable index entry, retain schema/data | Delete descriptor/keys: fewer dormant definitions, requires a separately approved data/layout migration |
@@ -391,7 +397,5 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D8: folder consolidation | Defer unless logical ownership still causes costly edits | Approve M8 later: better locality, more path/resource/fixture risk without new behavior |
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
-Unverified: descriptor-load overhead, new generic factory binding parity, and registry
-async-completion extension. These need the specified characterization/native gates;
-they are not implementation successes. Phase 1 verification checks source facts and
-the design and existing test baseline only. **STOP: owner approval is required before M1 or any Phase 2 code.**
+Historical Phase 1 verification covered source facts/design only; later evidence and
+authorizations are in MIGRATION_LOG.md. M4b remains unauthorized; D1 acceptance is not merge approval.

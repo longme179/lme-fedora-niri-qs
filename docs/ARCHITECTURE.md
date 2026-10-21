@@ -152,12 +152,17 @@ settings file. These exact existing flat keys remain in `settings.json`:
 
 ```json
 {"preferences":{
-  "clipboardEnabled":{"type":"boolean","default":true,"portable":true,"appearance":false},
-  "clipboardImages":{"type":"boolean","default":true,"portable":true,"appearance":false},
-  "clipboardLimit":{"type":"integer","default":100,"min":20,"max":500,"portable":true,"appearance":false,"validator":"clipboardLimit"}
+  "clipboardEnabled":{"type":"boolean","default":true,"portable":true,"appearance":false,"validator":"boolean"},
+  "clipboardImages":{"type":"boolean","default":true,"portable":true,"appearance":false,"validator":"boolean"},
+  "clipboardLimit":{"type":"integer","default":100,"min":20,"max":500,"portable":true,"appearance":false,"validator":"integer"}
 }}
 ```
 
+M5 implements this interface as `settings_schema.Schema`; the backend explicitly binds
+existing validator/default callbacks (descriptor defaultResolver names are data only).
+Clipboard (3), weather scalar (2) and OSD (5)
+keys are descriptor-owned; 137 keys stay in the legacy fragment. Weather/OSD entries
+own schema only; their UI remains in legacy registries.
 Schema interface: `defaults(context)`, `validate(key,value)`, `portable_keys()`,
 `appearance_keys()`; retain `DEFAULT_PREFERENCES` and `validate_preference` as adapters.
 Named validators/default resolvers bind to existing Python functions, never `eval`.
@@ -170,6 +175,11 @@ The worker reads the same three defaults/validators, retaining its existing malf
 fallback behavior; main Preferences retains its different last-valid reload behavior.
 **Do not change** lock → reload → merge/token patch → fsync → atomic replace, backup,
 file permissions, flat key names, migrations or existing user data.
+Schema definitions are immutable; `defaults()` returns independent values. The worker
+requests only its Clipboard context. Original key/appearance order is retained.
+When the UI index is broken/empty, bundled config descriptors retain known preference
+definitions while the existing catalog diagnostic/fallback runs. This temporary
+discovery bridge must be revisited with any authorized descriptor-folder moves.
 
 ## 3. Vertical slice: Clipboard before and after
 
@@ -400,4 +410,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M4b is merged; M5 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M4b is merged; M5 is implemented for owner review. M6 and later need authorization.

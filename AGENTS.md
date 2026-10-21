@@ -36,7 +36,9 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
    Remove corresponding legacy registrations in the SAME commit; no duplicates.
 4. Add characterization/contracts, withdrawal and relevant native coverage.
 5. Update user docs and STATE; keep public IPC/CLI/env/import facades compatible.
-   Preference fragments remain metadata until schema migration is authorized.
+   Schema definitions live in descriptor preferences plus the legacy fragment.
+   Declare portable/profile membership explicitly; defaults deny both. Bind named
+   validators/resolvers to Python functions; JSON contains no code.
 
 ## Commands and checks
 
@@ -63,11 +65,10 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
   XDG/Sway/D-Bus. Hardware-only checks must say "needs real-session check".
 - During work: Python changes use G0 + relevant units; QML changes use G0 + G1
   + relevant native cases. Run G0-G4 and G6 polling ONCE before requesting merge.
-  An explicit milestone gate scope takes precedence (agent-state: G0 once only).
+  An explicit milestone gate scope takes precedence.
 - Before merge, once per branch: 10 cold launches each of preview and Settings,
   main vs head, medians only; Quickshell/backend RSS at 10 seconds. Ask only if
-  Settings exceeds +100 ms or either process RSS exceeds +10%. This docs/tooling
-  task does not request a launch/RSS measurement.
+  Settings exceeds +100 ms or either process RSS exceeds +10%.
 - Batch future conversions by families, 3-6 per branch; one review stop per branch.
   No unauthorized milestone, merge or push to main. Owner merges review branches.
 - Ask only for behavior or public API/data-format changes, unclassifiable baseline

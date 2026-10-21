@@ -43,8 +43,9 @@ def stop(process):
 
 
 class Launch:
-    def __init__(self, kind, name):
+    def __init__(self, kind, name, cache_path=None):
         self.kind, self.name = kind, name
+        self.cache_path = cache_path
 
     def __enter__(self):
         self.temp = tempfile.TemporaryDirectory(prefix='startup-', dir=OUTPUT)
@@ -53,6 +54,8 @@ class Launch:
         for name in ('CONFIG', 'STATE', 'CACHE', 'DATA'):
             path = root / name.lower(); path.mkdir()
             self.env['XDG_' + name + '_HOME'] = str(path)
+        if self.cache_path is not None:
+            self.env['XDG_CACHE_HOME'] = str(self.cache_path)
         # Absolute socket keeps this launch isolated while using the private compositor.
         runtime = root/'runtime'; runtime.mkdir(mode=0o700)
         self.env['XDG_RUNTIME_DIR'] = str(runtime)

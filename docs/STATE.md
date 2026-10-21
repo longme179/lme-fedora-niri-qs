@@ -1,4 +1,4 @@
-# Agent state (2026-10-21)
+# Agent state (2026-10-22)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
@@ -8,9 +8,9 @@ Do not read archive/ unless answering a specific historical question.
 - M0 baseline/harness; M1 runner/storage; M2 content types; G3 baseline repair;
   M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
 - D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
-- M5: implemented on refactor/m5-settings-schema, awaiting owner review/merge.
-  Ten descriptor-owned preference keys; 137 legacy. Only Clipboard UI is converted.
-- M6/batch conversions need the next owner prompt. M8 moves deferred.
+- M5 merged: ten descriptor-owned preference keys; 137 legacy. Only Clipboard UI is converted.
+- M6: refactor/m6-launchpad-actions implemented, awaiting owner review/merge.
+  Only synchronous launchpadRun. M7/other domains need authorization; M8 moves deferred.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 
 ## Compatibility adapters and retirement
@@ -25,6 +25,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
+- M6 explicit provider binding/legacy dispatch trees retire per domain with catalog/conversion parity.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema
   facades; retain public names until explicit owner-approved compatibility changes.
 - Legacy validator/default bindings (137 keys), original key-order inventory,

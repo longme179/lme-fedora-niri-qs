@@ -58,6 +58,8 @@ from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass,
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
+from backend_actions import ActionRegistry
+from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
 from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
@@ -523,6 +525,8 @@ class DesktopBackend:
         self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.launcher_history = LauncherHistory()
         self.launchpad = Launchpad()
+        self.actions = ActionRegistry()
+        self.action_state = self.actions.provide([(provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -1053,7 +1057,7 @@ class DesktopBackend:
                 "monitor": self.monitor.state if self.monitor_enabled else {}}
 
     def feature_snapshot(self):
-        return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), "launchpadJobs": self.launchpad.snapshot(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
+        return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), **self.action_state(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
@@ -1247,18 +1251,17 @@ class DesktopBackend:
         return str(value)
 
     def handle(self, request: Any) -> dict[str, Any]:
-        self.result_sequence += 1
-        self.result_unemitted = True
+        self.result_sequence += 1; self.result_unemitted = True
         action = request.get("action", "") if isinstance(request, dict) else ""
         try:
-            if not isinstance(request, dict) or not isinstance(action, str) or not action:
-                raise ValueError("Input must be an object with an action")
-            if self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "launchpadRun", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}:
-                raise ValueError("This action is unavailable in the settings app")
+            if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
+            spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
+            if spec is not None: self.actions.check_context(action, context)
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
-                self.perform_demo(action, request)
-                self.last_result = {"ok": True, "action": action, "message": "Demo preview: no system command executed",
-                                    "sequence": self.result_sequence}
+                if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
+                else: self.perform_demo(action, request)
+                self.last_result = {"ok": True, "action": action, "message": "Demo preview: no system command executed", "sequence": self.result_sequence}
                 if action == "calculate": self.last_result.update(query=request.get("query"), message=calculate(request.get("query")))
                 return dict(self.last_result)
             self.saver_snapshot()
@@ -1269,7 +1272,7 @@ class DesktopBackend:
             # Read back only the changed control, including writes that partially fail.
             field = {"volume": "audio", "mute": "audio", "micVolume": "microphone", "micMute": "microphone", "brightness": "brightness"}.get(action)
             if field and self.system_cache is not None: self.system_cache.pop(field, None)
-            message = self.perform(action, request)
+            message = self.actions.dispatch(action, request, context=context, demo=False) if spec is not None else self.perform(action, request)
             if action == "chargeMode" or action in self.feature_jobs:
                 self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
                 return dict(self.last_result)
@@ -1328,7 +1331,7 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action in ("imageAnnotate", "launchpadRun", "wallpaperEnsure"): pass
+        elif action in ("imageAnnotate", "wallpaperEnsure"): pass
         elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
         elif action.startswith("gowall"): pass
         elif action == "wallpaperStatus": self.wallpaper_daemon={"available":True,"running":True,"query":"eDP-1: 1920x1080 · demo wallpaper","error":""}
@@ -1732,9 +1735,6 @@ class DesktopBackend:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
             return "State refreshed"
-        if action == 'launchpadRun':
-            if not self.preferences.values['launchpadEnabled']: raise ValueError('Launchpad is disabled')
-            return self.launchpad.run(request.get('id'),self.preferences.values['launchpadEntries'],self.preferences.values['terminal'],request.get('mode'))
         if action == "launch":
             app_id = request.get("id")
             if not isinstance(app_id, str) or app_id not in self.applications.entries:

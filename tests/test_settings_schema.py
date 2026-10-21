@@ -201,3 +201,20 @@ assert b.DEFAULT_PREFERENCES['osdMargin'] == 24
                 result=self.copied(mutate,'import desktop_backend')
                 self.assertNotEqual(result.returncode,0)
                 self.assertIn(message,result.stderr)
+
+    def test_new_fragment_membership_is_explicit_and_default_deny(self):
+        def mutate(root):
+            path=root/'config/clipboard.json';data=json.loads(path.read_text())
+            data['preferences'].update(
+                schemaAppearance=dict(type='boolean',default=True,portable=True,appearance=True),
+                schemaPrivate=dict(type='boolean',default=True))
+            path.write_text(json.dumps(data))
+        code="""import desktop_backend as b
+schema = b.PREFERENCE_SCHEMA
+assert 'schemaAppearance' in schema.appearance_keys()
+assert 'schemaAppearance' in schema.portable_keys()
+assert 'schemaPrivate' not in schema.portable_keys()
+assert 'schemaPrivate' not in schema.appearance_keys()
+"""
+        result=self.copied(mutate,code)
+        self.assertEqual(result.returncode,0,result.stderr)

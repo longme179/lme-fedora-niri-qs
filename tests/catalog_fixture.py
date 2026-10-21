@@ -79,7 +79,7 @@ def session(native=False, prepare=None):
                 (root/name).symlink_to(REPO/name, target_is_directory=True)
         if prepare: prepare(root)
         entry = root/'catalog-fixture.qml'; entry.write_text(QML)
-        env = dict(os.environ, LME_SHELL_DEMO='1', XDG_CONFIG_HOME=directory+'/user-config',
+        env = dict(os.environ, LME_SHELL_DEMO='1', PYTHONDONTWRITEBYTECODE='1', XDG_CONFIG_HOME=directory+'/user-config',
             XDG_STATE_HOME=directory+'/state', XDG_DATA_HOME=directory+'/data', XDG_CACHE_HOME=directory+'/cache',
             DBUS_SYSTEM_BUS_ADDRESS='unix:path='+directory+'/no-system-bus',
             QT_QPA_PLATFORM='wayland' if native else 'offscreen', QT_QUICK_BACKEND='rhi' if native else 'software')

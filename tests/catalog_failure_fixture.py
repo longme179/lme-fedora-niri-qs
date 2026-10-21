@@ -94,7 +94,7 @@ def session(mode, fault):
         source.write_text(code.replace('    id: root\n', '    id: root\n'+OBSERVE, 1))
         runtime = Path(directory)/'runtime'; runtime.mkdir(mode=0o700)
         wayland = str(Path(os.environ['XDG_RUNTIME_DIR'])/os.environ['WAYLAND_DISPLAY'])
-        env = dict(os.environ, LME_SHELL_DEMO='1', QT_QPA_PLATFORM='wayland', QT_QUICK_BACKEND='rhi',
+        env = dict(os.environ, LME_SHELL_DEMO='1', PYTHONDONTWRITEBYTECODE='1', QT_QPA_PLATFORM='wayland', QT_QUICK_BACKEND='rhi',
             XDG_CONFIG_HOME=directory+'/config', XDG_STATE_HOME=directory+'/state', XDG_CACHE_HOME=directory+'/cache',
             XDG_DATA_HOME=directory+'/data', XDG_RUNTIME_DIR=str(runtime), WAYLAND_DISPLAY=wayland,
             DBUS_SYSTEM_BUS_ADDRESS='unix:path='+directory+'/no-system-bus')

@@ -59,3 +59,22 @@ class CatalogCliCase(unittest.TestCase):
             capture_output=True, text=True, timeout=5)
         self.assertEqual(result.returncode, 1)
         self.assertIn('Feature catalog: Missing or escaping resource:', result.stderr)
+
+    def test_legacy_and_canonical_empty_index_need_no_python(self):
+        python = self.root/'bin/python3'
+        python.write_text('#!/bin/bash\nexit 97\n'); python.chmod(0o700)
+        self.env['PATH'] = str(python.parent)+':'+self.env['PATH']
+        self.assertEqual(self.launch('appearance').returncode, 0)
+        result = self.launch('absent')
+        self.assertEqual((result.returncode, result.stderr), (2, 'Error: unknown settings page: absent\n'))
+
+    def test_unknown_key_lookup_does_not_read_descriptor_or_resource(self):
+        (self.root/'config/features.json').write_text(json.dumps({'version': 1, 'features': [
+            {'id': 'sample', 'descriptor': 'missing.json', 'enabled': True,
+             'startup': {'settingsPage': {'key': 'sample'}}}]}))
+        result = self.launch('sample')
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, 'accepted:sample\n', ''))
+        result = subprocess.run(['python3', str(self.root/'scripts/feature_catalog.py'), '--check'],
+            capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Feature catalog:', result.stderr)

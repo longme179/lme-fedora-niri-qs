@@ -1,0 +1,11 @@
+test_enabled_keys_and_prefix_substring_keys_match_python (test_catalog_admission.AdmissionCase.test_enabled_keys_and_prefix_substring_keys_match_python) ... ok
+test_bar_and_preference_keys_are_not_pages (test_catalog_admission.AdmissionCase.test_bar_and_preference_keys_are_not_pages) ... ok
+test_disabled_entry_matches_python (test_catalog_admission.AdmissionCase.test_disabled_entry_matches_python) ... ok
+test_missing_malformed_and_empty_index_match_python (test_catalog_admission.AdmissionCase.test_missing_malformed_and_empty_index_match_python) ... ok
+test_legacy_pages_match_python_even_with_broken_index (test_catalog_admission.AdmissionCase.test_legacy_pages_match_python_even_with_broken_index) ... ok
+test_check_rejects_unsafe_page_keys (test_catalog_admission.AdmissionCase.test_check_rejects_unsafe_page_keys) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.129s
+
+OK

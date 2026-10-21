@@ -1,0 +1,38 @@
+test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged (test_feature_catalog.CatalogContractCase.test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged) ... ok
+test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults) ... FAIL
+test_empty_index_and_disabled_ids_retain_schema_but_hide_ui (test_feature_catalog.CatalogContractCase.test_empty_index_and_disabled_ids_retain_schema_but_hide_ui) ... ok
+test_rejects_duplicate_feature_projection_and_preference_ids (test_feature_catalog.CatalogContractCase.test_rejects_duplicate_feature_projection_and_preference_ids) ... ok
+test_rejects_invalid_version_shapes_and_duplicate_json_keys (test_feature_catalog.CatalogContractCase.test_rejects_invalid_version_shapes_and_duplicate_json_keys) ... ok
+test_rejects_legacy_collisions_even_when_disabled (test_feature_catalog.CatalogContractCase.test_rejects_legacy_collisions_even_when_disabled) ... ok
+test_rejects_mismatched_descriptor_and_executable_metadata (test_feature_catalog.CatalogContractCase.test_rejects_mismatched_descriptor_and_executable_metadata) ... ok
+test_rejects_missing_resources_traversal_absolute_and_symlink_escape (test_feature_catalog.CatalogContractCase.test_rejects_missing_resources_traversal_absolute_and_symlink_escape) ... ok
+
+======================================================================
+FAIL: test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_feature_catalog.py", line 26, in test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults
+    with session() as probe:
+         ^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_fixture.py", line 89, in session
+    probe.wait(lambda state: len(state['tabs']) >= 6)
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_fixture.py", line 67, in wait
+    raise AssertionError(str(state) + '\n' + self.log.read())
+AssertionError: {}
+  INFO: Launching config: "/tmp/tmpeko5xh89/checkout/catalog-fixture.qml"
+  INFO: Shell ID: "58fea27ab4fc2e845b18ebd551b29232" Path ID "58fea27ab4fc2e845b18ebd551b29232"
+  INFO: Saving logs to "/workspace/.lme-dev/runtime/quickshell/by-id/lw22k9h8nt/log.qslog"
+ ERROR: Failed to load configuration
+ ERROR:   caused by @catalog-fixture.qml[19:59]: Type BarModule unavailable
+ ERROR:   caused by @qml/bar/BarModule.qml[36:23]: Unexpected token `for'
+ ERROR:   caused by @qml/bar/BarModule.qml[36:28]: Unexpected token `const'
+ ERROR:   caused by @qml/bar/BarModule.qml[36:38]: Expected token `,'
+
+
+----------------------------------------------------------------------
+Ran 8 tests in 12.096s
+
+FAILED (failures=1)

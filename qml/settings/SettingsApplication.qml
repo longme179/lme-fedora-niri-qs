@@ -11,14 +11,14 @@ ShellRoot {
     id: root
     property bool initialized: false
     property bool startupFailed: false
-    property string requestedPage: SettingsRegistry.page(Quickshell.env("LME_SETTINGS_PAGE") || "appearance").key
-    readonly property bool prepared: (Theme.ready && ShellState.backendReady) || startupFailed
-    onPreparedChanged: if (prepared) initialized = true
+    property string requestedPage: Quickshell.env("LME_SETTINGS_PAGE") || "appearance"
+    readonly property bool prepared: (FeatureCatalog.ready && Theme.ready && ShellState.backendReady) || startupFailed
+    onPreparedChanged: if (prepared) { requestedPage = SettingsRegistry.page(requestedPage).key; initialized = true; }
     readonly property string screenshotPath: Quickshell.env("LME_SETTINGS_SCREENSHOT") || ""
     IpcHandler {
         target: "settings"
         function openPage(page: string): bool {
-            if (page) root.requestedPage = SettingsRegistry.page(page).key;
+            if (page) root.requestedPage = FeatureCatalog.settled ? SettingsRegistry.page(page).key : page;
             if (view.item) (view.item as SettingsView).navigate(root.requestedPage);
             window.minimized = false;
             if (view.status === Loader.Ready) window.visible = true;

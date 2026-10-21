@@ -1,0 +1,22 @@
+test_settings_missing_index (test_catalog_failures.NativeCatalogFailureCase.test_settings_missing_index) ... FAIL
+
+======================================================================
+FAIL: test_settings_missing_index (test_catalog_failures.NativeCatalogFailureCase.test_settings_missing_index)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 36, in test
+    def test(self): self.check_fault(mode, fault)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_failures.py", line 14, in check_fault
+    state = probe.wait(lambda state: state['ready'] and state['settled'] and bool(state['error']))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/catalog_failure_fixture.py", line 70, in wait
+    raise AssertionError(str(state)+'\n'+self.log.read())
+AssertionError: {}
+Feature catalog: Missing or escaping resource: config/features.json
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.112s
+
+FAILED (failures=1)

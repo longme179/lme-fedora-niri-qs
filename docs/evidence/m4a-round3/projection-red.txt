@@ -1,0 +1,18 @@
+Evidence directory: /workspace/.lme-dev/m4a-r3/projection-red-actual
+test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish (test_catalog_projection.NativeCatalogProjectionCase.test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish) ... FAIL
+
+======================================================================
+FAIL: test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish (test_catalog_projection.NativeCatalogProjectionCase.test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_projection.py", line 31, in test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish
+    self.assertEqual(probe.call('lookup'), '0')
+AssertionError: '100' != '0'
+- 100
++ 0
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.478s
+
+FAILED (failures=1)

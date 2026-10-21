@@ -1,6 +1,10 @@
 # Migration evidence
 
-Scope: M0 baseline, merged M1/M2 and G3 correction, plus the M3 review branch. M4 and later are not started.
+Scope: M0 baseline, merged M1–M3 and G3 correction, plus the M4a review branch.
+M4a review implements optimizations a/b and native failure recovery; functional gates
+pass. On 2026-10-21 the owner accepted the measured D1 cost despite the unmet rule;
+the historical round-4 verdict and samples below remain unchanged.
+M4b and later remain unauthorized; no real feature has been converted.
 
 ## M0 baseline — 2026-10-20
 
@@ -611,3 +615,1091 @@ Rollback: `git revert db6ab78` restores catalog/QML routing together. Keep `697f
 7. In an isolated preview, try the named control-tab env for Agenda/System and an unknown name; verify the same targets/fallback.
 
 Physical niri/GPU appearance, Bluetooth/backlight/suspend and long-session behavior remain **needs real-session check**. **STOP after M3; M4 and later remain unauthorized.**
+
+## M4a — A1 empty catalog infrastructure — 2026-10-21
+
+**Branch:** `refactor/m4a-feature-catalog`, based on merged main `186354a`.
+**Stop condition:** infrastructure checks complete; projected startup cost **fails**
+the proposed 50 ms rule. Do not start M4b or convert Clipboard.
+
+### Commits, contracts and unchanged behavior
+
+1. `15eb3ef`: [M4A_DESIGN.md](M4A_DESIGN.md), 70 lines, committed before code.
+2. `7f1a624`: characterization/contract tests and exact legacy metadata fixture.
+3. `c66a0dc`: reproducible synthetic startup fixture; test-only helper.
+4. `84d0919`: empty index, stdlib reader, cached QML singleton, hybrid projections,
+   generic URL entry adapters, CLI validation and the Settings startup barrier.
+5. The subsequent documentation commit records this evidence and the D1 stop.
+
+`config/features.json` contains **zero** production features. Enabled catalog entries
+append after the unchanged legacy arrays; disabled descriptors retain IDs and schema
+metadata but contribute no UI. The Python reader rejects malformed/duplicate JSON,
+unsupported versions, namespace/key collisions, missing resources, traversal and
+symlink escape (including the index itself). Backend and CLI use that reader;
+QML invokes it once per process, then uses cached data through the existing registries.
+Backend bar validation retains disabled IDs. Preference fragments remain metadata:
+no defaults, validators or settings persistence protocol have migrated.
+
+Empty-catalog bar/page/control/Agenda metadata and default bar layout match the
+pre-change fixture exactly. Existing UI factories, tab order, polling and refresh
+conditions remain. `openPage()` still confirms a visible window; cold requests queue
+until the catalog, Theme and backend are ready. `startupPending()` remains true
+while waiting, and false on the existing recoverable startup-failure path.
+
+**Existing assertions changed: none.** `test_settings_startup.py` setup now copies
+config and, when present, the reader into its isolated stub checkout. Its assertions
+are untouched. `migration_checks.py` adds the new suite to opt-in G3.
+The synthetic helper is excluded from unittest discovery and was exercised by the
+measurement run; it does not change the production catalog.
+
+### Before/after gates
+
+The before run had tests but **unmodified production code**. G0–G3 and polling-only
+G6 used disposable XDG roots, headless Sway and a private D-Bus, no real niri/system
+bus. See [gates.json](evidence/m4a/gates.json) for exact commands, resolved environment,
+per-test skip names/reasons, machine metadata and source hashes.
+
+| Gate | Before pass/fail/skip | After pass/fail/skip | Wall seconds before → after |
+| --- | ---: | ---: | ---: |
+| G0 `./scripts/check.sh` | 402 / 0 / 97 | 408 / 0 / 91 | 71.483 → 74.257 |
+| G1 preview + standalone startup | 3 / 0 / 0 | 3 / 0 / 0 | 10.698 → 11.337 |
+| G2 native personalization/startup | 4 / 0 / 0 | 4 / 0 / 0 | 38.831 → 38.976 |
+| G3 control/upgrade/gestures/navigation | 14 / 0 / 0 | 24 / 0 / 0 | 79.803 → 80.777 |
+| G6 polling regression only | 1 / 0 / 0 | 1 / 0 / 0 | 20.090 → 19.935 |
+
+G0 is **completed with skips**, not an all-tests pass. Before: 89 existing opt-in
+skips, two new native catalog opt-ins, six reader contracts not applicable because
+there was no reader yet. After: the six reader contracts execute, leaving 91 opt-in
+skips. G3 now additionally runs all ten catalog tests, including its two native cases.
+The separate pre-refactor catalog run explicitly recorded **2 pass / 0 fail / 8 skip**
+(return code 1 under the no-opt-in-skips harness policy); it is not reported as green.
+The six new reader and two native injection contracts were unavailable on baseline.
+
+Final native catalog tests use **copied checkouts**, not symlinked implementation
+folders or an environment index override. They prove an injected bar/page/tab loads
+without host edits, a standalone custom Settings page confirms visibility and clears
+startupPending, loaded metadata stays cached after an index edit, and disabled entries
+stay out of UI/CLI. See [after-G3.txt](evidence/m4a/after-G3.txt).
+
+Full qmllint (including touched QML and callers): before **141 files, 0 errors,
+67 warnings**, 16.545 s; after **142 files, 0 errors, 68 warnings**, 18.115 s.
+The additional warning is the SDK's missing `QProcess::ExitStatus` qmltype on the
+new Process exit handler; native tests execute that handler successfully.
+
+The after gate process recorded test-only HEAD `7f1a624` while production was an
+uncommitted candidate; hashes were checked unchanged before committing `84d0919`.
+The later measurement helper commit does not change those verified production bytes.
+Raw evidence: `/workspace/.lme-dev/m4a/{before,after-final,contracts-before}`.
+The committed JSON/text evidence does not depend on those transient paths remaining.
+
+### Failed candidates and rollback
+
+No failed production commit was kept or repaired by stacking fixes. Each failed
+uncommitted candidate was saved outside the checkout, then completely restored to
+the test-only baseline before rebuilding. No existing assertion was weakened.
+
+- Candidate 1: new QML handler used an unbraced `for`; configuration failed to parse.
+- Candidate 2: wrapper Loader assigned read-only implicitWidth/implicitHeight;
+  removed those assignments, using Loader's existing child-size propagation.
+- Candidate 3: G0 was **407 pass / 1 fail / 91 skip**: the existing qs-only PATH test
+  failed because unconditional `python3` lookup returned 127. The run was stopped;
+  that candidate was reverted. The final CLI resolves Python from PATH, falling
+  back to Fedora's `/usr/bin/python3`, preserving the qs-only contract.
+
+Logs: [candidate1](evidence/m4a/candidate1-unit.txt),
+[candidate2](evidence/m4a/candidate2-unit.txt),
+[failed G0](evidence/m4a/failed-candidate3-G0.txt).
+The focused qs-only/startup checks then passed **5/0/0**, followed by the final gates.
+The known G3 baseline failure documented above remains resolved; these reverted
+implementation candidates are not accepted baseline failures.
+
+### D1 startup cost — rule NOT met
+
+M0 used EPYC 7763; that machine is unavailable in this session. **Same-machine-as-M0
+was not achievable**. The explicit substitute is unchanged main `186354a` in a
+separate worktree on this same EPYC 9V74 VM, alongside the empty/synthetic versions.
+Historical M0 is context only, not the control for assigning catalog cost.
+
+Current machine: AMD EPYC 9V74, five visible CPUs, four-CPU quota, 32 GiB limit,
+Linux 6.18.55 / Debian 13, Python 3.12.14, Quickshell 0.3.2 (`4f508be`),
+Qt/qmllint 6.8.2, Sway 1.10.1, headless pixman compositor and Mesa software RHI.
+No physical GPU performance is claimed.
+
+Reuse `migration_startup.measure(5)` without changing its endpoint: fresh process and
+XDG config/state/data/cache/runtime for each sample, monotonic launch to the first
+visible nonzero mapped Sway window, 20 ms polling, no discarded warm-up, OS page
+cache not dropped. Preview uses `start.sh --preview --config migration-checkout`;
+Settings uses `settings.sh --page appearance`, real standalone host with demo backend.
+
+| Batch/configuration | Preview median ms | Settings median ms | Added preview / Settings vs that batch's main |
+| --- | ---: | ---: | ---: |
+| Historical M0, different CPU/code | 902.983 | 950.821 | Not comparable as catalog cost |
+| Initial: unchanged main | 925.656 | 992.604 | — |
+| Initial: empty | 849.475 | 865.191 | −76.181 / −127.413 |
+| Initial: synthetic | 822.168 | 916.774 | −103.488 / −75.830 |
+| Consecutive repeat: unchanged main | 817.971 | 866.760 | — |
+| Consecutive repeat: empty | 823.598 | 913.987 | +5.627 / +47.227 |
+| Consecutive repeat: synthetic | 873.167 | 972.947 | **+55.196 / +106.187** |
+
+Every median is five samples. Initial negative deltas suggested VM/cache/load noise,
+not an optimization; repeat main → empty → synthetic consecutively to investigate.
+**Both batches are retained; no sample or batch was discarded.** The repeat exceeds
+50 ms on both paths, so D1 has not been demonstrated and M4b is blocked. The initial
+batch's empty raw startup logs were overwritten by its synthetic run; their measured
+samples remain. The repeat preserves separate raw logs for every configuration.
+See [startup.json](evidence/m4a/startup.json) for every sample and both comparisons.
+
+Synthetic: **71 enabled inert descriptors**, 24,321 JSON bytes: one per current
+19 bar modules / 16 Settings pages / six control tabs, plus 30 preference fragments.
+Each references one inert Item. Unique synthetic IDs avoid shadowing legacy entries;
+Settings therefore has 16 extra navigation rows, a conservative hybrid overhead.
+It models metadata I/O, validation, subprocess transport and projections; it does
+not execute migrated features, workers/bootstrap, preference consumers or hardware
+rendering. Preview's mapped-window endpoint can precede async catalog completion,
+as M0's endpoint can precede service readiness; this is not first-feature-frame proof.
+No production feature was converted, including in the shipped empty index.
+
+Reproduction: `scripts/run-gates.sh --startup-runs 5` measures the empty index in a
+private session. For the three-way comparison, use that same private bootstrap
+with [measurement-driver.py.txt](evidence/m4a/measurement-driver.py.txt), adapting
+only the untouched-main worktree path. It calls the same M0 function and
+`tests/catalog_measurement.py`; source for the exact bootstrap and polling-only
+selection is stored alongside it. Raw repeat logs: `/workspace/.lme-dev/m4a/cost-repeat`.
+
+**Proposed next decision; NOT implemented:** generate validated QML metadata from the
+JSON at build/install time, keeping JSON authoritative and checking stale artifacts.
+This avoids a QML-side Python subprocess but adds generation/consistency checks.
+An alternative is to carry catalog metadata in the existing backend's first snapshot;
+that removes the extra process but couples registry readiness to backend transport
+and changes its protocol/fixtures. Discuss and approve a revision before implementing
+it; do not start M4b on the strength of the current measurements.
+
+### Adapters and retirement conditions
+
+| Adapter retained/introduced | Exact retirement condition |
+| --- | --- |
+| BarRegistry legacyModules + original specialized BarModule factories | Remove each migrated registration in its approved conversion commit, including the backend legacy ID; retain a factory until its specialized bindings have equivalent coverage. Remove the final legacy branch only after all registrations migrate. |
+| SettingsRegistry legacyPages + SettingsView inline page factories | Remove an entry only with its descriptor and navigation/order parity proof; keep handwritten page UI. Remove the final legacy selector after every page's specialized signals/bindings are covered. |
+| ControlRegistry control-grid tabs + ControlCenter inline components | Remove a legacy entry only when its descriptor replaces it and entry/refresh/mark-read/selection tests pass; control-grid geometry remains authoritative. |
+| CLI legacy page arguments, ShellState legacy page allowlist | Remove each ID together with its descriptor conversion and old exit/message/IPC tests; remove the lists only after the last legacy page migrates. |
+| Backend BAR_MODULES union with all catalog IDs | Remove the corresponding legacy set member in its conversion commit, retain disabled IDs from the catalog. No schema consumers migrate in M4a. |
+| Public registry APIs, integer controlTab and named env facade | Retain per D3. Internal numeric writes may retire only after their fixtures no longer need them; no such change occurs here. |
+
+No user settings/layout files, locks, atomic-write protocol, polling cadence,
+cache policy or power policy changed. Catalog validation errors now have an explicit
+diagnostic/error path; this is new invalid-input handling, not a change for the empty
+valid catalog. Native recovery from a malformed catalog was not separately exercised;
+reader rejection, existing Settings failure recovery and valid-catalog readiness were.
+
+### Laptop checklist (needs real-session check)
+
+1. Start the shell; check the bar's module order and saved layout match main.
+2. Open/close Control Center, Activity Island and Clipboard; check appearance/input.
+3. Gear → Settings; request multiple pages quickly during cold startup, then reopen.
+4. Check saved Liquid/Smoked appearance is present on the first visible Settings frame.
+5. Use bar audio/network/clock/battery actions and the System monitor shortcut.
+6. Switch all six control tabs; confirm notification mark-read and Agenda/Notes visibility.
+7. Close panels, reconnect an audio/Bluetooth device, reopen; confirm existing controls respond.
+8. Review shell/Settings logs for catalog diagnostics; do not install synthetic descriptors.
+
+## M4a review — cost attribution, a/b and failure recovery — 2026-10-21
+
+Historical checkpoint: round 3 below supersedes this startup acceptance analysis.
+Pairwise A/A P95 is not a confidence interval for a median.
+
+**Branch stays `refactor/m4a-feature-catalog`; no merge, no M4b, no real feature conversion.**
+Review baseline `f2b11c1`; comparison main `186354a`; a = `e60bacf`; b = `a09fefb`.
+**Verdict: a/b functional, D1 target NOT demonstrated. c is not implemented.**
+
+### What changed and what did not
+
+- a removes the extra QML Python reader. One async cached index FileView does
+  structural parsing; nonempty UI data waits for the existing backend's deep-validation
+  verdict. The verdict is added at the common live/demo emit boundary, not a new worker.
+- Python still performs containment/symlink/resource/duplicate/key checks at backend
+  startup and in the CLI; `check.sh` explicitly invokes `feature_catalog.py --check`.
+  Deep validation has a three-second SIGALRM deadline. No polling interval changed.
+- A broken catalog is **legacy-only plus a diagnostic**, as now specified in
+  [M4A_DESIGN.md](M4A_DESIGN.md). QML reads/validation have a three-second startup
+  deadline; late completion cannot republish a failed catalog. Heavy lazy reads
+  have their own three-second deadline. No additional QML process needs waiting on.
+- Bad catalog + valid legacy CLI page now starts Settings instead of aborting.
+  CI `--check` still rejects a broken bundle. This is the requested failure-policy
+  correction; valid-catalog page errors and public IPC contracts are unchanged.
+- Catalog failure no longer activates the saved-appearance failure bypass: Settings
+  still waits for Theme/backend, settles to legacy and confirms a visible window.
+  `openPage()` confirmation and `startupPending()` implementation remain intact.
+- a missed the target, so b adds optional index record `startup` bar/page/tab metadata.
+  This is the authoritative presentation for compact records. Python rejects a
+  conflicting duplicate in a descriptor; descriptor-only records remain compatible.
+  QML reads heavy data through `descriptor(id)` on first use, caches it and signals
+  `descriptorLoaded(id)`. Disabled IDs/schema remain available. Python still reads
+  heavy descriptors for its mandatory deep startup validation; backend laziness is
+  not claimed. No schema/default consumer or persistence transaction was migrated.
+- `config/features.json` is still exactly the empty version-1 index. Legacy ordering,
+  specialized factories, APIs, integer tab facade and saved layouts remain. Remove
+  a converted entry from its legacy list in the same conversion commit; this rule
+  has not been weakened. Descriptor-only compatibility may retire only after its
+  fixtures/consumers migrate in an authorized step. Public registry facades stay.
+
+No existing test assertion changed. The four pre-existing navigation/UI test files
+and original `test_feature_catalog.py` are byte-identical to review baseline; hashes
+are recorded in [gates.json](evidence/m4a-review/gates.json). Existing fixture setup
+adds optional warm-cache selection and suppresses late bytecode writes in copied
+checkouts. No production instrumentation, profiler module, index-redirect env flag,
+new runtime dependency, generated aggregate or freshness mechanism was committed.
+
+### Monotonic attribution (scratch only)
+
+Scratch copies of main/original M4a/final b used a small temporary QML clock backed
+by C++ `steady_clock` and Python `monotonic_ns` (Linux monotonic clock). Five diagnostic
+runs per path/variant recorded spawn requests, first Python statement, catalog read
+count/bytes, JSON parsing, remaining validation, synchronous publication/binding
+re-evaluation, projection calls, Theme/backend/catalog readiness and Settings Loader
+construction. Instrumentation and its compiled module remain outside the checkout.
+Only traces and summaries are committed: [attribution.json](evidence/m4a-review/attribution.json),
+[before traces](evidence/m4a-review/monotonic-before.json),
+[final traces](evidence/m4a-review/monotonic-b.json).
+
+These are **diagnostic phase medians, not uninstrumented launch deltas**. Clock calls,
+tracing imports and source changes perturb startup. Request-to-first-Python includes
+Qt deferred start/scheduling and interpreter startup, not just fork/exec syscalls.
+File I/O below counts only catalog files, excluding common library/font/shader/module
+reads. Phases overlap; publication includes its synchronous dependent bindings, and
+projection CPU is a subset. Do not sum these medians into an end-to-end prediction.
+
+Original M4a, milliseconds except counts/bytes:
+
+| Phase | Preview empty | Preview synthetic | Settings empty | Settings synthetic |
+| --- | ---: | ---: | ---: | ---: |
+| Extra Python processes (existing backend excluded) | 1 | 1 | 2 | 2 |
+| CLI request → first Python | — | — | 17.621 | 17.964 |
+| CLI imports before catalog load | — | — | 4.268 | 3.960 |
+| QML request → first Python, including deferred start | 180.242 | 176.872 | 37.647 | 44.533 |
+| Catalog file reads / bytes, all Python readers | 2 / 56 | 144 / 48,642 | 3 / 84 | 216 / 72,963 |
+| Python file reads, summed reader medians | .032 | 1.527 | .045 | 2.529 |
+| Python JSON parsing, summed reader medians | .043 | 1.466 | .058 | 2.025 |
+| Remaining deep validation, summed reader medians | .606 | 24.231 | .885 | 34.654 |
+| QML result JSON parsing | .117 | .400 | .113 | .468 |
+| Registry projection CPU | .165 | 1.392 | .020 | .140 |
+| Publication + dependent synchronous binding work | .508 | 21.115 | .057 | .186 |
+| Settings startup barrier, gross wait | — | — | 113.233 | 127.953 |
+| Barrier wait attributable to catalog finishing last | — | — | 0 | 0 |
+| Settings view construction after barrier | — | — | 130.662 | 140.521 |
+
+In that diagnostic cohort main's gross barrier/view construction was 102.867/117.036 ms.
+**Fixed-cost explanation:** even an empty Settings launch serially pays roughly
+22 ms for the CLI Python bootstrap/import/load (load itself .298 ms). Reads/parsing
+are about .1 ms across its three readers; those bytes cannot explain the fixed cost.
+The QML Python reader normally finishes before backend readiness: its entire elapsed
+lifetime is not additive barrier delay. Removing it alone therefore need not remove
+that serial CLI cost. At 71 descriptors, repeated deep validation is material, while
+raw JSON parsing remains small. The synthetic also creates extra navigation delegates;
+"cost per descriptor" inferred from a launch delta is not a pure parser cost.
+
+Final b, same diagnostic technique:
+
+| Phase | Preview empty | Preview synthetic | Settings empty | Settings synthetic |
+| --- | ---: | ---: | ---: | ---: |
+| Extra QML Python processes | 0 | 0 | 0 | 0 |
+| CLI bootstrap + imports | — | — | 21.650 | 20.952 |
+| QML file reads / bytes | 1 / 28 | 1 / 16,952 | 1 / 28 | 1 / 16,952 |
+| Python file reads / bytes (mandatory validation) | 1 / 28 | 72 / 25,304 | 2 / 56 | 144 / 50,608 |
+| Python file-read time | .017 | .850 | .027 | 1.235 |
+| Python JSON parse time | .025 | .784 | .040 | .991 |
+| Python deep validation | .354 | 12.078 | .532 | 18.559 |
+| QML JSON parse time | .042 | .218 | .019 | .252 |
+| Registry projection CPU | .142 | 1.722 | .016 | .130 |
+| Publication + synchronous bindings | — | 21.417 | — | .150 |
+| Async index request → delivery (includes UI queue) | 147.797 | 139.175 | 5.297 | 4.750 |
+| Settings gross barrier / catalog-only extra wait | — | — | 116.276 / 0 | 111.607 / 0 |
+| Settings view construction | — | — | 124.326 | 133.672 |
+
+The final cohort's main barrier/view timings were 124.102/143.281 ms, illustrating
+phase/cohort noise; this is not evidence that extra delegates speed up UI creation.
+Preview completion traces keep the process alive 300 ms after the mapped endpoint
+so late backend/catalog work is captured. Some metadata work can follow that first
+map. No full-conversion first-feature-frame claim follows from the preview metric.
+Unattributed scheduling/rendering/initialization remains; this breakdown is not an
+exact additive accounting of a 79 ms delta.
+
+### Warm interleaved measurements and A/A noise
+
+Same EPYC 9V74 VM/SDK as the previous M4a session: five visible CPUs, four CPU quota,
+32 GiB, Linux 6.18.55, Python 3.12.14, Qt 6.8.2, Quickshell 0.3.2, Sway 1.10.1,
+software Mesa RHI. No physical GPU claim. No gate or profiler ran during timed rounds.
+
+Use [catalog_benchmark.py](../tests/catalog_benchmark.py): 15 rounds of
+main/empty/synthetic/identical-main A/identical-main B, rotating the starting variant
+per round. Each path/variant has one excluded warm-up and retains its XDG cache;
+OS page cache is warm and never dropped. Each launch has fresh process/config/state/
+data/runtime. Endpoint is M0's first visible nonzero mapped Sway window, polled at
+20 ms. Before/a/b each have 150 timed launches (15 × five labels × two paths), 450
+total, plus their explicitly excluded warm-ups. No timed sample was removed.
+
+Synthetic remains 71 enabled inert descriptors (19 bar, 16 page, six tab, 30 preference
+fragments). Before/a use the descriptor layout (24,321 bytes); b encodes the same
+presentation in the index (25,304 total bytes). This tests the requested encoding
+change, not fewer features. Unique IDs append after legacy, so synthetic Settings
+has **32 navigation entries vs main's 16**. It is a conservative hybrid workload,
+not a proof of same-count post-conversion UI cost or real feature execution.
+
+All raw samples, machine data and summaries: [interleaved.json](evidence/m4a-review/interleaved.json).
+Times below are milliseconds, median / minimum / maximum / IQR:
+
+| Stage | Path | Main | Empty | Synthetic |
+| --- | --- | ---: | ---: | ---: |
+| Before | Preview | 625.3 / 577.4 / 685.8 / 33.3 | 613.2 / 580.4 / 751.3 / 38.7 | 621.4 / 576.9 / 695.2 / 24.7 |
+| Before | Settings | 623.1 / 576.8 / 649.6 / 24.6 | 644.9 / 599.8 / 719.9 / 36.8 | 679.7 / 639.0 / 714.5 / 21.0 |
+| a | Preview | 643.7 / 606.0 / 712.1 / 41.2 | 646.2 / 579.0 / 797.1 / 52.3 | 644.1 / 560.9 / 752.5 / 63.7 |
+| a | Settings | 618.0 / 573.8 / 672.0 / 32.9 | 640.9 / 578.1 / 728.2 / 42.4 | 687.6 / 648.8 / 725.6 / 32.2 |
+| b | Preview | 605.4 / 575.5 / 655.6 / 29.9 | 604.4 / 551.5 / 719.7 / 46.7 | 601.8 / 550.9 / 650.0 / 33.8 |
+| b | Settings | 601.7 / 550.6 / 699.5 / 47.6 | 634.0 / 572.2 / 711.3 / 41.8 | 681.1 / 622.3 / 913.0 / 45.9 |
+
+A/A noise floor = P95 of **absolute within-round B minus A** for the same main
+checkout; it is a conservative empirical single-pair floor, not a confidence bound
+on a population median. Every delta is judged against its own stage/path floor:
+
+| Stage/path | Empty − main | Synthetic − main | A/A signed median / difference IQR / abs P95 | Judgment |
+| --- | ---: | ---: | ---: | --- |
+| Before preview | −12.1 | −3.8 | +11.5 / 36.5 / 45.0 | Both within noise; synthetic ≤50 |
+| Before Settings | +21.9 | +56.6 | −12.6 / 32.8 / 54.3 | Empty within noise; synthetic slightly above noise and >50 |
+| a preview | +2.6 | +0.4 | −20.0 / 35.5 / 73.5 | Both within noise; synthetic ≤50 |
+| a Settings | +22.9 | +69.7 | +8.9 / 41.7 / 63.5 | Empty within noise; synthetic above noise and >50 |
+| b preview | −1.0 | −3.6 | −20.8 / 48.7 / 97.6 | Both within noise; synthetic ≤50 |
+| b Settings | +32.2 | +79.4 | −2.1 / 60.1 / 110.5 | Both within noise, but synthetic median >50 |
+
+The absolute launch medians cannot be compared across separate stages as a speedup.
+The final Settings delta is not statistically established as a causal 79 ms cost;
+it sits inside a large A/A floor. Nevertheless it exceeds the requested **median**
+limit, so evidence does **not** demonstrate D1. We did not change the rule, select a
+favorable subset, add an aggregate or claim an end-to-end performance improvement.
+
+### Native failure cases, gate accounting and checks
+
+Committed copied-checkout tests cover each of these in **both actual shell and
+standalone Settings hosts**: missing index, malformed JSON, unsupported version,
+missing descriptor, traversal, symlink escape, duplicate feature ID; additionally
+validation timeout and collisions with legacy bar/page/tab IDs. These are 22 native
+cases. Observation IPC and fault injection are added only to copies, never production.
+They assert bounded settlement, a live process, legacy bar/page/tab lists, existing
+diagnostics, usable control popup routing or visible Settings/Clipboard navigation,
+and settled `startupPending()`/`openPage()` contracts.
+
+Four more compact tests (two unit, two native) prove equivalent projections/schema,
+conflict/traversal rejection, no heavy QML descriptor cached at startup, first-use
+load/cache, and schema retention for disabled entries. **Do not call this full
+hardware/rendering validation.** All 36 catalog-related checks execute in final G3.
+
+Requested original accounting is confirmed:
+- Original G3 **14 → 24** = the same 14 tests + eight CatalogContractCase and two
+  NativeCatalogCase tests; protected test files are unchanged, not weakened.
+- Original G0 **402/0/97 → 408/0/91** = six new reader contracts become executable;
+  the two native catalog tests still skip by default:
+  `test_feature_catalog.NativeCatalogCase.test_copied_checkout_injects_bar_page_tab_without_host_edits`
+  and `test_feature_catalog.NativeCatalogCase.test_copied_checkout_disabled_entry_retains_identity_without_ui`.
+- This review adds 22 native failure cases (default opt-out), then two unit and two
+  native compact cases. Hence final G0 is **410/0/115**, while G3 executes all 50.
+
+| Gate | Review baseline P/F/S; seconds | After a P/F/S; seconds | After b P/F/S; seconds |
+| --- | ---: | ---: | ---: |
+| G0 | 408/0/91; 73.322 | 408/0/113; 71.870 | 410/0/115; 73.439 |
+| G1 | 3/0/0; 11.281 | 3/0/0; 10.538 | 3/0/0; 10.509 |
+| G2 | 4/0/0; 38.984 | 4/0/0; 37.849 | 4/0/0; 39.213 |
+| G3 | 24/0/0; 81.882 | 46/0/0; 119.533 | 50/0/0; 122.028 |
+| G6 polling only | 1/0/0; 20.010 | 1/0/0; 20.012 | 1/0/0; 20.089 |
+
+G0 is completed **with skips**, not all tests passed. Names/reasons, exact commands,
+environments and hashes are in [gates.json](evidence/m4a-review/gates.json). Full
+qmllint covers touched QML and callers: 142 files each time, **0 errors**, warnings
+68 → 69 → 71. New warnings are unqualified delegate property accesses; their paths
+execute in native tests, but warnings are not reported as absent.
+
+The missing-index Settings case was first shown failing on unmodified production
+(CLI aborted), then passed after the authorized recovery change. Two uncommitted a
+candidates were fully restored before rebuilding: first missed the demo verdict;
+second exposed synchronous registry-binding loops on legacy collisions plus a copied
+checkout cleanup race from late bytecode writes. No failed production commit was
+kept or repaired by stacking fixes. Diagnostic deferral and fixture bytecode isolation
+resolved them; assertions were not edited. Evidence includes the red characterization
+and rejected candidate output. A full after-a gate set preceded b; final after-b gates
+ran on committed `a09fefb`, after the optimization commit as requested.
+
+### Decision and options — stop for owner review
+
+1. **Accept the measured hybrid cost:** final preview synthetic −3.6 ms, Settings
+   +79.4 ms, empty Settings +32.2 ms. The deltas are within final A/A noise, but the
+   Settings median misses the target by **29.4 ms**. Acceptance must be explicit;
+   this is not permission for M4b.
+2. **Build-time aggregate (c): not implemented or measured.** It must remove at least
+   29.4 ms from the observed Settings path to meet this baseline's limit. Final
+   diagnostics measure ~18.6 ms of Python deep validation plus ~1 ms Python JSON
+   parsing across CLI/backend, and ~21 ms fixed CLI bootstrap/import. These are
+   overlapping phase medians, not a promised saving. QML already reads one index,
+   so simply aggregating its metadata cannot be assumed to reach 50 ms. Need owner
+   approval for a prototype, generation script and stale-artifact tests.
+3. **Keep UI metadata in QML (D1 alternative):** measured main reference is
+   preview 605.4 ms / Settings 601.7 ms, zero catalog overhead by definition. That
+   reference removes runtime JSON UI catalog work, not a measured implementation
+   retaining every new catalog mechanism. It gives up JSON-driven registration;
+   do not claim it as a drop-in completed alternative.
+
+A same-count full-conversion synthetic or lower-noise laptop run could separate UI
+inflation and VM variability, but neither was substituted for the agreed hybrid
+benchmark to turn this verdict green. No c, merge, M4b, polling/power policy change,
+installer change or real-session manipulation follows from this report.
+
+
+## M4a review round 3 — serial launch cost and D1 — 2026-10-21
+
+**D1 NOT satisfied. Stop for owner decision. No merge, M4b or aggregate c.**
+This section supersedes the previous review's startup acceptance analysis. Its
+single-run pairwise A/A P95 is not the uncertainty of a median of 15 observations.
+No numbers from separate benchmark sessions are combined below.
+
+### Commits and preserved behavior
+
+Branch: `refactor/m4a-feature-catalog`; main verified remotely at `186354a`.
+Production checkpoints: a `92cb0d8`, b `01f9bde`, c `8eabc20`.
+Later harness/docs commits do not change the application source used for final arms.
+
+- `cd6fe22`: three CLI characterization tests pass against unchanged production
+  (`f7b39b9` application tree): legacy admission and unknown-page messages,
+  enabled/disabled index pages and explicit deep-check failure. See baseline log.
+- `cd37626`, `5711956`, `cc810b4`, `5302c3d`: randomized measurement/statistics,
+  replacement fixture and its count/order contract, payload accounting and invalid
+  launch rejection. New helpers remain stdlib and below the 250-line cap.
+- a: legacy pages use Bash; the bundled empty index needs no catalog Python reader.
+  Unknown keys use an index-only lookup, no descriptor/resource reads. The native
+  fixture supplies full startup metadata; reader and fault fixtures retain their
+  descriptor-only inputs. The original contract/fault assertions are untouched.
+- b: backend initialization validates once, before preferences/layout validation;
+  importing the backend does not read catalog files. It runs in the existing
+  backend process, concurrent with QML startup. No worker/process/polling is added.
+- c: one publication object updates data/settlement together; `BarRegistry.info`
+  reads a registry property cache. A copied-checkout probe records **100 extra
+  projections before c, zero after c** for 100 lookups; lazy reads do not republish.
+
+No real feature is converted. `config/features.json` remains the same empty index.
+Legacy order, visuals, cadence, settings lock/merge/atomic writes and public IPC
+contracts are unchanged. Intended admission/diagnostic differences: a new catalog
+page needs its key in index startup metadata for CLI discovery; descriptor-only
+reader/QML compatibility remains. Invalid resources are diagnosed by backend/QML
+rather than the launcher's deep check. The explicit `--check` still rejects them.
+Existing legacy pages require no catalog Python on cold launch; pre-existing
+visible-window focus/recovery helpers retain their Python use and handshake.
+
+### Rejected attempts and gate accounting
+
+`40eb39a` failed G3 (47/3/0): the changed fixture gave a partial startup summary,
+so QML correctly used that summary without its descriptor's bar/tab entries.
+It was reverted in `406b1ea`, then replaced by a complete native fixture in a.
+No assertion/timeout was weakened. The complete-summary fixture contract now pins
+this down. The reverted reader/fault fixture inputs are still unchanged in a.
+
+A restored-baseline G1 run had two IPC errors: its socket pathname was **112 bytes**,
+above Unix `sun_path`'s 108-byte capacity. Harness-only `ece65c3` keeps owned XDG
+runtime/config/state directories under short `/tmp/startup-*` roots and leaves logs
+under the requested evidence path. G1 then reran: **3/0/0**, 10.640 seconds. Other
+restored gates were green; this harness failure is not a product pass or a skip.
+The first isolated counter-test invocation omitted its opt-in and skipped one test;
+it is not counted as passed. Its subsequent opted-in red/green runs are retained.
+
+Cells below are **passed / failed / skipped; wall seconds**. G0 with skips is
+completed-with-skips, not an unqualified gate pass. Full commands, environment,
+every skipped test/reason, rejected output and unchanged-source hashes are in
+[gates.json](evidence/m4a-round3/gates.json). G6 is the authorized polling-only
+regression, not the unrelated Launchpad suites. The before set for b is after a;
+the before set for c is after b, plus the passing replacement-model characterization.
+
+| Checkpoint | G0 | G1 | G2 | G3 | G6 polling |
+| --- | --- | --- | --- | --- | --- |
+| Initial f7b39b9 | 410/0/115; 72.828 | 3/0/0; 10.892 | 4/0/0; 38.381 | 50/0/0; 120.386 | 1/0/0; 19.933 |
+| Restored baseline | 415/0/115; 72.625 | 3/0/0; 10.640 | 4/0/0; 37.439 | 50/0/0; 120.525 | 1/0/0; 19.793 |
+| a — 92cb0d8 | 418/0/115; 73.067 | 3/0/0; 10.853 | 4/0/0; 38.019 | 50/0/0; 117.643 | 1/0/0; 19.795 |
+| b — 01f9bde | 419/0/115; 72.407 | 3/0/0; 10.502 | 4/0/0; 37.302 | 50/0/0; 116.178 | 1/0/0; 19.992 |
+| c — 8eabc20 | 420/0/116; 72.117 | 3/0/0; 10.380 | 4/0/0; 37.754 | 51/0/0; 116.169 | 1/0/0; 20.103 |
+
+G0 410/0/115 → 420/0/116: ten new unit tests pass (six CLI, two statistics,
+one backend-owner, one replacement-model). The one additional default skip is
+`test_catalog_projection.NativeCatalogProjectionCase.test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish`
+(reason: private Wayland batched catalog projection); it executes and passes in G3.
+Both original `NativeCatalogCase` tests still skip by default and execute in G3:
+`test_copied_checkout_injects_bar_page_tab_without_host_edits` and
+`test_copied_checkout_disabled_entry_retains_identity_without_ui`.
+G3 51 = 14 unchanged pre-catalog tests + 10 original catalog tests + 22 unchanged
+fault tests + four compact/lazy tests + one new projection test; zero skips.
+All G0 lint runs scan 142 QML files (including touched files and callers): zero
+errors, 71 warnings, unchanged. G0 wall times above cover check.sh; separately
+timed qmllint adds about 16 seconds per G0 run (exact times in JSON). No existing
+assertion was edited.
+
+### After-optimization monotonic attribution (diagnostic, not acceptance samples)
+
+Five instrumented launches per final variant/path, entirely in scratch copies.
+Python uses `monotonic_ns`; the existing scratch Qt clock uses `steady_clock` on
+the same host clock. Only raw traces/phase summaries are committed, no production
+instrumentation. [Traces](evidence/m4a-round3/monotonic-traces.json),
+[phase medians](evidence/m4a-round3/attribution.json).
+Each cell is milliseconds unless it states count/bytes. E=empty, A=additive,
+R=replace. Phase medians are not additive; readers/Qt work overlap. Spawn-to-first
+marker includes dispatch/scheduler wait and tracer imports, not pure fork/exec CPU.
+
+The earlier ~35 ms validation figure summed CLI (~9.85), QML reader (~15.15) and
+backend (~9.65) phases; only the CLI share was serial before Quickshell. It was
+not 35 ms of serial CLI validation. Those old figures explain the earlier report;
+they are not mixed with this session's startup deltas.
+
+| Phase | Preview E | Preview A | Preview R | Settings E | Settings A | Settings R |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Catalog CLI processes | 0 | 0 | 0 | 0 | 0 | 1 |
+| CLI spawn→first marker | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 17.264 |
+| CLI imports | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 4.514 |
+| CLI index lookup total (read/parse/cheap checks) | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.574 |
+| CLI deep validation | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Backend spawn→first marker | 203.059 | 201.954 | 180.007 | 63.871 | 60.996 | 60.657 |
+| Backend imports/setup | 50.553 | 46.743 | 49.065 | 45.267 | 43.254 | 42.030 |
+| Backend file reads / bytes | 1 / 28 | 72 / 25304 | 72 / 24893 | 1 / 28 | 72 / 25304 | 72 / 24893 |
+| Backend read | 0.018 | 0.757 | 0.755 | 0.013 | 0.682 | 0.743 |
+| Backend JSON parse | 0.025 | 0.688 | 0.586 | 0.018 | 0.592 | 0.598 |
+| Backend deep validation (including path/stat checks) | 0.279 | 11.352 | 12.360 | 0.198 | 10.967 | 10.239 |
+| QML file reads / bytes | 1 / 28 | 1 / 16952 | 1 / 16541 | 1 / 28 | 1 / 16952 | 1 / 16541 |
+| QML async read request→callback (queue + I/O) | 140.872 | 138.009 | 114.767 | 4.514 | 4.666 | 4.476 |
+| QML JSON parse | 0.028 | 0.253 | 0.255 | 0.021 | 0.204 | 0.288 |
+| QML cheap structural validation | 0.023 | 0.071 | 0.056 | 0.022 | 0.046 | 0.069 |
+| QML assembly | 0.000 | 0.441 | 0.492 | 0.000 | 0.356 | 0.423 |
+| Registry projection calls | 6 | 6 | 6 | 3 | 3 | 3 |
+| Registry projection CPU | 0.058 | 0.210 | 0.125 | 0.020 | 0.123 | 0.096 |
+| Synchronous publication/binding | 0.000 | 19.852 | 11.375 | 0.000 | 0.144 | 0.139 |
+| Settings host→prepared barrier | n/a | n/a | n/a | 112.471 | 125.024 | 117.901 |
+| Additional wait beyond backend/theme ready | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Settings view construction | n/a | n/a | n/a | 116.178 | 137.922 | 117.835 |
+
+Settings R's CLI additionally reads **one index / 16,541 bytes**, read 0.024 ms,
+parse 0.203 ms. No descriptor/deep check runs in it. The serial bootstrap/import
+is ~21.8 ms, lookup ~0.6 ms: removing legacy CLI entries brings this process back.
+The backend remains the sole deep validator; a nonempty QML catalog waits for its
+verdict before executable resource loading. Zero *additional* catalog barrier
+wait does not make backend validation free: backend-ready includes that work.
+Preview publication still includes ~20 ms of dependent UI work for A, even though
+JS projection is ~0.2 ms. Caching removes repeated projection calls, not dependent
+UI construction. These traces locate work; they do not fully explain a difference
+of end-to-end medians by summing overlapping phase medians.
+
+### One randomized interleaved experiment
+
+One private Sway/D-Bus session; **30 timed rounds × 11 arms × 2 paths = 660 samples**.
+All arms occur once per round, randomized with seed 241021. Paths form two blocks
+in the same session; every comparison uses that path's main observations in this
+session. One excluded warm-up per arm/path, warm OS page cache and reused per-arm
+XDG cache (including shader/Qt caches); fresh process/config/state/data/runtime
+for every launch. No other task test/profiler/build ran during timed rounds.
+Shared host scheduling is uncontrolled. AMD EPYC 9V74, five visible CPUs, four-CPU
+quota (`400000 100000`), 32 GiB cgroup limit, Linux 6.18.55, Python 3.12.14,
+Qt 6.8.2, Quickshell 0.3.2; headless Sway pixman + Qt OpenGL llvmpipe. CPU governor
+and power-supply state are **not exposed by this container**; no governor/power
+state was changed. Machine/load observations before and after are in the JSON.
+
+User entries: `start.sh --preview --config migration-checkout` and
+`settings.sh --page appearance`; monotonic launch→first mapped visible nonzero
+Sway window, polled every 20 ms (M0 endpoint). This does not measure full-feature
+readiness or guarantee identical first-frame content after conversion.
+
+Arms: main/A-A `186354a`, pre `f7b39b9`, a `92cb0d8`, b `01f9bde`, final/c
+`8eabc20`. Application files are identical at `5302c3d` (only the benchmark helper
+was hardened afterwards), and remain unchanged by this documentation checkpoint.
+
+Both synthetic modes contain **71 descriptors**: 19 bar entries, 16 pages, six
+tabs, 30 single-boolean preference fragments, one shared inert QML resource.
+A appends to legacy: total 38/32/12. R removes legacy QML/JSON registrations and
+backend bar IDs in the copied checkout, restores the original IDs/order through
+the catalog, and **removes CLI legacy page admission too**: total 19/16/6.
+R retains original bar/Settings component factories in the copy so first-frame
+rendering work is not replaced by inert widgets. Neither mode measures actual
+converted-feature URL loaders/bootstrap/workers, realistic schema payloads,
+diverse resource graphs, tab content execution, lazy first-use cost or real GPU.
+The lower R preview number is not evidence that fully migrated features start
+faster; the mapped endpoint can precede complete catalog-driven content.
+
+Statistics: 20,000 seeded **joint round-block bootstrap** resamples; report the
+percentile 95% CI of **difference of medians**, not median of paired differences.
+A/A is a separate arm with its own 30 launches. Mann–Whitney is two-sided with
+average ties and continuity correction (normal approximation), exploratory and
+uncorrected for multiple comparisons. It tests ranks, not the paired-median
+estimand; it is not the acceptance criterion. No pairwise P95 is used as a CI.
+
+[Raw CSV](evidence/m4a-round3/samples.csv), [all values/method/commits/statistics](evidence/m4a-round3/measurements.json).
+[Exact commands/bootstrap](evidence/m4a-round3/commands.txt) and [arm list](evidence/m4a-round3/arms.json) are retained.
+CSV was checked: exactly 30 observations per arm/path, all 11 arms in each round,
+and all values identical to the JSON samples. CSV line endings are normalized to LF,
+with every field unchanged; both byte hashes are recorded. All timed launches were checked for
+configuration/IPC failure, catalog diagnostics, reference/type errors and loops.
+
+#### Preview — milliseconds; delta vs main
+
+| Arm | Median | IQR | Min | Max | Δ median | 95% CI of Δ | Mann–Whitney p |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| main | 585.5 | 48.7 | 542.4 | 743.1 | +0.0 | [+0.0, +0.0] | 1 |
+| main-aa | 581.5 | 44.8 | 545.3 | 768.6 | -4.0 | [-20.9, +8.8] | 0.9941 |
+| pre-empty | 581.6 | 64.8 | 532.5 | 689.2 | -3.9 | [-23.3, +27.2] | 0.7618 |
+| pre-add | 585.6 | 51.9 | 547.4 | 655.6 | +0.1 | [-18.8, +17.2] | 0.7731 |
+| a-empty | 585.0 | 57.3 | 528.0 | 655.0 | -0.6 | [-21.4, +23.1] | 0.8534 |
+| a-add | 595.3 | 44.5 | 534.4 | 655.4 | +9.8 | [-17.3, +25.7] | 0.4825 |
+| b-empty | 576.4 | 62.1 | 533.4 | 661.6 | -9.1 | [-26.6, +10.7] | 0.7062 |
+| b-add | 604.4 | 49.8 | 531.5 | 674.9 | +18.9 | [-6.8, +32.5] | 0.1858 |
+| final-empty | 593.5 | 45.3 | 533.5 | 774.0 | +8.0 | [-16.9, +23.6] | 0.6627 |
+| final-add | 599.2 | 53.6 | 529.6 | 769.7 | +13.7 | [-7.4, +32.1] | 0.3183 |
+| final-replace | 560.7 | 52.3 | 507.8 | 706.4 | -24.9 | [-46.0, -1.9] | 0.02068 |
+
+#### Settings — milliseconds; delta vs main
+
+| Arm | Median | IQR | Min | Max | Δ median | 95% CI of Δ | Mann–Whitney p |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| main | 607.3 | 50.3 | 553.5 | 705.0 | +0.0 | [+0.0, +0.0] | 1 |
+| main-aa | 606.4 | 53.2 | 569.0 | 677.7 | -0.9 | [-22.4, +18.6] | 0.7283 |
+| pre-empty | 622.6 | 50.3 | 573.7 | 890.8 | +15.3 | [-0.6, +42.3] | 0.01327 |
+| pre-add | 689.1 | 44.8 | 635.8 | 783.1 | +81.8 | [+58.6, +104.2] | 3.82e-10 |
+| a-empty | 607.1 | 49.0 | 549.6 | 719.4 | -0.2 | [-21.2, +20.3] | 1 |
+| a-add | 643.9 | 41.6 | 596.5 | 829.7 | +36.6 | [+17.4, +55.2] | 3.831e-05 |
+| b-empty | 608.3 | 38.2 | 550.5 | 681.4 | +1.0 | [-18.9, +19.6] | 0.6414 |
+| b-add | 646.2 | 50.6 | 593.3 | 803.0 | +39.0 | [+14.5, +60.0] | 0.0001681 |
+| final-empty | 599.9 | 28.6 | 577.3 | 710.9 | -7.4 | [-24.2, +10.2] | 0.9823 |
+| final-add | 652.1 | 46.2 | 589.5 | 756.6 | +44.8 | [+23.7, +59.5] | 1.019e-05 |
+| final-replace | 664.8 | 51.3 | 637.0 | 1006.8 | +57.5 | [+33.9, +82.2] | 1.287e-09 |
+
+### Acceptance and owner options — STOP
+
+| Required comparison | Median delta | 95% CI | Rule | Verdict |
+| --- | ---: | --- | --- | --- |
+| Empty preview | +8.0 ms | [-16.9, +23.6] | Includes 0 | Pass |
+| Empty Settings | -7.4 ms | [-24.2, +10.2] | Includes 0 | Pass |
+| Replace preview | -24.9 ms | [-46.0, -1.9] | Upper ≤50 ms | Pass |
+| Replace Settings | +57.5 ms | [+33.9, +82.2] | Upper ≤50 ms | **Fail** |
+
+The empty rule passes by inclusion of zero, **not** by an established ≤10 ms
+upper bound. A/A median-difference CIs are preview [-20.9,+8.8] and Settings
+[-22.4,+18.6] ms; these describe uncertainty in this experiment, not a universal
+noise threshold. Settings R's upper bound exceeds the budget by **32.2 ms**.
+No acceptance threshold, arm or sample was changed after inspecting results.
+
+1. **Accept this cost explicitly:** Settings main 607.3 → replace 664.8 ms;
+   +57.5 ms (95% CI +33.9…+82.2), ~9.5% median increase. The owner could accept
+   this evidence/change the budget; this does not itself authorize M4b.
+2. **Build-time aggregate c (not implemented/measured):** only ~1.9 ms of measured
+   Settings R read/parse work (CLI + backend + QML) and ~0.4 ms assembly are direct
+   aggregation opportunities here, versus a 32.2 ms upper-bound budget gap. Merely
+   aggregating JSON leaves ~21.8 ms CLI bootstrap/import and ~10.2 ms backend
+   validation. Those are phase budgets, not a new predicted CI; do not assume c
+   meets the rule. A more ambitious prototype needs separate approval.
+3. **QML metadata, D1 alternative (not implemented/measured):** untouched main is
+   the measured reference, 585.5 ms preview / 607.3 ms Settings. Keeping startup
+   metadata/page admission static could avoid the returning ~22 ms CLI process
+   and runtime publication; retaining the new backend/schema model may still cost
+   time. That reference is not a completed catalog-compatible prototype or a
+   promised delta/CI. Recommend comparing this approach before investing in c
+   solely to save JSON I/O; it trades JSON-driven UI registration for startup cost.
+
+### Adapters and retirement conditions
+
+- Legacy bar/page/tab arrays and append projection remain. Remove each converted
+  registration in the same conversion commit; no bulk conversion here. Retire the
+  hybrid path only after the last legacy registration and its fixtures migrate.
+- Descriptor-only QML/reader startup reads remain; remove only after every live
+  record has complete index startup metadata and old-format fixtures/callers are
+  deliberately retired. CLI new-page discovery already requires that metadata.
+- `feature_catalog.py --page KEY [LEGACY...]` keeps the optional legacy arguments
+  as a CLI adapter; retire them only when all callers migrate and the owner agrees
+  to dropping this public compatibility form. `--check` remains a deep check.
+- Registry APIs, numeric controlTab/named env mapping, Settings openPage visible
+  reply/startupPending, and existing import/CLI facades remain. This phase gives no
+  permission to retire them; require a caller audit and explicit compatibility
+  decision first. Backend owner initialization precedes preference validation.
+
+### Laptop checklist — needs real-session check
+
+1. Start the unchanged empty-catalog shell; compare bar order/labels/layout.
+2. Open Settings via Gear; verify the saved appearance is used on the first frame.
+3. Repeat Gear during startup and after opening; use `settings.sh --page clipboard`
+   then `--page appearance`; confirm one visible Settings instance and correct pages.
+4. Open/close Control Center; try audio/devices/agenda/system routes and monitor.
+5. Run `start.sh --preview` separately and close it; verify the live shell is intact.
+
+No real GPU/backlight/Bluetooth/suspend validation is claimed. No polling, power
+policy, installer, user's config or running desktop was changed. STOP after this
+review; aggregate c, merge and M4b require the owner's next decision.
+
+## M4a review round 4 — admission HIT without Python (2026-10-21)
+
+**Status: regression gates green; D1 performance acceptance remains red.**
+Stay on `refactor/m4a-feature-catalog`; no merge, M4b conversion, aggregate c,
+backend scheduling change or acceptance-threshold adjustment is authorized.
+
+Pre-registration **6cc5e3f** was committed before any round-4 measurement,
+profiling or gate execution. [The rule](M4A_ROUND4_PREREG.md) is unchanged from
+round 3; only decisive Settings samples increase to 60 rounds per arm.
+Production baseline: `52c571b` (same startup implementation as `8eabc20`);
+main `186354a` was verified against the remote. Optimized production: `9c3fd38`.
+`0395360` adds only the reproducible measurement helper.
+
+### Cold-path audit, before implementation
+
+Read `settings.sh` on the unmodified baseline before changing admission. In order:
+
+| Step | Process / shell work | Condition and purpose |
+| --- | --- | --- |
+| 1 | `dirname`, inside `repo_dir` command substitution | Finds checkout; `cd` and `pwd -P` themselves are builtins. |
+| 2 | `python3 feature_catalog.py --page KEY` | Before optimization, nonlegacy key with nonempty index. `command -v` resolving Python is builtin, in a substitution. This was the additional catalog process. |
+| 3 | `readlink -f /proc/$PPID/exe` | Only when `LME_QS_BINARY` is unset; detects a Quickshell parent. |
+| 4 | `command -v quickshell` / `qs` | Builtins in a command substitution if no binary was found; no external lookup tool. |
+| 5 | Quickshell `ipc call settings openPage KEY` | Probes an existing instance. A normal cold no-instance launch fails this probe and proceeds to exec. |
+| 6 | `exec` Quickshell Settings | Replaces the script process; this is the application launch, not an additional fork by exec. |
+
+Bash command substitutions also entail subshell contexts; shell optimization can
+coalesce a subshell with an external exec. The table distinguishes executable
+helpers from builtins rather than asserting a portable count of Bash forks.
+`grep`, `sed`, `jq` and other text-filter processes are absent. `read`, `[[ ]]`,
+`case`, `printf`, `export` and `unset` are builtins. With `LME_QS_BINARY` supplied,
+steps 3/4 are omitted. No other Python helper always runs before a cold launch:
+the shutdown-wait helper (and its repeated Quickshell list clients) belongs to
+recovery of an existing instance; the niri focus helper belongs to successful
+reuse. Neither can absorb ordinary cold admission. Backend Python starts after
+Quickshell and is separate from this audit.
+
+### Change, format contract and tests first
+
+`0566471` commits the new fixtures/tests before production changes. On unmodified
+production six characterization methods passed; three future-contract methods
+failed, with eight reported subtest/top-level failure events: noncanonical input
+was accepted, descriptor-only page summaries were accepted, and catalog hits
+spawned Python. [Red log](evidence/m4a-round4/characterization-red.log),
+[baseline characterization](evidence/m4a-round4/characterization-baseline.log).
+These expected new-contract failures are not described as passing gates.
+
+`9c3fd38` changes only `settings.sh` and `feature_catalog.py`:
+
+- Legacy hits retain their existing case arm, with no index read. A catalog HIT
+  reads the index once (existing three-second read bound), loops over its lines
+  with Bash builtins and admits an exact, enabled `settingsPage.key`. The HIT
+  performs no command substitution, Python spawn or descriptor read.
+- Canonical index: empty stays exactly `{"version":1,"features":[]}\n`.
+  Nonempty uses that root header followed by one compact feature record per
+  line, comma separators and a closing `]}\n`. Each record starts with `id`;
+  `startup.settingsPage.key` is its first page field. Other fields retain order.
+  `canonical_index()` emits this representation, using literal safe ASCII page
+  keys (`[A-Za-z][A-Za-z0-9_-]*`); JSON string escapes cannot hide a checked key.
+- `--check` deep-validates first, preserving existing resource rejection messages,
+  then requires canonical bytes and startup keys for **all** settings pages,
+  disabled included. Therefore a checked, enabled page cannot be missed by the
+  matcher. No production feature is converted and the bundled index stays empty.
+- MISS retains the Python index-only lookup, error text/exit codes, and existing
+  empty-index shortcut. Noncanonical runtime fixtures still use this adapter.
+  Admission is not trust: corrupt input can give a false positive, but QML still
+  waits for the backend's deep verdict before loading catalog resources; a
+  rejected catalog settles to legacy-only with the existing diagnostic.
+- No QML/backend/polling/animation source changes; `openPage()` visible-window
+  confirmation, `startupPending()`, deadlines and the settings lock/write protocol
+  remain guarded by the unchanged native tests.
+
+All nine new tests now pass ([green log](evidence/m4a-round4/admission-green.log)).
+Parity covers every enabled fixture key, exact/prefix/substring distinctions,
+bar-only/preference-only names, disabled entries, legacy pages, empty/missing/
+malformed/unsupported indices, safe charset and canonical rejection. The committed
+copied-checkout tracing test observes **0 catalog Python processes for all 16
+legacy and all 3 enabled catalog pages**, then **1** for a MISS, proving the
+wrapper is active. Wrappers and fake cold Quickshell exist only in the copy;
+there is no production hook or index-redirect environment variable.
+[Per-page counts](evidence/m4a-round4/process-counts.json).
+
+### Gates before and after the optimization
+
+P/F/S = passed/failed/skipped. Wall seconds exclude the separate qmllint sweep.
+
+| Gate | Before P/F/S | Before s | After P/F/S | After s |
+| --- | ---: | ---: | ---: | ---: |
+| G0 | 420/0/116 | 75.013 | 429/0/116 | 75.566 |
+| G1 | 3/0/0 | 11.806 | 3/0/0 | 10.237 |
+| G2 | 4/0/0 | 39.429 | 4/0/0 | 38.642 |
+| G3 | 51/0/0 | 125.709 | 51/0/0 | 120.649 |
+| G6 | 1/0/0 | 20.507 | 1/0/0 | 19.912 |
+
+G0 is **completed with skips**, not an entirely executed passing suite. It grows
+by precisely the nine new admission methods; skip names/reasons are identical
+before/after (116). The two original `NativeCatalogCase` tests still skip by
+default, as do the opt-in fault/compact/projection cases; they execute in G3.
+G3 remains **51 = 14 pre-existing + 10 original catalog + 22 native fault +
+4 compact + 1 projection**; all execute, no skip. The nine new methods also run
+in G0 and explicitly outside it. G6 selects only `NativePollingCase`.
+Both full qmllint sweeps: 142 QML files, **0 errors / 71 existing warnings**;
+before 17.553 s, after 15.933 s. No existing test, assertion, timeout or fixture
+was edited; no failed optimization gate needed a revert or a fix-forward.
+[Exact commands/env/skipped tests](evidence/m4a-round4/gates.json),
+[before native log](evidence/m4a-round4/before-G3.log),
+[after native log](evidence/m4a-round4/after-G3.log).
+
+### Backend first-snapshot attribution — measure only
+
+Ten diagnostic Settings launches with synthetic replacement in a copied checkout,
+separate from the decisive run. Monotonic timestamps bracket first backend
+statement, validation, construction and snapshot flush. Qt spawn-request markers
+include dispatch/interpreter bootstrap, not merely process creation. The initial
+Python timestamp is after importing `time`, before importing the tracer; tracer
+imports/writes add overhead. These are diagnostic timings, not a comparison with
+uninstrumented startup samples. No instrumentation or backend optimization is
+committed. Each row is a separate median; do not sum medians.
+
+| Phase | Median ms |
+| --- | ---: |
+| Qt spawn request → first backend statement | 53.259 |
+| Imports + tracer → validation owner | 52.500 |
+| Validation owner total | 11.324 |
+| ↳ file reads | 0.594 |
+| ↳ JSON parse | 0.543 |
+| ↳ deep validation residual (load minus read/parse) | 9.827 |
+| Backend construction after validation | 1.897 |
+| Snapshot encode + flush | 0.208 |
+| First backend statement → first snapshot flushed | 66.488 |
+| Qt spawn request → first snapshot flushed | 121.168 |
+
+Each load reads **72 files / 23,978 bytes** (index + 71 descriptors). Median of
+per-run ratios: validation owner **18.03%**, deep residual
+**15.80%** of first-statement-to-snapshot time. These are medians of
+ratios, not ratios of the table's medians.
+[Intervals and raw runs](evidence/m4a-round4/attribution.json),
+[monotonic events](evidence/m4a-round4/monotonic-traces.json).
+
+Options **not implemented**, requiring owner decision:
+
+1. Keep validation before the snapshot: measured validation budget **11.32 ms**,
+   of which **9.83 ms** is residual checks. Existing failure policy and no pop-in
+   are already intact. No extra scheduling complexity.
+2. Emit a pending envelope before validation while withholding catalog-ready and
+   retaining the QML trust barrier. At most the measured **11.32 ms** is shifted
+   after that early message; this does **not** predict a Settings improvement,
+   because valid-catalog UI still waits. Preferences/catalog-ID sanitization
+   must remain gated. Not recommended merely to improve a snapshot metric.
+3. Start bounded validation earlier and overlap independent backend initialization,
+   preserving one backend and publishing UI only after its verdict. The import
+   phase is **52.50 ms**, versus **11.32 ms** validation: theoretical overlap
+   ceiling about **11.32 ms**, not a measured gain. Overlapping only construction
+   has a much smaller **1.90 ms** ceiling. GIL/dependencies may remove the benefit;
+   this requires an approved experiment, not an assumed speedup or a new worker.
+
+None is implemented. Broken catalog still means legacy-only plus diagnostic;
+valid catalog metadata is never provisionally shown and then replaced.
+
+### One decisive randomized interleaved session
+
+The committed `tests/catalog_round4.py` implements the pre-registration: Settings
+5 arms × 60 rounds, followed by Preview 3 arms × 30 rounds, **390 timed samples**.
+Arm order shuffles per round with seed **241021**; one excluded warm-up per
+arm/path, warm OS page cache and persistent per-arm/path XDG cache. Process,
+config/state/data/runtime are fresh each launch. Same user scripts, same 20 ms
+mapped-visible-window polling endpoint as round 3. No tests, profiling or build
+workload ran concurrently; monitoring only read progress. No outliers removed,
+no stopping early, no second decisive run, no threshold changes.
+
+AMD EPYC 9V74, 5 visible CPUs, cgroup quota 4 CPUs (`400000 100000`), 32 GiB limit,
+Linux 6.18.55 / Debian 13, Python 3.12.14, Quickshell 0.3.2 / Qt 6.8.2.
+Private Sway 1.10.1 pixman, Qt RHI/OpenGL Mesa software. Governor and power-supply
+state are **not exposed** by the container; do not infer an AC/battery/governor
+setting. Load averages before/after are retained in measurements.json; shared
+host scheduling cannot be controlled, and no real-GPU result is claimed.
+
+`main` and `main-aa` are independent copies of `186354a`. Optimized arms use
+`9c3fd38`; replacement-current is exactly `8eabc20`. Both replace fixtures use
+**identical canonical index bytes** (not a different payload for the old CLI).
+Each has 19 bar modules, 16 pages, 6 tabs and 30 preference fragments: 71 inert
+descriptors, 23,978 JSON bytes. Legacy registrations and CLI page arm are removed
+only in the copies; existing first-frame factories remain. This models registry,
+validation, projection and admission costs, not migrated schema consumption,
+feature bootstrap/workers, realistic descriptor graphs or hardware rendering.
+Preview mapping may precede catalog completion; do not interpret its improvement.
+
+All units below are ms. CI = percentile 95% **joint round-block bootstrap** of
+**difference of medians**, 20,000 resamples; exploratory two-sided Mann-Whitney
+uses the round-3 tie/continuity-corrected normal approximation, unadjusted for
+multiple comparisons. P-values do not decide acceptance. Compare within this
+session only. A/A is not a substitute threshold or a single-run P95 argument.
+
+| Path / arm | N | Median | IQR | Min | Max | Δ vs main | 95% CI | MW p |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| settings / main | 60 | 605.60 | 54.33 | 572.77 | 831.44 | +0.00 | [+0.00, +0.00] | 1 |
+| settings / main-aa | 60 | 620.14 | 54.50 | 571.80 | 915.96 | +14.53 | [-16.91, +25.16] | 0.96023 |
+| settings / final-empty-new | 60 | 637.76 | 71.46 | 548.70 | 776.09 | +32.16 | [+1.96, +44.53] | 0.048739 |
+| settings / final-replace-current | 60 | 672.41 | 45.49 | 605.62 | 932.11 | +66.80 | [+46.05, +81.96] | 6.8387e-10 |
+| settings / final-replace-new | 60 | 646.75 | 59.71 | 578.06 | 790.69 | +41.15 | [+15.44, +50.84] | 0.0020817 |
+| preview / main | 30 | 608.02 | 42.32 | 526.10 | 762.09 | +0.00 | [+0.00, +0.00] | 1 |
+| preview / final-empty-new | 30 | 606.38 | 52.39 | 534.29 | 878.49 | -1.63 | [-19.81, +19.36] | 0.76183 |
+| preview / final-replace-new | 30 | 575.28 | 57.21 | 529.93 | 751.51 | -32.74 | [-48.63, -11.70] | 0.019883 |
+
+Settings A/A delta **+14.53 ms**, CI **[-16.91, +25.16]** includes zero. It does
+not override the registered empty result. Secondary within-session new-versus-
+current replacement comparison: **-25.66 ms**, CI **[-48.33, -14.71]**; this
+supports removal of the CLI overhead, not satisfaction of D1 versus main.
+
+| Registered check | Result | Verdict |
+| --- | --- | --- |
+| Settings empty: CI includes zero OR upper ≤10 | [+1.96, +44.53] | **Miss** |
+| Settings replace: upper ≤50 | upper +50.844318 | **Miss** |
+| Preview empty | [-19.81, +19.36], includes zero | Met |
+| Preview replace | upper -11.70 | Met; regression check only |
+
+**D1 remains unsatisfied.** The replacement upper bound exceeds the limit by
+0.844318 ms; do not round that into a pass. The empty Settings miss also needs
+an owner decision. The empty legacy launch executes the same admission branch
+as before round 4, so this overall M4a-versus-main delta must not be attributed
+to the new catalog-HIT matcher without further evidence.
+
+[All raw CSV](evidence/m4a-round4/samples.csv),
+[distributions/metadata/CI](evidence/m4a-round4/measurements.json),
+[commands and method](evidence/m4a-round4/commands.txt).
+CSV SHA256: `3b68698394e28bbb994a382240ac5c87f42aeb800b462dd7a35d082cf9bcb218`.
+All 390 CSV values match JSON; every bootstrap result was independently recomputed
+from those stored samples with the committed statistics helper.
+
+### Decision needed; no further implementation
+
+| Option | Numbers available now | Trade-off / uncertainty |
+| --- | --- | --- |
+| Explicitly accept the measured cost | Settings empty +32.16 ms, CI upper +44.53; replace +41.15 ms, CI upper +50.84 | Owner exception required for both misses; keep runtime JSON discovery and the zero-Python HIT. This is not the current verdict. |
+| Authorize aggregate c | Replacement read/parse medians only 0.59/0.54 ms; validation owner 11.32 ms includes required containment/resource checks | Removing reads alone cannot address the 28-byte empty-index case. These profiling budgets are not an adjusted CI or a prediction of passing. Generated-file freshness/build complexity; c remains unauthorized. |
+| Return startup metadata to QML (D1 alternative) | Same-session main Settings median 605.60 ms versus empty 637.76 / replacement 646.75 ms | Main is a reference, not a measured result of this alternative. Removes runtime discovery from the startup boundary; costs architectural flexibility. Needs design approval and a fresh registered comparison; no claimed gain yet. |
+
+No performance retuning or new measurement run follows these misses. Await owner
+choice before backend scheduling experiments, aggregate c, D1 redesign or M4b.
+
+### Compatibility and behavior record
+
+No UI, feature order, resource loading policy, IPC, settings persistence or polling
+behavior changed beyond round 3. The intentional new authoring/CLI contract is
+that explicit `--check` rejects noncanonical index text and page descriptors whose
+keys are absent from startup metadata. Runtime old-format admission remains a
+Python MISS adapter; old deep reader behavior/rejection text is retained.
+
+- Legacy registry/page case adapters remain until an individually approved
+  conversion removes each registration in the **same commit** as its descriptor.
+- Python `--page` remains the authoritative MISS/error compatibility path; retire
+  only if an approved replacement proves byte-identical errors/exit codes for
+  every parity/fault fixture. The Bash HIT is not a validation replacement.
+- Descriptor-only reader/QML adapters remain for existing fixtures and imports;
+  retire only after all such consumers migrate with approval and their contracts
+  execute. Checked production page keys must already be in startup metadata.
+- `openPage()`/`startupPending()` and numeric tab/public CLI/env/import facades
+  are unchanged. The existing public-API retirement conditions are not advanced.
+
+Regression gates green do not authorize merging or waive the red performance
+acceptance. No laptop GPU/display/Bluetooth/backlight/suspend check was performed;
+all native results concern disposable headless Sway/D-Bus/XDG sessions only.
+
+## D1 owner decision and startup budget — 2026-10-21
+
+**D1 resolved: JSON index + descriptors; measured cost accepted by the owner on
+2026-10-21.** This is an explicit owner acceptance of a missed pre-registered
+rule, not a redefinition of that rule and not a claim that round 4 passed it.
+No new samples, statistics, thresholds or production changes accompany this decision.
+The reviewed head is `24cf501`, with production identical to measured `9c3fd38`.
+Stay on `refactor/m4a-feature-catalog`: **no merge, M4b or further optimization**.
+
+Accepted round-4 figures, added median versus main `186354a`:
+
+| Cold-launch path / model | Added median | 95% CI | Original rule |
+| --- | ---: | --- | --- |
+| Settings, empty catalog | +32.2 ms | [+2.0, +44.5] ms | Not met; owner accepts cost |
+| Settings, synthetic replacement | +41.2 ms | [+15.4, +50.8] ms | Not met; owner accepts cost |
+| Preview, empty / replacement | No regression against registered checks | See unchanged round-4 table/raw evidence | Met; do not interpret improvement |
+
+Caveats: software-rendered VM (private Sway pixman, Qt RHI/OpenGL Mesa software),
+warm filesystem/per-arm caches, fresh-process **cold launches only**, and an
+endpoint of the first visible mapped window (20 ms polling), not full feature
+readiness. Settings used **60 timed rounds per arm**; Preview used 30. The result
+does not measure warm Gear/IPC reuse, a cold OS cache or real laptop GPU behavior.
+All 390 samples and the joint round-block bootstrap CIs remain in round-4 evidence.
+
+### Budget for later milestones
+
+Every later milestone re-measures **both Settings and preview cold launch** against
+**the previous accepted head**, recording its exact Git revision. Start with this
+accepted M4a implementation (review head `24cf501`, production `9c3fd38`); a docs-only
+or merge descendant may represent it when the production diff is identical.
+Use the same warm-cache/fresh-process, user-entry-script, mapped-window endpoint,
+randomized interleaved and joint round-block bootstrap CI method. Record sample
+counts, renderer/machine and cache policy so comparisons are reviewable.
+
+If the **95% CI lower bound of the added median cost exceeds 10 ms on either
+path, STOP and ask the owner** before proceeding. Do not silently change the
+baseline, endpoint or threshold. This is a prospective incremental budget; it
+does not make the missed round-4 rule pass retrospectively.
+
+Optional optimizations remain **NOT authorized**:
+
+- Backend validation off the first-snapshot path: approximately **11 ms** of
+  measured validation-owner time (11.32 ms in diagnostic profiling). Moving it
+  can shift a snapshot metric without speeding Settings if the trust barrier
+  still waits. Broken catalog must remain legacy-only plus diagnostic; valid
+  catalogs must not pop in. No scheduling/thread/worker change is approved.
+- Aggregate c: approximately **1.1 ms read/parse budget** (0.59/0.54 ms medians),
+  not a demonstrated startup saving. Required resource/path validation remains;
+  removing reads does not explain the empty-index cost. No aggregate is approved.
+
+### Merge-readiness scope and intended contracts
+
+Remote main and `origin/main` are still `186354a`; merge-base is `186354a`.
+The local `main` ref is older (`0548626`), so review comparisons use the verified
+remote-tracking main. No branch/ref update, rebase or merge was performed.
+The M4a production diff against `origin/main` is **15 files, +432 / -16 lines**;
+this decision commit changes documentation only. `config/features.json` remains
+exactly the 28-byte empty index `{"version":1,"features":[]}\n`.
+
+Runtime source has no scratch profiler imports/hooks, monotonic marker calls,
+preload binaries or scratch output trees. Tracked benchmark/test helpers and raw
+JSON/CSV/log evidence are intentional. Native tests instrument **copied fixtures**
+for fault/projection assertions; these are not installed runtime instrumentation.
+
+On exercised legacy paths with the empty index, no UI/navigation/action behavior
+difference versus the characterized main baseline was found, apart from the
+accepted cold-start cost. Order/defaults, gestures, monitor routing, card editing,
+IPC page reuse/readiness and existing CLI unknown-page messages remain guarded.
+The exact intended additions/contract changes are:
+
+1. Bundled version-1 index/descriptors and projections extend existing registries;
+   legacy entries keep their order, enabled entries append in index order, and
+   disabled entries retain IDs/schema metadata while hiding their UI. The shipped
+   index contains **zero real features**; no schema fragment is consumed yet.
+2. Deep validation rejects invalid versions/shapes, duplicate keys/IDs/preferences,
+   legacy collisions and missing/escaping resources, including disabled entries.
+   A broken/timed-out catalog settles to legacy-only plus the existing diagnostic.
+3. QML loads/caches the index once per process, publishes projections together,
+   gates catalog resources on the backend verdict and joins the Settings startup
+   barrier. Descriptor resources are lazy/bounded. `openPage()` still confirms a
+   visible window and `startupPending()` still reports pending initialization.
+4. Backend startup validates once before preferences, without import-time catalog
+   I/O, and adds `catalogValidation: {error: string}` to emitted snapshots.
+5. `feature_catalog.py --page KEY [LEGACY...]` provides index-only admission;
+   `settings.sh` admits enabled canonical catalog keys with Bash builtins, with
+   Python on MISS. Existing legacy/unknown-page exit codes and messages remain.
+6. Explicit `--check` (also run by `check.sh`) deep-validates and **rejects
+   noncanonical indexes**, unsafe page identifiers and page keys absent from
+   startup metadata. Canonical nonempty indexes have one compact record per line,
+   `id` first and literal `settingsPage.key` first. Runtime old-format readers and
+   Python MISS compatibility remain; this authoring contract is intentionally new.
+
+Final-HEAD G0 and G3 must be executed after this docs-only commit. Their actual
+counts/skips and the complete branch commit list are reported in the verification
+reply; this paragraph does not pre-claim that either gate passed. Prior rounds'
+results remain historical. Laptop acceptance is still the owner's step.
+
+### Laptop checklist briefing — needs real-session check
+
+This is a short manual smoke check on the real Fedora/niri/GPU session before
+merging, not a request to reproduce the 60-round VM benchmark. Use the reviewed
+checkout explicitly so an installed older copy cannot give a misleading result.
+Do not install synthetic descriptors or overwrite niri configuration.
+
+1. Record the branch/HEAD and confirm the index is empty; stop the old shell using your usual method and launch this checkout.
+2. Compare bar order, labels and saved layout; open/close Control Center, Activity Island and Clipboard, checking input and animation.
+3. Open Settings with Gear while using your saved Liquid/Smoked style; the first visible frame should already use that appearance.
+4. Repeat Gear during startup and while Settings is open; expect one Settings window. Route to Clipboard then Appearance with `settings.sh --page ... --daemonize`.
+5. Close and reopen Settings; confirm the requested page and saved appearance, with no hang or duplicate window.
+6. Try bar audio/network/clock/battery routes, all six Control Center tabs and System monitor; check mark-read and Agenda/Notes visibility.
+7. Test preview for this checkout separately; closing it should leave the live shell/config intact. Check GPU/glass/Jelly appearance for regression.
+8. Review logs for catalog/QML errors; report HEAD, steps, expected/actual result and log/video if something differs. Real reconnect/hardware checks are optional follow-ups, not claimed by VM gates.

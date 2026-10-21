@@ -1,0 +1,6 @@
+test_replace_removes_legacy_entries_and_preserves_namespace_order (test_catalog_model.CatalogModelCase.test_replace_removes_legacy_entries_and_preserves_namespace_order) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.028s
+
+OK

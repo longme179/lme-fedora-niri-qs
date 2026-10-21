@@ -1,0 +1,109 @@
+test_bar_and_preference_keys_are_not_pages (test_catalog_admission.AdmissionCase.test_bar_and_preference_keys_are_not_pages) ... ok
+test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) ... 
+  test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version": 1, "features": [{"id": "sample", "descriptor": "config/sample.json",') ... FAIL
+  test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version":1,"features":[\n{"id":"sample","descriptor":"config/sample.json","enab') ... FAIL
+  test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version":1,"features":[\n{"id":"sample","descriptor":"config/sample.json","enab') ... FAIL
+test_check_rejects_unsafe_page_keys (test_catalog_admission.AdmissionCase.test_check_rejects_unsafe_page_keys) ... ok
+test_check_requires_page_keys_in_startup_summary (test_catalog_admission.AdmissionCase.test_check_requires_page_keys_in_startup_summary) ... FAIL
+test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) ... 
+  test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='sample') ... FAIL
+  test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='sampleLong') ... FAIL
+  test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='Case_2-X') ... FAIL
+test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) ... FAIL
+test_disabled_entry_matches_python (test_catalog_admission.AdmissionCase.test_disabled_entry_matches_python) ... ok
+test_enabled_keys_and_prefix_substring_keys_match_python (test_catalog_admission.AdmissionCase.test_enabled_keys_and_prefix_substring_keys_match_python) ... ok
+test_legacy_pages_match_python_even_with_broken_index (test_catalog_admission.AdmissionCase.test_legacy_pages_match_python_even_with_broken_index) ... ok
+test_missing_malformed_and_empty_index_match_python (test_catalog_admission.AdmissionCase.test_missing_malformed_and_empty_index_match_python) ... ok
+
+======================================================================
+FAIL: test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version": 1, "features": [{"id": "sample", "descriptor": "config/sample.json",')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 53, in test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key
+    self.assertEqual(result.returncode, 1, result.stderr)
+AssertionError: 0 != 1 : 
+
+======================================================================
+FAIL: test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version":1,"features":[\n{"id":"sample","descriptor":"config/sample.json","enab')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 53, in test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key
+    self.assertEqual(result.returncode, 1, result.stderr)
+AssertionError: 0 != 1 : 
+
+======================================================================
+FAIL: test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) (text='{"version":1,"features":[\n{"id":"sample","descriptor":"config/sample.json","enab')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 53, in test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key
+    self.assertEqual(result.returncode, 1, result.stderr)
+AssertionError: 0 != 1 : 
+
+======================================================================
+FAIL: test_check_requires_page_keys_in_startup_summary (test_catalog_admission.AdmissionCase.test_check_requires_page_keys_in_startup_summary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 68, in test_check_requires_page_keys_in_startup_summary
+    self.assertEqual(result.returncode, 1, result.stderr)
+AssertionError: 0 != 1 : 
+
+======================================================================
+FAIL: test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='sample')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 76, in test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits
+    self.assertEqual(fixture.calls(), [], 'Catalog Python ran on a page hit')
+AssertionError: Lists differ: ['/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample'
+
+- ['/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample']
++ [] : Catalog Python ran on a page hit
+
+======================================================================
+FAIL: test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='sampleLong')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 76, in test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits
+    self.assertEqual(fixture.calls(), [], 'Catalog Python ran on a page hit')
+AssertionError: Lists differ: ['/tmp/admission-3yd8msuf/full/scripts/fea[103 chars]ong'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample'
+
++ []
+- ['/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample',
+-  '/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sampleLong'] : Catalog Python ran on a page hit
+
+======================================================================
+FAIL: test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) (page='Case_2-X')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 76, in test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits
+    self.assertEqual(fixture.calls(), [], 'Catalog Python ran on a page hit')
+AssertionError: Lists differ: ['/tmp/admission-3yd8msuf/full/scripts/fea[178 chars]2-X'] != []
+
+First list contains 3 additional elements.
+First extra element 0:
+'/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample'
+
++ []
+- ['/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sample',
+-  '/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page sampleLong',
+-  '/tmp/admission-3yd8msuf/full/scripts/feature_catalog.py --page Case_2-X'] : Catalog Python ran on a page hit
+
+======================================================================
+FAIL: test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_catalog_admission.py", line 78, in test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits
+    self.assertEqual(len(fixture.calls()), 1, 'Tracing must observe the Python MISS fallback')
+AssertionError: 4 != 1 : Tracing must observe the Python MISS fallback
+
+----------------------------------------------------------------------
+Ran 9 tests in 2.734s
+
+FAILED (failures=8)

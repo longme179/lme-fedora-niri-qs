@@ -1,0 +1,12 @@
+test_import_does_not_validate_and_backend_initialization_validates_once (test_catalog_backend_startup.CatalogBackendStartupCase.test_import_does_not_validate_and_backend_initialization_validates_once) ... ok
+test_enabled_inline_page_and_disabled_page_admission (test_catalog_cli.CatalogCliCase.test_enabled_inline_page_and_disabled_page_admission) ... ok
+test_explicit_check_still_rejects_missing_descriptor (test_catalog_cli.CatalogCliCase.test_explicit_check_still_rejects_missing_descriptor) ... ok
+test_legacy_and_empty_index_need_no_python (test_catalog_cli.CatalogCliCase.test_legacy_and_empty_index_need_no_python) ... ok
+test_legacy_pages_and_empty_unknown_keep_messages_and_codes (test_catalog_cli.CatalogCliCase.test_legacy_pages_and_empty_unknown_keep_messages_and_codes) ... ok
+test_native_fixture_index_carries_the_complete_presentation (test_catalog_cli.CatalogCliCase.test_native_fixture_index_carries_the_complete_presentation) ... ok
+test_unknown_key_lookup_does_not_read_descriptor_or_resource (test_catalog_cli.CatalogCliCase.test_unknown_key_lookup_does_not_read_descriptor_or_resource) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.299s
+
+OK

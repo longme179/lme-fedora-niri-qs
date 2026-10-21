@@ -1,0 +1,8 @@
+test_enabled_inline_page_and_disabled_page_admission (test_catalog_cli.CatalogCliCase.test_enabled_inline_page_and_disabled_page_admission) ... ok
+test_explicit_check_still_rejects_missing_descriptor (test_catalog_cli.CatalogCliCase.test_explicit_check_still_rejects_missing_descriptor) ... ok
+test_legacy_pages_and_empty_unknown_keep_messages_and_codes (test_catalog_cli.CatalogCliCase.test_legacy_pages_and_empty_unknown_keep_messages_and_codes) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.334s
+
+OK

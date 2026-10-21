@@ -1,0 +1,21 @@
+test_enabled_inline_page_and_disabled_page_admission (test_catalog_cli.CatalogCliCase.test_enabled_inline_page_and_disabled_page_admission) ... ok
+test_explicit_check_still_rejects_missing_descriptor (test_catalog_cli.CatalogCliCase.test_explicit_check_still_rejects_missing_descriptor) ... ok
+test_legacy_and_empty_index_need_no_python (test_catalog_cli.CatalogCliCase.test_legacy_and_empty_index_need_no_python) ... ok
+test_legacy_pages_and_empty_unknown_keep_messages_and_codes (test_catalog_cli.CatalogCliCase.test_legacy_pages_and_empty_unknown_keep_messages_and_codes) ... ok
+test_native_fixture_index_carries_the_complete_presentation (test_catalog_cli.CatalogCliCase.test_native_fixture_index_carries_the_complete_presentation) ... ok
+test_unknown_key_lookup_does_not_read_descriptor_or_resource (test_catalog_cli.CatalogCliCase.test_unknown_key_lookup_does_not_read_descriptor_or_resource) ... ok
+test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged (test_feature_catalog.CatalogContractCase.test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged) ... ok
+test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults) ... ok
+test_empty_index_and_disabled_ids_retain_schema_but_hide_ui (test_feature_catalog.CatalogContractCase.test_empty_index_and_disabled_ids_retain_schema_but_hide_ui) ... ok
+test_rejects_duplicate_feature_projection_and_preference_ids (test_feature_catalog.CatalogContractCase.test_rejects_duplicate_feature_projection_and_preference_ids) ... ok
+test_rejects_invalid_version_shapes_and_duplicate_json_keys (test_feature_catalog.CatalogContractCase.test_rejects_invalid_version_shapes_and_duplicate_json_keys) ... ok
+test_rejects_legacy_collisions_even_when_disabled (test_feature_catalog.CatalogContractCase.test_rejects_legacy_collisions_even_when_disabled) ... ok
+test_rejects_mismatched_descriptor_and_executable_metadata (test_feature_catalog.CatalogContractCase.test_rejects_mismatched_descriptor_and_executable_metadata) ... ok
+test_rejects_missing_resources_traversal_absolute_and_symlink_escape (test_feature_catalog.CatalogContractCase.test_rejects_missing_resources_traversal_absolute_and_symlink_escape) ... ok
+test_conflicting_or_escaping_inline_metadata_is_rejected (test_catalog_compact.CompactCatalogCase.test_conflicting_or_escaping_inline_metadata_is_rejected) ... ok
+test_inline_matches_legacy_descriptor_projection_and_schema (test_catalog_compact.CompactCatalogCase.test_inline_matches_legacy_descriptor_projection_and_schema) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.545s
+
+OK

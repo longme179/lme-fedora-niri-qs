@@ -1,0 +1,17 @@
+test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged (test_feature_catalog.CatalogContractCase.test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged) ... ok
+test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults) ... ok
+test_empty_index_and_disabled_ids_retain_schema_but_hide_ui (test_feature_catalog.CatalogContractCase.test_empty_index_and_disabled_ids_retain_schema_but_hide_ui) ... skipped 'M4a reader absent on unmodified baseline'
+test_rejects_duplicate_feature_projection_and_preference_ids (test_feature_catalog.CatalogContractCase.test_rejects_duplicate_feature_projection_and_preference_ids) ... skipped 'M4a reader absent on unmodified baseline'
+test_rejects_invalid_version_shapes_and_duplicate_json_keys (test_feature_catalog.CatalogContractCase.test_rejects_invalid_version_shapes_and_duplicate_json_keys) ... skipped 'M4a reader absent on unmodified baseline'
+test_rejects_legacy_collisions_even_when_disabled (test_feature_catalog.CatalogContractCase.test_rejects_legacy_collisions_even_when_disabled) ... skipped 'M4a reader absent on unmodified baseline'
+test_rejects_mismatched_descriptor_and_executable_metadata (test_feature_catalog.CatalogContractCase.test_rejects_mismatched_descriptor_and_executable_metadata) ... skipped 'M4a reader absent on unmodified baseline'
+test_rejects_missing_resources_traversal_absolute_and_symlink_escape (test_feature_catalog.CatalogContractCase.test_rejects_missing_resources_traversal_absolute_and_symlink_escape) ... skipped 'M4a reader absent on unmodified baseline'
+test_backend_reconnect_keeps_the_loaded_window_and_theme (test_settings_startup.SettingsStartupCase.test_backend_reconnect_keeps_the_loaded_window_and_theme) ... ok
+test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme (test_settings_startup.SettingsStartupCase.test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme) ... ok
+test_initial_backend_failure_shows_a_recoverable_window (test_settings_startup.SettingsStartupCase.test_initial_backend_failure_shows_a_recoverable_window) ... ok
+test_repeated_gear_requests_queue_the_last_page_without_restarting (test_settings_startup.SettingsStartupCase.test_repeated_gear_requests_queue_the_last_page_without_restarting) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 11.316s
+
+OK (skipped=6)

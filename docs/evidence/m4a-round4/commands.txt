@@ -1,0 +1,52 @@
+Pre-registration (docs only), committed before all round-4 gates/profiling/measurements:
+  6cc5e3f849e14cb9036230ee9c6a9a80bc2ea56b
+Production before: 52c571b / 8eabc20 (identical startup implementation)
+Production after: 9c3fd38
+Main verified against origin refs/heads/main: 186354a4e8922aba8adc6a0546e29511d59b1c1b
+
+Environment: source /workspace/.lme-dev/env.sh
+Private bootstrap: scripts/run-gates.sh copied outside checkout, repo_dir fixed to this
+checkout; driver changes only G6 selection to (POLLING_UI, test_polling_ui.NativePollingCase).
+No installed configs, live compositor, user D-Bus or production catalog hooks used.
+
+Before/after (different output directories, fresh Sway and private D-Bus):
+  bash /workspace/.lme-dev/m4a-r4/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4a-r4/before --gates G0,G1,G2,G3,G6
+  bash /workspace/.lme-dev/m4a-r4/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4a-r4/after --gates G0,G1,G2,G3,G6
+Exact commands, environment, skip names/reasons and wall times: gates.json.
+
+New tests before/after:
+  PYTHONPATH=tests:scripts python3 -m unittest -v test_catalog_admission
+Characterization subset (6 methods) on unmodified production: characterization-baseline.log.
+New-contract red run (3 methods, 8 failure events): characterization-red.log.
+All 9 methods after: admission-green.log. No existing assertions edited.
+Process tracing wrapper is defined by tests/catalog_admission_fixture.py and installed
+ONLY in a copied checkout; subprocesses for legacy/catalog HITs are zero, MISS one.
+
+Diagnostic profiling, after gates and before the decisive benchmark:
+  bash /workspace/.lme-dev/m4a-r4/profile-run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4a-r4/attribution-session --gates G0
+This alternate private driver profiles 10 Settings replacement launches; it does NOT
+run G0 despite the shared bootstrap argument. Only copied source was instrumented.
+C++ steady_clock QML markers and Python monotonic_ns share Linux CLOCK_MONOTONIC.
+Mark backend spawn request, first statement (after importing time, before tracer),
+validation owner/load start/end, first snapshot begin/flushed. document() in the copy
+counts bytes/read time/parse time; deep residual is load total minus read/parse time.
+Tracer imports/writes add overhead. No instrumentation is committed.
+Raw traces: monotonic-traces.json; per-run intervals and ratios: attribution.json.
+
+Decisive session (once, no other tests/profiling running):
+  bash /workspace/.lme-dev/m4a-r4/benchmark-run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4a-r4/decisive --gates G0
+Alternate driver runs, not G0:
+  python3 tests/catalog_round4.py --head 9c3fd38 --output "$LME_GATE_OUTPUT/measurement"
+The committed helper reproduces arms, sample counts and statistics. Reuse the private
+bootstrap with this driver command; --output must name a new directory. Launch uses
+short /tmp runtime paths to avoid the Unix IPC socket limit. CSV uses LF directly.
+390 samples; 20000 joint round-block bootstrap resamples/comparison, seed 241021.
+All CSV values checked against measurements.json; all bootstrap comparisons recomputed
+exactly. Secondary new-vs-current comparison is exploratory, not an acceptance rule.
+
+Decision: both Settings criteria missed; no rerun, threshold adjustment, backend
+optimization, aggregate or M4b conversion performed. Await owner decision.
+
+Evidence logs preserve unittest stdout verbatim, including trailing spaces on
+subtest/AssertionError lines. Source/doc whitespace check excludes these raw *.log
+files; no output bytes were stripped to make a cosmetic check pass.

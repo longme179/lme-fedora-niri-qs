@@ -14,7 +14,7 @@ GATES = {
     'G0': ([], ['./scripts/check.sh']),
     'G1': (['PERSONALIZATION_UI'], ['migration_startup.SmokeCase', 'test_settings_startup.NativeSettingsStartupCase']),
     'G2': (['PERSONALIZATION_UI'], ['test_settings_startup.NativeSettingsStartupCase', 'test_personalization.NativePersonalizationCase']),
-    'G3': (['UPGRADE_UI'], ['test_control_grid.ControlGridUiCase', 'test_upgrade_ui.UpgradeInterfaceCase', 'test_bar_gestures.BarGestureQmlCase', 'test_navigation.TabContractCase', 'test_navigation.NativeTabCase']),
+    'G3': (['UPGRADE_UI'], ['test_control_grid.ControlGridUiCase', 'test_upgrade_ui.UpgradeInterfaceCase', 'test_bar_gestures.BarGestureQmlCase', 'test_navigation.TabContractCase', 'test_navigation.NativeTabCase', 'test_feature_catalog', 'test_catalog_failures', 'test_catalog_compact', 'test_catalog_projection']),
     'G4': (['CLIPBOARD_NATIVE', 'CLIPBOARD_UI', 'ANNOTATION_UI', 'CAPTURE_UI'], ['test_clipboard.NativeClipboardCase', 'test_clipboard.ClipboardInterfaceCase', 'test_image_annotation_ui.AnnotationInterfaceCase', 'test_capture_night']),
     'G5': (['DISPLAY_WATCHDOG', 'UPGRADE_UI'], ['test_upgrades.DetachedDisplayCase', 'test_managed_commands.ManagedCommandsCase', 'test_battery_saver', 'test_battery_saver_backend', 'test_battery_saver_qml']),
     'G6': (['POLLING_UI'], ['test_launchpad.LaunchpadCase', 'test_launchpad.LaunchpadQmlCase', 'test_polling_ui.NativePollingCase']),

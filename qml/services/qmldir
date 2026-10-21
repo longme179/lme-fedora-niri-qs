@@ -8,6 +8,7 @@ singleton OSDManager 1.0 OSDManager.qml
 singleton VisualizerState 1.0 VisualizerState.qml
 singleton NotesState 1.0 NotesState.qml
 singleton ControlRegistry 1.0 ControlRegistry.qml
+singleton FeatureCatalog 1.0 FeatureCatalog.qml
 
 singleton BluetoothState 1.0 BluetoothState.qml
 singleton PeripheralBatteries 1.0 PeripheralBatteries.qml

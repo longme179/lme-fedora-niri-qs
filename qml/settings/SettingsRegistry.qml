@@ -1,7 +1,9 @@
 pragma Singleton
 import QtQuick
+import "../services"
 QtObject {
-    readonly property var pages: [
+    readonly property var pages: FeatureCatalog.project("settingsPage", legacyPages, "key")
+    readonly property var legacyPages: [
         {key: "elements", title: "Elements and fonts", icon: "settings", description: "Your colors, down to the element", keywords: "theme hex color class token typography font family buttons inputs surfaces palette"},
         {key: "appearance", title: "Appearance", icon: "settings", description: "Color palettes, glass and motion", keywords: "island maximum size width height name identity branding smoked glass liquid surface refraction tint brightness feather smearing rim lens accent opacity animations motion theme font roboto profiles density popup blur overlay compositor palette material rose pine gruvbox nord catppuccin media wave timeline playback progress seek shuffle repeat stable metadata shapes"},
         {key: "topbar", title: "Top bar", icon: "overview", description: "Your modules, in your order", keywords: "click right middle scroll gestures mute volume dnd modules layout islands activity timer media pill clock workspaces tray size corners border fill round square left center right"},

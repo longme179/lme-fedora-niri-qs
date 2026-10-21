@@ -59,6 +59,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
+from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, validate_legacy
 
 
 DEFAULT_PREFERENCES = {
@@ -98,6 +99,24 @@ DEFAULT_PREFERENCES = {
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
+FEATURE_CATALOG_ERROR = ''
+FEATURE_CATALOG = empty_catalog()
+_catalog_initialized = False
+
+
+def initialize_catalog():
+    """Validate once in the backend process, never in its importing callers."""
+    global FEATURE_CATALOG, FEATURE_CATALOG_ERROR, BAR_MODULES, _catalog_initialized
+    if _catalog_initialized: return
+    _catalog_initialized = True
+    try:
+        FEATURE_CATALOG = validate_legacy(feature_catalog(), {'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
+    except CatalogError as error:
+        FEATURE_CATALOG_ERROR = str(error)
+        print(f'Feature catalog: {error}', file=sys.stderr)
+    BAR_MODULES = BAR_MODULES | set(FEATURE_CATALOG['ids']['bar'])
+
+
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
     ("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles"),
@@ -1947,7 +1966,8 @@ class DesktopBackend:
                 raise CommandError(str(reply.get("Err", "The niri action failed")) if isinstance(reply, dict) else "Invalid niri reply")
 
 def emit(backend: DesktopBackend) -> None:
-    print(json.dumps(backend.snapshot(), ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)
+    state = dict(backend.snapshot(), catalogValidation={"error": FEATURE_CATALOG_ERROR})
+    print(json.dumps(state, ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1963,6 +1983,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--interval must be at least 0.5 seconds")
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
+    initialize_catalog()
     backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
     if args.restore_displays:
         if backend.saver_snapshot()['active']:

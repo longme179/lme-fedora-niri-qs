@@ -1,0 +1,3033 @@
+{
+  "preview": {
+    "empty": {
+      "0": [
+        {
+          "pid": 273937,
+          "event": "qml.index.read-request",
+          "ns": 42815301221793
+        },
+        {
+          "pid": 273937,
+          "event": "backend.spawn-request",
+          "ns": 42815301833284
+        },
+        {
+          "pid": 273937,
+          "event": "host.ready",
+          "ns": 42815305866807
+        },
+        {
+          "pid": 273937,
+          "event": "qml.index.loaded",
+          "ns": 42815466005155
+        },
+        {
+          "pid": 273937,
+          "event": "index.validation.start",
+          "ns": 42815466144135
+        },
+        {
+          "pid": 273937,
+          "event": "index.validation.end",
+          "ns": 42815466164565
+        },
+        {
+          "pid": 273937,
+          "event": "catalog.settled",
+          "ns": 42815466184716
+        },
+        {
+          "pid": 273937,
+          "event": "theme.ready",
+          "ns": 42815467304041
+        },
+        {
+          "pid": 273973,
+          "event": "backend.first-python-statement",
+          "ns": 42815533986892
+        },
+        {
+          "pid": 273973,
+          "event": "backend.first-catalog-statement",
+          "ns": 42815585292974
+        },
+        {
+          "pid": 273973,
+          "event": "backend.load.start",
+          "ns": 42815586287331
+        },
+        {
+          "pid": 273973,
+          "event": "backend.load.end",
+          "ns": 42815586554012,
+          "total_ns": 344238,
+          "validation_ns": 309586,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 15202,
+          "parse_ns": 19450
+        },
+        {
+          "pid": 273937,
+          "event": "backend.ready",
+          "ns": 42815948679463
+        },
+        {
+          "pid": 273937,
+          "event": "qml.metrics:58137:6:28323:1:28",
+          "ns": 42816236973330
+        }
+      ],
+      "1": [
+        {
+          "pid": 274007,
+          "event": "qml.index.read-request",
+          "ns": 42816660126818
+        },
+        {
+          "pid": 274007,
+          "event": "backend.spawn-request",
+          "ns": 42816660666561
+        },
+        {
+          "pid": 274007,
+          "event": "host.ready",
+          "ns": 42816664521905
+        },
+        {
+          "pid": 274007,
+          "event": "qml.index.loaded",
+          "ns": 42816818172516
+        },
+        {
+          "pid": 274007,
+          "event": "index.validation.start",
+          "ns": 42816818423093
+        },
+        {
+          "pid": 274007,
+          "event": "index.validation.end",
+          "ns": 42816818460500
+        },
+        {
+          "pid": 274007,
+          "event": "catalog.settled",
+          "ns": 42816818496995
+        },
+        {
+          "pid": 274007,
+          "event": "theme.ready",
+          "ns": 42816820307951
+        },
+        {
+          "pid": 274041,
+          "event": "backend.first-python-statement",
+          "ns": 42816892440267
+        },
+        {
+          "pid": 274041,
+          "event": "backend.first-catalog-statement",
+          "ns": 42816948264120
+        },
+        {
+          "pid": 274041,
+          "event": "backend.load.start",
+          "ns": 42816949272358
+        },
+        {
+          "pid": 274041,
+          "event": "backend.load.end",
+          "ns": 42816949591248,
+          "total_ns": 322265,
+          "validation_ns": 278509,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 18447,
+          "parse_ns": 25309
+        },
+        {
+          "pid": 274007,
+          "event": "backend.ready",
+          "ns": 42817098505213
+        },
+        {
+          "pid": 274007,
+          "event": "qml.metrics:77596:6:77357:1:28",
+          "ns": 42817434872479
+        }
+      ],
+      "2": [
+        {
+          "pid": 274066,
+          "event": "qml.index.read-request",
+          "ns": 42817811423733
+        },
+        {
+          "pid": 274066,
+          "event": "backend.spawn-request",
+          "ns": 42817811952359
+        },
+        {
+          "pid": 274066,
+          "event": "host.ready",
+          "ns": 42817815660331
+        },
+        {
+          "pid": 274066,
+          "event": "qml.index.loaded",
+          "ns": 42817951501857
+        },
+        {
+          "pid": 274066,
+          "event": "index.validation.start",
+          "ns": 42817951645423
+        },
+        {
+          "pid": 274066,
+          "event": "index.validation.end",
+          "ns": 42817951665062
+        },
+        {
+          "pid": 274066,
+          "event": "catalog.settled",
+          "ns": 42817951686435
+        },
+        {
+          "pid": 274066,
+          "event": "theme.ready",
+          "ns": 42817952861273
+        },
+        {
+          "pid": 274099,
+          "event": "backend.first-python-statement",
+          "ns": 42818006757473
+        },
+        {
+          "pid": 274099,
+          "event": "backend.first-catalog-statement",
+          "ns": 42818053826226
+        },
+        {
+          "pid": 274099,
+          "event": "backend.load.start",
+          "ns": 42818054940343
+        },
+        {
+          "pid": 274099,
+          "event": "backend.load.end",
+          "ns": 42818055244901,
+          "total_ns": 311669,
+          "validation_ns": 265810,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 18547,
+          "parse_ns": 27312
+        },
+        {
+          "pid": 274066,
+          "event": "backend.ready",
+          "ns": 42818254290009
+        },
+        {
+          "pid": 274066,
+          "event": "qml.metrics:58837:6:26991:1:28",
+          "ns": 42818517593608
+        }
+      ],
+      "3": [
+        {
+          "pid": 274123,
+          "event": "qml.index.read-request",
+          "ns": 42818865829829
+        },
+        {
+          "pid": 274123,
+          "event": "backend.spawn-request",
+          "ns": 42818866305595
+        },
+        {
+          "pid": 274123,
+          "event": "host.ready",
+          "ns": 42818869936381
+        },
+        {
+          "pid": 274123,
+          "event": "qml.index.loaded",
+          "ns": 42819003914115
+        },
+        {
+          "pid": 274123,
+          "event": "index.validation.start",
+          "ns": 42819004110801
+        },
+        {
+          "pid": 274123,
+          "event": "index.validation.end",
+          "ns": 42819004135218
+        },
+        {
+          "pid": 274123,
+          "event": "catalog.settled",
+          "ns": 42819004158483
+        },
+        {
+          "pid": 274123,
+          "event": "theme.ready",
+          "ns": 42819005231258
+        },
+        {
+          "pid": 274155,
+          "event": "backend.first-python-statement",
+          "ns": 42819057093847
+        },
+        {
+          "pid": 274155,
+          "event": "backend.first-catalog-statement",
+          "ns": 42819098021904
+        },
+        {
+          "pid": 274155,
+          "event": "backend.load.start",
+          "ns": 42819099001499
+        },
+        {
+          "pid": 274155,
+          "event": "backend.load.end",
+          "ns": 42819099290734,
+          "total_ns": 290958,
+          "validation_ns": 253842,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 18027,
+          "parse_ns": 19089
+        },
+        {
+          "pid": 274123,
+          "event": "backend.ready",
+          "ns": 42819305749509
+        },
+        {
+          "pid": 274123,
+          "event": "qml.metrics:52528:6:26970:1:28",
+          "ns": 42819526787422
+        }
+      ],
+      "4": [
+        {
+          "pid": 274179,
+          "event": "qml.index.read-request",
+          "ns": 42819873671992
+        },
+        {
+          "pid": 274179,
+          "event": "backend.spawn-request",
+          "ns": 42819874131494
+        },
+        {
+          "pid": 274179,
+          "event": "host.ready",
+          "ns": 42819877283109
+        },
+        {
+          "pid": 274179,
+          "event": "qml.index.loaded",
+          "ns": 42820014544246
+        },
+        {
+          "pid": 274179,
+          "event": "index.validation.start",
+          "ns": 42820014712880
+        },
+        {
+          "pid": 274179,
+          "event": "index.validation.end",
+          "ns": 42820014735644
+        },
+        {
+          "pid": 274179,
+          "event": "catalog.settled",
+          "ns": 42820014758438
+        },
+        {
+          "pid": 274179,
+          "event": "theme.ready",
+          "ns": 42820016061290
+        },
+        {
+          "pid": 274212,
+          "event": "backend.first-python-statement",
+          "ns": 42820077190645
+        },
+        {
+          "pid": 274212,
+          "event": "backend.first-catalog-statement",
+          "ns": 42820126675059
+        },
+        {
+          "pid": 274212,
+          "event": "backend.load.start",
+          "ns": 42820127743577
+        },
+        {
+          "pid": 274212,
+          "event": "backend.load.end",
+          "ns": 42820128080595,
+          "total_ns": 335224,
+          "validation_ns": 293702,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 16795,
+          "parse_ns": 24727
+        },
+        {
+          "pid": 274179,
+          "event": "backend.ready",
+          "ns": 42820321948223
+        },
+        {
+          "pid": 274179,
+          "event": "qml.metrics:58166:6:39910:1:28",
+          "ns": 42820586740233
+        }
+      ]
+    },
+    "add": {
+      "0": [
+        {
+          "pid": 274236,
+          "event": "qml.index.read-request",
+          "ns": 42820940532103
+        },
+        {
+          "pid": 274236,
+          "event": "backend.spawn-request",
+          "ns": 42820940996852
+        },
+        {
+          "pid": 274236,
+          "event": "host.ready",
+          "ns": 42820944925897
+        },
+        {
+          "pid": 274236,
+          "event": "qml.index.loaded",
+          "ns": 42821093177691
+        },
+        {
+          "pid": 274236,
+          "event": "index.validation.start",
+          "ns": 42821094288673
+        },
+        {
+          "pid": 274236,
+          "event": "index.validation.end",
+          "ns": 42821094359831
+        },
+        {
+          "pid": 274236,
+          "event": "theme.ready",
+          "ns": 42821095192865
+        },
+        {
+          "pid": 274268,
+          "event": "backend.first-python-statement",
+          "ns": 42821156104327
+        },
+        {
+          "pid": 274268,
+          "event": "backend.first-catalog-statement",
+          "ns": 42821194352149
+        },
+        {
+          "pid": 274268,
+          "event": "backend.load.start",
+          "ns": 42821195253196
+        },
+        {
+          "pid": 274268,
+          "event": "backend.load.end",
+          "ns": 42821206885007,
+          "total_ns": 11622307,
+          "validation_ns": 10327878,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 712748,
+          "parse_ns": 581681
+        },
+        {
+          "pid": 274236,
+          "event": "assembly.start",
+          "ns": 42821649393999
+        },
+        {
+          "pid": 274236,
+          "event": "assembly.end",
+          "ns": 42821649789344
+        },
+        {
+          "pid": 274236,
+          "event": "binding.start",
+          "ns": 42821649804347
+        },
+        {
+          "pid": 274236,
+          "event": "catalog.settled",
+          "ns": 42821649818738
+        },
+        {
+          "pid": 274236,
+          "event": "binding.end",
+          "ns": 42821669657595
+        },
+        {
+          "pid": 274236,
+          "event": "backend.ready",
+          "ns": 42821669820461
+        },
+        {
+          "pid": 274236,
+          "event": "qml.metrics:271999:6:323356:1:16952",
+          "ns": 42821864707919
+        }
+      ],
+      "1": [
+        {
+          "pid": 274303,
+          "event": "qml.index.read-request",
+          "ns": 42822242744422
+        },
+        {
+          "pid": 274303,
+          "event": "backend.spawn-request",
+          "ns": 42822243188541
+        },
+        {
+          "pid": 274303,
+          "event": "host.ready",
+          "ns": 42822246981040
+        },
+        {
+          "pid": 274303,
+          "event": "qml.index.loaded",
+          "ns": 42822380097364
+        },
+        {
+          "pid": 274303,
+          "event": "index.validation.start",
+          "ns": 42822380456204
+        },
+        {
+          "pid": 274303,
+          "event": "index.validation.end",
+          "ns": 42822380516745
+        },
+        {
+          "pid": 274303,
+          "event": "theme.ready",
+          "ns": 42822381258852
+        },
+        {
+          "pid": 274335,
+          "event": "backend.first-python-statement",
+          "ns": 42822436492470
+        },
+        {
+          "pid": 274335,
+          "event": "backend.first-catalog-statement",
+          "ns": 42822476360510
+        },
+        {
+          "pid": 274335,
+          "event": "backend.load.start",
+          "ns": 42822477393746
+        },
+        {
+          "pid": 274335,
+          "event": "backend.load.end",
+          "ns": 42822492545537,
+          "total_ns": 15153914,
+          "validation_ns": 13181206,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 1082521,
+          "parse_ns": 890187
+        },
+        {
+          "pid": 274303,
+          "event": "assembly.start",
+          "ns": 42822673535126
+        },
+        {
+          "pid": 274303,
+          "event": "assembly.end",
+          "ns": 42822673975680
+        },
+        {
+          "pid": 274303,
+          "event": "binding.start",
+          "ns": 42822673994909
+        },
+        {
+          "pid": 274303,
+          "event": "catalog.settled",
+          "ns": 42822674011704
+        },
+        {
+          "pid": 274303,
+          "event": "binding.end",
+          "ns": 42822694970887
+        },
+        {
+          "pid": 274303,
+          "event": "backend.ready",
+          "ns": 42822695109906
+        },
+        {
+          "pid": 274303,
+          "event": "qml.metrics:256436:6:252540:1:16952",
+          "ns": 42822928953397
+        }
+      ],
+      "2": [
+        {
+          "pid": 274358,
+          "event": "qml.index.read-request",
+          "ns": 42823293021023
+        },
+        {
+          "pid": 274358,
+          "event": "backend.spawn-request",
+          "ns": 42823293709069
+        },
+        {
+          "pid": 274358,
+          "event": "host.ready",
+          "ns": 42823297097360
+        },
+        {
+          "pid": 274358,
+          "event": "qml.index.loaded",
+          "ns": 42823433048051
+        },
+        {
+          "pid": 274358,
+          "event": "index.validation.start",
+          "ns": 42823433358098
+        },
+        {
+          "pid": 274358,
+          "event": "index.validation.end",
+          "ns": 42823433440362
+        },
+        {
+          "pid": 274358,
+          "event": "theme.ready",
+          "ns": 42823434276610
+        },
+        {
+          "pid": 274390,
+          "event": "backend.first-python-statement",
+          "ns": 42823492053107
+        },
+        {
+          "pid": 274390,
+          "event": "backend.first-catalog-statement",
+          "ns": 42823539770525
+        },
+        {
+          "pid": 274390,
+          "event": "backend.load.start",
+          "ns": 42823540858012
+        },
+        {
+          "pid": 274390,
+          "event": "backend.load.end",
+          "ns": 42823553701969,
+          "total_ns": 12826510,
+          "validation_ns": 11352333,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 756584,
+          "parse_ns": 717593
+        },
+        {
+          "pid": 274358,
+          "event": "assembly.start",
+          "ns": 42823718766480
+        },
+        {
+          "pid": 274358,
+          "event": "assembly.end",
+          "ns": 42823719156397
+        },
+        {
+          "pid": 274358,
+          "event": "binding.start",
+          "ns": 42823719171159
+        },
+        {
+          "pid": 274358,
+          "event": "catalog.settled",
+          "ns": 42823719185421
+        },
+        {
+          "pid": 274358,
+          "event": "binding.end",
+          "ns": 42823739023656
+        },
+        {
+          "pid": 274358,
+          "event": "backend.ready",
+          "ns": 42823739231269
+        },
+        {
+          "pid": 274358,
+          "event": "qml.metrics:205460:6:205620:1:16952",
+          "ns": 42824002130289
+        }
+      ],
+      "3": [
+        {
+          "pid": 274414,
+          "event": "qml.index.read-request",
+          "ns": 42824353396368
+        },
+        {
+          "pid": 274414,
+          "event": "backend.spawn-request",
+          "ns": 42824353855850
+        },
+        {
+          "pid": 274414,
+          "event": "host.ready",
+          "ns": 42824357220035
+        },
+        {
+          "pid": 274414,
+          "event": "qml.index.loaded",
+          "ns": 42824491405534
+        },
+        {
+          "pid": 274414,
+          "event": "index.validation.start",
+          "ns": 42824491740107
+        },
+        {
+          "pid": 274414,
+          "event": "index.validation.end",
+          "ns": 42824491797243
+        },
+        {
+          "pid": 274414,
+          "event": "theme.ready",
+          "ns": 42824492580302
+        },
+        {
+          "pid": 274447,
+          "event": "backend.first-python-statement",
+          "ns": 42824555884852
+        },
+        {
+          "pid": 274447,
+          "event": "backend.first-catalog-statement",
+          "ns": 42824601666475
+        },
+        {
+          "pid": 274447,
+          "event": "backend.load.start",
+          "ns": 42824602748995
+        },
+        {
+          "pid": 274447,
+          "event": "backend.load.end",
+          "ns": 42824616782832,
+          "total_ns": 14009521,
+          "validation_ns": 12470280,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 851263,
+          "parse_ns": 687978
+        },
+        {
+          "pid": 274414,
+          "event": "assembly.start",
+          "ns": 42824764043265
+        },
+        {
+          "pid": 274414,
+          "event": "assembly.end",
+          "ns": 42824764493693
+        },
+        {
+          "pid": 274414,
+          "event": "binding.start",
+          "ns": 42824764512391
+        },
+        {
+          "pid": 274414,
+          "event": "catalog.settled",
+          "ns": 42824764528145
+        },
+        {
+          "pid": 274414,
+          "event": "binding.end",
+          "ns": 42824784153340
+        },
+        {
+          "pid": 274414,
+          "event": "backend.ready",
+          "ns": 42824784284107
+        },
+        {
+          "pid": 274414,
+          "event": "qml.metrics:209696:6:212960:1:16952",
+          "ns": 42825068959075
+        }
+      ],
+      "4": [
+        {
+          "pid": 274470,
+          "event": "qml.index.read-request",
+          "ns": 42825413274005
+        },
+        {
+          "pid": 274470,
+          "event": "backend.spawn-request",
+          "ns": 42825413852996
+        },
+        {
+          "pid": 274470,
+          "event": "host.ready",
+          "ns": 42825416979243
+        },
+        {
+          "pid": 274470,
+          "event": "qml.index.loaded",
+          "ns": 42825551169574
+        },
+        {
+          "pid": 274470,
+          "event": "index.validation.start",
+          "ns": 42825551677869
+        },
+        {
+          "pid": 274470,
+          "event": "index.validation.end",
+          "ns": 42825551765641
+        },
+        {
+          "pid": 274470,
+          "event": "theme.ready",
+          "ns": 42825552781320
+        },
+        {
+          "pid": 274502,
+          "event": "backend.first-python-statement",
+          "ns": 42825615806575
+        },
+        {
+          "pid": 274502,
+          "event": "backend.first-catalog-statement",
+          "ns": 42825660198466
+        },
+        {
+          "pid": 274502,
+          "event": "backend.load.start",
+          "ns": 42825662549405
+        },
+        {
+          "pid": 274502,
+          "event": "backend.load.end",
+          "ns": 42825673829697,
+          "total_ns": 11276607,
+          "validation_ns": 9983249,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 731648,
+          "parse_ns": 561710
+        },
+        {
+          "pid": 274470,
+          "event": "assembly.start",
+          "ns": 42825851309304
+        },
+        {
+          "pid": 274470,
+          "event": "assembly.end",
+          "ns": 42825851762235
+        },
+        {
+          "pid": 274470,
+          "event": "binding.start",
+          "ns": 42825851780373
+        },
+        {
+          "pid": 274470,
+          "event": "catalog.settled",
+          "ns": 42825851798300
+        },
+        {
+          "pid": 274470,
+          "event": "binding.end",
+          "ns": 42825871288392
+        },
+        {
+          "pid": 274470,
+          "event": "backend.ready",
+          "ns": 42825871450516
+        },
+        {
+          "pid": 274470,
+          "event": "qml.metrics:196665:6:368615:1:16952",
+          "ns": 42826129084464
+        }
+      ]
+    },
+    "replace": {
+      "0": [
+        {
+          "pid": 274526,
+          "event": "qml.index.read-request",
+          "ns": 42826493550601
+        },
+        {
+          "pid": 274526,
+          "event": "backend.spawn-request",
+          "ns": 42826493988651
+        },
+        {
+          "pid": 274526,
+          "event": "host.ready",
+          "ns": 42826497168878
+        },
+        {
+          "pid": 274526,
+          "event": "qml.index.loaded",
+          "ns": 42826604806926
+        },
+        {
+          "pid": 274526,
+          "event": "index.validation.start",
+          "ns": 42826605144824
+        },
+        {
+          "pid": 274526,
+          "event": "index.validation.end",
+          "ns": 42826605200688
+        },
+        {
+          "pid": 274526,
+          "event": "theme.ready",
+          "ns": 42826605851758
+        },
+        {
+          "pid": 274557,
+          "event": "backend.first-python-statement",
+          "ns": 42826669507006
+        },
+        {
+          "pid": 274557,
+          "event": "backend.first-catalog-statement",
+          "ns": 42826715324328
+        },
+        {
+          "pid": 274557,
+          "event": "backend.load.start",
+          "ns": 42826716402661
+        },
+        {
+          "pid": 274557,
+          "event": "backend.load.end",
+          "ns": 42826727763394,
+          "total_ns": 11388294,
+          "validation_ns": 10085963,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 755030,
+          "parse_ns": 547301
+        },
+        {
+          "pid": 274526,
+          "event": "assembly.start",
+          "ns": 42826987610154
+        },
+        {
+          "pid": 274526,
+          "event": "assembly.end",
+          "ns": 42826988114293
+        },
+        {
+          "pid": 274526,
+          "event": "binding.start",
+          "ns": 42826988135064
+        },
+        {
+          "pid": 274526,
+          "event": "catalog.settled",
+          "ns": 42826988152060
+        },
+        {
+          "pid": 274526,
+          "event": "binding.end",
+          "ns": 42826999306563
+        },
+        {
+          "pid": 274526,
+          "event": "backend.ready",
+          "ns": 42826999422217
+        },
+        {
+          "pid": 274526,
+          "event": "qml.metrics:110956:6:255214:1:16541",
+          "ns": 42827406925520
+        }
+      ],
+      "1": [
+        {
+          "pid": 274586,
+          "event": "qml.index.read-request",
+          "ns": 42827819573634
+        },
+        {
+          "pid": 274586,
+          "event": "backend.spawn-request",
+          "ns": 42827820051293
+        },
+        {
+          "pid": 274586,
+          "event": "host.ready",
+          "ns": 42827823461688
+        },
+        {
+          "pid": 274586,
+          "event": "qml.index.loaded",
+          "ns": 42827941445084
+        },
+        {
+          "pid": 274586,
+          "event": "index.validation.start",
+          "ns": 42827941889774
+        },
+        {
+          "pid": 274586,
+          "event": "index.validation.end",
+          "ns": 42827941969043
+        },
+        {
+          "pid": 274586,
+          "event": "theme.ready",
+          "ns": 42827942943420
+        },
+        {
+          "pid": 274638,
+          "event": "backend.first-python-statement",
+          "ns": 42828008499574
+        },
+        {
+          "pid": 274638,
+          "event": "backend.first-catalog-statement",
+          "ns": 42828074701655
+        },
+        {
+          "pid": 274638,
+          "event": "backend.load.start",
+          "ns": 42828075872348
+        },
+        {
+          "pid": 274638,
+          "event": "backend.load.end",
+          "ns": 42828092849326,
+          "total_ns": 16959062,
+          "validation_ns": 15662190,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 710863,
+          "parse_ns": 586009
+        },
+        {
+          "pid": 274586,
+          "event": "assembly.start",
+          "ns": 42828122809295
+        },
+        {
+          "pid": 274586,
+          "event": "assembly.end",
+          "ns": 42828123301376
+        },
+        {
+          "pid": 274586,
+          "event": "binding.start",
+          "ns": 42828123325021
+        },
+        {
+          "pid": 274586,
+          "event": "catalog.settled",
+          "ns": 42828123345662
+        },
+        {
+          "pid": 274586,
+          "event": "binding.end",
+          "ns": 42828134700001
+        },
+        {
+          "pid": 274586,
+          "event": "backend.ready",
+          "ns": 42828134832801
+        },
+        {
+          "pid": 274586,
+          "event": "qml.metrics:148772:6:320272:1:16541",
+          "ns": 42828481682953
+        }
+      ],
+      "2": [
+        {
+          "pid": 274673,
+          "event": "qml.index.read-request",
+          "ns": 42828828772895
+        },
+        {
+          "pid": 274673,
+          "event": "backend.spawn-request",
+          "ns": 42828829883117
+        },
+        {
+          "pid": 274673,
+          "event": "host.ready",
+          "ns": 42828835336727
+        },
+        {
+          "pid": 274673,
+          "event": "qml.index.loaded",
+          "ns": 42828955271311
+        },
+        {
+          "pid": 274673,
+          "event": "index.validation.start",
+          "ns": 42828955634238
+        },
+        {
+          "pid": 274673,
+          "event": "index.validation.end",
+          "ns": 42828955690062
+        },
+        {
+          "pid": 274673,
+          "event": "theme.ready",
+          "ns": 42828956646421
+        },
+        {
+          "pid": 274705,
+          "event": "backend.first-python-statement",
+          "ns": 42829037699896
+        },
+        {
+          "pid": 274705,
+          "event": "backend.first-catalog-statement",
+          "ns": 42829094812468
+        },
+        {
+          "pid": 274705,
+          "event": "backend.load.start",
+          "ns": 42829096096892
+        },
+        {
+          "pid": 274705,
+          "event": "backend.load.end",
+          "ns": 42829114610864,
+          "total_ns": 18495826,
+          "validation_ns": 16445946,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 1003315,
+          "parse_ns": 1046565
+        },
+        {
+          "pid": 274673,
+          "event": "assembly.start",
+          "ns": 42829178628182
+        },
+        {
+          "pid": 274673,
+          "event": "assembly.end",
+          "ns": 42829179072110
+        },
+        {
+          "pid": 274673,
+          "event": "binding.start",
+          "ns": 42829179097408
+        },
+        {
+          "pid": 274673,
+          "event": "catalog.settled",
+          "ns": 42829179114284
+        },
+        {
+          "pid": 274673,
+          "event": "binding.end",
+          "ns": 42829193927599
+        },
+        {
+          "pid": 274673,
+          "event": "backend.ready",
+          "ns": 42829194061331
+        },
+        {
+          "pid": 274673,
+          "event": "qml.metrics:124889:6:219270:1:16541",
+          "ns": 42829510552206
+        }
+      ],
+      "3": [
+        {
+          "pid": 274725,
+          "event": "qml.index.read-request",
+          "ns": 42829839142628
+        },
+        {
+          "pid": 274725,
+          "event": "backend.spawn-request",
+          "ns": 42829839785536
+        },
+        {
+          "pid": 274725,
+          "event": "host.ready",
+          "ns": 42829843356802
+        },
+        {
+          "pid": 274725,
+          "event": "qml.index.loaded",
+          "ns": 42829953909838
+        },
+        {
+          "pid": 274725,
+          "event": "index.validation.start",
+          "ns": 42829954198363
+        },
+        {
+          "pid": 274725,
+          "event": "index.validation.end",
+          "ns": 42829954244342
+        },
+        {
+          "pid": 274725,
+          "event": "theme.ready",
+          "ns": 42829954866258
+        },
+        {
+          "pid": 274755,
+          "event": "backend.first-python-statement",
+          "ns": 42830019792118
+        },
+        {
+          "pid": 274755,
+          "event": "backend.first-catalog-statement",
+          "ns": 42830067734123
+        },
+        {
+          "pid": 274755,
+          "event": "backend.load.start",
+          "ns": 42830068856633
+        },
+        {
+          "pid": 274755,
+          "event": "backend.load.end",
+          "ns": 42830082740475,
+          "total_ns": 13857412,
+          "validation_ns": 12359941,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 773420,
+          "parse_ns": 724051
+        },
+        {
+          "pid": 274725,
+          "event": "assembly.start",
+          "ns": 42830119299154
+        },
+        {
+          "pid": 274725,
+          "event": "assembly.end",
+          "ns": 42830119679777
+        },
+        {
+          "pid": 274725,
+          "event": "binding.start",
+          "ns": 42830119695821
+        },
+        {
+          "pid": 274725,
+          "event": "catalog.settled",
+          "ns": 42830119709672
+        },
+        {
+          "pid": 274725,
+          "event": "binding.end",
+          "ns": 42830130803874
+        },
+        {
+          "pid": 274725,
+          "event": "backend.ready",
+          "ns": 42830130931376
+        },
+        {
+          "pid": 274725,
+          "event": "qml.metrics:113599:6:205529:1:16541",
+          "ns": 42830481462784
+        }
+      ],
+      "4": [
+        {
+          "pid": 274775,
+          "event": "qml.index.read-request",
+          "ns": 42830882583274
+        },
+        {
+          "pid": 274775,
+          "event": "backend.spawn-request",
+          "ns": 42830883021574
+        },
+        {
+          "pid": 274775,
+          "event": "host.ready",
+          "ns": 42830886109643
+        },
+        {
+          "pid": 274775,
+          "event": "qml.index.loaded",
+          "ns": 42830996189897
+        },
+        {
+          "pid": 274775,
+          "event": "index.validation.start",
+          "ns": 42830996632323
+        },
+        {
+          "pid": 274775,
+          "event": "index.validation.end",
+          "ns": 42830996711462
+        },
+        {
+          "pid": 274775,
+          "event": "theme.ready",
+          "ns": 42830997620490
+        },
+        {
+          "pid": 274807,
+          "event": "backend.first-python-statement",
+          "ns": 42831052978421
+        },
+        {
+          "pid": 274807,
+          "event": "backend.first-catalog-statement",
+          "ns": 42831095964686
+        },
+        {
+          "pid": 274807,
+          "event": "backend.load.start",
+          "ns": 42831096799392
+        },
+        {
+          "pid": 274807,
+          "event": "backend.load.end",
+          "ns": 42831107843669,
+          "total_ns": 11029294,
+          "validation_ns": 9828746,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 651590,
+          "parse_ns": 548958
+        },
+        {
+          "pid": 274775,
+          "event": "assembly.start",
+          "ns": 42831151867356
+        },
+        {
+          "pid": 274775,
+          "event": "assembly.end",
+          "ns": 42831153583269
+        },
+        {
+          "pid": 274775,
+          "event": "binding.start",
+          "ns": 42831153627205
+        },
+        {
+          "pid": 274775,
+          "event": "catalog.settled",
+          "ns": 42831153648778
+        },
+        {
+          "pid": 274775,
+          "event": "binding.end",
+          "ns": 42831166098110
+        },
+        {
+          "pid": 274775,
+          "event": "backend.ready",
+          "ns": 42831166221596
+        },
+        {
+          "pid": 274775,
+          "event": "qml.metrics:196566:6:330848:1:16541",
+          "ns": 42831523846347
+        }
+      ]
+    }
+  },
+  "settings": {
+    "empty": {
+      "0": [
+        {
+          "pid": 274826,
+          "event": "qml.index.read-request",
+          "ns": 42831831079641
+        },
+        {
+          "pid": 274826,
+          "event": "backend.spawn-request",
+          "ns": 42831831646254
+        },
+        {
+          "pid": 274826,
+          "event": "host.ready",
+          "ns": 42831832922365
+        },
+        {
+          "pid": 274826,
+          "event": "qml.index.loaded",
+          "ns": 42831836248984
+        },
+        {
+          "pid": 274826,
+          "event": "index.validation.start",
+          "ns": 42831836304167
+        },
+        {
+          "pid": 274826,
+          "event": "index.validation.end",
+          "ns": 42831836320251
+        },
+        {
+          "pid": 274826,
+          "event": "catalog.settled",
+          "ns": 42831836336515
+        },
+        {
+          "pid": 274826,
+          "event": "theme.ready",
+          "ns": 42831836899092
+        },
+        {
+          "pid": 274851,
+          "event": "backend.first-python-statement",
+          "ns": 42831898483987
+        },
+        {
+          "pid": 274851,
+          "event": "backend.first-catalog-statement",
+          "ns": 42831942831952
+        },
+        {
+          "pid": 274851,
+          "event": "backend.load.start",
+          "ns": 42831943750685
+        },
+        {
+          "pid": 274851,
+          "event": "backend.load.end",
+          "ns": 42831943963175,
+          "total_ns": 217508,
+          "validation_ns": 186572,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 12989,
+          "parse_ns": 17947
+        },
+        {
+          "pid": 274826,
+          "event": "backend.ready",
+          "ns": 42831948278722
+        },
+        {
+          "pid": 274826,
+          "event": "barrier.prepared",
+          "ns": 42831948341497
+        },
+        {
+          "pid": 274826,
+          "event": "settings.view.loaded",
+          "ns": 42832064519610
+        },
+        {
+          "pid": 274826,
+          "event": "qml.metrics:20361:3:16224:1:28",
+          "ns": 42832932193605
+        }
+      ],
+      "1": [
+        {
+          "pid": 274894,
+          "event": "qml.index.read-request",
+          "ns": 42833271096281
+        },
+        {
+          "pid": 274894,
+          "event": "backend.spawn-request",
+          "ns": 42833271885679
+        },
+        {
+          "pid": 274894,
+          "event": "host.ready",
+          "ns": 42833274563611
+        },
+        {
+          "pid": 274894,
+          "event": "qml.index.loaded",
+          "ns": 42833277298658
+        },
+        {
+          "pid": 274894,
+          "event": "index.validation.start",
+          "ns": 42833277409365
+        },
+        {
+          "pid": 274894,
+          "event": "index.validation.end",
+          "ns": 42833277433782
+        },
+        {
+          "pid": 274894,
+          "event": "catalog.settled",
+          "ns": 42833277452570
+        },
+        {
+          "pid": 274894,
+          "event": "theme.ready",
+          "ns": 42833278069218
+        },
+        {
+          "pid": 274920,
+          "event": "backend.first-python-statement",
+          "ns": 42833343237122
+        },
+        {
+          "pid": 274920,
+          "event": "backend.first-catalog-statement",
+          "ns": 42833395359076
+        },
+        {
+          "pid": 274920,
+          "event": "backend.load.start",
+          "ns": 42833396525722
+        },
+        {
+          "pid": 274920,
+          "event": "backend.load.end",
+          "ns": 42833396750771,
+          "total_ns": 231498,
+          "validation_ns": 197958,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 13000,
+          "parse_ns": 20540
+        },
+        {
+          "pid": 274894,
+          "event": "backend.ready",
+          "ns": 42833401535234
+        },
+        {
+          "pid": 274894,
+          "event": "barrier.prepared",
+          "ns": 42833401598459
+        },
+        {
+          "pid": 274894,
+          "event": "settings.view.loaded",
+          "ns": 42833509551831
+        },
+        {
+          "pid": 274894,
+          "event": "qml.metrics:19840:3:57537:1:28",
+          "ns": 42834033785363
+        }
+      ],
+      "2": [
+        {
+          "pid": 274950,
+          "event": "qml.index.read-request",
+          "ns": 42834355808813
+        },
+        {
+          "pid": 274950,
+          "event": "backend.spawn-request",
+          "ns": 42834356552412
+        },
+        {
+          "pid": 274950,
+          "event": "host.ready",
+          "ns": 42834357849004
+        },
+        {
+          "pid": 274950,
+          "event": "qml.index.loaded",
+          "ns": 42834360311632
+        },
+        {
+          "pid": 274950,
+          "event": "index.validation.start",
+          "ns": 42834360396610
+        },
+        {
+          "pid": 274950,
+          "event": "index.validation.end",
+          "ns": 42834360420546
+        },
+        {
+          "pid": 274950,
+          "event": "catalog.settled",
+          "ns": 42834360438813
+        },
+        {
+          "pid": 274950,
+          "event": "theme.ready",
+          "ns": 42834360887238
+        },
+        {
+          "pid": 274976,
+          "event": "backend.first-python-statement",
+          "ns": 42834415689076
+        },
+        {
+          "pid": 274976,
+          "event": "backend.first-catalog-statement",
+          "ns": 42834455152197
+        },
+        {
+          "pid": 274976,
+          "event": "backend.load.start",
+          "ns": 42834455953013
+        },
+        {
+          "pid": 274976,
+          "event": "backend.load.end",
+          "ns": 42834456270761,
+          "total_ns": 318240,
+          "validation_ns": 283808,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 16836,
+          "parse_ns": 17596
+        },
+        {
+          "pid": 274950,
+          "event": "backend.ready",
+          "ns": 42834459702242
+        },
+        {
+          "pid": 274950,
+          "event": "barrier.prepared",
+          "ns": 42834459766148
+        },
+        {
+          "pid": 274950,
+          "event": "settings.view.loaded",
+          "ns": 42834576627451
+        },
+        {
+          "pid": 274950,
+          "event": "qml.metrics:25169:3:45939:1:28",
+          "ns": 42835098708583
+        }
+      ],
+      "3": [
+        {
+          "pid": 275005,
+          "event": "qml.index.read-request",
+          "ns": 42835423081559
+        },
+        {
+          "pid": 275005,
+          "event": "backend.spawn-request",
+          "ns": 42835423621132
+        },
+        {
+          "pid": 275005,
+          "event": "host.ready",
+          "ns": 42835424924103
+        },
+        {
+          "pid": 275005,
+          "event": "qml.index.loaded",
+          "ns": 42835427595756
+        },
+        {
+          "pid": 275005,
+          "event": "index.validation.start",
+          "ns": 42835427666332
+        },
+        {
+          "pid": 275005,
+          "event": "index.validation.end",
+          "ns": 42835427688746
+        },
+        {
+          "pid": 275005,
+          "event": "catalog.settled",
+          "ns": 42835427706512
+        },
+        {
+          "pid": 275005,
+          "event": "theme.ready",
+          "ns": 42835428398394
+        },
+        {
+          "pid": 275031,
+          "event": "backend.first-python-statement",
+          "ns": 42835487492053
+        },
+        {
+          "pid": 275031,
+          "event": "backend.first-catalog-statement",
+          "ns": 42835532826103
+        },
+        {
+          "pid": 275031,
+          "event": "backend.load.start",
+          "ns": 42835533731045
+        },
+        {
+          "pid": 275031,
+          "event": "backend.load.end",
+          "ns": 42835533941472,
+          "total_ns": 216656,
+          "validation_ns": 185219,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 12899,
+          "parse_ns": 18538
+        },
+        {
+          "pid": 275005,
+          "event": "backend.ready",
+          "ns": 42835537308465
+        },
+        {
+          "pid": 275005,
+          "event": "barrier.prepared",
+          "ns": 42835537394825
+        },
+        {
+          "pid": 275005,
+          "event": "settings.view.loaded",
+          "ns": 42835655290615
+        },
+        {
+          "pid": 275005,
+          "event": "qml.metrics:20091:3:20571:1:28",
+          "ns": 42836194778102
+        }
+      ],
+      "4": [
+        {
+          "pid": 275061,
+          "event": "qml.index.read-request",
+          "ns": 42836547437419
+        },
+        {
+          "pid": 275061,
+          "event": "backend.spawn-request",
+          "ns": 42836547909850
+        },
+        {
+          "pid": 275061,
+          "event": "host.ready",
+          "ns": 42836549248725
+        },
+        {
+          "pid": 275061,
+          "event": "qml.index.loaded",
+          "ns": 42836551762980
+        },
+        {
+          "pid": 275061,
+          "event": "index.validation.start",
+          "ns": 42836551818544
+        },
+        {
+          "pid": 275061,
+          "event": "index.validation.end",
+          "ns": 42836551834148
+        },
+        {
+          "pid": 275061,
+          "event": "catalog.settled",
+          "ns": 42836551849871
+        },
+        {
+          "pid": 275061,
+          "event": "theme.ready",
+          "ns": 42836552334401
+        },
+        {
+          "pid": 275088,
+          "event": "backend.first-python-statement",
+          "ns": 42836601613875
+        },
+        {
+          "pid": 275088,
+          "event": "backend.first-catalog-statement",
+          "ns": 42836639113060
+        },
+        {
+          "pid": 275088,
+          "event": "backend.load.start",
+          "ns": 42836639904371
+        },
+        {
+          "pid": 275088,
+          "event": "backend.load.end",
+          "ns": 42836640213486,
+          "total_ns": 307463,
+          "validation_ns": 270968,
+          "reads": 1,
+          "bytes": 28,
+          "read_ns": 18007,
+          "parse_ns": 18488
+        },
+        {
+          "pid": 275061,
+          "event": "backend.ready",
+          "ns": 42836643771287
+        },
+        {
+          "pid": 275061,
+          "event": "barrier.prepared",
+          "ns": 42836643834442
+        },
+        {
+          "pid": 275061,
+          "event": "settings.view.loaded",
+          "ns": 42836755852853
+        },
+        {
+          "pid": 275061,
+          "event": "qml.metrics:80180:3:17166:1:28",
+          "ns": 42837285660659
+        }
+      ]
+    },
+    "add": {
+      "0": [
+        {
+          "pid": 275117,
+          "event": "qml.index.read-request",
+          "ns": 42837593893541
+        },
+        {
+          "pid": 275117,
+          "event": "backend.spawn-request",
+          "ns": 42837594405722
+        },
+        {
+          "pid": 275117,
+          "event": "host.ready",
+          "ns": 42837595461111
+        },
+        {
+          "pid": 275117,
+          "event": "qml.index.loaded",
+          "ns": 42837597870659
+        },
+        {
+          "pid": 275117,
+          "event": "index.validation.start",
+          "ns": 42837598112713
+        },
+        {
+          "pid": 275117,
+          "event": "index.validation.end",
+          "ns": 42837598158762
+        },
+        {
+          "pid": 275117,
+          "event": "theme.ready",
+          "ns": 42837598668059
+        },
+        {
+          "pid": 275143,
+          "event": "backend.first-python-statement",
+          "ns": 42837650627408
+        },
+        {
+          "pid": 275143,
+          "event": "backend.first-catalog-statement",
+          "ns": 42837691052147
+        },
+        {
+          "pid": 275143,
+          "event": "backend.load.start",
+          "ns": 42837691988486
+        },
+        {
+          "pid": 275143,
+          "event": "backend.load.end",
+          "ns": 42837702305759,
+          "total_ns": 10314709,
+          "validation_ns": 9239600,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 584992,
+          "parse_ns": 490117
+        },
+        {
+          "pid": 275117,
+          "event": "assembly.start",
+          "ns": 42837706186706
+        },
+        {
+          "pid": 275117,
+          "event": "assembly.end",
+          "ns": 42837706561831
+        },
+        {
+          "pid": 275117,
+          "event": "binding.start",
+          "ns": 42837706581671
+        },
+        {
+          "pid": 275117,
+          "event": "catalog.settled",
+          "ns": 42837706596834
+        },
+        {
+          "pid": 275117,
+          "event": "binding.end",
+          "ns": 42837706723745
+        },
+        {
+          "pid": 275117,
+          "event": "backend.ready",
+          "ns": 42837706804937
+        },
+        {
+          "pid": 275117,
+          "event": "barrier.prepared",
+          "ns": 42837706822704
+        },
+        {
+          "pid": 275117,
+          "event": "settings.view.loaded",
+          "ns": 42837833938579
+        },
+        {
+          "pid": 275117,
+          "event": "qml.metrics:118019:3:202505:1:16952",
+          "ns": 42838623059940
+        }
+      ],
+      "1": [
+        {
+          "pid": 275184,
+          "event": "qml.index.read-request",
+          "ns": 42838987340812
+        },
+        {
+          "pid": 275184,
+          "event": "backend.spawn-request",
+          "ns": 42838987924661
+        },
+        {
+          "pid": 275184,
+          "event": "host.ready",
+          "ns": 42838989255575
+        },
+        {
+          "pid": 275184,
+          "event": "qml.index.loaded",
+          "ns": 42838992294139
+        },
+        {
+          "pid": 275184,
+          "event": "index.validation.start",
+          "ns": 42838992585558
+        },
+        {
+          "pid": 275184,
+          "event": "index.validation.end",
+          "ns": 42838992636885
+        },
+        {
+          "pid": 275184,
+          "event": "theme.ready",
+          "ns": 42838993244950
+        },
+        {
+          "pid": 275211,
+          "event": "backend.first-python-statement",
+          "ns": 42839067081084
+        },
+        {
+          "pid": 275211,
+          "event": "backend.first-catalog-statement",
+          "ns": 42839108927383
+        },
+        {
+          "pid": 275211,
+          "event": "backend.load.start",
+          "ns": 42839110065266
+        },
+        {
+          "pid": 275211,
+          "event": "backend.load.end",
+          "ns": 42839122438454,
+          "total_ns": 12366637,
+          "validation_ns": 10967269,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 682154,
+          "parse_ns": 717214
+        },
+        {
+          "pid": 275184,
+          "event": "assembly.start",
+          "ns": 42839126748632
+        },
+        {
+          "pid": 275184,
+          "event": "assembly.end",
+          "ns": 42839127102275
+        },
+        {
+          "pid": 275184,
+          "event": "binding.start",
+          "ns": 42839127117878
+        },
+        {
+          "pid": 275184,
+          "event": "catalog.settled",
+          "ns": 42839127133131
+        },
+        {
+          "pid": 275184,
+          "event": "binding.end",
+          "ns": 42839127267834
+        },
+        {
+          "pid": 275184,
+          "event": "backend.ready",
+          "ns": 42839127449257
+        },
+        {
+          "pid": 275184,
+          "event": "barrier.prepared",
+          "ns": 42839127473734
+        },
+        {
+          "pid": 275184,
+          "event": "settings.view.loaded",
+          "ns": 42839265395452
+        },
+        {
+          "pid": 275184,
+          "event": "qml.metrics:122595:3:250617:1:16952",
+          "ns": 42839800439214
+        }
+      ],
+      "2": [
+        {
+          "pid": 275243,
+          "event": "qml.index.read-request",
+          "ns": 42840136333496
+        },
+        {
+          "pid": 275243,
+          "event": "backend.spawn-request",
+          "ns": 42840136923635
+        },
+        {
+          "pid": 275243,
+          "event": "host.ready",
+          "ns": 42840138043961
+        },
+        {
+          "pid": 275243,
+          "event": "qml.index.loaded",
+          "ns": 42840140999135
+        },
+        {
+          "pid": 275243,
+          "event": "index.validation.start",
+          "ns": 42840141242491
+        },
+        {
+          "pid": 275243,
+          "event": "index.validation.end",
+          "ns": 42840141288380
+        },
+        {
+          "pid": 275243,
+          "event": "theme.ready",
+          "ns": 42840141821833
+        },
+        {
+          "pid": 275270,
+          "event": "backend.first-python-statement",
+          "ns": 42840201302560
+        },
+        {
+          "pid": 275270,
+          "event": "backend.first-catalog-statement",
+          "ns": 42840273864686
+        },
+        {
+          "pid": 275270,
+          "event": "backend.load.start",
+          "ns": 42840274918042
+        },
+        {
+          "pid": 275270,
+          "event": "backend.load.end",
+          "ns": 42840288993452,
+          "total_ns": 14068109,
+          "validation_ns": 12468991,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 981853,
+          "parse_ns": 617265
+        },
+        {
+          "pid": 275243,
+          "event": "assembly.start",
+          "ns": 42840293507473
+        },
+        {
+          "pid": 275243,
+          "event": "assembly.end",
+          "ns": 42840293863469
+        },
+        {
+          "pid": 275243,
+          "event": "binding.start",
+          "ns": 42840293881696
+        },
+        {
+          "pid": 275243,
+          "event": "catalog.settled",
+          "ns": 42840293897430
+        },
+        {
+          "pid": 275243,
+          "event": "binding.end",
+          "ns": 42840294020836
+        },
+        {
+          "pid": 275243,
+          "event": "backend.ready",
+          "ns": 42840294100756
+        },
+        {
+          "pid": 275243,
+          "event": "barrier.prepared",
+          "ns": 42840294117872
+        },
+        {
+          "pid": 275243,
+          "event": "settings.view.loaded",
+          "ns": 42840434182546
+        },
+        {
+          "pid": 275243,
+          "event": "qml.metrics:119121:3:203526:1:16952",
+          "ns": 42840960346864
+        }
+      ],
+      "3": [
+        {
+          "pid": 275302,
+          "event": "qml.index.read-request",
+          "ns": 42841293688838
+        },
+        {
+          "pid": 275302,
+          "event": "backend.spawn-request",
+          "ns": 42841294228060
+        },
+        {
+          "pid": 275302,
+          "event": "host.ready",
+          "ns": 42841295589240
+        },
+        {
+          "pid": 275302,
+          "event": "qml.index.loaded",
+          "ns": 42841297985748
+        },
+        {
+          "pid": 275302,
+          "event": "index.validation.start",
+          "ns": 42841298221793
+        },
+        {
+          "pid": 275302,
+          "event": "index.validation.end",
+          "ns": 42841298266070
+        },
+        {
+          "pid": 275302,
+          "event": "theme.ready",
+          "ns": 42841299026645
+        },
+        {
+          "pid": 275328,
+          "event": "backend.first-python-statement",
+          "ns": 42841355224134
+        },
+        {
+          "pid": 275328,
+          "event": "backend.first-catalog-statement",
+          "ns": 42841397805689
+        },
+        {
+          "pid": 275328,
+          "event": "backend.load.start",
+          "ns": 42841398734758
+        },
+        {
+          "pid": 275328,
+          "event": "backend.load.end",
+          "ns": 42841409279272,
+          "total_ns": 10537825,
+          "validation_ns": 9435553,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 598922,
+          "parse_ns": 503350
+        },
+        {
+          "pid": 275302,
+          "event": "assembly.start",
+          "ns": 42841413462095
+        },
+        {
+          "pid": 275302,
+          "event": "assembly.end",
+          "ns": 42841413788226
+        },
+        {
+          "pid": 275302,
+          "event": "binding.start",
+          "ns": 42841413803850
+        },
+        {
+          "pid": 275302,
+          "event": "catalog.settled",
+          "ns": 42841413819323
+        },
+        {
+          "pid": 275302,
+          "event": "binding.end",
+          "ns": 42841413948037
+        },
+        {
+          "pid": 275302,
+          "event": "backend.ready",
+          "ns": 42841414028057
+        },
+        {
+          "pid": 275302,
+          "event": "barrier.prepared",
+          "ns": 42841414044572
+        },
+        {
+          "pid": 275302,
+          "event": "settings.view.loaded",
+          "ns": 42841547795551
+        },
+        {
+          "pid": 275302,
+          "event": "qml.metrics:123184:3:197557:1:16952",
+          "ns": 42842072132013
+        }
+      ],
+      "4": [
+        {
+          "pid": 275359,
+          "event": "qml.index.read-request",
+          "ns": 42842379277940
+        },
+        {
+          "pid": 275359,
+          "event": "backend.spawn-request",
+          "ns": 42842379890743
+        },
+        {
+          "pid": 275359,
+          "event": "host.ready",
+          "ns": 42842381504502
+        },
+        {
+          "pid": 275359,
+          "event": "qml.index.loaded",
+          "ns": 42842383971265
+        },
+        {
+          "pid": 275359,
+          "event": "index.validation.start",
+          "ns": 42842384307892
+        },
+        {
+          "pid": 275359,
+          "event": "index.validation.end",
+          "ns": 42842384396165
+        },
+        {
+          "pid": 275359,
+          "event": "theme.ready",
+          "ns": 42842384821225
+        },
+        {
+          "pid": 275385,
+          "event": "backend.first-python-statement",
+          "ns": 42842440306231
+        },
+        {
+          "pid": 275385,
+          "event": "backend.first-catalog-statement",
+          "ns": 42842482738452
+        },
+        {
+          "pid": 275385,
+          "event": "backend.load.start",
+          "ns": 42842483560640
+        },
+        {
+          "pid": 275385,
+          "event": "backend.load.end",
+          "ns": 42842500567083,
+          "total_ns": 16990488,
+          "validation_ns": 14920637,
+          "reads": 72,
+          "bytes": 25304,
+          "read_ns": 1477465,
+          "parse_ns": 592386
+        },
+        {
+          "pid": 275359,
+          "event": "assembly.start",
+          "ns": 42842505591322
+        },
+        {
+          "pid": 275359,
+          "event": "assembly.end",
+          "ns": 42842506180248
+        },
+        {
+          "pid": 275359,
+          "event": "binding.start",
+          "ns": 42842506202312
+        },
+        {
+          "pid": 275359,
+          "event": "catalog.settled",
+          "ns": 42842506219738
+        },
+        {
+          "pid": 275359,
+          "event": "binding.end",
+          "ns": 42842506354521
+        },
+        {
+          "pid": 275359,
+          "event": "backend.ready",
+          "ns": 42842506508543
+        },
+        {
+          "pid": 275359,
+          "event": "barrier.prepared",
+          "ns": 42842506528893
+        },
+        {
+          "pid": 275359,
+          "event": "settings.view.loaded",
+          "ns": 42842650654746
+        },
+        {
+          "pid": 275359,
+          "event": "qml.metrics:190838:3:263106:1:16952",
+          "ns": 42843160980727
+        }
+      ]
+    },
+    "replace": {
+      "0": [
+        {
+          "pid": 275422,
+          "event": "cli.spawn-request",
+          "ns": 42843205891032
+        },
+        {
+          "pid": 275423,
+          "event": "cli.first-catalog-statement",
+          "ns": 42843223238148
+        },
+        {
+          "pid": 275423,
+          "event": "cli.lookup.start",
+          "ns": 42843227696890
+        },
+        {
+          "pid": 275423,
+          "event": "cli.lookup.end",
+          "ns": 42843228340409,
+          "total_ns": 642597,
+          "reads": 1,
+          "bytes": 16541,
+          "read_ns": 31918,
+          "parse_ns": 202675
+        },
+        {
+          "pid": 275416,
+          "event": "qml.index.read-request",
+          "ns": 42843510462218
+        },
+        {
+          "pid": 275416,
+          "event": "backend.spawn-request",
+          "ns": 42843510984594
+        },
+        {
+          "pid": 275416,
+          "event": "host.ready",
+          "ns": 42843512555429
+        },
+        {
+          "pid": 275416,
+          "event": "qml.index.loaded",
+          "ns": 42843518202360
+        },
+        {
+          "pid": 275416,
+          "event": "index.validation.start",
+          "ns": 42843518856455
+        },
+        {
+          "pid": 275416,
+          "event": "index.validation.end",
+          "ns": 42843518921923
+        },
+        {
+          "pid": 275416,
+          "event": "theme.ready",
+          "ns": 42843519563359
+        },
+        {
+          "pid": 275446,
+          "event": "backend.first-python-statement",
+          "ns": 42843577297567
+        },
+        {
+          "pid": 275446,
+          "event": "backend.first-catalog-statement",
+          "ns": 42843619773653
+        },
+        {
+          "pid": 275446,
+          "event": "backend.load.start",
+          "ns": 42843620735612
+        },
+        {
+          "pid": 275446,
+          "event": "backend.load.end",
+          "ns": 42843635279367,
+          "total_ns": 14525148,
+          "validation_ns": 12958092,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 840278,
+          "parse_ns": 726778
+        },
+        {
+          "pid": 275416,
+          "event": "assembly.start",
+          "ns": 42843639657779
+        },
+        {
+          "pid": 275416,
+          "event": "assembly.end",
+          "ns": 42843640195228
+        },
+        {
+          "pid": 275416,
+          "event": "binding.start",
+          "ns": 42843640217341
+        },
+        {
+          "pid": 275416,
+          "event": "catalog.settled",
+          "ns": 42843640235208
+        },
+        {
+          "pid": 275416,
+          "event": "binding.end",
+          "ns": 42843640359475
+        },
+        {
+          "pid": 275416,
+          "event": "backend.ready",
+          "ns": 42843640599136
+        },
+        {
+          "pid": 275416,
+          "event": "barrier.prepared",
+          "ns": 42843640620208
+        },
+        {
+          "pid": 275416,
+          "event": "settings.view.loaded",
+          "ns": 42843763359890
+        },
+        {
+          "pid": 275416,
+          "event": "qml.metrics:98518:3:260102:1:16541",
+          "ns": 42844540254307
+        }
+      ],
+      "1": [
+        {
+          "pid": 275495,
+          "event": "cli.spawn-request",
+          "ns": 42844603664414
+        },
+        {
+          "pid": 275496,
+          "event": "cli.first-catalog-statement",
+          "ns": 42844621950454
+        },
+        {
+          "pid": 275496,
+          "event": "cli.lookup.start",
+          "ns": 42844627486279
+        },
+        {
+          "pid": 275496,
+          "event": "cli.lookup.end",
+          "ns": 42844627975205,
+          "total_ns": 488305,
+          "reads": 1,
+          "bytes": 16541,
+          "read_ns": 24206,
+          "parse_ns": 194043
+        },
+        {
+          "pid": 275489,
+          "event": "qml.index.read-request",
+          "ns": 42844961878508
+        },
+        {
+          "pid": 275489,
+          "event": "backend.spawn-request",
+          "ns": 42844962429868
+        },
+        {
+          "pid": 275489,
+          "event": "host.ready",
+          "ns": 42844964495518
+        },
+        {
+          "pid": 275489,
+          "event": "qml.index.loaded",
+          "ns": 42844967340661
+        },
+        {
+          "pid": 275489,
+          "event": "index.validation.start",
+          "ns": 42844968187446
+        },
+        {
+          "pid": 275489,
+          "event": "index.validation.end",
+          "ns": 42844968264041
+        },
+        {
+          "pid": 275489,
+          "event": "theme.ready",
+          "ns": 42844968970265
+        },
+        {
+          "pid": 275522,
+          "event": "backend.first-python-statement",
+          "ns": 42845023087146
+        },
+        {
+          "pid": 275522,
+          "event": "backend.first-catalog-statement",
+          "ns": 42845064247032
+        },
+        {
+          "pid": 275522,
+          "event": "backend.load.start",
+          "ns": 42845065116981
+        },
+        {
+          "pid": 275522,
+          "event": "backend.load.end",
+          "ns": 42845076774461,
+          "total_ns": 11646293,
+          "validation_ns": 10238808,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 808998,
+          "parse_ns": 598487
+        },
+        {
+          "pid": 275489,
+          "event": "assembly.start",
+          "ns": 42845081670642
+        },
+        {
+          "pid": 275489,
+          "event": "assembly.end",
+          "ns": 42845082107019
+        },
+        {
+          "pid": 275489,
+          "event": "binding.start",
+          "ns": 42845082129543
+        },
+        {
+          "pid": 275489,
+          "event": "catalog.settled",
+          "ns": 42845082146569
+        },
+        {
+          "pid": 275489,
+          "event": "binding.end",
+          "ns": 42845082268573
+        },
+        {
+          "pid": 275489,
+          "event": "backend.ready",
+          "ns": 42845082347001
+        },
+        {
+          "pid": 275489,
+          "event": "barrier.prepared",
+          "ns": 42845082396385
+        },
+        {
+          "pid": 275489,
+          "event": "settings.view.loaded",
+          "ns": 42845203446483
+        },
+        {
+          "pid": 275489,
+          "event": "qml.metrics:96074:3:448265:1:16541",
+          "ns": 42845733606708
+        }
+      ],
+      "2": [
+        {
+          "pid": 275558,
+          "event": "cli.spawn-request",
+          "ns": 42845792455313
+        },
+        {
+          "pid": 275559,
+          "event": "cli.first-catalog-statement",
+          "ns": 42845809461185
+        },
+        {
+          "pid": 275559,
+          "event": "cli.lookup.start",
+          "ns": 42845813571784
+        },
+        {
+          "pid": 275559,
+          "event": "cli.lookup.end",
+          "ns": 42845813971445,
+          "total_ns": 404248,
+          "reads": 1,
+          "bytes": 16541,
+          "read_ns": 23545,
+          "parse_ns": 123356
+        },
+        {
+          "pid": 275552,
+          "event": "qml.index.read-request",
+          "ns": 42846107916874
+        },
+        {
+          "pid": 275552,
+          "event": "backend.spawn-request",
+          "ns": 42846108460983
+        },
+        {
+          "pid": 275552,
+          "event": "host.ready",
+          "ns": 42846109666298
+        },
+        {
+          "pid": 275552,
+          "event": "qml.index.loaded",
+          "ns": 42846111805518
+        },
+        {
+          "pid": 275552,
+          "event": "index.validation.start",
+          "ns": 42846112607576
+        },
+        {
+          "pid": 275552,
+          "event": "index.validation.end",
+          "ns": 42846112676620
+        },
+        {
+          "pid": 275552,
+          "event": "theme.ready",
+          "ns": 42846113237724
+        },
+        {
+          "pid": 275583,
+          "event": "backend.first-python-statement",
+          "ns": 42846170510397
+        },
+        {
+          "pid": 275583,
+          "event": "backend.first-catalog-statement",
+          "ns": 42846215328550
+        },
+        {
+          "pid": 275583,
+          "event": "backend.load.start",
+          "ns": 42846216238620
+        },
+        {
+          "pid": 275583,
+          "event": "backend.load.end",
+          "ns": 42846228090943,
+          "total_ns": 11845322,
+          "validation_ns": 10533781,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 743225,
+          "parse_ns": 568316
+        },
+        {
+          "pid": 275552,
+          "event": "assembly.start",
+          "ns": 42846232063614
+        },
+        {
+          "pid": 275552,
+          "event": "assembly.end",
+          "ns": 42846232486320
+        },
+        {
+          "pid": 275552,
+          "event": "binding.start",
+          "ns": 42846232506982
+        },
+        {
+          "pid": 275552,
+          "event": "catalog.settled",
+          "ns": 42846232524788
+        },
+        {
+          "pid": 275552,
+          "event": "binding.end",
+          "ns": 42846232638409
+        },
+        {
+          "pid": 275552,
+          "event": "backend.ready",
+          "ns": 42846232716577
+        },
+        {
+          "pid": 275552,
+          "event": "barrier.prepared",
+          "ns": 42846232733913
+        },
+        {
+          "pid": 275552,
+          "event": "settings.view.loaded",
+          "ns": 42846341976455
+        },
+        {
+          "pid": 275552,
+          "event": "qml.metrics:89316:3:287854:1:16541",
+          "ns": 42846849325969
+        }
+      ],
+      "3": [
+        {
+          "pid": 275618,
+          "event": "cli.spawn-request",
+          "ns": 42846894308409
+        },
+        {
+          "pid": 275619,
+          "event": "cli.first-catalog-statement",
+          "ns": 42846911046118
+        },
+        {
+          "pid": 275619,
+          "event": "cli.lookup.start",
+          "ns": 42846915650980
+        },
+        {
+          "pid": 275619,
+          "event": "cli.lookup.end",
+          "ns": 42846916311855,
+          "total_ns": 659823,
+          "reads": 1,
+          "bytes": 16541,
+          "read_ns": 23426,
+          "parse_ns": 363136
+        },
+        {
+          "pid": 275612,
+          "event": "qml.index.read-request",
+          "ns": 42847240832198
+        },
+        {
+          "pid": 275612,
+          "event": "backend.spawn-request",
+          "ns": 42847241238960
+        },
+        {
+          "pid": 275612,
+          "event": "host.ready",
+          "ns": 42847242510715
+        },
+        {
+          "pid": 275612,
+          "event": "qml.index.loaded",
+          "ns": 42847244964489
+        },
+        {
+          "pid": 275612,
+          "event": "index.validation.start",
+          "ns": 42847245671794
+        },
+        {
+          "pid": 275612,
+          "event": "index.validation.end",
+          "ns": 42847245741699
+        },
+        {
+          "pid": 275612,
+          "event": "theme.ready",
+          "ns": 42847246453561
+        },
+        {
+          "pid": 275644,
+          "event": "backend.first-python-statement",
+          "ns": 42847301651089
+        },
+        {
+          "pid": 275644,
+          "event": "backend.first-catalog-statement",
+          "ns": 42847339959234
+        },
+        {
+          "pid": 275644,
+          "event": "backend.load.start",
+          "ns": 42847340793731
+        },
+        {
+          "pid": 275644,
+          "event": "backend.load.end",
+          "ns": 42847351893523,
+          "total_ns": 11098830,
+          "validation_ns": 9885573,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 668806,
+          "parse_ns": 544451
+        },
+        {
+          "pid": 275612,
+          "event": "assembly.start",
+          "ns": 42847355753234
+        },
+        {
+          "pid": 275612,
+          "event": "assembly.end",
+          "ns": 42847356118774
+        },
+        {
+          "pid": 275612,
+          "event": "binding.start",
+          "ns": 42847356136731
+        },
+        {
+          "pid": 275612,
+          "event": "catalog.settled",
+          "ns": 42847356177012
+        },
+        {
+          "pid": 275612,
+          "event": "binding.end",
+          "ns": 42847356425416
+        },
+        {
+          "pid": 275612,
+          "event": "backend.ready",
+          "ns": 42847356577906
+        },
+        {
+          "pid": 275612,
+          "event": "barrier.prepared",
+          "ns": 42847356603935
+        },
+        {
+          "pid": 275612,
+          "event": "settings.view.loaded",
+          "ns": 42847473291746
+        },
+        {
+          "pid": 275612,
+          "event": "qml.metrics:132249:3:324929:1:16541",
+          "ns": 42847999744403
+        }
+      ],
+      "4": [
+        {
+          "pid": 275680,
+          "event": "cli.spawn-request",
+          "ns": 42848060428878
+        },
+        {
+          "pid": 275681,
+          "event": "cli.first-catalog-statement",
+          "ns": 42848077692829
+        },
+        {
+          "pid": 275681,
+          "event": "cli.lookup.start",
+          "ns": 42848082207076
+        },
+        {
+          "pid": 275681,
+          "event": "cli.lookup.end",
+          "ns": 42848082785086,
+          "total_ns": 574355,
+          "reads": 1,
+          "bytes": 16541,
+          "read_ns": 23105,
+          "parse_ns": 282044
+        },
+        {
+          "pid": 275674,
+          "event": "qml.index.read-request",
+          "ns": 42848357538169
+        },
+        {
+          "pid": 275674,
+          "event": "backend.spawn-request",
+          "ns": 42848357970090
+        },
+        {
+          "pid": 275674,
+          "event": "host.ready",
+          "ns": 42848359009184
+        },
+        {
+          "pid": 275674,
+          "event": "qml.index.loaded",
+          "ns": 42848362013868
+        },
+        {
+          "pid": 275674,
+          "event": "index.validation.start",
+          "ns": 42848362693982
+        },
+        {
+          "pid": 275674,
+          "event": "index.validation.end",
+          "ns": 42848362761313
+        },
+        {
+          "pid": 275674,
+          "event": "theme.ready",
+          "ns": 42848363323019
+        },
+        {
+          "pid": 275704,
+          "event": "backend.first-python-statement",
+          "ns": 42848413653520
+        },
+        {
+          "pid": 275704,
+          "event": "backend.first-catalog-statement",
+          "ns": 42848450905104
+        },
+        {
+          "pid": 275704,
+          "event": "backend.load.start",
+          "ns": 42848451689986
+        },
+        {
+          "pid": 275704,
+          "event": "backend.load.end",
+          "ns": 42848462552130,
+          "total_ns": 10861252,
+          "validation_ns": 9476128,
+          "reads": 72,
+          "bytes": 24893,
+          "read_ns": 715083,
+          "parse_ns": 670041
+        },
+        {
+          "pid": 275674,
+          "event": "assembly.start",
+          "ns": 42848466274509
+        },
+        {
+          "pid": 275674,
+          "event": "assembly.end",
+          "ns": 42848466651917
+        },
+        {
+          "pid": 275674,
+          "event": "binding.start",
+          "ns": 42848466689724
+        },
+        {
+          "pid": 275674,
+          "event": "catalog.settled",
+          "ns": 42848466706299
+        },
+        {
+          "pid": 275674,
+          "event": "binding.end",
+          "ns": 42848466823025
+        },
+        {
+          "pid": 275674,
+          "event": "backend.ready",
+          "ns": 42848466900862
+        },
+        {
+          "pid": 275674,
+          "event": "barrier.prepared",
+          "ns": 42848466918429
+        },
+        {
+          "pid": 275674,
+          "event": "settings.view.loaded",
+          "ns": 42848584753647
+        },
+        {
+          "pid": 275674,
+          "event": "qml.metrics:90056:3:239781:1:16541",
+          "ns": 42849111344738
+        }
+      ]
+    }
+  }
+}

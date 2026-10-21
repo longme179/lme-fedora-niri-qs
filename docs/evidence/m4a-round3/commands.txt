@@ -1,0 +1,13 @@
+Gate sessions used the scripts/run-gates.sh bootstrap plus a polling-only G6 driver:
+bash /workspace/.lme-dev/m4a-r3/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output STAGE_DIRECTORY --gates G0,G1,G2,G3,G6
+Driver: migration_checks.GATES['G6'] = (['POLLING_UI'], ['test_polling_ui.NativePollingCase']); migration_checks.main()
+Per-stage commands/environments/counts/skips are in gates.json.
+
+Benchmark (exact invocation):
+bash /workspace/.lme-dev/m4a-r3/bench-run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4a-r3/benchmark --gates G1
+The bootstrap is recorded verbatim in benchmark-session.txt. Its retained --gates G1 option does NOT execute G1: the final driver is replaced by the benchmark below. No tests/profiler ran concurrently.
+Benchmark Python command, inside the fresh private session:
+python3 tests/catalog_round3.py --arms /workspace/.lme-dev/m4a-r3/arms.json --output "$LME_GATE_OUTPUT/results" --rounds 30
+The complete arm list is also committed as arms.json. The environment SDK path is specific to this machine; an installed compatible toolchain can omit --env-file. Never use the live session for these checks.
+
+Attribution: separate scratch copies, five traces per variant/path, not acceptance samples. No source instrumentation is committed.

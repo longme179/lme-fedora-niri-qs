@@ -18,10 +18,13 @@ class SettingsStartupCase(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for name in ('qml', 'config', 'assets'):
+            for name in ('qml', 'assets'):
                 (root/name).symlink_to(repo/name, target_is_directory=True)
+            shutil.copytree(repo/'config', root/'config')
             scripts = root/'scripts'; scripts.mkdir()
             shutil.copy2(repo/'scripts/settings.sh', scripts/'settings.sh')
+            if (repo/'scripts/feature_catalog.py').exists():
+                shutil.copy2(repo/'scripts/feature_catalog.py', scripts/'feature_catalog.py')
             preferences = copy.deepcopy(backend.DEFAULT_PREFERENCES)
             preferences.update(surfaceStyle=style, fontOverrides={'body': 'DejaVu Sans'}, opacity=.81)
             preferences['liquidGlass']['opacity'] = .63

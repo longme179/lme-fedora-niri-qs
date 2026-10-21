@@ -1,0 +1,196 @@
+{
+  "historical_M0": {
+    "machine": "AMD EPYC 7763; unavailable in this session",
+    "preview": 0.902983,
+    "settings": 0.950821
+  },
+  "machine_substitution": "EPYC 9V74; 5 visible CPUs, 4 CPU quota, 32 GiB; Python 3.12.14, Qt 6.8.2, Quickshell 0.3.2, Sway 1.10.1, Mesa software RHI. Same M0 method, different physical/virtual CPU.",
+  "batch_1": {
+    "baseline": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.925656,
+          0.940783,
+          0.971778,
+          0.91162,
+          0.882838
+        ],
+        "median_seconds": 0.925656
+      },
+      "settings": {
+        "seconds": [
+          0.899711,
+          0.992604,
+          1.010526,
+          0.970177,
+          0.999597
+        ],
+        "median_seconds": 0.992604
+      }
+    },
+    "empty": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.84624,
+          0.849475,
+          0.851362,
+          0.872306,
+          0.841611
+        ],
+        "median_seconds": 0.849475
+      },
+      "settings": {
+        "seconds": [
+          0.865191,
+          0.891519,
+          0.86818,
+          0.838014,
+          0.838708
+        ],
+        "median_seconds": 0.865191
+      }
+    },
+    "synthetic": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.822168,
+          0.767746,
+          0.84641,
+          0.79333,
+          0.824491
+        ],
+        "median_seconds": 0.822168
+      },
+      "settings": {
+        "seconds": [
+          0.912988,
+          0.957845,
+          0.94078,
+          0.882072,
+          0.916774
+        ],
+        "median_seconds": 0.916774
+      },
+      "synthetic": {
+        "descriptors": 71,
+        "bars": 19,
+        "pages": 16,
+        "tabs": 6,
+        "preference_fragments": 30,
+        "json_bytes": 24321
+      },
+      "limits": "Enabled inert entries append to legacy lists with unique IDs; the Settings sidebar therefore has extra rows. Models JSON I/O, validation, process transport and registry projections. Does not model migrated feature execution, bootstrap/workers, schema consumption, or hardware rendering. No production registration is converted."
+    },
+    "added_median_ms": {
+      "empty": {
+        "preview": -76.181,
+        "settings": -127.413
+      },
+      "synthetic": {
+        "preview": -103.488,
+        "settings": -75.83
+      }
+    }
+  },
+  "batch_2": {
+    "baseline": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.843856,
+          0.817678,
+          0.797457,
+          0.878787,
+          0.817971
+        ],
+        "median_seconds": 0.817971
+      },
+      "settings": {
+        "seconds": [
+          0.819495,
+          0.931348,
+          0.838858,
+          0.883688,
+          0.86676
+        ],
+        "median_seconds": 0.86676
+      }
+    },
+    "empty": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.842288,
+          0.823362,
+          0.824798,
+          0.805453,
+          0.823598
+        ],
+        "median_seconds": 0.823598
+      },
+      "settings": {
+        "seconds": [
+          0.884954,
+          0.922469,
+          0.94651,
+          0.913987,
+          0.842655
+        ],
+        "median_seconds": 0.913987
+      }
+    },
+    "synthetic": {
+      "method": "Fresh process and fresh XDG config/state/data/cache/runtime per run; monotonic launch-to-first-visible mapped Sway window, polled every 20ms. OS page cache not dropped; no warm-up exclusion.",
+      "runs": 5,
+      "preview": {
+        "seconds": [
+          0.873167,
+          0.856353,
+          0.951509,
+          0.818658,
+          0.89695
+        ],
+        "median_seconds": 0.873167
+      },
+      "settings": {
+        "seconds": [
+          0.972947,
+          0.963546,
+          0.952703,
+          1.057377,
+          0.986587
+        ],
+        "median_seconds": 0.972947
+      },
+      "synthetic": {
+        "descriptors": 71,
+        "bars": 19,
+        "pages": 16,
+        "tabs": 6,
+        "preference_fragments": 30,
+        "json_bytes": 24321
+      },
+      "limits": "Enabled inert entries append to legacy lists with unique IDs; the Settings sidebar therefore has extra rows. Models JSON I/O, validation, process transport and registry projections. Does not model migrated feature execution, bootstrap/workers, schema consumption, or hardware rendering. No production registration is converted."
+    },
+    "added_median_ms": {
+      "empty": {
+        "preview": 5.627,
+        "settings": 47.227
+      },
+      "synthetic": {
+        "preview": 55.196,
+        "settings": 106.187
+      }
+    }
+  },
+  "threshold_ms": 50,
+  "verdict": "STOP: batch 2 exceeds 50 ms on both paths; no M4b."
+}

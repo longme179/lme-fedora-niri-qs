@@ -20,6 +20,8 @@ class PopupMotionCase(unittest.TestCase):
             source = source.replace('id: root\n', 'id: root\n    property bool idleGhost: true\n', 1)
             source = source.replace('Component.onCompleted: ClipboardState.start()',
                 'Component.onCompleted: { ClipboardState.start(); root.idleGhost = overlay.visible || activityIsland.mounted || panelLoader.mounted; }')
+            if 'Component.onCompleted: ClipboardState.start()' not in (repo / 'shell.qml').read_text():
+                source = source.replace('id: root\n', 'id: root\n    Component.onCompleted: root.idleGhost = overlay.visible || activityIsland.mounted || panelLoader.mounted\n', 1)
             source = source.replace('target: "shell"', '''target: "shell"
         function fixtureState(): string { return JSON.stringify({ready: ShellState.backendReady, ghost: root.idleGhost, visible: overlay.visible, active: panelLoader.active, progress: panelLoader.progress}); }
         function fixtureOpen(): string {

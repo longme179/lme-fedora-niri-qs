@@ -9,13 +9,14 @@ import "qml/services"
 import "qml/panels"
 
 ShellRoot {
+    id: root
     property bool clipboardInitialPending: Quickshell.env("LME_TEST_CLIPBOARD_UI") === "1"
     function initializeClipboard() {
         if (!clipboardInitialPending || Quickshell.env("LME_TEST_FEATURES") !== "1" || !FeatureCatalog.ready) return;
         clipboardInitialPending = false;
         ClipboardState.start(); ShellState.togglePanel("clipboard");
     }
-    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(initializeClipboard); } }
+    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(root.initializeClipboard); } }
     function find(item, name) { if (!item) return null; if (item.objectName === name) return item; for (const child of item.children || []) { const match = find(child, name); if (match) return match; } return null; }
     function mediaStatus(name) {
         const timeline = find(surface,name), wave = find(timeline,"mediaProgressWave");

@@ -17,7 +17,7 @@ while (($#)); do
     shift
 done
 case "$page" in
-    utilities|appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about) ;;
+    utilities|appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|idle|keybinds|behavior|about) ;;
     *)
         catalog_index=""
         if [[ -f "$repo_dir/config/features.json" ]]; then

@@ -98,7 +98,7 @@ DEFAULT_PREFERENCES = {
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR = ''
 FEATURE_CATALOG = empty_catalog()
 _catalog_initialized = False
@@ -260,6 +260,7 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in ("barLayout", "barGestures"): initialize_catalog()
     if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
@@ -360,8 +361,9 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "desktopWidgets": return desktop_widgets(value)
     if key == "barGestures":
         actions = {"default", "none", "control", "audio", "devices", "agenda", "system", "wifi", "notifications", "activity",
-                   "launchpad", "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
+                   "launchpad", "launcher", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
                    "volumeUp", "volumeDown", "mediaToggle", "mediaNext", "mediaPrevious", "workspaceNext", "workspacePrevious"}
+        actions |= set(FEATURE_CATALOG["ids"]["gesture"])
         gestures = {"left", "right", "middle", "scrollUp", "scrollDown"}
         if (isinstance(value, dict) and set(value) <= BAR_MODULES
                 and all(isinstance(bindings, dict) and set(bindings) <= gestures

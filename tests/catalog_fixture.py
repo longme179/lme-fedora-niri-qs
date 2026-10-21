@@ -77,8 +77,8 @@ def session(native=False, prepare=None):
             root.mkdir()
             for name in ('qml', 'config', 'scripts', 'assets'):
                 (root/name).symlink_to(REPO/name, target_is_directory=True)
-        if prepare: prepare(root)
         entry = root/'catalog-fixture.qml'; entry.write_text(QML)
+        if prepare: prepare(root)
         env = dict(os.environ, LME_SHELL_DEMO='1', PYTHONDONTWRITEBYTECODE='1', XDG_CONFIG_HOME=directory+'/user-config',
             XDG_STATE_HOME=directory+'/state', XDG_DATA_HOME=directory+'/data', XDG_CACHE_HOME=directory+'/cache',
             DBUS_SYSTEM_BUS_ADDRESS='unix:path='+directory+'/no-system-bus',
@@ -105,6 +105,8 @@ def inject(root, enabled=True):
                        ('qml/panels/CatalogFixture.qml', 'injectedTab')]:
         (root/path).write_text('import QtQuick\nItem { objectName: "'+name+'"; implicitWidth: 40; implicitHeight: 80 }\n')
     (root/'config/feature-fixture.json').write_text(json.dumps(descriptor))
-    (root/'config/features.json').write_text(json.dumps({'version': 1, 'features': [
-        {'id': 'catalogFixture', 'descriptor': 'config/feature-fixture.json', 'enabled': enabled}]}))
+    record = {'id': 'catalogFixture', 'descriptor': 'config/feature-fixture.json', 'enabled': enabled}
+    if (root/'catalog-fixture.qml').exists():
+        record['startup'] = {kind: descriptor[kind] for kind in ('bar', 'settingsPage', 'controlTab')}
+    (root/'config/features.json').write_text(json.dumps({'version': 1, 'features': [record]}))
     return descriptor

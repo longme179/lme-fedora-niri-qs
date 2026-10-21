@@ -131,40 +131,60 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
     return validate_legacy(result, legacy, setting_keys)
 
 
-@lru_cache(maxsize=1)
-def catalog():
-    """Only process owners cache; explicit fixture reads remain independent."""
+def bounded(operation):
     def expired(*_): raise CatalogError('Validation timed out; using legacy entries')
     previous = signal.signal(signal.SIGALRM, expired)
     timer = signal.setitimer(signal.ITIMER_REAL, 3)
     try:
-        return load_catalog()
+        return operation()
     finally:
         signal.setitimer(signal.ITIMER_REAL, *timer)
         signal.signal(signal.SIGALRM, previous)
 
 
+@lru_cache(maxsize=1)
+def catalog():
+    """Only process owners cache; explicit fixture reads remain independent."""
+    return bounded(load_catalog)
+
+
+def page_keys():
+    """Admission only; backend validation gates QML resource loading separately."""
+    index = document(Path(__file__).resolve().parents[1] / 'config/features.json')
+    shape(index, {'version', 'features'}, {'version', 'features'})
+    if type(index['version']) is not int or index['version'] != 1 or not isinstance(index['features'], list):
+        raise CatalogError('Unsupported feature catalog version or index')
+    keys = []
+    for record in index['features']:
+        shape(record, {'id', 'descriptor', 'enabled', 'startup'}, {'id', 'descriptor', 'enabled'})
+        if type(record['enabled']) is not bool: raise CatalogError('Invalid enabled flag')
+        startup = record.get('startup', {})
+        shape(startup, set(KINDS), set())
+        page = startup.get('settingsPage', {})
+        if not isinstance(page, dict): raise CatalogError('Invalid settings page')
+        if page and record['enabled']: keys.append(identifier(page.get('key')))
+    return keys
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
-        try:
-            data = catalog()
-            if args and args[0] == '--page': validate_legacy(data, {'settingsPage': args[2:]})
-        except CatalogError as error:
-            if not args or args[0] != '--page': raise
-            print(f'Feature catalog: {error}', file=sys.stderr)
-            data = empty_catalog()
         if args and args[0] == '--page' and len(args) >= 2:
             page, legacy = args[1], args[2:]
-            if page not in legacy and page not in [item['key'] for item in data['settingsPage']]:
+            if page in legacy: return 0
+            try: keys = bounded(page_keys)
+            except CatalogError as error:
+                print(f'Feature catalog: {error}', file=sys.stderr)
+                keys = []
+            if page not in keys:
                 print(f'Error: unknown settings page: {page}', file=sys.stderr)
                 return 2
         elif args == ['--check']:
-            pass
+            catalog()
         elif args:
             raise CatalogError('Unsupported catalog arguments')
         else:
-            print(json.dumps(data, separators=(',', ':')))
+            print(json.dumps(catalog(), separators=(',', ':')))
     except CatalogError as error:
         print(f'Feature catalog: {error}', file=sys.stderr)
         return 1

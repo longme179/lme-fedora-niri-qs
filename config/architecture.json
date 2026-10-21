@@ -18,7 +18,7 @@
     "display": ["qml/settings/DisplayPage.qml", "scripts/display_control.py", "scripts/display_mirror.py"],
     "idle": ["qml/settings/IdlePage.qml", "scripts/idle_control.py"],
     "keybinds": ["qml/settings/KeybindsPage.qml", "scripts/niri_keybinds.py"],
-    "launchpad": ["qml/panels/LaunchpadPanel.qml", "qml/panels/LaunchpadEditor.qml", "qml/settings/UtilitiesPage.qml", "scripts/launchpad.py"],
+    "launchpad": ["qml/panels/LaunchpadPanel.qml", "qml/panels/LaunchpadEditor.qml", "qml/settings/UtilitiesPage.qml", "scripts/launchpad.py", "scripts/launchpad_actions.py"],
     "launcher": ["qml/panels/Launcher.qml", "qml/services/LauncherSearch.js", "scripts/file_search.py", "scripts/launcher_history.py"],
     "lyrics": ["scripts/lyrics.py"],
     "nightLight": ["qml/settings/NightLightPage.qml", "scripts/night_light.py"],
@@ -39,7 +39,7 @@
     "authentication": ["qml/auth/AuthenticationAgent.qml", "qml/auth/AuthenticationDialog.qml", "qml/auth/AuthenticationWindow.qml"]
   },
   "sharedPrefixes": ["qml/components/", "qml/theme/", "qml/services/"],
-  "sharedFiles": ["scripts/settings_schema.py", "scripts/command_runner.py", "scripts/content_types.py", "scripts/storage.py", "scripts/desktop_features.py", "scripts/feature_catalog.py", "scripts/settings_transfer.py", "scripts/liquid_glass.py", "scripts/managed_command.py", "scripts/check_architecture.py", "qml/bar/ActionBarButton.qml", "qml/bar/BarGestures.qml", "qml/bar/BarRegistry.qml", "qml/bar/BarSurface.qml", "qml/bar/ModuleGestures.qml", "qml/settings/SettingsCard.qml", "qml/settings/PreferenceSwitch.qml", "qml/settings/SettingsRegistry.qml"],
+  "sharedFiles": ["scripts/backend_actions.py", "scripts/settings_schema.py", "scripts/command_runner.py", "scripts/content_types.py", "scripts/storage.py", "scripts/desktop_features.py", "scripts/feature_catalog.py", "scripts/settings_transfer.py", "scripts/liquid_glass.py", "scripts/managed_command.py", "scripts/check_architecture.py", "qml/bar/ActionBarButton.qml", "qml/bar/BarGestures.qml", "qml/bar/BarRegistry.qml", "qml/bar/BarSurface.qml", "qml/bar/ModuleGestures.qml", "qml/settings/SettingsCard.qml", "qml/settings/PreferenceSwitch.qml", "qml/settings/SettingsRegistry.qml"],
   "hosts": ["scripts/desktop_backend.py", "qml/bar/BarModule.qml", "qml/bar/BarGroup.qml", "qml/panels/Bar.qml", "qml/panels/ControlCenter.qml", "qml/panels/ControlDashboard.qml", "qml/panels/DesktopPreview.qml", "qml/panels/FeatureBootstrap.qml", "qml/panels/SettingsPanel.qml", "qml/panels/TrayMenu.qml", "qml/settings/SettingsApplication.qml", "qml/settings/SettingsView.qml", "authentication-demo.qml", "capture-demo.qml", "native-features-demo.qml", "settings-demo.qml", "settings.qml", "shell.qml", "upgrades-demo.qml"],
   "legacyEdges": [
     ["qml/panels/Agenda.qml", "qml/panels/QuickNotes.qml", "Agenda embeds the legacy QuickNotes card; replace with catalog composition when that family converts."],

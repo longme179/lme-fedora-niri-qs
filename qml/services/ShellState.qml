@@ -32,6 +32,7 @@ QtObject {
     property string settingsPage: "appearance"
     property bool trayOpen: false
     property bool overviewOpen: false
+    property bool catalogPanelOpen: false
     property bool clipboardOpen: false
     property bool activityOpen: false
     property bool wifiOpen: false
@@ -46,7 +47,7 @@ QtObject {
     property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
+    readonly property bool panelOpen: catalogPanelOpen || launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -71,7 +72,9 @@ QtObject {
         return focused && focused.title ? focused.title : root.shellName;
     }
 
+    function isPanelOpen(name) { return FeatureCatalog.panel(name) ? catalogPanelOpen && panelKind === name : root[name + "Open"] === true; }
     function closePanels() {
+        catalogPanelOpen = false;
         launchpadOpen = false; launcherOpen = false; controlOpen = false; notificationsOpen = false;
         powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false; wifiOpen = false;
     }
@@ -79,6 +82,13 @@ QtObject {
         if (authenticationActive) return;
         if (name === "settings" && !demo && !settingsApp) {
             openSettingsPage("appearance");
+            return;
+        }
+        if (FeatureCatalog.panel(name)) {
+            const wasOpen = isPanelOpen(name);
+            closePanels();
+            if (screen) panelScreen = screen;
+            panelKind = name; catalogPanelOpen = !wasOpen;
             return;
         }
         const key = name + "Open";

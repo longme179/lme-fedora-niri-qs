@@ -45,29 +45,9 @@ Loader {
     }
     Component {
         id: actionComponent
-        IconButton {
-            id: button
-            objectName: "barAction-" + root.moduleId
-            implicitWidth: 30; implicitHeight: 30
-            iconName: root.moduleId === "notifications" ? (Notifications.dnd ? "bell-off" : "bell") : BarRegistry.info(root.moduleId).icon
-            tooltip: ["overview", "launcher"].includes(root.moduleId) ? "" : BarRegistry.info(root.moduleId).title
-            Accessible.name: BarRegistry.info(root.moduleId).title
-            active: root.moduleId === "launchpad" ? ShellState.launchpadOpen : root.moduleId === "notifications" ? ShellState.notificationsOpen : root.moduleId === "launcher" ? ShellState.launcherOpen : root.moduleId === "tray" ? ShellState.trayOpen : root.moduleId === "clipboard" ? ShellState.clipboardOpen : root.moduleId === "power" ? ShellState.powerOpen : false
-            onClicked: {
-                if (BarGestures.perform(root.moduleId, "left", root.screenInfo)) return;
-                if (root.moduleId === "desktop") DesktopState.toggleEdit();
-                else if (root.moduleId === "overview") ShellState.nativeOverview();
-                else {
-                    if (root.moduleId === "tray") {
-                        const position = button.mapToItem(null, button.width, 0);
-                        ShellState.trayAnchorX = position.x + (root.windowInfo ? Theme.barSideMargin : 0);
-                    }
-                    ShellState.togglePanel(root.moduleId, root.screenInfo);
-                }
-            }
-            Rectangle { visible: root.moduleId === "notifications" && Notifications.unreadCount > 0; width: 6; height: 6; radius: 3; color: Theme.pink; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 4 }
-        }
+        ActionBarButton { moduleId: root.moduleId; screenInfo: root.screenInfo; windowInfo: root.windowInfo }
     }
+
     Component {
         id: workspaceComponent
         Flickable {

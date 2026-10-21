@@ -7,7 +7,8 @@ QtObject {
     // Gesture defaults follow Noctalia; execution uses LME's existing actions.
     readonly property var gestures: ["left", "right", "middle", "scrollUp", "scrollDown"]
     readonly property var labels: ["Left click", "Right click", "Middle click", "Scroll up", "Scroll down"]
-    readonly property var actions: [
+    readonly property var actions: FeatureCatalog.project("gesture", legacyActions, "id")
+    readonly property var legacyActions: [
         {id: "default", title: "Default"}, {id: "none", title: "Do nothing"},
         {id: "control", title: "Control center"}, {id: "audio", title: "Audio controls"},
         {id: "devices", title: "Devices"}, {id: "agenda", title: "Agenda"}, {id: "system", title: "System monitor"},

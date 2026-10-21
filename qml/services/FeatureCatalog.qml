@@ -18,6 +18,7 @@ QtObject {
     property bool verified: false
     onVerifiedChanged: if (verified) assemble()
     property var requested: []
+    property var components: ({})
     signal descriptorLoaded(string id)
     readonly property var data: publication.data
     function fail(message) {
@@ -53,14 +54,16 @@ QtObject {
                 const descriptor = record.startup === undefined ? descriptors[record.id] : record.startup;
                 result.ids.features.push(record.id);
                 Object.assign(result.preferences, descriptor.preferences || {});
-                for (const kind of ["bar", "settingsPage", "controlTab"]) {
+                for (const kind of ["bar", "settingsPage", "controlTab", "panel", "bootstrap", "gesture"]) {
                     const item = descriptor[kind];
                     if (!item) continue;
                     const key = kind === "settingsPage" ? "key" : "id";
-                    if (typeof item[key] !== "string" || typeof item.entry !== "string") throw new Error("Invalid presentation entry");
+                    if (typeof item[key] !== "string" || kind !== "gesture" && typeof item.entry !== "string") throw new Error("Invalid presentation entry");
+                    if (!result.ids[kind]) result.ids[kind] = [];
                     result.ids[kind].push(item[key]);
+                    if (!result.all[kind]) result.all[kind] = [];
                     result.all[kind].push(Object.assign({}, item, {enabled: record.enabled}));
-                    if (record.enabled) result[kind].push(item);
+                    if (record.enabled) { if (!result[kind]) result[kind] = []; result[kind].push(item); }
                 }
             });
             publication = {data: result, settled: true, error: ""};
@@ -74,12 +77,47 @@ QtObject {
             Qt.callLater(() => root.fail("Duplicate " + kind + " ID in legacy: " + duplicate[key]));
             return legacy;
         }
-        const entries = includeDisabled ? all : data[kind] || [];
-        if (!entries.length || error) return legacy;
+        if (!all.length || error) return legacy;
+        const known = legacy.concat(all), children = {}, ordered = [];
+        for (const item of all) {
+            if (!item.after) continue;
+            if (!known.some(anchor => anchor[key] === item.after)) {
+                Qt.callLater(() => root.fail("Missing " + kind + " anchor: " + item.after));
+                return legacy;
+            }
+            if (!children[item.after]) children[item.after] = [];
+            children[item.after].push(item);
+        }
+        function append(item, visited) {
+            if (visited.includes(item[key])) throw new Error("Cyclic " + kind + " position");
+            ordered.push(item);
+            for (const child of children[item[key]] || []) append(child, visited.concat(item[key]));
+        }
+        try {
+            for (const item of legacy) append(item, []);
+            for (const item of all.filter(entry => !entry.after)) append(item, []);
+            if (ordered.length !== known.length) throw new Error("Cyclic " + kind + " position");
+        } catch (exception) { Qt.callLater(() => root.fail(String(exception))); return legacy; }
         const max = kind === "controlTab" ? Math.max(-1, ...legacy.map(item => item.legacyIndex)) : -1;
-        return legacy.concat(entries.map(entry => kind === "controlTab"
-            ? Object.assign({}, entry, {legacyIndex: max + 1 + all.findIndex(item => item[key] === entry[key])}) : entry));
+        return ordered.filter(entry => includeDisabled || entry.enabled !== false).map(entry => {
+            if (legacy.includes(entry)) return entry;
+            const value = Object.assign({}, entry);
+            if (!includeDisabled) delete value.enabled;
+            if (kind === "controlTab") value.legacyIndex = max + 1 + all.findIndex(item => item[key] === entry[key]);
+            return value;
+        });
     }
+    function component(entry) {
+        if (!entry || error) return null;
+        if (!components[entry]) {
+            const value = Qt.createComponent(url(entry));
+            if (value.status !== Component.Ready) { Qt.callLater(() => root.fail(value.errorString())); return null; }
+            components[entry] = value;
+        }
+        return components[entry];
+    }
+    function panel(id) { return (data.panel || []).find(entry => entry.id === id) || null; }
+
     function url(entry) { return entry ? Qt.resolvedUrl(Quickshell.shellPath(entry)) : ""; }
     property FileView indexFile: FileView {
         path: Quickshell.shellPath("config/features.json")

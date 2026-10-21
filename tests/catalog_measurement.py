@@ -7,7 +7,7 @@ import tempfile
 import migration_startup as startup
 
 
-def synthetic(root):
+def synthetic(root, compact=False):
     legacy = json.loads((root/'tests/fixtures/catalog-legacy.json').read_text())
     (root/'qml/catalog-inert.qml').write_text('import QtQuick\nItem { implicitWidth: 30; implicitHeight: 30 }\n')
     records = []
@@ -25,11 +25,14 @@ def synthetic(root):
                 entry.update({id_key: ident, 'entry': 'qml/catalog-inert.qml'})
                 descriptor[kind] = entry
             path = 'config/feature-' + ident + '.json'
+            record = {'id': ident, 'descriptor': path, 'enabled': True}
+            if compact:
+                record['startup'] = {key: descriptor.pop(key) for key in ('bar', 'settingsPage', 'controlTab') if key in descriptor}
             (root/path).write_text(json.dumps(descriptor))
-            records.append({'id': ident, 'descriptor': path, 'enabled': True})
+            records.append(record)
     (root/'config/features.json').write_text(json.dumps({'version': 1, 'features': records}))
     assert len(records) == len(legacy['bars']) + len(legacy['pages']) + len(legacy['tabs']) + 30
-    return {'descriptors': len(records), 'bars': len(legacy['bars']), 'pages': len(legacy['pages']),
+    return {'compact': compact, 'descriptors': len(records), 'bars': len(legacy['bars']), 'pages': len(legacy['pages']),
             'tabs': len(legacy['tabs']), 'preference_fragments': 30,
             'json_bytes': sum((root/item['descriptor']).stat().st_size for item in records)
                           + (root/'config/features.json').stat().st_size}

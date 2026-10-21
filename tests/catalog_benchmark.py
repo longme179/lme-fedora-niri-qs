@@ -23,14 +23,14 @@ def stats(values):
             'max_ms': max(values)*1000, 'iqr_ms': (percentile(values, .75)-percentile(values, .25))*1000}
 
 
-def benchmark(main, empty, output, runs=15):
+def benchmark(main, empty, output, runs=15, compact=False):
     assert runs >= 15
     output.mkdir(parents=True, exist_ok=False)
     original_repo, original_output = startup.REPO, startup.OUTPUT
     with tempfile.TemporaryDirectory(prefix='catalog-bench-') as directory:
         projected = Path(directory)/'synthetic'
         shutil.copytree(empty, projected, ignore=shutil.ignore_patterns('.git', '__pycache__'))
-        metadata = synthetic(projected)
+        metadata = synthetic(projected, compact)
         variants = {'main': main, 'empty': empty, 'synthetic': projected, 'aaA': main, 'aaB': main}
         result = {'runs': runs, 'machine': platform.platform(), 'cpu': next(line.split(':', 1)[1].strip()
             for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')),
@@ -78,5 +78,6 @@ if __name__ == '__main__':
     parser.add_argument('--empty', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--runs', type=int, default=15)
+    parser.add_argument('--compact', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(benchmark(args.main, args.empty, args.output, args.runs)['summary'], indent=2))
+    print(json.dumps(benchmark(args.main, args.empty, args.output, args.runs, args.compact)['summary'], indent=2))

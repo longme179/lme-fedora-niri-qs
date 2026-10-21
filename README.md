@@ -453,7 +453,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |
-| [Architecture](docs/ARCHITECTURE.md) / [Migration log](docs/MIGRATION_LOG.md) | Approved module boundaries, staged refactors and before/after checks |
+| [Architecture](docs/ARCHITECTURE.md) / [Agent state](docs/STATE.md) | Approved module boundaries, staged refactors and before/after checks |
 
 ## Help and development
 
@@ -478,10 +478,10 @@ The original backend, display and Clipboard imports remain available for compati
 Clipboard's bar item, panel, Settings page and bootstrap are registered in
 [config/clipboard.json](config/clipboard.json) through [config/features.json](config/features.json).
 Its settings schema and worker keep their existing implementations. See the
-[migration log](docs/MIGRATION_LOG.md#m4b--clipboard-catalog-slice--2026-10-21) for validation and startup measurements.
+[migration log](docs/archive/migration/MIGRATION_LOG.md#m4b--clipboard-catalog-slice--2026-10-21) for validation and startup measurements.
 
 Use `./scripts/run-gates.sh` for isolated migration checks; the
-[migration log](docs/MIGRATION_LOG.md) lists prerequisites, commands and results.
+[current agent state](docs/STATE.md) lists prerequisites, commands and results.
 
 ## Credits and license
 

@@ -38,7 +38,7 @@ as the public QML APIs. Replace their duplicated registration arrays incremental
 do not keep a new registry running alongside them for the same ID.
 Source: bundled `config/features.json` names explicit descriptors; Clipboard uses
 `config/clipboard.json`. The examples below remain target interfaces; the current
-pilot contract and ordering rules are in [M4B_DESIGN.md](M4B_DESIGN.md).
+pilot contract and ordering rules are in [M4B_DESIGN.md](archive/migration/M4B_DESIGN.md).
 One generic reader per process loads/validates/caches descriptors once; widgets do not.
 ```json
 {"version":1,"features":[{"id":"clipboard","descriptor":"config/feature-clipboard.json","enabled":true}]}
@@ -93,7 +93,7 @@ Existing global singleton/type exports remain compatibility facades until M8, if
 Registry readiness joins the existing Settings startup barrier before constructing its
 first page; failure uses the existing diagnostic path. Preserve `openPage()` visible-window
 confirmation and `startupPending()`. Round-4 startup cost was measured and accepted
-by the owner on 2026-10-21; see [MIGRATION_LOG.md](MIGRATION_LOG.md#d1-owner-decision-and-startup-budget--2026-10-21).
+by the owner on 2026-10-21; see [archived D1 decision](archive/migration/MIGRATION_LOG.md#d1-owner-decision-and-startup-budget--2026-10-21).
 
 ### 2.2 Backend action registry contract, including demo
 
@@ -397,4 +397,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only; later evidence and
-authorizations are in MIGRATION_LOG.md. M4b converts Clipboard only; M5 and later remain unauthorized.
+current authorizations are in STATE.md; historical records are in archive/migration/. M4b converts Clipboard only; M5 and later remain unauthorized.

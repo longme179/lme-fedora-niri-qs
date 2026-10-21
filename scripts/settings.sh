@@ -23,11 +23,24 @@ case "$page" in
         if [[ -f "$repo_dir/config/features.json" ]]; then
             IFS= read -r -d '' -t 3 catalog_index < "$repo_dir/config/features.json" || true
         fi
-        if [[ "${catalog_index//[[:space:]]/}" == '{"version":1,"features":[]}' || "${catalog_index//[[:space:]]/}" == '{"features":[],"version":1}' ]]; then
-            printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2
+        catalog_hit=false
+        # --check enforces one compact record per line and a literal, first page key.
+        # Admission is only a hint: QML still waits for the backend's validation.
+        if [[ "$page" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]]; then
+            while IFS= read -r catalog_record; do
+                if [[ "$catalog_record" == '{"id":'* && "$catalog_record" == *'"enabled":true'* &&
+                      "$catalog_record" == *'"settingsPage":{"key":"'"$page"'"'* ]]; then
+                    catalog_hit=true; break
+                fi
+            done <<< "$catalog_index"
         fi
-        python_binary="$(command -v python3 || printf /usr/bin/python3)"
-        "$python_binary" "$repo_dir/scripts/feature_catalog.py" --page "$page"
+        if [[ "$catalog_hit" != true ]]; then
+            if [[ "${catalog_index//[[:space:]]/}" == '{"version":1,"features":[]}' || "${catalog_index//[[:space:]]/}" == '{"features":[],"version":1}' ]]; then
+                printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2
+            fi
+            python_binary="$(command -v python3 || printf /usr/bin/python3)"
+            "$python_binary" "$repo_dir/scripts/feature_catalog.py" --page "$page"
+        fi
         ;;
 esac
 qs_binary="${LME_QS_BINARY:-}"

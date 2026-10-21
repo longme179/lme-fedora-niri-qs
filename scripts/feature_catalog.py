@@ -166,6 +166,29 @@ def page_keys():
     return keys
 
 
+def canonical_index(index):
+    """One compact record per line; startup page keys remain literal and first."""
+    records = []
+    for value in index['features']:
+        record = dict(id=value['id'], **{key: item for key, item in value.items() if key != 'id'})
+        if 'settingsPage' in record.get('startup', {}):
+            page = record['startup']['settingsPage']
+            record['startup'] = dict(record['startup'], settingsPage=dict(
+                key=page['key'], **{key: item for key, item in page.items() if key != 'key'}))
+        records.append(json.dumps(record, separators=(',', ':'), ensure_ascii=True))
+    return '{"version":1,"features":[' + ('\n'+',\n'.join(records)+'\n' if records else '') + ']}\n'
+
+
+def check_admission(data):
+    path = Path(__file__).resolve().parents[1] / 'config/features.json'
+    index = document(path)
+    keys = {record.get('startup', {}).get('settingsPage', {}).get('key') for record in index['features']}
+    if any(page['key'] not in keys for page in data['all']['settingsPage']):
+        raise CatalogError('Settings pages require startup keys in the index')
+    if path.read_text(encoding='utf-8') != canonical_index(index):
+        raise CatalogError('Noncanonical feature index: require compact records on separate lines and literal first page keys')
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
@@ -180,7 +203,7 @@ def main(argv=None):
                 print(f'Error: unknown settings page: {page}', file=sys.stderr)
                 return 2
         elif args == ['--check']:
-            catalog()
+            bounded(lambda: check_admission(catalog()))
         elif args:
             raise CatalogError('Unsupported catalog arguments')
         else:

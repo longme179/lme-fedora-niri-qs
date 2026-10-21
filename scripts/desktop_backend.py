@@ -30,6 +30,7 @@ import time
 from typing import Any
 
 from command_runner import CommandError, CommandRunner, TOOLS
+from settings_schema import Schema as PreferenceSchema
 
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
@@ -62,41 +63,17 @@ from battery_saver import BatterySaver, brightness_state
 from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
 
 
-DEFAULT_PREFERENCES = {
-    "shellName": "LME Shell", "language": "en", "animations": True, "opacity": 0.90, "surfaceStyle": "smoked", "liquidGlass": GLASS_DEFAULTS, "glassSelection": True,
-    "fontPicker": True, "colorPicker": True, "privacyIndicators": True, "dndWhileSharing": True,
-    "desktopEnabled": False, "desktopShapes": False, "desktopWidgets": {}, "lyricsEnabled": True, "lyricsOnline": False, "lyricsMode": "scroll", "lyricsFollow": True, "activityLyrics": True, "bluetoothPairing": True, "mediaStability": True, "mediaControls": True, "batteryDetails": True, "quickNotes": True, "audioVisualizer": False,
-    "desktopShapeCount": 4, "desktopShapeScale": 1.0, "desktopShapeOpacity": .14,
-    "desktopShapeSpeed": 1.0, "desktopShapeStyle": "mixed", "desktopShapeRotation": True,
-    "peripheralBatteryAlerts": True, "peripheralBatteryThreshold": 20, "batterySaverBrightness": 70,
-    "mirroringEnabled": True, "recordingEnabled": True, "recordingFolder": str(Path.home()/"Videos/Recordings"), "recordingEncoder": "auto",
-    "recordingAudio": "system", "recordingFormat": "mkv", "recordingCodec": "auto", "recordingFps": 30, "recordingBitrate": 12000,
-    "captureEditor": "auto",
-    "fileSearchEnabled": True,
-    "fileSearchRoots": [str(Path.home()/name) for name in ("Documents","Desktop","Downloads","Pictures")],
-    "osdEnabled": True, "osdPosition": "bottom-center", "osdLayout": "horizontal", "osdMargin": 24, "osdOutput": "focused",
-    "accent": "#9580ff", "wallpaper": "",
-    "density": "comfortable", "appearanceProfiles": [DRACULA_PROFILE],
-    "controlLayout": DEFAULT_CONTROL_LAYOUT, "controlGrid": DEFAULT_CONTROL_GRID, "controlWidth": 600,
-    "wallpaperFolder": "", **WALLPAPER_DEFAULTS, "launcherRanking": True, "launchpadEnabled": True, "launchpadEntries": {},
-    "notificationMutedApps": [], "dndUntil": 0, "displayLayout": [],
-    "notificationWidth": 380, "notificationPosition": "bar", "notificationMargin": 14,
-    "notificationRadius": 28, "notificationPadding": 16, "notificationOpacity": .90,
-    "notificationBorderWidth": 1, "notificationTitleSize": 14, "notificationBodySize": 13,
-    "notificationIdleAnimation": True, "notificationIdleSpeed": 16,
-    "idleEnabled": False, "idleProfiles": DEFAULT_IDLE_PROFILES, "idleLockBeforeSleep": True,
-    "niriConfigPath": "", "popupBlur": True, "barBlur": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS,
-    "barEdge": "top", "barEdgeMargin": 8, "barSideMargin": 12, "barHeight": 42,
-    "nightLightEnabled": False, "nightLightMode": "manual", "nightLightTemperature": 4500,
-    "nightLightStart": "20:00", "nightLightEnd": "07:00",
-    "terminal": "kitty", "bluetoothAdapter": "", "tasks": [],
-    "weatherAutoLocation": True, "weatherLocation": {}, "weatherUnit": "celsius",
-    "activityEnabled": True, "clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100,
-    "barGestures": {}, "barStyle": "connected", "barFontSize": 13, "barBorderWidth": 1, "barIslandStyles": {},
-    "barCorners": {"topLeft": -1, "topRight": -1, "bottomLeft": -1, "bottomRight": -1},
-    "barLayout": {"left": ["launcher", "overview", "workspaces"], "center": ["activity"],
-                  "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
-}
+PREFERENCE_SCHEMA = PreferenceSchema(
+    legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
+    resolvers={
+        "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
+        "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
+        "idleProfiles": lambda key: DEFAULT_IDLE_PROFILES,
+        "motion": lambda key: MOTION_DEFAULTS[key], "theme": lambda key: THEME_DEFAULTS[key],
+        "palette": lambda key: PALETTE_DEFAULTS[key], "wallpaper": lambda key: WALLPAPER_DEFAULTS[key],
+    })
+DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
+
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR = ''
@@ -110,7 +87,7 @@ def initialize_catalog():
     if _catalog_initialized: return
     _catalog_initialized = True
     try:
-        FEATURE_CATALOG = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
+        FEATURE_CATALOG = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, PREFERENCE_SCHEMA.legacy_keys)
     except CatalogError as error:
         FEATURE_CATALOG_ERROR = str(error)
         print(f'Feature catalog: {error}', file=sys.stderr)
@@ -260,6 +237,10 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    return PREFERENCE_SCHEMA.validate(key, value)
+
+
+def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key in ("barLayout", "barGestures"): initialize_catalog()
     if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
@@ -349,8 +330,7 @@ def validate_preference(key: str, value: Any) -> Any:
                and not any(ord(c) < 32 for c in item) for item in value):
             return list(dict.fromkeys(value))
         raise ValueError("Invalid notification rule")
-    if key in {"activityEnabled", "clipboardEnabled", "clipboardImages"} and type(value) is bool: return value
-    if key == "clipboardLimit" and type(value) is int and 20 <= value <= 500: return value
+    if key == "activityEnabled" and type(value) is bool: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
         return value
     if key == "barBorderWidth" and type(value) is int and 0 <= value <= 4: return value

@@ -4,22 +4,6 @@
     "qml/services/ClipboardState.qml",
     "scripts/clipboard.py"
   ],
-  "preferenceMetadata": {
-    "clipboardEnabled": {
-      "type": "boolean",
-      "default": true
-    },
-    "clipboardImages": {
-      "type": "boolean",
-      "default": true
-    },
-    "clipboardLimit": {
-      "type": "integer",
-      "default": 100,
-      "min": 20,
-      "max": 500
-    }
-  },
   "bar": {
     "id": "clipboard",
     "title": "Clipboard",
@@ -51,5 +35,30 @@
     "id": "clipboard",
     "title": "Clipboard",
     "after": "launchpad"
+  },
+  "preferences": {
+    "clipboardEnabled": {
+      "type": "boolean",
+      "default": true,
+      "portable": true,
+      "appearance": false,
+      "validator": "boolean"
+    },
+    "clipboardImages": {
+      "type": "boolean",
+      "default": true,
+      "portable": true,
+      "appearance": false,
+      "validator": "boolean"
+    },
+    "clipboardLimit": {
+      "type": "integer",
+      "default": 100,
+      "min": 20,
+      "max": 500,
+      "portable": true,
+      "appearance": false,
+      "validator": "integer"
+    }
   }
 }

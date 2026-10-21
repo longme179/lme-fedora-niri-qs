@@ -42,7 +42,10 @@ the reader does not create another legacy catalog or scrape source code.
   parsing, no extra Python reader process. Deep validation stays in Python;
   nonempty UI entries wait for the existing backend's validation verdict.
   Descriptor presentation data uses async reads with a bounded startup deadline.
-  If a misses the target, b moves light startup fields into the index; c needs approval.
+  a measured +69.7 ms for synthetic Settings; b uses optional record.startup for
+  bar/page/tab metadata. Heavy descriptor(id) data loads on first use, with a
+  per-read deadline. Descriptor-only records remain a compatibility adapter.
+  Python still validates every descriptor at boot/CLI/check time. c needs approval.
   Project through the existing registries. Their merge
   boundary checks collisions with their actual legacy arrays, including disabled
   entries. No per-widget process, file watcher, eval or environment index override.

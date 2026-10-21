@@ -1,0 +1,50 @@
+{
+  "shellName": "Personal shell",
+  "surfaceStyle": "liquid",
+  "accent": "#abcdef",
+  "opacity": 0.8,
+  "clipboardEnabled": false,
+  "clipboardImages": true,
+  "clipboardLimit": 240,
+  "weatherAutoLocation": false,
+  "weatherUnit": "fahrenheit",
+  "weatherLocation": {
+    "name": "Local city",
+    "latitude": 1,
+    "longitude": 2
+  },
+  "osdEnabled": true,
+  "osdPosition": "top-center",
+  "osdLayout": "vertical",
+  "osdMargin": 24,
+  "osdOutput": "focused",
+  "recordingEncoder": "cpu",
+  "recordingFormat": "mkv",
+  "themeOverrides": {
+    "buttonFill": "#123456"
+  },
+  "fontOverrides": {
+    "body": "Roboto"
+  },
+  "barLayout": {
+    "left": [
+      "launcher",
+      "overview",
+      "workspaces"
+    ],
+    "center": [
+      "activity"
+    ],
+    "right": [
+      "privacy",
+      "clipboard",
+      "tray",
+      "notifications",
+      "audio",
+      "network",
+      "battery",
+      "clock",
+      "settings"
+    ]
+  }
+}

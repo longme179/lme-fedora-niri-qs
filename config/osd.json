@@ -1,0 +1,42 @@
+{
+  "id": "osd",
+  "preferences": {
+    "osdEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "osdPosition": {
+      "type": "string",
+      "validator": "osdPosition",
+      "portable": true,
+      "appearance": false,
+      "default": "bottom-center"
+    },
+    "osdLayout": {
+      "type": "string",
+      "validator": "osdLayout",
+      "portable": true,
+      "appearance": false,
+      "default": "horizontal"
+    },
+    "osdMargin": {
+      "type": "integer",
+      "validator": "integer",
+      "portable": true,
+      "appearance": false,
+      "default": 24,
+      "min": 0,
+      "max": 96
+    },
+    "osdOutput": {
+      "type": "string",
+      "validator": "osdOutput",
+      "portable": false,
+      "appearance": false,
+      "default": "focused"
+    }
+  }
+}

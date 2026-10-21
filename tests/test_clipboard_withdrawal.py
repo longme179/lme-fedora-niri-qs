@@ -15,9 +15,9 @@ CONVERTED = (ROOT/'config/clipboard.json').exists()
 class ClipboardOwnershipCase(unittest.TestCase):
     def test_host_registration_removal_and_metadata_only_schema(self):
         descriptor = json.loads((ROOT/'config/clipboard.json').read_text())
-        self.assertNotIn('preferences', descriptor)
-        self.assertEqual(set(descriptor['preferenceMetadata']), {'clipboardEnabled', 'clipboardImages', 'clipboardLimit'})
-        self.assertEqual(descriptor['preferenceMetadata']['clipboardLimit'], dict(type='integer', default=100, min=20, max=500))
+        self.assertNotIn('preferenceMetadata', descriptor)
+        self.assertEqual(set(descriptor['preferences']), {'clipboardEnabled', 'clipboardImages', 'clipboardLimit'})
+        self.assertEqual(descriptor['preferences']['clipboardLimit'], dict(type='integer', default=100, min=20, max=500, portable=True, appearance=False, validator='integer'))
         for path in ('qml/settings/SettingsView.qml', 'qml/services/ShellState.qml', 'qml/settings/qmldir'):
             self.assertNotIn('clipboard', (ROOT/path).read_text().lower(), path)
         for path, start, end in [('qml/bar/BarRegistry.qml', 'legacyModules:', '\n    function'),

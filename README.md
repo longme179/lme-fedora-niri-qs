@@ -477,8 +477,11 @@ and `scripts/content_types.py` (the text byte limit and image signature recognit
 The original backend, display and Clipboard imports remain available for compatibility.
 Clipboard's bar item, panel, Settings page and bootstrap are registered in
 [config/clipboard.json](config/clipboard.json) through [config/features.json](config/features.json).
-Its settings schema and worker keep their existing implementations. See the
-[migration log](docs/archive/migration/MIGRATION_LOG.md#m4b--clipboard-catalog-slice--2026-10-21) for validation and startup measurements.
+Preference definitions are assembled by `scripts/settings_schema.py` from descriptor
+fragments and `config/preferences-legacy.json`. Clipboard, weather scalar settings
+and OSD use descriptor definitions; the other 137 keys retain legacy bindings.
+Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
+See the [migration log](docs/MIGRATION_LOG.md) for validation.
 
 Start development tasks with [current agent state](docs/STATE.md).
 `./scripts/check-architecture.sh` checks static dependencies, cycles and source sizes;

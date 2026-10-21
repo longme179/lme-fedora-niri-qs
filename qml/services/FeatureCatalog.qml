@@ -78,7 +78,7 @@ QtObject {
             return legacy;
         }
         if (!all.length || error) return legacy;
-        const known = legacy.concat(all), children = {}, ordered = [];
+        const known = legacy.concat(all), children = Object.create(null), ordered = [];
         for (const item of all) {
             if (!item.after) continue;
             if (!known.some(anchor => anchor[key] === item.after)) {

@@ -22,6 +22,7 @@ QtObject {
     readonly property bool popupBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool liquidBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && !batterySaverActive && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property var legacyPanels: ["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"]
     property string panelKind: "control"
     property bool launchpadOpen: false
     property bool launcherOpen: false
@@ -92,7 +93,7 @@ QtObject {
             return;
         }
         const key = name + "Open";
-        if (!["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
+        if (!legacyPanels.includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;

@@ -48,7 +48,8 @@ class Launch:
         self.cache_path = cache_path
 
     def __enter__(self):
-        self.temp = tempfile.TemporaryDirectory(prefix='startup-', dir=OUTPUT)
+        # Unix IPC sockets must fit sun_path even when the evidence directory is long.
+        self.temp = tempfile.TemporaryDirectory(prefix='startup-')
         root = Path(self.temp.name)
         self.env = dict(os.environ)
         for name in ('CONFIG', 'STATE', 'CACHE', 'DATA'):

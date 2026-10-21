@@ -8,6 +8,16 @@ from test_backend import Fixture, backend
 
 @unittest.skipUnless(importlib.util.find_spec('backend_actions'), 'M6 registry absent; registry-only routing N/A')
 class RegisteredRoutingCase(Fixture, unittest.TestCase):
+    def test_explicit_provider_list_registers_without_reading_preferences_or_projecting_state(self):
+        from backend_actions import ActionRegistry
+        from launchpad_actions import LaunchpadCapabilities, provide
+        read = Mock(); run = Mock(); snapshot = Mock(return_value={})
+        registry = ActionRegistry()
+        project = registry.provide([(provide, LaunchpadCapabilities(read, run, snapshot))])
+        read.assert_not_called(); run.assert_not_called(); snapshot.assert_not_called()
+        self.assertIsNotNone(registry.get('launchpadRun'))
+        self.assertEqual(project(), {'launchpadJobs': {}})
+
     def test_host_does_not_try_either_legacy_tree_after_registered_errors(self):
         from backend_actions import ActionRegistry, ActionSpec
         for demo in (False, True):

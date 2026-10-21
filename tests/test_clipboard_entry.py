@@ -72,3 +72,17 @@ class NativeEntryCase(unittest.TestCase):
             with self.subTest(mode=mode), self.world.launch(mode) as probe:
                 self.assertFalse(probe.wait(lambda state: state['demo'])['started'])
                 self.assertEqual(self.world.workers(), [])
+
+    def test_demo_preview_clipboard_dispatch_keeps_history_without_worker(self):
+        for mode in ('demo', 'preview'):
+            with self.subTest(mode=mode), self.world.launch(mode) as probe:
+                probe.call('close', target='shell'); probe.wait(lambda state: not state['panelOpen'])
+                probe.call('toggle', 'clipboard', target='shell')
+                state = probe.wait(lambda state: state['open'] and state['history'])
+                self.assertFalse(state['started']); self.assertEqual(self.world.workers(), [])
+
+    def test_preview_initial_clipboard_env_opens_history_without_worker(self):
+        self.world.env['LME_SHELL_PREVIEW_PANEL'] = 'clipboard'
+        with self.world.launch('preview') as probe:
+            state = probe.wait(lambda state: state['open'] and state['history'])
+            self.assertFalse(state['started']); self.assertEqual(self.world.workers(), [])

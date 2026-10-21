@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OBSERVE = '''
     property var sliceBars: []
     property var sliceSurface: null
+    property var slicePreview: null
     property var sliceFirstVisible: null
     property real sliceProgress: 0
     function sliceFind(item, name) {
@@ -101,8 +102,9 @@ class World:
         self.env.pop('LME_SHELL_PREVIEW', None); self.env.pop('LME_SHELL_SETTINGS', None)
         shell = self.root/'shell.qml'; text = shell.read_text()
         text = text.replace('import "qml/services"', 'import "qml/services"\nimport "qml/bar"\nimport "qml/settings"')
-        text = text.replace('    id: root\n', '    id: root\n'+OBSERVE+'\n    Binding { target: root; property: "sliceSurface"; value: overlay.contentItem }\n    Binding { target: root; property: "sliceProgress"; value: panelLoader.progress }\n', 1)
+        text = text.replace('    id: root\n', '    id: root\n'+OBSERVE+'\n    Binding { target: root; property: "sliceSurface"; value: root.preview && root.slicePreview ? root.slicePreview : overlay.contentItem }\n    Binding { target: root; property: "sliceProgress"; value: panelLoader.progress }\n', 1)
         text = text.replace('id: barWindow\n', 'id: barWindow\n                Component.onCompleted: root.sliceBars = root.sliceBars.concat(barWindow)\n')
+        text = text.replace('DesktopPreview { id: previewContent; anchors.fill: parent }', 'DesktopPreview { id: previewContent; anchors.fill: parent; Component.onCompleted: root.slicePreview = previewContent }')
         shell.write_text(text)
         settings = self.root/'qml/settings/SettingsApplication.qml'; text = settings.read_text()
         text = text.replace('import "../services"', 'import "../services"\nimport "../bar"')

@@ -78,6 +78,16 @@ class NativeWithdrawalCase(unittest.TestCase):
             self.assertEqual(probe.call('page'), 'clipboard')
             self.assertEqual(len(self.world.workers()), 1)
 
+    def test_disabled_saved_gesture_ids_remain_valid(self):
+        prefs = json.loads(self.world.settings.read_text())
+        prefs['barGestures'] = {'clipboard': {'right': 'clipboard'}, 'audio': {'middle': 'clipboard'}}
+        self.world.settings.write_text(json.dumps(prefs)); original = self.world.settings.read_bytes()
+        self.toggle(False)
+        with self.world.launch() as probe:
+            self.assertEqual(probe.wait(lambda state: state['ready'])['preferences']['barGestures'], prefs['barGestures'])
+            self.assertEqual(self.world.workers(), [])
+        self.assertEqual(self.world.settings.read_bytes(), original)
+
     def test_second_entry_needs_only_own_files_and_index_record(self):
         root = self.world.root
         before = {str(path.relative_to(root)): path.read_bytes() for path in root.rglob('*') if path.is_file()}
@@ -89,7 +99,8 @@ class NativeWithdrawalCase(unittest.TestCase):
         descriptor = dict(id='slicePeer', bar=dict(id='slicePeer', title='Slice peer', icon='applications', entry='qml/panels/SlicePeer/Bar.qml'),
             panel=dict(id='slicePeer', entry='qml/panels/SlicePeer/Panel.qml', centered=True),
             settingsPage=dict(key='slicePeer', title='Slice peer', description='slicePeerPage', keywords='slicePeer', icon='settings', entry='qml/panels/SlicePeer/Page.qml'),
-            bootstrap=dict(id='slicePeer', entry='qml/panels/SlicePeer/Bootstrap.qml'))
+            bootstrap=dict(id='slicePeer', entry='qml/panels/SlicePeer/Bootstrap.qml'),
+            gesture=dict(id='slicePeer', title='Slice peer'))
         path = root/'config/slicePeer.json'; path.write_text(json.dumps(descriptor))
         index = root/'config/features.json'; data = json.loads(index.read_text())
         data['features'].append(dict(id='slicePeer', descriptor='config/slicePeer.json', enabled=True,
@@ -97,12 +108,15 @@ class NativeWithdrawalCase(unittest.TestCase):
         from feature_catalog import canonical_index
         index.write_text(canonical_index(data))
         prefs = json.loads(self.world.settings.read_text()); prefs['barLayout'] = dict(left=['slicePeer'], center=[], right=[])
+        prefs['barGestures'] = {'slicePeer': {'right': 'slicePeer'}}
         self.world.settings.write_text(json.dumps(prefs))
         changed = [name for name, content in before.items() if (root/name).read_bytes() != content]
         self.assertEqual(changed, ['config/features.json'])
         with self.world.launch() as probe:
             self.assertIn('slicePeer', probe.wait(lambda state: state['ready'])['bars'])
             probe.wait(lambda state: state['status'] == 'slicePeerStarted')
+            self.assertIn('slicePeer', probe.wait(lambda state: True)['gestures'])
+            self.assertEqual(probe.wait(lambda state: True)['preferences']['barGestures'], prefs['barGestures'])
             probe.click('barAction-slicePeer')
             probe.wait(lambda state: state['panelKind'] == 'slicePeer' and state['panelOpen'])
             self.assertNotEqual(probe.call('point', 'slicePeerPanel'), 'null')

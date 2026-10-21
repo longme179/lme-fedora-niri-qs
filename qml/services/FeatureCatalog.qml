@@ -9,10 +9,14 @@ QtObject {
     property bool settled: false
     property string error: ""
     readonly property bool ready: settled
+    property bool indexLoaded: false
     property var records: []
-    onRecordsChanged: if (records.length) validate(ShellState.snapshot.catalogValidation)
+    onRecordsChanged: { if (records.length) validate(ShellState.snapshot.catalogValidation); assemble(); }
     property var descriptors: ({})
     property bool verified: false
+    onVerifiedChanged: if (verified) assemble()
+    property var requested: []
+    signal descriptorLoaded(string id)
     property var data: ({bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}})
     function fail(message) {
         if (error) return;
@@ -28,15 +32,24 @@ QtObject {
         if (verdict.error) fail(verdict.error);
         else verified = true;
     }
-    function acceptDescriptor(index, value) {
-        if (settled || error) return;
+    function descriptor(id) {
+        if (error || !records.some(record => record.id === id)) return null;
+        if (descriptors[id]) return descriptors[id];
+        if (!requested.includes(id)) requested = requested.concat(id);
+        return null;
+    }
+    function acceptDescriptor(id, value) {
+        if (error) return;
+        if (!value || value.id !== id) { fail("Invalid descriptor identity"); return; }
+        descriptors[id] = value;
+        assemble(); descriptorLoaded(id);
+    }
+    function assemble() {
+        if (!indexLoaded || !verified || settled || error || records.some(record => record.startup === undefined && !descriptors[record.id])) return;
         try {
-            if (!value || value.id !== records[index].id) throw new Error("Invalid descriptor identity");
-            descriptors[index] = value;
-            if (Object.keys(descriptors).length !== records.length) return;
             const result = {bar: [], settingsPage: [], controlTab: [], all: {bar: [], settingsPage: [], controlTab: []}, ids: {features: [], bar: [], settingsPage: [], controlTab: []}, preferences: {}};
-            records.forEach((record, position) => {
-                const descriptor = descriptors[position];
+            records.forEach(record => {
+                const descriptor = record.startup === undefined ? descriptors[record.id] : record.startup;
                 result.ids.features.push(record.id);
                 Object.assign(result.preferences, descriptor.preferences || {});
                 for (const kind of ["bar", "settingsPage", "controlTab"]) {
@@ -76,23 +89,30 @@ QtObject {
                 if (value.version !== 1 || !Array.isArray(value.features)) throw new Error("Unsupported version or index");
                 for (const item of value.features)
                     if (!item || typeof item.id !== "string" || typeof item.descriptor !== "string" || typeof item.enabled !== "boolean") throw new Error("Invalid index record");
-                root.records = value.features;
+                root.records = value.features; root.indexLoaded = true; root.assemble();
                 if (!root.records.length) root.settled = true;
             } catch (exception) { root.fail(String(exception)); }
         }
         onLoadFailed: root.fail("Index could not be read")
     }
     property Instantiator files: Instantiator {
-        model: root.verified && !root.error ? root.records : []
+        model: root.verified && !root.error ? root.records.filter(record => record.startup === undefined || root.requested.includes(record.id)) : []
         delegate: FileView {
-            required property int index
+            id: descriptorFile
+            property bool done: false
             required property var modelData
             path: Quickshell.shellPath(modelData.descriptor)
             onLoaded: {
-                try { root.acceptDescriptor(index, JSON.parse(text())); }
+                if (done || root.error) return;
+                done = true;
+                try { root.acceptDescriptor(modelData.id, JSON.parse(text())); }
                 catch (exception) { root.fail(String(exception)); }
             }
-            onLoadFailed: root.fail("Descriptor could not be read")
+            onLoadFailed: { done = true; root.fail("Descriptor could not be read"); }
+            property Timer deadline: Timer {
+                interval: 3000; running: !descriptorFile.done && !root.error
+                onTriggered: { descriptorFile.done = true; root.fail("Descriptor read timed out; using legacy entries"); }
+            }
         }
     }
     property Timer deadline: Timer {

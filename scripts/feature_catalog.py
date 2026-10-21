@@ -86,7 +86,7 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         raise CatalogError('Unsupported feature catalog version or index')
     result = empty_catalog()
     for record in index['features']:
-        shape(record, {'id', 'descriptor', 'enabled'}, {'id', 'descriptor', 'enabled'})
+        shape(record, {'id', 'descriptor', 'enabled', 'startup'}, {'id', 'descriptor', 'enabled'})
         ident = identifier(record['id'])
         if type(record['enabled']) is not bool: raise CatalogError('Invalid enabled flag')
         if ident in result['ids']['features']: raise CatalogError(f'Duplicate feature ID: {ident}')
@@ -94,6 +94,12 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         descriptor = document(resource(root, record['descriptor'], '.json'))
         shape(descriptor, {'id', 'sources', 'preferences', *KINDS}, {'id'})
         if descriptor['id'] != ident: raise CatalogError(f'Descriptor ID does not match index: {ident}')
+        startup = record.get('startup', {})
+        shape(startup, set(KINDS), set())
+        for kind, item in startup.items():
+            if kind in descriptor and descriptor[kind] != item:
+                raise CatalogError(f'Conflicting startup metadata: {ident}/{kind}')
+            descriptor[kind] = item
         sources = descriptor.get('sources', [])
         if not isinstance(sources, list): raise CatalogError('Invalid sources')
         for source in sources: resource(root, source)

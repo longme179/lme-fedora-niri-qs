@@ -10,6 +10,7 @@ WallpaperPlaylistSettings 1.0 WallpaperPlaylistSettings.qml
 DisplayPage 1.0 DisplayPage.qml
 ControlLayoutPage 1.0 ControlLayoutPage.qml
 WeatherPage 1.0 WeatherPage.qml
+ClipboardPage 1.0 ClipboardPage.qml
 BehaviorPage 1.0 BehaviorPage.qml
 AboutPage 1.0 AboutPage.qml
 SettingsApplication 1.0 SettingsApplication.qml

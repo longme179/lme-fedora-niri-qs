@@ -25,7 +25,8 @@ QtObject {
         {id: "desktop", title: "Desktop widgets", detail: "Arrange desktop widgets", icon: "overview"},
         {id: "power", title: "Power", detail: "Lock, sleep, restart or shut down", icon: "power"},
         {id: "settings", title: "Settings", detail: "Open the separate settings app", icon: "settings"},
-        {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"}
+        {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"},
+        {id: "clipboard", title: "Clipboard", detail: "Search text and image history", icon: "clipboard"}
     ]
     function info(id) { return knownModules.find(item => item.id === id) || {id: id, title: id, icon: "applications", enabled: false}; }
     function clone(layout) {

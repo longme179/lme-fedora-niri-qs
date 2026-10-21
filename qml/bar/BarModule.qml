@@ -26,7 +26,7 @@ Loader {
     height: 30
     y: parent ? (parent.height - height) / 2 : 0
     sourceComponent: catalogEntry.entry ? catalogComponent : moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
-                   : ["launchpad", "launcher", "overview", "tray", "notifications", "settings", "power", "desktop"].includes(moduleId) ? actionComponent : statusComponent
+                   : ["launchpad", "launcher", "overview", "tray", "notifications", "settings", "clipboard", "power", "desktop"].includes(moduleId) ? actionComponent : statusComponent
     ModuleGestures { anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo }
     Component {
         id: catalogComponent

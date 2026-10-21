@@ -77,7 +77,8 @@ def portable_keys():
 
 def appearance_keys():
     definitions,order,_ = metadata()
-    return tuple(key for key in order if definitions[key].get('appearance') is True)
+    keys = [key for key,value in definitions.items() if value.get('appearance') is True]
+    return tuple([key for key in order if key in keys] + [key for key in keys if key not in order])
 
 
 def bar_layout():

@@ -106,6 +106,5 @@ def inject(root, enabled=True):
         (root/path).write_text('import QtQuick\nItem { objectName: "'+name+'"; implicitWidth: 40; implicitHeight: 80 }\n')
     (root/'config/feature-fixture.json').write_text(json.dumps(descriptor))
     (root/'config/features.json').write_text(json.dumps({'version': 1, 'features': [
-        {'id': 'catalogFixture', 'descriptor': 'config/feature-fixture.json', 'enabled': enabled,
-         'startup': {'settingsPage': descriptor['settingsPage']}}]}))
+        {'id': 'catalogFixture', 'descriptor': 'config/feature-fixture.json', 'enabled': enabled}]}))
     return descriptor

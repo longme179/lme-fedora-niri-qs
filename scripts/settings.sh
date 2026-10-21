@@ -16,20 +16,8 @@ while (($#)); do
     esac
     shift
 done
-case "$page" in
-    utilities|appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about) ;;
-    *)
-        catalog_index=""
-        if [[ -f "$repo_dir/config/features.json" ]]; then
-            IFS= read -r -d '' -t 3 catalog_index < "$repo_dir/config/features.json" || true
-        fi
-        if [[ "${catalog_index//[[:space:]]/}" == '{"version":1,"features":[]}' ]]; then
-            printf 'Error: unknown settings page: %s\n' "$page" >&2; exit 2
-        fi
-        python_binary="$(command -v python3 || printf /usr/bin/python3)"
-        "$python_binary" "$repo_dir/scripts/feature_catalog.py" --page "$page"
-        ;;
-esac
+python_binary="$(command -v python3 || printf /usr/bin/python3)"
+"$python_binary" "$repo_dir/scripts/feature_catalog.py" --page "$page" utilities appearance elements desktop topbar controlLayout display nightLight wallpaper weather notifications clipboard idle keybinds behavior about
 qs_binary="${LME_QS_BINARY:-}"
 if [[ -z "$qs_binary" ]]; then
     parent_binary="$(readlink -f "/proc/$PPID/exe" 2>/dev/null || true)"

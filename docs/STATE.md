@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0 baseline/harness; M1 runner/storage; M2 content types; G3 baseline repair;
   M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
 - D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
-- Current branch task: chore/agent-state, docs/tooling only; STOP when complete.
+- chore/agent-state: docs/tooling complete; STOP and await the next owner prompt.
 - M5/M6 and batch conversions need the next owner prompt. M8 moves deferred.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 

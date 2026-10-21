@@ -22,6 +22,7 @@ never another feature implementation. Composition hosts may load feature entries
 `scripts/check-architecture.sh` resolves local Python AST imports, literal QML/JS
 imports and entry URLs. `config/architecture.json` records legacy ownership,
 exact exceptions with reasons, existing cyclic edges and source-size ceilings.
+Computed imports/URLs need manual review; the guard resolves static literals.
 Remove exceptions when their edge disappears; never widen them to pass a check.
 New source files have a 250-nonblank-line cap. Existing large files may not grow;
 ratchet their recorded ceiling down when shrinking them. No tree reorganization.

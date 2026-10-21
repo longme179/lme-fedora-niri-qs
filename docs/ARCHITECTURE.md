@@ -1,5 +1,8 @@
 # LME Shell architecture — Phase 1 proposal
 
+Current authorization and gate rules: [STATE.md](STATE.md), owner reset 2026-10-21.
+They supersede the historical startup budget and per-feature review stops below.
+
 **Status at authoring:** design for approval; no Phase 2 implementation. **Date:** 2026-10-20.
 **Source checked:** `58349e7`; corrections recorded in [ARCHITECTURE_AUDIT.md](ARCHITECTURE_AUDIT.md).
 Approved order: **A7 → A4 → A1 → A2 → A3 (ONE domain pilot) → A5**. A6 is deferred.
@@ -396,5 +399,5 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D8: folder consolidation | Defer unless logical ownership still causes costly edits | Approve M8 later: better locality, more path/resource/fixture risk without new behavior |
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
-Historical Phase 1 verification covered source facts/design only; later evidence and
-current authorizations are in STATE.md; historical records are in archive/migration/. M4b converts Clipboard only; M5 and later remain unauthorized.
+Historical Phase 1 verification covered source facts/design only. Current authorizations
+are in STATE.md; historical records are in archive/migration/. M4b is merged; M5 and later need authorization.

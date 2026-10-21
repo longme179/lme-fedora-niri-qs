@@ -480,8 +480,11 @@ Clipboard's bar item, panel, Settings page and bootstrap are registered in
 Its settings schema and worker keep their existing implementations. See the
 [migration log](docs/archive/migration/MIGRATION_LOG.md#m4b--clipboard-catalog-slice--2026-10-21) for validation and startup measurements.
 
-Use `./scripts/run-gates.sh` for isolated migration checks; the
-[current agent state](docs/STATE.md) lists prerequisites, commands and results.
+Start development tasks with [current agent state](docs/STATE.md).
+`./scripts/check-architecture.sh` checks static dependencies, cycles and source sizes;
+its legacy exceptions are recorded in `config/architecture.json`.
+Use `./scripts/run-gates.sh --gates G0` for isolated checks; the
+[migration log](docs/MIGRATION_LOG.md) records final milestone summaries.
 
 ## Credits and license
 

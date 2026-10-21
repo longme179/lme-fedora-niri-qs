@@ -481,6 +481,9 @@ Preference definitions are assembled by `scripts/settings_schema.py` from descri
 fragments and `config/preferences-legacy.json`. Clipboard, weather scalar settings
 and OSD use descriptor definitions; the other 137 keys retain legacy bindings.
 Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
+`scripts/backend_actions.py` owns registered action dispatch. Its first provider,
+`scripts/launchpad_actions.py`, handles only synchronous `launchpadRun`, with narrow
+controller/preferences callbacks; all other live and demo actions retain legacy routing.
 See the [migration log](docs/MIGRATION_LOG.md) for validation.
 
 Start development tasks with [current agent state](docs/STATE.md).

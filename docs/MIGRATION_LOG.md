@@ -58,3 +58,30 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   5. Restart shell and standalone Settings; confirm all changed values persist.
   6. Check settings/lock/import-backup mode 0600, parent 0700; one backup per import, no unexpected backups.
 - STOP after M5; no startup optimization, polling change, other UI conversion or file move.
+
+## M6 — Launchpad synchronous action pilot — 2026-10-22
+- Branch `refactor/m6-launchpad-actions`, base main `948c371` (M5 already merged); no dependency on its review branch.
+- Tests: `396524f`, `9c7c1d3`, `80e21dc`; extraction/routing: `fc17698`; final docs commit records this summary.
+- Re-found baseline live branch 1735, separate demo branch 1331, launchpadJobs projection 1056 in desktop_backend.py.
+- Explicit provider list binds provide(capabilities) in the composition root; catalog currently rejects backend fields and exports UI projections only. Discovery would also need broken/disabled-index ownership policy, beyond a small validated field.
+- Only launchpadRun is registered; provider receives current-preference, controller-run and controller-snapshot callbacks. Registration reads no preferences/state and starts nothing.
+- Characterization on unchanged production: focused 52/0/4; verified G0 481/0/132 (pass/fail/skip). Initial uncommitted fixture leaked disabled state across subtests (G0 480/1/132); corrected the fixture before the tests commit.
+- Four registry contracts were N/A in baseline G0; five later registry-only cases also proved N/A against unmodified main. Delegate checkpoint 56/0/0; final focused tests plus existing completion regression 62/0/0.
+- Final gates: G0 490/0/128; G1 3/0/0; G2 4/0/0; G3 53/0/0; G6 polling 1/0/0. G4/G5 not run: outside the explicit M6 gate scope.
+- G0 skip change: four existing N/A registry cases now execute, plus five new cases; 128 remain opt-in (116 UI/Wayland/D-Bus/OpenGL, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 fake-niri). No skips count as passes.
+- Full requested gates ran once after the source commit, in disposable XDG/Sway/D-Bus. qmllint 146 files, 0 errors/71 existing warnings; architecture guard passes without new exception/ceiling growth.
+- Sanity: 10 launches/path/arm, private software-rendered session; preview main/head 812.36/789.08 ms, Settings 838.89/822.49 ms. No +100 ms/+10% threshold flag.
+- RSS at 10 s (KiB, main/head): preview QS 282336/282148, backend 25564/26240; Settings QS 234728/234284, backend 25524/26192 (backend maximum +2.65%).
+- Controller source unchanged; literal argv/Bash/terminal, detached jobs/logs/eight-job limit, disabled-live/permissive-demo, exact errors/results/order and acknowledgement/completion contracts preserved. Existing test assertions untouched.
+- Compatibility: public JSON-lines actions/results/snapshots stay unchanged; unregistered live/demo trees (including prefixes) remain. Retire their branches per ID only with provider parity and same-commit registration removal.
+- Explicit provider binding retires when Launchpad UI/catalog conversion supports backend discovery with covered ownership/fallback semantics. execution/complete/presentation fields exist; worker execution is rejected, not migrated.
+- Assessment: cheap for further synchronous domains (53-line registry, 23-line provider); each needs narrow callbacks, one composition entry, live/demo characterization and its state projection.
+- Best second candidate: launcherHistoryClear, with history clear/snapshot callbacks; app launch itself additionally needs app lookup, terminal runner and usage recording contracts.
+- Appearance profiles need preference reload/update/validation capabilities and prefix parity; Wi-Fi/recorder require a separately authorized async completion contract first. No second domain implemented.
+- Laptop checklist (real hardware needs real-session check):
+  1. From the launcher, run a saved literal-argv Launchpad entry in the main shell without a terminal; inspect its log/job status.
+  2. Run the same entry in a terminal and verify cwd, arguments and exit status.
+  3. Run from the shell Launchpad panel and standalone Settings Utilities; verify both background/terminal choices.
+  4. Disable Launchpad: live must show the existing disabled error; re-enable and retry.
+  5. In preview/demo (including Settings demo), request that entry; verify no command, log or output file is created.
+- STOP after M6; no async, executor, queue, cache, polling or power-policy changes; no merge performed.

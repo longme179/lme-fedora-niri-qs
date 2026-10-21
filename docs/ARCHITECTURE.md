@@ -108,7 +108,7 @@ The host obtains `demo`/`settings_only` from process configuration, never the re
 duplicate those rules in Python. Example: `"actionPresentation":{"launchpadRun":{"success":"status","error":"status"}}`.
 
 ```python
-# Proposed interface in scripts/backend_actions.py; callbacks are Python, not JSON.
+# Implemented interface in scripts/backend_actions.py; callbacks are Python, not JSON.
 ActionSpec(name, contexts, live, demo, execution="sync", complete=None, presentation=None)
 # Pilot provider scripts/launchpad_actions.py; injected narrow capabilities:
 ActionSpec("launchpadRun", contexts={"shell", "settings"},
@@ -118,23 +118,32 @@ ActionSpec("launchpadRun", contexts={"shell", "settings"},
 
 Each domain exports action specs and its public state projection; the composition
 root binds required services. It must not pass the entire `DesktopBackend` object.
-Provider entry names are explicit bundled descriptor references, loaded only by the
-composition root through stdlib imports; registration must not execute commands.
-For example, Launchpad's descriptor adds
+The target discovery mechanism is explicit bundled descriptor references, loaded only
+by the composition root; registration must not execute commands. A future descriptor adds
 `"backend":{"entry":"scripts/launchpad_actions.py","factory":"provide"}`;
 `provide(capabilities)` returns specs and a state callback using the existing controller.
+M6 uses the authorized explicit provider list in the composition root instead: the
+current catalog rejects backend fields and exports UI projections only. Adding provider
+discovery also requires ownership/fallback policy when the UI index is broken or disabled;
+that exceeds a small validated field. Retire this binding when Launchpad UI converts.
+The list passes only current-preference, run and snapshot callbacks. Factory execution
+and registration do not read preferences, project state or start a job.
 Context checks occur before demo/live selection, as in `handle()` today.
 Registered actions never fall back to legacy routing after an error.
 Unmigrated IDs/prefixes keep their original live **and separate demo** handlers.
 Reject duplicate ownership; do not silently shadow one dispatcher with another.
 
-The pilot is **Launchpad only**: its single central action is `launchpadRun` (1850),
-with demo no-op at 1446, existing controller at `launchpad.py`, and `launchpadJobs`
-projection at the same `feature_snapshot` call site. Preserve detached jobs, logs, eight-job per-controller limit,
+The pilot is **Launchpad only**. At base `948c371`, `launchpadRun` lived at 1735,
+the separate demo no-op at 1331, and `launchpadJobs` projection at 1056.
+M6 removes both branches; the registry routes that exact ID, and the provider projects
+jobs at the same `feature_snapshot` slot. The controller remains `launchpad.py`.
+Preserve detached jobs, logs, eight-job per-controller limit,
 literal argv, explicit Bash/terminal choice and disabled-live/permissive-demo behavior.
 No async domain migration is authorized by proving this synchronous pilot.
 
-For a future async spec, `execution="worker"` delegates to existing `start_feature()`;
+M6 accepts synchronous specs only; `execution`, `complete` and `presentation` retain
+the designed interface, with no worker/completion migration. For a future authorized
+async spec, `execution="worker"` delegates to existing `start_feature()`;
 `complete(value)` installs domain state before the unchanged result emitter publishes it.
 No new executor, queue, sampling hook, cache invalidation policy or timer is introduced.
 Existing per-action invalidation remains in place; A6 is not smuggled into this registry.
@@ -360,7 +369,8 @@ No estimates below authorize a second A3 domain or A6 work.
 - Register one action/provider; inject current preferences/controller capabilities.
   First delegate its two old branches; then route the registered ID and remove those branches.
   Keep demo snapshot initialization, Settings check and pending/result emitter ordering.
-- Gates: G0–G2 + G6; `test_upgrades.UpgradesCase.test_background_completions_each_clear_their_pending_action`
+- M6 owner scope: G0–G3 + G6 polling; `test_launchpad`, `test_backend` and
+  `test_upgrades.UpgradesCase.test_background_completions_each_clear_their_pending_action`
   guards the unchanged executor path, not proof that an async provider has been migrated.
 - Adapter: unregistered live/demo actions still use their original trees, including
   prefix semantics. Remove only the Launchpad cases when parity passes. **Review pilot
@@ -410,4 +420,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M4b is merged; M5 is implemented for owner review. M6 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5 is merged; M6 is implemented for owner review. M7 and later need authorization.

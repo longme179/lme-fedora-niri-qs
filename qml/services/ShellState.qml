@@ -156,6 +156,7 @@ QtObject {
             if (JSON.stringify(next.launcherUsage || {}) === JSON.stringify(launcherUsage)) next.launcherUsage = launcherUsage;
             if (JSON.stringify(next.preferences) === JSON.stringify(preferences)) next.preferences = preferences;
             snapshot = next;
+            FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
             backendReady = true; restartAttempts = 0;
             if (!demo && !settingsApp) {

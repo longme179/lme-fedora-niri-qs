@@ -99,9 +99,11 @@ DEFAULT_PREFERENCES = {
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
+FEATURE_CATALOG_ERROR = ''
 try:
     FEATURE_CATALOG = validate_legacy(feature_catalog(), {'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
 except CatalogError as error:
+    FEATURE_CATALOG_ERROR = str(error)
     print(f'Feature catalog: {error}', file=sys.stderr)
     FEATURE_CATALOG = empty_catalog()
 BAR_MODULES = BAR_MODULES | set(FEATURE_CATALOG['ids']['bar'])
@@ -1954,7 +1956,8 @@ class DesktopBackend:
                 raise CommandError(str(reply.get("Err", "The niri action failed")) if isinstance(reply, dict) else "Invalid niri reply")
 
 def emit(backend: DesktopBackend) -> None:
-    print(json.dumps(backend.snapshot(), ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)
+    state = dict(backend.snapshot(), catalogValidation={"error": FEATURE_CATALOG_ERROR})
+    print(json.dumps(state, ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)
 
 
 def main(argv: list[str] | None = None) -> int:

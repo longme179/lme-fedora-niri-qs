@@ -10,7 +10,7 @@ import "../theme"
 ShellRoot {
     id: root
     property bool initialized: false
-    property bool startupFailed: !!FeatureCatalog.error
+    property bool startupFailed: false
     property string requestedPage: Quickshell.env("LME_SETTINGS_PAGE") || "appearance"
     readonly property bool prepared: (FeatureCatalog.ready && Theme.ready && ShellState.backendReady) || startupFailed
     onPreparedChanged: if (prepared) { requestedPage = SettingsRegistry.page(requestedPage).key; initialized = true; }

@@ -3,6 +3,7 @@ from functools import lru_cache
 import json
 from pathlib import Path
 import re
+import signal
 import sys
 
 KINDS = {'bar': 'id', 'settingsPage': 'key', 'controlTab': 'id'}
@@ -44,6 +45,7 @@ def resource(root, value, suffix=None):
         if not path.is_file() or suffix and path.suffix != suffix:
             raise ValueError('Wrong resource type')
     except (OSError, ValueError, RuntimeError) as error:
+        if isinstance(error, CatalogError): raise
         raise CatalogError(f'Missing or escaping resource: {value}') from error
     return path
 
@@ -126,19 +128,33 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
 @lru_cache(maxsize=1)
 def catalog():
     """Only process owners cache; explicit fixture reads remain independent."""
-    return load_catalog()
+    def expired(*_): raise CatalogError('Validation timed out; using legacy entries')
+    previous = signal.signal(signal.SIGALRM, expired)
+    timer = signal.setitimer(signal.ITIMER_REAL, 3)
+    try:
+        return load_catalog()
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, *timer)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     try:
-        data = catalog()
+        try:
+            data = catalog()
+            if args and args[0] == '--page': validate_legacy(data, {'settingsPage': args[2:]})
+        except CatalogError as error:
+            if not args or args[0] != '--page': raise
+            print(f'Feature catalog: {error}', file=sys.stderr)
+            data = empty_catalog()
         if args and args[0] == '--page' and len(args) >= 2:
             page, legacy = args[1], args[2:]
-            validate_legacy(data, {'settingsPage': legacy})
             if page not in legacy and page not in [item['key'] for item in data['settingsPage']]:
                 print(f'Error: unknown settings page: {page}', file=sys.stderr)
                 return 2
+        elif args == ['--check']:
+            pass
         elif args:
             raise CatalogError('Unsupported catalog arguments')
         else:

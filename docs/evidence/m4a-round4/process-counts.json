@@ -1,0 +1,102 @@
+[
+  {
+    "page": "utilities",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "appearance",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "elements",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "desktop",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "topbar",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "controlLayout",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "display",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "nightLight",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "wallpaper",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "weather",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "notifications",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "clipboard",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "idle",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "keybinds",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "behavior",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "about",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "sample",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "sampleLong",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "Case_2-X",
+    "returncode": 0,
+    "catalog_python_processes": 0
+  },
+  {
+    "page": "absent",
+    "returncode": 2,
+    "catalog_python_processes": 1
+  }
+]

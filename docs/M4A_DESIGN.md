@@ -43,8 +43,8 @@ the reader does not create another legacy catalog or scrape source code.
   Heavy descriptor(id) is lazy/cached with read deadlines. Descriptor-only reader/QML
   startup remains an adapter; CLI new-page discovery needs its key in index startup.
   Publish data/settlement together; cache projections used by BarRegistry.info.
-- settings.sh: legacy pages use Bash; the bundled empty index needs no Python reader.
-  Unknown keys use --page: index read/match only, no descriptor/resource/deep checks.
+- settings.sh: legacy/canonical catalog HITs use Bash builtins (format: round-4 log).
+  MISS uses --page: index read/match only, no descriptor/resource/deep checks.
   Keep exit codes/messages, IPC handshake/focus/recovery. Admission is not validation.
   Explicit feature_catalog.py --check and check.sh retain bounded deep validation.
 - While legacy lists exist, a broken/timed-out catalog settles to legacy-only plus
@@ -67,9 +67,9 @@ Do not edit existing assertions. Existing fixture setup may copy the new helper.
 
 Run G0–G3 and polling-only G6 before/after in private XDG/Wayland/D-Bus sessions.
 Keep M0's mapped-window endpoint/user scripts and short owned runtime paths.
-This does not prove full feature readiness or GPU behavior. One warm session uses
-main, A/A main, pre-optimization, each commit, final empty/add/replace interleaved.
-Randomize arms per round; 30 rounds/arm/path, one excluded warm-up, fresh non-cache
+This does not prove full feature readiness or GPU behavior. Round 3 interleaves
+main/A-A, optimization commits, empty/add/replace; round 4 follows its committed
+M4A_ROUND4_PREREG.md (60 Settings/30 Preview rounds), one warm-up, fresh non-cache
 XDG dirs. Report median/IQR/min/max, 20,000 joint round-block bootstrap resamples
 of difference of medians (95% percentile CI), exploratory two-sided Mann–Whitney p.
 A/A single-run spread is not a median CI; never compare separate runs.

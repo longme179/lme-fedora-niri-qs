@@ -1,6 +1,9 @@
 """Clipboard's observable integration is pinned before catalog ownership moves."""
 import ast
 import json
+import os
+import subprocess
+import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -64,3 +67,22 @@ class ClipboardContractsCase(unittest.TestCase):
             for line in imports:
                 self.assertTrue(line.startswith(('import Qt', 'import Quickshell')) or
                     line in ('import "../components"', 'import "../services"', 'import "../theme"'), line)
+
+    def test_import_facade_accepts_saved_clipboard_ids_before_explicit_startup(self):
+        code = """
+import sys
+sys.path.insert(0, 'scripts')
+import desktop_backend as backend
+assert not backend._catalog_initialized
+layout = dict(left=['launcher'], center=['activity'], right=['clipboard', 'settings'])
+gestures = {'clipboard': {'right': 'clipboard'}}
+assert backend.validate_preference('barLayout', layout) == layout
+assert backend.validate_preference('barGestures', gestures) == gestures
+backend.initialize_catalog()
+assert backend.validate_preference('barLayout', layout) == layout
+assert backend.validate_preference('barGestures', gestures) == gestures
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            env = dict(os.environ, XDG_CONFIG_HOME=directory, XDG_STATE_HOME=directory)
+            result = subprocess.run(['python3', '-c', code], cwd=ROOT, env=env, capture_output=True, text=True, timeout=5)
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, '', ''))

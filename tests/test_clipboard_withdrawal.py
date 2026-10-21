@@ -88,6 +88,19 @@ class NativeWithdrawalCase(unittest.TestCase):
             self.assertEqual(self.world.workers(), [])
         self.assertEqual(self.world.settings.read_bytes(), original)
 
+    def test_invalid_page_anchor_never_bootstraps_clipboard(self):
+        root = self.world.root; path = root/'config/clipboard.json'
+        descriptor = json.loads(path.read_text()); descriptor['settingsPage']['after'] = 'missingPage'
+        path.write_text(json.dumps(descriptor))
+        index = root/'config/features.json'; data = json.loads(index.read_text())
+        data['features'][0]['startup']['settingsPage']['after'] = 'missingPage'
+        index.write_text(json.dumps(data))
+        with self.world.launch() as probe:
+            state = probe.wait(lambda state: state['ready'] and bool(state['status']))
+            self.assertIn('Missing settingsPage anchor', state['status'])
+            self.assertFalse(state['started']); self.assertEqual(self.world.workers(), [])
+            self.assertNotIn('clipboard', state['bars']); self.assertNotIn('clipboard', state['pages'])
+
     def test_second_entry_needs_only_own_files_and_index_record(self):
         root = self.world.root
         before = {str(path.relative_to(root)): path.read_bytes() for path in root.rglob('*') if path.is_file()}
@@ -98,7 +111,7 @@ class NativeWithdrawalCase(unittest.TestCase):
         (folder/'Bootstrap.qml').write_text('import QtQuick\nimport "../../services"\nQtObject { Component.onCompleted: ShellState.statusMessage = "slicePeerStarted" }\n')
         descriptor = dict(id='slicePeer', bar=dict(id='slicePeer', title='Slice peer', icon='applications', entry='qml/panels/SlicePeer/Bar.qml'),
             panel=dict(id='slicePeer', entry='qml/panels/SlicePeer/Panel.qml', centered=True),
-            settingsPage=dict(key='slicePeer', title='Slice peer', description='slicePeerPage', keywords='slicePeer', icon='settings', entry='qml/panels/SlicePeer/Page.qml'),
+            settingsPage=dict(key='slicePeer', title='Slice peer', description='A peer entry', keywords='slicePeer', icon='settings', entry='qml/panels/SlicePeer/Page.qml'),
             bootstrap=dict(id='slicePeer', entry='qml/panels/SlicePeer/Bootstrap.qml'),
             gesture=dict(id='slicePeer', title='Slice peer'))
         path = root/'config/slicePeer.json'; path.write_text(json.dumps(descriptor))

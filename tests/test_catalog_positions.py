@@ -74,3 +74,19 @@ class CatalogPositionCase(unittest.TestCase):
         self.assertEqual(data['panel'][0]['id'], 'catalogFixture')
         index['features'][0]['startup']['bar']['after'] = 'other'; self.index.write_text(json.dumps(index))
         with self.assertRaisesRegex(reader.CatalogError, 'Conflicting startup'): reader.load_catalog(self.root)
+
+    def test_existing_legacy_sources_gate_all_namespaces_before_bootstrap(self):
+        if not hasattr(reader, 'legacy_ids'): self.skipTest('M4b all-namespace legacy adapter absent before extraction')
+        (self.root/'qml/services').mkdir()
+        (self.root/'qml/services/ShellState.qml').write_text('QtObject { readonly property var legacyPanels: ["control", "launcher"] }')
+        (self.root/'qml/settings/SettingsRegistry.qml').write_text('QtObject { readonly property var legacyPages: [{key: "appearance"}] }')
+        self.descriptor.update(panel=dict(id='control', entry='qml/panels/CatalogFixture.qml'),
+                               bootstrap=dict(id='catalogFixture', entry='qml/panels/CatalogFixture.qml'))
+        self.save(); legacy = reader.legacy_ids(self.root)
+        self.assertEqual(legacy['panel'], ['control', 'launcher'])
+        with self.assertRaisesRegex(reader.CatalogError, 'Duplicate panel ID in legacy'):
+            reader.load_catalog(self.root, legacy=legacy)
+        self.descriptor['panel']['id'] = 'catalogFixture'
+        self.descriptor['settingsPage']['after'] = 'missingPage'; self.save()
+        with self.assertRaisesRegex(reader.CatalogError, 'Missing settingsPage anchor'):
+            reader.load_catalog(self.root, legacy=legacy)

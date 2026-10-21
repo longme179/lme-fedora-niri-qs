@@ -6,11 +6,14 @@ import re
 import signal
 import sys
 
-KINDS = {'bar': 'id', 'settingsPage': 'key', 'controlTab': 'id'}
+KINDS = {'bar': 'id', 'settingsPage': 'key', 'controlTab': 'id', 'panel': 'id', 'bootstrap': 'id', 'gesture': 'id'}
 FIELDS = {
-    'bar': {'id', 'title', 'detail', 'icon', 'entry'},
-    'settingsPage': {'key', 'title', 'icon', 'description', 'keywords', 'entry'},
-    'controlTab': {'id', 'title', 'entry', 'refresh', 'markRead'},
+    'bar': {'id', 'title', 'detail', 'icon', 'entry', 'after'},
+    'settingsPage': {'key', 'title', 'icon', 'description', 'keywords', 'entry', 'after'},
+    'controlTab': {'id', 'title', 'entry', 'refresh', 'markRead', 'after'},
+    'panel': {'id', 'entry', 'centered', 'scrim'},
+    'bootstrap': {'id', 'entry'},
+    'gesture': {'id', 'title', 'after'},
 }
 
 
@@ -19,7 +22,7 @@ class CatalogError(ValueError):
 
 
 def empty_catalog():
-    return {'version': 1, **{kind: [] for kind in KINDS}, 'preferences': {},
+    return {'version': 1, **{kind: [] for kind in KINDS}, 'preferences': {}, 'preferenceMetadata': {},
             'ids': {'features': [], **{kind: [] for kind in KINDS}},
             'all': {kind: [] for kind in KINDS}}
 
@@ -75,7 +78,41 @@ def validate_legacy(data, legacy=None, setting_keys=()):
         if collision: raise CatalogError(f'Duplicate {kind} ID in legacy: {sorted(collision)[0]}')
     collision = set(data['preferences']) & set(setting_keys)
     if collision: raise CatalogError(f'Duplicate setting in legacy: {sorted(collision)[0]}')
+    validate_positions(data, legacy or {})
     return data
+
+
+def validate_positions(data, legacy):
+    for kind, entries in data['all'].items():
+        key = KINDS[kind]; anchors = {item[key]: item.get('after') for item in entries}
+        known = set(legacy.get(kind, ())) | set(anchors)
+        for ident, after in anchors.items():
+            if after is None: continue
+            identifier(after)
+            if kind in legacy and after not in known: raise CatalogError(f'Missing {kind} anchor: {after}')
+            visited = {ident}
+            while after in anchors:
+                if after in visited: raise CatalogError(f'Cyclic {kind} position: {ident}')
+                visited.add(after); after = anchors[after]
+
+
+def legacy_ids(root):
+    """Read the existing registrations until their owners leave the legacy lists."""
+    root = Path(root); result = {}
+    sources = [('bar', 'qml/bar/BarRegistry.qml', 'legacyModules'),
+        ('settingsPage', 'qml/settings/SettingsRegistry.qml', 'legacyPages'),
+        ('gesture', 'qml/bar/BarGestures.qml', 'legacyActions'),
+        ('panel', 'qml/services/ShellState.qml', 'legacyPanels')]
+    for kind, source, field in sources:
+        path = root/source
+        if not path.exists(): continue
+        match = re.search(r'\b' + field + r':\s*\[(.*?)\]', path.read_text(), re.S)
+        if not match: raise CatalogError(f'Missing legacy registration field: {field}')
+        pattern = r'"([A-Za-z][A-Za-z0-9_-]*)"' if kind == 'panel' else r'\b' + KINDS[kind] + r': "([A-Za-z][A-Za-z0-9_-]*)"'
+        result[kind] = re.findall(pattern, match[1])
+    path = root/'config/control-grid.json'
+    if path.exists(): result['controlTab'] = [item['id'] for item in document(path)['tabs']]
+    return result
 
 
 def load_catalog(root=None, *, legacy=None, setting_keys=()):
@@ -92,7 +129,7 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         if ident in result['ids']['features']: raise CatalogError(f'Duplicate feature ID: {ident}')
         result['ids']['features'].append(ident)
         descriptor = document(resource(root, record['descriptor'], '.json'))
-        shape(descriptor, {'id', 'sources', 'preferences', *KINDS}, {'id'})
+        shape(descriptor, {'id', 'sources', 'preferences', 'preferenceMetadata', *KINDS}, {'id'})
         if descriptor['id'] != ident: raise CatalogError(f'Descriptor ID does not match index: {ident}')
         startup = record.get('startup', {})
         shape(startup, set(KINDS), set())
@@ -103,6 +140,13 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         sources = descriptor.get('sources', [])
         if not isinstance(sources, list): raise CatalogError('Invalid sources')
         for source in sources: resource(root, source)
+        metadata = descriptor.get('preferenceMetadata', {})
+        if not isinstance(metadata, dict): raise CatalogError('Invalid preference metadata')
+        for key, definition in metadata.items():
+            identifier(key)
+            shape(definition, {'type', 'default', 'min', 'max'}, {'type', 'default'})
+            if key in result['preferenceMetadata']: raise CatalogError(f'Duplicate metadata key: {key}')
+            result['preferenceMetadata'][key] = definition
         preferences = descriptor.get('preferences', {})
         if not isinstance(preferences, dict): raise CatalogError('Invalid preference fragment')
         for key, definition in preferences.items():
@@ -115,16 +159,18 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         for kind, id_key in KINDS.items():
             if kind not in descriptor: continue
             item = descriptor[kind]
-            required = {id_key, 'title', 'entry'} | ({'icon'} if kind != 'controlTab' else set())
+            required = {id_key} | ({'entry'} if kind != 'gesture' else set()) | ({'title'} if kind not in ('panel', 'bootstrap') else set()) | ({'icon'} if kind in ('bar', 'settingsPage') else set())
             shape(item, FIELDS[kind], required)
             item_id = identifier(item[id_key])
             if item_id in result['ids'][kind]: raise CatalogError(f'Duplicate {kind} ID: {item_id}')
             for key, value in item.items():
-                if key in ('refresh', 'markRead'):
+                if key in ('refresh', 'markRead', 'centered'):
                     if type(value) is not bool: raise CatalogError(f'Invalid tab flag: {key}')
+                elif key == 'scrim':
+                    if type(value) not in (int, float) or not 0 <= value <= 1: raise CatalogError('Invalid panel scrim')
                 elif not isinstance(value, str) or not value:
                     raise CatalogError(f'Invalid {kind} field: {key}')
-            resource(root, item['entry'], '.qml')
+            if 'entry' in item: resource(root, item['entry'], '.qml')
             result['ids'][kind].append(item_id)
             result['all'][kind].append(dict(item, enabled=record['enabled']))
             if record['enabled']: result[kind].append(dict(item))
@@ -185,6 +231,7 @@ def check_admission(data):
     keys = {record.get('startup', {}).get('settingsPage', {}).get('key') for record in index['features']}
     if any(page['key'] not in keys for page in data['all']['settingsPage']):
         raise CatalogError('Settings pages require startup keys in the index')
+    validate_legacy(data, legacy_ids(path.parents[1]))
     if path.read_text(encoding='utf-8') != canonical_index(index):
         raise CatalogError('Noncanonical feature index: require compact records on separate lines and literal first page keys')
 

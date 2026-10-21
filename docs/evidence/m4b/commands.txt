@@ -1,0 +1,21 @@
+Source checkout: /workspace/lme-fedora-niri-qs
+SDK: source /workspace/.lme-dev/env.sh
+
+Baseline main (production c46f934, before production edits):
+bash /workspace/.lme-dev/m4b/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4b/before --gates G0,G1,G2,G3,G4,G6
+
+Restored checkpoint b00eda0 (empty index; corrected fixture/caller):
+bash /workspace/.lme-dev/m4b/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4b/before-retry --gates G0,G1,G2,G3,G4,G6
+
+Final production e499284:
+bash /workspace/.lme-dev/m4b/run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4b/final --gates G0,G1,G2,G3,G4,G6
+
+run.sh.txt is the existing run-gates disposable-XDG/private-Sway/private-D-Bus bootstrap with external checkout/self/driver paths. driver.py.txt is the final selection. Earlier selections omit not-yet-applicable new cases; exact test commands and env vars for every stage are retained in each G*.json / summary.json. G6 always selects NativePollingCase only. No defaults of the tracked run-gates harness changed.
+
+Startup: one session, final source HEAD fixed in benchmark-driver.py.txt:
+bash /workspace/.lme-dev/m4b/benchmark-run.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --output /workspace/.lme-dev/m4b/perf-session --gates G0
+The bootstrap's --gates token is unused by the benchmark driver; this invokes clipboard_measurement.benchmark, NOT G0. It launches 40 timed rounds per arm/path, seed 241021, settings then preview, plus one excluded warm-up per arm/path. User entry scripts, persistent per-arm/path warm cache, fresh process/config/state/data/runtime, private compositor and D-Bus. Endpoint is first visible mapped nonzero window, polled every 20ms. Raw CSV contains all 240 samples with round/order/commit/start monotonic timestamps. No gates, builds or profiling ran concurrently.
+
+Statistic verification: read samples.csv by path/arm in round order; assert each 40-element list equals results.json raw values; recompute describe() and compare() for every arm versus main and M4a using tests/catalog_statistics.py (20,000 seeded joint round-block bootstrap resamples). All fields compared exactly after JSON round-trip. No exclusions, second decisive run or threshold adjustment.
+
+Raw-log preservation: reverted-attempt/G0.log keeps unittest's trailing space before its failing subtest output (line 521). The final whitespace check excludes only that generated raw file; source, tests, docs and the other evidence retain the normal diff check. No raw failure output was normalized.

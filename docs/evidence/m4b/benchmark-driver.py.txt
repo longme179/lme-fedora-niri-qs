@@ -1,0 +1,8 @@
+from pathlib import Path
+import json, subprocess
+from clipboard_measurement import benchmark
+head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+assert head=='e499284b83e7a2977a1e01aa7bdb01ba8d134569',head
+assert not subprocess.check_output(['git','status','--porcelain'],text=True).strip()
+result=benchmark(Path('/workspace/.lme-dev/m4b/startup'), head)
+print(json.dumps(result['verdict'],indent=2),flush=True)

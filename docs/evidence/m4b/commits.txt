@@ -1,0 +1,18 @@
+96a0145 docs: define Clipboard slice, position rule and startup budget
+4742cb5 test(clipboard): pin order, search, schema and dependency contracts
+36a0eae test(clipboard): characterize native entry, worker isolation and annotation
+ba4cdaf test(catalog): pin Clipboard withdrawal and approved legacy ownership expectations
+67f4396 test(catalog): cover anchored projections and preserve popup fixture entry
+f88c2e7 refactor(catalog): add positioned entries and shared panel bootstrap adapters
+18d2eff test(clipboard): prepare startup comparison and saved gesture withdrawal coverage
+f819194 test(clipboard): preserve imported preference validation for saved IDs
+67a4056 test(clipboard): pin demo dispatch and initial preview panel contract
+63eb2e9 refactor(catalog): share panel admission with preview dispatch
+49ec1ee test(catalog): require legacy namespace validation before feature bootstrap
+674da15 refactor(catalog): validate existing namespaces before bootstrap admission
+f97b4e8 test(catalog): await existing catalog barrier before registry observations
+572f76c refactor(clipboard): replace legacy registrations with one positioned descriptor
+b48818e Revert "refactor(clipboard): replace legacy registrations with one positioned descriptor"
+2bc4cb1 test(settings): include valid catalog verdict in delayed backend fixture
+b00eda0 refactor(demo): use shared Clipboard panel admission and visibility
+e499284 refactor(clipboard): convert the complete slice with compatible entry contexts

@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-LEGACY = 'utilities appearance elements desktop topbar controlLayout display nightLight wallpaper weather notifications clipboard idle keybinds behavior about'.split()
+LEGACY = 'utilities appearance elements desktop topbar controlLayout display nightLight wallpaper weather notifications idle keybinds behavior about'.split()
 
 
 def canonical(index):

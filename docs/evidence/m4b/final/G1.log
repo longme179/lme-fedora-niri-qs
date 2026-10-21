@@ -1,0 +1,8 @@
+test_preview_alias_panels_and_clean_exit (migration_startup.SmokeCase.test_preview_alias_panels_and_clean_exit) ... ok
+test_standalone_demo_settings_open_close_reopen (migration_startup.SmokeCase.test_standalone_demo_settings_open_close_reopen) ... ok
+test_native_first_frame_and_repeated_gear_requests (test_settings_startup.NativeSettingsStartupCase.test_native_first_frame_and_repeated_gear_requests) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 10.944s
+
+OK

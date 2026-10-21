@@ -16,7 +16,7 @@ ShellRoot {
     id: root
     readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
     readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1"
-    Component.onCompleted: ClipboardState.start()
+    FeatureBootstrap {}
     LazyLoader {
         id: authentication
         active: !ShellState.demo
@@ -135,7 +135,7 @@ ShellRoot {
         // Closing visuals must not block another bar click or the application beneath.
         mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
         WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        PopupBackdrop { parent: ShellState.liquidBlurEnabled ? liquidScrim.contentItem : overlay.contentItem; anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: ["launchpad", "launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13 }
+        PopupBackdrop { parent: ShellState.liquidBlurEnabled ? liquidScrim.contentItem : overlay.contentItem; anchors.fill: parent; shown: ShellState.panelOpen || ShellState.activityOpen; strength: FeatureCatalog.panel(ShellState.panelKind)?.scrim ?? (["launchpad", "launcher", "power", "overview"].includes(ShellState.panelKind) ? .40 : ShellState.panelKind === "tray" ? 0 : .13) }
         MouseArea { anchors.fill: parent; onClicked: ShellState.closePanels() }
         Item {
             x: -overlay.viewport.x
@@ -148,11 +148,11 @@ ShellRoot {
             SlideLoader {
                 id: panelLoader
                 exitToEdge: true
-                readonly property bool centered: ["launchpad", "launcher", "power", "overview", "clipboard"].includes(ShellState.panelKind)
+                readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview"].includes(ShellState.panelKind)
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
                 shown: ShellState.panelOpen && !ShellState.activityOpen
-                content: ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
-                               : ShellState.panelKind === "notifications" ? notificationsComponent : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : ShellState.panelKind === "clipboard" ? clipboardComponent : powerComponent
+                content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
+                               : ShellState.panelKind === "notifications" ? notificationsComponent : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, parent.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : 500
                 x: centered ? (parent.width - width) / 2
@@ -171,7 +171,6 @@ ShellRoot {
     Component { id: powerComponent; PowerMenu {} }
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
     Component { id: overviewComponent; Overview {} }
-    Component { id: clipboardComponent; ClipboardPanel {} }
     Component { id: wifiComponent; WifiPanel {} }
     LazyLoader {
         active: !ShellState.demo && (ShellState.snapshot.capture || {}).status === "ready"

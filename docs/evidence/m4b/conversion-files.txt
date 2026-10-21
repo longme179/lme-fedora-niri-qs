@@ -1,0 +1,17 @@
+A	config/clipboard.json
+M	config/features.json
+M	native-features-demo.qml
+M	qml/bar/BarGestures.qml
+M	qml/bar/BarModule.qml
+M	qml/bar/BarRegistry.qml
+A	qml/bar/ClipboardButton.qml
+A	qml/panels/ClipboardFeature.qml
+M	qml/panels/DesktopPreview.qml
+M	qml/services/FeatureCatalog.qml
+M	qml/services/ShellState.qml
+M	qml/settings/SettingsRegistry.qml
+M	qml/settings/SettingsView.qml
+M	qml/settings/qmldir
+M	scripts/desktop_backend.py
+M	scripts/settings.sh
+M	shell.qml

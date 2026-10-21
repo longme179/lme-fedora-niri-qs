@@ -1,0 +1,6 @@
+test_live_protocol_panel_lifecycle_operations_devices_and_reconnect (test_polling_ui.NativePollingCase.test_live_protocol_panel_lifecycle_operations_devices_and_reconnect) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 19.927s
+
+OK

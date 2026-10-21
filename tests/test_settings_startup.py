@@ -30,7 +30,7 @@ class SettingsStartupCase(unittest.TestCase):
             preferences['liquidGlass']['opacity'] = .63
             state = dict(apps=[], system={}, niri={'available': False, 'windows': [], 'workspaces': []},
                          preferences=preferences, platform={'niriVersion': 'niri 26.04', 'popupBlurSupported': True},
-                         batterySaver={'active': saver}, lastResult={'action': 'ready', 'ok': True, 'sequence': 0})
+                         batterySaver={'active': saver}, catalogValidation={'error': ''}, lastResult={'action': 'ready', 'ok': True, 'sequence': 0})
             (root/'snapshot.json').write_text(json.dumps(state))
             (scripts/'desktop_backend.py').write_text('''import json, sys, time
 from pathlib import Path

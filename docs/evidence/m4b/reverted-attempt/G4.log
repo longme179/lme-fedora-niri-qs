@@ -1,0 +1,70 @@
+test_real_text_and_image_capture_copy_pause_and_clear (test_clipboard.NativeClipboardCase.test_real_text_and_image_capture_copy_pause_and_clear) ... ok
+test_watchers_stop_when_the_service_is_killed_without_cleanup (test_clipboard.NativeClipboardCase.test_watchers_stop_when_the_service_is_killed_without_cleanup) ... ok
+test_search_and_keyboard_copy_use_real_clipboard (test_clipboard.ClipboardInterfaceCase.test_search_and_keyboard_copy_use_real_clipboard) ... FAIL
+test_live_screenshot_toast_launches_editor_with_a_preserved_image_copy (test_image_annotation_ui.AnnotationInterfaceCase.test_live_screenshot_toast_launches_editor_with_a_preserved_image_copy) ... ok
+test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not (test_image_annotation_ui.AnnotationInterfaceCase.test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not) ... FAIL
+test_annotation_of_existing_images_preserves_source_and_uses_selected_editor (test_capture_night.CaptureNightCase.test_annotation_of_existing_images_preserves_source_and_uses_selected_editor) ... ok
+test_backend_annotation_worker_reports_success_and_rejects_stale_session (test_capture_night.CaptureNightCase.test_backend_annotation_worker_reports_success_and_rejects_stale_session) ... ok
+test_backend_routes_image_annotation_with_saved_editor_and_demo_is_isolated (test_capture_night.CaptureNightCase.test_backend_routes_image_annotation_with_saved_editor_and_demo_is_isolated) ... ok
+test_capture_native_modes_private_path_and_pending_timeout (test_capture_night.CaptureNightCase.test_capture_native_modes_private_path_and_pending_timeout) ... ok
+test_clock_boundaries_and_midnight_schedule (test_capture_night.CaptureNightCase.test_clock_boundaries_and_midnight_schedule) ... ok
+test_closed_capture_cannot_publish_a_late_ocr_result (test_capture_night.CaptureNightCase.test_closed_capture_cannot_publish_a_late_ocr_result) ... ok
+test_existing_image_annotation_rejects_remote_paths_invalid_images_and_missing_editors (test_capture_night.CaptureNightCase.test_existing_image_annotation_rejects_remote_paths_invalid_images_and_missing_editors) ... ok
+test_external_annotation_uses_persistent_flattened_png_and_allowlisted_argv (test_capture_night.CaptureNightCase.test_external_annotation_uses_persistent_flattened_png_and_allowlisted_argv) ... ok
+test_external_editor_launch_failure_keeps_saved_image_and_transfer_preference (test_capture_night.CaptureNightCase.test_external_editor_launch_failure_keeps_saved_image_and_transfer_preference) ... ok
+test_missing_editor_stale_token_or_bad_editor_does_not_export_or_spawn (test_capture_night.CaptureNightCase.test_missing_editor_stale_token_or_bad_editor_does_not_export_or_spawn) ... ok
+test_missing_gamma_dependency_and_readonly_settings (test_capture_night.CaptureNightCase.test_missing_gamma_dependency_and_readonly_settings) ... ok
+test_night_light_owns_only_its_worker_and_reports_gamma_failure (test_capture_night.CaptureNightCase.test_night_light_owns_only_its_worker_and_reports_gamma_failure) ... ok
+test_ocr_validates_installed_languages_and_uses_edited_image (test_capture_night.CaptureNightCase.test_ocr_validates_installed_languages_and_uses_edited_image) ... ok
+test_png_validation_and_export_never_overwrites (test_capture_night.CaptureNightCase.test_png_validation_and_export_never_overwrites) ... ok
+test_preferences_migrate_profiles_and_old_control_layouts (test_capture_night.CaptureNightCase.test_preferences_migrate_profiles_and_old_control_layouts) ... ok
+test_sunset_coordinates_polar_days_and_location_errors (test_capture_night.CaptureNightCase.test_sunset_coordinates_polar_days_and_location_errors) ... ok
+test_drawing_undo_redo_flattened_redaction_export_clipboard_and_real_ocr (test_capture_night.NativeCaptureCase.test_drawing_undo_redo_flattened_redaction_export_clipboard_and_real_ocr) ... ok
+test_shell_capture_opens_independent_editor_and_can_reopen_after_close (test_capture_night.NativeCaptureCase.test_shell_capture_opens_independent_editor_and_can_reopen_after_close) ... ok
+test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history (test_clipboard_entry.NativeEntryCase.test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history) ... ok
+test_demo_preview_clipboard_dispatch_keeps_history_without_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_clipboard_dispatch_keeps_history_without_worker) ... ok
+test_demo_preview_never_start_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_never_start_worker) ... ok
+test_image_click_routes_through_capture_service (test_clipboard_entry.NativeEntryCase.test_image_click_routes_through_capture_service) ... ok
+test_preview_initial_clipboard_env_opens_history_without_worker (test_clipboard_entry.NativeEntryCase.test_preview_initial_clipboard_env_opens_history_without_worker) ... ok
+test_settings_cli_search_reuse_and_first_page_ready_without_worker (test_clipboard_entry.NativeEntryCase.test_settings_cli_search_reuse_and_first_page_ready_without_worker) ... ok
+test_host_registration_removal_and_metadata_only_schema (test_clipboard_withdrawal.ClipboardOwnershipCase.test_host_registration_removal_and_metadata_only_schema) ... ok
+test_disable_preserves_layout_preferences_schema_history_and_reenable (test_clipboard_withdrawal.NativeWithdrawalCase.test_disable_preserves_layout_preferences_schema_history_and_reenable) ... ok
+test_disabled_saved_gesture_ids_remain_valid (test_clipboard_withdrawal.NativeWithdrawalCase.test_disabled_saved_gesture_ids_remain_valid) ... ok
+test_invalid_page_anchor_never_bootstraps_clipboard (test_clipboard_withdrawal.NativeWithdrawalCase.test_invalid_page_anchor_never_bootstraps_clipboard) ... ok
+test_second_entry_needs_only_own_files_and_index_record (test_clipboard_withdrawal.NativeWithdrawalCase.test_second_entry_needs_only_own_files_and_index_record) ... ok
+
+======================================================================
+FAIL: test_search_and_keyboard_copy_use_real_clipboard (test_clipboard.ClipboardInterfaceCase.test_search_and_keyboard_copy_use_real_clipboard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_clipboard.py", line 277, in test_search_and_keyboard_copy_use_real_clipboard
+    wait(lambda s: s.get('visible') is False)
+  File "/workspace/lme-fedora-niri-qs/tests/test_clipboard.py", line 266, in wait
+    raise AssertionError('Clipboard UI did not reach expected state: ' + log.read())
+AssertionError: Clipboard UI did not reach expected state:   INFO: Launching config: "/workspace/lme-fedora-niri-qs/native-features-demo.qml"
+  INFO: Shell ID: "a32323c00ecfcd27b3457272dc9ad50f" Path ID "a32323c00ecfcd27b3457272dc9ad50f"
+  INFO: Saving logs to "/workspace/.lme-dev/m4b/after/runtime/quickshell/by-id/kg71sbb9nt/log.qslog"
+  WARN scene: @native-features-demo.qml[70:65]: Unable to assign [undefined] to bool
+  INFO: Configuration Loaded
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("niri", "msg", "--json", "event-stream")
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+  WARN qt.qpa.wayland: Ignoring unexpected wl_keyboard.leave event. wl_surface argument does not match the current focus This is most likely a compositor bug
+
+
+======================================================================
+FAIL: test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not (test_image_annotation_ui.AnnotationInterfaceCase.test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/test_image_annotation_ui.py", line 110, in test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not
+    self.assertNotIn(error, log.read()); log.seek(0)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Unable to assign' unexpectedly found in '  INFO: Launching config: "/workspace/lme-fedora-niri-qs/native-features-demo.qml"\n  INFO: Shell ID: "a32323c00ecfcd27b3457272dc9ad50f" Path ID "a32323c00ecfcd27b3457272dc9ad50f"\n  INFO: Saving logs to "/workspace/.lme-dev/m4b/after/runtime/quickshell/by-id/pl715cb9nt/log.qslog"\n  WARN scene: @native-features-demo.qml[70:65]: Unable to assign [undefined] to bool\n  INFO: Configuration Loaded\n  WARN: Process failed to start, likely because the binary could not be found. Command: QList("niri", "msg", "--json", "event-stream")\n'
+
+----------------------------------------------------------------------
+Ran 34 tests in 57.965s
+
+FAILED (failures=2)

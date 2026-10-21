@@ -1,0 +1,14 @@
+Evidence directory: /workspace/.lme-dev/m4b/retry-focus
+test_native_first_frame_and_repeated_gear_requests (test_settings_startup.NativeSettingsStartupCase.test_native_first_frame_and_repeated_gear_requests) ... ok
+test_backend_reconnect_keeps_the_loaded_window_and_theme (test_settings_startup.SettingsStartupCase.test_backend_reconnect_keeps_the_loaded_window_and_theme) ... ok
+test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme (test_settings_startup.SettingsStartupCase.test_first_frame_uses_saved_glass_smoked_or_saver_without_default_theme) ... ok
+test_initial_backend_failure_shows_a_recoverable_window (test_settings_startup.SettingsStartupCase.test_initial_backend_failure_shows_a_recoverable_window) ... ok
+test_repeated_gear_requests_queue_the_last_page_without_restarting (test_settings_startup.SettingsStartupCase.test_repeated_gear_requests_queue_the_last_page_without_restarting) ... ok
+test_search_and_keyboard_copy_use_real_clipboard (test_clipboard.ClipboardInterfaceCase.test_search_and_keyboard_copy_use_real_clipboard) ... ok
+test_live_screenshot_toast_launches_editor_with_a_preserved_image_copy (test_image_annotation_ui.AnnotationInterfaceCase.test_live_screenshot_toast_launches_editor_with_a_preserved_image_copy) ... ok
+test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not (test_image_annotation_ui.AnnotationInterfaceCase.test_screenshot_notification_opens_annotation_and_ordinary_icons_do_not) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 24.018s
+
+OK

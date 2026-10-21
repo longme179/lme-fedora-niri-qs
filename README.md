@@ -475,6 +475,11 @@ Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses
 tool lookup and errors), `scripts/storage.py` (private JSON writes and file locks),
 and `scripts/content_types.py` (the text byte limit and image signature recognition).
 The original backend, display and Clipboard imports remain available for compatibility.
+Clipboard's bar item, panel, Settings page and bootstrap are registered in
+[config/clipboard.json](config/clipboard.json) through [config/features.json](config/features.json).
+Its settings schema and worker keep their existing implementations. See the
+[migration log](docs/MIGRATION_LOG.md#m4b--clipboard-catalog-slice--2026-10-21) for validation and startup measurements.
+
 Use `./scripts/run-gates.sh` for isolated migration checks; the
 [migration log](docs/MIGRATION_LOG.md) lists prerequisites, commands and results.
 

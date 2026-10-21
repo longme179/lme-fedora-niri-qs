@@ -59,7 +59,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
-from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, validate_legacy
+from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
 
 
 DEFAULT_PREFERENCES = {
@@ -98,7 +98,7 @@ DEFAULT_PREFERENCES = {
                   "right": ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]},
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
-               "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
+               "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR = ''
 FEATURE_CATALOG = empty_catalog()
 _catalog_initialized = False
@@ -110,7 +110,7 @@ def initialize_catalog():
     if _catalog_initialized: return
     _catalog_initialized = True
     try:
-        FEATURE_CATALOG = validate_legacy(feature_catalog(), {'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
+        FEATURE_CATALOG = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
     except CatalogError as error:
         FEATURE_CATALOG_ERROR = str(error)
         print(f'Feature catalog: {error}', file=sys.stderr)
@@ -260,6 +260,7 @@ class Applications:
 
 
 def validate_preference(key: str, value: Any) -> Any:
+    if key in ("barLayout", "barGestures"): initialize_catalog()
     if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
@@ -360,8 +361,9 @@ def validate_preference(key: str, value: Any) -> Any:
     if key == "desktopWidgets": return desktop_widgets(value)
     if key == "barGestures":
         actions = {"default", "none", "control", "audio", "devices", "agenda", "system", "wifi", "notifications", "activity",
-                   "launchpad", "launcher", "clipboard", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
+                   "launchpad", "launcher", "settings", "power", "overview", "workspaceBoard", "mute", "dnd",
                    "volumeUp", "volumeDown", "mediaToggle", "mediaNext", "mediaPrevious", "workspaceNext", "workspacePrevious"}
+        actions |= set(FEATURE_CATALOG["ids"]["gesture"])
         gestures = {"left", "right", "middle", "scrollUp", "scrollDown"}
         if (isinstance(value, dict) and set(value) <= BAR_MODULES
                 and all(isinstance(bindings, dict) and set(bindings) <= gestures

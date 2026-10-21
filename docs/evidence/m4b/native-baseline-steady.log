@@ -1,0 +1,10 @@
+Evidence directory: /workspace/.lme-dev/m4b/native-baseline-steady
+test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history (test_clipboard_entry.NativeEntryCase.test_bar_ipc_gesture_close_reopen_and_capture_switch_keep_history) ... ok
+test_demo_preview_never_start_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_never_start_worker) ... ok
+test_image_click_routes_through_capture_service (test_clipboard_entry.NativeEntryCase.test_image_click_routes_through_capture_service) ... ok
+test_settings_cli_search_reuse_and_first_page_ready_without_worker (test_clipboard_entry.NativeEntryCase.test_settings_cli_search_reuse_and_first_page_ready_without_worker) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 8.931s
+
+OK

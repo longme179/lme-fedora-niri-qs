@@ -9,6 +9,14 @@ import "qml/services"
 import "qml/panels"
 
 ShellRoot {
+    id: root
+    property bool clipboardInitialPending: Quickshell.env("LME_TEST_CLIPBOARD_UI") === "1"
+    function initializeClipboard() {
+        if (!clipboardInitialPending || Quickshell.env("LME_TEST_FEATURES") !== "1" || !FeatureCatalog.ready) return;
+        clipboardInitialPending = false;
+        ClipboardState.start(); ShellState.togglePanel("clipboard");
+    }
+    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(root.initializeClipboard); } }
     function find(item, name) { if (!item) return null; if (item.objectName === name) return item; for (const child of item.children || []) { const match = find(child, name); if (match) return match; } return null; }
     function mediaStatus(name) {
         const timeline = find(surface,name), wave = find(timeline,"mediaProgressWave");
@@ -18,12 +26,12 @@ ShellRoot {
     }
     Component.onCompleted: {
         if (Quickshell.env("LME_TEST_FEATURES") !== "1") { Qt.quit(); return; }
-        if (Quickshell.env("LME_TEST_CLIPBOARD_UI") === "1") { ClipboardState.start(); ShellState.clipboardOpen = true; }
+        if (clipboardInitialPending) initializeClipboard();
         else ShellState.activityOpen = true;
     }
     IpcHandler {
         target: "featuresFixture"
-        function clipboardStatus(): string { return JSON.stringify({ready: ClipboardState.ready, capturing: ClipboardState.capturing, visible: ShellState.clipboardOpen, count: ClipboardState.entries.length, query: ClipboardState.query, kind: ClipboardState.filter, preview: clipboardLoader.item ? clipboardLoader.item.previewOpen : false, focused: clipboardLoader.item ? clipboardLoader.item.searchFocused : false, pinned: ClipboardState.entries.filter(i => i.pinned).length, images: ClipboardState.entries.filter(i => i.kind === "image").length, lastResult: ShellState.lastResult, error: ClipboardState.state.error || ClipboardState.messageError}); }
+        function clipboardStatus(): string { return JSON.stringify({ready: ClipboardState.ready, capturing: ClipboardState.capturing, visible: ShellState.isPanelOpen("clipboard"), count: ClipboardState.entries.length, query: ClipboardState.query, kind: ClipboardState.filter, preview: clipboardLoader.item ? clipboardLoader.item.previewOpen : false, focused: clipboardLoader.item ? clipboardLoader.item.searchFocused : false, pinned: ClipboardState.entries.filter(i => i.pinned).length, images: ClipboardState.entries.filter(i => i.kind === "image").length, lastResult: ShellState.lastResult, error: ClipboardState.state.error || ClipboardState.messageError}); }
         function openClipboard(): void { ShellState.togglePanel("clipboard"); }
         function openNotifications(): void { ShellState.togglePanel("notifications"); }
         function annotationStatus(): string { return JSON.stringify({ready: ShellState.backendReady, notifications: Notifications.history, visible: ShellState.notificationsOpen, lastResult: ShellState.lastResult}); }
@@ -67,7 +75,7 @@ ShellRoot {
         color: "#22212c"
         Item { id: surface; anchors.fill: parent
         ActivityIsland { id: island }
-        Loader { id: clipboardLoader; anchors.centerIn: parent; active: ShellState.clipboardOpen; sourceComponent: Component { ClipboardPanel {} }
+        Loader { id: clipboardLoader; anchors.centerIn: parent; active: ShellState.isPanelOpen("clipboard"); sourceComponent: Component { ClipboardPanel {} }
             width: 620; height: 710 }
         Loader { id: controlLoader; anchors.centerIn: parent; active: ShellState.controlOpen; sourceComponent: Component { ControlDashboard {} }
             width: 620; height: 760 }

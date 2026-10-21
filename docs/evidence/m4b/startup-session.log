@@ -1,0 +1,27 @@
+Evidence directory: /workspace/.lme-dev/m4b/perf-session
+settings: 5/40 rounds, 3 arms
+settings: 10/40 rounds, 3 arms
+settings: 15/40 rounds, 3 arms
+settings: 20/40 rounds, 3 arms
+settings: 25/40 rounds, 3 arms
+settings: 30/40 rounds, 3 arms
+settings: 35/40 rounds, 3 arms
+settings: 40/40 rounds, 3 arms
+preview: 5/40 rounds, 3 arms
+preview: 10/40 rounds, 3 arms
+preview: 15/40 rounds, 3 arms
+preview: 20/40 rounds, 3 arms
+preview: 25/40 rounds, 3 arms
+preview: 30/40 rounds, 3 arms
+preview: 35/40 rounds, 3 arms
+preview: 40/40 rounds, 3 arms
+{
+  "settings": {
+    "lower_bound_ms": -2.4359569993066543,
+    "met": true
+  },
+  "preview": {
+    "lower_bound_ms": -23.494414925198726,
+    "met": true
+  }
+}

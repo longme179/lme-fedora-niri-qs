@@ -6,3 +6,4 @@ BarSurface 1.0 BarSurface.qml
 
 singleton BarGestures 1.0 BarGestures.qml
 ModuleGestures 1.0 ModuleGestures.qml
+ActionBarButton 1.0 ActionBarButton.qml

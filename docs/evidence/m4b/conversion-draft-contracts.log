@@ -1,0 +1,76 @@
+test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened (test_catalog_positions.CatalogPositionCase.test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened) ... ok
+test_anchor_validation_including_disabled_self_cycles_and_missing (test_catalog_positions.CatalogPositionCase.test_anchor_validation_including_disabled_self_cycles_and_missing) ... ok
+test_existing_legacy_sources_gate_all_namespaces_before_bootstrap (test_catalog_positions.CatalogPositionCase.test_existing_legacy_sources_gate_all_namespaces_before_bootstrap) ... ok
+test_new_presentation_resources_are_contained_and_metadata_is_inert (test_catalog_positions.CatalogPositionCase.test_new_presentation_resources_are_contained_and_metadata_is_inert) ... ok
+test_startup_extensions_match_descriptor_and_preserve_page_admission (test_catalog_positions.CatalogPositionCase.test_startup_extensions_match_descriptor_and_preserve_page_admission) ... ok
+test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged (test_feature_catalog.CatalogContractCase.test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged) ... ok
+test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults (test_feature_catalog.CatalogContractCase.test_empty_catalog_preserves_exact_bar_page_tab_metadata_and_defaults) ... ok
+test_empty_index_and_disabled_ids_retain_schema_but_hide_ui (test_feature_catalog.CatalogContractCase.test_empty_index_and_disabled_ids_retain_schema_but_hide_ui) ... ok
+test_rejects_duplicate_feature_projection_and_preference_ids (test_feature_catalog.CatalogContractCase.test_rejects_duplicate_feature_projection_and_preference_ids) ... ok
+test_rejects_invalid_version_shapes_and_duplicate_json_keys (test_feature_catalog.CatalogContractCase.test_rejects_invalid_version_shapes_and_duplicate_json_keys) ... ok
+test_rejects_legacy_collisions_even_when_disabled (test_feature_catalog.CatalogContractCase.test_rejects_legacy_collisions_even_when_disabled) ... ok
+test_rejects_mismatched_descriptor_and_executable_metadata (test_feature_catalog.CatalogContractCase.test_rejects_mismatched_descriptor_and_executable_metadata) ... ok
+test_rejects_missing_resources_traversal_absolute_and_symlink_escape (test_feature_catalog.CatalogContractCase.test_rejects_missing_resources_traversal_absolute_and_symlink_escape) ... ok
+test_enabled_inline_page_and_disabled_page_admission (test_catalog_cli.CatalogCliCase.test_enabled_inline_page_and_disabled_page_admission) ... ok
+test_explicit_check_still_rejects_missing_descriptor (test_catalog_cli.CatalogCliCase.test_explicit_check_still_rejects_missing_descriptor) ... ok
+test_legacy_and_empty_index_need_no_python (test_catalog_cli.CatalogCliCase.test_legacy_and_empty_index_need_no_python) ... ok
+test_legacy_pages_and_empty_unknown_keep_messages_and_codes (test_catalog_cli.CatalogCliCase.test_legacy_pages_and_empty_unknown_keep_messages_and_codes) ... ok
+test_native_fixture_index_carries_the_complete_presentation (test_catalog_cli.CatalogCliCase.test_native_fixture_index_carries_the_complete_presentation) ... ok
+test_unknown_key_lookup_does_not_read_descriptor_or_resource (test_catalog_cli.CatalogCliCase.test_unknown_key_lookup_does_not_read_descriptor_or_resource) ... ok
+test_bar_and_preference_keys_are_not_pages (test_catalog_admission.AdmissionCase.test_bar_and_preference_keys_are_not_pages) ... ok
+test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key (test_catalog_admission.AdmissionCase.test_check_accepts_canonical_and_rejects_format_that_can_hide_a_key) ... ok
+test_check_rejects_unsafe_page_keys (test_catalog_admission.AdmissionCase.test_check_rejects_unsafe_page_keys) ... ok
+test_check_requires_page_keys_in_startup_summary (test_catalog_admission.AdmissionCase.test_check_requires_page_keys_in_startup_summary) ... ok
+test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits (test_catalog_admission.AdmissionCase.test_copied_checkout_traces_zero_catalog_python_for_legacy_and_catalog_hits) ... ok
+test_disabled_entry_matches_python (test_catalog_admission.AdmissionCase.test_disabled_entry_matches_python) ... ok
+test_enabled_keys_and_prefix_substring_keys_match_python (test_catalog_admission.AdmissionCase.test_enabled_keys_and_prefix_substring_keys_match_python) ... ok
+test_legacy_pages_match_python_even_with_broken_index (test_catalog_admission.AdmissionCase.test_legacy_pages_match_python_even_with_broken_index) ... ok
+test_missing_malformed_and_empty_index_match_python (test_catalog_admission.AdmissionCase.test_missing_malformed_and_empty_index_match_python) ... ok
+test_import_does_not_validate_and_backend_initialization_validates_once (test_catalog_backend_startup.CatalogBackendStartupCase.test_import_does_not_validate_and_backend_initialization_validates_once) ... ok
+test_backend_capture_do_not_import_clipboard_and_ui_uses_shared_layers (test_clipboard_integration.ClipboardContractsCase.test_backend_capture_do_not_import_clipboard_and_ui_uses_shared_layers) ... ok
+test_import_facade_accepts_saved_clipboard_ids_before_explicit_startup (test_clipboard_integration.ClipboardContractsCase.test_import_facade_accepts_saved_clipboard_ids_before_explicit_startup) ... ok
+test_order_default_layout_search_and_gesture_choices (test_clipboard_integration.ClipboardContractsCase.test_order_default_layout_search_and_gesture_choices) ... FAIL
+test_preferences_limits_and_content_compatibility_stay_legacy (test_clipboard_integration.ClipboardContractsCase.test_preferences_limits_and_content_compatibility_stay_legacy) ... ok
+test_host_registration_removal_and_metadata_only_schema (test_clipboard_withdrawal.ClipboardOwnershipCase.test_host_registration_removal_and_metadata_only_schema) ... ok
+
+======================================================================
+FAIL: test_order_default_layout_search_and_gesture_choices (test_clipboard_integration.ClipboardContractsCase.test_order_default_layout_search_and_gesture_choices)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/m4b-conversion-draft/tests/test_clipboard_integration.py", line 37, in test_order_default_layout_search_and_gesture_choices
+    self.assertEqual(state['bars'], [item['id'] for item in expected['bars']])
+AssertionError: Lists differ: ['lau[153 chars]clock', 'desktop', 'power', 'settings', 'privacy'] != ['lau[153 chars]clock', 'desktop', 'power', 'settings', 'privacy', 'clipboard']
+
+Second list contains 1 additional elements.
+First extra element 18:
+'clipboard'
+
+  ['launchpad',
+   'launcher',
+   'overview',
+   'workspaces',
+   'windowTitle',
+   'activity',
+   'media',
+   'resources',
+   'tray',
+   'notifications',
+   'audio',
+   'network',
+   'battery',
+   'clock',
+   'desktop',
+   'power',
+   'settings',
+-  'privacy']
+?           ^
+
++  'privacy',
+?           ^
+
++  'clipboard']
+
+----------------------------------------------------------------------
+Ran 34 tests in 3.665s
+
+FAILED (failures=1)

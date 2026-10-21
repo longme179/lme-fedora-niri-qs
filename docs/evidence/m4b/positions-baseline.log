@@ -1,0 +1,9 @@
+test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened (test_catalog_positions.CatalogPositionCase.test_active_schema_collision_and_duplicate_ui_rules_are_not_weakened) ... skipped 'M4b position metadata not implemented on baseline'
+test_anchor_validation_including_disabled_self_cycles_and_missing (test_catalog_positions.CatalogPositionCase.test_anchor_validation_including_disabled_self_cycles_and_missing) ... skipped 'M4b position metadata not implemented on baseline'
+test_new_presentation_resources_are_contained_and_metadata_is_inert (test_catalog_positions.CatalogPositionCase.test_new_presentation_resources_are_contained_and_metadata_is_inert) ... skipped 'M4b position metadata not implemented on baseline'
+test_startup_extensions_match_descriptor_and_preserve_page_admission (test_catalog_positions.CatalogPositionCase.test_startup_extensions_match_descriptor_and_preserve_page_admission) ... skipped 'M4b position metadata not implemented on baseline'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK (skipped=4)

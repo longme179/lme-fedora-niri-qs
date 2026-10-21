@@ -22,6 +22,7 @@ QtObject {
     readonly property bool popupBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool liquidBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && !batterySaverActive && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property var legacyPanels: ["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "activity", "wifi"]
     property string panelKind: "control"
     property bool launchpadOpen: false
     property bool launcherOpen: false
@@ -32,7 +33,7 @@ QtObject {
     property string settingsPage: "appearance"
     property bool trayOpen: false
     property bool overviewOpen: false
-    property bool clipboardOpen: false
+    property bool catalogPanelOpen: false
     property bool activityOpen: false
     property bool wifiOpen: false
     property real activityAnchorX: -1
@@ -46,7 +47,7 @@ QtObject {
     property bool authenticationActive: false
     property var pendingActions: ({})
     property real trayAnchorX: -1
-    readonly property bool panelOpen: launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || clipboardOpen || activityOpen || wifiOpen
+    readonly property bool panelOpen: catalogPanelOpen || launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || activityOpen || wifiOpen
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -71,9 +72,11 @@ QtObject {
         return focused && focused.title ? focused.title : root.shellName;
     }
 
+    function isPanelOpen(name) { return FeatureCatalog.panel(name) ? catalogPanelOpen && panelKind === name : root[name + "Open"] === true; }
     function closePanels() {
+        catalogPanelOpen = false;
         launchpadOpen = false; launcherOpen = false; controlOpen = false; notificationsOpen = false;
-        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; clipboardOpen = false; activityOpen = false; wifiOpen = false;
+        powerOpen = false; settingsOpen = false; trayOpen = false; overviewOpen = false; activityOpen = false; wifiOpen = false;
     }
     function togglePanel(name, screen) {
         if (authenticationActive) return;
@@ -81,8 +84,15 @@ QtObject {
             openSettingsPage("appearance");
             return;
         }
+        if (FeatureCatalog.panel(name)) {
+            const wasOpen = isPanelOpen(name);
+            closePanels();
+            if (screen) panelScreen = screen;
+            panelKind = name; catalogPanelOpen = !wasOpen;
+            return;
+        }
         const key = name + "Open";
-        if (!["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "clipboard", "activity", "wifi"].includes(name)) return;
+        if (!legacyPanels.includes(name)) return;
         const wasOpen = root[key];
         closePanels();
         if (screen) panelScreen = screen;
@@ -91,7 +101,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)
+        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "idle", "keybinds", "behavior", "about"].includes(page)
                 && !(FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page)) return;
         closePanels(); settingsPage = page;
         if (demo) { panelKind = "settings"; settingsOpen = true; }

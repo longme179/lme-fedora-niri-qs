@@ -25,6 +25,9 @@ class CatalogContractCase(unittest.TestCase):
         expected = json.loads((REPO/'tests/fixtures/catalog-legacy.json').read_text())
         with session() as probe:
             state = probe.wait(lambda state: len(state['pages']) == len(expected['pages']))
+            for kind in ('bars', 'pages'):
+                state[kind] = [{key: value for key, value in entry.items()
+                                if key not in ('entry', 'after')} for entry in state[kind]]
             self.assertEqual({key: state[key] for key in expected}, expected)
 
     def test_cli_invalid_page_message_exit_and_missing_argument_are_unchanged(self):

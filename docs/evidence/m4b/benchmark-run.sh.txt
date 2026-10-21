@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# Run migration checks only inside a disposable compositor/session.
+set -euo pipefail
+repo_dir="/workspace/lme-fedora-niri-qs"
+if [[ "${1:-}" != --inside ]]; then
+    output=""; env_file=""; pointer_dir=""; gates=G0,G1,G2,G3,G4,G5,G6; startup_runs=0
+    while (($#)); do
+        case "$1" in
+            --output|--env-file|--pointer-dir|--gates|--startup-runs)
+                (($# >= 2)) || { printf 'Missing value for %s\n' "$1" >&2; exit 2; }
+                case "$1" in
+                    --output) output="$2" ;; --env-file) env_file="$2" ;;
+                    --pointer-dir) pointer_dir="$2" ;; --gates) gates="$2" ;;
+                    --startup-runs) startup_runs="$2" ;;
+                esac
+                shift ;;
+            --help|-h)
+                printf 'Usage: scripts/run-gates.sh [--output NEW_DIR] [--env-file FILE] [--pointer-dir DIR] [--gates G0,G1,...] [--startup-runs 5]\n'
+                exit 0 ;;
+            *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
+        esac
+        shift
+    done
+    [[ "$startup_runs" =~ ^[0-9]+$ && "$startup_runs" -le 10 ]] || exit 2
+    [[ "$gates" =~ ^G[0-6](,G[0-6])*$ ]] || exit 2
+    if [[ -n "$env_file" ]]; then source "$env_file"; fi
+    if [[ -z "$output" ]]; then output="$(mktemp -d "${TMPDIR:-/tmp}/lme-gates.XXXXXX")";
+    else mkdir -- "$output"; fi
+    output="$(cd -- "$output" && pwd -P)"
+    chmod 700 "$output"
+    export LME_GATE_OUTPUT="$output" LME_GATE_REPO="$repo_dir" LME_GATE_SET="$gates" LME_GATE_STARTUP_RUNS="$startup_runs"
+    unset DISPLAY WAYLAND_DISPLAY SWAYSOCK DBUS_SESSION_BUS_ADDRESS
+    for key in ${!LME_TEST_@}; do unset "$key"; done
+    unset LME_SHELL_PREVIEW LME_SHELL_SETTINGS LME_QS_BINARY LME_SETTINGS_PAGE
+    export XDG_CONFIG_HOME="$output/config" XDG_STATE_HOME="$output/state" XDG_CACHE_HOME="$output/cache"
+    export XDG_DATA_HOME="$output/data" XDG_RUNTIME_DIR="$output/runtime"
+    mkdir -m 700 "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_RUNTIME_DIR"
+    export DBUS_SYSTEM_BUS_ADDRESS="unix:path=$output/no-system-bus" NIRI_SOCKET="$output/no-niri"
+    export QT_QPA_PLATFORM=wayland QT_QUICK_BACKEND=rhi QSG_RHI_BACKEND=opengl LIBGL_ALWAYS_SOFTWARE=1
+    export LME_SHELL_DEMO=1 WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1
+    if [[ -n "$pointer_dir" ]]; then
+        export LME_TEST_POINTER="$pointer_dir/pointer-click" LME_TEST_DRAG="$pointer_dir/pointer-drag"
+        if [[ -x "$pointer_dir/pointer-right" ]]; then export LME_TEST_POINTER_RIGHT="$pointer_dir/pointer-right"; fi
+    fi
+    for binary in sway swaymsg dbus-run-session quickshell python3 qmllint; do
+        command -v "$binary" >/dev/null || { printf 'Missing tool: %s\n' "$binary" >&2; exit 2; }
+    done
+    printf 'Evidence directory: %s\n' "$output"
+    exec dbus-run-session -- bash "/workspace/.lme-dev/m4b/benchmark-run.sh" --inside
+fi
+[[ -d "${LME_GATE_OUTPUT:-}/runtime" && -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] || exit 2
+cat > "$LME_GATE_OUTPUT/sway.conf" <<'EOF'
+xwayland disable
+output HEADLESS-1 mode 1920x1080@60Hz scale 1
+output * bg #1e202d solid_color
+seat seat0 fallback true
+focus_follows_mouse no
+EOF
+sway --config "$LME_GATE_OUTPUT/sway.conf" > "$LME_GATE_OUTPUT/sway.log" 2>&1 &
+sway_pid=$!
+cleanup() {
+    if [[ -n "${SWAYSOCK:-}" ]]; then swaymsg -s "$SWAYSOCK" exit >/dev/null 2>&1 || true; fi
+    kill "$sway_pid" 2>/dev/null || true
+    wait "$sway_pid" 2>/dev/null || true
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
+for ((attempt=0; attempt<100; attempt++)); do
+    for socket in "$XDG_RUNTIME_DIR"/wayland-*; do
+        if [[ -S "$socket" ]]; then export WAYLAND_DISPLAY="${socket##*/}"; break; fi
+    done
+    for socket in "$XDG_RUNTIME_DIR"/sway-ipc.*.sock; do
+        if [[ -S "$socket" ]]; then export SWAYSOCK="$socket"; break; fi
+    done
+    if [[ -n "${WAYLAND_DISPLAY:-}" && -n "${SWAYSOCK:-}" ]]; then break; fi
+    kill -0 "$sway_pid" 2>/dev/null || { cat "$LME_GATE_OUTPUT/sway.log" >&2; exit 2; }
+    sleep .05
+done
+[[ -n "${SWAYSOCK:-}" ]] || { printf 'Private Sway did not start\n' >&2; exit 2; }
+cd -- "$repo_dir"
+export PYTHONPATH="$repo_dir/tests:$repo_dir/scripts${PYTHONPATH:+:$PYTHONPATH}"
+python3 "/workspace/.lme-dev/m4b/benchmark-driver.py"

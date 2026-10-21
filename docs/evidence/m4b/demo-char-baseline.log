@@ -1,0 +1,8 @@
+Evidence directory: /workspace/.lme-dev/m4b/demo-char-baseline
+test_demo_preview_clipboard_dispatch_keeps_history_without_worker (test_clipboard_entry.NativeEntryCase.test_demo_preview_clipboard_dispatch_keeps_history_without_worker) ... ok
+test_preview_initial_clipboard_env_opens_history_without_worker (test_clipboard_entry.NativeEntryCase.test_preview_initial_clipboard_env_opens_history_without_worker) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 3.749s
+
+OK

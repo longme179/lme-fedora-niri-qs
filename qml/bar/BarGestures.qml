@@ -7,14 +7,15 @@ QtObject {
     // Gesture defaults follow Noctalia; execution uses LME's existing actions.
     readonly property var gestures: ["left", "right", "middle", "scrollUp", "scrollDown"]
     readonly property var labels: ["Left click", "Right click", "Middle click", "Scroll up", "Scroll down"]
-    readonly property var actions: [
+    readonly property var actions: FeatureCatalog.project("gesture", legacyActions, "id")
+    readonly property var legacyActions: [
         {id: "default", title: "Default"}, {id: "none", title: "Do nothing"},
         {id: "control", title: "Control center"}, {id: "audio", title: "Audio controls"},
         {id: "devices", title: "Devices"}, {id: "agenda", title: "Agenda"}, {id: "system", title: "System monitor"},
         {id: "wifi", title: "Wi-Fi"}, {id: "notifications", title: "Notifications"},
         {id: "activity", title: "Activity Island"}, {id: "launcher", title: "Applications"},
         {id: "launchpad", title: "Launchpad"},
-        {id: "clipboard", title: "Clipboard"}, {id: "settings", title: "Settings"}, {id: "power", title: "Power menu"},
+        {id: "settings", title: "Settings"}, {id: "power", title: "Power menu"},
         {id: "overview", title: "niri overview"}, {id: "workspaceBoard", title: "Workspace board"},
         {id: "mute", title: "Toggle mute"}, {id: "dnd", title: "Toggle Do Not Disturb"},
         {id: "volumeUp", title: "Volume +5%"}, {id: "volumeDown", title: "Volume −5%"},

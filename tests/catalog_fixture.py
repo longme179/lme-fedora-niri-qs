@@ -34,7 +34,7 @@ ShellRoot {
     IpcHandler {
         target: "catalogFixture"
         function state(): string {
-            return JSON.stringify({bars: BarRegistry.modules, defaults: BarRegistry.defaults,
+            return JSON.stringify({registriesReady: FeatureCatalog.settled, bars: BarRegistry.modules, defaults: BarRegistry.defaults,
                 pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs, agenda: ControlRegistry.agendaTabs,
                 barLoaded: find(bar.item, "injectedBar"), pageLoaded: find(page.item, "injectedPage"),
                 tabLoaded: find(center.item, "injectedTab")});
@@ -86,7 +86,7 @@ def session(native=False, prepare=None):
         process = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
         try:
             probe = Probe(root, entry, env, log)
-            probe.wait(lambda state: len(state['tabs']) >= 6)
+            probe.wait(lambda state: state['registriesReady'] and len(state['tabs']) >= 6)
             yield probe
         finally:
             process.terminate(); process.wait(timeout=6)
@@ -108,5 +108,20 @@ def inject(root, enabled=True):
     record = {'id': 'catalogFixture', 'descriptor': 'config/feature-fixture.json', 'enabled': enabled}
     if (root/'catalog-fixture.qml').exists():
         record['startup'] = {kind: descriptor[kind] for kind in ('bar', 'settingsPage', 'controlTab')}
-    (root/'config/features.json').write_text(json.dumps({'version': 1, 'features': [record]}))
+    index = root/'config/features.json'
+    existing = json.loads(index.read_text())['features'] if index.exists() else []
+    index.write_text(json.dumps({'version': 1, 'features': [record] +
+        [item for item in existing if item['id'] != record['id']]}))
     return descriptor
+
+
+def legacy_expected():
+    """Frozen metadata minus only ownership declared by the shipped catalog."""
+    import sys
+    sys.path.insert(0, str(REPO/'scripts'))
+    from feature_catalog import load_catalog
+    expected = json.loads((REPO/'tests/fixtures/catalog-legacy.json').read_text())
+    catalog = load_catalog(REPO)
+    for kind, source, key in [('bars', 'bar', 'id'), ('pages', 'settingsPage', 'key'), ('tabs', 'controlTab', 'id')]:
+        expected[kind] = [item for item in expected[kind] if item[key] not in catalog['ids'][source]]
+    return expected

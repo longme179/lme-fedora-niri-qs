@@ -1,0 +1,7 @@
+Evidence directory: /workspace/.lme-dev/m4a-r3/projection-green
+test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish (test_catalog_projection.NativeCatalogProjectionCase.test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.844s
+
+OK

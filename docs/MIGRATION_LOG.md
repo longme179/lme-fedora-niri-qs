@@ -803,6 +803,9 @@ reader rejection, existing Settings failure recovery and valid-catalog readiness
 
 ## M4a review — cost attribution, a/b and failure recovery — 2026-10-21
 
+Historical checkpoint: round 3 below supersedes this startup acceptance analysis.
+Pairwise A/A P95 is not a confidence interval for a median.
+
 **Branch stays `refactor/m4a-feature-catalog`; no merge, no M4b, no real feature conversion.**
 Review baseline `f2b11c1`; comparison main `186354a`; a = `e60bacf`; b = `a09fefb`.
 **Verdict: a/b functional, D1 target NOT demonstrated. c is not implemented.**
@@ -1044,3 +1047,282 @@ A same-count full-conversion synthetic or lower-noise laptop run could separate 
 inflation and VM variability, but neither was substituted for the agreed hybrid
 benchmark to turn this verdict green. No c, merge, M4b, polling/power policy change,
 installer change or real-session manipulation follows from this report.
+
+
+## M4a review round 3 — serial launch cost and D1 — 2026-10-21
+
+**D1 NOT satisfied. Stop for owner decision. No merge, M4b or aggregate c.**
+This section supersedes the previous review's startup acceptance analysis. Its
+single-run pairwise A/A P95 is not the uncertainty of a median of 15 observations.
+No numbers from separate benchmark sessions are combined below.
+
+### Commits and preserved behavior
+
+Branch: `refactor/m4a-feature-catalog`; main verified remotely at `186354a`.
+Production checkpoints: a `92cb0d8`, b `01f9bde`, c `8eabc20`.
+Later harness/docs commits do not change the application source used for final arms.
+
+- `cd6fe22`: three CLI characterization tests pass against unchanged production
+  (`f7b39b9` application tree): legacy admission and unknown-page messages,
+  enabled/disabled index pages and explicit deep-check failure. See baseline log.
+- `cd37626`, `5711956`, `cc810b4`, `5302c3d`: randomized measurement/statistics,
+  replacement fixture and its count/order contract, payload accounting and invalid
+  launch rejection. New helpers remain stdlib and below the 250-line cap.
+- a: legacy pages use Bash; the bundled empty index needs no catalog Python reader.
+  Unknown keys use an index-only lookup, no descriptor/resource reads. The native
+  fixture supplies full startup metadata; reader and fault fixtures retain their
+  descriptor-only inputs. The original contract/fault assertions are untouched.
+- b: backend initialization validates once, before preferences/layout validation;
+  importing the backend does not read catalog files. It runs in the existing
+  backend process, concurrent with QML startup. No worker/process/polling is added.
+- c: one publication object updates data/settlement together; `BarRegistry.info`
+  reads a registry property cache. A copied-checkout probe records **100 extra
+  projections before c, zero after c** for 100 lookups; lazy reads do not republish.
+
+No real feature is converted. `config/features.json` remains the same empty index.
+Legacy order, visuals, cadence, settings lock/merge/atomic writes and public IPC
+contracts are unchanged. Intended admission/diagnostic differences: a new catalog
+page needs its key in index startup metadata for CLI discovery; descriptor-only
+reader/QML compatibility remains. Invalid resources are diagnosed by backend/QML
+rather than the launcher's deep check. The explicit `--check` still rejects them.
+Existing legacy pages require no catalog Python on cold launch; pre-existing
+visible-window focus/recovery helpers retain their Python use and handshake.
+
+### Rejected attempts and gate accounting
+
+`40eb39a` failed G3 (47/3/0): the changed fixture gave a partial startup summary,
+so QML correctly used that summary without its descriptor's bar/tab entries.
+It was reverted in `406b1ea`, then replaced by a complete native fixture in a.
+No assertion/timeout was weakened. The complete-summary fixture contract now pins
+this down. The reverted reader/fault fixture inputs are still unchanged in a.
+
+A restored-baseline G1 run had two IPC errors: its socket pathname was **112 bytes**,
+above Unix `sun_path`'s 108-byte capacity. Harness-only `ece65c3` keeps owned XDG
+runtime/config/state directories under short `/tmp/startup-*` roots and leaves logs
+under the requested evidence path. G1 then reran: **3/0/0**, 10.640 seconds. Other
+restored gates were green; this harness failure is not a product pass or a skip.
+The first isolated counter-test invocation omitted its opt-in and skipped one test;
+it is not counted as passed. Its subsequent opted-in red/green runs are retained.
+
+Cells below are **passed / failed / skipped; wall seconds**. G0 with skips is
+completed-with-skips, not an unqualified gate pass. Full commands, environment,
+every skipped test/reason, rejected output and unchanged-source hashes are in
+[gates.json](evidence/m4a-round3/gates.json). G6 is the authorized polling-only
+regression, not the unrelated Launchpad suites. The before set for b is after a;
+the before set for c is after b, plus the passing replacement-model characterization.
+
+| Checkpoint | G0 | G1 | G2 | G3 | G6 polling |
+| --- | --- | --- | --- | --- | --- |
+| Initial f7b39b9 | 410/0/115; 72.828 | 3/0/0; 10.892 | 4/0/0; 38.381 | 50/0/0; 120.386 | 1/0/0; 19.933 |
+| Restored baseline | 415/0/115; 72.625 | 3/0/0; 10.640 | 4/0/0; 37.439 | 50/0/0; 120.525 | 1/0/0; 19.793 |
+| a — 92cb0d8 | 418/0/115; 73.067 | 3/0/0; 10.853 | 4/0/0; 38.019 | 50/0/0; 117.643 | 1/0/0; 19.795 |
+| b — 01f9bde | 419/0/115; 72.407 | 3/0/0; 10.502 | 4/0/0; 37.302 | 50/0/0; 116.178 | 1/0/0; 19.992 |
+| c — 8eabc20 | 420/0/116; 72.117 | 3/0/0; 10.380 | 4/0/0; 37.754 | 51/0/0; 116.169 | 1/0/0; 20.103 |
+
+G0 410/0/115 → 420/0/116: ten new unit tests pass (six CLI, two statistics,
+one backend-owner, one replacement-model). The one additional default skip is
+`test_catalog_projection.NativeCatalogProjectionCase.test_module_lookup_does_not_reproject_and_lazy_reads_do_not_republish`
+(reason: private Wayland batched catalog projection); it executes and passes in G3.
+Both original `NativeCatalogCase` tests still skip by default and execute in G3:
+`test_copied_checkout_injects_bar_page_tab_without_host_edits` and
+`test_copied_checkout_disabled_entry_retains_identity_without_ui`.
+G3 51 = 14 unchanged pre-catalog tests + 10 original catalog tests + 22 unchanged
+fault tests + four compact/lazy tests + one new projection test; zero skips.
+All G0 lint runs scan 142 QML files (including touched files and callers): zero
+errors, 71 warnings, unchanged. G0 wall times above cover check.sh; separately
+timed qmllint adds about 16 seconds per G0 run (exact times in JSON). No existing
+assertion was edited.
+
+### After-optimization monotonic attribution (diagnostic, not acceptance samples)
+
+Five instrumented launches per final variant/path, entirely in scratch copies.
+Python uses `monotonic_ns`; the existing scratch Qt clock uses `steady_clock` on
+the same host clock. Only raw traces/phase summaries are committed, no production
+instrumentation. [Traces](evidence/m4a-round3/monotonic-traces.json),
+[phase medians](evidence/m4a-round3/attribution.json).
+Each cell is milliseconds unless it states count/bytes. E=empty, A=additive,
+R=replace. Phase medians are not additive; readers/Qt work overlap. Spawn-to-first
+marker includes dispatch/scheduler wait and tracer imports, not pure fork/exec CPU.
+
+The earlier ~35 ms validation figure summed CLI (~9.85), QML reader (~15.15) and
+backend (~9.65) phases; only the CLI share was serial before Quickshell. It was
+not 35 ms of serial CLI validation. Those old figures explain the earlier report;
+they are not mixed with this session's startup deltas.
+
+| Phase | Preview E | Preview A | Preview R | Settings E | Settings A | Settings R |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Catalog CLI processes | 0 | 0 | 0 | 0 | 0 | 1 |
+| CLI spawn→first marker | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 17.264 |
+| CLI imports | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 4.514 |
+| CLI index lookup total (read/parse/cheap checks) | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.574 |
+| CLI deep validation | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Backend spawn→first marker | 203.059 | 201.954 | 180.007 | 63.871 | 60.996 | 60.657 |
+| Backend imports/setup | 50.553 | 46.743 | 49.065 | 45.267 | 43.254 | 42.030 |
+| Backend file reads / bytes | 1 / 28 | 72 / 25304 | 72 / 24893 | 1 / 28 | 72 / 25304 | 72 / 24893 |
+| Backend read | 0.018 | 0.757 | 0.755 | 0.013 | 0.682 | 0.743 |
+| Backend JSON parse | 0.025 | 0.688 | 0.586 | 0.018 | 0.592 | 0.598 |
+| Backend deep validation (including path/stat checks) | 0.279 | 11.352 | 12.360 | 0.198 | 10.967 | 10.239 |
+| QML file reads / bytes | 1 / 28 | 1 / 16952 | 1 / 16541 | 1 / 28 | 1 / 16952 | 1 / 16541 |
+| QML async read request→callback (queue + I/O) | 140.872 | 138.009 | 114.767 | 4.514 | 4.666 | 4.476 |
+| QML JSON parse | 0.028 | 0.253 | 0.255 | 0.021 | 0.204 | 0.288 |
+| QML cheap structural validation | 0.023 | 0.071 | 0.056 | 0.022 | 0.046 | 0.069 |
+| QML assembly | 0.000 | 0.441 | 0.492 | 0.000 | 0.356 | 0.423 |
+| Registry projection calls | 6 | 6 | 6 | 3 | 3 | 3 |
+| Registry projection CPU | 0.058 | 0.210 | 0.125 | 0.020 | 0.123 | 0.096 |
+| Synchronous publication/binding | 0.000 | 19.852 | 11.375 | 0.000 | 0.144 | 0.139 |
+| Settings host→prepared barrier | n/a | n/a | n/a | 112.471 | 125.024 | 117.901 |
+| Additional wait beyond backend/theme ready | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| Settings view construction | n/a | n/a | n/a | 116.178 | 137.922 | 117.835 |
+
+Settings R's CLI additionally reads **one index / 16,541 bytes**, read 0.024 ms,
+parse 0.203 ms. No descriptor/deep check runs in it. The serial bootstrap/import
+is ~21.8 ms, lookup ~0.6 ms: removing legacy CLI entries brings this process back.
+The backend remains the sole deep validator; a nonempty QML catalog waits for its
+verdict before executable resource loading. Zero *additional* catalog barrier
+wait does not make backend validation free: backend-ready includes that work.
+Preview publication still includes ~20 ms of dependent UI work for A, even though
+JS projection is ~0.2 ms. Caching removes repeated projection calls, not dependent
+UI construction. These traces locate work; they do not fully explain a difference
+of end-to-end medians by summing overlapping phase medians.
+
+### One randomized interleaved experiment
+
+One private Sway/D-Bus session; **30 timed rounds × 11 arms × 2 paths = 660 samples**.
+All arms occur once per round, randomized with seed 241021. Paths form two blocks
+in the same session; every comparison uses that path's main observations in this
+session. One excluded warm-up per arm/path, warm OS page cache and reused per-arm
+XDG cache (including shader/Qt caches); fresh process/config/state/data/runtime
+for every launch. No other task test/profiler/build ran during timed rounds.
+Shared host scheduling is uncontrolled. AMD EPYC 9V74, five visible CPUs, four-CPU
+quota (`400000 100000`), 32 GiB cgroup limit, Linux 6.18.55, Python 3.12.14,
+Qt 6.8.2, Quickshell 0.3.2; headless Sway pixman + Qt OpenGL llvmpipe. CPU governor
+and power-supply state are **not exposed by this container**; no governor/power
+state was changed. Machine/load observations before and after are in the JSON.
+
+User entries: `start.sh --preview --config migration-checkout` and
+`settings.sh --page appearance`; monotonic launch→first mapped visible nonzero
+Sway window, polled every 20 ms (M0 endpoint). This does not measure full-feature
+readiness or guarantee identical first-frame content after conversion.
+
+Arms: main/A-A `186354a`, pre `f7b39b9`, a `92cb0d8`, b `01f9bde`, final/c
+`8eabc20`. Application files are identical at `5302c3d` (only the benchmark helper
+was hardened afterwards), and remain unchanged by this documentation checkpoint.
+
+Both synthetic modes contain **71 descriptors**: 19 bar entries, 16 pages, six
+tabs, 30 single-boolean preference fragments, one shared inert QML resource.
+A appends to legacy: total 38/32/12. R removes legacy QML/JSON registrations and
+backend bar IDs in the copied checkout, restores the original IDs/order through
+the catalog, and **removes CLI legacy page admission too**: total 19/16/6.
+R retains original bar/Settings component factories in the copy so first-frame
+rendering work is not replaced by inert widgets. Neither mode measures actual
+converted-feature URL loaders/bootstrap/workers, realistic schema payloads,
+diverse resource graphs, tab content execution, lazy first-use cost or real GPU.
+The lower R preview number is not evidence that fully migrated features start
+faster; the mapped endpoint can precede complete catalog-driven content.
+
+Statistics: 20,000 seeded **joint round-block bootstrap** resamples; report the
+percentile 95% CI of **difference of medians**, not median of paired differences.
+A/A is a separate arm with its own 30 launches. Mann–Whitney is two-sided with
+average ties and continuity correction (normal approximation), exploratory and
+uncorrected for multiple comparisons. It tests ranks, not the paired-median
+estimand; it is not the acceptance criterion. No pairwise P95 is used as a CI.
+
+[Raw CSV](evidence/m4a-round3/samples.csv), [all values/method/commits/statistics](evidence/m4a-round3/measurements.json).
+[Exact commands/bootstrap](evidence/m4a-round3/commands.txt) and [arm list](evidence/m4a-round3/arms.json) are retained.
+CSV was checked: exactly 30 observations per arm/path, all 11 arms in each round,
+and all values identical to the JSON samples. CSV line endings are normalized to LF,
+with every field unchanged; both byte hashes are recorded. All timed launches were checked for
+configuration/IPC failure, catalog diagnostics, reference/type errors and loops.
+
+#### Preview — milliseconds; delta vs main
+
+| Arm | Median | IQR | Min | Max | Δ median | 95% CI of Δ | Mann–Whitney p |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| main | 585.5 | 48.7 | 542.4 | 743.1 | +0.0 | [+0.0, +0.0] | 1 |
+| main-aa | 581.5 | 44.8 | 545.3 | 768.6 | -4.0 | [-20.9, +8.8] | 0.9941 |
+| pre-empty | 581.6 | 64.8 | 532.5 | 689.2 | -3.9 | [-23.3, +27.2] | 0.7618 |
+| pre-add | 585.6 | 51.9 | 547.4 | 655.6 | +0.1 | [-18.8, +17.2] | 0.7731 |
+| a-empty | 585.0 | 57.3 | 528.0 | 655.0 | -0.6 | [-21.4, +23.1] | 0.8534 |
+| a-add | 595.3 | 44.5 | 534.4 | 655.4 | +9.8 | [-17.3, +25.7] | 0.4825 |
+| b-empty | 576.4 | 62.1 | 533.4 | 661.6 | -9.1 | [-26.6, +10.7] | 0.7062 |
+| b-add | 604.4 | 49.8 | 531.5 | 674.9 | +18.9 | [-6.8, +32.5] | 0.1858 |
+| final-empty | 593.5 | 45.3 | 533.5 | 774.0 | +8.0 | [-16.9, +23.6] | 0.6627 |
+| final-add | 599.2 | 53.6 | 529.6 | 769.7 | +13.7 | [-7.4, +32.1] | 0.3183 |
+| final-replace | 560.7 | 52.3 | 507.8 | 706.4 | -24.9 | [-46.0, -1.9] | 0.02068 |
+
+#### Settings — milliseconds; delta vs main
+
+| Arm | Median | IQR | Min | Max | Δ median | 95% CI of Δ | Mann–Whitney p |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| main | 607.3 | 50.3 | 553.5 | 705.0 | +0.0 | [+0.0, +0.0] | 1 |
+| main-aa | 606.4 | 53.2 | 569.0 | 677.7 | -0.9 | [-22.4, +18.6] | 0.7283 |
+| pre-empty | 622.6 | 50.3 | 573.7 | 890.8 | +15.3 | [-0.6, +42.3] | 0.01327 |
+| pre-add | 689.1 | 44.8 | 635.8 | 783.1 | +81.8 | [+58.6, +104.2] | 3.82e-10 |
+| a-empty | 607.1 | 49.0 | 549.6 | 719.4 | -0.2 | [-21.2, +20.3] | 1 |
+| a-add | 643.9 | 41.6 | 596.5 | 829.7 | +36.6 | [+17.4, +55.2] | 3.831e-05 |
+| b-empty | 608.3 | 38.2 | 550.5 | 681.4 | +1.0 | [-18.9, +19.6] | 0.6414 |
+| b-add | 646.2 | 50.6 | 593.3 | 803.0 | +39.0 | [+14.5, +60.0] | 0.0001681 |
+| final-empty | 599.9 | 28.6 | 577.3 | 710.9 | -7.4 | [-24.2, +10.2] | 0.9823 |
+| final-add | 652.1 | 46.2 | 589.5 | 756.6 | +44.8 | [+23.7, +59.5] | 1.019e-05 |
+| final-replace | 664.8 | 51.3 | 637.0 | 1006.8 | +57.5 | [+33.9, +82.2] | 1.287e-09 |
+
+### Acceptance and owner options — STOP
+
+| Required comparison | Median delta | 95% CI | Rule | Verdict |
+| --- | ---: | --- | --- | --- |
+| Empty preview | +8.0 ms | [-16.9, +23.6] | Includes 0 | Pass |
+| Empty Settings | -7.4 ms | [-24.2, +10.2] | Includes 0 | Pass |
+| Replace preview | -24.9 ms | [-46.0, -1.9] | Upper ≤50 ms | Pass |
+| Replace Settings | +57.5 ms | [+33.9, +82.2] | Upper ≤50 ms | **Fail** |
+
+The empty rule passes by inclusion of zero, **not** by an established ≤10 ms
+upper bound. A/A median-difference CIs are preview [-20.9,+8.8] and Settings
+[-22.4,+18.6] ms; these describe uncertainty in this experiment, not a universal
+noise threshold. Settings R's upper bound exceeds the budget by **32.2 ms**.
+No acceptance threshold, arm or sample was changed after inspecting results.
+
+1. **Accept this cost explicitly:** Settings main 607.3 → replace 664.8 ms;
+   +57.5 ms (95% CI +33.9…+82.2), ~9.5% median increase. The owner could accept
+   this evidence/change the budget; this does not itself authorize M4b.
+2. **Build-time aggregate c (not implemented/measured):** only ~1.9 ms of measured
+   Settings R read/parse work (CLI + backend + QML) and ~0.4 ms assembly are direct
+   aggregation opportunities here, versus a 32.2 ms upper-bound budget gap. Merely
+   aggregating JSON leaves ~21.8 ms CLI bootstrap/import and ~10.2 ms backend
+   validation. Those are phase budgets, not a new predicted CI; do not assume c
+   meets the rule. A more ambitious prototype needs separate approval.
+3. **QML metadata, D1 alternative (not implemented/measured):** untouched main is
+   the measured reference, 585.5 ms preview / 607.3 ms Settings. Keeping startup
+   metadata/page admission static could avoid the returning ~22 ms CLI process
+   and runtime publication; retaining the new backend/schema model may still cost
+   time. That reference is not a completed catalog-compatible prototype or a
+   promised delta/CI. Recommend comparing this approach before investing in c
+   solely to save JSON I/O; it trades JSON-driven UI registration for startup cost.
+
+### Adapters and retirement conditions
+
+- Legacy bar/page/tab arrays and append projection remain. Remove each converted
+  registration in the same conversion commit; no bulk conversion here. Retire the
+  hybrid path only after the last legacy registration and its fixtures migrate.
+- Descriptor-only QML/reader startup reads remain; remove only after every live
+  record has complete index startup metadata and old-format fixtures/callers are
+  deliberately retired. CLI new-page discovery already requires that metadata.
+- `feature_catalog.py --page KEY [LEGACY...]` keeps the optional legacy arguments
+  as a CLI adapter; retire them only when all callers migrate and the owner agrees
+  to dropping this public compatibility form. `--check` remains a deep check.
+- Registry APIs, numeric controlTab/named env mapping, Settings openPage visible
+  reply/startupPending, and existing import/CLI facades remain. This phase gives no
+  permission to retire them; require a caller audit and explicit compatibility
+  decision first. Backend owner initialization precedes preference validation.
+
+### Laptop checklist — needs real-session check
+
+1. Start the unchanged empty-catalog shell; compare bar order/labels/layout.
+2. Open Settings via Gear; verify the saved appearance is used on the first frame.
+3. Repeat Gear during startup and after opening; use `settings.sh --page clipboard`
+   then `--page appearance`; confirm one visible Settings instance and correct pages.
+4. Open/close Control Center; try audio/devices/agenda/system routes and monitor.
+5. Run `start.sh --preview` separately and close it; verify the live shell is intact.
+
+No real GPU/backlight/Bluetooth/suspend validation is claimed. No polling, power
+policy, installer, user's config or running desktop was changed. STOP after this
+review; aggregate c, merge and M4b require the owner's next decision.

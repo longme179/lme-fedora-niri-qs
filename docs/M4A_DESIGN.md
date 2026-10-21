@@ -21,9 +21,9 @@ Baseline: main `186354a` (M3 merged). M4b needs separate authorization.
 ## Data and validation
 
 `config/features.json`: `{"version":1,"features":[]}`. Index records contain
-`id`, relative `descriptor` path and boolean `enabled`. Descriptors contain their
-matching `id`, optional `sources`, `preferences`, `bar`, `settingsPage`, `controlTab`.
-Presentation entries carry plain metadata and a relative `.qml` `entry` resource.
+`id`, relative `descriptor`, boolean `enabled`, optional `startup` with all UI entries.
+Descriptors: `id`, optional `sources`, `preferences`, `bar`, `settingsPage`, `controlTab`.
+Presentation entries carry metadata and a `.qml` resource; duplicated fields must match.
 Preferences are inert schema fragments, not generated UI or a new settings writer.
 There are no JSON callbacks, executable expressions or dynamic Python imports.
 
@@ -36,21 +36,17 @@ the reader does not create another legacy catalog or scrape source code.
 
 ## Process boundaries and compatibility
 
-- Python backend: load/cache metadata once through the reader; validate against
-  its existing bar IDs and preference keys. No dispatch/schema/polling changes.
-- QML optimization a: one cached async FileView index read, cheap structural
-  parsing, no extra Python reader process. Deep validation stays in Python;
-  nonempty UI entries wait for the existing backend's validation verdict.
-  Descriptor presentation data uses async reads with a bounded startup deadline.
-  a measured +69.7 ms for synthetic Settings; b uses optional record.startup for
-  bar/page/tab metadata. Heavy descriptor(id) data loads on first use, with a
-  per-read deadline. Descriptor-only records remain a compatibility adapter.
-  Python still validates every descriptor at boot/CLI/check time. c needs approval.
-  Project through the existing registries. Their merge
-  boundary checks collisions with their actual legacy arrays, including disabled
-  entries. No per-widget process, file watcher, eval or environment index override.
-- Settings CLI/check.sh: deep-validate through the same bounded Python reader;
-  keep unknown-page messages/exit codes and existing IPC/visible-window handshake.
+- Backend: bounded validation/cache at its startup concurrent with QML, before
+  preferences. No catalog reads on import; verdict uses the snapshot, no new worker.
+- QML: cached async index read, cheap validation, no process. Nonempty entries wait
+  for the backend verdict before QML resource loading; this trust gate remains.
+  Heavy descriptor(id) is lazy/cached with read deadlines. Descriptor-only reader/QML
+  startup remains an adapter; CLI new-page discovery needs its key in index startup.
+  Publish data/settlement together; cache projections used by BarRegistry.info.
+- settings.sh: legacy pages use Bash; the bundled empty index needs no Python reader.
+  Unknown keys use --page: index read/match only, no descriptor/resource/deep checks.
+  Keep exit codes/messages, IPC handshake/focus/recovery. Admission is not validation.
+  Explicit feature_catalog.py --check and check.sh retain bounded deep validation.
 - While legacy lists exist, a broken/timed-out catalog settles to legacy-only plus
   console diagnostics and the existing ShellState error banner. Never block legacy
   pages or treat catalog failure as missing saved appearance. Settings still waits
@@ -70,9 +66,15 @@ malformed/missing/escaping resources, schema key collisions and Settings readine
 Do not edit existing assertions. Existing fixture setup may copy the new helper.
 
 Run G0–G3 and polling-only G6 before/after in private XDG/Wayland/D-Bus sessions.
-Review uses 15 warm-cache round-robin runs per variant/path, plus identical-main A/A.
-Keep M0's mapped-window endpoint; report all samples, min/max/IQR and paired A/A noise.
-M0's EPYC 7763 is unavailable; compare untouched main on the current EPYC 9V74.
-Synthetic entries model metadata/projection and extra hybrid rows, not feature execution.
-Targets: empty delta within measured A/A noise; synthetic added median <=50 ms per path.
-If a/b miss, stop for owner review; c and any real conversion need separate approval.
+Keep M0's mapped-window endpoint/user scripts and short owned runtime paths.
+This does not prove full feature readiness or GPU behavior. One warm session uses
+main, A/A main, pre-optimization, each commit, final empty/add/replace interleaved.
+Randomize arms per round; 30 rounds/arm/path, one excluded warm-up, fresh non-cache
+XDG dirs. Report median/IQR/min/max, 20,000 joint round-block bootstrap resamples
+of difference of medians (95% percentile CI), exploratory two-sided Mann–Whitney p.
+A/A single-run spread is not a median CI; never compare separate runs.
+Empty: CI includes zero or upper <=10 ms on both paths; synthetic replace: upper
+<=50 ms on both paths. Add doubles legacy counts; replace removes legacy registrations
+and CLI admission in a copied fixture, retaining first-frame factories. Neither models
+converted loading/workers, realistic schema payloads or GPU rendering. If the rule
+misses, report options and wait. Aggregate c and M4b need separate approval.

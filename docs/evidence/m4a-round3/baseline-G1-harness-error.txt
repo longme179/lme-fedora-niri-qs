@@ -1,0 +1,42 @@
+test_preview_alias_panels_and_clean_exit (migration_startup.SmokeCase.test_preview_alias_panels_and_clean_exit) ... ERROR
+test_standalone_demo_settings_open_close_reopen (migration_startup.SmokeCase.test_standalone_demo_settings_open_close_reopen) ... ERROR
+test_native_first_frame_and_repeated_gear_requests (test_settings_startup.NativeSettingsStartupCase.test_native_first_frame_and_repeated_gear_requests) ... ok
+
+======================================================================
+ERROR: test_preview_alias_panels_and_clean_exit (migration_startup.SmokeCase.test_preview_alias_panels_and_clean_exit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/migration_startup.py", line 106, in test_preview_alias_panels_and_clean_exit
+    launch.ipc('toggle', panel); time.sleep(.4)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/migration_startup.py", line 89, in ipc
+    return subprocess.check_output(['quickshell', *config, 'ipc', 'call', target, method, *args],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['quickshell', '-c', 'migration-checkout', 'ipc', 'call', 'shell', 'toggle', 'clipboard']' returned non-zero exit status 255.
+
+======================================================================
+ERROR: test_standalone_demo_settings_open_close_reopen (migration_startup.SmokeCase.test_standalone_demo_settings_open_close_reopen)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/lme-fedora-niri-qs/tests/migration_startup.py", line 114, in test_standalone_demo_settings_open_close_reopen
+    self.assertEqual(launch.ipc('openPage', 'clipboard'), 'true')
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/lme-fedora-niri-qs/tests/migration_startup.py", line 89, in ipc
+    return subprocess.check_output(['quickshell', *config, 'ipc', 'call', target, method, *args],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['quickshell', '-p', '/workspace/lme-fedora-niri-qs/settings-demo.qml', 'ipc', 'call', 'settings', 'openPage', 'clipboard']' returned non-zero exit status 255.
+
+----------------------------------------------------------------------
+Ran 3 tests in 5.209s
+
+FAILED (errors=2)

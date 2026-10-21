@@ -118,7 +118,7 @@ QtObject {
     }
     function panel(id) { return (data.panel || []).find(entry => entry.id === id) || null; }
 
-    function url(entry) { return entry ? Qt.resolvedUrl(Quickshell.shellPath(entry)) : ""; }
+    function url(entry) { return entry ? Qt.resolvedUrl("root:/" + entry) : ""; }
     property FileView indexFile: FileView {
         path: Quickshell.shellPath("config/features.json")
         onLoaded: {

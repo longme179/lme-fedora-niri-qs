@@ -15,7 +15,7 @@ Item {
         ShellState.togglePanel(initialPanel);
     }
     Component.onCompleted: openInitialPanel()
-    Connections { target: FeatureCatalog; function onReadyChanged() { root.openInitialPanel(); } }
+    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(root.openInitialPanel); } }
     Image { anchors.fill: parent; source: "../../assets/wallpapers/liquid-dracula.png"; fillMode: Image.PreserveAspectCrop }
     Bar { objectName: "desktopBar"; x: Theme.barSideMargin; y: Theme.barBottom ? parent.height - Theme.barTopMargin - height : Theme.barTopMargin; width: parent.width - Theme.barSideMargin * 2; height: Theme.barHeight }
     Column {
@@ -41,11 +41,11 @@ Item {
         objectName: "desktopPanel"
         exitToEdge: true
         readonly property Item panel: item as Item
-        readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview", "settings", "clipboard"].includes(ShellState.panelKind)
+        readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview", "settings"].includes(ShellState.panelKind)
         direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
         shown: ShellState.panelOpen && !ShellState.activityOpen
         content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpad : ShellState.panelKind === "launcher" ? launcher : ShellState.panelKind === "control" ? control
-                         : ShellState.panelKind === "notifications" ? notifications : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : ShellState.panelKind === "clipboard" ? clipboard : power
+                         : ShellState.panelKind === "notifications" ? notifications : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : power
         width: panel ? Math.min(panel.implicitWidth, root.width - 32) : 400
         height: panel ? Math.min(panel.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
@@ -59,6 +59,5 @@ Item {
     Component { id: power; PowerMenu {} }
     Component { id: tray; TrayMenu {} }
     Component { id: overview; Overview {} }
-    Component { id: clipboard; ClipboardPanel {} }
     Component { id: wifi; WifiPanel {} }
 }

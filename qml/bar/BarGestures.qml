@@ -15,7 +15,7 @@ QtObject {
         {id: "wifi", title: "Wi-Fi"}, {id: "notifications", title: "Notifications"},
         {id: "activity", title: "Activity Island"}, {id: "launcher", title: "Applications"},
         {id: "launchpad", title: "Launchpad"},
-        {id: "clipboard", title: "Clipboard"}, {id: "settings", title: "Settings"}, {id: "power", title: "Power menu"},
+        {id: "settings", title: "Settings"}, {id: "power", title: "Power menu"},
         {id: "overview", title: "niri overview"}, {id: "workspaceBoard", title: "Workspace board"},
         {id: "mute", title: "Toggle mute"}, {id: "dnd", title: "Toggle Do Not Disturb"},
         {id: "volumeUp", title: "Volume +5%"}, {id: "volumeDown", title: "Volume −5%"},

@@ -141,3 +141,63 @@ class SchemaOwnershipCase(unittest.TestCase):
         self.assertEqual(worker.validate('clipboardLimit',500),500)
         self.assertEqual(schema.validate('weatherUnit','fahrenheit'),'fahrenheit')
         with self.assertRaises(ValueError):worker.validate('clipboardLimit',True)
+
+    def copied(self, mutate, code):
+        import shutil
+        with tempfile.TemporaryDirectory(prefix='m5-schema-copy-') as directory:
+            root=Path(directory)/'checkout';root.mkdir()
+            for name in ('scripts','qml','config'):
+                shutil.copytree(ROOT/name,root/name,ignore=shutil.ignore_patterns('__pycache__'))
+            mutate(root)
+            return subprocess.run([sys.executable,'-c',code],cwd=root,
+                env=dict(os.environ,PYTHONPATH=str(root/'scripts'),XDG_CONFIG_HOME=str(root/'private-config')),
+                capture_output=True,text=True,timeout=10)
+
+    def test_descriptor_is_the_only_clipboard_default_and_limit_source(self):
+        def mutate(root):
+            path=root/'config/clipboard.json';data=json.loads(path.read_text())
+            data['preferences']['clipboardLimit'].update(default=150,min=30,max=450)
+            path.write_text(json.dumps(data))
+        code="""import desktop_backend as b, clipboard
+assert b.DEFAULT_PREFERENCES['clipboardLimit'] == clipboard.preferences()['clipboardLimit'] == 150
+for n in (20, 500):
+ try: b.validate_preference('clipboardLimit', n)
+ except ValueError: pass
+ else: raise AssertionError(n)
+assert b.validate_preference('clipboardLimit', 450) == 450
+"""
+        result=self.copied(mutate,code)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_disabled_or_broken_index_keeps_bundled_preference_data(self):
+        def mutate(root, mode):
+            path=root/'config/features.json'
+            if mode=='missing':path.unlink()
+            elif mode=='malformed':path.write_text('{bad')
+            elif mode=='empty':path.write_text('{"version":1,"features":[]}')
+            else:
+                data=json.loads(path.read_text())
+                for record in data['features']:record['enabled']=False
+                path.write_text(json.dumps(data))
+        code="""import desktop_backend as b, clipboard
+assert b.DEFAULT_PREFERENCES['clipboardLimit'] == clipboard.preferences()['clipboardLimit'] == 100
+assert b.DEFAULT_PREFERENCES['weatherUnit'] == 'celsius'
+assert b.DEFAULT_PREFERENCES['osdMargin'] == 24
+"""
+        for mode in ('disabled','missing','malformed','empty'):
+            with self.subTest(mode=mode):
+                result=self.copied(lambda root:mutate(root,mode),code)
+                self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_duplicate_json_keys_and_missing_owners_fail_without_reading_user_settings(self):
+        def missing(root):
+            path=root/'config/preferences-legacy.json';data=json.loads(path.read_text())
+            del data['preferences']['shellName'];path.write_text(json.dumps(data))
+        def duplicate(root):
+            path=root/'config/preferences-legacy.json'
+            path.write_text(path.read_text().replace('"version": 1','"version": 1, "version": 1',1))
+        for mutate,message in ((missing,'Missing preference owner'),(duplicate,'Duplicate JSON key')):
+            with self.subTest(message=message):
+                result=self.copied(mutate,'import desktop_backend')
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn(message,result.stderr)

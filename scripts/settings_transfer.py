@@ -5,8 +5,20 @@ import os
 from pathlib import Path
 from desktop_features import APPEARANCE_KEYS
 
-from settings_schema import portable_keys
-PORTABLE = set(portable_keys())
+PORTABLE = set(APPEARANCE_KEYS) | {
+    'shellName','surfaceStyle','liquidGlass','glassSelection',
+    'wallpaperPlaylistEnabled','wallpaperPlaylistPaused','wallpaperPlaylistShuffle','wallpaperPlaylistInterval','wallpaperTransition','wallpaperTransitionDuration',
+    'launcherRanking','launchpadEnabled',
+    'wallpaperTransitionFps','wallpaperTransitionStep','wallpaperTransitionAngle','wallpaperTransitionPosition','wallpaperTransitionBezier','wallpaperTransitionWave','wallpaperResize','wallpaperFilter','wallpaperFillColor',
+    'desktopShapeCount','desktopShapeScale','desktopShapeOpacity','desktopShapeSpeed','desktopShapeStyle','desktopShapeRotation',
+    'notificationWidth','notificationPosition','notificationMargin','notificationRadius','notificationPadding','notificationOpacity',
+    'notificationBorderWidth','notificationTitleSize','notificationBodySize','notificationIdleAnimation','notificationIdleSpeed',
+    'barGestures','barEdge','barEdgeMargin','barSideMargin','barHeight','barStyle','barBorderWidth','barCorners','barIslandStyles','barFontSize','barLayout','barBlur',
+    'desktopEnabled','desktopShapes','desktopWidgets','lyricsEnabled','lyricsOnline','lyricsMode','lyricsFollow','activityLyrics','bluetoothPairing','mediaStability','mediaControls','mirroringEnabled','recordingEnabled','recordingEncoder','recordingAudio','recordingFormat','recordingCodec','recordingFps','recordingBitrate','captureEditor','fileSearchEnabled','quickNotes','audioVisualizer','osdEnabled','osdPosition','osdLayout','osdMargin','controlLayout','controlWidth','popupBlur','fontPicker','colorPicker','privacyIndicators','dndWhileSharing',
+    'controlGrid','batteryDetails','weatherAutoLocation','weatherUnit','activityEnabled','clipboardEnabled','clipboardImages','clipboardLimit',
+    'peripheralBatteryAlerts','peripheralBatteryThreshold','batterySaverBrightness',
+    'nightLightMode','nightLightTemperature','nightLightStart','nightLightEnd',
+}
 
 
 def transfer_path(value):

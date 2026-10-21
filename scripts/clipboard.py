@@ -18,7 +18,6 @@ import shutil
 import tempfile
 
 from content_types import MAX_TEXT, image_type
-from settings_schema import clipboard_schema as PREFERENCE_SCHEMA
 
 MAX_IMAGE = 8 * 1024 * 1024
 MAX_TOTAL = 64 * 1024 * 1024
@@ -168,13 +167,14 @@ def capture(kind: str, directory: Path):
 
 
 def preferences() -> dict:
-    defaults = PREFERENCE_SCHEMA.defaults("clipboard")
+    defaults = {"clipboardEnabled": True, "clipboardImages": True, "clipboardLimit": 100}
     config = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))) / "lme-shell/settings.json"
     try:
         value = json.loads(config.read_text())
-        for key in defaults:
-            try: defaults[key] = PREFERENCE_SCHEMA.validate(key, value.get(key))
-            except ValueError: pass
+        for key in ["clipboardEnabled", "clipboardImages"]:
+            if type(value.get(key)) is bool: defaults[key] = value[key]
+        if type(value.get('clipboardLimit')) is int and 20 <= value['clipboardLimit'] <= 500:
+            defaults['clipboardLimit'] = value['clipboardLimit']
     except (OSError, ValueError, AttributeError): pass
     return defaults
 

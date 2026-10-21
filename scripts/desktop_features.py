@@ -16,8 +16,7 @@ PALETTE_CATALOG = PALETTE_DOCUMENT['palettes']
 PALETTE_IDS = {p['id'] for p in PALETTE_CATALOG}
 PALETTE_SCHEMES = tuple(PALETTE_DOCUMENT['schemes'])
 PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", "paletteScheme": "tonal-spot", "paletteMode": "dark", "paletteContrast": 0.0, "wallpaperPalette": {}}
-from settings_schema import appearance_keys
-APPEARANCE_KEYS = appearance_keys()
+APPEARANCE_KEYS = ("accent", "opacity", "density", "animations", *MOTION_DEFAULTS, *THEME_DEFAULTS, *PALETTE_DEFAULTS)
 DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,
                    "density": "comfortable", "animations": True, **MOTION_DEFAULTS, **THEME_DEFAULTS, **PALETTE_DEFAULTS}
 CONTROL_CATALOG = json.loads((Path(__file__).resolve().parents[1] / 'config/control-grid.json').read_text())

@@ -1,0 +1,49 @@
+"""After-only structural checks: new catalog consumption, not baseline characterization."""
+import json
+import subprocess
+from pathlib import Path
+import navigation_fixture as nf
+
+nf.QML = nf.QML.replace('        function open(): void {', '''        function selectId(id: string): void { ShellState.selectControlTab(id); }
+        function registryState(): string {
+            return JSON.stringify({currentId: ShellState.controlTabId,
+                mappings: ControlRegistry.tabs.map(t => ({id:t.id, legacy:ControlRegistry.indexForId(t.id), position:ControlRegistry.positionForIndex(t.legacyIndex)})),
+                agenda: agenda.item ? agenda.item.tabs.map(t => t.title) : [],
+                agendaSelected: agenda.item ? agenda.item.tabs.filter(t => root.find(agenda.item,t.title)?.selected).map(t => t.id) : []});
+        }
+        function open(): void {''')
+repo = Path('/workspace/lme-fedora-niri-qs')
+catalog = json.loads((repo/'config/control-grid.json').read_text())
+by_id = {t['id']:t for t in catalog['tabs']}
+extra = dict(id='test-page', title='Test page', legacyIndex=6, entry='AudioMixer')
+catalog['tabs'] = [by_id['system'], by_id['devices'], by_id['controls'], by_id['audio'], extra, by_id['agenda'], by_id['notifications']]
+agenda = {t['id']:t for t in catalog['agendaTabs']}
+catalog['agendaTabs'] = [agenda['timer'],agenda['notes'],agenda['calendar'],agenda['tasks']]
+with nf.session(native=True, catalog=catalog) as p:
+    p.call('open')
+    state = p.wait(lambda s:s['selected']=='Controls')
+    assert state['tabs'] == [t['title'] for t in catalog['tabs']],state
+    observed = json.loads(p.call('registryState'))
+    assert observed['mappings'] == [dict(id=t['id'],legacy=t['legacyIndex'],position=i) for i,t in enumerate(catalog['tabs'])],observed
+    for tab in catalog['tabs']:
+        p.call('selectId',tab['id'])
+        state=p.wait(lambda s:s['current']==tab['legacyIndex'] and s['selected']==tab['title'])
+        assert json.loads(p.call('registryState'))['currentId']==tab['id']
+    p.call('selectId','audio');p.wait(lambda s:s['selected']=='Audio');p.call('focus')
+    subprocess.run(['wtype','-M','ctrl','-k','Tab','-m','ctrl'],env=p.env,check=True,timeout=4)
+    p.wait(lambda s:s['current']==6 and s['selected']=='Test page' and s['kind']=='audio')
+    p.call('selectId','controls');p.wait(lambda s:s['selected']=='Controls');p.call('focus')
+    subprocess.run(['wtype','-M','ctrl','-M','shift','-k','Tab','-m','shift','-m','ctrl'],env=p.env,check=True,timeout=4)
+    p.wait(lambda s:s['current']==2 and s['selected']=='Devices')
+    p.call('selectId','unknown-tab');p.wait(lambda s:s['current']==0 and s['selected']=='Controls')
+    p.call('agendaNumber',3);p.wait(lambda s:s['editor'])
+    observed=json.loads(p.call('registryState'))
+    assert observed['agenda']==['Timer','Notes','Calendar','To do'] and observed['agendaSelected']==['notes'],observed
+    p.call('setting','quickNotes','false')
+    state=p.wait(lambda s:not s['notes'])
+    assert state['editor'],state
+    observed=json.loads(p.call('registryState'))
+    assert observed['agenda']==['Timer','Calendar','To do'] and not observed['agendaSelected'],observed
+result=dict(status='passed',check='after-only catalog structure',controlOrder=[t['id'] for t in catalog['tabs']],agendaOrder=[t['id'] for t in catalog['agendaTabs']],legacyRoundTrips=True,insertedPage=True,forwardAndReverseKeyboard=True,hiddenNotesSelectionPreserved=True)
+Path('/workspace/.lme-dev/m3/structural-result.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result),flush=True)

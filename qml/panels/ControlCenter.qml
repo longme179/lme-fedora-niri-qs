@@ -12,14 +12,21 @@ GlassPanel {
     implicitWidth: Math.max(ShellState.preferences.controlWidth || 600, (ShellState.preferences.controlGrid || {}).columns === 8 ? 900 : 480)
     implicitHeight: 900
     focus: true
-    property var tabs: ["Controls", "Audio", "Devices", "Agenda", "Notifications", "System"]
+    readonly property var tabEntries: ControlRegistry.tabs
+    property var tabs: tabEntries.map(tab => tab.title)
+    readonly property var tabComponents: ({ControlDashboard: controls, AudioMixer: audio, DeviceControls: devices, Agenda: agenda, NotificationCenter: notices, SystemMonitor: monitor})
     property bool editing: false
     property bool initialized: false
-    property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? Math.max(0, ["controls", "audio", "devices", "agenda", "notifications", "system"].indexOf(Quickshell.env("LME_SHELL_CONTROL_TAB"))) : ShellState.controlTab
-    function refreshControls() { if (initialized && visible && [0, 2].includes(currentTab) && ShellState.backendReady) ShellState.run("controlsRefresh"); }
-    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; if (currentTab === 4) Notifications.markRead(); refreshControls(); }
+    // Integer properties remain compatibility boundaries for existing fixtures/imports.
+    property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? ControlRegistry.indexForId(Quickshell.env("LME_SHELL_CONTROL_TAB")) : ShellState.controlTab
+    readonly property var selectedTab: ControlRegistry.tabForIndex(currentTab)
+    readonly property int tabIndex: ControlRegistry.positionForIndex(currentTab)
+    function selectTab(id) { currentTab = ControlRegistry.indexForId(id); }
+    function refreshControls() { if (initialized && visible && ControlRegistry.tabForIndex(currentTab).refresh && ShellState.backendReady) ShellState.run("controlsRefresh"); }
+    function markTabRead() { if (ControlRegistry.tabForIndex(currentTab).markRead) Notifications.markRead(); }
+    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; markTabRead(); refreshControls(); }
     onVisibleChanged: refreshControls()
-    Component.onCompleted: { initialized = true; if (currentTab === 4) Notifications.markRead(); refreshControls(); }
+    Component.onCompleted: { initialized = true; markTabRead(); refreshControls(); }
     Connections {
         target: ShellState
         function onControlTabChanged() { if (root.currentTab !== ShellState.controlTab) root.currentTab = ShellState.controlTab; }
@@ -28,7 +35,9 @@ GlassPanel {
     Keys.onEscapePressed: if (editing) editing = false; else ShellState.closePanels()
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ControlModifier)) {
-            currentTab = (currentTab + ((event.modifiers & Qt.ShiftModifier) ? tabs.length - 1 : 1)) % tabs.length;
+            const next = ((tabIndex >= 0 ? tabIndex : currentTab) + ((event.modifiers & Qt.ShiftModifier) ? tabs.length - 1 : 1)) % tabs.length;
+            if (tabIndex < 0) currentTab = next;
+            else selectTab(tabEntries[next].id);
             event.accepted = true;
         }
     }
@@ -59,7 +68,7 @@ GlassPanel {
                 Accessible.name: "Quick appearance profile"
                 onActivated: ShellState.run("appearanceApply", {name: currentText})
             }
-            LiquidButton { objectName: "controlEdit"; visible: root.currentTab === 0; text: root.editing ? "Done" : "Edit layout"; selected: root.editing; onClicked: root.editing = !root.editing }
+            LiquidButton { objectName: "controlEdit"; visible: root.selectedTab.id === "controls"; text: root.editing ? "Done" : "Edit layout"; selected: root.editing; onClicked: root.editing = !root.editing }
         }
         RowLayout {
             visible: root.editing; Layout.fillWidth: true
@@ -88,24 +97,25 @@ GlassPanel {
         }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: tabGrid.implicitHeight
-            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.currentTab) as LiquidButton : null; fill: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent }
+            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.tabIndex) as LiquidButton : null; fill: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent }
         GridLayout {
             id: tabGrid; anchors.fill: parent; columnSpacing: 5; rowSpacing: 5
             columns: 3
             Repeater {
-                id: tabRepeater; model: root.tabs
+                id: tabRepeater; model: root.tabEntries
                 delegate: LiquidButton {
-                    required property string modelData
+                    required property var modelData
                     required property int index
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
-                    text: modelData
-                    selected: Theme.animatedTabs && root.currentTab === index; selectionFill: false
+                    text: modelData.title
+                    readonly property bool current: root.currentTab === modelData.legacyIndex
+                    selected: Theme.animatedTabs && current; selectionFill: false
                     selectionColor: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent
-                    Accessible.role: Accessible.PageTab; Accessible.selected: root.currentTab === index
-                    palette.button: root.currentTab === index && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
-                    palette.buttonText: root.currentTab === index && !Theme.liquidGlass ? Theme.background : Theme.text
-                    onClicked: root.currentTab = index
+                    Accessible.role: Accessible.PageTab; Accessible.selected: current
+                    palette.button: current && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
+                    palette.buttonText: current && !Theme.liquidGlass ? Theme.background : Theme.text
+                    onClicked: root.selectTab(modelData.id)
                 }
             }
         }
@@ -113,7 +123,7 @@ GlassPanel {
         Loader {
             id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
-            sourceComponent: root.currentTab === 0 ? controls : root.currentTab === 1 ? audio : root.currentTab === 2 ? devices : root.currentTab === 3 ? agenda : root.currentTab === 4 ? notices : monitor
+            sourceComponent: root.tabComponents[root.selectedTab.entry]
         }
     }
     Component { id: monitor; SystemMonitor {} }

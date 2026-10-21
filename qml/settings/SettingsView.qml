@@ -128,12 +128,18 @@ Item {
                     x: 6; y: 6
                     direction: "up"
                     width: pageScroll.width - 12
-                    content: root.page === "utilities" ? utilitiesPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
+                    content: root.currentPage.entry ? catalogPage : root.page === "utilities" ? utilitiesPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage
                                    : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage : root.page === "elements" ? elementsPage
                                    : root.page === "notifications" ? notificationsPage : root.page === "weather" ? weatherPage : root.page === "clipboard" ? clipboardPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
+        }
+    }
+    Component {
+        id: catalogPage
+        Loader {
+            source: FeatureCatalog.url(root.currentPage.entry)
         }
     }
     Component { id: utilitiesPage; UtilitiesPage { onWallpaperRequested:root.navigate("wallpaper") } }

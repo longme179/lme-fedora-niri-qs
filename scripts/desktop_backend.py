@@ -59,6 +59,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
+from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, validate_legacy
 
 
 DEFAULT_PREFERENCES = {
@@ -98,6 +99,12 @@ DEFAULT_PREFERENCES = {
 }
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "clipboard", "activity", "privacy", "power", "desktop", "launchpad"}
+try:
+    FEATURE_CATALOG = validate_legacy(feature_catalog(), {'bar': BAR_MODULES}, DEFAULT_PREFERENCES)
+except CatalogError as error:
+    print(f'Feature catalog: {error}', file=sys.stderr)
+    FEATURE_CATALOG = empty_catalog()
+BAR_MODULES = BAR_MODULES | set(FEATURE_CATALOG['ids']['bar'])
 POWER_PROFILE_SERVICES = (
     ("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles", "org.freedesktop.UPower.PowerProfiles"),
     ("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles"),

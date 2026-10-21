@@ -91,7 +91,8 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function openSettingsPage(page) {
-        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)) return;
+        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "clipboard", "idle", "keybinds", "behavior", "about"].includes(page)
+                && !(FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page)) return;
         closePanels(); settingsPage = page;
         if (demo) { panelKind = "settings"; settingsOpen = true; }
         else if (!settingsProcess.running) settingsProcess.running = true;

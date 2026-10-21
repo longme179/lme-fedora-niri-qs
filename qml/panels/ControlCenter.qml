@@ -123,9 +123,10 @@ GlassPanel {
         Loader {
             id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
-            sourceComponent: root.tabComponents[root.selectedTab.entry]
+            sourceComponent: root.tabComponents[root.selectedTab.entry] || catalogTab
         }
     }
+    Component { id: catalogTab; Loader { source: FeatureCatalog.url(root.selectedTab.entry) } }
     Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }

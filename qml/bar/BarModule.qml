@@ -14,19 +14,30 @@ Loader {
     property var windowInfo: null
     property bool compact: false
     property real titleBudget: 360
+    readonly property var catalogEntry: BarRegistry.info(moduleId)
     readonly property var battery: ShellState.system.battery || {}
     readonly property var player: ShellState.demo ? null : Mpris.players.values.find(p => p.isPlaying) || Mpris.players.values[0] || null
     readonly property bool available: moduleId === "launchpad" ? ShellState.preferences.launchpadEnabled !== false : moduleId === "privacy" ? ShellState.preferences.privacyIndicators !== false && PrivacyState.indicators.length > 0 : moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
                                    : moduleId === "battery" ? battery.available === true
                                    : moduleId === "media" ? player !== null : true
-    active: available
-    visible: available
+    active: available && catalogEntry.enabled !== false
+    visible: active
     width: available && item ? (item as Item).implicitWidth : 0
     height: 30
     y: parent ? (parent.height - height) / 2 : 0
-    sourceComponent: moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
+    sourceComponent: catalogEntry.entry ? catalogComponent : moduleId === "privacy" ? privacyComponent : (moduleId === "activity" || moduleId === "windowTitle" && ShellState.preferences.activityEnabled !== false) ? activityComponent : moduleId === "workspaces" ? workspaceComponent : moduleId === "windowTitle" ? titleComponent
                    : ["launchpad", "launcher", "overview", "tray", "notifications", "settings", "clipboard", "power", "desktop"].includes(moduleId) ? actionComponent : statusComponent
     ModuleGestures { anchors.fill: parent; moduleId: root.moduleId; screenInfo: root.screenInfo }
+    Component {
+        id: catalogComponent
+        Loader {
+            source: FeatureCatalog.url(root.catalogEntry.entry)
+            onLoaded: {
+                for (const key of ["screenInfo", "windowInfo", "compact", "titleBudget"])
+                    if (key in item) item[key] = Qt.binding(() => root[key]);
+            }
+        }
+    }
     Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
     Component {
         id: activityComponent

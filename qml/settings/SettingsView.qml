@@ -131,7 +131,7 @@ Item {
                     width: pageScroll.width - 12
                     content: root.currentPage.entry ? catalogPage : root.page === "topbar" ? barPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
-                                   : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
+                                   : root.page === "behavior" ? behaviorPage : appearancePage
                 }
             }
         }
@@ -150,5 +150,4 @@ Item {
     Component { id: controlPage; ControlLayoutPage {} }
     Component { id: elementsPage; ElementsPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
-    Component { id: aboutPage; AboutPage {} }
 }

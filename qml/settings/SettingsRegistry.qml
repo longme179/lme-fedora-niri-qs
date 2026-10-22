@@ -10,7 +10,6 @@ QtObject {
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
         {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "launcher ranking usage history clear frequency recent terminal applications preferences recording audio system microphone bluetooth pair pin passkey peripheral battery low alerts threshold headphones mouse keyboard lyrics lrc lrclib cache follow transcript current line island"},
-        {key: "about", title: "About", icon: "bell", description: "Your desktop and its contributors", keywords: "update upgrade github git commit version license requirements credits inir"}
     ]
     function page(key) { return pages.find(p => p.key === key) || pages[0]; }
     function search(query) {

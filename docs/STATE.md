@@ -9,9 +9,9 @@ Do not read archive/ unless answering a specific historical question.
   M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
 - D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
 - M5/M6 merged: schema infrastructure and the synchronous Launchpad action pilot.
-- M4c-1: refactor/m4c1-light-features implemented, awaiting owner review/merge.
-  Five catalog Settings pages; 20 descriptor keys/127 legacy; only Clipboard's bar is converted.
-- M4c-2/M7/other domains need authorization; M8 moves deferred.
+- M4c-1 merged; M4c-2 implemented on refactor/m4c2-stateful-features for review.
+  Seven catalog Settings pages; 43 descriptor keys/104 legacy; only Clipboard's bar is converted.
+  Notifications/Desktop stay legacy under the M4c-2 time-box; M4c-3/M7 need authorization; M8 deferred.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 
 ## Compatibility adapters and retirement
@@ -24,11 +24,11 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Explicit provider bindings/legacy trees retire per domain with backend discovery and ownership/fallback parity.
-- Night/idle/keybind host state facades remain until controller/state consumers migrate with cadence unchanged.
+- Explicit providers/legacy trees retire per domain with backend discovery and ownership/fallback parity. Night/idle/keybind state facades retain cadence until their consumers migrate.
+- PageNavigation forwards local navigateRequested(pageId); retain old page signals until owner-approved public retirement.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema
   facades; retain public names until explicit owner-approved compatibility changes.
-- Legacy validator/default bindings (127 keys), original key-order inventory,
+- Legacy fragment (104 keys), validator/default bindings, original key-order inventory,
   BarRegistry default resolver and bundled-fragment fallback retire only after
   their last consumer/fallback contract is migrated. Worker fault policy is separate.
 - Architecture exceptions/size ceilings: remove vanished edges, lower shrunken

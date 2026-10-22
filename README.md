@@ -476,15 +476,17 @@ tool lookup and errors), `scripts/storage.py` (private JSON writes and file lock
 and `scripts/content_types.py` (the text byte limit and image signature recognition).
 The original backend, display and Clipboard imports remain available for compatibility.
 Clipboard's bar item, panel and bootstrap, and the Clipboard, Night Light, Idle,
-Keybinds and Weather Settings pages are registered through [config/features.json](config/features.json).
+Keybinds, Weather, Wallpaper and Shell utilities Settings pages are registered through [config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor
-fragments and `config/preferences-legacy.json`: 20 keys are descriptor-owned and
-127 retain legacy bindings.
+fragments and `config/preferences-legacy.json`: 43 keys are descriptor-owned and
+104 remain in the legacy fragment.
 Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
 `scripts/backend_actions.py` owns synchronous Launchpad, Night Light, Idle and Keybinds
 action dispatch through narrow controller/preferences callbacks. Weather's asynchronous
 controller and other live/demo actions retain legacy routing.
-See the [migration log](docs/MIGRATION_LOG.md) for validation.
+Page-to-page Settings links use a local `navigateRequested(pageId)` adapter.
+Notifications and Desktop retain legacy registration in this batch. See the
+[migration log](docs/MIGRATION_LOG.md) for validation and deferred scope.
 
 Start development tasks with [current agent state](docs/STATE.md).
 `./scripts/check-architecture.sh` checks static dependencies, cycles and source sizes;

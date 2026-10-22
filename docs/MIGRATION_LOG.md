@@ -116,3 +116,34 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   5. Disable one index entry in a copy, restart shell/Settings; confirm page/UI/CLI withdrawal and graceful links with saved grid/data unchanged.
   6. Re-enable the entry, restart and confirm access/settings return; check real gamma/idle behavior without competing daemons.
 - STOP after M4c-1; M4c-2/M7 are not authorized; no merge or main push performed.
+
+## M4c-2 — stateful pages and local navigation — 2026-10-22
+
+- Branch refactor/m4c2-stateful-features; base main f5b5bda (M4c-1 merged). No main push or merge.
+- Commits: characterization aaeeb40/4eedd69; navigation aae273e; fixture-only 06ea4ca/a0ffa77; Wallpaper a28ca9e; Utilities e652aaa. Failed conversion commits cae954f/f3be258 were reverted by ae4597c/e32027c before retrying.
+- Converted Wallpaper page +21 keys; Utilities page +2 keys under existing launchpad ownership. Seven catalog pages, 43 descriptor keys, 104 legacy; sidebar/search/CLI order unchanged. Shared palette controls remain with Appearance legacy bindings.
+- Wallpaper/Utilities scope is pages/schema only: scan/palette/awww/gowall, playlist/output state, managed/detached jobs, Launchpad editor/actions and all async/live/demo routing remain unchanged. No backend Python code changed.
+- Notifications SKIPPED: complete center withdrawal needs preservation of numeric tab 4, which current catalog metadata/projection cannot express. No server/history/mute/DND/toast policy changes; see the ten-line M4C2_NOTIFICATIONS.md addendum.
+- Desktop SKIPPED LAST: current canvas runs in non-preview demo as well as live; FeatureBootstrap is main-live-only. An equivalent context-aware bootstrap needs a separately scoped metadata/guard contract. Canvas/ambient/input/geometry/edit IPC/notes files unchanged; copied native lifecycle passes; hardware needs real-session check.
+- No new dependency exceptions/cycles. Utilities keeps its existing Launchpad composition owner and exact Gowall edge; navigation removes no static implementation edge, so no stale exception was removed. No file moves.
+- Unmodified-main baseline: G0 497/0/136, G1 3/0/0; focused 35/0/2 (ownership/withdrawal N/A). Fixture adaptation baselines: Wallpaper native 3/0/0; CLI/model fixtures 10/0/0 before retrying conversions. Counts are pass/fail/skip.
+- One full G0-G4/G6 run: G0 488/2/135 (Utilities-first test selectors), G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. After revert/fixture correction/retry: affected G0 498/0/135 and G1 3/0/0; final production config/scripts/qml is byte-identical to f3be258, where G1-G4/G6 ran. The full set was not repeated.
+- Focused final native/domain/schema suite: 42/0/0; post-selector correction 37/0/0. Ownership N/A now executes (+1 G0 pass/-1 skip). G0 skips: 123 opt-in UI/Wayland/private-session cases (including four new stateful native cases), 5 BlueZ, 5 MPRIS, 1 Matugen, 1 fake-niri. All four new native cases executed separately. qmllint: 147 files, 0 errors/71 warnings.
+- Withdrawal tests preserve exact settings/history/notes bytes and saved IDs, hide pages/search/CLI, disable Utilities -> Wallpaper when unavailable and restore access on re-enable. Fifth-entry copied fixture still needs only own QML/descriptor/index. Notifications/Desktop withdrawal is deferred, not claimed tested.
+- Existing assertions (AST comparison), timeouts and frozen fixtures unchanged. Existing Wallpaper QML fixture now loads its retained file URL; two CLI/model fixture selectors read the actual legacy list. Early navigation prototypes were discarded on failed checks; the new fixture waits for closed-popup unmount.
+- Adapters: PageNavigation locally forwards navigateRequested(pageId) to SettingsView; old fontSettingsRequested/wallpaperRequested signals remain public facades. Retire only with owner-approved public compatibility removal. settingsPageAvailable/hybrid legacy lists retire per namespace after their final surface/fixture migrates.
+- Schema legacy validator/resolver callbacks, default/export facades and bundled-fragment fallback remain until their last consumer/fault policy migrates. Preferences transactions, schema data format, defaults, limits, privacy membership and CLI messages unchanged. No observed enabled-UI difference beyond the authorized local navigation seam.
+- Sanity ONCE, ten launches/path/arm, private software-rendered session: preview main/head 1049.22/927.96 ms; Settings 989.87/946.64 ms. No +100 ms/+10% flag; these are medians, not a performance claim.
+- RSS at T+10 s (KiB main/head): preview Quickshell 281048/281148, backend 26216/26208; Settings Quickshell 234524/233644, backend 26172/26172. No raw logs/evidence committed.
+- M4c-3 plan: Appearance/Elements need ownership of palette/theme/font tokens, runtime default/profile resolvers, picker dialogs and platformRefresh/reconnect characterization; keep handwritten UI and token-patch persistence unchanged.
+- Top bar/bar modules need catalog layout/default/gesture/visibility parity, saved IDs and per-screen/window contexts. Convert simple ActionBarButton families first; keep workspace/tray/media/privacy service lifecycles legacy until separately characterized.
+- Behavior is a composite of battery saver, lyrics, peripherals, recording/capture, launcher, OSD and transfers: move only page/scalar ownership with clear fragments; keep async/hardware actions legacy. Display should keep apply/confirm/revert/watchdog and reconnect routing legacy; About needs UpdateState inspect/check/update/bootstrap process-lifecycle tests.
+- Controls/Launcher/Activity panels are best left legacy pending composition/refresh leases, numeric-tab compatibility, ranking/search workers and MPRIS/lyrics/focus/notes seams. Expected dependency work: explicit host composition/shared APIs for cross-feature cards, then retire exact QuickNotes/Gowall edges; no new exceptions, event bus, async registry, polling or power-policy changes. Notifications/Desktop need their deferred contracts before conversion.
+- Laptop checklist (needs real-session check):
+  1. Open Wallpaper/Utilities from Gear, CLI and search; verify sidebar/order and close/reopen.
+  2. Change wallpaper transition/playlist and a Launchpad entry; restart, confirm persistence and run the entry in terminal/background.
+  3. Check Notifications Font families -> Elements and Night Light -> Weather; verify DND/history and screenshot annotation still work.
+  4. In a copy disable wallpaper, restart: page/search/CLI disappear and Open awww controls is disabled; existing engine/output data stays.
+  5. Disable the launchpad index record: only Utilities page withdraws in this batch; Launchpad runtime/saved entries remain. Re-enable both records and confirm access/data return.
+  6. Check unchanged Desktop clock/notes/media, edit drag/resize, input/layers and multiple outputs on the laptop.
+- STOP after M4c-2; M4c-3/M7 and later are not authorized.

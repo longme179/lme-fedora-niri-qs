@@ -178,7 +178,10 @@ M5 implements this interface as `settings_schema.Schema`; the backend explicitly
 existing validator/default callbacks (descriptor defaultResolver names are data only).
 M5 migrated Clipboard (3), weather scalar (2) and OSD (5). M4c-1 adds Night Light (5),
 Idle (3), niriConfigPath (1) and weatherLocation (1): 20 descriptor keys/127 legacy.
-The four light Settings pages now use catalog entries; OSD's entry still owns schema only.
+M4c-2 adds Wallpaper (21 keys) and Utilities under existing Launchpad ownership (2):
+43 descriptor keys/104 legacy. Seven Settings pages use the catalog; OSD remains schema only.
+PageNavigation connects navigateRequested(pageId) locally to SettingsView; old page signals remain.
+Notifications and Desktop remain legacy: see M4C2_NOTIFICATIONS.md and the migration entry.
 Schema interface: `defaults(context)`, `validate(key,value)`, `portable_keys()`,
 `appearance_keys()`; retain `DEFAULT_PREFERENCES` and `validate_preference` as adapters.
 Named validators/default resolvers bind to existing Python functions, never `eval`.
@@ -427,4 +430,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6 are merged; M4c-1 is implemented for owner review. M4c-2/M7 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1 are merged; M4c-2 is implemented for owner review. M4c-3/M7 and later need authorization.

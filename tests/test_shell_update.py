@@ -222,7 +222,7 @@ import "qml/settings"
 import "qml/services"
 ShellRoot {
     FloatingWindow { implicitWidth:1100;implicitHeight:950;color:"#20232a"
-        AboutPage { id:page;width:1040;anchors.centerIn:parent }
+        Loader { id: page; source: Qt.resolvedUrl("qml/settings/AboutPage.qml");width:1040;anchors.centerIn:parent }
         TestCase { id:mouse;when:false }
     }
     IpcHandler { target:"fixture"

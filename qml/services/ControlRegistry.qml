@@ -9,7 +9,7 @@ QtObject {
     property var tiles: []
     readonly property var navigation: JSON.parse(catalog.text())
     readonly property var tabs: FeatureCatalog.project("controlTab", navigation.tabs || [], "id")
-    readonly property var agendaTabs: navigation.agendaTabs || []
+    readonly property var agendaTabs: FeatureCatalog.project("agendaTab", navigation.agendaTabs || [], "id")
     readonly property var cardIds: cards.map(item => item.id)
     readonly property var titles: [...cards, ...tiles].reduce((map, item) => { map[item.id] = item.title; return map; }, {})
     readonly property var defaults: [...cards, ...tiles].map(item => ({id: item.id, enabled: true, size: item.size || (item.cols >= 4 ? "full" : "half")}))

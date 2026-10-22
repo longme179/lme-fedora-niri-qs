@@ -1,0 +1,139 @@
+{
+  "id": "notifications",
+  "sources": [
+    "qml/panels/NotificationCenter.qml",
+    "qml/panels/NotificationToasts.qml",
+    "qml/settings/NotificationsPage.qml",
+    "qml/services/Notifications.qml"
+  ],
+  "settingsPage": {
+    "key": "notifications",
+    "title": "Notifications",
+    "icon": "bell",
+    "description": "Messages with room to breathe",
+    "keywords": "popup toast appearance width position padding radius border opacity title body color font idle animation rotation cloud",
+    "entry": "qml/settings/NotificationsPage.qml",
+    "after": "weather"
+  },
+  "preferences": {
+    "dndWhileSharing": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "notificationMutedApps": {
+      "type": "array",
+      "validator": "legacy",
+      "portable": false,
+      "appearance": false,
+      "default": []
+    },
+    "dndUntil": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": false,
+      "appearance": false,
+      "default": 0
+    },
+    "notificationWidth": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 380
+    },
+    "notificationPosition": {
+      "type": "string",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": "bar"
+    },
+    "notificationMargin": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 14
+    },
+    "notificationRadius": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 28
+    },
+    "notificationPadding": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 16
+    },
+    "notificationOpacity": {
+      "type": "number",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 0.9
+    },
+    "notificationBorderWidth": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 1
+    },
+    "notificationTitleSize": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 14
+    },
+    "notificationBodySize": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 13
+    },
+    "notificationIdleAnimation": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "notificationIdleSpeed": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 16
+    }
+  },
+  "controlTab": {
+    "id": "notifications",
+    "title": "Notifications",
+    "entry": "qml/panels/NotificationCenter.qml",
+    "legacyIndex": 4,
+    "markRead": true,
+    "after": "agenda"
+  },
+  "panel": {
+    "id": "notifications",
+    "entry": "qml/panels/NotificationCenter.qml"
+  },
+  "bootstrap": {
+    "id": "notifications",
+    "entry": "qml/panels/NotificationsFeature.qml",
+    "contexts": [
+      "live-main",
+      "demo",
+      "preview"
+    ]
+  }
+}

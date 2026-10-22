@@ -45,7 +45,7 @@ Item {
         direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
         shown: ShellState.panelOpen && !ShellState.activityOpen
         content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpad : ShellState.panelKind === "launcher" ? launcher : ShellState.panelKind === "control" ? control
-                         : ShellState.panelKind === "notifications" ? notifications : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : power
+                         : ShellState.panelKind === "wifi" ? wifi : ShellState.panelKind === "settings" ? settings : ShellState.panelKind === "tray" ? tray : ShellState.panelKind === "overview" ? overview : power
         width: panel ? Math.min(panel.implicitWidth, root.width - 32) : 400
         height: panel ? Math.min(panel.implicitHeight, root.height - Theme.panelTopMargin - 16) : 600
         x: centered ? (root.width - width) / 2 : root.width - width - 14
@@ -54,7 +54,6 @@ Item {
     Component { id: launchpad; LaunchpadPanel {} }
     Component { id: launcher; Launcher {} }
     Component { id: control; ControlCenter {} }
-    Component { id: notifications; NotificationCenter {} }
     Component { id: settings; SettingsPanel {} }
     Component { id: power; PowerMenu {} }
     Component { id: tray; TrayMenu {} }

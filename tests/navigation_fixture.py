@@ -140,8 +140,19 @@ def session(native=False, environment=None, catalog=None):
         else:
             (root/'config').mkdir()
             for path in (repo/'config').iterdir():
-                if path.name != 'control-grid.json': (root/'config'/path.name).symlink_to(path)
-            (root/'config/control-grid.json').write_text(json.dumps(catalog))
+                if path.name not in ('control-grid.json', 'features.json'): (root/'config'/path.name).symlink_to(path)
+            # Keep the reordered fixture authoritative across legacy/catalog ownership.
+            index = json.loads((repo/'config/features.json').read_text())
+            tabs = list(catalog['tabs'])
+            for record in index['features']:
+                entry = record.get('startup', {}).get('controlTab')
+                if not entry: continue
+                position = next((i for i,t in enumerate(tabs) if t['id'] == entry['id']), None)
+                if position is not None:
+                    record['startup']['controlTab'] = dict(entry, after=tabs[position-1]['id'])
+                    tabs.pop(position)
+            (root/'config/features.json').write_text(json.dumps(index))
+            (root/'config/control-grid.json').write_text(json.dumps(dict(catalog,tabs=tabs)))
         entry = root/'shell.qml'; entry.write_text(QML)
         env = dict(os.environ, LME_SHELL_DEMO='1', XDG_CONFIG_HOME=str(root/'home'), XDG_STATE_HOME=str(root/'state'),
                    XDG_DATA_HOME=str(root/'data'), DBUS_SYSTEM_BUS_ADDRESS='unix:path='+str(root/'no-system-bus'),

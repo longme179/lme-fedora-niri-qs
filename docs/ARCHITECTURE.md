@@ -53,7 +53,7 @@ One generic reader per process loads/validates/caches descriptors once; widgets 
   "publicServices":["qml/services/ClipboardState.qml"],
   "bar":{"id":"clipboard","title":"Clipboard","icon":"clipboard","renderer":"action","panel":"clipboard"},
   "panel":{"id":"clipboard","entry":"qml/panels/ClipboardPanel.qml"},
-  "bootstrap":{"entry":"qml/panels/ClipboardFeature.qml","contexts":["shell"]},
+  "bootstrap":{"id":"clipboard","entry":"qml/panels/ClipboardFeature.qml","contexts":["live-main"]},
   "settingsPage":{"key":"clipboard","title":"Clipboard","icon":"clipboard","description":"Text and images, ready when you need them","keywords":"history capture copy paste image pin","entry":"qml/settings/ClipboardPage.qml"},
   "worker":{"entry":"scripts/clipboard.py","owner":"ClipboardState","commands":["search","copy","pin","delete","clear","pause"]},
   "requiredTools":["wl-paste","wl-copy"]
@@ -88,8 +88,15 @@ Keep shared bar renderers and specialized bindings; extract an entry adapter onl
 Named tab hooks call the existing refresh/mark-read functions at the same lifecycle points.
 No JSON expression evaluation or new callback language is permitted.
 The proposed feature-owned bootstrap adapter calls existing `ClipboardState.start()`
-once in the main shell; demo/Settings keep their current guards. It replaces the
-literal call in `shell.qml`, not the worker's lifecycle/retry policy. New feature-local
+once in the main shell; demo/Settings keep their current guards.
+The literal shell.qml call has been replaced without changing worker lifecycle/retry.
+M4c-3 bootstrap contexts are live-main/demo/preview/settings; omitted contexts
+mean live-main. Settings takes precedence, then preview, then demo. Both hosts
+use FeatureBootstrap; Clipboard retains its existing start/retry/worker guards.
+Catalog controlTab/agendaTab entries may declare a unique nonnegative int32
+legacyIndex; projections retain it, assign unnumbered entries above reserved
+indices and preserve position before filtering disabled entries. Integer/ID/env
+routing and Agenda's existing fallback/quickNotes behavior remain compatible. New feature-local
 types use local imports/qmldir or URL entries; no shared qmldir registration is needed.
 Existing global singleton/type exports remain compatibility facades until M8, if chosen.
 
@@ -296,10 +303,9 @@ New `NativeTabCase`/`NativeEntryCase`/`NativeRoutingCase` use `LME_TEST_UPGRADE_
 One behavior-preserving refactor per commit; if gates fail, revert that step rather than
 stacking unrelated fixes. Keep characterization tests that already pass on the baseline.
 
-Startup budget (owner decision, 2026-10-21): each later milestone re-measures Settings
-and preview cold launches against the previous accepted head with the same warm-cache,
-mapped-window and bootstrap-CI method. If the 95% CI lower bound of the added median
-cost exceeds 10 ms on either path, **STOP and ask**. The round-4 rule is not redefined.
+The owner's process reset supersedes the historical D1 startup budget: D1 is
+closed. STATE.md requires one 10-launch preview/Settings median and T+10 s RSS
+sanity check per branch; stop only for Settings >+100 ms or RSS >+10%.
 
 ## 6. Ordered migration, adapters and rollback
 
@@ -430,4 +436,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1 are merged; M4c-2 is implemented for owner review. M4c-3/M7 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2 are merged; M4c-3 is implemented for owner review. M7 and later need authorization.

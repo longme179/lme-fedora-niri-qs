@@ -22,7 +22,7 @@ QtObject {
     readonly property bool popupBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool liquidBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
     readonly property bool barBlurEnabled: !demo && !batterySaverActive && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
-    readonly property var legacyPanels: ["launchpad", "launcher", "control", "notifications", "power", "settings", "tray", "overview", "activity", "wifi"]
+    readonly property var legacyPanels: ["launchpad", "launcher", "control", "power", "settings", "tray", "overview", "activity", "wifi"]
     property string panelKind: "control"
     property bool launchpadOpen: false
     property bool launcherOpen: false
@@ -89,6 +89,7 @@ QtObject {
             closePanels();
             if (screen) panelScreen = screen;
             panelKind = name; catalogPanelOpen = !wasOpen;
+            if (name === "notifications") { notificationsOpen = !wasOpen; if (notificationsOpen) Notifications.markRead(); }
             return;
         }
         const key = name + "Open";
@@ -101,7 +102,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function settingsPageAvailable(page) {
-        return ["desktop", "appearance", "elements", "topbar", "controlLayout", "display", "notifications", "behavior", "about"].includes(page)
+        return ["appearance", "elements", "topbar", "controlLayout", "display", "behavior"].includes(page)
                 || (FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page);
     }
     function openSettingsPage(page) {

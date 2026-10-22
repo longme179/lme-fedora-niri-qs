@@ -14,7 +14,7 @@ GlassPanel {
     focus: true
     readonly property var tabEntries: ControlRegistry.tabs
     property var tabs: tabEntries.map(tab => tab.title)
-    readonly property var tabComponents: ({ControlDashboard: controls, AudioMixer: audio, DeviceControls: devices, Agenda: agenda, NotificationCenter: notices, SystemMonitor: monitor})
+    readonly property var tabComponents: ({ControlDashboard: controls, AudioMixer: audio, DeviceControls: devices, Agenda: agenda, SystemMonitor: monitor})
     property bool editing: false
     property bool initialized: false
     // Integer properties remain compatibility boundaries for existing fixtures/imports.
@@ -126,11 +126,10 @@ GlassPanel {
             sourceComponent: root.tabComponents[root.selectedTab.entry] || catalogTab
         }
     }
-    Component { id: catalogTab; Loader { source: FeatureCatalog.url(root.selectedTab.entry) } }
+    Component { id: catalogTab; Loader { source: FeatureCatalog.url(root.selectedTab.entry); onLoaded: if (item && "embedded" in item) item.embedded = true } }
     Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }
     Component { id: devices; DeviceControls {} }
     Component { id: agenda; Agenda {} }
-    Component { id: notices; NotificationCenter { embedded: true } }
 }

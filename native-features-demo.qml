@@ -16,7 +16,8 @@ ShellRoot {
         clipboardInitialPending = false;
         ClipboardState.start(); ShellState.togglePanel("clipboard");
     }
-    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(root.initializeClipboard); } }
+    function initializeNotifications() { if (FeatureCatalog.ready && ShellState.settingsPageAvailable("notifications")) Notifications.start(); }
+    Connections { target: FeatureCatalog; function onReadyChanged() { Qt.callLater(root.initializeClipboard); Qt.callLater(root.initializeNotifications); } }
     function find(item, name) { if (!item) return null; if (item.objectName === name) return item; for (const child of item.children || []) { const match = find(child, name); if (match) return match; } return null; }
     function mediaStatus(name) {
         const timeline = find(surface,name), wave = find(timeline,"mediaProgressWave");
@@ -26,6 +27,7 @@ ShellRoot {
     }
     Component.onCompleted: {
         if (Quickshell.env("LME_TEST_FEATURES") !== "1") { Qt.quit(); return; }
+        initializeNotifications();
         if (clipboardInitialPending) initializeClipboard();
         else ShellState.activityOpen = true;
     }
@@ -34,7 +36,7 @@ ShellRoot {
         function clipboardStatus(): string { return JSON.stringify({ready: ClipboardState.ready, capturing: ClipboardState.capturing, visible: ShellState.isPanelOpen("clipboard"), count: ClipboardState.entries.length, query: ClipboardState.query, kind: ClipboardState.filter, preview: clipboardLoader.item ? clipboardLoader.item.previewOpen : false, focused: clipboardLoader.item ? clipboardLoader.item.searchFocused : false, pinned: ClipboardState.entries.filter(i => i.pinned).length, images: ClipboardState.entries.filter(i => i.kind === "image").length, lastResult: ShellState.lastResult, error: ClipboardState.state.error || ClipboardState.messageError}); }
         function openClipboard(): void { ShellState.togglePanel("clipboard"); }
         function openNotifications(): void { ShellState.togglePanel("notifications"); }
-        function annotationStatus(): string { return JSON.stringify({ready: ShellState.backendReady, notifications: Notifications.history, visible: ShellState.notificationsOpen, lastResult: ShellState.lastResult}); }
+        function annotationStatus(): string { return JSON.stringify({ready: ShellState.backendReady && FeatureCatalog.ready && Notifications.started, notifications: Notifications.history, visible: ShellState.notificationsOpen, lastResult: ShellState.lastResult}); }
         function openActivity(): void { ShellState.togglePanel("activity"); }
         function openControl(): void {
             ShellState.run("setting", {key:"controlLayout",value:ShellState.preferences.controlLayout.map(item => Object.assign({},item,{enabled:item.id==="media"}))});

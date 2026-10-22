@@ -99,7 +99,7 @@ Item {
                 id: quickGrid
                 Layout.fillWidth: true
                 editing: root.editing; dragLayer: root; viewport: scroll
-                components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
+                components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: ShellState.settingsPageAvailable("notifications") ? dndModule : null,
                     stayAwake: ShellState.settingsPageAvailable("idle") ? stayAwakeModule : null, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,

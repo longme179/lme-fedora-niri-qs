@@ -1,0 +1,18 @@
+{
+  "id": "update",
+  "sources": [
+    "qml/settings/AboutPage.qml",
+    "qml/services/UpdateState.qml",
+    "scripts/shell_update.py"
+  ],
+  "settingsPage": {
+    "key": "about",
+    "title": "About",
+    "icon": "bell",
+    "description": "Your desktop and its contributors",
+    "keywords": "update upgrade github git commit version license requirements credits inir",
+    "entry": "qml/settings/AboutPage.qml",
+    "after": "behavior"
+  },
+  "preferences": {}
+}

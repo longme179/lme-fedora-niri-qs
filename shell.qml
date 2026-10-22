@@ -76,7 +76,6 @@ ShellRoot {
             }
         }
     }
-    LazyLoader { active: !root.preview; component: DesktopCanvas {} }
     PanelWindow {
         id: liquidScrim
         screen: overlay.screen
@@ -152,7 +151,7 @@ ShellRoot {
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
                 shown: ShellState.panelOpen && !ShellState.activityOpen
                 content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
-                               : ShellState.panelKind === "notifications" ? notificationsComponent : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
+                               : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
                 width: item ? Math.min(item.implicitWidth, parent.width - 32) : 400
                 height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : 500
                 x: centered ? (parent.width - width) / 2
@@ -166,7 +165,6 @@ ShellRoot {
     Component { id: launchpadComponent; LaunchpadPanel {} }
     Component { id: launcherComponent; Launcher {} }
     Component { id: controlComponent; ControlCenter {} }
-    Component { id: notificationsComponent; NotificationCenter {} }
     Component { id: settingsComponent; SettingsPanel {} }
     Component { id: powerComponent; PowerMenu {} }
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
@@ -186,7 +184,6 @@ ShellRoot {
             }
         }
     }
-    NotificationToasts { preview: root.preview }
     Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
     StatusWindow { preview: root.preview }
     LazyLoader {

@@ -200,13 +200,6 @@
       "legacyIndex": 3
     },
     {
-      "id": "notifications",
-      "title": "Notifications",
-      "entry": "NotificationCenter",
-      "legacyIndex": 4,
-      "markRead": true
-    },
-    {
       "id": "system",
       "title": "System",
       "entry": "SystemMonitor",

@@ -35,7 +35,8 @@ ShellRoot {
         target: "catalogFixture"
         function state(): string {
             return JSON.stringify({registriesReady: FeatureCatalog.settled, bars: BarRegistry.modules, defaults: BarRegistry.defaults,
-                pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs, agenda: ControlRegistry.agendaTabs,
+                pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs.map(tab => { const value = Object.assign({}, tab); delete value.after;
+                    if (value.entry.endsWith(".qml")) value.entry = value.entry.split("/").pop().slice(0,-4); return value; }), agenda: ControlRegistry.agendaTabs,
                 barLoaded: find(bar.item, "injectedBar"), pageLoaded: find(page.item, "injectedPage"),
                 tabLoaded: find(center.item, "injectedTab")});
         }
@@ -86,7 +87,8 @@ def session(native=False, prepare=None):
         process = subprocess.Popen(['quickshell', '-p', str(entry)], env=env, stdout=log, stderr=log)
         try:
             probe = Probe(root, entry, env, log)
-            probe.wait(lambda state: state['registriesReady'] and len(state['tabs']) >= 6)
+            minimum = len(legacy_expected()['tabs'])
+            probe.wait(lambda state: state['registriesReady'] and len(state['tabs']) >= minimum)
             yield probe
         finally:
             process.terminate(); process.wait(timeout=6)
@@ -124,4 +126,6 @@ def legacy_expected():
     catalog = load_catalog(REPO)
     for kind, source, key in [('bars', 'bar', 'id'), ('pages', 'settingsPage', 'key'), ('tabs', 'controlTab', 'id')]:
         expected[kind] = [item for item in expected[kind] if item[key] not in catalog['ids'][source]]
+    hidden = set(catalog['ids']['settingsPage']) & {'desktop', 'notifications'}
+    expected['bars'] = [item for item in expected['bars'] if item['id'] not in hidden]
     return expected

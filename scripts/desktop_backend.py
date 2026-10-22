@@ -61,7 +61,6 @@ from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
 from audio_actions import AudioCapabilities, provide as provide_audio
 from window_actions import WindowCapabilities, provide as provide_windows
-from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -535,10 +534,6 @@ class DesktopBackend:
             return self.niri
         self.actions = ActionRegistry()
         self.action_state = self.actions.provide([
-            (provide_appearance, AppearanceCapabilities(lambda: self.preferences.values,
-                lambda **kwargs: self.preferences.reload(**kwargs), lambda *args, **kwargs: self.preferences.update(*args, **kwargs),
-                lambda key, value: validate_preference(key, value), lambda: DEFAULT_PREFERENCES,
-                lambda action, request: self.appearance_action(action, request))),
             (provide_windows, WindowCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs),
                 lambda argv: self.runner.spawn(argv), lambda name: self.runner.executable(name), lambda name: self.runner.available(name),
                 lambda: self.preferences.values, lambda: self.applications.entries, lambda: self.file_search['entries'],
@@ -1286,7 +1281,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1451,7 +1446,13 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply"}:
+        elif action == "paletteReset":
+            self.preferences.values.update(paletteSource="dracula", accent=DRACULA_PROFILE["accent"])
+        elif action == "palettePreset":
+            ident=validate_preference('palettePreset',request.get('id'))
+            colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
+            self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
+        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
@@ -1560,6 +1561,11 @@ class DesktopBackend:
             folders=list(self.preferences.values["fileSearchRoots"])
             self.file_search={"query":query,"entries":[],"truncated":False}
             return self.start_feature(action,lambda: search_files(query,folders,cancel))
+        if action == "palettePreset":
+            ident=validate_preference('palettePreset',request.get('id'))
+            selected=next(p for p in PALETTE_CATALOG if p['id']==ident)
+            self.preferences.update({'palettePreset':ident,'paletteSource':'preset','accent':selected['colors']['accent']})
+            return selected['name']+' palette applied; manual overrides preserved'
         if action == "palettePreview":
             self.runner.executable("matugen")
             self.palette_preview = {"colors": {}, "path": ""}
@@ -1571,6 +1577,16 @@ class DesktopBackend:
                     or any(self.palette_preview.get(k)!=self.preferences.values[k] for k in ('paletteScheme','paletteMode','paletteContrast'))): raise ValueError("Generate a preview for this image first")
             self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
             return "Wallpaper palette applied; element overrides preserved"
+        if action == "paletteReset":
+            self.preferences.update({"paletteSource":"dracula","accent":DRACULA_PROFILE["accent"]})
+            return "Dracula palette restored; element overrides preserved"
+        if action == "settingsExport":
+            self.preferences.reload(force=True)
+            return "Exported " + export_document(request.get("path"),self.preferences.values,request.get("kind"))
+        if action == "settingsImport":
+            values=read_document(request.get("path"),validate_preference,DEFAULT_PREFERENCES)
+            backup=self.preferences.update(values,backup=True)
+            return "Imported settings. Previous settings: " + str(backup)
         if action.startswith("appearance"): return self.appearance_action(action, request)
         if action in ('gowallThemes','gowallGenerate','gowallSave','gowallApply','gowallSetup'):
             if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')

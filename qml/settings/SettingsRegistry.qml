@@ -9,7 +9,6 @@ QtObject {
         {key: "topbar", title: "Top bar", icon: "overview", description: "Your modules, in your order", keywords: "click right middle scroll gestures mute volume dnd modules layout islands activity timer media pill clock workspaces tray size corners border fill round square left center right"},
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
-        {key: "nightLight", title: "Night Light", icon: "weather-sun", description: "Softer light after sunset", keywords: "blue gamma warm temperature schedule sunrise sunset wlsunset"},
         {key: "desktop", title: "Desktop widgets", icon: "overview", description: "Clock, notes and media on your desktop", keywords: "canvas drag resize widget output screen edit"},
         {key: "wallpaper", title: "Wallpaper", icon: "applications", description: "A backdrop that feels like you", keywords: "playlist shuffle pause interval transition display output background image picture folder library thumbnail matugen material scheme contrast palette light dark"},
         {key: "utilities", title: "Shell utilities", icon: "applications", description: "Your commands and image tools", keywords: "launchpad scripts bash commands binary background terminal gowall upscale palette awww wallpaper"},

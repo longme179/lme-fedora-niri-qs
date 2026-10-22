@@ -60,6 +60,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
+from night_light_actions import NightLightCapabilities, provide as provide_night_light
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
 from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
@@ -67,7 +68,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput")},
+    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd")},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -264,9 +265,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key in {'barEdgeMargin', 'barSideMargin', 'barHeight'} and type(value) is int:
         low, high = {'barEdgeMargin': (0, 64), 'barSideMargin': (0, 160), 'barHeight': (36, 64)}[key]
         if low <= value <= high: return value
-    if key == "nightLightEnabled" and type(value) is bool: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
-    if key == "nightLightTemperature" and type(value) is int and 2500 <= value <= 6500: return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
     if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
@@ -526,7 +525,10 @@ class DesktopBackend:
         self.launcher_history = LauncherHistory()
         self.launchpad = Launchpad()
         self.actions = ActionRegistry()
-        self.action_state = self.actions.provide([(provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot))])
+        self.action_state = self.actions.provide([
+            (provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot)),
+            (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
+                self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None)))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -1257,7 +1259,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1322,8 +1324,6 @@ class DesktopBackend:
                 self.mirror_state = {'active': True, 'available': True, 'source': request.get('source'), 'target': request.get('target'), 'error': ''}
             elif action == 'mirrorStop': self.mirror_state = {**self.mirror_state, 'active': False}
         elif action == "platformRefresh": pass
-        elif action == "nightLightRefresh":
-            self.night_state = {'available': True, 'enabled': self.preferences.values['nightLightEnabled'], 'active': self.preferences.values['nightLightEnabled'], 'temperature': self.preferences.values['nightLightTemperature'], 'mode': self.preferences.values['nightLightMode'], 'start': self.preferences.values['nightLightStart'], 'end': self.preferences.values['nightLightEnd'], 'error': ''}
         elif action in {"captureClose", "captureLanguages"}:
             if action == 'captureClose': self.capture.close()
             else: self.capture.state['languages'] = ['eng', 'vie']
@@ -1521,20 +1521,6 @@ class DesktopBackend:
             if action == 'mirrorStop': return self.mirror.stop()
             self.mirror_state = self.mirror.state()
             return 'Mirror refreshed'
-        if action == 'nightLightRefresh':
-            if type(request.get('retry', False)) is not bool: raise ValueError('Night Light retry must be boolean')
-            if self.settings_only:
-                self.night_state = {'available': self.runner.available('wlsunset'), 'active': False,
-                                    'error': f"Start {self.preferences.values['shellName']} to control Night Light."}
-                if request.get('retry'):
-                    run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'retryNightLight')
-                reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'nightLightStatus')
-                try:
-                    state = json.loads(reply or '{}')
-                    if isinstance(state, dict) and 'active' in state: self.night_state = state
-                except ValueError: pass
-            else: self.night_light.signature = None
-            return 'Night Light refreshed'
         if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
         if action == 'imageAnnotate':
             editor = self.preferences.values['captureEditor']

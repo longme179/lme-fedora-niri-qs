@@ -38,7 +38,7 @@ Item {
     }
     function shown(id) {
         const tile = tiles.find(t => t.id === id);
-        return tile && (ShellState.preferences.controlLayout || []).some(m => m.id === tile.id && m.enabled);
+        return tile && root.components[id] !== null && (ShellState.preferences.controlLayout || []).some(m => m.id === tile.id && m.enabled);
     }
     function cancelDrag() { ghost.visible = false; movingId = ""; proposed = null; dragging = false; }
     function updateTarget() {

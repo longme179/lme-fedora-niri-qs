@@ -100,7 +100,7 @@ Item {
                 Layout.fillWidth: true
                 editing: root.editing; dragLayer: root; viewport: scroll
                 components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
-                    stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, overview: overviewModule,
+                    stayAwake: stayAwakeModule, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
                     batterySaver: batterySaverModule, settings: settingsModule, power: powerModule})

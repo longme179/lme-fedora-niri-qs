@@ -35,8 +35,7 @@ ShellRoot {
         target: "catalogFixture"
         function state(): string {
             return JSON.stringify({registriesReady: FeatureCatalog.settled, bars: BarRegistry.modules, defaults: BarRegistry.defaults,
-                pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs.map(tab => { const value = Object.assign({}, tab); delete value.after;
-                    if (value.entry.endsWith(".qml")) value.entry = value.entry.split("/").pop().slice(0,-4); return value; }), agenda: ControlRegistry.agendaTabs,
+                pages: SettingsRegistry.pages, tabs: ControlRegistry.tabs, agenda: ControlRegistry.agendaTabs,
                 barLoaded: find(bar.item, "injectedBar"), pageLoaded: find(page.item, "injectedPage"),
                 tabLoaded: find(center.item, "injectedTab")});
         }
@@ -125,6 +124,4 @@ def legacy_expected():
     catalog = load_catalog(REPO)
     for kind, source, key in [('bars', 'bar', 'id'), ('pages', 'settingsPage', 'key'), ('tabs', 'controlTab', 'id')]:
         expected[kind] = [item for item in expected[kind] if item[key] not in catalog['ids'][source]]
-    hidden = set(catalog['ids']['settingsPage']) & {'desktop', 'notifications'}
-    expected['bars'] = [item for item in expected['bars'] if item['id'] not in hidden]
     return expected

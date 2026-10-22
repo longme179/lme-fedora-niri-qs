@@ -52,7 +52,7 @@ class DesktopAmbientQmlCase(unittest.TestCase):
     DesktopAmbient { id: desktop }
     FloatingWindow {
         implicitWidth: 900; implicitHeight: 1050
-        Loader { id: page; source: Qt.resolvedUrl("qml/settings/DesktopPage.qml"); anchors { top: parent.top; left: parent.left; right: parent.right; margins: 16 } }
+        DesktopPage { id: page; anchors { top: parent.top; left: parent.left; right: parent.right; margins: 16 } }
         TestCase { id: pointer; when: false }
     }
     property int phase: 0

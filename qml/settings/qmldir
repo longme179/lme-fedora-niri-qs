@@ -14,6 +14,5 @@ SettingsApplication 1.0 SettingsApplication.qml
 ElementsPage 1.0 ElementsPage.qml
 NotificationsPage 1.0 NotificationsPage.qml
 DesktopPage 1.0 DesktopPage.qml
-UtilitiesPage 1.0 UtilitiesPage.qml
 GowallSettings 1.0 GowallSettings.qml
 AwwwSettings 1.0 AwwwSettings.qml

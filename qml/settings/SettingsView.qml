@@ -129,7 +129,7 @@ Item {
                     x: 6; y: 6
                     direction: "up"
                     width: pageScroll.width - 12
-                    content: root.currentPage.entry ? catalogPage : root.page === "utilities" ? utilitiesPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage
+                    content: root.currentPage.entry ? catalogPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
                                    : root.page === "notifications" ? notificationsPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
@@ -144,7 +144,6 @@ Item {
             PageNavigation { target: catalogLoader.item; onRequested: pageId => root.navigate(pageId) }
         }
     }
-    Component { id: utilitiesPage; UtilitiesPage {} }
     Component { id: desktopPage; DesktopPage {} }
     Component { id: appearancePage; AppearancePage {} }
     Component { id: barPage; TopBarPage {} }

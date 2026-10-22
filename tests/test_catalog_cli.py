@@ -16,7 +16,7 @@ class CatalogCliCase(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         for name in ('scripts', 'config', 'bin'): (self.root/name).mkdir()
-        for name in ('settings.sh', 'feature_catalog.py'):
+        for name in ('settings.sh', 'feature_catalog.py', 'catalog_metadata.py'):
             shutil.copy2(ROOT/'scripts'/name, self.root/'scripts'/name)
         (self.root/'config/features.json').write_text('{"version":1,"features":[]}')
         self.qs = self.root/'bin/qs'
@@ -29,7 +29,8 @@ class CatalogCliCase(unittest.TestCase):
             env=self.env, capture_output=True, text=True, timeout=5)
 
     def test_legacy_pages_and_empty_unknown_keep_messages_and_codes(self):
-        for page in ('appearance', 'behavior', 'controlLayout', 'about'):
+        legacy = (ROOT/'scripts/settings.sh').read_text().split('case "$page" in',1)[1].split(')',1)[0].strip().split('|')
+        for page in legacy:
             result = self.launch(page)
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, 'accepted:'+page+'\n', ''))
         result = self.launch('absent')

@@ -11,6 +11,7 @@ ColumnLayout {
     id: root
     spacing: 20
     signal fontSettingsRequested()
+    signal navigateRequested(string pageId)
     property string colorToken: "notificationFill"
     ColorPicker {
         id: picker
@@ -104,7 +105,7 @@ ColumnLayout {
         Flow {
             Layout.fillWidth: true; spacing: 8
             LiquidButton { text: "Reset notification colors"; enabled: !Theme.liquidGlass; onClicked: { const colors = Object.assign({}, ShellState.preferences.themeOverrides || {}); for (const key of ["notificationFill", "notificationTitle", "notificationBody", "notificationAccent", "notificationBorder"]) delete colors[key]; ShellState.run("setting", {key: "themeOverrides", value: colors}); } }
-            LiquidButton { text: "Font families…"; onClicked: root.fontSettingsRequested() }
+            LiquidButton { text: "Font families…"; onClicked: { root.fontSettingsRequested(); root.navigateRequested("elements"); } }
         }
     }
     SettingsCard {

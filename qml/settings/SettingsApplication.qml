@@ -9,6 +9,7 @@ import "../theme"
 
 ShellRoot {
     id: root
+    Loader { source: Qt.resolvedUrl("root:/qml/panels/FeatureBootstrap.qml") }
     property bool initialized: false
     property bool startupFailed: false
     property string requestedPage: Quickshell.env("LME_SETTINGS_PAGE") || "appearance"

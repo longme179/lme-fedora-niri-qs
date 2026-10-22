@@ -6,7 +6,7 @@ import re
 import signal
 import sys
 
-from catalog_metadata import KINDS, FIELDS, validate_indices
+from catalog_metadata import KINDS, FIELDS, validate_indices, validate_contexts
 
 
 class CatalogError(ValueError):
@@ -163,6 +163,7 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
             for key, value in item.items():
                 if key in ('refresh', 'markRead', 'centered', 'fallback'):
                     if type(value) is not bool: raise CatalogError(f'Invalid tab flag: {key}')
+                elif key == 'contexts': validate_contexts(value, CatalogError)
                 elif key == 'legacyIndex':
                     if type(value) is not int or not 0 <= value <= 2147483647: raise CatalogError('Invalid legacyIndex')
                 elif key == 'scrim':

@@ -206,3 +206,21 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Switch workspaces, including another output, and check focus/overview behavior.
   4. In Settings save/apply/delete an appearance profile and apply/reset a palette; confirm unrelated overrides remain.
   5. Export/import a preset, restart, verify values and private backup; confirm preview/demo runs no system commands.
+
+## M7b — wallpaperScan asynchronous pilot — 2026-10-23
+
+1. Baseline main 411cc9f: handle (1282) admits wallpaperScan in shell and the Settings legacy allowlist; process context precedes demo/live selection.
+2. Live perform (1593) calls start_feature('wallpaperScan', lambda: wallpaper_library(request.get('folder'))); it does not scan synchronously.
+3. start_feature (1112) rejects an existing owner with 'This operation is already running'; otherwise submit uses the existing two-worker feature_executor and feature_jobs.
+4. handle returns {ok:true, action:'wallpaperScan', message:'Working…', pending:true, sequence:N}; no new result shape is needed.
+5. snapshot (1025) uses result_unemitted to publish the input acknowledgement before inspecting completed jobs; emit (1780) retains JSON-lines publication.
+6. finish_features (1117) chooses the first done job, increments sequence, obtains job.result(), installs wallpaper_library and publishes 'Wallpaper library refreshed'.
+7. Completion removes that feature_jobs owner, invalidates system_cache and breaks; each later completion receives its own result/sequence.
+8. CommandError/ValueError/OSError retain the old list, add error=str(error)[:400] and publish the same truncated error result; pending is absent.
+9. Snapshot field remains wallpaperLibrary at feature_snapshot (1088); entries/folder/truncated/error and all other snapshot slots stay unchanged.
+10. ShellState.accept (195) clears pendingActions[action] on a non-pending result; backend.onExited (216) clears all UI pending ownership.
+11. Scan has no action-specific cancellation; shutdown (1933) calls feature_executor.shutdown(wait=False, cancel_futures=True), without a final completion emission.
+12. Running futures finish normally; queued futures cancel. Manually finishing a cancelled future raises CancelledError today; that policy is not redesigned.
+13. Demo perform_demo (1381) ignores the requested folder and synchronously reads assets/wallpapers; it never scans the user's folder or starts a job/process.
+14. Demo handle returns the ordinary demo message without pending; the bundled library installs immediately, including in standalone Settings demo.
+15. Minimal extension: worker specs delegate to start_feature; complete(value or caught error) only installs domain state; existing presentation supplies the success text and the host emitter retains publication/cancellation.

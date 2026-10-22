@@ -140,6 +140,13 @@ jobs at the same `feature_snapshot` slot. The controller remains `launchpad.py`.
 Preserve detached jobs, logs, eight-job per-controller limit,
 literal argv, explicit Bash/terminal choice and disabled-live/permissive-demo behavior.
 No async domain migration is authorized by proving this synchronous pilot.
+M4c-1 subsequently adds nightLightRefresh, idleRefresh/idleInhibit and keybindRefresh
+with their separate demo behavior. Their periodic/controller state facades and original
+snapshot slots remain in the host; providers return no additional projection keys.
+Weather search/detect/select/refresh retain their legacy dispatch/controller contracts.
+Shared settingsPageAvailable guards page links and retained control-grid factories.
+Withdrawal filters UI without removing saved IDs or changing worker policy; standalone
+openPage/startupPending and their startup barrier remain unchanged.
 
 M6 accepts synchronous specs only; `execution`, `complete` and `presentation` retain
 the designed interface, with no worker/completion migration. For a future authorized
@@ -169,9 +176,9 @@ settings file. These exact existing flat keys remain in `settings.json`:
 
 M5 implements this interface as `settings_schema.Schema`; the backend explicitly binds
 existing validator/default callbacks (descriptor defaultResolver names are data only).
-Clipboard (3), weather scalar (2) and OSD (5)
-keys are descriptor-owned; 137 keys stay in the legacy fragment. Weather/OSD entries
-own schema only; their UI remains in legacy registries.
+M5 migrated Clipboard (3), weather scalar (2) and OSD (5). M4c-1 adds Night Light (5),
+Idle (3), niriConfigPath (1) and weatherLocation (1): 20 descriptor keys/127 legacy.
+The four light Settings pages now use catalog entries; OSD's entry still owns schema only.
 Schema interface: `defaults(context)`, `validate(key,value)`, `portable_keys()`,
 `appearance_keys()`; retain `DEFAULT_PREFERENCES` and `validate_preference` as adapters.
 Named validators/default resolvers bind to existing Python functions, never `eval`.
@@ -420,4 +427,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5 is merged; M6 is implemented for owner review. M7 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6 are merged; M4c-1 is implemented for owner review. M4c-2/M7 and later need authorization.

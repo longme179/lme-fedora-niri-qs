@@ -8,27 +8,27 @@ Do not read archive/ unless answering a specific historical question.
 - M0 baseline/harness; M1 runner/storage; M2 content types; G3 baseline repair;
   M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
 - D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
-- M5 merged: ten descriptor-owned preference keys; 137 legacy. Only Clipboard UI is converted.
-- M6: refactor/m6-launchpad-actions implemented, awaiting owner review/merge.
-  Only synchronous launchpadRun. M7/other domains need authorization; M8 moves deferred.
+- M5/M6 merged: schema infrastructure and the synchronous Launchpad action pilot.
+- M4c-1: refactor/m4c1-light-features implemented, awaiting owner review/merge.
+  Five catalog Settings pages; 20 descriptor keys/127 legacy; only Clipboard's bar is converted.
+- M4c-2/M7/other domains need authorization; M8 moves deferred.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 
 ## Compatibility adapters and retirement
 
-- Runner/errors/TOOLS, storage and Clipboard content-type re-exports: keep public
-  import facades until an explicit owner-approved compatibility change.
-- Integer controlTab and named LME_SHELL_CONTROL_TAB mapping: public compatibility;
-  internal adapters retire only after all callers/fixtures use stable IDs.
+- Runner/errors/TOOLS, storage/content-type re-exports: keep public facades until owner-approved retirement.
+- Integer controlTab/named env mapping: public compatibility; internal adapters retire after all callers/fixtures use stable IDs.
 - Hybrid registry projections, legacy lists, legacy_ids() source bridge and panel
   allowlist: retire per namespace after its final legacy registration/fixture.
 - ClipboardFeature -> ClipboardState.start(): retain until equivalent bootstrap
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- M6 explicit provider binding/legacy dispatch trees retire per domain with catalog/conversion parity.
+- Explicit provider bindings/legacy trees retire per domain with backend discovery and ownership/fallback parity.
+- Night/idle/keybind host state facades remain until controller/state consumers migrate with cadence unchanged.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema
   facades; retain public names until explicit owner-approved compatibility changes.
-- Legacy validator/default bindings (137 keys), original key-order inventory,
+- Legacy validator/default bindings (127 keys), original key-order inventory,
   BarRegistry default resolver and bundled-fragment fallback retire only after
   their last consumer/fallback contract is migrated. Worker fault policy is separate.
 - Architecture exceptions/size ceilings: remove vanished edges, lower shrunken

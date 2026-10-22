@@ -475,15 +475,15 @@ Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses
 tool lookup and errors), `scripts/storage.py` (private JSON writes and file locks),
 and `scripts/content_types.py` (the text byte limit and image signature recognition).
 The original backend, display and Clipboard imports remain available for compatibility.
-Clipboard's bar item, panel, Settings page and bootstrap are registered in
-[config/clipboard.json](config/clipboard.json) through [config/features.json](config/features.json).
+Clipboard's bar item, panel and bootstrap, and the Clipboard, Night Light, Idle,
+Keybinds and Weather Settings pages are registered through [config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor
-fragments and `config/preferences-legacy.json`. Clipboard, weather scalar settings
-and OSD use descriptor definitions; the other 137 keys retain legacy bindings.
+fragments and `config/preferences-legacy.json`: 20 keys are descriptor-owned and
+127 retain legacy bindings.
 Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
-`scripts/backend_actions.py` owns registered action dispatch. Its first provider,
-`scripts/launchpad_actions.py`, handles only synchronous `launchpadRun`, with narrow
-controller/preferences callbacks; all other live and demo actions retain legacy routing.
+`scripts/backend_actions.py` owns synchronous Launchpad, Night Light, Idle and Keybinds
+action dispatch through narrow controller/preferences callbacks. Weather's asynchronous
+controller and other live/demo actions retain legacy routing.
 See the [migration log](docs/MIGRATION_LOG.md) for validation.
 
 Start development tasks with [current agent state](docs/STATE.md).

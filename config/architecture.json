@@ -18,7 +18,6 @@
     "display": ["qml/settings/DisplayPage.qml", "scripts/display_control.py", "scripts/display_mirror.py"],
     "launcher": ["qml/panels/Launcher.qml", "qml/services/LauncherSearch.js", "scripts/file_search.py", "scripts/launcher_history.py"],
     "lyrics": ["scripts/lyrics.py"],
-    "notifications": ["qml/panels/NotificationCenter.qml", "qml/panels/NotificationToasts.qml", "qml/settings/NotificationsPage.qml", "qml/services/Notifications.qml"],
     "overview": ["qml/panels/Overview.qml"],
     "power": ["qml/panels/PowerMenu.qml"],
     "privacy": ["qml/services/PrivacyState.qml", "scripts/privacy.py"],

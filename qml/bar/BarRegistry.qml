@@ -6,7 +6,7 @@ QtObject {
     readonly property var zones: ["left", "center", "right"]
     readonly property var defaults: ({left: ["launcher", "overview", "workspaces"], center: ["activity"], right: ["privacy", "clipboard", "tray", "notifications", "audio", "network", "battery", "clock", "settings"]})
     readonly property var knownModules: FeatureCatalog.project("bar", legacyModules, "id", true)
-    readonly property var modules: FeatureCatalog.project("bar", legacyModules, "id")
+    readonly property var modules: FeatureCatalog.project("bar", legacyModules, "id").filter(item => available(item.id))
     readonly property var legacyModules: [
         {id: "launchpad", title: "Launchpad", detail: "Your scripts and binaries", icon: "applications"},
         {id: "launcher", title: "Applications", detail: "Application launcher", icon: "applications"},
@@ -27,7 +27,8 @@ QtObject {
         {id: "settings", title: "Settings", detail: "Open the separate settings app", icon: "settings"},
         {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"}
     ]
-    function info(id) { return knownModules.find(item => item.id === id) || {id: id, title: id, icon: "applications", enabled: false}; }
+    function available(id) { return id !== "notifications" || ShellState.settingsPageAvailable(id); }
+    function info(id) { const item = knownModules.find(item => item.id === id); return item && available(id) ? item : {id: id, title: id, icon: "applications", enabled: false}; }
     function clone(layout) {
         const value = layout || defaults;
         return {left: value.left.slice(), center: value.center.slice(), right: value.right.slice()};

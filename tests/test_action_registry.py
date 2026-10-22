@@ -195,3 +195,7 @@ class RegistryContractCase(unittest.TestCase):
         self.assertEqual(project(), {'launchpadJobs': {'saved': {'running': False}}})
         self.assertIsNotNone(registry.get('launchpadRun'))
         self.assertIsNone(registry.get('launchpadRunExtra'))
+
+# Keep the dispatch test entry stable without exceeding the source-size ratchet.
+from action_registry_async import WallpaperScanDispatchCase
+from action_registry_workers import WorkerRegistryCase

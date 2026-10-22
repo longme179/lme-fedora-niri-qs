@@ -85,3 +85,34 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   4. Disable Launchpad: live must show the existing disabled error; re-enable and retry.
   5. In preview/demo (including Settings demo), request that entry; verify no command, log or output file is created.
 - STOP after M6; no async, executor, queue, cache, polling or power-policy changes; no merge performed.
+
+## M4c-1 — four light catalog features — 2026-10-22
+
+- Branch refactor/m4c1-light-features, base main d9a7211 (M5/M6 merged). Tests c0d9c0c, cd7e8c7, 20b9f9d; final docs commit records verification.
+- One conversion commit each: Night Light 951ae17; Idle 190869b; Keybinds ee39333; Weather 806e9fd. No files moved or features added.
+- Five catalog Settings pages now include Clipboard; exact sidebar/search order and CLI admission retained. Schema owns 20 keys; 127 remain legacy (Night +5, Idle +3, Keybinds +1, Weather +1).
+- Baseline G0 495/0/132, G1 3/0/0; focused/native 50/0/2 (ownership/withdrawal N/A). All counts are pass/fail/skip; production was unchanged during characterization.
+- Night/Idle/Keybinds each: G0 496/0/131, G1 3/0/0; focused/native 52/0/0. Weather focused/native plus existing Settings cases: 63/0/0; its G0/G1 ran within the one final full set.
+- Final gates: G0 496/0/131; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 polling 1/0/0. Disposable XDG/Sway/D-Bus; no gate failure/revert.
+- G0 skips: 116 other opt-in UI/Wayland/D-Bus/OpenGL, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 fake-niri, 3 light native cases. Ownership N/A now runs; all three new native cases ran separately with zero skips.
+- Legacy CLI fixtures now derive the remaining list/use Behavior instead of Weather; existing assertions and frozen JSON goldens unchanged. Full 147-key defaults/validation/export parity passed after every conversion.
+- Withdrawal preserves exact settings/grid/schema/data bytes and IDs, hides pages/card/tiles, disables the Night Light -> Weather link, rejects withdrawn CLI keys and restores access on re-enable.
+- Fifth-page copied fixture adds only own QML/schema descriptor and one index record; no host edit. Action-provider capability bindings remain the explicit host adapter, not automatic discovery.
+- Preferences class AST and all four worker/controller files unchanged; enabled behavior, public facades/results/snapshot shape, privacy exclusions and worker policy preserved. No new dependency exceptions/cycles; backend ceiling ratcheted downward.
+- Sanity: ten launches/path/arm; preview main/head 891.88/884.28 ms, Settings 885.55/901.42 ms (+15.87 ms); no +100 ms/+10% flag.
+- RSS T+10 s (KiB, main/head): preview QS 281076/280624, backend 26240/26184; Settings QS 234836/234520, backend 26184/26160. Private software-rendered session.
+- Retain settingsPageAvailable/control-grid availability guards while surface factories remain legacy; retire per namespace when catalog surface entries cover the same routes/IDs.
+- Explicit sync providers retain host night_state/idle_state/keybinds facades and projection slots; retire with covered controller/state-consumer migration and backend-discovery ownership/fallback parity. Public import facades need owner-approved retirement.
+- Weather search/detect/select/refresh stay legacy: its controller owns asynchronous requests/cache. No registry worker/complete extension, sampling, cache or power-policy change.
+- M4c-2 plan, Notifications: preserve NotificationServer/history/annotation bootstrap and the fontSettingsRequested -> Elements route via a common navigation adapter; page-only loading cannot forward that signal today.
+- Desktop: preserve per-output layer/input/geometry lifecycle, DesktopState/notes bootstrap, edit IPC and Notes/media services; characterize withdrawal without deleting widget data.
+- Wallpaper/Utilities: retain scan/palette/awww/gowall async completion/cancellation, playlist/output state, managed/detached jobs, Utilities -> Wallpaper route and Launchpad editor composition; no async conversion without authorization.
+- Expected dependency work: retain or replace existing DesktopCard -> QuickNotes, UtilitiesPage -> GowallSettings, image_utilities.py -> wallpaper.py seams with shared APIs/composition. Do not create a new Utilities owner that imports Launchpad/Gowall implementations or add exceptions to bypass the rule.
+- Laptop checklist (hardware needs real-session check):
+  1. From Gear, open each of the four pages; verify headings and normal layout.
+  2. Run settings.sh --page nightLight/idle/keybinds/weather separately; repeat through Settings search and verify sidebar order.
+  3. Change temperature/schedule, idle profile, keybind config path and weather unit/location; restart and confirm persistence.
+  4. Use weather-card Gear and Night Light's Weather link; confirm they reuse the expected page IDs.
+  5. Disable one index entry in a copy, restart shell/Settings; confirm page/UI/CLI withdrawal and graceful links with saved grid/data unchanged.
+  6. Re-enable the entry, restart and confirm access/settings return; check real gamma/idle behavior without competing daemons.
+- STOP after M4c-1; M4c-2/M7 are not authorized; no merge or main push performed.

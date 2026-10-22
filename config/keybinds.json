@@ -1,0 +1,25 @@
+{
+  "id": "keybinds",
+  "sources": [
+    "scripts/niri_keybinds.py",
+    "scripts/keybind_actions.py"
+  ],
+  "settingsPage": {
+    "key": "keybinds",
+    "title": "Keyboard shortcuts",
+    "icon": "applications",
+    "description": "Your niri keybindings at a glance",
+    "keywords": "keybind bindings cheatsheet hotkey keys keyboard config includes search",
+    "entry": "qml/settings/KeybindsPage.qml",
+    "after": "idle"
+  },
+  "preferences": {
+    "niriConfigPath": {
+      "type": "string",
+      "validator": "niriConfigPath",
+      "portable": false,
+      "appearance": false,
+      "default": ""
+    }
+  }
+}

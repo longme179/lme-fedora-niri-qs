@@ -100,9 +100,12 @@ QtObject {
         root[key] = !wasOpen;
         if (notificationsOpen) Notifications.markRead();
     }
+    function settingsPageAvailable(page) {
+        return ["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "wallpaper", "notifications", "behavior", "about"].includes(page)
+                || (FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page);
+    }
     function openSettingsPage(page) {
-        if (!["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "nightLight", "wallpaper", "weather", "notifications", "idle", "keybinds", "behavior", "about"].includes(page)
-                && !(FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page)) return;
+        if (!settingsPageAvailable(page)) return;
         closePanels(); settingsPage = page;
         if (demo) { panelKind = "settings"; settingsOpen = true; }
         else if (!settingsProcess.running) settingsProcess.running = true;

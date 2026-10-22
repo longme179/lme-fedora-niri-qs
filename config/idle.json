@@ -1,0 +1,39 @@
+{
+  "id": "idle",
+  "sources": [
+    "scripts/idle_control.py",
+    "scripts/idle_actions.py"
+  ],
+  "settingsPage": {
+    "key": "idle",
+    "title": "Idle and sleep",
+    "icon": "battery",
+    "description": "Timeouts that follow your charger",
+    "keywords": "laptop ac battery display lock suspend sleep swayidle awake",
+    "entry": "qml/settings/IdlePage.qml",
+    "after": "clipboard"
+  },
+  "preferences": {
+    "idleEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": false
+    },
+    "idleProfiles": {
+      "type": "object",
+      "validator": "idleProfiles",
+      "portable": false,
+      "appearance": false,
+      "defaultResolver": "idleProfiles"
+    },
+    "idleLockBeforeSleep": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "nightLight",
+  "sources": [
+    "scripts/night_light.py",
+    "scripts/night_light_actions.py"
+  ],
+  "settingsPage": {
+    "key": "nightLight",
+    "title": "Night Light",
+    "icon": "weather-sun",
+    "description": "Softer light after sunset",
+    "keywords": "blue gamma warm temperature schedule sunrise sunset wlsunset",
+    "entry": "qml/settings/NightLightPage.qml",
+    "after": "display"
+  },
+  "preferences": {
+    "nightLightEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": false
+    },
+    "nightLightMode": {
+      "type": "string",
+      "validator": "nightLightMode",
+      "portable": true,
+      "appearance": false,
+      "default": "manual"
+    },
+    "nightLightTemperature": {
+      "type": "integer",
+      "validator": "integer",
+      "portable": true,
+      "appearance": false,
+      "default": 4500,
+      "min": 2500,
+      "max": 6500
+    },
+    "nightLightStart": {
+      "type": "string",
+      "validator": "nightLightStart",
+      "portable": true,
+      "appearance": false,
+      "default": "20:00"
+    },
+    "nightLightEnd": {
+      "type": "string",
+      "validator": "nightLightEnd",
+      "portable": true,
+      "appearance": false,
+      "default": "07:00"
+    }
+  }
+}

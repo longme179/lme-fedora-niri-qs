@@ -25,7 +25,7 @@ Rectangle {
                 LabelText { text: ShellState.demo ? "Demo forecast" : root.weather.automatic ? "Approximate location · by IP" : root.place.country || "Selected location"; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
             }
             IconButton { iconName: "refresh"; tooltip: "Refresh weather"; Accessible.name: "Refresh weather"; enabled: ShellState.backendReady && !root.weather.loading; onClicked: ShellState.run("weatherRefresh") }
-            IconButton { iconName: "settings"; tooltip: "Weather settings"; onClicked: ShellState.openSettingsPage("weather") }
+            IconButton { iconName: "settings"; tooltip: "Weather settings"; enabled: ShellState.settingsPageAvailable("weather"); onClicked: ShellState.openSettingsPage("weather") }
         }
         RowLayout {
             visible: root.weather.available === true

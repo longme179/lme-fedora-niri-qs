@@ -14,6 +14,7 @@ service APIs and stdlib helpers. Preserve attribution for third-party code.
 - `scripts/desktop_backend.py`: unprivileged JSON-lines backend; domain helpers
   and shared runner/storage/content/catalog modules remain flat in `scripts/`.
 - `config/features.json`: versioned index; descriptors own feature registrations.
+- `scripts/backend_actions.py`: sync registry; providers use narrow callbacks and explicit host bindings.
 - `tests/`: unit contracts and opt-in private Wayland checks.
 - `docs/STATE.md`: current status; `docs/MIGRATION_LOG.md`: concise new milestones.
 
@@ -39,6 +40,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
    Schema definitions live in descriptor preferences plus the legacy fragment.
    Declare portable/profile membership explicitly; defaults deny both. Bind named
    validators/resolvers to Python functions; JSON contains no code.
+   Guard cross-surface page links with ShellState.settingsPageAvailable; preserve saved IDs on withdrawal.
 
 ## Commands and checks
 

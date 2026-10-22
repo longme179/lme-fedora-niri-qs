@@ -28,7 +28,7 @@ Item {
     property bool editing: false
     property alias grid: quickGrid
     readonly property var cards: (ShellState.preferences.controlLayout || []).filter(item => ControlRegistry.cardIds.includes(item.id))
-    readonly property var cardComponents: ({weather: weatherModule, charging: chargingModule, media: mediaModule, resources: resourcesModule, capture: captureModule})
+    readonly property var cardComponents: ({weather: ShellState.settingsPageAvailable("weather") ? weatherModule : null, charging: chargingModule, media: mediaModule, resources: resourcesModule, capture: captureModule})
 
     function numeric(value, suffix) {
         return value === null || value === undefined ? "—" : Math.round(value) + (suffix || "");
@@ -100,7 +100,7 @@ Item {
                 Layout.fillWidth: true
                 editing: root.editing; dragLayer: root; viewport: scroll
                 components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: dndModule,
-                    stayAwake: stayAwakeModule, motion: motionModule, nightLight: nightLightModule, overview: overviewModule,
+                    stayAwake: ShellState.settingsPageAvailable("idle") ? stayAwakeModule : null, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
                     batterySaver: batterySaverModule, settings: settingsModule, power: powerModule})
@@ -117,7 +117,7 @@ Item {
                         required property int index
                         readonly property var modelData: root.cards[index] || null
                         objectName: "controlCard-" + (modelData ? modelData.id : "")
-                        active: modelData !== null && modelData.enabled
+                        active: modelData !== null && modelData.enabled && root.cardComponents[modelData.id] !== null
                         enabled: !root.editing
                         visible: active
                         Layout.fillWidth: true; Layout.preferredWidth: 1

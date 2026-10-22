@@ -129,9 +129,8 @@ Item {
                     direction: "up"
                     width: pageScroll.width - 12
                     content: root.currentPage.entry ? catalogPage : root.page === "utilities" ? utilitiesPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
-                                   : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage
-                                   : root.page === "idle" ? idlePage : root.page === "keybinds" ? keybindsPage : root.page === "nightLight" ? nightPage : root.page === "elements" ? elementsPage
-                                   : root.page === "notifications" ? notificationsPage : root.page === "weather" ? weatherPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
+                                   : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
+                                   : root.page === "notifications" ? notificationsPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
             }
         }
@@ -149,11 +148,7 @@ Item {
     Component { id: wallpaperPage; WallpaperPage {} }
     Component { id: displayPage; DisplayPage {} }
     Component { id: controlPage; ControlLayoutPage {} }
-    Component { id: weatherPage; WeatherPage {} }
     Component { id: notificationsPage; NotificationsPage { onFontSettingsRequested: root.navigate("elements") } }
-    Component { id: idlePage; IdlePage {} }
-    Component { id: keybindsPage; KeybindsPage {} }
-    Component { id: nightPage; NightLightPage {} }
     Component { id: elementsPage; ElementsPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }

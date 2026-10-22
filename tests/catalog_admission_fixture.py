@@ -1,13 +1,15 @@
 """Cold CLI fixtures and tracing live only inside a disposable checkout."""
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-LEGACY = 'utilities appearance elements desktop topbar controlLayout display nightLight wallpaper weather notifications idle keybinds behavior about'.split()
+LEGACY = re.search(r'^    (utilities\|appearance\|[^\n]+)\) ;;$',
+                   (ROOT/'scripts/settings.sh').read_text(), re.M).group(1).split('|')
 
 
 def canonical(index):

@@ -157,6 +157,14 @@ no registry extension or catalog backend fields. Existing state/snapshot slots,
 invalidation and acknowledgement order stay in the host. Direct perform/perform_demo
 facades forward registered IDs; unknown IDs and appearance* prefixes stay legacy.
 Profile transactions retain appearance_action; registry errors never fall through.
+M7b pilots only wallpaperScan with execution="worker", callable complete and the
+existing presentation field for its success message. Dispatch delegates to the host's
+start_feature; no executor/job table is owned by the registry. The existing completion
+emitter calls complete(value or its caught CommandError/ValueError/OSError) solely to
+install domain state, then publishes the original result/sequence and clears ownership.
+complete returns no result payload. Missing complete retains the old rejected-spec
+error message; unknown async IDs stay legacy. Cancellation, shutdown, one-completion
+ordering and snapshot publication remain in the host. No second async action is migrated.
 Weather search/detect/select/refresh retain their legacy dispatch/controller contracts.
 Shared settingsPageAvailable guards page links and retained control-grid factories.
 Withdrawal filters UI without removing saved IDs or changing worker policy; standalone
@@ -443,4 +451,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3 are merged; M7a synchronous providers are implemented for owner review. M7b and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3 are merged; M7a is merged; the M7b wallpaperScan pilot is implemented for owner review. Further async conversions need authorization.

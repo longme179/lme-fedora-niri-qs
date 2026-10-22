@@ -1,4 +1,4 @@
-# Agent state (2026-10-22)
+# Agent state (2026-10-23)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
@@ -9,9 +9,9 @@ Do not read archive/ unless answering a specific historical question.
   M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
 - D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
 - M5/M6 merged: schema infrastructure and the synchronous Launchpad action pilot.
-- M4c-1/M4c-2 merged; M4c-3 implemented on refactor/m4c3-capabilities for review.
+- M4c-1/M4c-2/M4c-3 merged; M7a implemented on refactor/m7a-sync-actions for review.
   Ten catalog Settings pages; 66 descriptor keys/81 legacy; only Clipboard's bar is converted.
-  Catalog tab indices/bootstrap contexts implemented; M7 needs authorization; M8 deferred.
+  Catalog tab indices/bootstrap contexts implemented; 29/89 backend IDs registered; M7b needs authorization; M8 deferred.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 
 ## Compatibility adapters and retirement
@@ -24,7 +24,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Explicit providers/legacy trees retire per domain with backend discovery and ownership/fallback parity. Night/idle/keybind state facades retain cadence until their consumers migrate.
+- Explicit providers retire with descriptor discovery/ownership/fallback parity; direct perform/perform_demo facades when direct callers retire. Night/idle/keybind state facades retain cadence until their consumers migrate.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema

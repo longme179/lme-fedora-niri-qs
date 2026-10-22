@@ -58,6 +58,10 @@ from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass,
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
+from local_content_actions import LocalContentCapabilities, provide as provide_local_content
+from audio_actions import AudioCapabilities, provide as provide_audio
+from window_actions import WindowCapabilities, provide as provide_windows
+from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -526,8 +530,26 @@ class DesktopBackend:
         self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.launcher_history = LauncherHistory()
         self.launchpad = Launchpad()
+        def refresh_action_niri():
+            self.niri = self.niri_state()
+            return self.niri
         self.actions = ActionRegistry()
         self.action_state = self.actions.provide([
+            (provide_appearance, AppearanceCapabilities(lambda: self.preferences.values,
+                lambda **kwargs: self.preferences.reload(**kwargs), lambda *args, **kwargs: self.preferences.update(*args, **kwargs),
+                lambda key, value: validate_preference(key, value), lambda: DEFAULT_PREFERENCES,
+                lambda action, request: self.appearance_action(action, request))),
+            (provide_windows, WindowCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs),
+                lambda argv: self.runner.spawn(argv), lambda name: self.runner.executable(name), lambda name: self.runner.available(name),
+                lambda: self.preferences.values, lambda: self.applications.entries, lambda: self.file_search['entries'],
+                lambda ident: self.launcher_history.record(ident), self.identifier, lambda: self.niri, refresh_action_niri,
+                lambda value: self.niri_action(value), lambda: self.demo_snapshot()['niri'], lambda: self.demo_snapshot()['apps'])),
+            (provide_audio, AudioCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), self.percentage,
+                lambda: self.bluetooth(), lambda enabled: self.set_bluetooth(enabled),
+                lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')})),
+            (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
+                self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
+                lambda value: self.demo_snapshot().__setitem__('calculator', value))),
             (provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot)),
             (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
                 self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
@@ -1264,7 +1286,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1296,6 +1318,7 @@ class DesktopBackend:
 
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
+        if spec := self.actions.get(action): return spec.demo(request)
         system = state["system"]
         if action == 'batterySaver':
             if type(request.get('enabled')) is not bool: raise ValueError('Battery saver must be enabled or disabled')
@@ -1358,11 +1381,7 @@ class DesktopBackend:
         elif action == "wallpaperScan":
             bundled = Path(__file__).resolve().parents[1] / "assets/wallpapers"
             self.wallpaper_library = wallpaper_library(str(bundled))
-        elif action == "calculate":
-            state["calculator"] = {"query": request.get("query"), "result": calculate(request.get("query")), "error": ""}
-        elif action == "copyText":
-            if not isinstance(request.get("text"), str): raise ValueError("Text is required")
-        elif action in ('notificationSave','launcherHistoryClear'): pass
+        elif action == 'launcherHistoryClear': pass
         elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             if action in {"wifiConnect", "wifiSaved"}:
                 system["network"].update(connected=True, ssid=request.get("ssid", "Home Wi-Fi"))
@@ -1387,27 +1406,10 @@ class DesktopBackend:
                 current = dict(self.preferences.values[key]); current.pop(request['token'], None); current.update(delta)
                 self.preferences.values[key] = current
             else: self.preferences.values[key] = validate_preference(key, request.get("value"))
-        elif action == "volume":
-            system["audio"]["volume"] = max(0, min(100, system["audio"]["volume"] + self.percentage(request["delta"], -100))) if "delta" in request else self.percentage(request.get("value"))
-        elif action == "mute":
-            system["audio"]["muted"] = not system["audio"]["muted"]
-        elif action == "micVolume":
-            system["microphone"]["volume"] = self.percentage(request.get("value"))
-        elif action == "micMute":
-            system["microphone"]["muted"] = not system["microphone"]["muted"]
-        elif action == "brightness":
-            system["brightness"]["percent"] = self.percentage(request.get("value"), 1)
         elif action == "wifiToggle":
             network = system["network"]
             network["enabled"] = not network["enabled"]
             network["connected"] = network["enabled"]
-        elif action == "bluetoothToggle":
-            system["bluetooth"]["enabled"] = not system["bluetooth"]["enabled"]
-        elif action == "bluetoothDevice":
-            device = next((item for item in system["bluetooth"]["devices"] if item["path"] == request.get("path")), None)
-            if not device or type(request.get("connected")) is not bool:
-                raise ValueError("Unknown Bluetooth device or state")
-            device["connected"] = request["connected"]
         elif action == "powerProfile":
             value = request.get("value")
             if value not in POWER_PROFILES:
@@ -1431,28 +1433,6 @@ class DesktopBackend:
             self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
         elif action in {"weatherRefresh", "weatherDetect"}:
             pass
-        elif action == "workspace":
-            workspace_id = self.identifier(request.get("id"))
-            if not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
-                raise ValueError("Workspace is no longer available")
-            for workspace in state["niri"]["workspaces"]:
-                workspace["is_focused"] = workspace["is_active"] = str(workspace["id"]) == workspace_id
-        elif action == "focusWindow":
-            window_id = self.identifier(request.get("id"))
-            if not any(str(item["id"]) == window_id for item in state["niri"]["windows"]):
-                raise ValueError("Window is no longer available")
-            for window in state["niri"]["windows"]:
-                window["is_focused"] = str(window["id"]) == window_id
-        elif action == "moveWindow":
-            window_id = self.identifier(request.get("id"))
-            workspace_id = self.identifier(request.get("workspaceId"))
-            window = next((item for item in state["niri"]["windows"] if str(item["id"]) == window_id), None)
-            if window is None or not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
-                raise ValueError("Window or workspace is no longer available")
-            window["workspace_id"] = int(workspace_id)
-        elif action == "launch":
-            if not any(item["id"] == request.get("id") for item in state["apps"]):
-                raise ValueError("Application is no longer available")
         elif action == "wallpaper":
             value = request.get("path")
             if not isinstance(value, str):
@@ -1471,15 +1451,9 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action == "paletteReset":
-            self.preferences.values.update(paletteSource="dracula", accent=DRACULA_PROFILE["accent"])
-        elif action == "palettePreset":
-            ident=validate_preference('palettePreset',request.get('id'))
-            colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
-            self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
+        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply"}:
             pass
-        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
+        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
     def prepare_notes(self):
@@ -1491,6 +1465,7 @@ class DesktopBackend:
         return "Notes storage ready"
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
+        if spec := self.actions.get(action): return spec.live(request)
         run = self.runner.run
         if action == 'batterySaver':
             enabled = request.get('enabled')
@@ -1585,18 +1560,6 @@ class DesktopBackend:
             folders=list(self.preferences.values["fileSearchRoots"])
             self.file_search={"query":query,"entries":[],"truncated":False}
             return self.start_feature(action,lambda: search_files(query,folders,cancel))
-        if action == "fileOpen":
-            path=request.get("path")
-            if not isinstance(path,str) or not any(e["path"]==path for e in self.file_search["entries"]): raise ValueError("Search again before opening this file")
-            target=Path(path)
-            if str(target.resolve())!=path or not (target.is_file() or target.is_dir()): raise ValueError("File moved or became unavailable")
-            self.runner.spawn([self.runner.executable("gio"),"open",target.as_uri()])
-            return "Opened file"
-        if action == "palettePreset":
-            ident=validate_preference('palettePreset',request.get('id'))
-            selected=next(p for p in PALETTE_CATALOG if p['id']==ident)
-            self.preferences.update({'palettePreset':ident,'paletteSource':'preset','accent':selected['colors']['accent']})
-            return selected['name']+' palette applied; manual overrides preserved'
         if action == "palettePreview":
             self.runner.executable("matugen")
             self.palette_preview = {"colors": {}, "path": ""}
@@ -1608,17 +1571,6 @@ class DesktopBackend:
                     or any(self.palette_preview.get(k)!=self.preferences.values[k] for k in ('paletteScheme','paletteMode','paletteContrast'))): raise ValueError("Generate a preview for this image first")
             self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
             return "Wallpaper palette applied; element overrides preserved"
-        if action == "paletteReset":
-            self.preferences.update({"paletteSource":"dracula","accent":DRACULA_PROFILE["accent"]})
-            return "Dracula palette restored; element overrides preserved"
-        if action == "notesInit": return self.prepare_notes()
-        if action == "settingsExport":
-            self.preferences.reload(force=True)
-            return "Exported " + export_document(request.get("path"),self.preferences.values,request.get("kind"))
-        if action == "settingsImport":
-            values=read_document(request.get("path"),validate_preference,DEFAULT_PREFERENCES)
-            backup=self.preferences.update(values,backup=True)
-            return "Imported settings. Previous settings: " + str(backup)
         if action.startswith("appearance"): return self.appearance_action(action, request)
         if action in ('gowallThemes','gowallGenerate','gowallSave','gowallApply','gowallSetup'):
             if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
@@ -1654,19 +1606,6 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.set("displayLayout", layout)
             self.displays = self.display_control.snapshot()
             return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
-        if action == "notificationSave":
-            if not isinstance(request.get("entries"), list): raise ValueError("Invalid notification history")
-            self.notification_history = self.valid_notifications(request["entries"])
-            write_json(self.notification_path, self.notification_history)
-            return ""
-        if action == "calculate":
-            # Query/result travel in the acknowledgement so stale queries can be ignored.
-            return calculate(request.get("query"))
-        if action == "copyText":
-            text = request.get("text")
-            if not isinstance(text, str) or len(text.encode()) > MAX_TEXT: raise ValueError("Invalid copy text")
-            run("wl-copy", "--type", "text/plain;charset=utf-8", input=text)
-            return "Copied"
         if action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             return self.start_feature(action, lambda: self.wifi_action(action, request))
         if action == "chargeMode":
@@ -1703,89 +1642,13 @@ class DesktopBackend:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
             return "State refreshed"
-        if action == "launch":
-            app_id = request.get("id")
-            if not isinstance(app_id, str) or app_id not in self.applications.entries:
-                raise ValueError("Application is no longer available; refresh the launcher")
-            app = self.applications.entries[app_id]
-            if app["terminal"]:
-                # gio chooses the desktop's terminal independently of our
-                # setting; terminal applications must honor the user's choice.
-                terminal = shutil.which(self.preferences.values["terminal"])
-                if not terminal:
-                    raise CommandError("The configured terminal is unavailable")
-                self.runner.spawn([terminal, "-e", *app["argv"]])
-            elif self.runner.available("gio"):
-                run("gio", "launch", app["path"])
-            else:
-                self.runner.spawn(list(app["argv"]))
-            if self.preferences.values['launcherRanking']: self.launcher_history.record(app_id)
-            return f"Launched {app['name']}"
         if action == 'launcherHistoryClear':
             self.launcher_history.clear()
             return 'Launcher usage history cleared'
-        if action == "focusWindow":
-            run("niri", "msg", "action", "focus-window", "--id", self.identifier(request.get("id")))
-            return "Window focused"
-        if action == "moveWindow":
-            window_id = int(self.identifier(request.get("id")))
-            workspace_id = int(self.identifier(request.get("workspaceId")))
-            self.niri = self.niri_state()
-            if (not any(item.get("id") == window_id for item in self.niri["windows"])
-                    or not any(item.get("id") == workspace_id for item in self.niri["workspaces"])):
-                raise ValueError("Window or workspace is no longer available")
-            self.niri_action({"MoveWindowToWorkspace": {"window_id": window_id, "reference": {"Id": workspace_id}, "focus": False}})
-            return "Window moved to workspace"
-        if action == "nativeOverview":
-            run("niri", "msg", "action", "toggle-overview")
-            return "Native overview toggled"
-        if action == "workspace":
-            workspace_id = self.identifier(request.get("id"))
-            workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
-            if workspace is None:
-                self.niri = self.niri_state()
-                workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
-            if workspace is None:
-                raise ValueError("Workspace is no longer available")
-            # A redundant focus-monitor centers the cursor even on the current output.
-            self.niri_action({"FocusWorkspace": {"reference": {"Id": int(workspace_id)}}})
-            return "Workspace focused"
-        if action == "volume":
-            if "delta" in request:
-                delta = self.percentage(request["delta"], -100)
-                run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{abs(delta)}%{'+' if delta >= 0 else '-'}")
-                return "Volume adjusted"
-            value = self.percentage(request.get("value"))
-            run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{value}%")
-            return f"Volume {value}%"
-        if action == "mute":
-            run("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
-            return "Mute toggled"
-        if action == "micVolume":
-            value = self.percentage(request.get("value"))
-            run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SOURCE@", f"{value}%")
-            return f"Microphone {value}%"
-        if action == "micMute":
-            run("wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle")
-            return "Microphone mute toggled"
-        if action == "brightness":
-            value = self.percentage(request.get("value"), 1)
-            run("brightnessctl", "--class=backlight", "set", f"{value}%")
-            return f"Brightness {value}%"
         if action == "wifiToggle":
             status = run("nmcli", "radio", "wifi")
             run("nmcli", "radio", "wifi", "off" if status.strip() == "enabled" else "on")
             return "Wi-Fi toggled"
-        if action == "bluetoothToggle":
-            return self.set_bluetooth(not self.bluetooth()["enabled"])
-        if action == "bluetoothDevice":
-            path, connected = request.get("path"), request.get("connected")
-            state = self.bluetooth()
-            if (not isinstance(path, str) or not re.fullmatch(r"/org/bluez/hci[0-9]+/dev_(?:[A-Fa-f0-9]{2}_){5}[A-Fa-f0-9]{2}", path)
-                    or type(connected) is not bool or not any(item["path"] == path for item in state["devices"])):
-                raise ValueError("Unknown Bluetooth device or state")
-            run("busctl", "--system", "call", "org.bluez", path, "org.bluez.Device1", "Connect" if connected else "Disconnect", timeout=15.0)
-            return "Bluetooth device " + ("connected" if connected else "disconnected")
         if action == "powerProfile":
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():

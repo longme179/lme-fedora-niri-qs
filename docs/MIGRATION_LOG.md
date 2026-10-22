@@ -178,3 +178,31 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Check Desktop clock/notes/media, edit drag/resize, input/layers, reconnect/multiple outputs and saved geometry.
   4. In a copy disable Notifications/Desktop/update entries; restart shell/Settings: UI/server/surfaces withdraw, saved bytes/IDs stay.
   5. Re-enable/restart; confirm data/access return and the Clipboard worker starts once live and never in Settings/demo/preview.
+
+## M7a — synchronous coordinator providers — 2026-10-23
+
+- Branch refactor/m7a-sync-actions, base main add26d5; review only, no merge/main push. Final runtime tree 70f2af9; subsequent changes are documentation only.
+- Tests 1ec793c/a78b9aa; fixture 26f60ce; providers: local 98ee7b4, audio f80f164, windows e156f3f, appearance 70f2af9.
+- Reverted audio 07a0355 with f72ce29 after G0 513/1/141 exposed a stale perform mock; corrected fixture before retry. Reverted appearance 82a7071 with f0c4542 after direct demo-return reproduction; one corrected extraction per affected provider.
+- Registered all 24 requested IDs: local content 4, audio/backlight/Bluetooth 7, windows/launcher 6, appearance/transfer 7. None skipped; 29/89 IDs registered including the existing 5; unlisted actions remain legacy.
+- Discovery reuses the M6 explicit composition list. Four flat providers receive narrow callbacks, never DesktopBackend; no registry extension, worker/complete hook, second executor, new dependency exception or schema migration.
+- Host retains context admission before demo/live, acknowledgement/sequence/query/result publication, explicit read-back invalidation and existing snapshot slots. Registered errors do not fall back; unknown IDs/prefixes retain both legacy trees.
+- perform: 344 → 233 lines; perform_demo: 187 → 139 (AST function spans, physical/nonblank equal). Existing source ceiling ratcheted down; new files below 250 nonblank lines.
+- Characterization on unmodified production: G0 513/0/142; focused backend/contracts 51/0/1. Golden matrices freeze live/demo × shell/Settings results, commands/kwargs, state and preference changes; UTF-8 byte bounds and private-file bytes/modes are asserted separately.
+- Additional direct demo-facade characterization passed 1/0/0 on unmodified main; reproduced 3 profile subtest failures on the first extraction, then passed after revert/re-extraction. Retained facade now preserves None.
+- Affected G0 after local/audio retry/windows/initial appearance: each 514/0/141. Focused final suites: local 64, audio 66, windows 82, appearance 76 passes, no failures/skips.
+- Full final G0-G4/G6 at runtime head 70f2af9: G0 515/0/141; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 polling 1/0/0 (pass/fail/skip). Earlier preliminary full run was interrupted in G3 for facade review and is not counted as complete.
+- G0 skips: unchanged 141 baseline cases (129 opt-in session/UI, 5 BlueZ/PyGObject, 5 MPRIS, 1 Matugen, 1 detached fake-niri). The initial extra ownership N/A skip now executes; one added facade test accounts for the other pass. No skipped gate is called passed.
+- qmllint: 148 files, 0 errors, 71 existing warnings. Architecture dependency/cycle/size checks pass; all existing assertion ASTs and frozen fixtures remain unchanged.
+- Fixture-only diff in test_polling.py: `- FakeRunner({("pw-dump",): "[]"})` → `+ FakeRunner({("pw-dump",): "[]"}, available=("wpctl",))`; assertions/timeouts and production polling stay untouched.
+- Behavior differences: none on exercised enabled user paths; detached jobs/history/literal argv/terminal choice, Bluetooth projection, demo no-I/O, profile transactions and Settings backup/permissions retain their contracts. No public CLI/IPC or persisted-format change.
+- Sanity ONCE: 10 fresh-process/fresh-XDG launches per path/arm, private Sway/D-Bus software rendering; mapped-window endpoint, warm OS page cache. Preview median main/head 678.68/682.08 ms; Settings 748.90/741.60 ms. No startup profiling/CIs/raw evidence committed.
+- RSS T+10 s, KiB main/head: preview QS 281644/279324, backend 26256/25944; Settings QS 231240/230820, backend 26212/25896. Neither Settings +100 ms nor process RSS +10% flag triggered.
+- Adapters: explicit provider bindings retire only with descriptor discovery ownership/disabled/fault parity; direct perform/perform_demo facades require zero direct callers plus owner-approved retirement. Domain helper/public import facades remain while existing consumers or prefix contracts need them.
+- Existing prepare_notes/valid_notifications/set_bluetooth/appearance_action helpers, state projections and Preferences lock/reload/merge/fsync/replace remain authoritative. M7b/async work is not authorized.
+- Laptop checklist (needs real-session check):
+  1. From the shell adjust volume/mute/microphone/brightness; confirm HUD and device read-back, including Bluetooth connect/disconnect.
+  2. Launch apps normally and in the configured terminal; focus and move a window; confirm launcher history and literal arguments.
+  3. Switch workspaces, including another output, and check focus/overview behavior.
+  4. In Settings save/apply/delete an appearance profile and apply/reset a palette; confirm unrelated overrides remain.
+  5. Export/import a preset, restart, verify values and private backup; confirm preview/demo runs no system commands.

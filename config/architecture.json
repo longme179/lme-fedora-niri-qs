@@ -28,6 +28,7 @@
     "behavior": ["qml/settings/BehaviorPage.qml"],
     "controlLayout": ["qml/settings/ControlLayoutPage.qml"],
     "bar": ["qml/settings/TopBarPage.qml"],
+    "wallpaper": ["qml/settings/WallpaperPage.qml", "qml/settings/WallpaperPlaylistSettings.qml", "qml/settings/AwwwSettings.qml", "scripts/wallpaper.py", "scripts/wallpaper_palette.py"],
     "imageUtilities": ["qml/settings/GowallSettings.qml", "scripts/image_utilities.py"],
     "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml"],
     "update": ["qml/settings/AboutPage.qml", "qml/services/UpdateState.qml", "scripts/shell_update.py"],

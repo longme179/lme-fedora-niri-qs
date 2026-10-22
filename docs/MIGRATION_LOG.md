@@ -147,3 +147,34 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   5. Disable the launchpad index record: only Utilities page withdraws in this batch; Launchpad runtime/saved entries remain. Re-enable both records and confirm access/data return.
   6. Check unchanged Desktop clock/notes/media, edit drag/resize, input/layers and multiple outputs on the laptop.
 - STOP after M4c-2; M4c-3/M7 and later are not authorized.
+
+## M4c-3 — catalog capabilities and stateful bootstrap — 2026-10-22
+
+- Branch refactor/m4c3-capabilities; base main 37ab8ac. Review branch only; no merge/main push.
+- Commits: tests f2758f1/e39a57d/c186ca6; fixture b37da99 reverted dcddefc → 5882838; capabilities da03d5d/e0922c3; withdrawal contract 431b74a; Notifications 760c270, Desktop f06a9cc, About 95ab3db.
+- Converted Notifications (page/tab/toasts/server), Desktop (page/canvas/ambient/widgets) and About (page only); none skipped. All other requested legacy families stay legacy.
+- A: explicit unique int32 legacyIndex for controlTab/agendaTab; original six tab mappings/order and numeric/ID/env routes preserved. Unnumbered entries follow reserved indices.
+- B: contexts live-main/demo/preview/settings, omitted = live-main. Clipboard remains main-live-only/once; Desktop runs live/demo, never preview/Settings.
+- Schema: moved Notifications 14 + Desktop 9 keys unchanged; 66 descriptor/81 legacy keys; About owns no keys. No file moves, new exceptions, async registry, cadence/power changes.
+- Withdrawal preserves exact settings/history/notes/widget bytes and saved IDs; no notification server/UI or desktop surfaces; edit IPC returns false. Re-enable restores access. Ten-line policy: M4C3_NOTIFICATIONS.md.
+- Enabled history/mute/DND/annotation/toast suppression, canvas geometry/layer/input/media/notes seams and updater lifecycle pass native tests; hardware needs real-session check.
+- Baseline on unmodified production: G0 499/0/139, G1 3/0/0; initial capability/domain suite 26/0/4 and feature suite 2/0/1 (extension/withdrawal N/A).
+- Affected final runs: Notifications 71/0/1, Desktop 41/0/1, About 30/0/0; each G0 501/0/141 + G1 3/0/0. N/A skips were About withdrawal before its conversion; CLI fixture baseline 6/0/0.
+- Full G0-G4/G6 at final tested head 5882838 (production identical to 95ab3db): G0 501/0/141; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 1/0/0 (pass/fail/skip); following docs only record results. qmllint 148 files, 0 errors/71 warnings.
+- G0 skips: 129 opt-in UI/private-session cases (six new native); 5 BlueZ, 5 MPRIS, 1 Matugen, 1 fake-niri; the six new native cases run in affected private sessions. No skipped gate is reported passed.
+- Discarded failed uncommitted prototypes (import/JSON/readiness/CLI). Preliminary full G3 was 52/1/0: helper hard-coded six legacy tabs; b37da99 was reverted, corrected as 5882838, native probe 2/0/0. No assertions/timeouts relaxed.
+- Existing assertion ASTs and frozen JSON unchanged. Fixture diffs: [5882838](https://github.com/longme179/lme-fedora-niri-qs/commit/5882838.diff), [c186ca6](https://github.com/longme179/lme-fedora-niri-qs/commit/c186ca6.diff); new probe wait: e39a57d.
+- Fixture-only diff: `- DesktopPage/AboutPage {…}` → `+ Loader {source: retained file URL; …}`; tab probe strips after/maps URL to original type ID, legacy expected bars exclude withdrawn owners; reordered fixture relocates the catalog record; `- tabs>=6` → `+ tabs>=len(remainingLegacyTabs)` (readiness helper only).
+- CLI fixture diff: `- ('appearance','behavior','controlLayout','about')` → `+ current legacy admission list`; copied reader gains catalog_metadata.py. All original success/error assertions remain exact.
+- Adapters: public integer/env/page/panel/flag/schema facades remain; internal projections retire at zero callers/legacy entries. Notifications.start/demo-ready and bar guards retire with equivalent composition/worker isolation; KINDS/FIELDS stay re-exported.
+- Behavior differences: none on exercised enabled user paths; authorized catalog withdrawal/context/index capabilities added. Demo annotation ready now waits for its bootstrap; persistence formats/transactions and worker policies unchanged.
+- Sanity ONCE, 10 launches/path/arm, private software-rendered session: preview main/head 909.04/932.13 ms; Settings 889.43/941.16 ms. No timing/CI/profiling study or raw evidence committed.
+- RSS T+10 s (KiB main/head): preview QS/backend 281140/279764; 26216/26228; Settings 233008/231128; 26172/26196. Settings +51.73 ms; maximum backend RSS +0.092%; no +100 ms/+10% flag.
+- M7 inventory/plan: 89 IDs = 59 sync (5 registered), 29 worker/async, 1 conditional suspend; domain counts and lifecycle qualifications in [M4C3_M7_PLAN.md](M4C3_M7_PLAN.md).
+- Proposed M7 order: local content → audio/palette → launcher; separately authorize async wallpaperScan pilot → remaining workers → display/power lifecycle last. No M7 implementation or merge authorized; STOP here.
+- Laptop checklist (needs real-session check):
+  1. Open Notifications/Desktop/About by Gear, CLI and search; verify order, close/reopen and updater controls.
+  2. Receive native notifications; check history, mute/DND, center/toast suppression and screenshot click → annotation.
+  3. Check Desktop clock/notes/media, edit drag/resize, input/layers, reconnect/multiple outputs and saved geometry.
+  4. In a copy disable Notifications/Desktop/update entries; restart shell/Settings: UI/server/surfaces withdraw, saved bytes/IDs stay.
+  5. Re-enable/restart; confirm data/access return and the Clipboard worker starts once live and never in Settings/demo/preview.

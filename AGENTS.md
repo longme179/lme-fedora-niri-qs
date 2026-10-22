@@ -40,6 +40,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
    Schema definitions live in descriptor preferences plus the legacy fragment.
    Declare portable/profile membership explicitly; defaults deny both. Bind named
    validators/resolvers to Python functions; JSON contains no code.
+   Declare bootstrap contexts (default live-main) and tab legacyIndex when preserving integer routes.
    Guard cross-surface page links with ShellState.settingsPageAvailable; preserve saved IDs on withdrawal.
    Pages emit navigateRequested(pageId); PageNavigation connects locally to the Settings host, not a global bus.
 

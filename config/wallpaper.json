@@ -4,6 +4,7 @@
     "qml/settings/WallpaperPlaylistSettings.qml",
     "qml/settings/AwwwSettings.qml",
     "scripts/wallpaper.py",
+    "scripts/wallpaper_actions.py",
     "scripts/wallpaper_palette.py"
   ],
   "settingsPage": {

@@ -62,6 +62,7 @@ from local_content_actions import LocalContentCapabilities, provide as provide_l
 from audio_actions import AudioCapabilities, provide as provide_audio
 from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
+from wallpaper_actions import WallpaperScanCapabilities, provide as provide_wallpaper_scan
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -533,8 +534,10 @@ class DesktopBackend:
         def refresh_action_niri():
             self.niri = self.niri_state()
             return self.niri
-        self.actions = ActionRegistry()
+        self.actions = ActionRegistry(start_feature=lambda action, operation: self.start_feature(action, operation))
         self.action_state = self.actions.provide([
+            (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
+                lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
             (provide_appearance, AppearanceCapabilities(lambda: self.preferences.values,
                 lambda **kwargs: self.preferences.reload(**kwargs), lambda *args, **kwargs: self.preferences.update(*args, **kwargs),
                 lambda key, value: validate_preference(key, value), lambda: DEFAULT_PREFERENCES,
@@ -1118,18 +1121,19 @@ class DesktopBackend:
         for action, job in list(self.feature_jobs.items()):
             if not job.done(): continue
             self.result_sequence += 1
+            spec = self.actions.get(action)
             try:
                 if getattr(job, 'capture_token', self.capture.state.get('token')) != self.capture.state.get('token'):
                     self.last_result = {'ok': True, 'action': action, 'message': '', 'sequence': self.result_sequence}
                     del self.feature_jobs[action]
                     break
                 value = job.result()
-                if action == "fileSearch": self.file_search = value; message = "File search completed"
+                if spec is not None and spec.execution == 'worker': spec.complete(value); message = value if spec.presentation is None else spec.presentation
+                elif action == "fileSearch": self.file_search = value; message = "File search completed"
                 elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
                 elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
                 elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
                 elif action == "wallpaperStatus": self.wallpaper_daemon=value; message="Wallpaper daemon checked"
-                elif action == "wallpaperScan": self.wallpaper_library = value; message = "Wallpaper library refreshed"
                 elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
                     token, content = value
@@ -1138,8 +1142,8 @@ class DesktopBackend:
                 else: message = value
                 self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
             except (CommandError, ValueError, OSError) as error:
+                if spec is not None and spec.execution == 'worker': spec.complete(error)
                 self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}
-                if action == "wallpaperScan": self.wallpaper_library = {**self.wallpaper_library, "error": str(error)[:400]}
             del self.feature_jobs[action]
             if action in {"recordStart", "recordStop"}: self.privacy_cache = None
             if action == 'batterySaver':
@@ -1286,7 +1290,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1378,9 +1382,6 @@ class DesktopBackend:
             if self.displays["preview"].get("status") != "pending": raise ValueError("No display preview")
             if action == "displayConfirm": self.preferences.values["displayLayout"] = self.displays["preview"]["layout"]
             self.displays["preview"]["status"] = "confirmed" if action == "displayConfirm" else "reverted"
-        elif action == "wallpaperScan":
-            bundled = Path(__file__).resolve().parents[1] / "assets/wallpapers"
-            self.wallpaper_library = wallpaper_library(str(bundled))
         elif action == 'launcherHistoryClear': pass
         elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             if action in {"wifiConnect", "wifiSaved"}:
@@ -1465,7 +1466,7 @@ class DesktopBackend:
         return "Notes storage ready"
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
-        if spec := self.actions.get(action): return spec.live(request)
+        if self.actions.get(action) is not None: return self.actions.invoke_live(action, request)
         run = self.runner.run
         if action == 'batterySaver':
             enabled = request.get('enabled')
@@ -1590,8 +1591,6 @@ class DesktopBackend:
                 self.wallpapers.ready()
                 return "Wallpaper daemon ready"
             return self.start_feature(action,ensure)
-        if action == "wallpaperScan":
-            return self.start_feature(action, lambda: wallpaper_library(request.get("folder")))
         if action == "displayRefresh":
             self.displays = self.display_control.snapshot()
             return "Displays refreshed"

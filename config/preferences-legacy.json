@@ -56,6 +56,8 @@
     "controlGrid": {"type": "object", "validator": "legacy", "portable": true, "appearance": false, "defaultResolver": "controlGrid"},
     "controlWidth": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 600},
     "launcherRanking": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
+    "launchpadEnabled": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
+    "launchpadEntries": {"type": "object", "validator": "legacy", "portable": false, "appearance": false, "default": {}},
     "notificationMutedApps": {"type": "array", "validator": "legacy", "portable": false, "appearance": false, "default": []},
     "dndUntil": {"type": "integer", "validator": "legacy", "portable": false, "appearance": false, "default": 0},
     "displayLayout": {"type": "array", "validator": "legacy", "portable": false, "appearance": false, "default": []},

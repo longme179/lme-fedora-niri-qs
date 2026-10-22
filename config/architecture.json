@@ -16,6 +16,7 @@
     "recording": ["qml/panels/RecorderWidget.qml", "scripts/screen_recording.py"],
     "desktop": ["qml/panels/DesktopCanvas.qml", "qml/panels/DesktopWidgetWindow.qml", "qml/panels/DesktopAmbient.qml", "qml/panels/DesktopCard.qml", "qml/settings/DesktopPage.qml", "qml/services/DesktopState.qml", "scripts/desktop_widgets.py"],
     "display": ["qml/settings/DisplayPage.qml", "scripts/display_control.py", "scripts/display_mirror.py"],
+    "launchpad": ["qml/panels/LaunchpadPanel.qml", "qml/panels/LaunchpadEditor.qml", "qml/settings/UtilitiesPage.qml", "scripts/launchpad.py", "scripts/launchpad_actions.py"],
     "launcher": ["qml/panels/Launcher.qml", "qml/services/LauncherSearch.js", "scripts/file_search.py", "scripts/launcher_history.py"],
     "lyrics": ["scripts/lyrics.py"],
     "notifications": ["qml/panels/NotificationCenter.qml", "qml/panels/NotificationToasts.qml", "qml/settings/NotificationsPage.qml", "qml/services/Notifications.qml"],

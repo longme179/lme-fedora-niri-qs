@@ -61,6 +61,7 @@ from launchpad import Launchpad, entries as launchpad_entries
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
+from idle_actions import IdleCapabilities, provide as provide_idle
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
 from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
@@ -68,7 +69,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd")},
+    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles")},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -304,7 +305,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly", "jelly-v2"): return value
     if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
-    if key in {"idleEnabled", "idleLockBeforeSleep", "popupBlur", "barBlur"} and type(value) is bool: return value
+    if key in {"popupBlur", "barBlur"} and type(value) is bool: return value
     if key == "idleProfiles": return validate_profiles(value)
     if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
         return str(Path(value).expanduser().resolve()) if value else ""
@@ -528,7 +529,9 @@ class DesktopBackend:
         self.action_state = self.actions.provide([
             (provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot)),
             (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
-                self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None)))])
+                self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
+            (provide_idle, IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
+                lambda: self.ac_online(), self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value)))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -1259,7 +1262,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "idleRefresh", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1336,11 +1339,6 @@ class DesktopBackend:
         elif action.startswith("gowall"): pass
         elif action == "wallpaperStatus": self.wallpaper_daemon={"available":True,"running":True,"query":"eDP-1: 1920x1080 · demo wallpaper","error":""}
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
-        elif action == "idleRefresh":
-            self.idle_state = {"source": "battery", "available": True, "running": False, "error": "", "profile": self.preferences.values["idleProfiles"]["battery"]}
-        elif action == "idleInhibit":
-            if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
-            self.idle_control.paused = request["value"]
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
         elif action == "displayRefresh":
@@ -1565,19 +1563,6 @@ class DesktopBackend:
         if action == "platformRefresh":
             self.platform = self.compositor_features()
             return "Compositor version checked"
-        if action == "idleRefresh":
-            self.idle_state = {"source": "ac" if self.ac_online() else "battery", "available": all(self.runner.available(n) for n in ("swayidle", "swaylock", "niri")), "error": ""}
-            if self.settings_only:
-                reply = self.try_run("quickshell", "-p", self.shell_entry, "ipc", "call", "shell", "idleStatus")
-                try:
-                    state = json.loads(reply or "{}")
-                    if isinstance(state, dict) and state.get("source") in {"ac", "battery"}: self.idle_state = state
-                except ValueError: pass
-            return "Idle profile refreshed"
-        if action == "idleInhibit":
-            if type(request.get("value")) is not bool: raise ValueError("Idle inhibit must be boolean")
-            self.idle_control.paused = request["value"]
-            return "Idle paused" if request["value"] else "Idle resumed"
         if action == "recordStart":
             if 'batterySaver' in self.feature_jobs or self.saver_snapshot()['busy']:
                 raise ValueError('Wait for Battery saver to finish before recording')

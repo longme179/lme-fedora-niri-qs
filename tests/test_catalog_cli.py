@@ -29,7 +29,7 @@ class CatalogCliCase(unittest.TestCase):
             env=self.env, capture_output=True, text=True, timeout=5)
 
     def test_legacy_pages_and_empty_unknown_keep_messages_and_codes(self):
-        for page in ('appearance', 'weather', 'controlLayout', 'about'):
+        for page in ('appearance', 'behavior', 'controlLayout', 'about'):
             result = self.launch(page)
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, 'accepted:'+page+'\n', ''))
         result = self.launch('absent')

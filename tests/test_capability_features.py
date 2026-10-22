@@ -67,3 +67,23 @@ class NativeStatefulCapabilityCase(unittest.TestCase):
         self.assertEqual(world.settings.read_bytes(),original);self.assertEqual(history.read_bytes(),b'[]')
         world.toggle('notifications',True)
         with world.launch('shell') as probe:probe.wait(lambda s:probe.owns_server())
+
+    def test_about_routes_search_and_withdrawal_preserve_preferences(self):
+        import subprocess
+        world=self.world()
+        with world.launch('settings',page='about') as probe:
+            probe.wait(lambda s:s['about'])
+            self.assertEqual(probe.call('openPage','appearance',target='settings'),'true')
+            probe.wait(lambda s:s['page']=='appearance')
+            self.assertEqual(probe.call('search','About',target='statefulFeatures'),'true')
+            probe.wait(lambda s:s['page']=='about' and s['about'])
+        if not converted('update'):self.skipTest('About unconverted on baseline; withdrawal N/A')
+        world.toggle('update',False);original=world.settings.read_bytes()
+        with world.launch('settings') as probe:
+            self.assertNotIn('about',probe.wait(lambda s:s['ready'])['pages'])
+            reply=subprocess.run([str(world.root/'scripts/settings.sh'),'--page','about'],env=probe.env,capture_output=True,text=True,timeout=5)
+            self.assertEqual((reply.returncode,reply.stderr),(2,'Error: unknown settings page: about\n'))
+            probe.call('openPage','about',target='settings');probe.wait(lambda s:s['page']=='elements')
+        self.assertEqual(world.settings.read_bytes(),original)
+        world.toggle('update',True)
+        with world.launch('settings',page='about') as probe:probe.wait(lambda s:s['about'])

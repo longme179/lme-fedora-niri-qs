@@ -93,6 +93,8 @@ class NativeLightFeatureCase(unittest.TestCase):
                     probe.call('open',feature);self.assertFalse(probe.wait(lambda s:True)['panelOpen'])
                     probe.call('toggle','control',target='shell')
                     state=probe.wait(lambda s:s['panelOpen'])
+                    probe.wait(lambda s:s['progress']==1)
+                    state=probe.wait(lambda s:True)
                     if feature=='nightLight': self.assertFalse(state['nightTile'])
                     if feature=='idle': self.assertFalse(state['idleTile'])
                     if feature=='weather':

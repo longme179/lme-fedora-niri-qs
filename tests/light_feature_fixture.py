@@ -21,7 +21,7 @@ OBSERVE = '''
             const marks = ["Warmer evenings", "Laptop idle profiles", "Niri keybindings", "Find me automatically", "Fifth feature"];
             const weatherRoute = root.sliceFind(surface, "Weather location settings");
             return JSON.stringify({ready: ShellState.backendReady && FeatureCatalog.ready && Theme.ready,
-                page: surface && surface.page || ShellState.settingsPage, panelOpen: ShellState.panelOpen,
+                page: surface && surface.page || ShellState.settingsPage, panelOpen: ShellState.panelOpen, progress: root.sliceProgress,
                 pages: SettingsRegistry.pages.map(p => p.key), searches: query.map(q => SettingsRegistry.search(q).map(p => p.key)),
                 marks: marks.filter(name => !!root.sliceFind(surface, name)), preferences: ShellState.preferences,
                 lastResult: ShellState.lastResult, weatherRouteEnabled: weatherRoute ? weatherRoute.enabled : null,

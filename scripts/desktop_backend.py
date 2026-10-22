@@ -59,6 +59,7 @@ from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
+from audio_actions import AudioCapabilities, provide as provide_audio
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -529,6 +530,9 @@ class DesktopBackend:
         self.launchpad = Launchpad()
         self.actions = ActionRegistry()
         self.action_state = self.actions.provide([
+            (provide_audio, AudioCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), self.percentage,
+                lambda: self.bluetooth(), lambda enabled: self.set_bluetooth(enabled),
+                lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')})),
             (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
                 self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
                 lambda value: self.demo_snapshot().__setitem__('calculator', value))),
@@ -1388,27 +1392,10 @@ class DesktopBackend:
                 current = dict(self.preferences.values[key]); current.pop(request['token'], None); current.update(delta)
                 self.preferences.values[key] = current
             else: self.preferences.values[key] = validate_preference(key, request.get("value"))
-        elif action == "volume":
-            system["audio"]["volume"] = max(0, min(100, system["audio"]["volume"] + self.percentage(request["delta"], -100))) if "delta" in request else self.percentage(request.get("value"))
-        elif action == "mute":
-            system["audio"]["muted"] = not system["audio"]["muted"]
-        elif action == "micVolume":
-            system["microphone"]["volume"] = self.percentage(request.get("value"))
-        elif action == "micMute":
-            system["microphone"]["muted"] = not system["microphone"]["muted"]
-        elif action == "brightness":
-            system["brightness"]["percent"] = self.percentage(request.get("value"), 1)
         elif action == "wifiToggle":
             network = system["network"]
             network["enabled"] = not network["enabled"]
             network["connected"] = network["enabled"]
-        elif action == "bluetoothToggle":
-            system["bluetooth"]["enabled"] = not system["bluetooth"]["enabled"]
-        elif action == "bluetoothDevice":
-            device = next((item for item in system["bluetooth"]["devices"] if item["path"] == request.get("path")), None)
-            if not device or type(request.get("connected")) is not bool:
-                raise ValueError("Unknown Bluetooth device or state")
-            device["connected"] = request["connected"]
         elif action == "powerProfile":
             value = request.get("value")
             if value not in POWER_PROFILES:
@@ -1738,42 +1725,10 @@ class DesktopBackend:
             # A redundant focus-monitor centers the cursor even on the current output.
             self.niri_action({"FocusWorkspace": {"reference": {"Id": int(workspace_id)}}})
             return "Workspace focused"
-        if action == "volume":
-            if "delta" in request:
-                delta = self.percentage(request["delta"], -100)
-                run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{abs(delta)}%{'+' if delta >= 0 else '-'}")
-                return "Volume adjusted"
-            value = self.percentage(request.get("value"))
-            run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SINK@", f"{value}%")
-            return f"Volume {value}%"
-        if action == "mute":
-            run("wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
-            return "Mute toggled"
-        if action == "micVolume":
-            value = self.percentage(request.get("value"))
-            run("wpctl", "set-volume", "--limit", "1.0", "@DEFAULT_AUDIO_SOURCE@", f"{value}%")
-            return f"Microphone {value}%"
-        if action == "micMute":
-            run("wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle")
-            return "Microphone mute toggled"
-        if action == "brightness":
-            value = self.percentage(request.get("value"), 1)
-            run("brightnessctl", "--class=backlight", "set", f"{value}%")
-            return f"Brightness {value}%"
         if action == "wifiToggle":
             status = run("nmcli", "radio", "wifi")
             run("nmcli", "radio", "wifi", "off" if status.strip() == "enabled" else "on")
             return "Wi-Fi toggled"
-        if action == "bluetoothToggle":
-            return self.set_bluetooth(not self.bluetooth()["enabled"])
-        if action == "bluetoothDevice":
-            path, connected = request.get("path"), request.get("connected")
-            state = self.bluetooth()
-            if (not isinstance(path, str) or not re.fullmatch(r"/org/bluez/hci[0-9]+/dev_(?:[A-Fa-f0-9]{2}_){5}[A-Fa-f0-9]{2}", path)
-                    or type(connected) is not bool or not any(item["path"] == path for item in state["devices"])):
-                raise ValueError("Unknown Bluetooth device or state")
-            run("busctl", "--system", "call", "org.bluez", path, "org.bluez.Device1", "Connect" if connected else "Disconnect", timeout=15.0)
-            return "Bluetooth device " + ("connected" if connected else "disconnected")
         if action == "powerProfile":
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():

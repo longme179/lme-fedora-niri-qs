@@ -60,6 +60,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
 from audio_actions import AudioCapabilities, provide as provide_audio
+from window_actions import WindowCapabilities, provide as provide_windows
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -528,8 +529,16 @@ class DesktopBackend:
         self.wallpapers = Wallpapers(self.runner,self.preferences)
         self.launcher_history = LauncherHistory()
         self.launchpad = Launchpad()
+        def refresh_action_niri():
+            self.niri = self.niri_state()
+            return self.niri
         self.actions = ActionRegistry()
         self.action_state = self.actions.provide([
+            (provide_windows, WindowCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs),
+                lambda argv: self.runner.spawn(argv), lambda name: self.runner.executable(name), lambda name: self.runner.available(name),
+                lambda: self.preferences.values, lambda: self.applications.entries, lambda: self.file_search['entries'],
+                lambda ident: self.launcher_history.record(ident), self.identifier, lambda: self.niri, refresh_action_niri,
+                lambda value: self.niri_action(value), lambda: self.demo_snapshot()['niri'], lambda: self.demo_snapshot()['apps'])),
             (provide_audio, AudioCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), self.percentage,
                 lambda: self.bluetooth(), lambda enabled: self.set_bluetooth(enabled),
                 lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')})),
@@ -1419,28 +1428,6 @@ class DesktopBackend:
             self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
         elif action in {"weatherRefresh", "weatherDetect"}:
             pass
-        elif action == "workspace":
-            workspace_id = self.identifier(request.get("id"))
-            if not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
-                raise ValueError("Workspace is no longer available")
-            for workspace in state["niri"]["workspaces"]:
-                workspace["is_focused"] = workspace["is_active"] = str(workspace["id"]) == workspace_id
-        elif action == "focusWindow":
-            window_id = self.identifier(request.get("id"))
-            if not any(str(item["id"]) == window_id for item in state["niri"]["windows"]):
-                raise ValueError("Window is no longer available")
-            for window in state["niri"]["windows"]:
-                window["is_focused"] = str(window["id"]) == window_id
-        elif action == "moveWindow":
-            window_id = self.identifier(request.get("id"))
-            workspace_id = self.identifier(request.get("workspaceId"))
-            window = next((item for item in state["niri"]["windows"] if str(item["id"]) == window_id), None)
-            if window is None or not any(str(item["id"]) == workspace_id for item in state["niri"]["workspaces"]):
-                raise ValueError("Window or workspace is no longer available")
-            window["workspace_id"] = int(workspace_id)
-        elif action == "launch":
-            if not any(item["id"] == request.get("id") for item in state["apps"]):
-                raise ValueError("Application is no longer available")
         elif action == "wallpaper":
             value = request.get("path")
             if not isinstance(value, str):
@@ -1465,9 +1452,9 @@ class DesktopBackend:
             ident=validate_preference('palettePreset',request.get('id'))
             colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
             self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport"}:
+        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport"}:
             pass
-        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
+        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
     def prepare_notes(self):
@@ -1574,13 +1561,6 @@ class DesktopBackend:
             folders=list(self.preferences.values["fileSearchRoots"])
             self.file_search={"query":query,"entries":[],"truncated":False}
             return self.start_feature(action,lambda: search_files(query,folders,cancel))
-        if action == "fileOpen":
-            path=request.get("path")
-            if not isinstance(path,str) or not any(e["path"]==path for e in self.file_search["entries"]): raise ValueError("Search again before opening this file")
-            target=Path(path)
-            if str(target.resolve())!=path or not (target.is_file() or target.is_dir()): raise ValueError("File moved or became unavailable")
-            self.runner.spawn([self.runner.executable("gio"),"open",target.as_uri()])
-            return "Opened file"
         if action == "palettePreset":
             ident=validate_preference('palettePreset',request.get('id'))
             selected=next(p for p in PALETTE_CATALOG if p['id']==ident)
@@ -1678,53 +1658,9 @@ class DesktopBackend:
             self.apps = self.applications.scan()
             self.last_app_scan = time.monotonic()
             return "State refreshed"
-        if action == "launch":
-            app_id = request.get("id")
-            if not isinstance(app_id, str) or app_id not in self.applications.entries:
-                raise ValueError("Application is no longer available; refresh the launcher")
-            app = self.applications.entries[app_id]
-            if app["terminal"]:
-                # gio chooses the desktop's terminal independently of our
-                # setting; terminal applications must honor the user's choice.
-                terminal = shutil.which(self.preferences.values["terminal"])
-                if not terminal:
-                    raise CommandError("The configured terminal is unavailable")
-                self.runner.spawn([terminal, "-e", *app["argv"]])
-            elif self.runner.available("gio"):
-                run("gio", "launch", app["path"])
-            else:
-                self.runner.spawn(list(app["argv"]))
-            if self.preferences.values['launcherRanking']: self.launcher_history.record(app_id)
-            return f"Launched {app['name']}"
         if action == 'launcherHistoryClear':
             self.launcher_history.clear()
             return 'Launcher usage history cleared'
-        if action == "focusWindow":
-            run("niri", "msg", "action", "focus-window", "--id", self.identifier(request.get("id")))
-            return "Window focused"
-        if action == "moveWindow":
-            window_id = int(self.identifier(request.get("id")))
-            workspace_id = int(self.identifier(request.get("workspaceId")))
-            self.niri = self.niri_state()
-            if (not any(item.get("id") == window_id for item in self.niri["windows"])
-                    or not any(item.get("id") == workspace_id for item in self.niri["workspaces"])):
-                raise ValueError("Window or workspace is no longer available")
-            self.niri_action({"MoveWindowToWorkspace": {"window_id": window_id, "reference": {"Id": workspace_id}, "focus": False}})
-            return "Window moved to workspace"
-        if action == "nativeOverview":
-            run("niri", "msg", "action", "toggle-overview")
-            return "Native overview toggled"
-        if action == "workspace":
-            workspace_id = self.identifier(request.get("id"))
-            workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
-            if workspace is None:
-                self.niri = self.niri_state()
-                workspace = next((item for item in self.niri["workspaces"] if str(item.get("id")) == workspace_id), None)
-            if workspace is None:
-                raise ValueError("Workspace is no longer available")
-            # A redundant focus-monitor centers the cursor even on the current output.
-            self.niri_action({"FocusWorkspace": {"reference": {"Id": int(workspace_id)}}})
-            return "Workspace focused"
         if action == "wifiToggle":
             status = run("nmcli", "radio", "wifi")
             run("nmcli", "radio", "wifi", "off" if status.strip() == "enabled" else "on")

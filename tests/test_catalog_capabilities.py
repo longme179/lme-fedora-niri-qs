@@ -100,4 +100,5 @@ class NativeCapabilityCase(unittest.TestCase):
                     output=os.pread(probe.log.fileno(),1048576,0).decode()
                     for other in ('live-main','demo','preview','settings'):
                         self.assertEqual(output.count('BOOT_'+other),int(other==context),output)
+                    probe.wait(lambda s:len(world.workers())-before==int(mode=='shell'))
                     self.assertEqual(len(world.workers())-before,int(mode=='shell'))

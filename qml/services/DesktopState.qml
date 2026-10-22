@@ -5,7 +5,7 @@ import Quickshell
 QtObject {
     id: root
     property bool editing: false
-    readonly property bool enabled: ShellState.preferences.desktopEnabled === true
+    readonly property bool enabled: ShellState.settingsPageAvailable("desktop") && ShellState.preferences.desktopEnabled === true
     readonly property var widgets: ShellState.preferences.desktopWidgets || {}
     onEnabledChanged: if (!enabled) editing = false
     function matches(record, screen) {

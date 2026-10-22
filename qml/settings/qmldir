@@ -12,6 +12,5 @@ BehaviorPage 1.0 BehaviorPage.qml
 AboutPage 1.0 AboutPage.qml
 SettingsApplication 1.0 SettingsApplication.qml
 ElementsPage 1.0 ElementsPage.qml
-DesktopPage 1.0 DesktopPage.qml
 GowallSettings 1.0 GowallSettings.qml
 AwwwSettings 1.0 AwwwSettings.qml

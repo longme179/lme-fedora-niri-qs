@@ -9,7 +9,6 @@ QtObject {
         {key: "topbar", title: "Top bar", icon: "overview", description: "Your modules, in your order", keywords: "click right middle scroll gestures mute volume dnd modules layout islands activity timer media pill clock workspaces tray size corners border fill round square left center right"},
         {key: "controlLayout", title: "Control center", icon: "overview", description: "Arrange your tiles and cards", keywords: "widgets modular drag drop layout size width hide"},
         {key: "display", title: "Displays", icon: "overview", description: "Resolution, refresh rate and arrangement", keywords: "monitor screen scale 60 120 hz resolution revert"},
-        {key: "desktop", title: "Desktop widgets", icon: "overview", description: "Clock, notes and media on your desktop", keywords: "canvas drag resize widget output screen edit"},
         {key: "behavior", title: "Behavior", icon: "resources", description: "Small choices for your everyday workflow", keywords: "launcher ranking usage history clear frequency recent terminal applications preferences recording audio system microphone bluetooth pair pin passkey peripheral battery low alerts threshold headphones mouse keyboard lyrics lrc lrclib cache follow transcript current line island"},
         {key: "about", title: "About", icon: "bell", description: "Your desktop and its contributors", keywords: "update upgrade github git commit version license requirements credits inir"}
     ]

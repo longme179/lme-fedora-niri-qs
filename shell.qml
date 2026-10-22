@@ -76,7 +76,6 @@ ShellRoot {
             }
         }
     }
-    LazyLoader { active: !root.preview; component: DesktopCanvas {} }
     PanelWindow {
         id: liquidScrim
         screen: overlay.screen

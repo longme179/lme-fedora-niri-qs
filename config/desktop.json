@@ -1,0 +1,94 @@
+{
+  "id": "desktop",
+  "sources": [
+    "qml/panels/DesktopCanvas.qml",
+    "qml/panels/DesktopWidgetWindow.qml",
+    "qml/panels/DesktopAmbient.qml",
+    "qml/panels/DesktopCard.qml",
+    "qml/settings/DesktopPage.qml",
+    "qml/services/DesktopState.qml",
+    "scripts/desktop_widgets.py"
+  ],
+  "settingsPage": {
+    "key": "desktop",
+    "title": "Desktop widgets",
+    "icon": "overview",
+    "description": "Clock, notes and media on your desktop",
+    "keywords": "canvas drag resize widget output screen edit",
+    "entry": "qml/settings/DesktopPage.qml",
+    "after": "nightLight"
+  },
+  "preferences": {
+    "desktopEnabled": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    },
+    "desktopShapes": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    },
+    "desktopWidgets": {
+      "type": "object",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": {}
+    },
+    "desktopShapeCount": {
+      "type": "integer",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 4
+    },
+    "desktopShapeScale": {
+      "type": "number",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 1.0
+    },
+    "desktopShapeOpacity": {
+      "type": "number",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 0.14
+    },
+    "desktopShapeSpeed": {
+      "type": "number",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": 1.0
+    },
+    "desktopShapeStyle": {
+      "type": "string",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": "mixed"
+    },
+    "desktopShapeRotation": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    }
+  },
+  "bootstrap": {
+    "id": "desktop",
+    "entry": "qml/panels/DesktopCanvas.qml",
+    "contexts": [
+      "live-main",
+      "demo"
+    ]
+  }
+}

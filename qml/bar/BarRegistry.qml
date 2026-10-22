@@ -27,7 +27,7 @@ QtObject {
         {id: "settings", title: "Settings", detail: "Open the separate settings app", icon: "settings"},
         {id: "privacy", title: "Privacy", detail: "Active microphone, camera and screen sharing", icon: "screen-share"}
     ]
-    function available(id) { return id !== "notifications" || ShellState.settingsPageAvailable(id); }
+    function available(id) { return !["notifications", "desktop"].includes(id) || ShellState.settingsPageAvailable(id); }
     function info(id) { const item = knownModules.find(item => item.id === id); return item && available(id) ? item : {id: id, title: id, icon: "applications", enabled: false}; }
     function clone(layout) {
         const value = layout || defaults;

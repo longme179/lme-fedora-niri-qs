@@ -14,7 +14,6 @@
     "batterySaver": ["scripts/battery_saver.py"],
     "capture": ["qml/panels/ScreenshotEditor.qml", "scripts/screen_capture.py"],
     "recording": ["qml/panels/RecorderWidget.qml", "scripts/screen_recording.py"],
-    "desktop": ["qml/panels/DesktopCanvas.qml", "qml/panels/DesktopWidgetWindow.qml", "qml/panels/DesktopAmbient.qml", "qml/panels/DesktopCard.qml", "qml/settings/DesktopPage.qml", "qml/services/DesktopState.qml", "scripts/desktop_widgets.py"],
     "display": ["qml/settings/DisplayPage.qml", "scripts/display_control.py", "scripts/display_mirror.py"],
     "launcher": ["qml/panels/Launcher.qml", "qml/services/LauncherSearch.js", "scripts/file_search.py", "scripts/launcher_history.py"],
     "lyrics": ["scripts/lyrics.py"],

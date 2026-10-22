@@ -84,11 +84,17 @@ class NativeLightFeatureCase(unittest.TestCase):
         for feature in converted():
             with self.subTest(feature=feature):
                 world=self.world();world.toggle(feature,False)
+                saved=json.loads(world.settings.read_text())
+                saved.update(controlLayout=backend.DEFAULT_CONTROL_LAYOUT,controlGrid=backend.DEFAULT_CONTROL_GRID)
+                if feature=='weather': saved['nightLightMode']='sunset'
+                world.settings.write_text(json.dumps(saved))
                 original=world.settings.read_bytes()
                 marker=world.home/'state/preserved-data';marker.write_text('keep me')
                 descriptor=(world.root/'config'/f'{feature}.json').read_bytes()
                 with world.launch() as probe:
                     state=probe.wait(lambda s:s['ready']);self.assertNotIn(feature,state['pages'])
+                    self.assertEqual(state['preferences']['controlLayout'],saved['controlLayout'])
+                    self.assertEqual(state['preferences']['controlGrid'],saved['controlGrid'])
                     self.assertNotIn(feature,state['searches'][0])
                     probe.call('open',feature);self.assertFalse(probe.wait(lambda s:True)['panelOpen'])
                     probe.call('toggle','control',target='shell')
@@ -101,6 +107,10 @@ class NativeLightFeatureCase(unittest.TestCase):
                         self.assertFalse(state['weatherCard']);self.assertFalse(state['weatherGear'])
                 with world.launch('settings') as probe:
                     self.assertNotIn(feature,probe.wait(lambda s:s['ready'])['pages'])
+                    if feature=='weather':
+                        probe.call('openPage','nightLight',target='settings')
+                        state=probe.wait(lambda s:FEATURES['nightLight'][1] in s['marks'])
+                        self.assertFalse(state['weatherRouteEnabled'])
                     reply=subprocess.run([str(world.root/'scripts/settings.sh'),'--page',feature],env=probe.env,capture_output=True,text=True,timeout=5)
                     self.assertEqual((reply.returncode,reply.stderr),(2,'Error: unknown settings page: '+feature+'\n'))
                 self.assertEqual(world.settings.read_bytes(),original);self.assertEqual(marker.read_text(),'keep me')

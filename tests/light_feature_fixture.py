@@ -52,6 +52,7 @@ class Probe(SliceProbe):
 class LightWorld(World):
     def __init__(self, directory):
         super().__init__(directory)
+        self.env['NIRI_CONFIG'] = str(self.root/'config/niri/lme-shell.kdl')
         for name in ('shell.qml', 'qml/settings/SettingsApplication.qml'):
             path = self.root/name
             text = path.read_text().replace('    id: root\n', '    id: root\n'+OBSERVE, 1)

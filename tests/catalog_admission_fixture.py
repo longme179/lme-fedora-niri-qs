@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-LEGACY = re.search(r'^    (utilities\|appearance\|[^\n]+)\) ;;$',
+LEGACY = re.search(r'^    ([A-Za-z][A-Za-z0-9_|-]*)\) ;;$',
                    (ROOT/'scripts/settings.sh').read_text(), re.M).group(1).split('|')
 
 

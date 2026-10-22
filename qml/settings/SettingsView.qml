@@ -21,6 +21,7 @@ Item {
         history = history.concat(page); page = SettingsRegistry.page(key).key;
         search.clear(); pageScroll.contentY = 0;
     }
+    PageNavigation { target: pageLoader.item; onRequested: pageId => root.navigate(pageId) }
     function goBack() { if (history.length) { page = history[history.length - 1]; history = history.slice(0, -1); pageScroll.contentY = 0; } }
     Shortcut { sequence: "Ctrl+F"; onActivated: search.forceActiveFocus() }
     Shortcut { sequence: "Alt+Left"; onActivated: root.goBack() }
@@ -128,7 +129,7 @@ Item {
                     x: 6; y: 6
                     direction: "up"
                     width: pageScroll.width - 12
-                    content: root.currentPage.entry ? catalogPage : root.page === "utilities" ? utilitiesPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage : root.page === "wallpaper" ? wallpaperPage
+                    content: root.currentPage.entry ? catalogPage : root.page === "desktop" ? desktopPage : root.page === "topbar" ? barPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
                                    : root.page === "notifications" ? notificationsPage : root.page === "behavior" ? behaviorPage : root.page === "about" ? aboutPage : appearancePage
                 }
@@ -138,17 +139,17 @@ Item {
     Component {
         id: catalogPage
         Loader {
+            id: catalogLoader
             source: FeatureCatalog.url(root.currentPage.entry)
+            PageNavigation { target: catalogLoader.item; onRequested: pageId => root.navigate(pageId) }
         }
     }
-    Component { id: utilitiesPage; UtilitiesPage { onWallpaperRequested:root.navigate("wallpaper") } }
     Component { id: desktopPage; DesktopPage {} }
     Component { id: appearancePage; AppearancePage {} }
     Component { id: barPage; TopBarPage {} }
-    Component { id: wallpaperPage; WallpaperPage {} }
     Component { id: displayPage; DisplayPage {} }
     Component { id: controlPage; ControlLayoutPage {} }
-    Component { id: notificationsPage; NotificationsPage { onFontSettingsRequested: root.navigate("elements") } }
+    Component { id: notificationsPage; NotificationsPage {} }
     Component { id: elementsPage; ElementsPage {} }
     Component { id: behaviorPage; BehaviorPage {} }
     Component { id: aboutPage; AboutPage {} }

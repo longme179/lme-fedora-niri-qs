@@ -6,12 +6,13 @@ import "../services"
 ColumnLayout {
     id:root
     signal wallpaperRequested()
+    signal navigateRequested(string pageId)
     spacing:20
     GowallSettings { Layout.fillWidth:true }
     SettingsCard {
         title:"Wallpaper engine"
         description:"Awww transition, scaling and display controls are shared with Wallpaper settings."
-        LiquidButton { text:"Open awww controls"; onClicked:root.wallpaperRequested() }
+        LiquidButton { text:"Open awww controls"; enabled:ShellState.settingsPageAvailable("wallpaper"); onClicked:{ root.wallpaperRequested(); root.navigateRequested("wallpaper"); } }
     }
     SettingsCard {
         title:"Launchpad"

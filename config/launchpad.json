@@ -1,0 +1,34 @@
+{
+  "id": "launchpad",
+  "sources": [
+    "qml/panels/LaunchpadPanel.qml",
+    "qml/panels/LaunchpadEditor.qml",
+    "scripts/launchpad.py",
+    "scripts/launchpad_actions.py"
+  ],
+  "settingsPage": {
+    "key": "utilities",
+    "title": "Shell utilities",
+    "icon": "applications",
+    "description": "Your commands and image tools",
+    "keywords": "launchpad scripts bash commands binary background terminal gowall upscale palette awww wallpaper",
+    "entry": "qml/settings/UtilitiesPage.qml",
+    "after": "wallpaper"
+  },
+  "preferences": {
+    "launchpadEnabled": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "launchpadEntries": {
+      "type": "object",
+      "validator": "legacy",
+      "portable": false,
+      "appearance": false,
+      "default": {}
+    }
+  }
+}

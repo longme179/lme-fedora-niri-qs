@@ -101,7 +101,7 @@ QtObject {
         if (notificationsOpen) Notifications.markRead();
     }
     function settingsPageAvailable(page) {
-        return ["utilities", "desktop", "appearance", "elements", "topbar", "controlLayout", "display", "wallpaper", "notifications", "behavior", "about"].includes(page)
+        return ["desktop", "appearance", "elements", "topbar", "controlLayout", "display", "notifications", "behavior", "about"].includes(page)
                 || (FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page);
     }
     function openSettingsPage(page) {

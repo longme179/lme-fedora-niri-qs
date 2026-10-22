@@ -72,9 +72,10 @@ class WallpaperSettingsCase(unittest.TestCase):
     property int phase:0
     property int ticks:0
     property var checks:({})
+    property alias page: pageLoader.item
     FloatingWindow { implicitWidth:1000;implicitHeight:900
-        Flickable { anchors.fill:parent;contentHeight:page.implicitHeight
-            WallpaperPage { id:page;width:parent.width }
+        Flickable { anchors.fill:parent;contentHeight:page ? page.implicitHeight : 0
+            Loader { id:pageLoader;width:parent.width;source:Qt.resolvedUrl("qml/settings/WallpaperPage.qml") }
         }
         TestCase { id:mouse;when:false }
     }

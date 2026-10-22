@@ -34,7 +34,7 @@ def replace_legacy(root):
         path = root/relative; text = path.read_text(); assert expression in text
         path.write_text(text.replace(expression, '', 1))
     path = root/'scripts/settings.sh'
-    text, count = re.subn(r'^    utilities\|appearance\|.*\) ;;\n', '', path.read_text(), count=1, flags=re.M)
+    text, count = re.subn(r'(?<=case "\$page" in\n)    [A-Za-z][A-Za-z0-9_|-]*\) ;;\n', '', path.read_text(), count=1, flags=re.M)
     assert count == 1
     path.write_text(text)
     metadata['json_bytes'] = (root/'config/features.json').stat().st_size + sum((root/item['descriptor']).stat().st_size for item in index['features'])

@@ -41,6 +41,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
    Declare portable/profile membership explicitly; defaults deny both. Bind named
    validators/resolvers to Python functions; JSON contains no code.
    Guard cross-surface page links with ShellState.settingsPageAvailable; preserve saved IDs on withdrawal.
+   Pages emit navigateRequested(pageId); PageNavigation connects locally to the Settings host, not a global bus.
 
 ## Commands and checks
 

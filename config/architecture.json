@@ -1,6 +1,7 @@
 {
   "version": 1,
   "legacyFeatures": {
+    "localContent": ["scripts/local_content_actions.py"],
     "activity": ["qml/bar/ActivityButton.qml", "qml/panels/ActivityIsland.qml", "qml/panels/ActivityCard.qml", "qml/services/ActivityState.qml"],
     "agenda": ["qml/panels/Agenda.qml", "qml/panels/CalendarWidget.qml"],
     "notes": ["qml/panels/QuickNotes.qml", "qml/services/NotesState.qml"],
@@ -68,7 +69,7 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 281,
-    "scripts/desktop_backend.py": 1987,
+    "scripts/desktop_backend.py": 1975,
     "tests/fixtures/catalog-legacy.json": 323,
     "tests/test_backend.py": 486,
     "tests/test_battery_saver.py": 359,

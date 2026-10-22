@@ -58,6 +58,7 @@ from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass,
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
+from local_content_actions import LocalContentCapabilities, provide as provide_local_content
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -528,6 +529,9 @@ class DesktopBackend:
         self.launchpad = Launchpad()
         self.actions = ActionRegistry()
         self.action_state = self.actions.provide([
+            (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
+                self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
+                lambda value: self.demo_snapshot().__setitem__('calculator', value))),
             (provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot)),
             (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
                 self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
@@ -1296,6 +1300,7 @@ class DesktopBackend:
 
     def perform_demo(self, action: str, request: dict[str, Any]) -> None:
         state = self.demo_snapshot()
+        if spec := self.actions.get(action): return spec.demo(request)
         system = state["system"]
         if action == 'batterySaver':
             if type(request.get('enabled')) is not bool: raise ValueError('Battery saver must be enabled or disabled')
@@ -1358,11 +1363,7 @@ class DesktopBackend:
         elif action == "wallpaperScan":
             bundled = Path(__file__).resolve().parents[1] / "assets/wallpapers"
             self.wallpaper_library = wallpaper_library(str(bundled))
-        elif action == "calculate":
-            state["calculator"] = {"query": request.get("query"), "result": calculate(request.get("query")), "error": ""}
-        elif action == "copyText":
-            if not isinstance(request.get("text"), str): raise ValueError("Text is required")
-        elif action in ('notificationSave','launcherHistoryClear'): pass
+        elif action == 'launcherHistoryClear': pass
         elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             if action in {"wifiConnect", "wifiSaved"}:
                 system["network"].update(connected=True, ssid=request.get("ssid", "Home Wi-Fi"))
@@ -1477,7 +1478,7 @@ class DesktopBackend:
             ident=validate_preference('palettePreset',request.get('id'))
             colors=next(p['colors'] for p in PALETTE_CATALOG if p['id']==ident)
             self.preferences.values.update(palettePreset=ident,paletteSource='preset',accent=colors['accent'])
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "notesInit"}:
+        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "fileOpen", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "nativeOverview", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
@@ -1491,6 +1492,7 @@ class DesktopBackend:
         return "Notes storage ready"
 
     def perform(self, action: str, request: dict[str, Any]) -> str:
+        if spec := self.actions.get(action): return spec.live(request)
         run = self.runner.run
         if action == 'batterySaver':
             enabled = request.get('enabled')
@@ -1611,7 +1613,6 @@ class DesktopBackend:
         if action == "paletteReset":
             self.preferences.update({"paletteSource":"dracula","accent":DRACULA_PROFILE["accent"]})
             return "Dracula palette restored; element overrides preserved"
-        if action == "notesInit": return self.prepare_notes()
         if action == "settingsExport":
             self.preferences.reload(force=True)
             return "Exported " + export_document(request.get("path"),self.preferences.values,request.get("kind"))
@@ -1654,19 +1655,6 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.set("displayLayout", layout)
             self.displays = self.display_control.snapshot()
             return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
-        if action == "notificationSave":
-            if not isinstance(request.get("entries"), list): raise ValueError("Invalid notification history")
-            self.notification_history = self.valid_notifications(request["entries"])
-            write_json(self.notification_path, self.notification_history)
-            return ""
-        if action == "calculate":
-            # Query/result travel in the acknowledgement so stale queries can be ignored.
-            return calculate(request.get("query"))
-        if action == "copyText":
-            text = request.get("text")
-            if not isinstance(text, str) or len(text.encode()) > MAX_TEXT: raise ValueError("Invalid copy text")
-            run("wl-copy", "--type", "text/plain;charset=utf-8", input=text)
-            return "Copied"
         if action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
             return self.start_feature(action, lambda: self.wifi_action(action, request))
         if action == "chargeMode":

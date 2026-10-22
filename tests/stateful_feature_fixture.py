@@ -46,7 +46,9 @@ OBSERVE = '''
 
 class Probe(LightProbe):
     def call(self, method, *args, target='statefulFeatures'):
-        return super().call(method, *args, target=target)
+        reply=super().call(method, *args, target=target)
+        if method=='close' and target=='shell': self.wait(lambda s:s['progress']==0 and not s['panelOpen'])
+        return reply
 
 class StatefulWorld(LightWorld):
     def __init__(self, directory):

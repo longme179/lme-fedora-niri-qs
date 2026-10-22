@@ -54,7 +54,7 @@ QtObject {
                 const descriptor = record.startup === undefined ? descriptors[record.id] : record.startup;
                 result.ids.features.push(record.id);
                 Object.assign(result.preferences, descriptor.preferences || {});
-                for (const kind of ["bar", "settingsPage", "controlTab", "panel", "bootstrap", "gesture"]) {
+                for (const kind of ["bar", "settingsPage", "controlTab", "agendaTab", "panel", "bootstrap", "gesture"]) {
                     const item = descriptor[kind];
                     if (!item) continue;
                     const key = kind === "settingsPage" ? "key" : "id";
@@ -98,12 +98,18 @@ QtObject {
             for (const item of all.filter(entry => !entry.after)) append(item, []);
             if (ordered.length !== known.length) throw new Error("Cyclic " + kind + " position");
         } catch (exception) { Qt.callLater(() => root.fail(String(exception))); return legacy; }
-        const max = kind === "controlTab" ? Math.max(-1, ...legacy.map(item => item.legacyIndex)) : -1;
+        const indexed = kind === "controlTab" || kind === "agendaTab";
+        const declared = indexed ? known.filter(item => item.legacyIndex !== undefined).map(item => item.legacyIndex) : [];
+        if (declared.some(value => !Number.isInteger(value) || value < 0 || value > 2147483647) || new Set(declared).size !== declared.length) {
+            Qt.callLater(() => root.fail("Invalid or duplicate " + kind + " legacyIndex")); return legacy;
+        }
+        const max = Math.max(-1, ...declared);
+        const automatic = all.filter(item => item.legacyIndex === undefined);
         return ordered.filter(entry => includeDisabled || entry.enabled !== false).map(entry => {
             if (legacy.includes(entry)) return entry;
             const value = Object.assign({}, entry);
             if (!includeDisabled) delete value.enabled;
-            if (kind === "controlTab") value.legacyIndex = max + 1 + all.findIndex(item => item[key] === entry[key]);
+            if (indexed && value.legacyIndex === undefined) value.legacyIndex = max + 1 + automatic.findIndex(item => item[key] === entry[key]);
             return value;
         });
     }

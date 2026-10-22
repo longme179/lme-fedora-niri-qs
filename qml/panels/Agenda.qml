@@ -30,7 +30,7 @@ ColumnLayout {
             }
         }
     }
-    Loader { Layout.fillWidth: true; Layout.fillHeight: true; sourceComponent: root.pages[ControlRegistry.tabForIndex(root.tab, true).entry] }
+    Loader { Layout.fillWidth: true; Layout.fillHeight: true; sourceComponent: root.pages[ControlRegistry.tabForIndex(root.tab, true).entry] || FeatureCatalog.component(ControlRegistry.tabForIndex(root.tab, true).entry) }
     Component { id: calendar; CalendarWidget {} }
     Component { id: tasks; TasksWidget {} }
     Component { id: notes; QuickNotes {} }

@@ -126,7 +126,7 @@ GlassPanel {
             sourceComponent: root.tabComponents[root.selectedTab.entry] || catalogTab
         }
     }
-    Component { id: catalogTab; Loader { source: FeatureCatalog.url(root.selectedTab.entry) } }
+    Component { id: catalogTab; Loader { source: FeatureCatalog.url(root.selectedTab.entry); onLoaded: if (item && "embedded" in item) item.embedded = true } }
     Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }

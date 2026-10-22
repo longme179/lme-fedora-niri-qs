@@ -6,15 +6,7 @@ import re
 import signal
 import sys
 
-KINDS = {'bar': 'id', 'settingsPage': 'key', 'controlTab': 'id', 'panel': 'id', 'bootstrap': 'id', 'gesture': 'id'}
-FIELDS = {
-    'bar': {'id', 'title', 'detail', 'icon', 'entry', 'after'},
-    'settingsPage': {'key', 'title', 'icon', 'description', 'keywords', 'entry', 'after'},
-    'controlTab': {'id', 'title', 'entry', 'refresh', 'markRead', 'after'},
-    'panel': {'id', 'entry', 'centered', 'scrim'},
-    'bootstrap': {'id', 'entry'},
-    'gesture': {'id', 'title', 'after'},
-}
+from catalog_metadata import KINDS, FIELDS, validate_indices
 
 
 class CatalogError(ValueError):
@@ -111,7 +103,10 @@ def legacy_ids(root):
         pattern = r'"([A-Za-z][A-Za-z0-9_-]*)"' if kind == 'panel' else r'\b' + KINDS[kind] + r': "([A-Za-z][A-Za-z0-9_-]*)"'
         result[kind] = re.findall(pattern, match[1])
     path = root/'config/control-grid.json'
-    if path.exists(): result['controlTab'] = [item['id'] for item in document(path)['tabs']]
+    if path.exists():
+        navigation = document(path)
+        for kind, field in [('controlTab', 'tabs'), ('agendaTab', 'agendaTabs')]:
+            result[kind] = [item['id'] for item in navigation.get(field, [])]
     return result
 
 
@@ -166,8 +161,10 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
             item_id = identifier(item[id_key])
             if item_id in result['ids'][kind]: raise CatalogError(f'Duplicate {kind} ID: {item_id}')
             for key, value in item.items():
-                if key in ('refresh', 'markRead', 'centered'):
+                if key in ('refresh', 'markRead', 'centered', 'fallback'):
                     if type(value) is not bool: raise CatalogError(f'Invalid tab flag: {key}')
+                elif key == 'legacyIndex':
+                    if type(value) is not int or not 0 <= value <= 2147483647: raise CatalogError('Invalid legacyIndex')
                 elif key == 'scrim':
                     if type(value) not in (int, float) or not 0 <= value <= 1: raise CatalogError('Invalid panel scrim')
                 elif not isinstance(value, str) or not value:
@@ -176,6 +173,8 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
             result['ids'][kind].append(item_id)
             result['all'][kind].append(dict(item, enabled=record['enabled']))
             if record['enabled']: result[kind].append(dict(item))
+    navigation = root/'config/control-grid.json'
+    validate_indices(result, document(navigation) if navigation.exists() else {}, CatalogError)
     return validate_legacy(result, legacy, setting_keys)
 
 

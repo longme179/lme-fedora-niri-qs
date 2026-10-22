@@ -30,7 +30,6 @@
     "bar": ["qml/settings/TopBarPage.qml"],
     "wallpaper": ["qml/settings/WallpaperPage.qml", "qml/settings/WallpaperPlaylistSettings.qml", "qml/settings/AwwwSettings.qml", "scripts/wallpaper.py", "scripts/wallpaper_palette.py"],
     "imageUtilities": ["qml/settings/GowallSettings.qml", "scripts/image_utilities.py"],
-    "weather": ["qml/panels/WeatherWidget.qml", "qml/settings/WeatherPage.qml", "scripts/weather.py"],
     "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml"],
     "update": ["qml/settings/AboutPage.qml", "qml/services/UpdateState.qml", "scripts/shell_update.py"],
     "authentication": ["qml/auth/AuthenticationAgent.qml", "qml/auth/AuthenticationDialog.qml", "qml/auth/AuthenticationWindow.qml"]

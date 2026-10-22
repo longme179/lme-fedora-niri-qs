@@ -122,7 +122,6 @@
     "terminal": {"type": "string", "validator": "legacy", "portable": false, "appearance": false, "default": "kitty"},
     "bluetoothAdapter": {"type": "string", "validator": "legacy", "portable": false, "appearance": false, "default": ""},
     "tasks": {"type": "array", "validator": "legacy", "portable": false, "appearance": false, "default": []},
-    "weatherLocation": {"type": "object", "validator": "legacy", "portable": false, "appearance": false, "default": {}},
     "activityEnabled": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "barGestures": {"type": "object", "validator": "legacy", "portable": true, "appearance": false, "default": {}},
     "barStyle": {"type": "string", "validator": "legacy", "portable": true, "appearance": false, "default": "connected"},

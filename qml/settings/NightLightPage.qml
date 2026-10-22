@@ -47,7 +47,7 @@ ColumnLayout {
             Layout.fillWidth: true; visible: ShellState.preferences.nightLightMode === "sunset"
             LabelText { text: "Uses your Weather location and local timezone. Approximate sunrise/sunset; no additional location request."; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
             LabelText { text: root.state.start && root.state.end ? "Sunset " + root.state.start + " · Sunrise " + root.state.end : "Waiting for location"; color: Theme.accent; font.weight: Font.Bold }
-            LiquidButton { text: "Weather location settings"; onClicked: ShellState.openSettingsPage("weather") }
+            LiquidButton { text: "Weather location settings"; enabled: ShellState.settingsPageAvailable("weather"); onClicked: ShellState.openSettingsPage("weather") }
         }
     }
     SettingsCard {

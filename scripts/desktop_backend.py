@@ -70,7 +70,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles", "niriConfigPath")},
+    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles", "niriConfigPath", "weatherLocation")},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,

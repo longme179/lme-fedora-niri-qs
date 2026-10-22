@@ -150,6 +150,13 @@ No async domain migration is authorized by proving this synchronous pilot.
 M4c-1 subsequently adds nightLightRefresh, idleRefresh/idleInhibit and keybindRefresh
 with their separate demo behavior. Their periodic/controller state facades and original
 snapshot slots remain in the host; providers return no additional projection keys.
+M7a adds local content (4), audio/backlight/Bluetooth (7), launcher/windows (6)
+and synchronous profiles/palette/settings transfer (7): 29/89 IDs now registered.
+Four flat providers use the same explicit composition list and narrow callbacks;
+no registry extension or catalog backend fields. Existing state/snapshot slots,
+invalidation and acknowledgement order stay in the host. Direct perform/perform_demo
+facades forward registered IDs; unknown IDs and appearance* prefixes stay legacy.
+Profile transactions retain appearance_action; registry errors never fall through.
 Weather search/detect/select/refresh retain their legacy dispatch/controller contracts.
 Shared settingsPageAvailable guards page links and retained control-grid factories.
 Withdrawal filters UI without removing saved IDs or changing worker policy; standalone
@@ -436,4 +443,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2 are merged; M4c-3 is implemented for owner review. M7 and later need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3 are merged; M7a synchronous providers are implemented for owner review. M7b and later need authorization.

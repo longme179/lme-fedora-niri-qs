@@ -3,5 +3,6 @@
 {"id":"weather","descriptor":"config/weather.json","enabled":true,"startup":{}},
 {"id":"osd","descriptor":"config/osd.json","enabled":true,"startup":{}},
 {"id":"nightLight","descriptor":"config/nightLight.json","enabled":true,"startup":{"settingsPage":{"key":"nightLight","title":"Night Light","icon":"weather-sun","description":"Softer light after sunset","keywords":"blue gamma warm temperature schedule sunrise sunset wlsunset","entry":"qml/settings/NightLightPage.qml","after":"display"}}},
-{"id":"idle","descriptor":"config/idle.json","enabled":true,"startup":{"settingsPage":{"key":"idle","title":"Idle and sleep","icon":"battery","description":"Timeouts that follow your charger","keywords":"laptop ac battery display lock suspend sleep swayidle awake","entry":"qml/settings/IdlePage.qml","after":"clipboard"}}}
+{"id":"idle","descriptor":"config/idle.json","enabled":true,"startup":{"settingsPage":{"key":"idle","title":"Idle and sleep","icon":"battery","description":"Timeouts that follow your charger","keywords":"laptop ac battery display lock suspend sleep swayidle awake","entry":"qml/settings/IdlePage.qml","after":"clipboard"}}},
+{"id":"keybinds","descriptor":"config/keybinds.json","enabled":true,"startup":{"settingsPage":{"key":"keybinds","title":"Keyboard shortcuts","icon":"applications","description":"Your niri keybindings at a glance","keywords":"keybind bindings cheatsheet hotkey keys keyboard config includes search","entry":"qml/settings/KeybindsPage.qml","after":"idle"}}}
 ]}

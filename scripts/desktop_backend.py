@@ -62,6 +62,7 @@ from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
 from idle_actions import IdleCapabilities, provide as provide_idle
+from keybind_actions import KeybindCapabilities, provide as provide_keybinds
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
 from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
@@ -69,7 +70,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles")},
+    validators={key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles", "niriConfigPath")},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -531,7 +532,8 @@ class DesktopBackend:
             (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
                 self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
             (provide_idle, IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
-                lambda: self.ac_online(), self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value)))])
+                lambda: self.ac_online(), self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value))),
+            (provide_keybinds, KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state)))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -1262,7 +1264,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "keybindRefresh", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreset", "palettePreview", "paletteApply", "paletteReset", "settingsExport", "settingsImport", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "appearanceSave", "appearanceApply", "appearanceDelete", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "wallpaperScan", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1310,8 +1312,6 @@ class DesktopBackend:
                 "interfaces": [{"name": "wlp1s0", "download": 245760, "upload": 18432}],
                 "processes": [{"pid": 1820, "name": "firefox", "user": "user", "cpu": 18.4, "memoryBytes": 943718400}, {"pid": 1142, "name": "niri", "user": "user", "cpu": 3.8, "memoryBytes": 188743680}, {"pid": 1250, "name": "quickshell", "user": "user", "cpu": 1.2, "memoryBytes": 125829120}],
                 "processCount": 3, "sampledAt": 1, "error": ""}
-        elif action == "keybindRefresh":
-            self.keybinds = read_keybinds(str(Path(__file__).resolve().parents[1]/"config/niri/lme-shell.kdl"))
         elif action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
             if action == 'mirrorRefresh':
                 self.perform_demo('displayRefresh', {})
@@ -1555,9 +1555,6 @@ class DesktopBackend:
             self.monitor_enabled = request["enabled"]
             self.monitor = SystemMonitor(self.proc)
             return "System monitor started" if self.monitor_enabled else "System monitor stopped"
-        if action == "keybindRefresh":
-            self.keybinds = read_keybinds(self.preferences.values["niriConfigPath"])
-            return "Keybindings refreshed"
         if action == "glassBlurApply":
             return apply_blur(self.preferences.path.parent, self.preferences.values["liquidGlass"])
         if action == "platformRefresh":

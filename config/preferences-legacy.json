@@ -92,7 +92,6 @@
     "notificationBodySize": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 13},
     "notificationIdleAnimation": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "notificationIdleSpeed": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 16},
-    "niriConfigPath": {"type": "string", "validator": "legacy", "portable": false, "appearance": false, "default": ""},
     "popupBlur": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "barBlur": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "springMotion": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": true, "defaultResolver": "motion"},

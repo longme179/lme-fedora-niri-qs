@@ -5,6 +5,39 @@ Scope: all current action providers, shared dispatch/completion/runner, settings
 transfer, Launchpad jobs, and Clipboard/Notifications/Desktop bootstrap seams.
 This is a targeted code review with private-session tests, not a hardware audit.
 
+## Device-action follow-up (2026-10-23)
+
+Implemented on `fix/device-action-reliability`, based on merged main ace2744:
+
+- P1 Bluetooth: Connect/Disconnect now use the existing worker pool. Context/demo
+  behavior, commands and error text stay; live requests acknowledge before worker
+  validation/completion. Completion invalidates Bluetooth read-back, including
+  failure, so a snapshot sampled during Connect cannot remain cached afterward.
+  Bluetooth power toggle/pairing retain their existing controller paths.
+- P2 notification history: persist atomically before installing backend memory.
+  Write/fsync/replace errors leave the previous backend history and file intact;
+  a later save can retry. QML history/debounce and Preferences persistence stay.
+- P2 export: serialize to a private stage, flush/fsync, then publish exclusively.
+  Existing destinations are never overwritten; failed attempts clean their stage.
+  Filesystems without hard links retain exclusive direct creation and owned-file
+  failure cleanup. That fallback retains the old partial-visibility window while
+  writing; it does not claim atomic publication. Replacement inodes are preserved.
+- P2 Wi-Fi: all connection/profile/radio mutations share admission through the
+  existing job table, including the synchronous facade/radio toggle. Scan remains
+  independent. Finished-but-unpublished jobs still own admission. The current
+  controller selects one adapter and radio/profile writes can be global, so this
+  deliberately serializes mutations conservatively; it adds no multi-adapter
+  parallelism, request queue, second job table, monitor or registry extension.
+- P3 Launchpad log growth is still open and is not part of this fix branch.
+  Further action migration, including recordStop, has not started.
+
+New tests cover blocked Connect with responsive volume/snapshot, ack/completion
+sequences, cache refills during pending/error, stale devices, write/replace/fsync
+faults, retry, destination races, no-hardlink fallback, Wi-Fi conflicts and release.
+The owner approved the existing test adaptations in DEVICE_QOL_TEST_REVIEW.md.
+Frozen golden files remain unchanged; the old sync golden compares final state
+and commands, while separate worker tests assert actual protocol sequences.
+
 ## Wi-Fi changes in this branch
 
 - The old runner ignored nmcli's repeated secret prompts until its overall
@@ -29,7 +62,7 @@ This is a targeted code review with private-session tests, not a hardware audit.
 - No new persistent monitor, executor, process pool or background polling cadence.
   Passwords remain stdin-only, in a memfd, with existing error redaction.
 
-## Findings for the next branch
+## Original findings (first four addressed above)
 
 | Priority | Finding and evidence | Smallest proposed correction |
 | --- | --- | --- |
@@ -41,7 +74,8 @@ This is a targeted code review with private-session tests, not a hardware audit.
 
 The first three findings were reproduced with mocked commands/storage in a
 scratch script; the last two follow directly from existing tests and file I/O.
-They are documented, not silently fixed by the Wi-Fi commit.
+They were documented by the Wi-Fi feedback commit; the follow-up above fixes
+the first four without changing Launchpad log policy.
 
 ## Contracts retained and next plan
 
@@ -53,8 +87,8 @@ They are documented, not silently fixed by the Wi-Fi commit.
   per-output lifecycle stay behind their current shared services/catalog adapters.
 - History/widget bounds exist (notifications 200, Clipboard 20–500, Desktop 12).
   These bounds alone do not prove total-process memory use or absence of leaks.
-- Recommended order: Bluetooth responsiveness; notification/export failure
-  recovery; Wi-Fi group admission; then consider `recordStop` as the next small
+- After reviewing the follow-up and checking it on a laptop, consider bounded
+  Launchpad logs as a separate QoL change or `recordStop` as the next small
   migration. Re-characterize cancellation/ownership before that migration.
   Larger async families still need the seams listed in ASYNC_ACTIONS.md.
 - No additional action migration is included here. Avoid a new event bus,

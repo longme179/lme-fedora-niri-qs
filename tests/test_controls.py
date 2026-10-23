@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from test_backend import backend, FakeRunner, Fixture
+from action_test_helpers import complete_action
 
 
 MANAGED = ("busctl", "--system", "--json=short", "call", "org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects")
@@ -142,4 +143,4 @@ class ControlsCase(Fixture, unittest.TestCase):
     def test_bluetooth_device_path_cannot_invoke_other_dbus_objects(self):
         live = self.make_backend(BluezRunner())
         for path in ("/org/bluez/hci0", "/org/freedesktop/login1", "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF"):
-            self.assertFalse(live.handle({"action": "bluetoothDevice", "path": path, "connected": True})["ok"])
+            self.assertFalse(complete_action(live, {"action": "bluetoothDevice", "path": path, "connected": True})["ok"])

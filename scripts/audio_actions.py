@@ -1,4 +1,4 @@
-"""Synchronous audio, backlight and Bluetooth operations with host-owned read-back."""
+"""Audio/backlight controls and worker-owned Bluetooth connects with host read-back."""
 from dataclasses import dataclass
 import re
 from typing import Callable
@@ -13,6 +13,7 @@ class AudioCapabilities:
     bluetooth: Callable
     set_bluetooth: Callable
     demo_controls: Callable
+    invalidate_bluetooth: Callable = lambda: None
 
 
 def provide(capabilities):
@@ -69,5 +70,7 @@ def provide(capabilities):
     handlers = {'volume': volume, 'mute': mute, 'micVolume': mic_volume, 'micMute': mic_mute,
                 'brightness': brightness, 'bluetoothToggle': lambda request: capabilities.set_bluetooth(not capabilities.bluetooth()['enabled']),
                 'bluetoothDevice': bluetooth_device}
-    return tuple(ActionSpec(name, {'shell'}, live, lambda request, name=name: demo(name, request))
+    return tuple(ActionSpec(name, {'shell'}, live, lambda request, name=name: demo(name, request),
+                 execution='worker' if name == 'bluetoothDevice' else 'sync',
+                 complete=(lambda value: capabilities.invalidate_bluetooth()) if name == 'bluetoothDevice' else None)
                  for name, live in handlers.items()), lambda: {}

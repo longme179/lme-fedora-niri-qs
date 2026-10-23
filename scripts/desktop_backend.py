@@ -64,7 +64,7 @@ from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
                                WallpaperDaemonCapabilities, provide_daemon as provide_wallpaper_daemon)
-from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi
+from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi, busy as wifi_busy, toggle as toggle_wifi
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -557,7 +557,7 @@ class DesktopBackend:
                 lambda value: self.niri_action(value), lambda: self.demo_snapshot()['niri'], lambda: self.demo_snapshot()['apps'])),
             (provide_audio, AudioCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), self.percentage,
                 lambda: self.bluetooth(), lambda enabled: self.set_bluetooth(enabled),
-                lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')})),
+                lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')}, lambda: setattr(self, 'bluetooth_cache', None))),
             (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
                 self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
                 lambda value: self.demo_snapshot().__setitem__('calculator', value))),
@@ -1121,7 +1121,7 @@ class DesktopBackend:
         return result
 
     def start_feature(self, action, operation):
-        if action in self.feature_jobs: raise ValueError("This operation is already running")
+        if action in self.feature_jobs or wifi_busy(action, self.feature_jobs): raise ValueError("This operation is already running")
         self.feature_jobs[action] = self.feature_executor.submit(operation)
         return "Working…"
 
@@ -1634,10 +1634,7 @@ class DesktopBackend:
         if action == 'launcherHistoryClear':
             self.launcher_history.clear()
             return 'Launcher usage history cleared'
-        if action == "wifiToggle":
-            status = run("nmcli", "radio", "wifi")
-            run("nmcli", "radio", "wifi", "off" if status.strip() == "enabled" else "on")
-            return "Wi-Fi toggled"
+        if action == "wifiToggle": return toggle_wifi(run, self.feature_jobs)
         if action == "powerProfile":
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():
@@ -1714,7 +1711,7 @@ class DesktopBackend:
         return "Appearance profile " + {"appearanceSave": "saved", "appearanceApply": "applied", "appearanceDelete": "deleted"}[action]
 
     def wifi_action(self, action, request):
-        return perform_wifi(self._wifi_capabilities, action, request)
+        return perform_wifi(self._wifi_capabilities, action, request, pending=self.feature_jobs)
 
     @staticmethod
     def niri_action(action: dict[str, Any]) -> None:

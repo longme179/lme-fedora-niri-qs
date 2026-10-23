@@ -32,8 +32,8 @@ def provide(capabilities):
     def notifications(request):
         if not isinstance(request.get('entries'), list): raise ValueError('Invalid notification history')
         history = capabilities.notifications(request['entries'])
-        capabilities.save_history(history)
         write_json(capabilities.history_path(), history)
+        capabilities.save_history(history)
         return ''
 
     def calculate_demo(request):

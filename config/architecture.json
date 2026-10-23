@@ -69,7 +69,7 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 281,
-    "scripts/desktop_backend.py": 1809,
+    "scripts/desktop_backend.py": 1806,
     "tests/fixtures/catalog-legacy.json": 323,
     "tests/test_backend.py": 486,
     "tests/test_battery_saver.py": 359,
@@ -83,7 +83,7 @@
     "tests/test_liquid_style.py": 522,
     "tests/test_local_qml.py": 342,
     "tests/test_personalization.py": 321,
-    "tests/test_polling.py": 320,
+    "tests/test_polling.py": 313,
     "tests/test_popup_motion.py": 355,
     "tests/test_shell_update.py": 268
   }

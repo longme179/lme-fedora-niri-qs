@@ -3,6 +3,7 @@ import json
 import unittest
 from unittest.mock import patch
 
+from action_test_helpers import complete_action, bluez_runner
 from test_backend import Fixture, FakeRunner, backend
 
 RADIO = ("nmcli", "radio", "wifi")
@@ -19,15 +20,7 @@ def profile_query(service, name):
 
 class PollingCase(Fixture, unittest.TestCase):
     def hardware_runner(self):
-        objects = {}
-        for index in [0, 1]:
-            path = f"/org/bluez/hci{index}"
-            objects[path] = {"org.bluez.Adapter1": {"Alias": f"Adapter {index}", "Powered": True}}
-            objects[path + "/dev_AA_BB_CC_DD_EE_FF"] = {"org.bluez.Device1": {"Alias": f"Headset {index}", "Paired": True, "Connected": False}}
-        runner = FakeRunner({BLUEZ: json.dumps({"data": [objects]}),
-            profile_query(MODERN, "ActiveProfile"): 's "balanced"',
-            profile_query(MODERN, "Profiles"): 'aa{sv} 3 1 "Profile" s "balanced" 1 "Profile" s "power-saver" 1 "Profile" s "performance"'})
-        return runner, objects
+        return bluez_runner(BLUEZ, MODERN)
 
     def wifi_runner(self):
         return FakeRunner({RADIO: "enabled", SUMMARY:
@@ -205,7 +198,7 @@ class PollingCase(Fixture, unittest.TestCase):
             clock.return_value = 105
             state = live.snapshot()["system"]["bluetooth"]
             self.assertEqual(state["adapter"], "/org/bluez/hci0")
-            self.assertFalse(live.handle({"action": "bluetoothDevice", "path": old_device, "connected": True})["ok"])
+            self.assertFalse(complete_action(live, {"action": "bluetoothDevice", "path": old_device, "connected": True})["ok"])
             runner.responses[BLUEZ] = backend.CommandError("BlueZ disconnected")
             clock.return_value = 110
             state = live.snapshot()["system"]["bluetooth"]
@@ -259,7 +252,7 @@ class PollingCase(Fixture, unittest.TestCase):
                 self.assertTrue(live.handle({"action": "bluetoothToggle"})["ok"])
                 self.assertEqual(live.snapshot()["system"]["bluetooth"]["enabled"], enabled)
             for connected in [True, False]:
-                result = live.handle({"action": "bluetoothDevice", "path": path, "connected": connected})
+                result = complete_action(live, {"action": "bluetoothDevice", "path": path, "connected": connected})
                 self.assertEqual(result["ok"], connected)
                 self.assertEqual(live.snapshot()["system"]["bluetooth"]["devices"][0]["connected"], connected)
             for profile, ok in [("power-saver", True), ("performance", False)]:

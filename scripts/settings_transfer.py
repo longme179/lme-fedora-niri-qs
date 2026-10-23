@@ -1,8 +1,10 @@
 """Validated JSON settings transfer; no archive extraction or private preset data."""
 # SPDX-License-Identifier: GPL-3.0-or-later
+import errno
 import json
 import os
 from pathlib import Path
+import tempfile
 from desktop_features import APPEARANCE_KEYS
 
 from settings_schema import portable_keys
@@ -40,10 +42,40 @@ def read_document(value, validator, defaults):
         return validate_document(json.load(handle),validator,defaults)
 
 
+def _write(fd, payload):
+    try: stream = os.fdopen(fd, 'w', encoding='utf-8')
+    except BaseException:
+        os.close(fd)
+        raise
+    with stream as handle:
+        handle.write(payload); handle.flush(); os.fsync(handle.fileno())
+
+
+def _publish(stage, path, payload):
+    try: os.link(stage, path)
+    except FileExistsError:
+        raise FileExistsError(errno.EEXIST, os.strerror(errno.EEXIST), str(path)) from None
+    except OSError as error:
+        if error.errno not in (errno.EPERM, errno.EOPNOTSUPP, errno.ENOSYS, errno.EXDEV): raise
+        # FAT/removable filesystems retain exclusive creation, with owned-file cleanup.
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        identity = os.fstat(fd)
+        try: _write(fd, payload)
+        except BaseException:
+            try:
+                current = path.lstat()
+                if (current.st_dev, current.st_ino) == (identity.st_dev, identity.st_ino): path.unlink()
+            except FileNotFoundError: pass
+            raise
+
+
 def export_document(value, values, kind):
-    path=transfer_path(value)
-    payload=json.dumps(document(values,kind),indent=2,allow_nan=False)+'\n'
-    # Existing files are never overwritten, including the live settings file.
-    with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),'w',encoding='utf-8') as handle:
-        handle.write(payload);handle.flush();os.fsync(handle.fileno())
+    path = transfer_path(value)
+    payload = json.dumps(document(values, kind), indent=2, allow_nan=False)+'\n'
+    fd, stage = tempfile.mkstemp(prefix='.lme-export-', dir=path.parent)
+    try:
+        _write(fd, payload)
+        _publish(stage, path, payload)
+    finally:
+        os.unlink(stage)
     return str(path)

@@ -111,3 +111,42 @@ class WifiAuthenticationCase(unittest.TestCase):
         self.assertLess(time.monotonic()-started, 3); self.assertFalse(runner.pending)
         self.assertTrue(any('disconnect' in args for args in queries))
         self.assertEqual(runner.run('nmcli', '-c', 'print("retry successful")'), 'retry successful')
+
+    def test_abort_recovers_a_late_activation_path_without_polling_between_prompts(self):
+        from wifi_auth import AuthenticationError
+        watch, run, clock = self.watch()
+        run.return_value = '30 (disconnected)\n--'
+        watch(PROMPT.encode(), None)
+        for _ in range(3): watch(PROMPT.encode(), None)
+        self.assertEqual(run.call_count, 1)
+        run.return_value = '60 (connecting)\n'+PATH
+        with self.assertRaises(AuthenticationError): watch((PROMPT+'\n'+PROMPT).encode(), None)
+        watch.cancel()
+        self.assertTrue(any('disconnect' in call.args for call in run.call_args_list))
+        other, run, clock = self.watch()
+        clock.return_value = 116
+        with self.assertRaises(AuthenticationError): other(b'', None)
+        other.cancel()
+        self.assertTrue(any('disconnect' in call.args for call in run.call_args_list))
+
+    def test_deadline_checks_device_state_if_pretty_progress_is_missing(self):
+        watch, run, clock = self.watch(state=70)
+        clock.return_value = 116
+        watch(b'', None)
+        self.assertTrue(watch.authenticated)
+
+
+class WifiPasswordValidationCase(unittest.TestCase):
+    @unittest.skipUnless(AUTH, 'Wi-Fi authentication guard absent on baseline')
+    def test_psk_validation_allows_hex_and_does_not_apply_wpa2_minimum_to_wpa3(self):
+        from wifi_actions import WifiCapabilities, perform
+        state = dict(available=True, device='wlan0', networks=[dict(bssid='AA:BB', security='WPA2')])
+        run = Mock(); capabilities = WifiCapabilities(lambda **kwargs: state, run, Mock())
+        for password in ('short', 'x'*64, 'é'*32):
+            with self.assertRaisesRegex(ValueError, 'WPA/WPA2 passwords'):
+                perform(capabilities, 'wifiConnect', dict(bssid='AA:BB', password=password))
+        run.assert_not_called()
+        for password in ('12345678', 'a'*64):
+            self.assertEqual(perform(capabilities, 'wifiConnect', dict(bssid='AA:BB', password=password)), 'Wi-Fi connected')
+        state['networks'][0]['security'] = 'WPA3'
+        self.assertEqual(perform(capabilities, 'wifiConnect', dict(bssid='AA:BB', password='short')), 'Wi-Fi connected')

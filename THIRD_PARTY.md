@@ -307,3 +307,14 @@ The awww adapter was checked against LGFae/awww revision
 `25ea4fd7a42359379da9ddadedda1c477caa4ae0` (GPLv3), particularly
 `client/src/cli.rs`, `daemon/src/animations.rs` and `common/src/ipc/types.rs`,
 and exercised with awww 0.12.1. No awww renderer or daemon code is copied.
+
+## Development-only Modularity skills
+
+[Modularity](https://github.com/vladikk/modularity) by Vlad Khononov is bundled at
+`bcdca9a595764b9aa88d5d8d6020f52e7f5f1f52` in
+`.agents/skills/modularity/upstream/`, with unmodified skills, document template,
+README and [CC BY-NC-SA 4.0 license](.agents/skills/modularity/upstream/LICENSE).
+The LME [adapter](.agents/skills/modularity/SKILL.md) is an adaptation under the same
+license; its changes and origin are recorded in [UPSTREAM.md](.agents/skills/modularity/UPSTREAM.md).
+These are developer documentation only; the shell does not load them or install
+the upstream Claude plugin. The runtime source licenses remain unchanged.

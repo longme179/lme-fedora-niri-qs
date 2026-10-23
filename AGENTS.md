@@ -2,9 +2,22 @@
 
 Read `docs/STATE.md` first. Read `docs/ARCHITECTURE.md` for design questions.
 Do not read `docs/archive/` unless a specific historical question requires it.
-Use `.agents/skills/ponytail/SKILL.md` at full level, as requested by the owner.
+Use `.agents/skills/ponytail/SKILL.md` at full level together with
+`.agents/skills/modularity/SKILL.md` for shell development, as requested by the owner.
 Keep source, UI text and documentation in English. Prefer existing controls,
 service APIs and stdlib helpers. Preserve attribution for third-party code.
+
+## Pragmatic architecture and memory
+
+Use Balanced Coupling to choose boundaries and Ponytail to keep changes small.
+Read the local Modularity adapter first; upstream templates add no approval gates,
+full audits or HTML reports unless the task calls for them. Keep stable legacy seams.
+Target total shell memory <=400 MB steady state / <=500 MB in ordinary active use:
+main QS, Python backend, owned workers and Settings/backends while open. Prefer
+aggregate PSS; label summed RSS double-counting and report heavy temporary job peaks
+separately. Reuse existing samples; do not claim a whole-shell total from one PID.
+Reuse shared services/pools/textures; no backend, daemon or timer per widget.
+No behavior/visual/polling/cache/power changes are implied by these targets.
 
 ## Layout and dependency rule
 
@@ -69,8 +82,8 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
   XDG/Sway/D-Bus. Hardware-only checks must say "needs real-session check".
 - During work: Python changes use G0 + relevant units; QML changes use G0 + G1
   + relevant native cases. Run G0-G4 and G6 polling ONCE before requesting merge.
-  An explicit milestone gate scope takes precedence.
-- Before merge, once per branch: 10 cold launches each of preview and Settings,
+  An explicit milestone gate scope takes precedence. Docs/skills-only: G0 only; no GUI gates or launch/RSS sanity.
+- Before runtime merges, once per branch: 10 cold launches each of preview and Settings,
   main vs head, medians only; Quickshell/backend RSS at 10 seconds. Ask only if
   Settings exceeds +100 ms or either process RSS exceeds +10%.
 - Batch future conversions by families, 3-6 per branch; one review stop per branch.

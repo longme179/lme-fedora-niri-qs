@@ -237,3 +237,16 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   1. Open Wallpaper Settings from Gear/CLI/search; confirm the current library and controls render.
   2. Rescan a real folder; confirm Scanning → sorted image list with the expected folder and no stuck pending.
   3. Try a missing folder, then rescan a valid one and restart Settings; confirm the error clears, no stuck pending and no settings/history loss.
+
+## Development skills and async follow-up plan — 2026-10-23
+
+- Branch chore/modularity-skill, base main 16de00e (M7b merged); docs/skills only, no new async action authorized or converted.
+- Added repo-local Modularity + Ponytail guidance; pinned vladikk/modularity bcdca9a595764b9aa88d5d8d6020f52e7f5f1f52 with provenance and CC BY-NC-SA 4.0 documentation license. Seven upstream files are byte-identical; runtime licensing unchanged.
+- Local adapter overrides upstream approval/report ceremony; use cohesive boundaries, narrow shared contracts and the smallest complete change. No plugin installer or runtime dependency/service added.
+- Aggregate memory target: <=400 MB steady / <=500 MB ordinary active use, including Settings/backend/workers; prefer PSS and label RSS shared-memory limits and temporary-job peaks. No new profiling or memory-saving claim.
+- ASYNC_ACTIONS.md records all 28 remaining async IDs and proposed batches. Correction to M7b: imageAnnotate captures the editor before enqueue, so eight (not nine) fit the worker hook directly; twenty need additional contracts. Wallpaper status/ensure are the recommended next pair, not implemented.
+- Verification: G0 528 passed / 0 failed / 141 skipped; qmllint 148 files, 0 errors / 71 existing warnings; integrity/local links, line caps and diff checks passed. Existing assertions/fixtures unchanged.
+- G0 skips remain 129 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 Matugen and 1 detached fake-niri. No skipped case is called passed.
+- GUI gates and runtime launch/RSS sanity not run: docs/skills-only scope, zero runtime/config/test changes; this limited check policy is recorded explicitly in STATE/AGENTS. No raw gate logs committed.
+- Adapters/retirement: existing runtime adapters unchanged; the local skill adapter remains while LME uses the upstream references and owner-specific workflow. STATE now records M7b merged.
+- Behavior differences: none; no measured whole-shell memory result or laptop/hardware guarantee. No merge/main push performed.

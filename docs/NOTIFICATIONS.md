@@ -32,6 +32,14 @@ Shell status messages use the same appearance, remain bottom-center, and grow
 up to 60% of the output height. Longer status messages can be scrolled or dismissed.
 Screenshot notifications still open annotation when their card is clicked.
 
+If history cannot be saved, **Notification Center** shows the storage error and a
+**Retry** button. Fix the storage problem, then retry; newer changes made during
+a save are kept pending and saved afterward. Reconnecting the backend also
+retries unsaved history. Failures do not generate another notification or loop
+automatic retries without a new change. Unsaved entries remain in this shell
+session only, so retry successfully before quitting if you need them restored.
+The previous history file remains intact when an atomic write fails.
+
 Changes save automatically in the existing settings file. Notification options
 are included in settings exports and backups; color overrides are also included
 in Appearance profiles. No additional package is required.

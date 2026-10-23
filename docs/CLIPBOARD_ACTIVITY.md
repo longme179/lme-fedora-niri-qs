@@ -20,6 +20,9 @@ Click an image to annotate it, right-click its thumbnail to preview it, or use
 its Copy button to copy the original. The panel closes after opening the editor
 or a successful copy. Paste into the destination application with its normal paste
 shortcut. Copying from history does not synthesize typing into another window.
+Copy/search results are delivered individually during rapid input. Enter waits
+for the latest outstanding search; restarting the clipboard worker resets its
+pending operations so reused result sequence numbers cannot leave Copy stuck.
 
 Choose Auto, Satty or Swappy in **Settings → Behavior → Image annotation**.
 Auto prefers installed Satty, then Swappy. Annotation opens a separate copy in

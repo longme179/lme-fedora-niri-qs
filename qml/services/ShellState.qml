@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "ActionPending.js" as Pending
 
 QtObject {
     id: root
@@ -46,6 +47,7 @@ QtObject {
     property bool draggingWindow: false
     property bool authenticationActive: false
     property var pendingActions: ({})
+    property var pendingState: Pending.initial()
     property real trayAnchorX: -1
     readonly property bool panelOpen: catalogPanelOpen || launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || activityOpen || wifiOpen
     property var panelScreen: null
@@ -151,17 +153,27 @@ QtObject {
             statusMessage = "Desktop backend is unavailable. Check the shell log.";
             statusError = true; statusTimer.restart(); return;
         }
-        const request = Object.assign({}, payload || {}, {action: action});
         // Release the layer-shell keyboard grab before any external agent opens.
         // The built-in Polkit agent also closes panels for requests from apps.
         if (action === "imageAnnotate" || action === "chargeMode" && !demo) closePanels();
-        pendingActions = Object.assign({}, pendingActions, {[action]: true});
+        let sent;
+        try { sent = Pending.sent(pendingState, action); }
+        catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
+        const request = Object.assign({}, payload || {}, {action: action, clientSerial: sent.serial});
+        pendingState = sent;
         backend.write(JSON.stringify(request) + "\n");
+        // Write before notifying consumers, which can synchronously submit again.
+        pendingActions = sent.pending;
     }
     function accept(data) {
         try {
             const next = JSON.parse(data);
             if (!next.apps || !next.system || !next.niri) return;
+            const resultChanged = next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult);
+            const ownership = Pending.received(pendingState, next.actionPending, resultChanged ? next.lastResult : null);
+            if (ownership.invalid) console.warn("Invalid desktop backend message: actionPending ownership");
+            pendingState = ownership.state;
+            pendingActions = ownership.state.pending;
             const oldAudio = system.audio;
             const oldBrightness = system.brightness;
             // Keep delegate identities stable between polls, especially during a drag.
@@ -189,12 +201,9 @@ QtObject {
                 osdLabel = "Brightness"; osdValue = next.system.brightness.percent;
                 osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel,osdValue);
             }
-            if (next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult)) {
+            if (resultChanged) {
                 lastResult = next.lastResult;
                 if (String(next.lastResult.action).startsWith("wifi") && next.lastResult.action !== "wifiWatch") wifiResult = next.lastResult;
-                const pending = Object.assign({}, pendingActions);
-                if (!next.lastResult.pending) delete pending[next.lastResult.action];
-                pendingActions = pending;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
                 if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
@@ -211,9 +220,10 @@ QtObject {
         stdout: SplitParser { onRead: data => root.accept(data) }
         stderr: SplitParser { onRead: data => console.warn("Desktop backend:", data) }
         onExited: exitCode => {
+            root.pendingState = Pending.initial();
+            root.pendingActions = ({});
             root.backendReady = false;
             if (root.wifiResult && root.wifiResult.pending) root.wifiResult = {ok: false, message: "Desktop backend stopped during the Wi-Fi operation. Retry after it reconnects."};
-            root.pendingActions = ({});
             root.statusMessage = "Desktop backend stopped (" + exitCode + ").";
             root.statusError = true;
             if (root.restartAttempts < 3) { root.restartAttempts++; root.restartTimer.restart(); }

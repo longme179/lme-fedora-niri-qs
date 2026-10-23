@@ -30,6 +30,7 @@ import time
 from typing import Any
 
 from command_runner import CommandError, CommandRunner, TOOLS
+from action_pending import acknowledge, emit_snapshot, handle_line
 from settings_schema import Schema as PreferenceSchema
 
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
@@ -611,6 +612,7 @@ class DesktopBackend:
             profiles=self.power_profiles, set_profile=self.set_power_profile)
         self.battery_saver_state = {"active": False, "busy": False, "error": "", "warnings": []}
         self.result_sequence = 0
+        self.client_serial = 0
         self.result_unemitted = False
         self.last_result = {"ok": True, "action": "ready", "message": "Backend ready", "sequence": 0}
         self.niri = {"available": False, "workspaces": [], "windows": []}
@@ -1291,6 +1293,7 @@ class DesktopBackend:
         return str(value)
 
     def handle(self, request: Any) -> dict[str, Any]:
+        self.client_serial = acknowledge(self.client_serial, request)
         self.result_sequence += 1; self.result_unemitted = True
         action = request.get("action", "") if isinstance(request, dict) else ""
         try:
@@ -1734,8 +1737,7 @@ class DesktopBackend:
                 raise CommandError(str(reply.get("Err", "The niri action failed")) if isinstance(reply, dict) else "Invalid niri reply")
 
 def emit(backend: DesktopBackend) -> None:
-    state = dict(backend.snapshot(), catalogValidation={"error": FEATURE_CATALOG_ERROR})
-    print(json.dumps(state, ensure_ascii=False, allow_nan=False, separators=(",", ":")), flush=True)
+    emit_snapshot(backend.snapshot(), FEATURE_CATALOG_ERROR, backend.client_serial, backend.feature_jobs, backend.charge_job is not None)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1857,10 +1859,8 @@ def main(argv: list[str] | None = None) -> int:
                     line, input_buffer = input_buffer.split(b"\n", 1)
                     if not line.strip():
                         continue
-                    try:
-                        backend.handle(json.loads(line.decode("utf-8")))
-                    except (UnicodeError, json.JSONDecodeError):
-                        backend.last_result = {"ok": False, "action": "", "message": "Invalid JSON input"}
+                    error = handle_line(backend.handle, line)
+                    if error is not None: backend.last_result = error
                     # Send each result even if several commands arrived together.
                     emit(backend)
                     next_poll = time.monotonic() + args.interval

@@ -7,6 +7,19 @@ from command_runner import CommandError
 from wifi_auth import connect
 
 ACTIONS = ('wifiScan', 'wifiConnect', 'wifiSaved', 'wifiDisconnect', 'wifiForget')
+MUTATIONS = frozenset((*ACTIONS[1:], 'wifiToggle'))
+
+
+def busy(action, pending):
+    # One selected-adapter controller; radio/profile writes also affect other adapters.
+    return action in MUTATIONS and bool(MUTATIONS.intersection(pending))
+
+
+def toggle(run, pending):
+    if busy('wifiToggle', pending): raise ValueError('This operation is already running')
+    status = run('nmcli', 'radio', 'wifi')
+    run('nmcli', 'radio', 'wifi', 'off' if status.strip() == 'enabled' else 'on')
+    return 'Wi-Fi toggled'
 
 
 @dataclass(frozen=True)
@@ -16,7 +29,8 @@ class WifiCapabilities:
     demo_network: Callable
 
 
-def perform(capabilities, action, request):
+def perform(capabilities, action, request, *, pending=()):
+    if busy(action, pending): raise ValueError('This operation is already running')
     state = capabilities.network(details=True)
     if not state["available"]: raise CommandError("NetworkManager is unavailable")
     interface = request.get("device") or state.get("device")

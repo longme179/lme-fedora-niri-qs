@@ -112,14 +112,15 @@ class WifiDispatchCase(Fixture, unittest.TestCase):
     def test_job_errors_duplicate_owners_and_one_completion_per_snapshot(self):
         live = self.configured()
         for sequence, action in enumerate(ACTIONS, 1):
-            self.assertEqual(live.handle(dict(action=action, **REQUEST)), self.result(action, sequence=sequence, pending=True))
+            expected = self.result(action, sequence=sequence, pending=True) if action in ACTIONS[:2] else self.result(action, 'This operation is already running', sequence, ok=False)
+            self.assertEqual(live.handle(dict(action=action, **REQUEST)), expected)
         owners = dict(live.feature_jobs)
         self.assertEqual(live.handle(dict(action='wifiScan')), self.result('wifiScan', 'This operation is already running', 6, ok=False))
-        self.assertEqual(live.feature_jobs, owners); self.assertEqual(len(live.feature_executor.jobs), 5)
+        self.assertEqual(live.feature_jobs, owners); self.assertEqual(len(live.feature_executor.jobs), 2)
         with patch.object(live.runner, 'run', side_effect=backend.CommandError('x'*450)):
-            for action in ACTIONS: live.feature_executor.complete()
+            for action in ACTIONS[:2]: live.feature_executor.complete()
         self.assertEqual(live.snapshot()['lastResult']['sequence'], 6)
-        for sequence, action in enumerate(ACTIONS, 7):
+        for sequence, action in enumerate(ACTIONS[:2], 7):
             self.assertEqual(live.snapshot()['lastResult'], self.result(action, 'x'*400, sequence, ok=False))
             self.assertNotIn(action, live.feature_jobs)
         self.assertFalse(live.feature_jobs)
@@ -176,8 +177,10 @@ class WifiDispatchCase(Fixture, unittest.TestCase):
                 self.assertEqual(backend.main([]), 0)
             self.assertEqual([frame['lastResult']['action'] for frame in frames], ['ready', *ACTIONS])
             for sequence, (action, frame) in enumerate(zip(ACTIONS, frames[1:]), 1):
-                self.assertEqual(frame['lastResult'], self.result(action, sequence=sequence, pending=True))
-                self.assertTrue(live.feature_jobs[action].cancelled())
+                expected = self.result(action, sequence=sequence, pending=True) if action in ACTIONS[:2] else self.result(action, 'This operation is already running', sequence, ok=False)
+                self.assertEqual(frame['lastResult'], expected)
+                if action in ACTIONS[:2]: self.assertTrue(live.feature_jobs[action].cancelled())
+                else: self.assertNotIn(action, live.feature_jobs)
             self.assertFalse(any(call[0] == 'nmcli' for call in live.runner.calls))
             self.assertFalse(any(call.kwargs.get('details') for call in live.network.call_args_list))
         gate.set()

@@ -76,8 +76,8 @@ class LiquidThemeCase(unittest.TestCase):
 
     def test_liquid_pauses_only_global_blur_and_preserves_the_saved_preference(self):
         result = self.run_qml('import "qml/services"', '''
-    Timer { interval:80;running:true;repeat:true;onTriggered: {
-        if(!ShellState.backendReady) return;
+    Timer { id:check;interval:80;running:true;repeat:true;onTriggered: {
+        if(!ShellState.backendReady) return; check.stop();
         const saved=Object.assign({},ShellState.preferences,{surfaceStyle:"smoked",popupBlur:true,barBlur:true});
         function apply(style,popup,supported) {
             ShellState.snapshot=Object.assign({},ShellState.snapshot,{

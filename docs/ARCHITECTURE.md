@@ -170,6 +170,10 @@ wallpaper_actions module: available/run/ready/install callbacks, no registry ext
 Status RuntimeError stays a successful unavailable-daemon state report; other caught
 errors leave old state intact. Ensure completion installs no state. Both demo handlers
 remain command-free; the host retains ack/pending/snapshot and daemon lifecycle policy.
+M7d adds the five Wi-Fi workers via network/run/demo_network capabilities in
+wifi_actions.py. wifi_action remains a synchronous compatibility facade; validation
+still occurs inside the worker, Settings admission stays denied, and the host keeps
+network sampling, subscriptions, read-back invalidation and result publication.
 Weather search/detect/select/refresh retain their legacy dispatch/controller contracts.
 Shared settingsPageAvailable guards page links and retained control-grid factories.
 Withdrawal filters UI without removing saved IDs or changing worker policy; standalone
@@ -456,4 +460,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3/M7a/M7b are merged; M7c's Wallpaper daemon pair is implemented for owner review. Further async conversions need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3/M7a/M7b/M7c are merged; M7d's Wi-Fi workers are implemented for owner review. Further async conversions need authorization.

@@ -250,3 +250,24 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - GUI gates and runtime launch/RSS sanity not run: docs/skills-only scope, zero runtime/config/test changes; this limited check policy is recorded explicitly in STATE/AGENTS. No raw gate logs committed.
 - Adapters/retirement: existing runtime adapters unchanged; the local skill adapter remains while LME uses the upstream references and owner-specific workflow. STATE now records M7b merged.
 - Behavior differences: none; no measured whole-shell memory result or laptop/hardware guarantee. No merge/main push performed.
+
+## M7c — Wallpaper daemon worker pair — 2026-10-23
+
+- Branch refactor/m7c-wallpaper-daemon, base main 7d56552; tests 483ba0d, extraction 27d05a7. Final full gates ran on runtime head 27d05a7; later changes are documentation only. No reverts or additional action conversions.
+- Registered wallpaperStatus/wallpaperEnsure (32/89 IDs: 29 sync + 3 workers). Existing wallpaper_actions module/explicit composition list, narrow available/run/ready/install callbacks; no registry extension or new executor/queue/timer/process.
+- Removed both live/demo legacy branches, Settings legacy admission IDs and status completion branch; scheduler, result/sequence/pending/snapshot and daemon lifecycle remain authoritative in the host/controller.
+- Preserve status RuntimeError as a successful unavailable-daemon report with its full error field; other caught errors leave old state intact and truncate result text as before. Ensure only waits for existing readiness and installs no completion state. Demo is command/job/write-free.
+- Characterization on unmodified production: new cases 7/0/1 N/A; focused suites 97/0/2; G0 535/0/142. Initial uncommitted fixture prototype used the wrong ManualExecutor.complete API; corrected before baseline, without production changes.
+- After extraction focused suites 98/0/1; the worker ownership N/A now executes. Final gates pass/fail/skip: G0 536/0/141; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 polling 1/0/0. qmllint 148 files, 0 errors/71 existing warnings.
+- G0 skips unchanged: 129 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri. Focused skip is the same detached display opt-in. No skipped case is called passed; laptop/real daemon checks remain below.
+- Owner-approved test data diff: `('wallpaperStatus', 'wallpaperUnknown')` → `('wallpaperNext', 'wallpaperUnknown')` in action_registry_workers.py. All existing assertion ASTs/timeouts and frozen fixtures unchanged; no QML change.
+- perform 231→221, perform_demo 136→135, finish_features 35→34 lines; backend nonblank ceiling ratcheted 1849→1841. Dependency/cycle/size checks pass; wallpaper.py and backend_actions.py are unchanged.
+- Sanity ONCE: 10 fresh-process/fresh-XDG launches per path/arm, private software-rendered Sway/D-Bus, warm OS cache, mapped-window endpoint. Preview median main/head 795.22/799.50 ms; Settings 834.50/825.55 ms. No profiling/CIs/raw evidence committed.
+- RSS T+10 s KiB main/head: preview QS 279880/281492, backend 25960/25968; Settings QS 230876/231000, backend 25952/25896. Largest increase 0.576%; no Settings +100 ms/process RSS +10% flag.
+- Existing T+10 s sample also sums PSS of each launch's two owned processes: preview 287785/289405 KiB main/head; Settings 238817/238885 KiB. These separate private instances do not prove total live-shell + open Settings/workers memory or hardware rendering performance.
+- Adapters: explicit provider bindings retire with descriptor backend ownership/withdrawal/fault parity; direct perform/perform_demo facades require zero direct callers plus owner-approved retirement. WallpaperScanCapabilities/provide remain compatible; shared scheduler/emitter stay.
+- Behavior differences: none on exercised paths. No public IPC/CLI/data/schema, cadence/cache/power or visual change. Remaining async: six simple candidates (Wi-Fi five + recordStop), twenty with extra contracts; further conversion needs authorization.
+- Laptop checklist (needs real-session check):
+  1. Open Wallpaper Settings; Check daemon reports the existing awww state/query and clears pending.
+  2. Start if needed with awww stopped/running; confirm readiness or the existing useful error, then retry.
+  3. Check daemon from the shell and standalone Settings; preview/demo must start no daemon and leave saved settings/wallpapers unchanged.

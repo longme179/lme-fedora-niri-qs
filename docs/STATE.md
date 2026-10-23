@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a and M7b merged; 30/89 backend IDs (29 sync + wallpaperScan worker).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b merged; M7c daemon pair implemented for review: 32/89 IDs (29 sync + 3 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Async follow-up inventory/order: ASYNC_ACTIONS.md (planning only; eight simple candidates, twenty with extra contracts).
+- Async follow-up inventory/order: ASYNC_ACTIONS.md (six simple candidates, twenty with extra contracts; further work needs authorization).
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

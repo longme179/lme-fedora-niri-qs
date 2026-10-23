@@ -164,7 +164,12 @@ emitter calls complete(value or its caught CommandError/ValueError/OSError) sole
 install domain state, then publishes the original result/sequence and clears ownership.
 complete returns no result payload. Missing complete retains the old rejected-spec
 error message; unknown async IDs stay legacy. Cancellation, shutdown, one-completion
-ordering and snapshot publication remain in the host. No second async action is migrated.
+ordering and snapshot publication remain in the host. M7b migrates no second async action.
+M7c adds only wallpaperStatus/wallpaperEnsure through a second factory in the existing
+wallpaper_actions module: available/run/ready/install callbacks, no registry extension.
+Status RuntimeError stays a successful unavailable-daemon state report; other caught
+errors leave old state intact. Ensure completion installs no state. Both demo handlers
+remain command-free; the host retains ack/pending/snapshot and daemon lifecycle policy.
 Weather search/detect/select/refresh retain their legacy dispatch/controller contracts.
 Shared settingsPageAvailable guards page links and retained control-grid factories.
 Withdrawal filters UI without removing saved IDs or changing worker policy; standalone
@@ -451,4 +456,4 @@ Directory restructuring is last and optional. A6 remains outside this proposal.
 | D9: presentation transport | Read immutable descriptor metadata in both layers | Export resolved action metadata in snapshots: useful for runtime capabilities, but adds a protocol field this static policy does not need |
 
 Historical Phase 1 verification covered source facts/design only. Current authorizations
-are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3 are merged; M7a is merged; the M7b wallpaperScan pilot is implemented for owner review. Further async conversions need authorization.
+are in STATE.md; historical records are in archive/migration/. M5/M6/M4c-1/M4c-2/M4c-3/M7a/M7b are merged; M7c's Wallpaper daemon pair is implemented for owner review. Further async conversions need authorization.

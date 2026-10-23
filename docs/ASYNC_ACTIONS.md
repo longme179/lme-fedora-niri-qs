@@ -1,22 +1,21 @@
-# Async actions after M7b
+# Async actions after the Wallpaper daemon pair
 
-Planning only, checked against main `16de00e` on 2026-10-23. M7b is merged:
-`wallpaperScan` delegates to the existing worker scheduler and completion emitter.
-There are 30/89 registered IDs (29 sync, one worker). No further conversion is
-authorized by this plan. The remaining async inventory has **28 IDs**.
+Checked against main `7d56552` and M7c `27d05a7` on 2026-10-23. M7b is merged;
+M7c `wallpaperStatus`/`wallpaperEnsure` are implemented for review, using the same
+worker scheduler/completion emitter as `wallpaperScan`. There are 32/89 registered
+IDs (29 sync, three workers). No further conversion is authorized by this plan.
+The remaining async inventory has **26 IDs**.
 
-## Existing worker contract fits: 8
+## Remaining actions the existing worker contract fits: 6
 
 | Proposed batch | Actions | What must remain unchanged |
 | --- | --- | --- |
-| Wallpaper daemon | `wallpaperStatus`, `wallpaperEnsure` | Status/errors, Settings admission, demo state, daemon lifecycle |
 | Wi-Fi | `wifiScan`, `wifiConnect`, `wifiSaved`, `wifiDisconnect`, `wifiForget` | Credentials, literal argv, read-back and error/result state |
 | Record stop | `recordStop` | Recorder ownership, completion and failure behavior |
 
-Start with the two Wallpaper daemon actions: they share the pilot's domain and
-need no new registry phase. Then Wi-Fi; record stop follows after its
-existing controller contracts are characterized. These are planning candidates,
-not guarantees that extraction will pass its behavior-preservation tests.
+The daemon pair needed no new registry phase. Next propose Wi-Fi, then record
+stop after its existing controller contracts are characterized. These are planning
+candidates, not guarantees that extraction will pass behavior-preservation tests.
 
 Each batch first pins shell/Settings × live/demo behavior on unmodified code:
 admission, immediate ack, result/sequence, pending cleanup, snapshot, error and
@@ -40,14 +39,14 @@ preflight first: consider a small explicit admission/preparation seam, preservin
 immediate errors and request-time options. Do not create a generic workflow engine.
 Cancellation, capture leases and separate controllers require their own designs;
 power/display-sensitive work goes last. Conditional `suspend` and internal
-`wallpaperCycle` are outside this 28-ID inventory. Sync `gowallSetup` and
+`wallpaperCycle` are outside this inventory. Sync `gowallSetup` and
 `weatherSelect` are not included.
 
 Correction to the M7b assessment: it listed nine simple candidates, including
 `imageAnnotate`. Its current live branch captures `captureEditor` before enqueue;
 the registry invokes `live(request)` inside the worker. Reading the editor there
 would change behavior when preferences change while the job waits. Hence eight
-simple candidates, twenty needing another seam; the total remains twenty-eight.
+original simple candidates, twenty needing another seam; after M7c, six plus twenty.
 
 ## Modularity, implementation size and memory
 

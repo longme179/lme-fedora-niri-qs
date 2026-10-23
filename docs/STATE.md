@@ -5,14 +5,14 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0 baseline/harness; M1 runner/storage; M2 content types; G3 baseline repair;
-  M3 stable control-tab IDs; M4a catalog infrastructure; M4b Clipboard slice: merged.
-- D1: JSON index + descriptors accepted by the owner. Startup optimization CLOSED.
-- M5/M6 merged: schema infrastructure and the synchronous Launchpad action pilot.
-- M4c-1/M4c-2/M4c-3/M7a merged; M7b wallpaperScan pilot implemented for review.
-  Ten catalog Settings pages; 66 descriptor keys/81 legacy; only Clipboard's bar is converted.
-  Catalog tab indices/bootstrap contexts implemented; 30/89 IDs registered (29 sync + wallpaperScan worker); no second async action authorized; M8 deferred.
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a and M7b merged; 30/89 backend IDs (29 sync + wallpaperScan worker).
+  Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
+- D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
+- Async follow-up inventory/order: ASYNC_ACTIONS.md (planning only; eight simple candidates, twenty with extra contracts).
 - A6 remains out of scope: no polling, cache or power-policy changes.
+- Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
+- Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
+  Prefer aggregate PSS, label summed RSS limitations and temporary-job peaks; individual PID samples are not the total.
 
 ## Compatibility adapters and retirement
 
@@ -40,12 +40,12 @@ Do not read archive/ unless answering a specific historical question.
 - `./scripts/run-gates.sh --gates G0` isolates XDG, Sway/Wayland and D-Bus;
   optional `--env-file FILE --pointer-dir DIR`. Gate cases: tests/migration_checks.py.
 - During work: Python = G0 + relevant units; QML = G0 + G1 + relevant native case.
-  Full G0-G4 + G6 polling ONCE before merge review; explicit task scope overrides
-  by task. Report actual pass/fail/skip counts and reasons.
+  Runtime branches: full G0-G4 + G6 polling ONCE before merge review; explicit task scope overrides.
+  Docs/skills-only: G0 only, no GUI gates/sanity. Report actual pass/fail/skip counts and reasons.
 - Tests first, then refactor, then docs commits. No assertion edits without asking;
   revert a failed commit, never fix forward. Keep behavior and public contracts.
 - Disposable sessions only; never real config/session. Hardware: needs real-session check.
-- Future branch sanity once before merge: 10 preview/Settings launches each,
+- Runtime branch sanity once before merge: 10 preview/Settings launches each,
   main vs head medians; QS/backend RSS at 10 s. Ask if Settings >+100 ms or RSS >+10%.
 - No more D1 profiling, CIs, A/A, seeds, aggregate c or validation scheduling.
 - Priorities: modularity, scalability, functionality, stability, memory footprint.

@@ -83,7 +83,7 @@
     "tests/test_liquid_style.py": 522,
     "tests/test_local_qml.py": 342,
     "tests/test_personalization.py": 321,
-    "tests/test_polling.py": 320,
+    "tests/test_polling.py": 313,
     "tests/test_popup_motion.py": 355,
     "tests/test_shell_update.py": 268
   }

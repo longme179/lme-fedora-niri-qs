@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from test_backend import Fixture, FakeRunner, backend
+from action_test_helpers import complete_action
 
 BT = '/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF'
 DEMO = 'Demo preview: no system command executed'
@@ -81,9 +82,11 @@ class SyncFixture(Fixture):
                 initial = copy.deepcopy(self.preferences.values)
                 output = []
                 with patch('time.time', return_value=123), patch('time.time_ns', return_value=123):
-                    for action, args in CASES[group]:
+                    for ordinal, (action, args) in enumerate(CASES[group], 1):
                         args = json.loads(json.dumps(args).replace('$ROOT', str(self.root)))
-                        result = live.handle(dict(action=action, **args))
+                        result = complete_action(live, dict(action=action, **args))
+                        # This golden pins commands/end state; worker tests pin ack/sequence.
+                        if action == "bluetoothDevice" and not demo and not settings: result = dict(result, sequence=ordinal)
                         demo_state = live._demo_state
                         output.append(dict(result=result, calls=live.runner.details[:], spawns=live.runner.spawns[:],
                             system=copy.deepcopy({k: demo_state['system'][k] for k in ('audio', 'microphone', 'brightness', 'bluetooth')}),

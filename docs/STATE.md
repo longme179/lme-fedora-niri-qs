@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b merged; M7c daemon pair implemented for review: 32/89 IDs (29 sync + 3 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c merged; M7d Wi-Fi implemented for review: 37/89 IDs (29 sync + 8 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Async follow-up inventory/order: ASYNC_ACTIONS.md (six simple candidates, twenty with extra contracts; further work needs authorization).
+- Async follow-up inventory/order: ASYNC_ACTIONS.md (recordStop plus twenty with extra contracts; further work needs authorization).
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -24,7 +24,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Explicit providers retire with descriptor discovery/ownership/fallback parity; worker delegation/complete hooks keep the host scheduler/emitter; direct perform/perform_demo facades when direct callers retire. Night/idle/keybind state facades retain cadence until their consumers migrate.
+- Explicit providers retire with descriptor discovery/ownership/fallback parity; worker delegation/complete hooks keep the host scheduler/emitter; direct perform/perform_demo and wifi_action facades at zero callers plus owner approval. Night/idle/keybind state facades retain cadence until their consumers migrate.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema

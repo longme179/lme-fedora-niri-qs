@@ -1,21 +1,20 @@
-# Async actions after the Wallpaper daemon pair
+# Async actions after Wi-Fi extraction
 
-Checked against main `7d56552` and M7c `27d05a7` on 2026-10-23. M7b is merged;
-M7c `wallpaperStatus`/`wallpaperEnsure` are implemented for review, using the same
-worker scheduler/completion emitter as `wallpaperScan`. There are 32/89 registered
-IDs (29 sync, three workers). No further conversion is authorized by this plan.
-The remaining async inventory has **26 IDs**.
+Checked against main `130600b` and M7d `2afc0b1` on 2026-10-23. M7b/M7c are merged;
+M7d's five Wi-Fi actions are implemented for review, using the same worker
+scheduler/completion emitter as `wallpaperScan`. There are 37/89 registered IDs
+(29 sync, eight workers). No further conversion is authorized by this plan.
+The remaining async inventory has **21 IDs**.
 
-## Remaining actions the existing worker contract fits: 6
+## Remaining action the existing worker contract fits: 1
 
 | Proposed batch | Actions | What must remain unchanged |
 | --- | --- | --- |
-| Wi-Fi | `wifiScan`, `wifiConnect`, `wifiSaved`, `wifiDisconnect`, `wifiForget` | Credentials, literal argv, read-back and error/result state |
 | Record stop | `recordStop` | Recorder ownership, completion and failure behavior |
 
-The daemon pair needed no new registry phase. Next propose Wi-Fi, then record
-stop after its existing controller contracts are characterized. These are planning
-candidates, not guarantees that extraction will pass behavior-preservation tests.
+The daemon pair and Wi-Fi needed no new registry phase. Next propose recordStop
+after its existing controller contracts are characterized. This is a planning
+candidate, not a guarantee that extraction will pass behavior-preservation tests.
 
 Each batch first pins shell/Settings × live/demo behavior on unmodified code:
 admission, immediate ack, result/sequence, pending cleanup, snapshot, error and
@@ -46,7 +45,7 @@ Correction to the M7b assessment: it listed nine simple candidates, including
 `imageAnnotate`. Its current live branch captures `captureEditor` before enqueue;
 the registry invokes `live(request)` inside the worker. Reading the editor there
 would change behavior when preferences change while the job waits. Hence eight
-original simple candidates, twenty needing another seam; after M7c, six plus twenty.
+original simple candidates, twenty needing another seam; after M7d, one plus twenty.
 
 ## Modularity, implementation size and memory
 

@@ -271,3 +271,26 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   1. Open Wallpaper Settings; Check daemon reports the existing awww state/query and clears pending.
   2. Start if needed with awww stopped/running; confirm readiness or the existing useful error, then retry.
   3. Check daemon from the shell and standalone Settings; preview/demo must start no daemon and leave saved settings/wallpapers unchanged.
+
+## M7d — Wi-Fi worker provider — 2026-10-23
+
+- Branch refactor/m7d-wifi-actions, base main 130600b; characterization 97ef647; extraction ef4434e reverted e46d9e6; fixture-only repair 18d7f86; identical extraction reapplied as 2afc0b1. Later changes are documentation only.
+- Registered wifiScan/wifiConnect/wifiSaved/wifiDisconnect/wifiForget: 37/89 IDs (29 sync + 8 workers). Discovery remains the M6 explicit composition list; network/run/demo_network callbacks only, never DesktopBackend. No registry extension/executor/queue/timer/process added.
+- Moved both legacy dispatch branches and command logic to wifi_actions.py; wifi_action remains a synchronous compatibility facade. Shell-only admission still precedes demo/live; validation/current-adapter lookup still occurs inside the existing worker, not at enqueue.
+- Host keeps network parsing, sampling/subscription/caches, completion/result/sequence/ack/pending and snapshot projection; generic completion hook installs no state. Commands/argv/timeouts/messages, stdin-only password handling and demo no-op/state/no-I/O behavior remain identical.
+- Characterization on unmodified production: nine new cases pass, one registry N/A; focused 102/0/2; G0 545/0/142. After extraction/retry focused 103/0/1 (only detached fake-niri opt-in skipped); ownership N/A now executes.
+- Initial full G0 was 545/1/141: LiquidThemeCase.test_liquid_pauses_only_global_blur_and_preserves_the_saved_preference printed two identical all-true results. Its repeating fixture timer did not stop after readiness; finish/Qt.quit does not prevent another emission. This failure is not counted as passed.
+- Classification: test-fixture race, unrelated to Wi-Fi. Main case passed 5/5 individually; a timer-driven double-finish probe on main reproduced the exact len=2 assertion without importing product features. Reverted extraction before repair; stopped only that fixture timer after readiness; assertions/timeouts/size ceiling unchanged. Fixed fixture passed 5/5 on baseline before re-extraction.
+- Existing assertion ASTs and frozen fixtures unchanged; no product QML change. The moved command body is AST-identical after capability binding; network/handle/start_feature/finish_features/snapshot/main lifecycle remain unchanged.
+- Final full gates on runtime head 2afc0b1 (pass/fail/skip): G0 546/0/141; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 polling 1/0/0. qmllint 148 files, 0 errors/71 existing warnings. Temporary execution transport disconnect preserved files/processes; completed gate artifacts and exit status were checked after reconnect.
+- G0 skips unchanged: 129 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri. No skipped case or the initial failing run is reported as passed. No raw gate logs committed.
+- Sanity ONCE: 10 fresh-process/fresh-XDG launches per path/arm, private software-rendered Sway/D-Bus, warm OS cache, mapped-window endpoint. Preview median main/head 788.09/777.97 ms; Settings 798.79/820.28 ms; no profiling/CIs/raw samples committed.
+- RSS T+10 s KiB main/head: preview QS 279616/280116, backend 25968/25832; Settings QS 231552/231280, backend 25924/25800. Largest increase 0.179%; Settings +21.49 ms; no +100 ms/+10% flag.
+- PSS of each separate launch's two owned processes, KiB main/head: preview 287527/287893; Settings 239465/239067. This existing sanity sample does not establish total live-shell + open Settings/workers memory or real hardware performance.
+- perform 221→219, perform_demo 135→131, wifi_action 32→2 lines; backend nonblank ceiling 1841→1809. Added Wi-Fi source ownership, no new dependency exceptions; all new source files <250 nonblank lines.
+- Adapters: explicit provider binding retires with descriptor ownership/withdrawal/fault parity; wifi_action and direct perform/perform_demo facades require zero callers plus owner-approved retirement. Host network reader remains authoritative; this milestone does not redesign its lifecycle.
+- Behavior differences: none on exercised user paths; only the test fixture stops repeating after readiness. No public API/IPC/CLI/settings format, visuals, polling/cache/power-policy changes. Remaining async: recordStop plus twenty needing extra contracts; further conversion needs authorization.
+- Laptop checklist (needs real-session check):
+  1. Open Wi-Fi from the bar/Control Center; rescan, connect with a password, disconnect, reconnect a saved network, then forget a disposable saved network.
+  2. Try an incorrect password and a stale/disconnected adapter; confirm useful errors, no secret in notifications/logs and no stuck pending; close/reopen the panel.
+  3. Switch/reconnect adapters, then restart the shell; confirm summary/read-back and saved networks. Preview/demo must make no network change; standalone Settings still denies these actions.

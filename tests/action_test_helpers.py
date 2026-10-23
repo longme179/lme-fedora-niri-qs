@@ -24,4 +24,3 @@ def bluez_runner(bluez, service):
         ("busctl", "--system", "get-property", *service, "ActiveProfile"): 's "balanced"',
         ("busctl", "--system", "get-property", *service, "Profiles"): 'aa{sv} 3 1 "Profile" s "balanced" 1 "Profile" s "power-saver" 1 "Profile" s "performance"'})
     return runner, objects
-

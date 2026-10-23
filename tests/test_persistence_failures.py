@@ -1,6 +1,7 @@
 """Persistence failure/retry regressions; disposable files and injected I/O faults."""
 from contextlib import contextmanager
 import copy
+import errno
 import json
 import os
 from pathlib import Path
@@ -78,3 +79,24 @@ class ExportPersistenceCase(Fixture,unittest.TestCase):
             with self.assertRaises(FileExistsError) as error:self.export(path)
         self.assertEqual(error.exception.filename,str(path));self.assertEqual(path.read_text(),'another writer')
         self.assertEqual(list(self.root.iterdir()),[path])
+
+    def test_no_hardlink_filesystem_still_exports_exclusively_and_cleans_failed_retry(self):
+        path=self.root/'preset.json'
+        with patch('settings_transfer.os.link',side_effect=OSError(errno.EOPNOTSUPP,'No hard links')):
+            self.export(path)
+            with self.assertRaises(FileExistsError):self.export(path)
+            path.unlink()
+            with patch('settings_transfer.os.fsync',side_effect=[None,OSError('Final write failed')]):
+                with self.assertRaisesRegex(OSError,'Final write failed'):self.export(path)
+        self.assertFalse(path.exists());self.assertEqual(list(self.root.iterdir()),[])
+
+    def test_fallback_failure_keeps_a_destination_replaced_by_another_writer(self):
+        path=self.root/'preset.json'
+        def fail_final(fd):
+            if path.exists():
+                replacement=self.root/'other';replacement.write_text('keep replacement');replacement.replace(path)
+                raise OSError('Final write failed')
+        with patch('settings_transfer.os.link',side_effect=OSError(errno.EOPNOTSUPP,'No hard links')), \
+             patch('settings_transfer.os.fsync',side_effect=fail_final):
+            with self.assertRaisesRegex(OSError,'Final write failed'):self.export(path)
+        self.assertEqual(path.read_text(),'keep replacement');self.assertEqual(list(self.root.iterdir()),[path])

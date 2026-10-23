@@ -62,7 +62,8 @@ from local_content_actions import LocalContentCapabilities, provide as provide_l
 from audio_actions import AudioCapabilities, provide as provide_audio
 from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
-from wallpaper_actions import WallpaperScanCapabilities, provide as provide_wallpaper_scan
+from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
+                               WallpaperDaemonCapabilities, provide_daemon as provide_wallpaper_daemon)
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -538,6 +539,9 @@ class DesktopBackend:
         self.action_state = self.actions.provide([
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
+            (provide_wallpaper_daemon, WallpaperDaemonCapabilities(lambda name: self.runner.available(name),
+                lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.wallpapers.ready(),
+                lambda value: setattr(self, 'wallpaper_daemon', value))),
             (provide_appearance, AppearanceCapabilities(lambda: self.preferences.values,
                 lambda **kwargs: self.preferences.reload(**kwargs), lambda *args, **kwargs: self.preferences.update(*args, **kwargs),
                 lambda key, value: validate_preference(key, value), lambda: DEFAULT_PREFERENCES,
@@ -1133,7 +1137,6 @@ class DesktopBackend:
                 elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
                 elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
                 elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
-                elif action == "wallpaperStatus": self.wallpaper_daemon=value; message="Wallpaper daemon checked"
                 elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
                     token, content = value
@@ -1290,7 +1293,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "wallpaperStatus", "wallpaperEnsure", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1361,10 +1364,9 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action in ("imageAnnotate", "wallpaperEnsure"): pass
+        elif action == "imageAnnotate": pass
         elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
         elif action.startswith("gowall"): pass
-        elif action == "wallpaperStatus": self.wallpaper_daemon={"available":True,"running":True,"query":"eDP-1: 1920x1080 · demo wallpaper","error":""}
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
@@ -1581,16 +1583,6 @@ class DesktopBackend:
             elif action=='gowallApply': operation=lambda:self.image_utilities.apply(request.get('path'),request.get('output',''))
             else: return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
             return self.start_feature(action,operation)
-        if action == "wallpaperStatus":
-            def status():
-                try: return {"available":self.runner.available('awww'),"running":True,"query":self.runner.run('awww','query',timeout=2),"error":""}
-                except RuntimeError as exc: return {"available":self.runner.available('awww'),"running":False,"query":"","error":str(exc)}
-            return self.start_feature(action,status)
-        if action == "wallpaperEnsure":
-            def ensure():
-                self.wallpapers.ready()
-                return "Wallpaper daemon ready"
-            return self.start_feature(action,ensure)
         if action == "displayRefresh":
             self.displays = self.display_control.snapshot()
             return "Displays refreshed"

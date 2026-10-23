@@ -27,7 +27,7 @@
     "controlLayout": ["qml/settings/ControlLayoutPage.qml"],
     "bar": ["qml/settings/TopBarPage.qml"],
     "imageUtilities": ["qml/settings/GowallSettings.qml", "scripts/image_utilities.py"],
-    "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml"],
+    "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml", "scripts/wifi_actions.py"],
     "authentication": ["qml/auth/AuthenticationAgent.qml", "qml/auth/AuthenticationDialog.qml", "qml/auth/AuthenticationWindow.qml"]
   },
   "sharedPrefixes": ["qml/components/", "qml/theme/", "qml/services/"],
@@ -69,7 +69,7 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 281,
-    "scripts/desktop_backend.py": 1841,
+    "scripts/desktop_backend.py": 1809,
     "tests/fixtures/catalog-legacy.json": 323,
     "tests/test_backend.py": 486,
     "tests/test_battery_saver.py": 359,

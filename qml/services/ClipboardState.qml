@@ -22,6 +22,7 @@ QtObject {
     property bool messageError: false
     property bool copyPending: false
     property bool searching: false
+    property int pendingSearches: 0
     property bool demoPaused: false
     property var lastResult: null
     signal copied()
@@ -36,7 +37,7 @@ QtObject {
     function search(value, kind) {
         query = value; filter = kind;
         if (ShellState.demo) searched(true);
-        else if (ready) { searching = true; send("search", {query: value, kind: kind}); }
+        else if (ready && backend.running) { pendingSearches++; searching = true; send("search", {query: value, kind: kind}); }
     }
     function send(action, payload) {
         if (ShellState.demo) {
@@ -62,7 +63,10 @@ QtObject {
             if (next.lastResult && (!lastResult || next.lastResult.sequence !== lastResult.sequence)) {
                 lastResult = next.lastResult;
                 if (lastResult.action === "copy") copyPending = false;
-                if (lastResult.action === "search") { searching = false; searched(lastResult.ok); }
+                if (lastResult.action === "search") {
+                    pendingSearches = Math.max(0, pendingSearches - 1); searching = pendingSearches > 0;
+                    if (!searching) searched(lastResult.ok);
+                }
                 message = lastResult.message || ""; messageError = !lastResult.ok;
                 if (lastResult.action === "copy" && lastResult.ok) copied();
             }
@@ -75,6 +79,7 @@ QtObject {
         stdout: SplitParser { onRead: data => root.accept(data) }
         onExited: {
             root.ready = false; root.copyPending = false; root.searching = false;
+            root.pendingSearches = 0; root.lastResult = null;
             root.message = "Clipboard service stopped. Check the shell log."; root.messageError = true;
             if (root.started && root.restartAttempts < 3) { root.restartAttempts++; root.restart.restart(); }
         }

@@ -239,6 +239,16 @@ def serve(directory: Path):
     signal.signal(signal.SIGINT, stop)
     selector = selectors.DefaultSelector()
     buffer, last_signature, last_config, available = b"", None, 0, False
+    def publish():
+        nonlocal last_signature
+        capturing = bool(capture_service.watchers) and all(p.poll() is None for p in capture_service.watchers.values())
+        signature = (history.revision, history.paused, capturing, available, capture_service.error, sequence, query, kind)
+        if signature == last_signature: return
+        state = {"entries": history.entries(query, kind), "paused": history.paused, "capturing": capturing, "available": available,
+                 "total": history.db.execute('SELECT count(*) FROM entries').fetchone()[0],
+                 "revision": history.revision, "error": capture_service.error, "lastResult": last_result}
+        print(json.dumps(state, ensure_ascii=False, separators=(',', ':')), flush=True)
+        last_signature = signature
     try:
         try:
             selector.register(sys.stdin, selectors.EVENT_READ)
@@ -251,18 +261,7 @@ def serve(directory: Path):
             if time.monotonic() - last_config >= 1:
                 capture_service.update(preferences()); last_config = time.monotonic()
                 available = bool(shutil.which('wl-copy') and shutil.which('wl-paste'))
-            revision, paused = history.revision, history.paused
-            capturing = bool(capture_service.watchers) and all(p.poll() is None for p in capture_service.watchers.values())
-            signature = (revision, paused, capturing, available, capture_service.error, sequence, query, kind)
-            # Poll a tiny revision counter; do not sort/serialize all history
-            # four times a second when the clipboard is idle.
-            if signature != last_signature:
-                state = {"entries": history.entries(query, kind), "paused": paused,
-                         "capturing": capturing, "available": available,
-                         "total": history.db.execute('SELECT count(*) FROM entries').fetchone()[0],
-                         "revision": revision, "error": capture_service.error, "lastResult": last_result}
-                print(json.dumps(state, ensure_ascii=False, separators=(',', ':')), flush=True)
-                last_signature = signature
+            publish()  # Idle revision checks do not serialize unchanged history.
             if not selector.select(.25): continue
             chunk = os.read(sys.stdin.fileno(), 8192)
             if not chunk: break
@@ -298,6 +297,7 @@ def serve(directory: Path):
                     if action == 'search': query, kind = '', 'all'
                 sequence += 1
                 last_result = {'action': action, 'ok': ok, 'message': message, 'sequence': sequence}
+                publish()  # Never coalesce operation outcomes, even within one read.
     finally:
         capture_service.stop(); selector.close(); history.db.close()
 

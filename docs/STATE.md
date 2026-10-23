@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c merged; M7d Wi-Fi implemented for review: 37/89 IDs (29 sync + 8 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d merged: 37/89 IDs (29 sync + 8 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Async follow-up inventory/order: ASYNC_ACTIONS.md (recordStop plus twenty with extra contracts; further work needs authorization).
+- QoL review/order: PORTED_FEATURES_REVIEW.md; async inventory: ASYNC_ACTIONS.md (recordStop plus twenty with extra contracts; further work needs authorization).
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -42,15 +42,15 @@ Do not read archive/ unless answering a specific historical question.
 - During work: Python = G0 + relevant units; QML = G0 + G1 + relevant native case.
   Runtime branches: full G0-G4 + G6 polling ONCE before merge review; explicit task scope overrides.
   Docs/skills-only: G0 only, no GUI gates/sanity. Report actual pass/fail/skip counts and reasons.
-- Tests first, then refactor, then docs commits. No assertion edits without asking;
-  revert a failed commit, never fix forward. Keep behavior and public contracts.
+- Tests first, then implementation, then docs. No assertion edits without asking;
+  revert a failed commit, never fix forward. Refactors preserve behavior; authorized fixes/QoLs may improve it (2026-10-23), with tests and reported differences.
 - Disposable sessions only; never real config/session. Hardware: needs real-session check.
 - Runtime branch sanity once before merge: 10 preview/Settings launches each,
   main vs head medians; QS/backend RSS at 10 s. Ask if Settings >+100 ms or RSS >+10%.
 - No more D1 profiling, CIs, A/A, seeds, aggregate c or validation scheduling.
 - Priorities: modularity, scalability, functionality, stability, memory footprint.
 - Future family batches: 3-6 features per branch; one review stop per branch.
-- Ask only for behavior/API/data-format changes, unclassifiable baseline failure,
+- Ask only for unapproved behavior/API/data-format changes, unclassifiable baseline failure,
   or sanity flags. Never start an unauthorized milestone or merge/push main.
 - Replies <=40 lines; one MIGRATION entry <=30 lines, laptop checklist <=6 lines.
   Commit only final gate summaries; no raw evidence directories.

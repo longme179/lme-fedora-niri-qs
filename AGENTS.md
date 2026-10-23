@@ -17,7 +17,7 @@ main QS, Python backend, owned workers and Settings/backends while open. Prefer
 aggregate PSS; label summed RSS double-counting and report heavy temporary job peaks
 separately. Reuse existing samples; do not claim a whole-shell total from one PID.
 Reuse shared services/pools/textures; no backend, daemon or timer per widget.
-No behavior/visual/polling/cache/power changes are implied by these targets.
+Memory targets imply no behavior/visual/polling/cache/power changes. Owner-authorized fixes/QoLs may improve behavior; characterize and report the changes.
 
 ## Layout and dependency rule
 
@@ -75,7 +75,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
 - D1/startup optimization is CLOSED. No profiling, bootstrap CIs, A/A arms,
   seeds, raw CSV, aggregate c or backend-validation scheduling. A6 is out of scope:
   no polling, cache or power-policy changes.
-- Characterize before refactoring; separate tests, extraction and docs commits.
+- Characterize before refactoring; separate tests, implementation and docs commits.
   Never edit an existing assertion without asking. If a gate fails, revert the
   responsible commit rather than fixing forward. Never call skips/failures passed.
 - Never touch real niri/Quickshell config or the running session. Use disposable
@@ -88,7 +88,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
   Settings exceeds +100 ms or either process RSS exceeds +10%.
 - Batch future conversions by families, 3-6 per branch; one review stop per branch.
   No unauthorized milestone, merge or push to main. Owner merges review branches.
-- Ask only for behavior or public API/data-format changes, unclassifiable baseline
+- Ask only for unapproved behavior or public API/data-format changes, unclassifiable baseline
   failures, or the launch/RSS flags. Otherwise continue within authorized scope.
 - Replies <=40 lines; one migration entry <=30 lines per milestone, checklist <=6
   lines. Commit a final gate summary only, no raw logs/evidence directories.

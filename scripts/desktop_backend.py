@@ -64,7 +64,6 @@ from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
                                WallpaperDaemonCapabilities, provide_daemon as provide_wallpaper_daemon)
-from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi
 from backend_actions import ActionRegistry
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
@@ -536,11 +535,8 @@ class DesktopBackend:
         def refresh_action_niri():
             self.niri = self.niri_state()
             return self.niri
-        self._wifi_capabilities = WifiCapabilities(lambda **kwargs: self.network(**kwargs),
-            lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation: self.start_feature(action, operation))
         self.action_state = self.actions.provide([
-            (provide_wifi, self._wifi_capabilities),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
             (provide_wallpaper_daemon, WallpaperDaemonCapabilities(lambda name: self.runner.available(name),
@@ -1389,6 +1385,10 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.values["displayLayout"] = self.displays["preview"]["layout"]
             self.displays["preview"]["status"] = "confirmed" if action == "displayConfirm" else "reverted"
         elif action == 'launcherHistoryClear': pass
+        elif action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
+            if action in {"wifiConnect", "wifiSaved"}:
+                system["network"].update(connected=True, ssid=request.get("ssid", "Home Wi-Fi"))
+            elif action == "wifiDisconnect": system["network"].update(connected=False, ssid="")
         elif action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":
@@ -1597,6 +1597,8 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.set("displayLayout", layout)
             self.displays = self.display_control.snapshot()
             return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
+        if action in {"wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget"}:
+            return self.start_feature(action, lambda: self.wifi_action(action, request))
         if action == "chargeMode":
             value = request.get("value")
             if type(value) is not int or value not in (85, 100):
@@ -1714,7 +1716,37 @@ class DesktopBackend:
         return "Appearance profile " + {"appearanceSave": "saved", "appearanceApply": "applied", "appearanceDelete": "deleted"}[action]
 
     def wifi_action(self, action, request):
-        return perform_wifi(self._wifi_capabilities, action, request)
+        state = self.network(details=True)
+        if not state["available"]: raise CommandError("NetworkManager is unavailable")
+        interface = request.get("device") or state.get("device")
+        if not isinstance(interface, str) or interface != state.get("device") or not interface:
+            raise ValueError("No Wi-Fi adapter is available")
+        run = self.runner.run
+        if action == "wifiScan":
+            run("nmcli", "--wait", "15", "device", "wifi", "rescan", "ifname", interface, timeout=18)
+            return "Wi-Fi scan completed"
+        if action == "wifiDisconnect":
+            run("nmcli", "--wait", "15", "device", "disconnect", interface, timeout=18)
+            return "Wi-Fi disconnected"
+        if action in {"wifiSaved", "wifiForget"}:
+            ident = request.get("uuid")
+            if not isinstance(ident, str) or not any(n["uuid"] == ident for n in state.get("saved", [])):
+                raise ValueError("Saved network is no longer available")
+            if action == "wifiForget":
+                run("nmcli", "connection", "delete", "uuid", ident)
+                return "Saved network removed"
+            args = ("connection", "up", "uuid", ident, "ifname", interface)
+        else:
+            network = next((n for n in state["networks"] if n.get("bssid") == request.get("bssid")), None)
+            if not network: raise ValueError("Network is no longer visible; scan again")
+            if network.get("enterprise"): raise ValueError("Enterprise Wi-Fi needs a certificate or account. Use Advanced network settings.")
+            args = ("device", "wifi", "connect", network["bssid"], "ifname", interface)
+        password = request.get("password", "")
+        if not isinstance(password, str) or len(password) > 128 or any(c in password for c in "\r\n\x00"):
+            raise ValueError("Invalid Wi-Fi password")
+        # nmcli's secret agent reads stdin; the password never appears in argv, state or logs.
+        run("nmcli", "--wait", "45", "--ask", *args, input=password + "\n", timeout=50)
+        return "Wi-Fi connected"
 
     @staticmethod
     def niri_action(action: dict[str, Any]) -> None:

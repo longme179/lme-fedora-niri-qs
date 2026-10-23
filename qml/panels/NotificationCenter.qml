@@ -83,6 +83,17 @@ Item {
         LabelText { visible: Notifications.sharingDnd; text: "Notification popups are paused while sharing your screen"; color: Theme.green; Layout.fillWidth: true; wrapMode: Text.Wrap }
         LabelText { visible: Notifications.dnd; Layout.fillWidth: true; color: Theme.yellow; wrapMode: Text.Wrap; text: Notifications.dndUntil === -1 ? "Popups silenced until turned off" : "Popups resume at " + Qt.formatDateTime(new Date(Notifications.dndUntil), "hh:mm") }
         RowLayout {
+            visible: Notifications.saveError !== ""
+            Layout.fillWidth: true
+            LabelText { Layout.fillWidth: true; Layout.minimumWidth: 0; wrapMode: Text.Wrap; color: Theme.yellow; text: "Notification history has unsaved changes. " + Notifications.saveError }
+            LiquidButton {
+                objectName: "notificationSaveRetry"; text: Notifications.saving ? "Saving…" : "Retry"
+                Accessible.name: "Retry saving notification history"
+                enabled: ShellState.backendReady && !Notifications.saving
+                onClicked: Notifications.retrySave()
+            }
+        }
+        RowLayout {
             visible: Notifications.mutedApps.length > 0
             Layout.fillWidth: true
             LabelText { text: "Muted apps"; font.pixelSize: 12; color: Theme.muted }

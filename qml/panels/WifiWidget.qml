@@ -8,7 +8,7 @@ import "../theme"
 ColumnLayout {
     id: root
     Component.onCompleted: ShellState.watchWifi(root, visible)
-    onVisibleChanged: ShellState.watchWifi(root, visible)
+    onVisibleChanged: { ShellState.watchWifi(root, visible); if (!visible) { forgetUuid = ""; if (connectionDialog) connectionDialog.close(); } }
     Component.onDestruction: ShellState.watchWifi(root, false)
     spacing: 12
     readonly property var network: ShellState.system.network || {}
@@ -16,8 +16,29 @@ ColumnLayout {
     readonly property var result: ShellState.wifiResult || {}
     readonly property bool busy: ["wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle"].some(a => ShellState.pendingActions[a])
     property var selectedNetwork: null
+    property string selectedDevice: ""
+    property string connectAction: ""
+    property bool awaitingConnection: false
+    property string connectionError: ""
+    readonly property bool adapterChanged: !ShellState.demo && !!selectedNetwork && selectedDevice !== String(network.device || "")
     property string forgetUuid: ""
     property alias connectionPopup: connectionDialog
+    Connections {
+        target: ShellState
+        function onWifiResultChanged() {
+            const value = ShellState.wifiResult || {};
+            if (!root.awaitingConnection || !connectionDialog.visible || value.action !== root.connectAction || value.pending) return;
+            root.awaitingConnection = false;
+            if (value.ok) connectionDialog.close();
+            else { root.connectionError = value.message || "Connection failed. Try again."; Qt.callLater(() => password.forceActiveFocus()); }
+        }
+        function onBackendReadyChanged() {
+            if (!ShellState.backendReady && root.awaitingConnection) {
+                root.awaitingConnection = false;
+                root.connectionError = "The desktop backend restarted. Try again after it reconnects.";
+            }
+        }
+    }
     RowLayout {
         Layout.fillWidth: true
         LabelText { text: "Wi-Fi"; font.pixelSize: 20; font.weight: Font.Bold; Layout.fillWidth: true }
@@ -26,7 +47,7 @@ ColumnLayout {
     }
     LabelText { text: !root.network.available ? "NetworkManager or nmcli is unavailable." : !root.network.device && !ShellState.demo ? "No Wi-Fi adapter found." : root.connected ? "Connected to " + root.network.ssid : root.network.enabled ? "Choose a network to connect." : "Wi-Fi is turned off."; color: root.connected ? Theme.cyan : Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
     LabelText {
-        visible: !!root.result.message
+        visible: !!root.result.message && !connectionDialog.visible
         text: root.result.pending ? "Connecting or updating networks…" : root.result.message || ""
         color: root.result.ok === false ? Theme.red : Theme.muted
         Layout.fillWidth: true; wrapMode: Text.Wrap
@@ -50,7 +71,7 @@ ColumnLayout {
                     onClicked: {
                         if (ap.modelData.connected) ShellState.run("wifiDisconnect");
                         else if (ap.modelData.enterprise) ShellState.run("openSettings", {target: "network"});
-                        else { root.selectedNetwork = ap.modelData; password.text = ""; connectionDialog.open(); }
+                        else { root.selectedNetwork = ap.modelData; root.selectedDevice = String(root.network.device || ""); connectionDialog.open(); }
                     }
                 }
             }
@@ -64,7 +85,7 @@ ColumnLayout {
             id: saved; required property var modelData
             Layout.fillWidth: true; spacing: 8
             LabelText { text: saved.modelData.name; Layout.fillWidth: true; elide: Text.ElideRight }
-            LiquidButton { text: "Connect"; enabled: !root.busy && !!root.network.enabled; onClicked: { root.selectedNetwork = {ssid: saved.modelData.name, savedUuid: saved.modelData.uuid, secured: true}; password.text = ""; connectionDialog.open(); } }
+            LiquidButton { objectName: "wifiSaved-" + saved.modelData.uuid; text: "Connect"; enabled: !root.busy && !!root.network.enabled; onClicked: { root.selectedNetwork = {ssid: saved.modelData.name, savedUuid: saved.modelData.uuid, secured: true}; root.selectedDevice = String(root.network.device || ""); connectionDialog.open(); } }
             LiquidButton { text: root.forgetUuid === saved.modelData.uuid ? "Confirm forget" : "Forget"; enabled: !root.busy; onClicked: { if (root.forgetUuid === saved.modelData.uuid) { ShellState.run("wifiForget", {uuid: saved.modelData.uuid}); root.forgetUuid = ""; } else root.forgetUuid = saved.modelData.uuid; } }
         }
     }
@@ -76,8 +97,9 @@ ColumnLayout {
         width: Math.min(440, parent ? parent.width - 32 : 440)
         padding: 24; modal: true; focus: true; popupType: Popup.Item
         closePolicy: Popup.CloseOnEscape
-        onOpened: password.forceActiveFocus()
-        onClosed: { password.text = ""; reveal.checked = false; root.selectedNetwork = null; }
+        onAboutToShow: { password.text = ""; reveal.checked = false; root.connectionError = ""; }
+        onOpened: { if (!root.awaitingConnection) password.forceActiveFocus(); }
+        onClosed: { password.text = ""; reveal.checked = false; root.selectedNetwork = null; root.awaitingConnection = false; root.connectionError = ""; }
         background: Rectangle {
             radius: 24; color: Theme.panel; border.width: 1; border.color: Theme.border
             GlassMaterial { anchors.fill: parent; radius: parent.radius }
@@ -86,19 +108,33 @@ ColumnLayout {
             spacing: 16
             LabelText { text: "Connect to " + (root.selectedNetwork ? root.selectedNetwork.ssid : "Wi-Fi"); font.weight: Font.Bold; font.pixelSize: 20; Layout.fillWidth: true; wrapMode: Text.Wrap }
             LabelText { text: root.selectedNetwork && root.selectedNetwork.secured ? "Enter the Wi-Fi password, or leave blank to use a saved password." : "This network does not require a password."; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
-            ExpressiveField { id: password; objectName: "wifiPassword"; visible: !!root.selectedNetwork && !!root.selectedNetwork.secured; Layout.fillWidth: true; placeholderText: "Wi-Fi password"; maximumLength: 128; echoMode: reveal.checked ? TextInput.Normal : TextInput.Password; inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText; Accessible.name: "Wi-Fi password"; onAccepted: connectButton.clicked() }
+            ExpressiveField { id: password; objectName: "wifiPassword"; visible: !!root.selectedNetwork && !!root.selectedNetwork.secured; enabled: !root.busy; Layout.fillWidth: true; placeholderText: "Wi-Fi password"; maximumLength: 128; echoMode: reveal.checked ? TextInput.Normal : TextInput.Password; inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText; Accessible.name: "Wi-Fi password"; onAccepted: connectButton.clicked() }
             RowLayout {
                 visible: password.visible
-                ExpressiveSwitch { id: reveal; Accessible.name: "Show Wi-Fi password" }
+                ExpressiveSwitch { id: reveal; enabled: !root.busy; Accessible.name: "Show Wi-Fi password" }
                 LabelText { text: "Show password" }
+            }
+            LabelText {
+                objectName: "wifiConnectionStatus"
+                Layout.fillWidth: true; wrapMode: Text.Wrap
+                visible: text.length > 0
+                text: !ShellState.backendReady ? "Desktop backend is reconnecting…" : root.adapterChanged ? "The Wi-Fi adapter changed. Close this dialog and choose the network again." : root.awaitingConnection ? "Connecting… You can close this dialog while the connection continues." : root.connectionError
+                color: root.awaitingConnection ? Theme.muted : Theme.red
             }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidButton { text: "Cancel"; onClicked: connectionDialog.close() }
+                LiquidButton { text: root.awaitingConnection ? "Close" : "Cancel"; onClicked: connectionDialog.close() }
                 Item { Layout.fillWidth: true }
                 LiquidButton {
-                    id: connectButton; text: "Connect"; enabled: !root.busy && !!root.selectedNetwork
-                    onClicked: { if (!enabled) return; ShellState.run(root.selectedNetwork.savedUuid ? "wifiSaved" : "wifiConnect", {uuid: root.selectedNetwork.savedUuid || "", bssid: root.selectedNetwork.bssid || "", ssid: root.selectedNetwork.ssid, password: password.text}); connectionDialog.close(); }
+                    id: connectButton; objectName: "wifiConnectSubmit"; text: root.awaitingConnection ? "Connecting…" : "Connect"
+                    enabled: !root.busy && !!root.selectedNetwork && ShellState.backendReady && !root.adapterChanged
+                    onClicked: {
+                        if (!enabled) return;
+                        root.connectAction = root.selectedNetwork.savedUuid ? "wifiSaved" : "wifiConnect";
+                        root.connectionError = ""; root.awaitingConnection = true;
+                        const secret = password.text; password.text = ""; reveal.checked = false;
+                        ShellState.run(root.connectAction, {device: root.selectedDevice, uuid: root.selectedNetwork.savedUuid || "", bssid: root.selectedNetwork.bssid || "", ssid: root.selectedNetwork.ssid, password: secret});
+                    }
                 }
             }
         }

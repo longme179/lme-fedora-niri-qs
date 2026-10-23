@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d, Wi-Fi feedback and device-action fixes merged: 37/89 IDs (28 sync + 9 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- QoL: F1/F2 merged in f28be3d (Clipboard delivery/restarts, Notification save recovery). F3_PENDING_OWNERSHIP_PLAN.md proposes the next wire contract; planning only, approval before runtime. F4/F5 and recordStop remain later; no further async port started.
+- QoL: F1/F2 merged in f28be3d. F3's approved pending-ownership contract is implemented on fix/action-pending-ownership for review; see F3_PENDING_OWNERSHIP_PLAN.md and ROADMAP.md. F4/F5 and recordStop remain proposals; no further async port started.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -17,6 +17,7 @@ Do not read archive/ unless answering a specific historical question.
 ## Compatibility adapters and retirement
 
 - Runner/errors/TOOLS, storage/content-type re-exports: keep public facades until owner-approved retirement.
+- F3 legacy pending reducer retains old-peer/fixture fallback; retire only at zero legacy consumers plus owner approval. pendingActions and emit/handle/snapshot stay public facades.
 - Integer controlTab/named env mapping: public compatibility; internal adapters retire after all callers/fixtures use stable IDs.
 - Hybrid registry projections, legacy lists, legacy_ids() source bridge and panel
   allowlist: retire per namespace after its final legacy registration/fixture.
@@ -56,5 +57,3 @@ Do not read archive/ unless answering a specific historical question.
   Commit only final gate summaries; no raw evidence directories.
 - Preserve stdlib/unprivileged backend, English text, Preferences lock/merge/atomic
   writes, preview/standalone Settings and non-destructive installers.
-
-Historical records: archive/migration/ (moved unchanged; not required task reading).

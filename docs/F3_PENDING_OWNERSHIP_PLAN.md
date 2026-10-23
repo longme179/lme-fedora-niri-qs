@@ -1,8 +1,8 @@
 # F3: action pending ownership
 
-Planning only, 2026-10-23. Baseline: merged main **f28be3d**, including F1/F2
-(PR22). This is the next review boundary from NEXT_OPTIMIZATION_PLAN.md.
-Runtime implementation requires approval of the additive wire contract below.
+Approved and implemented for review, 2026-10-23. Implementation baseline:
+merged main **bc5768c**, including F1/F2 and the plan (PR22/24).
+Runtime commit **f516ed4**; final checks are recorded in MIGRATION_LOG.md.
 
 ## Problem and scope
 
@@ -22,7 +22,7 @@ protocol/reducer defect, not evidence of a normal mouse-only device failure.
 Do not infer ownership from error strings or suppress repeated run() calls.
 Sliders/settings must still submit updates; fileSearch must still replace work.
 
-## Proposed wire contract (approval item)
+## Approved wire contract
 
 Keep lastResult, its sequence/messages and ack-before-completion unchanged.
 Add an optional request tag and one top-level field on emitted JSON snapshots:
@@ -157,5 +157,6 @@ stop for Settings >+100 ms or RSS >+10%. No D1 profiling or startup optimization
   and retry after failure; search rapidly; apply/cancel a charge request if
   supported; close/reopen panels and restart shell/Settings without stuck busy.
 
-**Review decision:** approve F3 only, including clientSerial/actionPending and the
-compatibility policy. This document does not start runtime implementation.
+**Review boundary:** F3 only, including clientSerial/actionPending and the approved
+compatibility policy. F4/F5 and further action migration remain unauthorized;
+see ROADMAP.md for the proposed sequence and remaining release criteria.

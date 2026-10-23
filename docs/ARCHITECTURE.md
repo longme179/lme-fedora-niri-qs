@@ -111,6 +111,13 @@ Retain JSON-lines requests `{action,...payload}` and results
 `{action,ok,message,sequence,pending?}`. Preserve error truncation/redaction, acknowledgement
 before completion, one completion at a time, and the existing snapshot shape/order.
 The host obtains `demo`/`settings_only` from process configuration, never the request.
+F3 adds optional `clientSerial` requests and top-level `actionPending` wire metadata
+at `emit(backend)`: acknowledged client watermark plus existing active job IDs.
+ShellState combines that ownership with its latest unacknowledged sends before
+notifying snapshot/result consumers. Existing lastResult and direct Python
+snapshot/dispatch facades remain unchanged. Legacy peers retain result-based
+fallback; after negotiation, malformed ownership preserves the last valid state
+until recovery/reconnect. See [the F3 contract](F3_PENDING_OWNERSHIP_PLAN.md).
 `ActionSpec.presentation` references its descriptor's presentation data; it does not
 duplicate those rules in Python. Example: `"actionPresentation":{"launchpadRun":{"success":"status","error":"status"}}`.
 

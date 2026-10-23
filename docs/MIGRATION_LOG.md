@@ -342,3 +342,19 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. Connect Wi-Fi or a saved profile; conflicting radio/profile operations must reject without stealing the active job. Scan, retry after failure and close/reopen must work.
   3. Export to a new path, then the same path; verify no overwrite. Test a disposable unwritable destination and retry after restoring access; include removable storage if used.
   4. Send a notification and restart the shell; confirm history restores. Preview/demo must make no real device changes; check normal Settings/import still works.
+
+## Ported-feature optimization plan — 2026-10-23
+
+- Branch docs/ported-feature-optimization-plan, base merged main 92c74d6 (PR21 included). Documentation only; no runtime/test/assertion/fixture changes or further migration.
+- NEXT_OPTIMIZATION_PLAN.md reviews the 37 registered actions, Clipboard transport, Notifications persistence and Desktop/media seams; records source confidence, proposed owners, tests, risks and a small implementation sequence.
+- Bounded scratch reproduction: a real Clipboard worker receives copy + search in one pipe write but publishes only search sequence 2; UI copyPending requires the missing copy outcome. No real clipboard capture/session used.
+- Actual fake-device backend/ManualExecutor trace plus the QML reducer demonstrates duplicate rejection clearing UI pending while the original Bluetooth job still exists. Ordinary buttons already guard duplicates; no normal mouse-only reproduction claimed.
+- Finite fake producers confirm Launchpad logs retain 5,242,880 bytes and CommandRunner retains 8,388,608 characters without an output bound. No disk exhaustion, RAM leak or performance saving claimed. Notification save-error recovery is source-verified, not native-UI verified.
+- References pin inspected DMS, Noctalia, end4-pC, Caelestia and Serpantinum commits; compare adoption costs/limitations with Python subprocess, Qt Quick, notification protocol and Balanced Coupling theory. No third-party runtime code copied.
+- Proposed order: Clipboard result delivery + Notification recovery; then approved pending-ownership contract; bounded command capture/conditional detached logs; only afterward consider recordStop migration. No new milestone authorized.
+- Public snapshot ownership metadata and detached log retention/process cost require review before implementation. Do not add a broad duplicate-action guard, kill detached jobs, silently truncate successful JSON or infer GPU gains from another shell.
+- G0 ONCE in disposable XDG/private Sway/D-Bus: 572 pass / 0 fail / 143 skip (715 total), unchanged from merged main; 105.649 s. qmllint 148 files, 0 errors / 71 existing warnings.
+- Skips unchanged: 131 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri. They are not reported passed; GUI gates/sanity are intentionally not run for this docs-only branch. No raw logs/evidence committed.
+- STATE records PR21 as merged and links the next plan; the earlier review links forward. Adapters and their retirement conditions are unchanged; 66 descriptor / 81 legacy schema keys remain.
+- Behavior differences: none, documentation only. D1 closed; A6 untouched; no startup profiling, cache/polling/power changes or new dependency exceptions.
+- Real-session device/GPU checks and aggregate shell + Settings/worker memory remain unverified. The plan retains <=400 MB steady / <=500 MB ordinary active targets without deriving a combined total from separate PID-pair samples.

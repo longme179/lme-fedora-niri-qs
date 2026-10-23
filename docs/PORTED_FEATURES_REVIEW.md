@@ -5,6 +5,10 @@ Scope: all current action providers, shared dispatch/completion/runner, settings
 transfer, Launchpad jobs, and Clipboard/Notifications/Desktop bootstrap seams.
 This is a targeted code review with private-session tests, not a hardware audit.
 
+Follow-up against merged main 92c74d6: [next optimization plan](NEXT_OPTIMIZATION_PLAN.md).
+It records new bounded reproductions, source-only findings and pinned comparisons
+with other shells; implementation still requires authorization.
+
 ## Device-action follow-up (2026-10-23)
 
 Implemented on `fix/device-action-reliability`, based on merged main ace2744:

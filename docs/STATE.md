@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d and Wi-Fi feedback merged; device-action fixes implemented for review: 37/89 IDs (28 sync + 9 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d, Wi-Fi feedback and device-action fixes merged: 37/89 IDs (28 sync + 9 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- QoL status: PORTED_FEATURES_REVIEW.md (Bluetooth/persistence/Wi-Fi fixes; Launchpad logs remain open); async inventory: ASYNC_ACTIONS.md (recordStop plus twenty with extra contracts; further work needs authorization).
+- QoL status: PORTED_FEATURES_REVIEW.md; next review: NEXT_OPTIMIZATION_PLAN.md (result delivery/recovery and output bounds; planning only). Async inventory: ASYNC_ACTIONS.md (recordStop plus twenty with extra contracts; further work needs authorization).
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

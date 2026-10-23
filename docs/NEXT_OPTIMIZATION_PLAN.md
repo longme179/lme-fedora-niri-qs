@@ -6,8 +6,9 @@ Ponytail and Balanced Coupling guide the scope: repair observable failures at
 existing owners, reuse services, and avoid a framework or a process per widget.
 
 Execution authorized by the owner after commit 50194c1. First review branch:
-`fix/content-result-recovery`, F1/F2 implemented; see MIGRATION_LOG.md for checks.
-F3–F5 and recordStop remain subsequent branches at the planned review boundary.
+`fix/content-result-recovery`, F1/F2 merged in main f28be3d; see MIGRATION_LOG.md.
+The next proposed boundary is [F3 pending ownership](F3_PENDING_OWNERSHIP_PLAN.md),
+planning only pending wire-contract approval. F4/F5 and recordStop stay later.
 
 ## Scope and current state
 

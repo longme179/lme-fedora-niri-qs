@@ -27,7 +27,7 @@
     "controlLayout": ["qml/settings/ControlLayoutPage.qml"],
     "bar": ["qml/settings/TopBarPage.qml"],
     "imageUtilities": ["qml/settings/GowallSettings.qml", "scripts/image_utilities.py"],
-    "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml", "scripts/wifi_actions.py"],
+    "wifi": ["qml/panels/WifiPanel.qml", "qml/panels/WifiWidget.qml", "scripts/wifi_actions.py", "scripts/wifi_auth.py"],
     "authentication": ["qml/auth/AuthenticationAgent.qml", "qml/auth/AuthenticationDialog.qml", "qml/auth/AuthenticationWindow.qml"]
   },
   "sharedPrefixes": ["qml/components/", "qml/theme/", "qml/services/"],

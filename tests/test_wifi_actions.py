@@ -5,7 +5,7 @@ import json
 import os
 from threading import Event
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from test_backend import Fixture, FakeRunner, backend
 from test_features import ManualExecutor
@@ -42,8 +42,8 @@ class WifiDispatchCase(Fixture, unittest.TestCase):
     def test_live_commands_stdin_timeouts_ack_and_snapshot_shape(self):
         commands = (
             (('nmcli', '--wait', '15', 'device', 'wifi', 'rescan', 'ifname', 'wlp1s0'), dict(timeout=18)),
-            (('nmcli', '--wait', '45', '--ask', 'device', 'wifi', 'connect', 'AA:BB', 'ifname', 'wlp1s0'), dict(input=REQUEST['password']+'\n', timeout=50)),
-            (('nmcli', '--wait', '45', '--ask', 'connection', 'up', 'uuid', 'safe-uuid', 'ifname', 'wlp1s0'), dict(input=REQUEST['password']+'\n', timeout=50)),
+            (('nmcli', '--pretty', '--wait', '45', '--ask', 'device', 'wifi', 'connect', 'AA:BB', 'ifname', 'wlp1s0'), dict(input=REQUEST['password']+'\n', timeout=50, observe=ANY)),
+            (('nmcli', '--pretty', '--wait', '45', '--ask', 'connection', 'up', 'uuid', 'safe-uuid', 'ifname', 'wlp1s0'), dict(input=REQUEST['password']+'\n', timeout=50, observe=ANY)),
             (('nmcli', '--wait', '15', 'device', 'disconnect', 'wlp1s0'), dict(timeout=18)),
             (('nmcli', 'connection', 'delete', 'uuid', 'safe-uuid'), {}))
         for action, message, (args, kwargs) in zip(ACTIONS, MESSAGES, commands):
@@ -103,7 +103,7 @@ class WifiDispatchCase(Fixture, unittest.TestCase):
                     live.feature_executor.complete(); live.finish_features()
                     self.assertTrue(live.last_result['ok'])
                     self.assertEqual(run.call_args.args[-2:], ('ifname', 'wlan1'))
-                    self.assertEqual(run.call_args.kwargs, dict(input=password+'\n', timeout=50))
+                    self.assertEqual(run.call_args.kwargs, dict(input=password+'\n', timeout=50, observe=ANY))
         live = self.configured(); live.handle(dict(action='wifiScan', **REQUEST))
         live.network.return_value['device'] = 'wlan1'
         live.feature_executor.complete(); live.finish_features()

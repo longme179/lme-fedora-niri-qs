@@ -47,7 +47,7 @@ class CommandRunner:
             raise CommandError(f"Required command is unavailable: {name}")
         return self.commands[name]
 
-    def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None) -> str:
+    def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None, observe=None) -> str:
         argv = [self.executable(name), *map(str, args)]
         if name == 'gowall':
             argv = [sys.executable, str(Path(__file__).with_name('managed_command.py')), '--parent', str(os.getpid()), '--', *argv]
@@ -82,7 +82,8 @@ class CommandRunner:
                 try:
                     stdout, stderr = process.communicate(timeout=min(.1, remaining))
                     break
-                except subprocess.TimeoutExpired: pass
+                except subprocess.TimeoutExpired as progress:
+                    if observe is not None: observe(progress.output, progress.stderr)
         except OSError as exc:
             raise CommandError(f"Unable to run {name}: {exc.strerror}") from exc
         finally:

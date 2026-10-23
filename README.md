@@ -468,7 +468,11 @@ reproduction steps, logs, doctor output, `niri --version` and `qs --version`.
 
 Wi-Fi keeps the selected network open after a connection error so you can retry. Repeated password prompts fail early; a 15-second authentication guard preserves the longer timeout for IP configuration. Closing the dialog during an attempt lets it continue. Enterprise networks use Advanced network settings.
 
+Bluetooth Connect/Disconnect runs in the background so other shell controls remain responsive. Wi-Fi accepts one connection/profile/radio change at a time; scans can still run independently.
+
 Pair new Bluetooth devices from Control Center → Devices, including PIN and passkey confirmation. Install `python3-gobject-base` for the pairing agent. Blueman and the network editor remain available for external device settings and enterprise Wi-Fi.
+
+Settings exports preserve existing files and clean up failed writes so you can retry. Notification history is installed in the backend only after it has been saved successfully.
 
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.
 Native UI checks require a private Wayland session. See [validation details](docs/VALIDATION.md)

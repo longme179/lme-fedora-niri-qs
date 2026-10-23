@@ -1,10 +1,10 @@
 # Async actions after Wi-Fi extraction
 
-Checked against main `130600b` and M7d `2afc0b1` on 2026-10-23. M7b/M7c are merged;
-M7d's five Wi-Fi actions are implemented for review, using the same worker
-scheduler/completion emitter as `wallpaperScan`. There are 37/89 registered IDs
-(29 sync, eight workers). No further conversion is authorized by this plan.
-The remaining async inventory has **21 IDs**.
+M7b/M7c/M7d and Wi-Fi feedback are merged (main ace2744). The device-action
+reliability follow-up on runtime head 3e167ad moves the already registered
+bluetoothDevice to the same worker pool: 37/89 registered IDs, 28 sync and nine
+workers. There is no new registry phase or executor. The **21 remaining legacy
+async IDs** below are unchanged; further conversion still needs authorization.
 
 ## Remaining action the existing worker contract fits: 1
 

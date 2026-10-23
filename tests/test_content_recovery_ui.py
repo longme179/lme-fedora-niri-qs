@@ -37,6 +37,8 @@ OBSERVE = '''
             const field = root.sliceFind(root.sliceSurface,"Search clipboard history");
             field.text = "persisted"; field.accepted();
         }
+        function copy(): void { ClipboardState.send("copy",{id:ClipboardState.entries.find(e => e.kind === "text").id}); }
+        function restartClipboard(): void { ClipboardState.backend.running = false; }
     }
 '''
 
@@ -68,4 +70,21 @@ class ClipboardRecoveryUiCase(unittest.TestCase):
                 state = json.loads(probe.call('state',target='contentRecovery'))
                 self.assertEqual(len(state['copies']),2)
                 self.assertEqual(len(world.workers()),1)
+
+    def test_worker_restart_accepts_reused_result_sequence_and_clears_pending(self):
+        with tempfile.TemporaryDirectory(prefix='content-restart-') as directory:
+            world = World(Path(directory));shell = world.root/'shell.qml'
+            shell.write_text(shell.read_text().replace('    id: root\n','    id: root\n'+OBSERVE,1))
+            with world.launch() as probe:
+                probe.wait(lambda s:s['workerReady'] and s['count']==2)
+                probe.call('copy',target='contentRecovery')
+                probe.wait(lambda _:len(json.loads(probe.call('state',target='contentRecovery'))['copies'])==1)
+                probe.call('restartClipboard',target='contentRecovery')
+                probe.wait(lambda s:not s['workerReady'])
+                probe.wait(lambda s:s['workerReady'] and len(world.workers())==2)
+                probe.call('copy',target='contentRecovery')
+                probe.wait(lambda _:len(json.loads(probe.call('state',target='contentRecovery'))['copies'])==2)
+                state = json.loads(probe.call('state',target='contentRecovery'))
+                self.assertEqual(state['copies'],[1,1])
+                self.assertFalse(state['copyPending']);self.assertFalse(state['searching'])
 

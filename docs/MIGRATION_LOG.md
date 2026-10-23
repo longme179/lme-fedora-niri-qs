@@ -206,3 +206,34 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Switch workspaces, including another output, and check focus/overview behavior.
   4. In Settings save/apply/delete an appearance profile and apply/reset a palette; confirm unrelated overrides remain.
   5. Export/import a preset, restart, verify values and private backup; confirm preview/demo runs no system commands.
+
+## M7b — wallpaperScan asynchronous pilot — 2026-10-23
+
+1. Baseline main 411cc9f: handle (1282) admits wallpaperScan in shell and the Settings legacy allowlist; process context precedes demo/live selection.
+2. Live perform (1593) calls start_feature('wallpaperScan', lambda: wallpaper_library(request.get('folder'))); it does not scan synchronously.
+3. start_feature (1112) rejects an existing owner with 'This operation is already running'; otherwise submit uses the existing two-worker feature_executor and feature_jobs.
+4. handle returns {ok:true, action:'wallpaperScan', message:'Working…', pending:true, sequence:N}; no new result shape is needed.
+5. snapshot (1025) uses result_unemitted to publish the input acknowledgement before inspecting completed jobs; emit (1780) retains JSON-lines publication.
+6. finish_features (1117) chooses the first done job, increments sequence, obtains job.result(), installs wallpaper_library and publishes 'Wallpaper library refreshed'.
+7. Completion removes that feature_jobs owner, invalidates system_cache and breaks; each later completion receives its own result/sequence.
+8. CommandError/ValueError/OSError retain the old list, add error=str(error)[:400] and publish the same truncated error result; pending is absent.
+9. Snapshot field remains wallpaperLibrary at feature_snapshot (1088); entries/folder/truncated/error and all other snapshot slots stay unchanged.
+10. ShellState.accept (195) clears pendingActions[action] on a non-pending result; backend.onExited (216) clears all UI pending ownership.
+11. Scan has no action-specific cancellation; shutdown (1933) calls feature_executor.shutdown(wait=False, cancel_futures=True), without a final completion emission.
+12. Running futures finish normally; queued futures cancel. Manually finishing a cancelled future raises CancelledError today; that policy is not redesigned.
+13. Demo perform_demo (1381) ignores the requested folder and synchronously reads assets/wallpapers; it never scans the user's folder or starts a job/process.
+14. Demo handle returns the ordinary demo message without pending; the bundled library installs immediately, including in standalone Settings demo.
+15. Minimal extension: worker specs delegate to start_feature; complete(value or caught error) only installs domain state; existing presentation supplies the success text and the host emitter retains publication/cancellation.
+
+- Commits: flow b5b4d29, characterization 9430b33, extraction d5b9b47; base main 411cc9f, branch refactor/m7b-async-pilot. Full set ran on the final runtime tree d5b9b47; subsequent changes are docs only. No reverts or second action.
+- Baseline G0 524/0/145 and focused 76/0/4; after extraction focused 85/0/0 (including existing routing contracts). Four worker N/A cases now execute. Existing assertions/frozen fixtures unchanged; rejected incomplete specs retain the old diagnostic.
+- Final gates (pass/fail/skip): G0 528/0/141, G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. G0's 141 baseline skips remain (129 opt-in/session, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 fake-niri); qmllint 148 files, 0 errors/71 existing warnings.
+- Sanity ONCE, 10 launches/path/arm, private software-rendered Sway/D-Bus, fresh XDG/processes, warm OS cache: preview median main/head 806.17/809.12 ms; Settings 854.65/843.70 ms. RSS at T+10 s KiB main/head: preview QS 280072/280332, backend 25944/25956; Settings QS 231112/231100, backend 25888/25936. No +100 ms/+10% flag; no profiling/CIs/raw logs committed.
+- Extension proven: ActionSpec('wallpaperScan', {'shell','settings'}, scan, demo, execution='worker', complete=complete, presentation='Wallpaper library refreshed'); only installs state on completion. Explicit binding retires with descriptor backend ownership/fallback parity; direct perform/invoke_live facade at zero direct callers plus owner approval; scheduler/emitter remain shared infrastructure.
+- Behavior differences: none on exercised paths. 30/89 IDs registered (29 sync + this worker); perform 233→231, perform_demo 139→136, finish_features 34→35 lines. Other legacy handler bodies are byte-identical (53 live/40 demo/9 completion); start_feature, snapshot/feature_snapshot and main lifecycle ASTs unchanged. No queue/timer/executor, polling/cache/power, public JSON/CLI or persisted-format changes.
+- Assessment: the same extension fits 9 more IDs without a new registry phase: wallpaperStatus, wallpaperEnsure, imageAnnotate, recordStop, wifiScan/wifiConnect/wifiSaved/wifiDisconnect/wifiForget. Recommend wallpaperStatus/Ensure next only with owner authorization and their own characterization; none converted here.
+- Remaining 19 need more: fileSearch (replacement/cancellation); palettePreview (preflight/options snapshot); captureExport/captureAnnotate/captureOcr (tokens/leases); recordStart/lock (preflight); wallpaper/wallpaperNext/wallpaperResetOutput, gowallThemes/gowallGenerate/gowallSave/gowallApply, batterySaver (group admission/guards); chargeMode and weatherSearch/weatherDetect/weatherRefresh (separate executor/controller contracts). Conditional suspend/internal wallpaperCycle are outside the 28-ID inventory.
+- Laptop checklist (needs real-session check):
+  1. Open Wallpaper Settings from Gear/CLI/search; confirm the current library and controls render.
+  2. Rescan a real folder; confirm Scanning → sorted image list with the expected folder and no stuck pending.
+  3. Try a missing folder, then rescan a valid one and restart Settings; confirm the error clears, no stuck pending and no settings/history loss.

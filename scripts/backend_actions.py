@@ -1,4 +1,4 @@
-"""Synchronous action ownership; the host retains protocol, acknowledgements and legacy routing."""
+"""Action ownership; the host retains scheduling, protocol and completion publication."""
 from dataclasses import dataclass
 from typing import Callable
 
@@ -18,7 +18,8 @@ class ActionSpec:
 
 
 class ActionRegistry:
-    def __init__(self, specs=()):
+    def __init__(self, specs=(), *, start_feature=None):
+        self._start_feature = start_feature
         self._specs = {}
         self.register(specs)
 
@@ -27,7 +28,7 @@ class ActionRegistry:
         for spec in specs:
             if spec.name in self._specs or spec.name in pending:
                 raise ValueError('Duplicate action owner: '+spec.name)
-            if spec.execution != 'sync':
+            if spec.execution != 'sync' and not (spec.execution == 'worker' and callable(spec.complete)):
                 raise ValueError('Only synchronous actions are supported')
             pending[spec.name] = spec
         self._specs.update(pending)
@@ -50,4 +51,11 @@ class ActionRegistry:
     def dispatch(self, name, request, *, context, demo):
         self.check_context(name, context)
         spec = self._specs[name]
-        return (spec.demo if demo else spec.live)(request)
+        return spec.demo(request) if demo else self.invoke_live(name, request)
+
+    def invoke_live(self, name, request):
+        spec = self._specs[name]
+        if spec.execution == 'worker':
+            if self._start_feature is None: raise ValueError('Worker dispatcher is unavailable')
+            return self._start_feature(name, lambda: spec.live(request))
+        return spec.live(request)

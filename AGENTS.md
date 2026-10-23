@@ -14,7 +14,7 @@ service APIs and stdlib helpers. Preserve attribution for third-party code.
 - `scripts/desktop_backend.py`: unprivileged JSON-lines backend; domain helpers
   and shared runner/storage/content/catalog modules remain flat in `scripts/`.
 - `config/features.json`: versioned index; descriptors own feature registrations.
-- `scripts/backend_actions.py`: sync registry; providers use narrow callbacks and explicit host bindings.
+- `scripts/backend_actions.py`: sync/worker registry; narrow capabilities and explicit host bindings; workers delegate existing scheduling/completion.
 - `tests/`: unit contracts and opt-in private Wayland checks.
 - `docs/STATE.md`: current status; `docs/MIGRATION_LOG.md`: concise new milestones.
 

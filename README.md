@@ -465,6 +465,9 @@ if unwanted; niri owns that policy.
 
 [Report a problem](https://github.com/longme179/lme-fedora-niri-qs/issues) with
 reproduction steps, logs, doctor output, `niri --version` and `qs --version`.
+
+Wi-Fi keeps the selected network open after a connection error so you can retry. Repeated password prompts fail early; a 15-second authentication guard preserves the longer timeout for IP configuration. Closing the dialog during an attempt lets it continue. Enterprise networks use Advanced network settings.
+
 Pair new Bluetooth devices from Control Center → Devices, including PIN and passkey confirmation. Install `python3-gobject-base` for the pairing agent. Blueman and the network editor remain available for external device settings and enterprise Wi-Fi.
 
 Run `./scripts/check.sh` for backend regressions, script syntax and demo state.

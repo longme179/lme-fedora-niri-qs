@@ -41,7 +41,8 @@ Use available tools and plain rg/Python instead of requiring Claude-only tools.
 4. Reuse the catalog, schema fragments, action registry, shared services, scheduler
    and completion emitter. Keep one source for rules/defaults and domain-owned
    validation. An added feature should mostly touch its own files and index entry.
-5. Preserve behavior, public IPC/CLI/JSON, Settings persistence, worker lifecycle,
+5. Preserve behavior in refactors; owner-authorized fixes/QoLs may improve it. Keep
+   public IPC/CLI/JSON, Settings persistence, worker lifecycle,
    preview/standalone Settings and existing dependency guardrails. Async preflight,
    cancellation and completion contracts must be understood before extraction.
 6. Characterize observable behavior before refactoring; test the affected contract.

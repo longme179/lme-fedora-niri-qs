@@ -23,6 +23,12 @@ Singleton {
     readonly property bool sharingDnd: ShellState.preferences.dndWhileSharing !== false && PrivacyState.sharing
     readonly property bool effectiveDnd: dnd || sharingDnd
     property bool historyLoaded: false
+    property int historyRevision: 0
+    property int savedRevision: 0
+    property int submittedRevision: -1
+    property string saveError: ""
+    readonly property bool historyDirty: historyRevision > savedRevision
+    readonly property bool saving: submittedRevision >= 0
     readonly property var mutedApps: ShellState.preferences.notificationMutedApps || []
     readonly property var popups: !enabled || effectiveDnd ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
     readonly property int count: history.length
@@ -31,7 +37,21 @@ Singleton {
     Timer { interval: 1000; running: root.dnd && root.dndUntil > 0; repeat: true; onTriggered: root.now = Date.now() }
     Connections {
         target: ShellState
-        function onBackendReadyChanged() { if (root.enabled && ShellState.backendReady && root.historyLoaded && !ShellState.demo) persistDelay.restart(); }
+        function onBackendReadyChanged() {
+            if (!ShellState.backendReady) {
+                if (root.saving) root.saveError = "The backend stopped before notification history could be saved.";
+                root.submittedRevision = -1;
+            } else if (root.enabled && root.historyLoaded && root.historyDirty) persistDelay.restart();
+        }
+        function onLastResultChanged() {
+            const result = ShellState.lastResult;
+            if (!root.saving || !result || result.action !== "notificationSave" || result.pending) return;
+            const attempted = root.submittedRevision;
+            root.submittedRevision = -1;
+            if (result.ok) { root.savedRevision = attempted; root.saveError = ""; }
+            else root.saveError = result.message || "Notification history could not be saved.";
+            if (root.historyRevision > attempted) persistDelay.restart();
+        }
         function onSnapshotChanged() {
             if (!root.enabled || root.historyLoaded || !ShellState.backendReady) return;
             root.historyLoaded = true;
@@ -39,10 +59,22 @@ Singleton {
             root.history = [...root.history, ...restored].slice(0, 200);
         }
     }
-    onHistoryChanged: if (enabled && historyLoaded && !ShellState.demo && !ShellState.settingsApp) persistDelay.restart()
+    onHistoryChanged: {
+        if (enabled && historyLoaded && !ShellState.demo && !ShellState.settingsApp) {
+            historyRevision++;
+            if (!saving) persistDelay.restart();
+        }
+    }
+    onEnabledChanged: if (!enabled) { persistDelay.stop(); submittedRevision = -1; }
+    function saveHistory() {
+        if (!enabled || !historyLoaded || !historyDirty || saving || !ShellState.backendReady || ShellState.demo || ShellState.settingsApp) return;
+        submittedRevision = historyRevision;
+        ShellState.run("notificationSave", {entries: history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", imagePath: e.imagePath || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))});
+    }
+    function retrySave() { persistDelay.stop(); saveHistory(); }
     Timer {
         id: persistDelay; interval: 500
-        onTriggered: if (root.enabled && ShellState.backendReady) ShellState.run("notificationSave", {entries: root.history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", imagePath: e.imagePath || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))})
+        onTriggered: root.saveHistory()
     }
 
     function screenshotImage(notification) {

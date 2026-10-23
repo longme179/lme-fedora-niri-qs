@@ -381,3 +381,13 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   1. Super+V: type rapidly, press Enter, reopen, copy text/image and check image-click annotation; verify no stuck Copy/Search state.
   2. Send notifications, use DND/mute, open history and restart the shell; confirm history and settings restore.
   3. If a history storage error occurs, fix storage access and use Retry before quitting; confirm the message clears and history survives restart.
+
+## F3 pending ownership plan — 2026-10-23
+
+- Branch docs/f3-pending-ownership-plan, based on merged main f28be3d (F1/F2, PR22). Documentation only; no runtime/test/assertion/fixture changes.
+- F3_PENDING_OWNERSHIP_PLAN.md specifies the proposed clientSerial request tag and actionPending wire metadata; existing lastResult/messages/sequences and direct backend snapshot facades stay. Owner approval of the additive wire contract precedes implementation.
+- Ownership comes from existing feature_jobs/charge_job after snapshot completion handling; UI combines it with latest unacknowledged sends. Covers duplicate rejection, late snapshots, synchronous bursts, fileSearch replacement, reentrancy and reconnect without a second scheduler/job table.
+- Plan preserves legacy-peer fallback, domain controllers, F1/F2 recovery, public Boolean pendingActions and emit(backend). Malformed metadata after negotiation conservatively retains ownership until a valid frame/reconnect; persistent peer faults can leave busy visible. Adapter retirement requires owner-approved removal of old peers/fixtures.
+- G0 ONCE, disposable XDG/private Sway/D-Bus: 576 pass / 0 fail / 148 skip (724 total), 130.781 s; qmllint 148 files, 0 errors / 71 existing warnings. Counts unchanged from F1/F2; skips are 136 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri.
+- Docs-only scope: no GUI gates or launch/RSS sanity, no raw logs committed. Runtime/device/memory claims are unverified; the plan names the later native gates, normal sanity and real-session checklist.
+- STATE and NEXT_OPTIMIZATION_PLAN link the review boundary. No behavior change, F4/F5, recordStop migration, D1 work, A6 change, source-ceiling increase or dependency exception.

@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d, Wi-Fi feedback and device-action fixes merged: 37/89 IDs (28 sync + 9 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- QoL review: fix/content-result-recovery implements NEXT_OPTIMIZATION_PLAN.md F1/F2 (Clipboard delivery/restarts, Notification save recovery). F3–F5 remain separate review branches; ASYNC_ACTIONS.md lists recordStop plus twenty with extra contracts. No further async port started.
+- QoL: F1/F2 merged in f28be3d (Clipboard delivery/restarts, Notification save recovery). F3_PENDING_OWNERSHIP_PLAN.md proposes the next wire contract; planning only, approval before runtime. F4/F5 and recordStop remain later; no further async port started.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

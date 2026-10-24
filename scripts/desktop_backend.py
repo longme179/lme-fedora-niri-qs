@@ -566,6 +566,10 @@ class DesktopBackend:
             (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,
                 lambda value:setattr(self,'charge_job',self.charge_executor.submit(self.set_charge,value)),
                 lambda:setattr(self,'system_cache',None),lambda:self.demo_snapshot()['system']['charging'])),
+            (provide_wallpaper_changes, WallpaperChangeCapabilities(lambda:tuple(self.feature_jobs),
+                lambda *args,**kwargs:self.apply_wallpaper(*args,**kwargs),lambda output:self.wallpapers.advance(output),
+                lambda output:self.wallpapers.reset_output(output),lambda:self.preferences.values,
+                lambda path:validate_preference('wallpaper',path),lambda value:validate_wallpaper('wallpaperOutputs',value))),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
@@ -1445,21 +1449,6 @@ class DesktopBackend:
             if not place:
                 raise ValueError("Select a city first.")
             self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
-        elif action == "wallpaper":
-            value = request.get("path")
-            if not isinstance(value, str):
-                raise ValueError("A wallpaper file path is required")
-            path = str(Path(value).expanduser().resolve())
-            if request.get('output'):
-                changes=validate_wallpaper('wallpaperOutputs',{request['output']:path})
-                self.preferences.values['wallpaperOutputs']={**self.preferences.values['wallpaperOutputs'],**changes}
-            else: self.preferences.values["wallpaper"] = validate_preference("wallpaper", path)
-        elif action == 'wallpaperNext':
-            if not self.preferences.values['wallpaperPlaylist']: raise ValueError('The playlist is empty')
-        elif action == 'wallpaperResetOutput':
-            output=request.get('output')
-            validate_wallpaper('wallpaperOutputs',{output:'/preview.png'})
-            self.preferences.values['wallpaperOutputs']={k:v for k,v in self.preferences.values['wallpaperOutputs'].items() if k!=output}
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
@@ -1586,12 +1575,6 @@ class DesktopBackend:
         if action in {"suspend", "reboot", "poweroff"}:
             run("systemctl", action)
             return f"{action.capitalize()} requested"
-        if action in {'wallpaper','wallpaperNext','wallpaperResetOutput'}:
-            if any(key.startswith('wallpaper') for key in self.feature_jobs): raise ValueError('A wallpaper change is already running')
-            if action=='wallpaper': job=lambda: self.apply_wallpaper(request.get('path'),output=request.get('output',''))
-            elif action=='wallpaperNext': job=lambda: self.wallpapers.advance(request.get('output'))
-            else: job=lambda: self.wallpapers.reset_output(request.get('output'))
-            return self.start_feature(action,job)
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":

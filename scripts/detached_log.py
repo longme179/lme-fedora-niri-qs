@@ -92,7 +92,8 @@ def supervise(command, log_fd, ready_fd):
         child = os.posix_spawnp(command[0], command, os.environ, file_actions=[
             (os.POSIX_SPAWN_DUP2, write_fd, 1), (os.POSIX_SPAWN_DUP2, write_fd, 2),
             (os.POSIX_SPAWN_CLOSE, read_fd), (os.POSIX_SPAWN_CLOSE, write_fd)],
-            setsigdef=(signal.SIGTERM, signal.SIGINT))
+            setsigdef=(signal.SIGTERM, signal.SIGINT, signal.SIGPIPE,
+                *[getattr(signal,name) for name in ('SIGXFZ','SIGXFSZ') if hasattr(signal,name)]))
         os.write(ready_fd, b'{"ok":true}\n')
     except OSError as error:
         import json

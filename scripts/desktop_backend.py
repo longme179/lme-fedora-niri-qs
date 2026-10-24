@@ -36,6 +36,8 @@ from settings_schema import Schema as PreferenceSchema
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
+from weather_actions import WeatherCapabilities, provide as provide_weather
+from charge_actions import ChargeCapabilities, provide as provide_charge
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, DEFAULT_CONTROL_GRID, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
                               appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, apply_layout, current_layout
@@ -559,6 +561,11 @@ class DesktopBackend:
             (provide_sessions, LeaseCapabilities(lambda:self.preferences.values,lambda:self.capture.state,
                 lambda *args:self.capture.export(*args),lambda *args:self.capture.annotate(*args),
                 lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
+            (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
+                lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot())),
+            (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,
+                lambda value:setattr(self,'charge_job',self.charge_executor.submit(self.set_charge,value)),
+                lambda:setattr(self,'system_cache',None),lambda:self.demo_snapshot()['system']['charging'])),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
@@ -1433,24 +1440,11 @@ class DesktopBackend:
             if value not in POWER_PROFILES:
                 raise ValueError("Invalid power profile")
             system["powerProfile"] = value
-        elif action == "chargeMode":
-            value = request.get("value")
-            if type(value) is not int or value not in (85, 100):
-                raise ValueError("Choose conservation (85) or maximum charge (100).")
-            system["charging"].update(mode="conservation" if value == 85 else "max", limitPercent=value)
-        elif action == "weatherSearch":
-            query = request.get("query")
-            if not isinstance(query, str) or not 2 <= len(query.strip()) <= 100:
-                raise ValueError("Enter a city name of 2–100 characters.")
-            state["weather"]["search"] = {"query": query, "loading": False, "error": "",
-                "results": [{"name": query.strip(), "country": "Demo", "latitude": 10.82, "longitude": 106.63}]}
         elif action == "weatherSelect":
             place = location(request.get("location"))
             if not place:
                 raise ValueError("Select a city first.")
             self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
-        elif action in {"weatherRefresh", "weatherDetect"}:
-            pass
         elif action == "wallpaper":
             value = request.get("path")
             if not isinstance(value, str):
@@ -1556,27 +1550,6 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.set("displayLayout", layout)
             self.displays = self.display_control.snapshot()
             return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
-        if action == "chargeMode":
-            value = request.get("value")
-            if type(value) is not int or value not in (85, 100):
-                raise ValueError("Choose conservation (85) or maximum charge (100).")
-            state = self.charging()
-            if not state["canSet"]:
-                raise ValueError(state["reason"])
-            if self.charge_job is not None:
-                raise ValueError("A charge-mode change is already running.")
-            self.charge_job = self.charge_executor.submit(self.set_charge, value)
-            self.system_cache = None
-            return "Changing charge mode; administrator authentication may be required"
-        if action == "weatherSearch":
-            self.weather.search(request.get("query"))
-            return "Searching locations"
-        if action == "weatherDetect":
-            self.weather.detect()
-            return "Detecting approximate location"
-        if action == "weatherRefresh":
-            self.weather.refresh(self.preferences.values["weatherAutoLocation"])
-            return "Refreshing weather"
         if action == "weatherSelect":
             place = location(request.get("location"))
             if not place:

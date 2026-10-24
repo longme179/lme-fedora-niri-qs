@@ -11,7 +11,7 @@ import re
 import signal
 import sys
 import uuid
-from peripheral_battery import bluetooth_device
+from peripheral_values import bluetooth_device
 
 AGENT_PATH = '/org/lme/Shell/BluetoothAgent'
 AGENT_XML = '''<node><interface name="org.bluez.Agent1">

@@ -1,6 +1,7 @@
 """Bounded wallpaper playlists and per-output awww images; no rendering daemon."""
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
+from content_types import EXTENSIONS, image_path
 from contextlib import contextmanager
 import fcntl
 import math
@@ -10,7 +11,6 @@ import re
 import time
 
 TRANSITIONS = ('fade','wipe','wave','grow','outer','left','right','top','bottom','simple','none','random')
-EXTENSIONS = {'.png','.jpg','.jpeg','.webp','.gif','.bmp'}
 DEFAULTS = {'wallpaperPlaylist':[], 'wallpaperPlaylistEnabled':False, 'wallpaperPlaylistPaused':False,
             'wallpaperPlaylistShuffle':False, 'wallpaperPlaylistInterval':300, 'wallpaperPlaylistOutput':'',
             'wallpaperTransition':'fade', 'wallpaperTransitionDuration':3.0, 'wallpaperOutputs':{},
@@ -25,18 +25,6 @@ def output_name(value, shared=False):
     raise ValueError('Choose a valid display name')
 
 
-def image_path(value):
-    if not isinstance(value,str) or not value or len(value)>4096 or any(ord(c)<32 for c in value):
-        raise ValueError('Choose a wallpaper image path')
-    path=Path(value).expanduser()
-    if not path.is_absolute():
-        raise ValueError('Choose an absolute PNG, JPEG, WebP, GIF, or BMP path')
-    try: path=path.resolve()
-    except RuntimeError as exc: raise ValueError('Wallpaper path contains a symlink loop') from exc
-    text=str(path)
-    if path.suffix.lower() not in EXTENSIONS or len(text)>4096 or any(ord(c)<32 or 0xd800<=ord(c)<=0xdfff for c in text):
-        raise ValueError('Choose an absolute PNG, JPEG, WebP, GIF, or BMP path')
-    return text
 
 
 def validate(key,value):

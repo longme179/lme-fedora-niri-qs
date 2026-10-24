@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Release memory tool merged (d2a58b0). refactor/shared-domain-values extracts image paths/peripheral values with old import facades; approved test-data update applied. See SHARED_VALUES_PLAN.md. Laptop release/PSS checks remain pending; no later family authorized.
+- Release memory tool and shared image/peripheral values merged (53e321a). refactor/shared-display-layout extracts the shared layout contract with old Display exports; see SHARED_DISPLAY_LAYOUT_PLAN.md. Laptop release/PSS checks remain pending; no later family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -16,7 +16,7 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Compatibility adapters and retirement
 
-- Runner/errors/TOOLS, storage/content-type/image-path/peripheral-value re-exports: retain until zero consumers plus owner-approved retirement.
+- Runner/errors/TOOLS, storage/content-type/image-path/peripheral-value/display-layout re-exports: retain until zero consumers plus owner-approved retirement.
 - F3 legacy pending reducer retains old-peer/fixture fallback; retire only at zero legacy consumers plus owner approval. pendingActions and emit/handle/snapshot stay public facades.
 - Integer controlTab/named env mapping: public compatibility; internal adapters retire after all callers/fixtures use stable IDs.
 - Hybrid registry projections, legacy lists, legacy_ids() source bridge and panel

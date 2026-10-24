@@ -570,3 +570,25 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   1. Generate/save/apply a Gowall image and select wallpaper using spaces/Unicode or a symlink path; confirm expected path errors and existing-file protection.
   2. Pair/connect/disconnect/reconnect a peripheral; check names, battery 0% vs unknown, adapter changes and low-battery/DND behavior without duplicate or stale values.
   3. Recheck the real-session release checklist and reviewed steady/Settings/ordinary-active PSS inventory; physical device/GPU/restore behavior is not certified by private fixtures.
+
+## Shared display layout contract — 2026-10-25
+
+- Branch refactor/shared-display-layout, main 53e321a (shared values merged). Plan 732dd37, characterization bd492a8, approved test inputs fc49f16, extraction 3e59a02; final docs separate. No main merge or later milestone.
+- Move validate_layout/current_layout/apply_layout unchanged to shared display_layout; BatterySaver imports shared directly and display_control re-exports all three. No controller/file moves, duplicate implementation, new dependency/process/executor/timer or schema change.
+- Characterization on unchanged production: focused 126/0/2; after extraction 127/0/1. Counts pass/fail/skip. The shared import/identity case was N/A before and now runs; detached fake-niri is an opt-in tested separately below. Architecture 20/0/0 after approved data updates.
+- Owner approved exactly SHARED_DISPLAY_LAYOUT_PLAN.md's two legacy-test updates on 2026-10-25: expected shared import and copied Utilities/Gowall stale-edge fixture. Existing assertion ASTs, timeouts and frozen fixtures stay unchanged; production Utilities is untouched.
+- Affected G0 before 668/0/154 (114.056s), after 669/0/153 (108.154s); qmllint 148 files/0 errors/71 existing warnings. One new import-isolation skip becomes a pass; no test removal.
+- Full final runtime/test head 3e59a02: G0 669/0/153 (108.375s), G1 3/0/0 (10.306s), G2 4/0/0 (38.226s), G3 53/0/0 (121.506s), G4 34/0/0 (50.310s), G6 polling 1/0/0 (19.838s). Run once; final commit changes README/docs only. Final qmllint 148 files/0 errors/71 existing warnings.
+- Default G0 skips: 141 opt-in session/UI, 5 BlueZ, 5 MPRIS, 1 real Matugen and 1 detached fake-niri. Opt-ins are not passes; this branch explicitly executes the detached watchdog and saver UI below, not physical devices.
+- Private watchdog/saver UI before: 4/0/1 (25.676s), then the skipped canvas case with UPGRADE_UI enabled 1/0/0 (1.326s). After, both flags enabled: 5/0/0 (26.717s), including independent rollback after initiator exit and canvas/settings/spectrum/visual restore checks.
+- Extracted functions, all remaining DisplayControl/watchdog functions/classes and BatterySaver functions/classes are AST-identical to main. Exact validation errors, boundaries/bool/finite checks, filtering/order, fractional refresh argv, fail-fast/best-effort errors and input immutability pinned.
+- One branch sanity: 10 fresh-process/fresh-XDG launches each, main/head medians preview 734.02/741.86ms, Settings 804.18/805.59ms (same runtime source later committed unchanged in 3e59a02). Warm OS cache, private Sway pixman/software OpenGL, mapped-window endpoint/20ms poll; no D1 profiling/CIs or raw evidence committed.
+- T+10s RSS KiB main/head: preview QS 278916/280764, backend 25748/25744; Settings QS 230684/231048, backend 25708/25708. Largest increase 0.663%; no +100ms/+10% flags. Separate pairs do not establish combined laptop PSS/budget or a memory saving.
+- Architecture exceptions 8->7, all QML; no Python cross-feature exception remains. Cycle edges stay 12; old size ceilings unchanged; shared module 39 nonblank lines. Coordinator/QML/preferences/catalog/frozen fixtures byte-identical; 75/89 action IDs, 66 descriptor/81 legacy preference keys unchanged.
+- Adapters: display_control's three old imports remain (also through desktop_backend); retire only at zero consumers plus owner approval. Other STATE.md adapter conditions remain. Function __module__ now identifies display_layout; no exercised UI/CLI/result/journal difference.
+- No polling/cache/power-policy/guard/timeout/worker change, provider discovery, retention/deletion or further UI/schema conversion. Laptop release and reviewed aggregate PSS checks remain pending.
+- Laptop checklist (needs real-session check):
+  1. Apply mode/scale/position, confirm, then preview again and revert; confirm all original values return.
+  2. Let an unconfirmed preview time out after closing Settings; confirm independent rollback still restores the original layout.
+  3. Toggle saver on/off from 120 Hz; check exact supported ~60 Hz timing and original mode/brightness/profile/theme restore, including a disconnected/reconnected output.
+  4. Complete RELEASE_CHECKLIST.md and reviewed steady/Settings-open/ordinary-active memory inventories; private VM tests do not certify hardware or total RAM.

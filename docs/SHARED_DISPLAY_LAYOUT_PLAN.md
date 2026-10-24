@@ -36,7 +36,7 @@ Retain old imports until zero consumers and explicit owner-approved retirement.
    branch/draft PR and stop. Physical display/power and aggregate laptop PSS
    checks remain pending; VM tests cannot close RELEASE_CHECKLIST.md.
 
-## Required test maintenance (approval pending)
+## Required test maintenance (owner-approved 2026-10-25)
 
 In tests/test_architecture.py, rename the obsolete Python legacy-edge test to
 test_battery_saver_uses_shared_layout_contract and change its expected import
@@ -47,3 +47,11 @@ assertion, all other assertions, timeouts and frozen fixtures unchanged.
 
 Stable 14 coordinator IDs/core pages stay legacy. Catalog provider discovery,
 retention/deletion, further schema groups, D1 and A6 are outside this branch.
+
+## Execution
+
+Plan 732dd37 precedes characterization bd492a8 on unchanged main production.
+Owner approved exactly the two legacy-test updates above (fc49f16); assertion
+ASTs and frozen fixtures remain unchanged. Extraction 3e59a02 keeps all moved
+function bodies and both domain controllers AST-identical. Final verification,
+sanity and remaining laptop checks are recorded in MIGRATION_LOG.md.

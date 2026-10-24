@@ -541,6 +541,7 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation: self.start_feature(action, operation))
         self.action_state = self.actions.provide([
+            (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_wifi, self._wifi_capabilities),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
@@ -1457,7 +1458,7 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply"}:
+        elif action in {"glassBlurApply", "recordStart", "fileSearch", "palettePreview", "paletteApply"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
@@ -1554,7 +1555,6 @@ class DesktopBackend:
                 with self.battery_saver.guard(allow_active=True):
                     return self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"])
             return self.start_feature(action,record)
-        if action == "recordStop": return self.start_feature(action,self.recorder.stop)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
             query=request.get("query")

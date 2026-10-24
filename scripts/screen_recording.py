@@ -22,6 +22,12 @@ import time
 
 
 class Recorder:
+    @staticmethod
+    def provide_stop(stop):
+        from backend_actions import ActionSpec
+        return ((ActionSpec('recordStop', {'shell'}, lambda request: stop(), lambda request: None,
+                            execution='worker', complete=lambda value: None),), lambda: {})
+
     def __init__(self, runner, sysfs=Path('/sys')):
         self.runner,self.sysfs=runner,sysfs
         self.child=None;self.selector=None;self.closed=False;self.preparing=False;self.log=None;self.path=None;self.started=0;self.lock=threading.RLock()

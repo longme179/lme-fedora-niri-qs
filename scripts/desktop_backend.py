@@ -59,6 +59,7 @@ from capture_actions import ControlCapabilities, ImageCapabilities, LeaseCapabil
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
+from mirror_actions import MirrorCapabilities, provide as provide_mirror
 from file_search_actions import SearchCapabilities, provide as provide_file_search
 from file_search import roots as search_roots, search as search_files
 from threading import Event
@@ -552,6 +553,13 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
+            (provide_mirror, MirrorCapabilities(settings_only=lambda:self.settings_only,
+                preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
+                available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),
+                try_run=lambda *args:self.try_run(*args),start=lambda *args:self.mirror.start(*args),
+                stop=lambda:self.mirror.stop(),state=lambda:self.mirror.state(),outputs=lambda:self.display_control.outputs(),
+                current=lambda:self.mirror_state,install=lambda value:setattr(self,'mirror_state',value),
+                refresh_displays=lambda:self.perform_demo('displayRefresh',{}),displays=lambda:self.displays['outputs'])),
             (provide_display, PreviewCapabilities(lambda:self.displays,lambda value:setattr(self,'displays',value),
                 lambda:self.display_control.snapshot(),lambda layout:self.display_control.start(layout),
                 lambda token,keep:self.display_control.decide(token,keep),lambda:'batterySaver' in self.feature_jobs,
@@ -1343,7 +1351,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1389,20 +1397,6 @@ class DesktopBackend:
                 "interfaces": [{"name": "wlp1s0", "download": 245760, "upload": 18432}],
                 "processes": [{"pid": 1820, "name": "firefox", "user": "user", "cpu": 18.4, "memoryBytes": 943718400}, {"pid": 1142, "name": "niri", "user": "user", "cpu": 3.8, "memoryBytes": 188743680}, {"pid": 1250, "name": "quickshell", "user": "user", "cpu": 1.2, "memoryBytes": 125829120}],
                 "processCount": 3, "sampledAt": 1, "error": ""}
-        elif action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
-            if action == 'mirrorRefresh':
-                self.perform_demo('displayRefresh', {})
-                if len(self.displays['outputs']) == 1:
-                    external = copy.deepcopy(self.displays['outputs'][0])
-                    external.update(name='HDMI-A-1', description='Demo projector', x=1920)
-                    self.displays['outputs'].append(external)
-            if action == 'mirrorStart':
-                names = {o['name'] for o in self.displays['outputs'] if o['enabled']}
-                if request.get('source') not in names or request.get('target') not in names or request.get('source') == request.get('target'):
-                    raise ValueError('Choose two different, active niri displays.')
-                if not self.preferences.values['mirroringEnabled']: raise ValueError('Display mirroring is disabled')
-                self.mirror_state = {'active': True, 'available': True, 'source': request.get('source'), 'target': request.get('target'), 'error': ''}
-            elif action == 'mirrorStop': self.mirror_state = {**self.mirror_state, 'active': False}
         elif action.startswith("gowall"): pass
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
@@ -1467,27 +1461,6 @@ class DesktopBackend:
     def perform(self, action: str, request: dict[str, Any]) -> str:
         if self.actions.get(action) is not None: return self.actions.invoke_live(action, request)
         run = self.runner.run
-        if action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
-            if self.settings_only:
-                if action != 'mirrorRefresh':
-                    args = [request.get('source'), request.get('target')] if action == 'mirrorStart' else []
-                    if any(not isinstance(a, str) for a in args): raise ValueError('Choose source and target displays')
-                    reply = run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', action, *args)
-                    if reply.strip() != 'true': raise ValueError(f"Start {self.preferences.values['shellName']} before controlling display mirroring.")
-                reply = self.try_run('quickshell', '-p', self.shell_entry, 'ipc', 'call', 'shell', 'mirrorStatus')
-                self.mirror_state = {'active': False, 'available': self.runner.available('wl-mirror'),
-                                     'error': f"Start {self.preferences.values['shellName']} before controlling display mirroring."}
-                try:
-                    value = json.loads(reply or '{}')
-                    if isinstance(value, dict) and type(value.get('active')) is bool: self.mirror_state = value
-                except ValueError: pass
-                return 'Mirror refreshed' if action == 'mirrorRefresh' else 'Mirror request sent'
-            if action == 'mirrorStart':
-                if not self.preferences.values['mirroringEnabled']: raise ValueError('Display mirroring is disabled')
-                return self.mirror.start(request.get('source'), request.get('target'), self.display_control.outputs())
-            if action == 'mirrorStop': return self.mirror.stop()
-            self.mirror_state = self.mirror.state()
-            return 'Mirror refreshed'
         if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             if self.wifi_watching != request["enabled"]:

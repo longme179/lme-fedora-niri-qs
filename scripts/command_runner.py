@@ -10,6 +10,7 @@ import subprocess
 import sys
 from threading import Event, Lock
 import time
+from command_output import DEFAULT_LIMIT, LIMITS, capture, text
 
 
 TOOLS = (
@@ -47,7 +48,9 @@ class CommandRunner:
             raise CommandError(f"Required command is unavailable: {name}")
         return self.commands[name]
 
-    def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None, observe=None) -> str:
+    def run(self, name: str, *args: str, timeout: float = 3.0, input: str | None = None, observe=None, max_output=None) -> str:
+        limit = LIMITS.get(name, DEFAULT_LIMIT) if max_output is None else max_output
+        if type(limit) is not int or limit <= 0: raise ValueError('Output limit must be a positive integer')
         argv = [self.executable(name), *map(str, args)]
         if name == 'gowall':
             argv = [sys.executable, str(Path(__file__).with_name('managed_command.py')), '--parent', str(os.getpid()), '--', *argv]
@@ -71,19 +74,16 @@ class CommandRunner:
                 )
                 self.pending.add(done)
             deadline = time.monotonic() + timeout
-            while True:
+            def check():
                 if self.closed.is_set():
-                    self.stop(process)
                     raise CommandError(f"{name} canceled: backend is closing")
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    self.stop(process)
                     raise CommandError(f"{name} timed out")
-                try:
-                    stdout, stderr = process.communicate(timeout=min(.1, remaining))
-                    break
-                except subprocess.TimeoutExpired as progress:
-                    if observe is not None: observe(progress.output, progress.stderr)
+                return min(.1, remaining)
+            stdout, stderr, overflow = capture(process, check, limit, observe)
+            if overflow: raise CommandError(f'{name} output exceeds {limit} bytes')
+            stdout, stderr = text(stdout), text(stderr)
         except OSError as exc:
             raise CommandError(f"Unable to run {name}: {exc.strerror}") from exc
         finally:
@@ -110,10 +110,7 @@ class CommandRunner:
             time.sleep(.1)
             try: os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError: pass
-        try: process.communicate(timeout=.5)
-        except subprocess.TimeoutExpired:
-            # A descendant that detached from the owned session must not hold shutdown's pipes open.
-            process.wait(timeout=.5)
+        try: process.wait(timeout=.5)
         finally:
             for stream in (process.stdin, process.stdout, process.stderr):
                 if stream: stream.close()

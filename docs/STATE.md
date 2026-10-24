@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle and Capture entry batches merged. Display preview branch review: 68/89 IDs (42 sync entry calls + 26 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture and Display preview batches merged. Mirroring review branch: 71/89 IDs (45 sync entry calls + 26 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- refactor/display-preview-actions implements five synchronous preview/compositor entries; controller/watchdog/guard/transaction policy unchanged. See DISPLAY_PREVIEW_PLAN.md and ROADMAP.md. Real laptop checks remain pending in RELEASE_CHECKLIST.md; no later family is authorized.
+- refactor/mirroring-actions implements three synchronous mirror entries, with unchanged main-shell ownership and Settings IPC; legacy-input update approved/applied. See MIRRORING_PLAN.md and ROADMAP.md. Real laptop checks remain pending in RELEASE_CHECKLIST.md; no later family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

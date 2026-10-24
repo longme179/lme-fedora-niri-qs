@@ -26,8 +26,8 @@ migration coverage, not product stability or remaining engineering effort.
 | Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry implemented | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 11 catalog records, 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 66 of 147 keys descriptor-owned; 81 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
-| Backend dispatch | Display preview branch: 68 of 89 IDs registered, 42 sync entry calls + 26 workers | 21 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
-| Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle and Capture entry batches merged; preview/compositor entries implemented for review | Laptop integration, scoped combined memory and normal release sign-off |
+| Backend dispatch | Mirroring branch: 71 of 89 IDs registered, 45 sync entry calls + 26 workers | 18 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
+| Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture and Display preview batches merged; mirror routes implemented for review | Laptop integration, scoped combined memory and normal release sign-off |
 | Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity | Combined real-session shell + Settings/worker memory and physical device/GPU checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
@@ -35,10 +35,11 @@ We have passed the infrastructure/pilot stage and are hardening integration befo
 expanding migrations. The merged resource branch converted the 21 async entry points
 through explicit preflight/admission/lease/controller contracts; see ASYNC_ACTIONS.md.
 Capture's five synchronous start/close/language entries are merged; see
-CAPTURE_ENTRY_PLAN.md. The next family moves the four Display preview entries and
-platformRefresh into providers; see DISPLAY_PREVIEW_PLAN.md. The existing detached
-watchdog, saver guard and journal-before-preferences confirmation order stay.
-Controller/UI/pending/shutdown semantics stay; no additional worker/process.
+CAPTURE_ENTRY_PLAN.md. Display preview/platformRefresh entries are merged; see
+DISPLAY_PREVIEW_PLAN.md. Mirroring now has its provider for review; see
+MIRRORING_PLAN.md. The main shell still owns the child, Settings uses its IPC and
+demo remains isolated. Controllers/UI/pending/shutdown semantics stay, including
+watchdog/guard/confirmation policy; no additional worker/process.
 Existing stable legacy ownership is acceptable; full conversion is not the goal.
 
 ## Proposed order after resource/lifecycle review
@@ -47,14 +48,15 @@ Existing stable legacy ownership is acceptable; full conversion is not the goal.
    21 converted async entries are merged. Complete RELEASE_CHECKLIST.md on the laptop and
    assess the combined memory scenario with its profile/worker scope stated.
    Hardware/GPU success cannot be inferred from private software-rendered checks.
-2. **Choose the next useful small family after Display preview review.** There are 21
+2. **Choose the next useful small family after Mirroring review.** There are 18
    legacy coordinator IDs and 81 legacy schema keys. Prefer cohesive groups whose
    move reduces actual change cost; characterize first and retain public facades/
-   transaction semantics. Mirroring's three entries are the next cohesive candidate:
-   preserve main-shell ownership, Settings IPC replies/fallback and disconnected
-   output cleanup. Remaining wallpaper/Weather selection routes are another small
-   candidate. Core settings transactions, refresh and power/control orchestration
-   may stay legacy when extraction would merely move stable coordination.
+   transaction semantics. Remaining selection/application routes are the next small
+   candidate: paletteApply, glassBlurApply, gowallSetup and weatherSelect, through
+   their existing providers/services. Preserve preview matching, setup admission,
+   preference writes and demo behavior. Core settings transactions, refresh and
+   power/control orchestration may stay legacy when extraction would merely move
+   stable coordination.
 3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
    an adapter. A descriptor backend contract must preserve disabled/broken-catalog
    fallback and ownership before replacing them; no competing registry.

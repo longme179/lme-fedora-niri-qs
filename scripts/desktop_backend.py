@@ -47,6 +47,8 @@ from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
 from content_types import MAX_TEXT
+from gowall_actions import GowallCapabilities, provide as provide_gowall
+from saver_actions import SaverCapabilities, provide as provide_saver
 from recording_actions import RecordingCapabilities, provide as provide_recording
 from palette_actions import PaletteCapabilities, provide as provide_palette
 from capture_actions import ImageCapabilities, provide_image
@@ -545,6 +547,12 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
+            (provide_gowall, GowallCapabilities(lambda:tuple(self.feature_jobs), lambda:self.image_utilities.themes(),
+                lambda request:self.image_utilities.generate(request), lambda path,destination:self.image_utilities.save(path,destination),
+                lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
+                lambda value:setattr(self.image_utilities,'state',value))),
+            (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
+                lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
@@ -1156,8 +1164,6 @@ class DesktopBackend:
                     spec.complete(value)
                     message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
                 elif action == "fileSearch": self.file_search = value; message = "File search completed"
-                elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
-                elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
                 elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
                     token, content = value
@@ -1349,10 +1355,7 @@ class DesktopBackend:
         state = self.demo_snapshot()
         if spec := self.actions.get(action): return spec.demo(request)
         system = state["system"]
-        if action == 'batterySaver':
-            if type(request.get('enabled')) is not bool: raise ValueError('Battery saver must be enabled or disabled')
-            self.battery_saver_state = {"active": request['enabled'], "busy": False, "error": "", "warnings": []}
-        elif action == "wifiWatch":
+        if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             self.wifi_watching = request["enabled"]
         elif action == "controlsRefresh": pass
@@ -1386,7 +1389,6 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
         elif action.startswith("gowall"): pass
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action.startswith("appearance"):
@@ -1487,12 +1489,6 @@ class DesktopBackend:
     def perform(self, action: str, request: dict[str, Any]) -> str:
         if self.actions.get(action) is not None: return self.actions.invoke_live(action, request)
         run = self.runner.run
-        if action == 'batterySaver':
-            enabled = request.get('enabled')
-            if type(enabled) is not bool: raise ValueError('Battery saver must be enabled or disabled')
-            state = self.saver_snapshot()
-            self.saver_preflight(enabled, state)
-            return self.start_feature(action, lambda: self.toggle_battery_saver(enabled))
         if action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
             if self.settings_only:
                 if action != 'mirrorRefresh':
@@ -1570,14 +1566,9 @@ class DesktopBackend:
             self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
             return "Wallpaper palette applied; element overrides preserved"
         if action.startswith("appearance"): return self.appearance_action(action, request)
-        if action in ('gowallThemes','gowallGenerate','gowallSave','gowallApply','gowallSetup'):
+        if action == 'gowallSetup':
             if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
-            if action=='gowallThemes': operation=self.image_utilities.themes
-            elif action=='gowallGenerate': operation=lambda:self.image_utilities.generate(request)
-            elif action=='gowallSave': operation=lambda:self.image_utilities.save(request.get('path'),request.get('destination'))
-            elif action=='gowallApply': operation=lambda:self.image_utilities.apply(request.get('path'),request.get('output',''))
-            else: return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
-            return self.start_feature(action,operation)
+            return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
         if action == "displayRefresh":
             self.displays = self.display_control.snapshot()
             return "Displays refreshed"

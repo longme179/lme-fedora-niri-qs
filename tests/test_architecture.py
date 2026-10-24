@@ -32,8 +32,8 @@ class ArchitectureCharacterizationCase(unittest.TestCase):
         self.assertEqual(descriptor['bar']['after'], 'privacy')
         self.assertEqual(descriptor['settingsPage']['after'], 'notifications')
 
-    def test_current_python_legacy_edges_remain_explicit(self):
-        for source, target in [('scripts/battery_saver.py', 'display_control')]:
+    def test_battery_saver_uses_shared_layout_contract(self):
+        for source, target in [('scripts/battery_saver.py', 'display_layout')]:
             with self.subTest(source=source): self.assertIn(target, self.imports(source))
 
 
@@ -135,8 +135,8 @@ class ArchitectureGuardCase(unittest.TestCase):
         self.assertIn('Ratchet size ceiling', self.errors())
 
     def test_vanished_legacy_exception_must_be_removed(self):
-        path = self.root/'scripts/battery_saver.py'
-        path.write_text(path.read_text().replace('from display_control import apply_layout, current_layout, validate_layout', ''))
+        path = self.root/'qml/settings/UtilitiesPage.qml'
+        path.write_text(path.read_text().replace('GowallSettings {', 'Item {'))
         self.assertIn('Stale legacy exception', self.errors())
 
     def test_unknown_flat_implementation_requires_ownership(self):

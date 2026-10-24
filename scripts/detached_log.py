@@ -76,11 +76,12 @@ def start_detached(argv, *, cwd, stdin, stdout, stderr, start_new_session):
 
 def supervise(command, log_fd, ready_fd):
     import select
-    stopping = None
+    def force_stop(_signum, _frame):
+        os.killpg(os.getpid(), signal.SIGKILL)
+    signal.signal(signal.SIGALRM, force_stop)
     def stop(signum, _frame):
-        nonlocal stopping
-        stopping = time.monotonic()
         signal.signal(signum, signal.SIG_IGN)
+        signal.setitimer(signal.ITIMER_REAL, .3)
         os.killpg(os.getpid(), signum)
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
@@ -103,24 +104,18 @@ def supervise(command, log_fd, ready_fd):
         os.close(ready_fd)
         os.close(write_fd)
     sink = LimitedLog(log_fd)
-    def check_stop():
-        if stopping is not None and time.monotonic()-stopping >= .3:
-            os.killpg(os.getpid(), signal.SIGKILL)
     try:
         while True:
-            check_stop()
-            if not select.select([read_fd], [], [], .1)[0]: continue
+            select.select([read_fd], [], [])
             value = os.read(read_fd, 65536)
             if not value: break
             sink.write(value)
-        while True:
-            check_stop()
-            pid, status = os.waitpid(child, os.WNOHANG)
-            if pid: break
-            time.sleep(.05)
+        _, status = os.waitpid(child, 0)
         code = os.waitstatus_to_exitcode(status)
         if code < 0:
-            signal.signal(-code, signal.SIG_DFL)
+            if -code not in (signal.SIGKILL, signal.SIGSTOP): signal.signal(-code, signal.SIG_DFL)
+            import resource
+            resource.setrlimit(resource.RLIMIT_CORE, (0,0))
             os.kill(os.getpid(), -code)
         return code or (74 if sink.failed else 0)
     finally:

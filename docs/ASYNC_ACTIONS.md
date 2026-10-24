@@ -3,11 +3,12 @@
 2026-10-24. Merged resource/lifecycle main 3f9ac22 includes all 21 previously listed
 legacy async entry conversions: **58/89 IDs, 32 sync entry calls and 26 workers**.
 Merged Capture entry main 201c452 includes its five synchronous start/close/language
-entries: **63/89, 37 sync entry calls and 26 workers**. The subsequent
-`refactor/display-preview-actions` review branch adds five synchronous preview/
-compositor entries: **68/89, 42 sync entry calls and 26 workers**. Existing
-controller/watchdog calls stay synchronous; no async contract changes. UI
-composition and schema ownership stay. See DISPLAY_PREVIEW_PLAN.md.
+entries: **63/89, 37 sync entry calls and 26 workers**. Merged Display preview main
+b73a7b0 has **68/89, 42 sync entry calls and 26 workers**. The subsequent
+`refactor/mirroring-actions` review branch adds three synchronous mirror routes:
+**71/89, 45 sync entry calls and 26 workers**. Existing controller/watchdog calls
+stay synchronous; Settings still uses the main shell's mirror IPC. No async
+contract, UI composition or schema change. See MIRRORING_PLAN.md.
 
 | Family | Actions | Preserved owner/contract |
 | --- | --- | --- |
@@ -38,7 +39,7 @@ network operations. Domain algorithms, retries, sampling and power policy stay.
 
 ## Remaining boundaries
 
-21 finite coordinator IDs remain legacy on the Display preview branch. Conditional suspend and internal
+18 finite coordinator IDs remain legacy on the Mirroring branch. Conditional suspend and internal
 wallpaperCycle retain their existing paths; neither was in the 21-ID inventory.
 Do not infer that every asynchronous operation in the shell is a registry worker.
 A later migration needs a named scope, characterization and its actual ownership

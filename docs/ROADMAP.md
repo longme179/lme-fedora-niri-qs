@@ -1,6 +1,6 @@
 # LME Shell: position and next boundaries
 
-2026-10-23. This is a roadmap, not authorization for another implementation.
+2026-10-24. This is a roadmap, not authorization for another implementation.
 Read STATE.md for current ownership/process rules; archive documents are history.
 
 ## Destination
@@ -26,45 +26,35 @@ migration coverage, not product stability or remaining engineering effort.
 | Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry implemented | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 11 catalog records, 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 66 of 147 keys descriptor-owned; 81 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
-| Backend dispatch | 37 of 89 IDs registered: 28 sync + 9 workers | 52 legacy IDs; 21 have async-specific contracts, including one simple candidate and twenty needing additional seams |
-| Cross-feature reliability | Wi-Fi feedback/admission, Bluetooth nonblocking dispatch, notification/export persistence and F1/F2 merged | F3 on the current review branch fixes pending ownership; F4/F5 are still proposals |
+| Backend dispatch | Resource branch: 58 of 89 IDs registered, 32 sync entry calls + 26 workers | 31 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
+| Cross-feature reliability | Wi-Fi/Bluetooth/persistence and F1-F3 merged; F5/F4 resource bounds implemented on the resource review branch | Laptop integration, scoped combined memory and normal release sign-off |
 | Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity | Combined real-session shell + Settings/worker memory and physical device/GPU checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
 We have passed the infrastructure/pilot stage and are hardening integration before
-expanding migrations. F3 adds a transport contract, not another ported action.
+expanding migrations. The resource branch then converted the 21 async entry points
+through explicit preflight/admission/lease/controller contracts; see ASYNC_ACTIONS.md.
 Existing stable legacy ownership is acceptable; full conversion is not the goal.
 
-## Proposed order after F3 review
+## Proposed order after resource/lifecycle review
 
-1. **Finish this correctness boundary.** Review F3's duplicate rejection, delayed
-   snapshots, reentrant callbacks and restart behavior on the laptop. Merge only
-   after checks and review. F1/F2 recovery must remain covered.
-2. **F5: bounded shared command capture.** Inventory valid output sizes and text/
-   JSON/observer contracts first. Bound retention while draining both pipes;
-   overflow must be an explicit redacted failure, never successful truncated JSON.
-   Preserve timeout/cancellation/process-group and secret handling. No RAM saving
-   is promised before evidence; this is an unimplemented hardening proposal.
-3. **F4: detached Launchpad logging, conditional.** Approve retention/error policy
-   and process cost first. An active writer cap may require a detached relay per
-   job; completed-log cleanup alone is insufficient. Preserve shell-exit survival,
-   terminal/argv semantics and eight-job limit. Skip if it needs a general job
-   framework or an unacceptable memory/process trade-off.
-4. **Resume small backend migrations only when authorized.** recordStop is the
-   next candidate for the existing worker contract. Then consider request-time
-   preflight/options; see ASYNC_ACTIONS.md. Group admission, replace/cancel,
-   capture token/lease and separate controllers each need an explicit design.
-   Battery/display-sensitive contracts go last; never port all twenty mechanically.
-5. **Close modularity gaps where change cost warrants it.** Small schema families,
-   descriptor provider discovery/withdrawal policy, remaining host registration
-   seams and removal of obsolete dependency exceptions. Core legacy pages/bar/
-   Controls/Launcher/Activity stay put until a separately approved useful scope.
-   M8 physical moves are optional and last; they are not a prerequisite for release.
-6. **Release confidence.** Repeat the laptop integration checklist and exercise
-   notification/clipboard recovery, radio hotplug/reconnect, capture, display
-   confirm/revert and battery-saver restore. Measure combined memory in ordinary
-   use, including Settings/workers, and record scope/temporary peaks honestly.
-   Address demonstrated regressions at their owner before another conversion.
+1. **Close release evidence.** Review F5 command bounds, F4 log/relay cost and the
+   21 converted async entries. Complete RELEASE_CHECKLIST.md on the laptop and
+   assess the combined memory scenario with its profile/worker scope stated.
+   Hardware/GPU success cannot be inferred from private software-rendered checks.
+2. **Choose the next useful small family.** There are 31 legacy coordinator IDs
+   and 81 legacy schema keys. Prefer cohesive groups whose move reduces actual
+   change cost; characterize first and retain public facades/transaction semantics.
+3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
+   an adapter. A descriptor backend contract must preserve disabled/broken-catalog
+   fallback and ownership before replacing them; no competing registry.
+4. **Remaining UI seams only when warranted.** Six core Settings pages and most
+   bar/Controls/Launcher/Activity registrations stay legacy by owner decision.
+   New migrations need a useful named scope; M8 physical moves are optional/last.
+5. **Retention and resource follow-ups, separately scoped.** Per-file Launchpad
+   caps do not bound logs from old/deleted IDs. Choose an explicit inactive-log
+   policy before deletion; count detached relays surviving restarts and all LME
+   instances in ordinary-use memory. Do not kill user jobs or delete active logs.
 
 ## Completion criteria and scope limits
 

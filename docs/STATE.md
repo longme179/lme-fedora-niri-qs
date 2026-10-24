@@ -1,14 +1,14 @@
-# Agent state (2026-10-23)
+# Agent state (2026-10-24)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/M7b/M7c/M7d, Wi-Fi feedback and device-action fixes merged: 37/89 IDs (28 sync + 9 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d and F1-F3 merged. Resource branch review: 58/89 IDs (32 sync entry calls + 26 workers), including the 21 listed async conversions.
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- QoL: F1/F2 merged in f28be3d. F3's approved pending-ownership contract is implemented on fix/action-pending-ownership for review; see F3_PENDING_OWNERSHIP_PLAN.md and ROADMAP.md. F4/F5 and recordStop remain proposals; no further async port started.
+- fix/resource-bounds-and-async-contracts implements the owner's F5/F4 + async plan; see RESOURCE_LIFECYCLE_PLAN.md, RESOURCE_LIMITS.md and ROADMAP.md. Real laptop checks remain pending in RELEASE_CHECKLIST.md; no further boundary is authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -25,7 +25,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Explicit providers retire with descriptor discovery/ownership/fallback parity; worker delegation/complete hooks keep the host scheduler/emitter; direct perform/perform_demo and wifi_action facades at zero callers plus owner approval. Night/idle/keybind state facades retain cadence until their consumers migrate.
+- Explicit providers retire with descriptor discovery/ownership/fallback parity; PreparedWork/complete/presentation retain the host scheduler/emitter and Future tags. Charge/Weather controllers keep their lifecycle. Public perform/perform_demo/wifi_action facades retire at zero callers + owner approval; state facades retain cadence.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema

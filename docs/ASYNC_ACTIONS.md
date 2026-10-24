@@ -1,61 +1,49 @@
-# Async actions after Wi-Fi extraction
+# Asynchronous action contracts
 
-M7b/M7c/M7d and Wi-Fi feedback are merged (main ace2744). The device-action
-reliability follow-up on runtime head 3e167ad moves the already registered
-bluetoothDevice to the same worker pool: 37/89 registered IDs, 28 sync and nine
-workers. There is no new registry phase or executor. The **21 remaining legacy
-async IDs** below are unchanged; further conversion still needs authorization.
+2026-10-24. On `fix/resource-bounds-and-async-contracts`, all 21 previously listed
+legacy async entry points have been converted for review. Main baseline 03e7006
+had 37/89 registered IDs; this branch has **58/89: 32 sync entry calls and 26
+coordinator workers**. UI composition and schema ownership are unchanged.
 
-## Remaining action the existing worker contract fits: 1
-
-| Proposed batch | Actions | What must remain unchanged |
+| Family | Actions | Preserved owner/contract |
 | --- | --- | --- |
-| Record stop | `recordStop` | Recorder ownership, completion and failure behavior |
+| Existing worker | recordStop | Recorder.stop; original worker queue, privacy invalidation and completion |
+| Request-time preflight (4) | palettePreview, recordStart, lock, imageAnnotate | Validate/capture options on the coordinator; execute only the prepared operation in its existing worker |
+| Group admission (8) | wallpaper, wallpaperNext, wallpaperResetOutput, gowallThemes, gowallGenerate, gowallSave, gowallApply, batterySaver | Prefix/transition guards before owning a Future; controller mutations and read-back stay at their owners |
+| Replace/cancel (1) | fileSearch | Existing Event/Future replacement and latest-state installation; not ordinary duplicate rejection |
+| Capture leases (3) | captureExport, captureAnnotate, captureOcr | Existing capture_token attached before ack; stale completion discarded by the host; editor captured at the original stage |
+| Separate controllers (4) | chargeMode, weatherSearch, weatherDetect, weatherRefresh | Sync registry entry calls existing asynchronous controllers; no extra executor or new coordinator-worker ack for Weather |
 
-The daemon pair and Wi-Fi needed no new registry phase. Next propose recordStop
-after its existing controller contracts are characterized. This is a planning
-candidate, not a guarantee that extraction will pass behavior-preservation tests.
+The small optional seam is `ActionSpec.prepare(request) -> PreparedWork(operation,
+metadata=None)`. Context admission precedes preparation; demo never prepares.
+The registry delegates the operation and trusted Future tags to the existing
+start_feature(). `complete(value)` installs domain state, then a static or trusted
+callable presentation produces the same message before normal result publication.
+No callbacks/expressions in JSON, second job table, queue or universal event bus.
 
-Each batch first pins shell/Settings × live/demo behavior on unmodified code:
-admission, immediate ack, result/sequence, pending cleanup, snapshot, error and
-shutdown behavior. Then move live/demo handlers together, keep narrow capabilities,
-and delete their legacy branches. Keep the shared executor/job table, scheduler,
-completion emitter and existing read-back calls; registered errors never fall back.
-Follow STATE's affected gates, final full gates and single runtime/RSS sanity check.
+All live/demo branches moved together. Registered errors never fall back to legacy.
+The unchanged-context golden covers 21 x shell/Settings x live/demo = 84 scenarios,
+with exact ack/completion/result/sequence, calls and selected state. Further cases
+cover preflight errors, captured options, group rejection, replacement and stale
+capture tokens. Existing import/dispatch/snapshot facades remain available.
 
-## Existing worker contract is insufficient: 20
+Charge still uses charge_executor/charge_job and finish_charge(); WeatherClient
+still owns loading, forecast/search/geolocation completion and shutdown. Those are
+explicit compatibility/controller seams, not worker specs disguised as synchronous
+network operations. Domain algorithms, retries, sampling and power policy stay.
 
-| Extra contract | Actions | Why a mechanical move is unsafe |
-| --- | --- | --- |
-| Synchronous preflight/options (4) | `palettePreview`, `recordStart`, `lock`, `imageAnnotate` | Keep immediate validation and request-time options, including editor selection before enqueue |
-| Group admission/guards (8) | `wallpaper`, `wallpaperNext`, `wallpaperResetOutput`, `gowallThemes`, `gowallGenerate`, `gowallSave`, `gowallApply`, `batterySaver` | Guards must run before job ownership; worker-side guards can reject their own job |
-| Replace/cancel (1) | `fileSearch` | Replaces/cancels an older search instead of ordinary duplicate-job rejection |
-| Token/lease metadata (3) | `captureExport`, `captureAnnotate`, `captureOcr` | Session validation and future metadata belong to capture lifecycle |
-| Separate controllers/executors (4) | `chargeMode`, `weatherSearch`, `weatherDetect`, `weatherRefresh` | Charge and Weather own different pending/completion/shutdown contracts |
+## Remaining boundaries
 
-Keep these legacy until separately authorized. After the simple batches, inspect
-preflight first: consider a small explicit admission/preparation seam, preserving
-immediate errors and request-time options. Do not create a generic workflow engine.
-Cancellation, capture leases and separate controllers require their own designs;
-power/display-sensitive work goes last. Conditional `suspend` and internal
-`wallpaperCycle` are outside this inventory. Sync `gowallSetup` and
-`weatherSelect` are not included.
+31 finite coordinator IDs remain legacy. Conditional suspend and internal
+wallpaperCycle retain their existing paths; neither was in the 21-ID inventory.
+Do not infer that every asynchronous operation in the shell is a registry worker.
+A later migration needs a named scope, characterization and its actual ownership
+contract; remaining stable legacy routes need not move merely to increase a count.
 
-Correction to the M7b assessment: it listed nine simple candidates, including
-`imageAnnotate`. Its current live branch captures `captureEditor` before enqueue;
-the registry invokes `live(request)` inside the worker. Reading the editor there
-would change behavior when preferences change while the job waits. Hence eight
-original simple candidates, twenty needing another seam; after M7d, one plus twenty.
+Explicit provider bindings retire only with descriptor discovery and equivalent
+ownership/withdrawal/fallback. Public controller/import/dispatch facades retire only
+at their documented zero-consumer condition plus owner approval. M8 stays optional.
 
-## Modularity, implementation size and memory
-
-Use [Modularity](../.agents/skills/modularity/SKILL.md) for cohesive ownership and
-[Ponytail](../.agents/skills/ponytail/SKILL.md) for the smallest complete extraction.
-Stable legacy handlers are acceptable; an action provider is not a new process.
-No executor/queue/timer per domain, async framework expansion, file moves, or
-polling/cache/power changes are implied by this plan.
-
-Aim for total-shell memory <=400 MB steady / <=500 MB ordinary active use,
-including open Settings and owned workers. Prefer aggregate PSS; label summed
-RSS limitations and temporary heavy-job peaks. Existing separate-instance RSS
-samples do not establish that total; no memory saving is claimed here.
+F5/F4 resource policy and measured relay costs are in RESOURCE_LIMITS.md; release
+and laptop checks are in RELEASE_CHECKLIST.md. No RAM saving or physical device/GPU
+success follows from dispatch extraction. A6 and D1 remain outside this work.

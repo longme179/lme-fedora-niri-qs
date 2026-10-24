@@ -96,3 +96,12 @@ Do not create a workflow engine, new executor/queue/timer, or change A6 policy.
 - Laptop checklist/release notes must say needs real-session check for Bluetooth,
   GPU/recording, display confirm/revert and battery-saver restore. This environment
   cannot close those checks; do not label the release fully validated without them.
+
+## Execution outcome
+
+F5, F4 and all 21 listed async entries are implemented for review, with 58/89
+registered IDs. Final gates, the normal sanity and combined memory sample are
+recorded in MIGRATION_LOG.md; resource policies are in RESOURCE_LIMITS.md.
+The final relay sample was one RSS/PSS 7,748/5,186 KiB and eight aggregate
+62,032/34,447 KiB (5 FD each). Real laptop release checks remain pending in
+RELEASE_CHECKLIST.md. No later boundary is authorized by this plan.

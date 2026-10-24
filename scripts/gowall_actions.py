@@ -13,6 +13,8 @@ class GowallCapabilities:
     apply: Callable
     current: Callable
     install: Callable
+    setup: Callable
+    terminal: Callable
 
 
 def provide(cap):
@@ -36,4 +38,8 @@ def provide(cap):
         lambda request,name=name:demo(name,request),execution='worker',
         complete=lambda value,name=name:complete(name,value),presentation=messages.get(name),
         prepare=lambda request,name=name:prepare(name,request)) for name in names)
-    return specs,lambda:{}
+    def setup(request):
+        if any(key.startswith('gowall') for key in cap.pending()):
+            raise ValueError('A gowall operation is already running')
+        return cap.setup(request.get('path'),cap.terminal())
+    return (*specs,ActionSpec('gowallSetup',{'shell','settings'},setup,lambda request:None)),lambda:{}

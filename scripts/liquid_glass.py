@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+from backend_actions import ActionSpec
 
 CONTROLS = json.loads((Path(__file__).resolve().parents[1]/'config/liquid-glass.json').read_text())
 DEFAULTS = {key: item['default'] for key, item in CONTROLS.items()}
@@ -43,3 +44,9 @@ def apply_blur(folder, values):
     finally:
         if os.path.exists(temporary): os.unlink(temporary)
     return f'Saved {path}. Include it after popup-blur.kdl in niri, then validate. Included files reload when applied. This changes compositor-wide blur.'
+
+
+def provide_blur(folder, values):
+    def apply(request):
+        return apply_blur(folder(), values())
+    return (ActionSpec('glassBlurApply', {'shell','settings'}, apply, lambda request:None),), lambda:{}

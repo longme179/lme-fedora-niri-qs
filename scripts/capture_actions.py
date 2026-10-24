@@ -1,7 +1,36 @@
-"""Image annotation captures the editor before queueing; capture owns its session."""
+"""Capture entry and worker contracts; the existing controller owns each session."""
 from dataclasses import dataclass
+import time
 from typing import Callable
 from backend_actions import ActionSpec, PreparedWork
+
+
+@dataclass(frozen=True)
+class ControlCapabilities:
+    start: Callable
+    close: Callable
+    languages: Callable
+    current: Callable
+
+
+def provide_controls(cap):
+    def start(mode):
+        # niri owns capture; let the dismissed panel finish its surface teardown.
+        time.sleep(.2)
+        return cap.start(mode)
+    def close(request):
+        cap.close()
+        return 'Screenshot closed'
+    def languages(request):
+        cap.languages()
+        return 'OCR languages refreshed'
+    def demo_languages(request):
+        cap.current()['languages'] = ['eng', 'vie']
+    specs = [ActionSpec(action, {'shell'}, lambda request, mode=mode: start(mode), lambda request: None)
+        for action, mode in (('screenshot', 'screen'), ('screenshotArea', 'area'), ('screenshotWindow', 'window'))]
+    specs.extend((ActionSpec('captureClose', {'shell'}, close, lambda request: cap.close()),
+        ActionSpec('captureLanguages', {'shell'}, languages, demo_languages)))
+    return tuple(specs), lambda: {}
 
 
 @dataclass(frozen=True)

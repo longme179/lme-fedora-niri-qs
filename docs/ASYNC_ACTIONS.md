@@ -2,10 +2,12 @@
 
 2026-10-24. Merged resource/lifecycle main 3f9ac22 includes all 21 previously listed
 legacy async entry conversions: **58/89 IDs, 32 sync entry calls and 26 workers**.
-The subsequent `refactor/capture-entry-actions` review branch adds five synchronous
-capture start/close/language entries: **63/89, 37 sync entry calls and 26 workers**.
-Those entries retain their synchronous controller calls; no async contract changes.
-UI composition and schema ownership are unchanged. See CAPTURE_ENTRY_PLAN.md.
+Merged Capture entry main 201c452 includes its five synchronous start/close/language
+entries: **63/89, 37 sync entry calls and 26 workers**. The subsequent
+`refactor/display-preview-actions` review branch adds five synchronous preview/
+compositor entries: **68/89, 42 sync entry calls and 26 workers**. Existing
+controller/watchdog calls stay synchronous; no async contract changes. UI
+composition and schema ownership stay. See DISPLAY_PREVIEW_PLAN.md.
 
 | Family | Actions | Preserved owner/contract |
 | --- | --- | --- |
@@ -36,7 +38,7 @@ network operations. Domain algorithms, retries, sampling and power policy stay.
 
 ## Remaining boundaries
 
-26 finite coordinator IDs remain legacy on the Capture entry branch. Conditional suspend and internal
+21 finite coordinator IDs remain legacy on the Display preview branch. Conditional suspend and internal
 wallpaperCycle retain their existing paths; neither was in the 21-ID inventory.
 Do not infer that every asynchronous operation in the shell is a registry worker.
 A later migration needs a named scope, characterization and its actual ownership

@@ -42,6 +42,7 @@ from charge_actions import ChargeCapabilities, provide as provide_charge
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, DEFAULT_CONTROL_GRID, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
                               appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, apply_layout, current_layout
+from display_actions import PreviewCapabilities, PlatformCapabilities, provide as provide_display, provide_platform
 from storage import read_json, write_json
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
@@ -551,6 +552,12 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
+            (provide_display, PreviewCapabilities(lambda:self.displays,lambda value:setattr(self,'displays',value),
+                lambda:self.display_control.snapshot(),lambda layout:self.display_control.start(layout),
+                lambda token,keep:self.display_control.decide(token,keep),lambda:'batterySaver' in self.feature_jobs,
+                lambda:self.battery_saver.guard(),lambda layout:self.preferences.set('displayLayout',layout),
+                lambda layout:self.preferences.values.__setitem__('displayLayout',layout))),
+            (provide_platform, PlatformCapabilities(lambda:self.compositor_features(),lambda value:setattr(self,'platform',value))),
             (provide_gowall, GowallCapabilities(lambda:tuple(self.feature_jobs), lambda:self.image_utilities.themes(),
                 lambda request:self.image_utilities.generate(request), lambda path,destination:self.image_utilities.save(path,destination),
                 lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
@@ -1336,7 +1343,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "displayRefresh", "displayApply", "displayConfirm", "displayRevert", "platformRefresh", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect", "mirrorRefresh", "mirrorStart", "mirrorStop"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1396,24 +1403,9 @@ class DesktopBackend:
                 if not self.preferences.values['mirroringEnabled']: raise ValueError('Display mirroring is disabled')
                 self.mirror_state = {'active': True, 'available': True, 'source': request.get('source'), 'target': request.get('target'), 'error': ''}
             elif action == 'mirrorStop': self.mirror_state = {**self.mirror_state, 'active': False}
-        elif action == "platformRefresh": pass
         elif action.startswith("gowall"): pass
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
-        elif action == "displayRefresh":
-            if not self.displays["outputs"]:
-                self.displays = {"outputs": [{"name": "eDP-1", "description": "Lenovo laptop display", "enabled": True,
-                    "modes": [{"width": 1920, "height": 1080, "refresh": hz * 1000, "label": f"1920 × 1080 · {hz} Hz"} for hz in (60, 120)],
-                    "current": {"width": 1920, "height": 1080, "refresh": 120000}, "scale": 1, "x": 0, "y": 0, "width": 1920, "height": 1080}], "preview": {}}
-            if self.displays["preview"].get("status") == "pending" and time.time() >= self.displays["preview"]["deadline"]:
-                self.displays["preview"]["status"] = "reverted"
-        elif action == "displayApply":
-            layout = validate_layout(request.get("layout"), self.displays["outputs"])
-            self.displays["preview"] = {"token": "demo", "status": "pending", "deadline": time.time() + 20, "layout": layout}
-        elif action in {"displayConfirm", "displayRevert"}:
-            if self.displays["preview"].get("status") != "pending": raise ValueError("No display preview")
-            if action == "displayConfirm": self.preferences.values["displayLayout"] = self.displays["preview"]["layout"]
-            self.displays["preview"]["status"] = "confirmed" if action == "displayConfirm" else "reverted"
         elif action == 'launcherHistoryClear': pass
         elif action == "setting":
             key = request.get("key")
@@ -1510,9 +1502,6 @@ class DesktopBackend:
             return "System monitor started" if self.monitor_enabled else "System monitor stopped"
         if action == "glassBlurApply":
             return apply_blur(self.preferences.path.parent, self.preferences.values["liquidGlass"])
-        if action == "platformRefresh":
-            self.platform = self.compositor_features()
-            return "Compositor version checked"
         if action == "paletteApply":
             colors=validate_palette(self.palette_preview.get("colors"))
             if (not colors or self.palette_preview.get("path") != request.get("path")
@@ -1523,20 +1512,6 @@ class DesktopBackend:
         if action == 'gowallSetup':
             if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
             return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
-        if action == "displayRefresh":
-            self.displays = self.display_control.snapshot()
-            return "Displays refreshed"
-        if action == "displayApply":
-            if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
-            with self.battery_saver.guard():
-                self.display_control.start(request.get("layout"))
-            self.displays = self.display_control.snapshot()
-            return "Display preview requested; confirm within 20 seconds"
-        if action in {"displayConfirm", "displayRevert"}:
-            layout = self.display_control.decide(request.get("token"), action == "displayConfirm")
-            if action == "displayConfirm": self.preferences.set("displayLayout", layout)
-            self.displays = self.display_control.snapshot()
-            return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
         if action == "weatherSelect":
             place = location(request.get("location"))
             if not place:

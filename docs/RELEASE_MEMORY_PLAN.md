@@ -7,7 +7,7 @@ before implementation. Release evidence is next; stable coordinator IDs stay put
 ## Scope
 
 Add a one-shot, stdlib `scripts/memory_report.py` for the laptop checklist.
-It reads only the current user's /proc metadata and memory counters; no daemon,
+It reads current-user /proc metadata/memory and checkout identity files; no daemon,
 watch loop, runtime integration, settings writes, signals or subprocess commands.
 Never collect environment variables or print user command arguments.
 
@@ -47,3 +47,12 @@ Never collect environment variables or print user command arguments.
 
 No D1 profiling, A6 policy changes, log deletion/retention, provider discovery,
 schema/UI conversions, process lifetime changes or claim of a memory reduction.
+
+## Execution
+
+Plan 5a87635 precedes characterization 508e715 and tooling implementation 2a2fa29.
+The existing relay shape passes on unchanged main. Nine new tool contracts are
+N/A before implementation and pass afterwards; the separate private Wayland
+inventory test also passes. Only the new CLI and its architecture host entry
+change executable/tooling code; shell runtime, old tests and data stay unchanged.
+Final gates, sanity and outstanding laptop checks are in MIGRATION_LOG.md.

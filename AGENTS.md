@@ -68,6 +68,7 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
 - G1 startup, G2 Settings, G3 controls/navigation/catalog, G4 clipboard/capture,
   G6 polling: see `tests/migration_checks.py` for flags and case names.
 - `./scripts/start.sh --preview`; `./scripts/settings.sh --page appearance`.
+- `python3 scripts/memory_report.py --label steady`: read-only one-shot PSS inventory; review PID ownership/partial reports per docs/RELEASE_CHECKLIST.md.
 
 ## Owner process reset (2026-10-21)
 

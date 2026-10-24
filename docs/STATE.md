@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview and Mirroring batches merged. Selection/application review branch: 75/89 IDs (49 sync entry calls + 26 workers).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- refactor/selection-application-actions registers paletteApply/glassBlurApply/gowallSetup/weatherSelect through existing domain providers/services, preserving transactions and demo isolation. See SELECTION_APPLICATION_PLAN.md and ROADMAP.md. Laptop release checks remain pending; no later family authorized.
+- chore/release-memory-check adds one-shot current-user memory inventory for release review; runtime/actions/schema stay unchanged. See RELEASE_MEMORY_PLAN.md and RELEASE_CHECKLIST.md. Laptop integration and total RAM remain pending; no later family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -38,6 +38,7 @@ Do not read archive/ unless answering a specific historical question.
 ## Gates and working rules
 
 - `./scripts/check.sh`: architecture/catalog + unit discovery + Bash/demo checks.
+- `python3 scripts/memory_report.py --label steady`: read-only PSS inventory; review ownership/partial counters before accepting totals.
 - `./scripts/run-gates.sh --gates G0` isolates XDG, Sway/Wayland and D-Bus;
   optional `--env-file FILE --pointer-dir DIR`. Gate cases: tests/migration_checks.py.
 - During work: Python = G0 + relevant units; QML = G0 + G1 + relevant native case.

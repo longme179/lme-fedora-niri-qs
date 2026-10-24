@@ -31,7 +31,7 @@
     "authentication": ["qml/auth/AuthenticationAgent.qml", "qml/auth/AuthenticationDialog.qml", "qml/auth/AuthenticationWindow.qml"]
   },
   "sharedPrefixes": ["qml/components/", "qml/theme/", "qml/services/"],
-  "sharedFiles": ["scripts/action_pending.py", "scripts/catalog_metadata.py", "scripts/backend_actions.py", "scripts/settings_schema.py", "scripts/command_runner.py", "scripts/command_output.py", "scripts/content_types.py", "scripts/storage.py", "scripts/desktop_features.py", "scripts/feature_catalog.py", "scripts/settings_transfer.py", "scripts/liquid_glass.py", "scripts/managed_command.py", "scripts/check_architecture.py", "qml/bar/ActionBarButton.qml", "qml/bar/BarGestures.qml", "qml/bar/BarRegistry.qml", "qml/bar/BarSurface.qml", "qml/bar/ModuleGestures.qml", "qml/settings/SettingsCard.qml", "qml/settings/PreferenceSwitch.qml", "qml/settings/SettingsRegistry.qml"],
+  "sharedFiles": ["scripts/action_pending.py", "scripts/catalog_metadata.py", "scripts/backend_actions.py", "scripts/settings_schema.py", "scripts/command_runner.py", "scripts/command_output.py", "scripts/content_types.py", "scripts/peripheral_values.py", "scripts/storage.py", "scripts/desktop_features.py", "scripts/feature_catalog.py", "scripts/settings_transfer.py", "scripts/liquid_glass.py", "scripts/managed_command.py", "scripts/check_architecture.py", "qml/bar/ActionBarButton.qml", "qml/bar/BarGestures.qml", "qml/bar/BarRegistry.qml", "qml/bar/BarSurface.qml", "qml/bar/ModuleGestures.qml", "qml/settings/SettingsCard.qml", "qml/settings/PreferenceSwitch.qml", "qml/settings/SettingsRegistry.qml"],
   "hosts": ["scripts/desktop_backend.py", "scripts/memory_report.py", "qml/bar/BarModule.qml", "qml/bar/BarGroup.qml", "qml/panels/Bar.qml", "qml/panels/ControlCenter.qml", "qml/panels/ControlDashboard.qml", "qml/panels/DesktopPreview.qml", "qml/panels/FeatureBootstrap.qml", "qml/panels/SettingsPanel.qml", "qml/panels/TrayMenu.qml", "qml/settings/SettingsApplication.qml", "qml/settings/SettingsView.qml", "authentication-demo.qml", "capture-demo.qml", "native-features-demo.qml", "settings-demo.qml", "settings.qml", "shell.qml", "upgrades-demo.qml"],
   "legacyEdges": [
     ["qml/panels/Agenda.qml", "qml/panels/QuickNotes.qml", "Agenda embeds the legacy QuickNotes card; replace with catalog composition when that family converts."],
@@ -41,8 +41,7 @@
     ["qml/panels/DeviceControls.qml", "qml/panels/PeripheralBatteryList.qml", "Device controls embed the legacy peripheral battery list; separate the shared service from its UI when converted."],
     ["qml/panels/DeviceControls.qml", "qml/panels/WifiWidget.qml", "Legacy bluetooth UI embeds wifi directly; remove this exact edge when its family migrates."],
     ["qml/settings/UtilitiesPage.qml", "qml/settings/GowallSettings.qml", "Utilities page embeds the legacy Gowall settings; replace with catalog composition on conversion."],
-    ["scripts/battery_saver.py", "scripts/display_control.py", "Battery-saver rollback uses the existing display-layout helpers; move their contract to shared infrastructure before removing."],
-    ["scripts/bluetooth_agent.py", "scripts/peripheral_battery.py", "BlueZ agent reuses the legacy peripheral property parser; extract a shared adapter when its family converts."]
+    ["scripts/battery_saver.py", "scripts/display_control.py", "Battery-saver rollback uses the existing display-layout helpers; move their contract to shared infrastructure before removing."]
   ],
   "cycleEdges": [
     ["qml/components/GlassBackdrop.qml", "qml/services/GlassState.qml", "Existing GlassState singleton owns a GlassBackdrop that reads GlassState; preserve rendering until an authorized split."],

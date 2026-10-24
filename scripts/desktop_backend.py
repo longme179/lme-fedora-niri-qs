@@ -47,6 +47,10 @@ from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
 from content_types import MAX_TEXT
+from recording_actions import RecordingCapabilities, provide as provide_recording
+from palette_actions import PaletteCapabilities, provide as provide_palette
+from capture_actions import ImageCapabilities, provide_image
+from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
 from file_search import roots as search_roots, search as search_files
@@ -539,9 +543,16 @@ class DesktopBackend:
             return self.niri
         self._wifi_capabilities = WifiCapabilities(lambda **kwargs: self.network(**kwargs),
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
-        self.actions = ActionRegistry(start_feature=lambda action, operation: self.start_feature(action, operation))
+        self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
             (Recorder.provide_stop, lambda: self.recorder.stop()),
+            (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
+                lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
+                lambda *args:self.recorder.start(*args))),
+            (provide_palette, PaletteCapabilities(self.runner.executable, lambda:self.preferences.values,
+                lambda value:setattr(self,'palette_preview',value), lambda *args:palette_preview(self.runner,*args))),
+            (provide_image, ImageCapabilities(lambda:self.preferences.values,lambda editor,path:annotate_image(self.runner,editor,path))),
+            (provide_lock, LockCapabilities(self.runner.executable,lambda:self.lock_session)),
             (provide_wifi, self._wifi_capabilities),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
@@ -1123,9 +1134,11 @@ class DesktopBackend:
                            "actions": [], "active": False, "popup": False, "transient": False})
         return result
 
-    def start_feature(self, action, operation):
+    def start_feature(self, action, operation, *, metadata=None):
         if action in self.feature_jobs or wifi_busy(action, self.feature_jobs): raise ValueError("This operation is already running")
+        tags = dict(metadata or {})
         self.feature_jobs[action] = self.feature_executor.submit(operation)
+        self.feature_jobs[action].__dict__.update(tags)
         return "Working…"
 
     def finish_features(self):
@@ -1139,9 +1152,10 @@ class DesktopBackend:
                     del self.feature_jobs[action]
                     break
                 value = job.result()
-                if spec is not None and spec.execution == 'worker': spec.complete(value); message = value if spec.presentation is None else spec.presentation
+                if spec is not None and spec.execution == 'worker':
+                    spec.complete(value)
+                    message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
                 elif action == "fileSearch": self.file_search = value; message = "File search completed"
-                elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
                 elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
                 elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
                 elif action == 'wallpaperCycle': message = ''
@@ -1372,7 +1386,6 @@ class DesktopBackend:
             if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
         elif action == "captureAnnotate":
             if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action == "imageAnnotate": pass
         elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
         elif action.startswith("gowall"): pass
         elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
@@ -1458,7 +1471,7 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "recordStart", "fileSearch", "palettePreview", "paletteApply"}:
+        elif action in {"glassBlurApply", "fileSearch", "paletteApply"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
@@ -1502,9 +1515,6 @@ class DesktopBackend:
             self.mirror_state = self.mirror.state()
             return 'Mirror refreshed'
         if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
-        if action == 'imageAnnotate':
-            editor = self.preferences.values['captureEditor']
-            return self.start_feature(action, lambda: annotate_image(self.runner, editor, request.get('path')))
         if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
         if action == 'captureExport':
             if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')
@@ -1542,19 +1552,6 @@ class DesktopBackend:
         if action == "platformRefresh":
             self.platform = self.compositor_features()
             return "Compositor version checked"
-        if action == "recordStart":
-            if 'batterySaver' in self.feature_jobs or self.saver_snapshot()['busy']:
-                raise ValueError('Wait for Battery saver to finish before recording')
-            if not self.preferences.values["recordingEnabled"]: raise ValueError("Screen recording is disabled")
-            niri=self.niri_state()
-            outputs={w.get("output") for w in niri["workspaces"] if w.get("output")}
-            output=request.get("output")
-            if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
-            prefs=dict(self.preferences.values)
-            def record():
-                with self.battery_saver.guard(allow_active=True):
-                    return self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"])
-            return self.start_feature(action,record)
         if action == "fileSearch":
             if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
             query=request.get("query")
@@ -1566,11 +1563,6 @@ class DesktopBackend:
             folders=list(self.preferences.values["fileSearchRoots"])
             self.file_search={"query":query,"entries":[],"truncated":False}
             return self.start_feature(action,lambda: search_files(query,folders,cancel))
-        if action == "palettePreview":
-            self.runner.executable("matugen")
-            self.palette_preview = {"colors": {}, "path": ""}
-            options={key:self.preferences.values[key] for key in ('paletteScheme','paletteMode','paletteContrast')}
-            return self.start_feature(action,lambda: palette_preview(self.runner,request.get("path"),options['paletteScheme'],options['paletteMode'],options['paletteContrast']))
         if action == "paletteApply":
             colors=validate_palette(self.palette_preview.get("colors"))
             if (not colors or self.palette_preview.get("path") != request.get("path")
@@ -1642,9 +1634,6 @@ class DesktopBackend:
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():
                 return self.set_power_profile(request.get('value'))
-        if action == "lock":
-            self.runner.executable("swaylock")
-            return self.start_feature(action, self.lock_session)
         if action in {"screenshot", "screenshotArea", "screenshotWindow"}:
             # niri owns capture and clipboard integration. Traditional grim uses
             # wlr-screencopy, which is not the portable screenshot path on niri.

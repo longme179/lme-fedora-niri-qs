@@ -42,8 +42,7 @@
     ["qml/panels/DeviceControls.qml", "qml/panels/WifiWidget.qml", "Legacy bluetooth UI embeds wifi directly; remove this exact edge when its family migrates."],
     ["qml/settings/UtilitiesPage.qml", "qml/settings/GowallSettings.qml", "Utilities page embeds the legacy Gowall settings; replace with catalog composition on conversion."],
     ["scripts/battery_saver.py", "scripts/display_control.py", "Battery-saver rollback uses the existing display-layout helpers; move their contract to shared infrastructure before removing."],
-    ["scripts/bluetooth_agent.py", "scripts/peripheral_battery.py", "BlueZ agent reuses the legacy peripheral property parser; extract a shared adapter when its family converts."],
-    ["scripts/image_utilities.py", "scripts/wallpaper.py", "Image utilities reuse the legacy wallpaper path validator; extract a shared validator in an authorized domain refactor."]
+    ["scripts/bluetooth_agent.py", "scripts/peripheral_battery.py", "BlueZ agent reuses the legacy peripheral property parser; extract a shared adapter when its family converts."]
   ],
   "cycleEdges": [
     ["qml/components/GlassBackdrop.qml", "qml/services/GlassState.qml", "Existing GlassState singleton owns a GlassBackdrop that reads GlassState; preserve rendering until an authorized split."],

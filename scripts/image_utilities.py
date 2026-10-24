@@ -10,7 +10,7 @@ import tempfile
 from threading import Lock
 import time
 import uuid
-from wallpaper import image_path
+from content_types import image_path
 
 OPERATIONS=('palette','upscale','extract','brightness','contrast','saturation','grayscale','invert','pixelate','resize')
 

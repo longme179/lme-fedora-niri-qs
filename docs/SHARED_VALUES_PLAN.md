@@ -42,3 +42,11 @@ exceptions are removed only when the static edge is gone; cycles/remaining caps
 stay. Source caps 250 nonblank; no new dependency/process or RAM-saving claim.
 Provider discovery/schema-format changes, further core-page conversions, log
 retention, D1 and A6 remain outside this branch.
+
+## Execution
+
+Plan 3d560c9 precedes characterization 2c1a2e5. Owner approved the test-data diff
+on 2026-10-25 (ea26d3c); it passes 20 architecture cases against unchanged main.
+Image paths extracted in 1581b09; peripheral values in 7942d92. Both retain public
+imports, remove only their vanished exception, and pass their affected gates.
+Final gates, one launch/RSS sanity and laptop checks are in MIGRATION_LOG.md.

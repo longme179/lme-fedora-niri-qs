@@ -18,4 +18,6 @@ Proposed changes in tests/test_architecture.py; assertions/timeouts stay identic
 
 The stale-exception fixture keeps testing the guard through the remaining display
 edge. Production BatterySaver is untouched. Frozen fixture files are unchanged.
-Approval required before applying; new characterization proceeds on main meanwhile.
+Owner approved the exact proposal on 2026-10-25. Applied in ea26d3c after all
+20 architecture tests passed with these inputs against unchanged main production
+at d2a58b0. Existing assertion ASTs and timeouts remain identical.

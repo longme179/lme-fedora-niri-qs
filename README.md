@@ -488,9 +488,11 @@ for test coverage and hardware-specific limitations.
 
 Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses,
 tool lookup and errors), `scripts/storage.py` (private JSON writes and file locks),
-`scripts/content_types.py` (the text byte limit and image signature recognition),
+`scripts/content_types.py` (text byte limit, image signatures and image-path validation),
 and `scripts/action_pending.py` (JSON-line acknowledgement and ownership projection).
 The original backend, display and Clipboard imports remain available for compatibility.
+Pairing and device batteries share pure normalization in `scripts/peripheral_values.py`;
+the original `peripheral_battery` and `wallpaper` value imports remain compatible.
 Converted pages, panels, bar entries and bootstraps are registered through
 [config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor

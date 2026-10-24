@@ -23,6 +23,8 @@ class BluetoothStatusQmlCase(unittest.TestCase):
         function accept(action, ok, message) {
             ShellState.statusMessage = "";
             ShellState.accept(JSON.stringify(Object.assign({}, ShellState.snapshot, {
+                actionPending:Object.assign({},ShellState.snapshot.actionPending,
+                    {active:action === "powerProfile" ? [] : ["powerProfile"]}),
                 lastResult:{action, ok, message, sequence:++sequence}
             })));
         }

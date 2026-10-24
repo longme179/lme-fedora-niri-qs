@@ -7,8 +7,9 @@ existing owners, reuse services, and avoid a framework or a process per widget.
 
 Execution authorized by the owner after commit 50194c1. First review branch:
 `fix/content-result-recovery`, F1/F2 merged in main f28be3d; see MIGRATION_LOG.md.
-The next proposed boundary is [F3 pending ownership](F3_PENDING_OWNERSHIP_PLAN.md),
-planning only pending wire-contract approval. F4/F5 and recordStop stay later.
+[F3 pending ownership](F3_PENDING_OWNERSHIP_PLAN.md) is approved and implemented
+on fix/action-pending-ownership for review. F4/F5 and recordStop stay later;
+[ROADMAP.md](ROADMAP.md) records current coverage and remaining release criteria.
 
 ## Scope and current state
 

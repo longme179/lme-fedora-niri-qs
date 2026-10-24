@@ -453,7 +453,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |
-| [Architecture](docs/ARCHITECTURE.md) / [Agent state](docs/STATE.md) | Approved module boundaries, staged refactors and before/after checks |
+| [Architecture](docs/ARCHITECTURE.md) / [Roadmap](docs/ROADMAP.md) / [Agent state](docs/STATE.md) | Module contracts, current coverage, remaining work and development rules |
 
 ## Help and development
 
@@ -480,20 +480,19 @@ for test coverage and hardware-specific limitations.
 
 Shared backend infrastructure lives in `scripts/command_runner.py` (subprocesses,
 tool lookup and errors), `scripts/storage.py` (private JSON writes and file locks),
-and `scripts/content_types.py` (the text byte limit and image signature recognition).
+`scripts/content_types.py` (the text byte limit and image signature recognition),
+and `scripts/action_pending.py` (JSON-line acknowledgement and ownership projection).
 The original backend, display and Clipboard imports remain available for compatibility.
-Clipboard's bar item, panel and bootstrap, and the Clipboard, Night Light, Idle,
-Keybinds, Weather, Wallpaper and Shell utilities Settings pages are registered through [config/features.json](config/features.json).
+Converted pages, panels, bar entries and bootstraps are registered through
+[config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor
-fragments and `config/preferences-legacy.json`: 43 keys are descriptor-owned and
-104 remain in the legacy fragment.
+fragments and `config/preferences-legacy.json`.
 Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
-`scripts/backend_actions.py` owns synchronous Launchpad, Night Light, Idle and Keybinds
-action dispatch through narrow controller/preferences callbacks. Weather's asynchronous
-controller and other live/demo actions retain legacy routing.
+`scripts/backend_actions.py` dispatches sync/worker actions through narrow callbacks;
+the host retains scheduling/completion and unconverted live/demo routes.
 Page-to-page Settings links use a local `navigateRequested(pageId)` adapter.
-Notifications and Desktop retain legacy registration in this batch. See the
-[migration log](docs/MIGRATION_LOG.md) for validation and deferred scope.
+See the [roadmap](docs/ROADMAP.md) for current migration coverage, remaining legacy
+contracts and release criteria; the [migration log](docs/MIGRATION_LOG.md) records checks.
 
 Start development tasks with [current agent state](docs/STATE.md).
 `./scripts/check-architecture.sh` checks static dependencies, cycles and source sizes;

@@ -33,9 +33,7 @@ class ArchitectureCharacterizationCase(unittest.TestCase):
         self.assertEqual(descriptor['settingsPage']['after'], 'notifications')
 
     def test_current_python_legacy_edges_remain_explicit(self):
-        for source, target in [('scripts/battery_saver.py', 'display_control'),
-                               ('scripts/bluetooth_agent.py', 'peripheral_battery'),
-                               ('scripts/image_utilities.py', 'wallpaper')]:
+        for source, target in [('scripts/battery_saver.py', 'display_control')]:
             with self.subTest(source=source): self.assertIn(target, self.imports(source))
 
 
@@ -137,8 +135,8 @@ class ArchitectureGuardCase(unittest.TestCase):
         self.assertIn('Ratchet size ceiling', self.errors())
 
     def test_vanished_legacy_exception_must_be_removed(self):
-        path = self.root/'scripts/image_utilities.py'
-        path.write_text(path.read_text().replace('from wallpaper import image_path', ''))
+        path = self.root/'scripts/battery_saver.py'
+        path.write_text(path.read_text().replace('from display_control import apply_layout, current_layout, validate_layout', ''))
         self.assertIn('Stale legacy exception', self.errors())
 
     def test_unknown_flat_implementation_requires_ownership(self):

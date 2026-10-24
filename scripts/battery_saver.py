@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import time
 
-from display_control import apply_layout, current_layout, validate_layout
+from display_layout import apply_layout, current_layout, validate_layout
 from storage import locked, write_json
 
 # Allow nominal 60 Hz EDID timings below 60.5 Hz; send the exact timing to niri.

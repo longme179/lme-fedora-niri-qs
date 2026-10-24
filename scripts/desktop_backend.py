@@ -55,6 +55,7 @@ from capture_actions import ImageCapabilities, provide_image
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
+from file_search_actions import SearchCapabilities, provide as provide_file_search
 from file_search import roots as search_roots, search as search_files
 from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
@@ -553,6 +554,8 @@ class DesktopBackend:
                 lambda value:setattr(self.image_utilities,'state',value))),
             (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
+            (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
+                lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
@@ -1163,7 +1166,6 @@ class DesktopBackend:
                 if spec is not None and spec.execution == 'worker':
                     spec.complete(value)
                     message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
-                elif action == "fileSearch": self.file_search = value; message = "File search completed"
                 elif action == 'wallpaperCycle': message = ''
                 elif action == "captureOcr":
                     token, content = value
@@ -1473,10 +1475,17 @@ class DesktopBackend:
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "fileSearch", "paletteApply"}:
+        elif action in {"glassBlurApply", "paletteApply"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
+
+    def replace_file_search(self):
+        self.file_search_cancel.set()
+        previous=self.feature_jobs.pop('fileSearch',None)
+        if previous: previous.cancel()
+        self.file_search_cancel=Event()
+        return self.file_search_cancel
 
     def prepare_notes(self):
         path = Path(os.environ.get("XDG_STATE_HOME") or Path.home()/".local/state") / "lme-shell/notes.txt"
@@ -1548,17 +1557,6 @@ class DesktopBackend:
         if action == "platformRefresh":
             self.platform = self.compositor_features()
             return "Compositor version checked"
-        if action == "fileSearch":
-            if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
-            query=request.get("query")
-            if not isinstance(query,str) or not 2<=len(query.strip())<=160: raise ValueError("File search needs 2–160 characters")
-            self.file_search_cancel.set()
-            previous=self.feature_jobs.pop(action,None)
-            if previous: previous.cancel()
-            self.file_search_cancel=Event();cancel=self.file_search_cancel
-            folders=list(self.preferences.values["fileSearchRoots"])
-            self.file_search={"query":query,"entries":[],"truncated":False}
-            return self.start_feature(action,lambda: search_files(query,folders,cancel))
         if action == "paletteApply":
             colors=validate_palette(self.palette_preview.get("colors"))
             if (not colors or self.palette_preview.get("path") != request.get("path")

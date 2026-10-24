@@ -42,3 +42,12 @@ work. Shared runner and transaction/lifecycle owners stay. Explicit discovery
 retires only with descriptor ownership/withdrawal/fallback parity; public facades
 require zero consumers and owner approval. Actual niri blur/upscale/terminal/GPU
 behavior needs real-session check; private VM results do not prove total RAM.
+
+## Execution result
+
+Implemented on runtime/test head a490075 after baseline characterization 4209727.
+Seven baseline cases pass; one ownership-only N/A becomes a pass after extraction.
+Old assertions/fixtures stay unchanged. Four sync entries extend existing providers
+and the glass service; no new provider file/process or compatibility mechanism.
+Final gates, one branch sanity and pending laptop checks are in MIGRATION_LOG.md.
+No subsequent family is implemented or authorized by this branch.

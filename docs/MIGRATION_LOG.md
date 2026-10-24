@@ -509,3 +509,24 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   1. From the main shell choose source/target, start and stop; confirm the correct output is mirrored and its output layout stays intact.
   2. Start/stop from Settings with the shell running; stop the shell and check the named-shell fallback without a second owned mirror child in Settings.
   3. Disconnect/disable a mirrored output, reconnect and restart; verify errors clear and shell exit stops its own child while unrelated wl-mirror instances remain.
+
+## Selection/application family — 2026-10-24
+
+- Branch refactor/selection-application-actions, main 2390d8d (Mirroring PR29 merged). Plan 640fc95 before tests 4209727 and extraction a490075; final docs separate. No later family/main merge.
+- Scope: paletteApply/glassBlurApply/gowallSetup/weatherSelect. Registry 75/89 (49 sync entry calls/26 workers), 14 legacy; schema unchanged at 66 descriptor/81 legacy. Existing providers/glass service; no new provider file, process, queue, timer, dependency or registry feature.
+- Baseline characterization 7 pass/0 fail/1 ownership-only N/A; after extraction 8/0/0, unchanged expectations. Covers 16 context/demo/action combinations, exact results/sequence/clientSerial, preferences/snapshot fields, validation order, failed-save behavior, owned blur bytes/permissions, literal Gowall setup argv/terminal, prefix admission and demo zero-I/O.
+- First local test attempt used serial instead of clientSerial; corrected the new request field before commit, without changing assertions. Production and existing tests were untouched at that point.
+- Baseline G0 with tests: 644/0/153 (88.340s); affected after G0 645/0/152 (88.100s). Focused units: 134/0/4; skips were real Matugen, native palette UI and two private glass controls checks, not passes.
+- Full final runtime/test head a490075, disposable XDG/private Sway/D-Bus: G0 645/0/152 (87.524s); G1 3/0/0 (8.923s); G2 4/0/0 (32.209s); G3 53/0/0 (97.559s); G4 34/0/0 (43.551s); G6 polling 1/0/0 (19.366s). Counts are pass/fail/skip; final docs do not change runtime/tests.
+- G0 skip count returns to main's 152: 140 opt-in session/UI, 5 private BlueZ/PyGObject, 5 MPRIS, 1 real Matugen, 1 detached fake-niri. The only before/after skip change is the new ownership test now executing. qmllint: 148 files, 0 errors, 71 pre-existing warnings.
+- Existing assertion ASTs/timeouts and frozen fixtures untouched. All coordinator method ASTs except composition/handle/perform/perform_demo unchanged; underlying apply_blur, image utilities, palette/weather algorithms, Preferences transactions and UI remain unchanged.
+- perform physical lines 77->60; perform_demo 61->54; backend nonblank ceiling 1654->1634. Four old live/demo branches and Settings admission entries removed together; permissive demo gowall prefix and other unknown-ID routing stay legacy.
+- One branch sanity: 10 fresh-process/fresh-XDG launches per path/arm, warm OS cache, mapped private Sway endpoint/20ms polling, Mesa software OpenGL/pixman. Main/head preview median 520.24/517.58ms; Settings 558.57/542.01ms. No D1 profiling/CIs or cross-run inference.
+- T+10s RSS KiB main/head: preview QS 278752/278844, backend 25768/25732; Settings QS 231364/230728, backend 25736/25716. Largest increase 0.033%; no +100ms/+10% flags. Separate-process pairs do not establish combined whole-shell memory or physical GPU behavior; no RAM-saving claim.
+- Behavior differences found: none on exercised paths. Preserve preview matching/lowercase colors, element overrides, single live settings transaction, normalized weather location, explicit owned blur writes, Gowall admission/setup/terminal and demo no-op vs memory-only selection. No A6, schema/UI/policy changes.
+- Adapters: explicit composition bindings retire with descriptor ownership/withdrawal/fallback parity; public perform/perform_demo, helper/import/snapshot/schema facades remain until zero consumers plus owner approval. No new compatibility mechanism, dependency exception/cycle or file move.
+- Remaining boundary: 14 coordinator IDs mostly own transactions/control/power/lifecycle. Retain them when extraction adds no value; prefer RELEASE_CHECKLIST.md laptop integration and combined PSS before further migrations. M8/D1/A6 stay deferred/closed/out of scope respectively.
+- Laptop checklist (needs real-session check):
+  1. Generate/apply a wallpaper palette; change preview image/options and verify stale apply is rejected, element overrides persist after restart.
+  2. Apply Liquid blur explicitly; validate the owned niri snippet and appearance. Try Gowall setup in the configured terminal, including busy rejection and normal upscale behavior.
+  3. Select a weather city from shell/Settings, restart and verify automatic location stays off; demo must not write files/spawn commands. Complete the combined-memory/release checklist separately.

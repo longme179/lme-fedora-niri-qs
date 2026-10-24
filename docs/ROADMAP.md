@@ -26,8 +26,8 @@ migration coverage, not product stability or remaining engineering effort.
 | Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry implemented | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 11 catalog records, 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 66 of 147 keys descriptor-owned; 81 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
-| Backend dispatch | Mirroring branch: 71 of 89 IDs registered, 45 sync entry calls + 26 workers | 18 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
-| Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture and Display preview batches merged; mirror routes implemented for review | Laptop integration, scoped combined memory and normal release sign-off |
+| Backend dispatch | Selection/application branch: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
+| Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture, Display preview and Mirroring batches merged; selection/application routes implemented for review | Laptop integration, scoped combined memory and normal release sign-off |
 | Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity | Combined real-session shell + Settings/worker memory and physical device/GPU checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
@@ -36,9 +36,10 @@ expanding migrations. The merged resource branch converted the 21 async entry po
 through explicit preflight/admission/lease/controller contracts; see ASYNC_ACTIONS.md.
 Capture's five synchronous start/close/language entries are merged; see
 CAPTURE_ENTRY_PLAN.md. Display preview/platformRefresh entries are merged; see
-DISPLAY_PREVIEW_PLAN.md. Mirroring now has its provider for review; see
-MIRRORING_PLAN.md. The main shell still owns the child, Settings uses its IPC and
-demo remains isolated. Controllers/UI/pending/shutdown semantics stay, including
+DISPLAY_PREVIEW_PLAN.md. Mirroring is merged (2390d8d); see MIRRORING_PLAN.md.
+The main shell still owns the mirror child and Settings uses its IPC.
+Selection/application reuses four domain/service registrations for review; see
+SELECTION_APPLICATION_PLAN.md. Demo remains isolated. Controllers/UI/pending/shutdown semantics stay, including
 watchdog/guard/confirmation policy; no additional worker/process.
 Existing stable legacy ownership is acceptable; full conversion is not the goal.
 
@@ -48,15 +49,15 @@ Existing stable legacy ownership is acceptable; full conversion is not the goal.
    21 converted async entries are merged. Complete RELEASE_CHECKLIST.md on the laptop and
    assess the combined memory scenario with its profile/worker scope stated.
    Hardware/GPU success cannot be inferred from private software-rendered checks.
-2. **Choose the next useful small family after Mirroring review.** There are 18
-   legacy coordinator IDs and 81 legacy schema keys. Prefer cohesive groups whose
-   move reduces actual change cost; characterize first and retain public facades/
-   transaction semantics. Remaining selection/application routes are the next small
-   candidate: paletteApply, glassBlurApply, gowallSetup and weatherSelect, through
-   their existing providers/services. Preserve preview matching, setup admission,
-   preference writes and demo behavior. Core settings transactions, refresh and
-   power/control orchestration may stay legacy when extraction would merely move
-   stable coordination.
+2. **Review selection/application, then prefer release evidence.** Four entries
+   (paletteApply, glassBlurApply, gowallSetup, weatherSelect) reuse their existing
+   domain providers/services. Preview matching, setup admission, preferences and
+   demo behavior stay. Fourteen legacy IDs remain: setting, refresh, controlsRefresh,
+   wifiWatch, monitor, launcherHistoryClear, wifiToggle, powerProfile, logout,
+   suspend, reboot, poweroff, desktopEdit and openSettings. These mostly coordinate
+   shared state, transactions or lifecycle; moving them just to reach 89/89 is not
+   a goal. No later family is authorized; choose another boundary only if it
+   reduces real change cost. Schema remains 81 legacy keys.
 3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
    an adapter. A descriptor backend contract must preserve disabled/broken-catalog
    fallback and ownership before replacing them; no competing registry.

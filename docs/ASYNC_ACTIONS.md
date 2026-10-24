@@ -4,11 +4,14 @@
 legacy async entry conversions: **58/89 IDs, 32 sync entry calls and 26 workers**.
 Merged Capture entry main 201c452 includes its five synchronous start/close/language
 entries: **63/89, 37 sync entry calls and 26 workers**. Merged Display preview main
-b73a7b0 has **68/89, 42 sync entry calls and 26 workers**. The subsequent
-`refactor/mirroring-actions` review branch adds three synchronous mirror routes:
-**71/89, 45 sync entry calls and 26 workers**. Existing controller/watchdog calls
-stay synchronous; Settings still uses the main shell's mirror IPC. No async
-contract, UI composition or schema change. See MIRRORING_PLAN.md.
+b73a7b0 has **68/89, 42 sync entry calls and 26 workers**. The
+Mirroring merge (2390d8d) adds three synchronous mirror routes:
+**71/89, 45 sync entry calls and 26 workers**. The subsequent
+`refactor/selection-application-actions` review branch adds paletteApply,
+glassBlurApply, gowallSetup and weatherSelect: **75/89, 49 sync entry calls and
+26 workers**. These are synchronous domain/service calls, not worker conversions.
+Existing controllers/watchdogs/transactions stay authoritative; no async contract,
+UI composition or schema change. See MIRRORING_PLAN.md and SELECTION_APPLICATION_PLAN.md.
 
 | Family | Actions | Preserved owner/contract |
 | --- | --- | --- |
@@ -39,7 +42,7 @@ network operations. Domain algorithms, retries, sampling and power policy stay.
 
 ## Remaining boundaries
 
-18 finite coordinator IDs remain legacy on the Mirroring branch. Conditional suspend and internal
+14 finite coordinator IDs remain legacy on the selection/application branch. Conditional suspend and internal
 wallpaperCycle retain their existing paths; neither was in the 21-ID inventory.
 Do not infer that every asynchronous operation in the shell is a registry worker.
 A later migration needs a named scope, characterization and its actual ownership

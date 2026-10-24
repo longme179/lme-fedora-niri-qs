@@ -51,7 +51,7 @@ from gowall_actions import GowallCapabilities, provide as provide_gowall
 from saver_actions import SaverCapabilities, provide as provide_saver
 from recording_actions import RecordingCapabilities, provide as provide_recording
 from palette_actions import PaletteCapabilities, provide as provide_palette
-from capture_actions import ImageCapabilities, provide_image
+from capture_actions import ImageCapabilities, LeaseCapabilities, provide_image, provide_sessions
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
@@ -556,6 +556,9 @@ class DesktopBackend:
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
                 lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),
+            (provide_sessions, LeaseCapabilities(lambda:self.preferences.values,lambda:self.capture.state,
+                lambda *args:self.capture.export(*args),lambda *args:self.capture.annotate(*args),
+                lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
@@ -1167,10 +1170,6 @@ class DesktopBackend:
                     spec.complete(value)
                     message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
                 elif action == 'wallpaperCycle': message = ''
-                elif action == "captureOcr":
-                    token, content = value
-                    if self.capture.state.get('token') == token: self.capture.state['ocrText'] = content
-                    message = "Text recognized" if content else "No text found. Try a tighter capture or another OCR language."
                 else: message = value
                 self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
             except (CommandError, ValueError, OSError) as error:
@@ -1387,12 +1386,7 @@ class DesktopBackend:
         elif action in {"captureClose", "captureLanguages"}:
             if action == 'captureClose': self.capture.close()
             else: self.capture.state['languages'] = ['eng', 'vie']
-        elif action == "captureExport":
-            if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
-        elif action == "captureAnnotate":
-            if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
         elif action.startswith("gowall"): pass
-        elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
         elif action == "displayRefresh":
@@ -1521,25 +1515,6 @@ class DesktopBackend:
             return 'Mirror refreshed'
         if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
         if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
-        if action == 'captureExport':
-            if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')
-            message = self.start_feature(action, lambda: self.capture.export(request['token'], request.get('operation'), request.get('folder')))
-            self.feature_jobs[action].capture_token = request['token']
-            return message
-        if action == 'captureAnnotate':
-            token=request.get('token')
-            if type(token) is not str: raise ValueError('Missing screenshot session')
-            if token != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-            editor=self.preferences.values['captureEditor']
-            message=self.start_feature(action,lambda:self.capture.annotate(token,editor,request.get('folder')))
-            self.feature_jobs[action].capture_token=token
-            return message
-        if action == 'captureOcr':
-            token, language = request.get('token'), request.get('language')
-            if type(token) is not str: raise ValueError('Missing screenshot session')
-            message = self.start_feature(action, lambda: (token, self.capture.ocr(token, language)))
-            self.feature_jobs[action].capture_token = token
-            return message
         if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             if self.wifi_watching != request["enabled"]:

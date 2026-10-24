@@ -4,12 +4,6 @@ from typing import Callable
 
 
 @dataclass(frozen=True)
-class PreparedWork:
-    operation: Callable
-    metadata: dict | None = None
-
-
-@dataclass(frozen=True)
 class ActionSpec:
     name: str
     contexts: frozenset[str]
@@ -18,7 +12,6 @@ class ActionSpec:
     execution: str = 'sync'
     complete: Callable | None = None
     presentation: object = None
-    prepare: Callable | None = None
 
     def __post_init__(self):
         object.__setattr__(self, 'contexts', frozenset(self.contexts))
@@ -64,12 +57,5 @@ class ActionRegistry:
         spec = self._specs[name]
         if spec.execution == 'worker':
             if self._start_feature is None: raise ValueError('Worker dispatcher is unavailable')
-            if spec.prepare is not None:
-                prepared = spec.prepare(request)
-                if not isinstance(prepared, PreparedWork) or not callable(prepared.operation):
-                    raise ValueError('Prepared worker must provide an operation')
-                if prepared.metadata:
-                    return self._start_feature(name, prepared.operation, metadata=prepared.metadata)
-                return self._start_feature(name, prepared.operation)
             return self._start_feature(name, lambda: spec.live(request))
         return spec.live(request)

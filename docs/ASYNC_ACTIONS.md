@@ -1,9 +1,11 @@
 # Asynchronous action contracts
 
-2026-10-24. On `fix/resource-bounds-and-async-contracts`, all 21 previously listed
-legacy async entry points have been converted for review. Main baseline 03e7006
-had 37/89 registered IDs; this branch has **58/89: 32 sync entry calls and 26
-coordinator workers**. UI composition and schema ownership are unchanged.
+2026-10-24. Merged resource/lifecycle main 3f9ac22 includes all 21 previously listed
+legacy async entry conversions: **58/89 IDs, 32 sync entry calls and 26 workers**.
+The subsequent `refactor/capture-entry-actions` review branch adds five synchronous
+capture start/close/language entries: **63/89, 37 sync entry calls and 26 workers**.
+Those entries retain their synchronous controller calls; no async contract changes.
+UI composition and schema ownership are unchanged. See CAPTURE_ENTRY_PLAN.md.
 
 | Family | Actions | Preserved owner/contract |
 | --- | --- | --- |
@@ -34,7 +36,7 @@ network operations. Domain algorithms, retries, sampling and power policy stay.
 
 ## Remaining boundaries
 
-31 finite coordinator IDs remain legacy. Conditional suspend and internal
+26 finite coordinator IDs remain legacy on the Capture entry branch. Conditional suspend and internal
 wallpaperCycle retain their existing paths; neither was in the 21-ID inventory.
 Do not infer that every asynchronous operation in the shell is a registry worker.
 A later migration needs a named scope, characterization and its actual ownership

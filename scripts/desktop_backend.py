@@ -54,7 +54,7 @@ from gowall_actions import GowallCapabilities, provide as provide_gowall
 from saver_actions import SaverCapabilities, provide as provide_saver
 from recording_actions import RecordingCapabilities, provide as provide_recording
 from palette_actions import PaletteCapabilities, provide as provide_palette
-from capture_actions import ImageCapabilities, LeaseCapabilities, provide_image, provide_sessions
+from capture_actions import ControlCapabilities, ImageCapabilities, LeaseCapabilities, provide_controls, provide_image, provide_sessions
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
@@ -562,6 +562,8 @@ class DesktopBackend:
             (provide_sessions, LeaseCapabilities(lambda:self.preferences.values,lambda:self.capture.state,
                 lambda *args:self.capture.export(*args),lambda *args:self.capture.annotate(*args),
                 lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
+            (provide_controls, ControlCapabilities(lambda mode:self.capture.start(mode),lambda:self.capture.close(),
+                lambda:self.capture.languages(),lambda:self.capture.state)),
             (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
                 lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot())),
             (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,
@@ -1395,9 +1397,6 @@ class DesktopBackend:
                 self.mirror_state = {'active': True, 'available': True, 'source': request.get('source'), 'target': request.get('target'), 'error': ''}
             elif action == 'mirrorStop': self.mirror_state = {**self.mirror_state, 'active': False}
         elif action == "platformRefresh": pass
-        elif action in {"captureClose", "captureLanguages"}:
-            if action == 'captureClose': self.capture.close()
-            else: self.capture.state['languages'] = ['eng', 'vie']
         elif action.startswith("gowall"): pass
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
@@ -1455,7 +1454,7 @@ class DesktopBackend:
                 raise ValueError("Unknown settings panel")
         elif action in {"glassBlurApply", "paletteApply"}:
             pass
-        elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
+        elif action not in {"refresh", "lock", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
     def replace_file_search(self):
@@ -1497,8 +1496,6 @@ class DesktopBackend:
             if action == 'mirrorStop': return self.mirror.stop()
             self.mirror_state = self.mirror.state()
             return 'Mirror refreshed'
-        if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
-        if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
         if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             if self.wifi_watching != request["enabled"]:
@@ -1561,12 +1558,6 @@ class DesktopBackend:
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():
                 return self.set_power_profile(request.get('value'))
-        if action in {"screenshot", "screenshotArea", "screenshotWindow"}:
-            # niri owns capture and clipboard integration. Traditional grim uses
-            # wlr-screencopy, which is not the portable screenshot path on niri.
-            # Let a just-dismissed control panel finish its surface teardown.
-            time.sleep(0.2)
-            return self.capture.start({'screenshot': 'screen', 'screenshotArea': 'area', 'screenshotWindow': 'window'}[action])
         if action == "logout":
             run("niri", "msg", "action", "quit", "--skip-confirmation")
             return "Logout requested"

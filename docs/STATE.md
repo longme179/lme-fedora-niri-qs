@@ -5,10 +5,10 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d and F1-F3 merged. Resource branch review: 58/89 IDs (32 sync entry calls + 26 workers), including the 21 listed async conversions.
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5 and the resource/lifecycle batch merged. Capture entry branch review: 63/89 IDs (37 sync entry calls + 26 workers).
   Ten catalog pages; 66 descriptor keys/81 legacy; Clipboard bar converted; tab/bootstrap adapters implemented.
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- fix/resource-bounds-and-async-contracts implements the owner's F5/F4 + async plan; see RESOURCE_LIFECYCLE_PLAN.md, RESOURCE_LIMITS.md and ROADMAP.md. Real laptop checks remain pending in RELEASE_CHECKLIST.md; no further boundary is authorized.
+- refactor/capture-entry-actions implements the next roadmap family: five synchronous capture entry actions, through the existing controller/provider. See CAPTURE_ENTRY_PLAN.md and ROADMAP.md. Real laptop checks remain pending in RELEASE_CHECKLIST.md; no later family is authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

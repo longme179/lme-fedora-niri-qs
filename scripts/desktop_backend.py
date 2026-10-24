@@ -67,7 +67,7 @@ from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
 from settings_transfer import export_document, read_document, document
-from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur
+from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur, provide_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
@@ -553,6 +553,7 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
+            (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
             (provide_mirror, MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
                 available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),
@@ -569,7 +570,8 @@ class DesktopBackend:
             (provide_gowall, GowallCapabilities(lambda:tuple(self.feature_jobs), lambda:self.image_utilities.themes(),
                 lambda request:self.image_utilities.generate(request), lambda path,destination:self.image_utilities.save(path,destination),
                 lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
-                lambda value:setattr(self.image_utilities,'state',value))),
+                lambda value:setattr(self.image_utilities,'state',value),
+                lambda path,terminal:self.image_utilities.setup(path,terminal),lambda:self.preferences.values['terminal'])),
             (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
@@ -580,7 +582,8 @@ class DesktopBackend:
             (provide_controls, ControlCapabilities(lambda mode:self.capture.start(mode),lambda:self.capture.close(),
                 lambda:self.capture.languages(),lambda:self.capture.state)),
             (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
-                lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot())),
+                lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot(),
+                lambda values:self.preferences.update(values))),
             (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,
                 lambda value:setattr(self,'charge_job',self.charge_executor.submit(self.set_charge,value)),
                 lambda:setattr(self,'system_cache',None),lambda:self.demo_snapshot()['system']['charging'])),
@@ -593,7 +596,8 @@ class DesktopBackend:
                 lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
                 lambda *args:self.recorder.start(*args))),
             (provide_palette, PaletteCapabilities(self.runner.executable, lambda:self.preferences.values,
-                lambda value:setattr(self,'palette_preview',value), lambda *args:palette_preview(self.runner,*args))),
+                lambda value:setattr(self,'palette_preview',value), lambda *args:palette_preview(self.runner,*args),
+                lambda:self.palette_preview,lambda values:self.preferences.update(values))),
             (provide_image, ImageCapabilities(lambda:self.preferences.values,lambda editor,path:annotate_image(self.runner,editor,path))),
             (provide_lock, LockCapabilities(self.runner.executable,lambda:self.lock_session)),
             (provide_wifi, self._wifi_capabilities),
@@ -1351,7 +1355,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "gowallSetup", "glassBlurApply", "desktopEdit","palettePreview", "paletteApply", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect", "weatherSelect"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "desktopEdit","palettePreview", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)
@@ -1430,16 +1434,9 @@ class DesktopBackend:
             if value not in POWER_PROFILES:
                 raise ValueError("Invalid power profile")
             system["powerProfile"] = value
-        elif action == "weatherSelect":
-            place = location(request.get("location"))
-            if not place:
-                raise ValueError("Select a city first.")
-            self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "paletteApply"}:
-            pass
         elif action not in {"refresh", "lock", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
 
@@ -1473,24 +1470,7 @@ class DesktopBackend:
             self.monitor_enabled = request["enabled"]
             self.monitor = SystemMonitor(self.proc)
             return "System monitor started" if self.monitor_enabled else "System monitor stopped"
-        if action == "glassBlurApply":
-            return apply_blur(self.preferences.path.parent, self.preferences.values["liquidGlass"])
-        if action == "paletteApply":
-            colors=validate_palette(self.palette_preview.get("colors"))
-            if (not colors or self.palette_preview.get("path") != request.get("path")
-                    or any(self.palette_preview.get(k)!=self.preferences.values[k] for k in ('paletteScheme','paletteMode','paletteContrast'))): raise ValueError("Generate a preview for this image first")
-            self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
-            return "Wallpaper palette applied; element overrides preserved"
         if action.startswith("appearance"): return self.appearance_action(action, request)
-        if action == 'gowallSetup':
-            if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
-            return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
-        if action == "weatherSelect":
-            place = location(request.get("location"))
-            if not place:
-                raise ValueError("Select a city first.")
-            self.preferences.update({"weatherLocation": place, "weatherAutoLocation": False})
-            return "Weather location updated"
         if action == "refresh":
             if self.settings_only:
                 self.preferences.reload(force=True)

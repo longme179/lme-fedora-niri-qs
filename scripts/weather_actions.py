@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec
+from weather import location
 
 
 @dataclass(frozen=True)
@@ -11,6 +12,7 @@ class WeatherCapabilities:
     detect: Callable
     refresh: Callable
     demo_state: Callable
+    update: Callable
 
 
 def provide(cap):
@@ -29,6 +31,15 @@ def provide(cap):
             raise ValueError('Enter a city name of 2–100 characters.')
         cap.demo_state()['weather']['search']={'query':query,'loading':False,'error':'',
             'results':[{'name':query.strip(),'country':'Demo','latitude':10.82,'longitude':106.63}]}
+    def select(request, demo=False):
+        place = location(request.get('location'))
+        if not place: raise ValueError('Select a city first.')
+        values = {'weatherLocation':place,'weatherAutoLocation':False}
+        if demo: cap.preferences().update(values)
+        else:
+            cap.update(values)
+            return 'Weather location updated'
     return (ActionSpec('weatherSearch',{'shell','settings'},search,demo_search),
             ActionSpec('weatherDetect',{'shell','settings'},detect,lambda request:None),
-            ActionSpec('weatherRefresh',{'shell'},refresh,lambda request:None)),lambda:{}
+            ActionSpec('weatherRefresh',{'shell'},refresh,lambda request:None),
+            ActionSpec('weatherSelect',{'shell','settings'},select,lambda request:select(request,demo=True))),lambda:{}

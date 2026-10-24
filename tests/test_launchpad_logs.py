@@ -66,6 +66,14 @@ class LaunchpadLogCase(Fixture, unittest.TestCase):
         self.assertEqual(self.finished(tool)['exitCode'],-signal.SIGKILL)
 
     @unittest.skipUnless(RELAY,'F4 relay not implemented on baseline')
+    def test_exec_restores_shell_sigpipe_default_like_popen(self):
+        from detached_log import start_detached
+        with self.put('signal-log','').open('wb') as sink:
+            child=start_detached(['/bin/sh','-c','kill -PIPE $$; exit 99'],cwd=self.root,
+                stdin=subprocess.DEVNULL,stdout=sink,stderr=sink,start_new_session=True)
+            self.assertEqual(child.wait(timeout=3),-signal.SIGPIPE)
+
+    @unittest.skipUnless(RELAY,'F4 relay not implemented on baseline')
     def test_silent_stubborn_job_is_force_stopped_without_a_polling_service(self):
         marker=self.root/'stubborn'
         tool,child=self.launch(f'import os,signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);open({str(marker)!r},"w").write(str(os.getpid()));time.sleep(30)')

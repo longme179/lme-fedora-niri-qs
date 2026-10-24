@@ -64,7 +64,7 @@ class WorkerRegistryCase(Fixture, unittest.TestCase):
         self.addCleanup(live.charge_executor.shutdown); self.addCleanup(live.feature_executor.shutdown)
         for demo in (False, True):
             live.demo = demo
-            for action in ('wallpaperNext', 'wallpaperUnknown'):
+            for action in ('mirrorRefresh', 'wallpaperUnknown'):
                 target = 'perform_demo' if demo else 'perform'
                 with patch.object(live, target, return_value='legacy') as legacy:
                     self.assertTrue(live.handle(dict(action=action))['ok'])

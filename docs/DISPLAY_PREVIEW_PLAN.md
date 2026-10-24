@@ -50,3 +50,11 @@ Adapters remain public dispatch/controller/import/snapshot facades and explicit
 provider bindings; retire only at zero consumers plus owner approval or equivalent
 descriptor ownership/withdrawal/fallback. No new protocol, worker or executor.
 Physical output switching, reconnect and restoration need real-session checks.
+
+## Execution result
+
+Implemented on runtime/test head `04ac0d6`: all five entries use the existing
+sync registry; the detached watchdog and controllers remain byte-identical.
+Characterization passed before extraction; final gates, the separate watchdog
+check and normal main/head sanity are recorded in MIGRATION_LOG.md. Mirroring,
+schema ownership and UI conversion remain outside this branch.

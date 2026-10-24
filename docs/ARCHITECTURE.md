@@ -123,7 +123,7 @@ duplicate those rules in Python. Example: `"actionPresentation":{"launchpadRun":
 
 ```python
 # Implemented interface in scripts/backend_actions.py; callbacks are Python, not JSON.
-ActionSpec(name, contexts, live, demo, execution="sync", complete=None, presentation=None)
+ActionSpec(name, contexts, live, demo, execution="sync", complete=None, presentation=None, prepare=None)
 # Pilot provider scripts/launchpad_actions.py; injected narrow capabilities:
 ActionSpec("launchpadRun", contexts={"shell", "settings"},
            live=run_saved_entry, demo=lambda request: None, execution="sync")
@@ -198,6 +198,15 @@ and six worker commands; Settings must not start that worker. Keep its snapshot
 `entries/available/capturing/paused/total/error/lastResult`, sequence and restart semantics.
 `setting` and `imageAnnotate` still use the desktop backend. Image annotation belongs
 to the capture service, not the Clipboard worker; no six new desktop actions are invented.
+
+The resource/lifecycle batch adds optional coordinator preparation:
+`prepare(request) -> PreparedWork(operation, metadata=None)`, after context checks
+and only for live worker dispatch. start_feature attaches existing trusted Future
+metadata before ack; complete installs state before a static/callable presentation.
+No JSON code or extra scheduler. This preserves request-time options, prefix guards,
+file-search replacement and capture leases. Charge and Weather entry calls use sync
+registry dispatch into their original asynchronous controllers/executors; result and
+loading semantics stay. See ASYNC_ACTIONS.md and RESOURCE_LIFECYCLE_PLAN.md.
 
 ### 2.3 Settings schema contract
 

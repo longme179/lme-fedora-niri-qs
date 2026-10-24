@@ -25,7 +25,8 @@
   },
   "sources": [
     "qml/panels/WeatherWidget.qml",
-    "scripts/weather.py"
+    "scripts/weather.py",
+    "scripts/weather_actions.py"
   ],
   "settingsPage": {
     "key": "weather",

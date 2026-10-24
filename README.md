@@ -454,6 +454,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |
 | [Architecture](docs/ARCHITECTURE.md) / [Roadmap](docs/ROADMAP.md) / [Agent state](docs/STATE.md) | Module contracts, current coverage, remaining work and development rules |
+| [Resource limits](docs/RESOURCE_LIMITS.md) / [Release checks](docs/RELEASE_CHECKLIST.md) | Bounded command output/logs, relay ownership and laptop sign-off |
 
 ## Help and development
 

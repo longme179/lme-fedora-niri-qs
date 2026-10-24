@@ -66,7 +66,7 @@ class PollingCase(Fixture, unittest.TestCase):
     def test_privacy_refreshes_after_actions_and_recording_completion(self):
         runner = FakeRunner({("pw-dump",): "[]"}, available=("wpctl",))
         live = self.make_backend(runner)
-        with patch.object(backend.time, "monotonic", return_value=100), patch.object(live, "perform", return_value="Done"):
+        with patch.object(backend.time, "monotonic", return_value=100), patch.object(live, "perform", return_value="Done"), patch.object(live.actions, "invoke_live", return_value="Done"):
             live.snapshot()
             for action in ["refresh", "micMute", "recordStart", "recordStop", "mirrorStart", "mirrorStop"]:
                 runner.calls.clear()

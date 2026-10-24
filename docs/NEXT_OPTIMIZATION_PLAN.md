@@ -7,8 +7,10 @@ existing owners, reuse services, and avoid a framework or a process per widget.
 
 Execution authorized by the owner after commit 50194c1. First review branch:
 `fix/content-result-recovery`, F1/F2 merged in main f28be3d; see MIGRATION_LOG.md.
-[F3 pending ownership](F3_PENDING_OWNERSHIP_PLAN.md) is approved and implemented
-on fix/action-pending-ownership for review. F4/F5 and recordStop stay later;
+[F3 pending ownership](F3_PENDING_OWNERSHIP_PLAN.md) is merged. F5, F4 and the
+21 listed async entry conversions are implemented for review on
+`fix/resource-bounds-and-async-contracts`; see RESOURCE_LIFECYCLE_PLAN.md and
+RESOURCE_LIMITS.md. The findings below retain their original review context;
 [ROADMAP.md](ROADMAP.md) records current coverage and remaining release criteria.
 
 ## Scope and current state

@@ -7,6 +7,7 @@ import shlex
 import shutil
 import subprocess
 import time
+from detached_log import start_detached
 
 
 def entries(value):
@@ -65,7 +66,8 @@ class Launchpad:
         log=directory/(key+'.log')
         flags=os.O_WRONLY|os.O_CREAT|os.O_TRUNC|os.O_NOFOLLOW
         with os.fdopen(os.open(log,flags,0o600),'w') as output:
-            process=subprocess.Popen(argv,cwd=cwd,stdin=subprocess.DEVNULL,stdout=output,stderr=output,start_new_session=True)
+            os.fchmod(output.fileno(),0o600)
+            process=start_detached(argv,cwd=cwd,stdin=subprocess.DEVNULL,stdout=output,stderr=output,start_new_session=True)
         self.jobs[key]=dict(process=process,running=True,exitCode=None,started=time.time(),log=str(log),terminal=in_terminal)
         # Bound history without interrupting user-owned commands.
         for stale in list(self.jobs):

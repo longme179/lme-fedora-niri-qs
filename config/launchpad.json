@@ -4,6 +4,7 @@
     "qml/panels/LaunchpadPanel.qml",
     "qml/panels/LaunchpadEditor.qml",
     "scripts/launchpad.py",
+    "scripts/detached_log.py",
     "scripts/launchpad_actions.py"
   ],
   "settingsPage": {

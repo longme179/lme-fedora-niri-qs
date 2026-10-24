@@ -5,7 +5,8 @@
     "qml/settings/AwwwSettings.qml",
     "scripts/wallpaper.py",
     "scripts/wallpaper_actions.py",
-    "scripts/wallpaper_palette.py"
+    "scripts/wallpaper_palette.py",
+    "scripts/palette_actions.py"
   ],
   "settingsPage": {
     "key": "wallpaper",

@@ -30,12 +30,15 @@ import time
 from typing import Any
 
 from command_runner import CommandError, CommandRunner, TOOLS
+from wallpaper_actions import WallpaperChangeCapabilities, provide_changes as provide_wallpaper_changes
 from action_pending import acknowledge, emit_snapshot, handle_line
 from settings_schema import Schema as PreferenceSchema
 
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
 from charge_control import ChargeControl, HELPER_PATH, trusted_helper
 from weather import WeatherClient, location
+from weather_actions import WeatherCapabilities, provide as provide_weather
+from charge_actions import ChargeCapabilities, provide as provide_charge
 from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_LAYOUT, DEFAULT_CONTROL_GRID, MOTION_DEFAULTS, THEME_DEFAULTS, PALETTE_DEFAULTS,
                               appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, apply_layout, current_layout
@@ -47,8 +50,15 @@ from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
 from content_types import MAX_TEXT
+from gowall_actions import GowallCapabilities, provide as provide_gowall
+from saver_actions import SaverCapabilities, provide as provide_saver
+from recording_actions import RecordingCapabilities, provide as provide_recording
+from palette_actions import PaletteCapabilities, provide as provide_palette
+from capture_actions import ImageCapabilities, LeaseCapabilities, provide_image, provide_sessions
+from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
+from file_search_actions import SearchCapabilities, provide as provide_file_search
 from file_search import roots as search_roots, search as search_files
 from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
@@ -539,8 +549,36 @@ class DesktopBackend:
             return self.niri
         self._wifi_capabilities = WifiCapabilities(lambda **kwargs: self.network(**kwargs),
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
-        self.actions = ActionRegistry(start_feature=lambda action, operation: self.start_feature(action, operation))
+        self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
+            (provide_gowall, GowallCapabilities(lambda:tuple(self.feature_jobs), lambda:self.image_utilities.themes(),
+                lambda request:self.image_utilities.generate(request), lambda path,destination:self.image_utilities.save(path,destination),
+                lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
+                lambda value:setattr(self.image_utilities,'state',value))),
+            (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
+                lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
+            (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
+                lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),
+            (provide_sessions, LeaseCapabilities(lambda:self.preferences.values,lambda:self.capture.state,
+                lambda *args:self.capture.export(*args),lambda *args:self.capture.annotate(*args),
+                lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
+            (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
+                lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot())),
+            (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,
+                lambda value:setattr(self,'charge_job',self.charge_executor.submit(self.set_charge,value)),
+                lambda:setattr(self,'system_cache',None),lambda:self.demo_snapshot()['system']['charging'])),
+            (provide_wallpaper_changes, WallpaperChangeCapabilities(lambda:tuple(self.feature_jobs),
+                lambda *args,**kwargs:self.apply_wallpaper(*args,**kwargs),lambda output:self.wallpapers.advance(output),
+                lambda output:self.wallpapers.reset_output(output),lambda:self.preferences.values,
+                lambda path:validate_preference('wallpaper',path),lambda value:validate_wallpaper('wallpaperOutputs',value))),
+            (Recorder.provide_stop, lambda: self.recorder.stop()),
+            (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
+                lambda:self.saver_snapshot(), lambda:self.niri_state(), lambda **options:self.battery_saver.guard(**options),
+                lambda *args:self.recorder.start(*args))),
+            (provide_palette, PaletteCapabilities(self.runner.executable, lambda:self.preferences.values,
+                lambda value:setattr(self,'palette_preview',value), lambda *args:palette_preview(self.runner,*args))),
+            (provide_image, ImageCapabilities(lambda:self.preferences.values,lambda editor,path:annotate_image(self.runner,editor,path))),
+            (provide_lock, LockCapabilities(self.runner.executable,lambda:self.lock_session)),
             (provide_wifi, self._wifi_capabilities),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
@@ -1122,9 +1160,11 @@ class DesktopBackend:
                            "actions": [], "active": False, "popup": False, "transient": False})
         return result
 
-    def start_feature(self, action, operation):
+    def start_feature(self, action, operation, *, metadata=None):
         if action in self.feature_jobs or wifi_busy(action, self.feature_jobs): raise ValueError("This operation is already running")
+        tags = dict(metadata or {})
         self.feature_jobs[action] = self.feature_executor.submit(operation)
+        self.feature_jobs[action].__dict__.update(tags)
         return "Working…"
 
     def finish_features(self):
@@ -1138,16 +1178,10 @@ class DesktopBackend:
                     del self.feature_jobs[action]
                     break
                 value = job.result()
-                if spec is not None and spec.execution == 'worker': spec.complete(value); message = value if spec.presentation is None else spec.presentation
-                elif action == "fileSearch": self.file_search = value; message = "File search completed"
-                elif action == "palettePreview": self.palette_preview = value; message = "Wallpaper palette preview ready"
-                elif action == "gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":value}; message="Gowall themes loaded"
-                elif action == "gowallGenerate": self.image_utilities.state=value; message="Gowall preview ready"
+                if spec is not None and spec.execution == 'worker':
+                    spec.complete(value)
+                    message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
                 elif action == 'wallpaperCycle': message = ''
-                elif action == "captureOcr":
-                    token, content = value
-                    if self.capture.state.get('token') == token: self.capture.state['ocrText'] = content
-                    message = "Text recognized" if content else "No text found. Try a tighter capture or another OCR language."
                 else: message = value
                 self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
             except (CommandError, ValueError, OSError) as error:
@@ -1334,10 +1368,7 @@ class DesktopBackend:
         state = self.demo_snapshot()
         if spec := self.actions.get(action): return spec.demo(request)
         system = state["system"]
-        if action == 'batterySaver':
-            if type(request.get('enabled')) is not bool: raise ValueError('Battery saver must be enabled or disabled')
-            self.battery_saver_state = {"active": request['enabled'], "busy": False, "error": "", "warnings": []}
-        elif action == "wifiWatch":
+        if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             self.wifi_watching = request["enabled"]
         elif action == "controlsRefresh": pass
@@ -1367,14 +1398,7 @@ class DesktopBackend:
         elif action in {"captureClose", "captureLanguages"}:
             if action == 'captureClose': self.capture.close()
             else: self.capture.state['languages'] = ['eng', 'vie']
-        elif action == "captureExport":
-            if request.get('operation') not in ('copy', 'save'): raise ValueError('Unknown screenshot export')
-        elif action == "captureAnnotate":
-            if request.get('token') != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-        elif action == "imageAnnotate": pass
-        elif action=="gowallThemes": self.image_utilities.state={**self.image_utilities.state,"themes":["dracula","nord","gruvbox","rose-pine"]}
         elif action.startswith("gowall"): pass
-        elif action == "captureOcr": self.capture.state['ocrText'] = self.preferences.values['shellName'] + '\nLocal screenshot text recognition'
         elif action.startswith("appearance"):
             self.appearance_action(action, request)
         elif action == "displayRefresh":
@@ -1421,46 +1445,25 @@ class DesktopBackend:
             if value not in POWER_PROFILES:
                 raise ValueError("Invalid power profile")
             system["powerProfile"] = value
-        elif action == "chargeMode":
-            value = request.get("value")
-            if type(value) is not int or value not in (85, 100):
-                raise ValueError("Choose conservation (85) or maximum charge (100).")
-            system["charging"].update(mode="conservation" if value == 85 else "max", limitPercent=value)
-        elif action == "weatherSearch":
-            query = request.get("query")
-            if not isinstance(query, str) or not 2 <= len(query.strip()) <= 100:
-                raise ValueError("Enter a city name of 2–100 characters.")
-            state["weather"]["search"] = {"query": query, "loading": False, "error": "",
-                "results": [{"name": query.strip(), "country": "Demo", "latitude": 10.82, "longitude": 106.63}]}
         elif action == "weatherSelect":
             place = location(request.get("location"))
             if not place:
                 raise ValueError("Select a city first.")
             self.preferences.values.update(weatherLocation=place, weatherAutoLocation=False)
-        elif action in {"weatherRefresh", "weatherDetect"}:
-            pass
-        elif action == "wallpaper":
-            value = request.get("path")
-            if not isinstance(value, str):
-                raise ValueError("A wallpaper file path is required")
-            path = str(Path(value).expanduser().resolve())
-            if request.get('output'):
-                changes=validate_wallpaper('wallpaperOutputs',{request['output']:path})
-                self.preferences.values['wallpaperOutputs']={**self.preferences.values['wallpaperOutputs'],**changes}
-            else: self.preferences.values["wallpaper"] = validate_preference("wallpaper", path)
-        elif action == 'wallpaperNext':
-            if not self.preferences.values['wallpaperPlaylist']: raise ValueError('The playlist is empty')
-        elif action == 'wallpaperResetOutput':
-            output=request.get('output')
-            validate_wallpaper('wallpaperOutputs',{output:'/preview.png'})
-            self.preferences.values['wallpaperOutputs']={k:v for k,v in self.preferences.values['wallpaperOutputs'].items() if k!=output}
         elif action == "openSettings":
             if request.get("target") not in {"network", "bluetooth", "audio"}:
                 raise ValueError("Unknown settings panel")
-        elif action in {"glassBlurApply", "recordStart", "recordStop", "fileSearch", "palettePreview", "paletteApply"}:
+        elif action in {"glassBlurApply", "paletteApply"}:
             pass
         elif action not in {"refresh", "lock", "screenshot", "screenshotArea", "screenshotWindow", "logout", "suspend", "reboot", "poweroff"}:
             raise ValueError(f"Unknown action: {action}")
+
+    def replace_file_search(self):
+        self.file_search_cancel.set()
+        previous=self.feature_jobs.pop('fileSearch',None)
+        if previous: previous.cancel()
+        self.file_search_cancel=Event()
+        return self.file_search_cancel
 
     def prepare_notes(self):
         path = Path(os.environ.get("XDG_STATE_HOME") or Path.home()/".local/state") / "lme-shell/notes.txt"
@@ -1473,12 +1476,6 @@ class DesktopBackend:
     def perform(self, action: str, request: dict[str, Any]) -> str:
         if self.actions.get(action) is not None: return self.actions.invoke_live(action, request)
         run = self.runner.run
-        if action == 'batterySaver':
-            enabled = request.get('enabled')
-            if type(enabled) is not bool: raise ValueError('Battery saver must be enabled or disabled')
-            state = self.saver_snapshot()
-            self.saver_preflight(enabled, state)
-            return self.start_feature(action, lambda: self.toggle_battery_saver(enabled))
         if action in {'mirrorRefresh', 'mirrorStart', 'mirrorStop'}:
             if self.settings_only:
                 if action != 'mirrorRefresh':
@@ -1501,29 +1498,7 @@ class DesktopBackend:
             self.mirror_state = self.mirror.state()
             return 'Mirror refreshed'
         if action == 'captureClose': self.capture.close(); return 'Screenshot closed'
-        if action == 'imageAnnotate':
-            editor = self.preferences.values['captureEditor']
-            return self.start_feature(action, lambda: annotate_image(self.runner, editor, request.get('path')))
         if action == 'captureLanguages': self.capture.languages(); return 'OCR languages refreshed'
-        if action == 'captureExport':
-            if type(request.get('token')) is not str: raise ValueError('Missing screenshot session')
-            message = self.start_feature(action, lambda: self.capture.export(request['token'], request.get('operation'), request.get('folder')))
-            self.feature_jobs[action].capture_token = request['token']
-            return message
-        if action == 'captureAnnotate':
-            token=request.get('token')
-            if type(token) is not str: raise ValueError('Missing screenshot session')
-            if token != self.capture.state.get('token'): raise ValueError('This screenshot session has ended')
-            editor=self.preferences.values['captureEditor']
-            message=self.start_feature(action,lambda:self.capture.annotate(token,editor,request.get('folder')))
-            self.feature_jobs[action].capture_token=token
-            return message
-        if action == 'captureOcr':
-            token, language = request.get('token'), request.get('language')
-            if type(token) is not str: raise ValueError('Missing screenshot session')
-            message = self.start_feature(action, lambda: (token, self.capture.ocr(token, language)))
-            self.feature_jobs[action].capture_token = token
-            return message
         if action == "wifiWatch":
             if type(request.get("enabled")) is not bool: raise ValueError("Wi-Fi watch enabled must be boolean")
             if self.wifi_watching != request["enabled"]:
@@ -1541,36 +1516,6 @@ class DesktopBackend:
         if action == "platformRefresh":
             self.platform = self.compositor_features()
             return "Compositor version checked"
-        if action == "recordStart":
-            if 'batterySaver' in self.feature_jobs or self.saver_snapshot()['busy']:
-                raise ValueError('Wait for Battery saver to finish before recording')
-            if not self.preferences.values["recordingEnabled"]: raise ValueError("Screen recording is disabled")
-            niri=self.niri_state()
-            outputs={w.get("output") for w in niri["workspaces"] if w.get("output")}
-            output=request.get("output")
-            if not niri["available"] or not isinstance(output,str) or output not in outputs: raise ValueError("Choose a connected niri output")
-            prefs=dict(self.preferences.values)
-            def record():
-                with self.battery_saver.guard(allow_active=True):
-                    return self.recorder.start(prefs["recordingFolder"],request.get("mode"),output,request.get("audio",prefs["recordingAudio"]),prefs["recordingEncoder"],prefs["recordingFormat"],prefs["recordingCodec"],prefs["recordingFps"],prefs["recordingBitrate"])
-            return self.start_feature(action,record)
-        if action == "recordStop": return self.start_feature(action,self.recorder.stop)
-        if action == "fileSearch":
-            if not self.preferences.values["fileSearchEnabled"]: raise ValueError("File search is disabled")
-            query=request.get("query")
-            if not isinstance(query,str) or not 2<=len(query.strip())<=160: raise ValueError("File search needs 2–160 characters")
-            self.file_search_cancel.set()
-            previous=self.feature_jobs.pop(action,None)
-            if previous: previous.cancel()
-            self.file_search_cancel=Event();cancel=self.file_search_cancel
-            folders=list(self.preferences.values["fileSearchRoots"])
-            self.file_search={"query":query,"entries":[],"truncated":False}
-            return self.start_feature(action,lambda: search_files(query,folders,cancel))
-        if action == "palettePreview":
-            self.runner.executable("matugen")
-            self.palette_preview = {"colors": {}, "path": ""}
-            options={key:self.preferences.values[key] for key in ('paletteScheme','paletteMode','paletteContrast')}
-            return self.start_feature(action,lambda: palette_preview(self.runner,request.get("path"),options['paletteScheme'],options['paletteMode'],options['paletteContrast']))
         if action == "paletteApply":
             colors=validate_palette(self.palette_preview.get("colors"))
             if (not colors or self.palette_preview.get("path") != request.get("path")
@@ -1578,14 +1523,9 @@ class DesktopBackend:
             self.preferences.update({"wallpaperPalette":colors,"paletteSource":"wallpaper","accent":colors["accent"]})
             return "Wallpaper palette applied; element overrides preserved"
         if action.startswith("appearance"): return self.appearance_action(action, request)
-        if action in ('gowallThemes','gowallGenerate','gowallSave','gowallApply','gowallSetup'):
+        if action == 'gowallSetup':
             if any(key.startswith('gowall') for key in self.feature_jobs): raise ValueError('A gowall operation is already running')
-            if action=='gowallThemes': operation=self.image_utilities.themes
-            elif action=='gowallGenerate': operation=lambda:self.image_utilities.generate(request)
-            elif action=='gowallSave': operation=lambda:self.image_utilities.save(request.get('path'),request.get('destination'))
-            elif action=='gowallApply': operation=lambda:self.image_utilities.apply(request.get('path'),request.get('output',''))
-            else: return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
-            return self.start_feature(action,operation)
+            return self.image_utilities.setup(request.get('path'),self.preferences.values['terminal'])
         if action == "displayRefresh":
             self.displays = self.display_control.snapshot()
             return "Displays refreshed"
@@ -1600,27 +1540,6 @@ class DesktopBackend:
             if action == "displayConfirm": self.preferences.set("displayLayout", layout)
             self.displays = self.display_control.snapshot()
             return "Display layout saved" if action == "displayConfirm" else "Restoring displays"
-        if action == "chargeMode":
-            value = request.get("value")
-            if type(value) is not int or value not in (85, 100):
-                raise ValueError("Choose conservation (85) or maximum charge (100).")
-            state = self.charging()
-            if not state["canSet"]:
-                raise ValueError(state["reason"])
-            if self.charge_job is not None:
-                raise ValueError("A charge-mode change is already running.")
-            self.charge_job = self.charge_executor.submit(self.set_charge, value)
-            self.system_cache = None
-            return "Changing charge mode; administrator authentication may be required"
-        if action == "weatherSearch":
-            self.weather.search(request.get("query"))
-            return "Searching locations"
-        if action == "weatherDetect":
-            self.weather.detect()
-            return "Detecting approximate location"
-        if action == "weatherRefresh":
-            self.weather.refresh(self.preferences.values["weatherAutoLocation"])
-            return "Refreshing weather"
         if action == "weatherSelect":
             place = location(request.get("location"))
             if not place:
@@ -1642,9 +1561,6 @@ class DesktopBackend:
             if 'batterySaver' in self.feature_jobs: raise ValueError('Wait for Battery saver to finish')
             with self.battery_saver.guard():
                 return self.set_power_profile(request.get('value'))
-        if action == "lock":
-            self.runner.executable("swaylock")
-            return self.start_feature(action, self.lock_session)
         if action in {"screenshot", "screenshotArea", "screenshotWindow"}:
             # niri owns capture and clipboard integration. Traditional grim uses
             # wlr-screencopy, which is not the portable screenshot path on niri.
@@ -1660,12 +1576,6 @@ class DesktopBackend:
         if action in {"suspend", "reboot", "poweroff"}:
             run("systemctl", action)
             return f"{action.capitalize()} requested"
-        if action in {'wallpaper','wallpaperNext','wallpaperResetOutput'}:
-            if any(key.startswith('wallpaper') for key in self.feature_jobs): raise ValueError('A wallpaper change is already running')
-            if action=='wallpaper': job=lambda: self.apply_wallpaper(request.get('path'),output=request.get('output',''))
-            elif action=='wallpaperNext': job=lambda: self.wallpapers.advance(request.get('output'))
-            else: job=lambda: self.wallpapers.reset_output(request.get('output'))
-            return self.start_feature(action,job)
         if action == "setting":
             key = request.get("key")
             if not isinstance(key, str) or key == "wallpaper":

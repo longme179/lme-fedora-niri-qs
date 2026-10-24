@@ -55,3 +55,10 @@ Log retention and provider discovery also remain separate decisions.
 Adapters remain: public perform/perform_demo, existing controller and snapshot
 facades, explicit provider discovery. Retire only at zero consumers with owner
 approval or equivalent descriptor ownership/withdrawal/fallback as applicable.
+
+## Execution result
+
+Implemented on runtime/test head `41cb405`; five sync entries now use the existing
+Capture provider. No controller/UI/scheduler/worker-policy changes. Characterization
+passed on unchanged production code; final gates and the normal launch/RSS sanity
+are summarized in MIGRATION_LOG.md. Real niri/GPU checks remain laptop work.

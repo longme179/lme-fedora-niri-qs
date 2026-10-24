@@ -26,25 +26,30 @@ migration coverage, not product stability or remaining engineering effort.
 | Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry implemented | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 11 catalog records, 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 66 of 147 keys descriptor-owned; 81 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
-| Backend dispatch | Resource branch: 58 of 89 IDs registered, 32 sync entry calls + 26 workers | 31 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
-| Cross-feature reliability | Wi-Fi/Bluetooth/persistence and F1-F3 merged; F5/F4 resource bounds implemented on the resource review branch | Laptop integration, scoped combined memory and normal release sign-off |
+| Backend dispatch | Capture entry branch: 63 of 89 IDs registered, 37 sync entry calls + 26 workers | 26 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
+| Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5 and the 21-action resource/lifecycle batch merged; remaining Capture entry routes implemented for review | Laptop integration, scoped combined memory and normal release sign-off |
 | Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity | Combined real-session shell + Settings/worker memory and physical device/GPU checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
 We have passed the infrastructure/pilot stage and are hardening integration before
-expanding migrations. The resource branch then converted the 21 async entry points
+expanding migrations. The merged resource branch converted the 21 async entry points
 through explicit preflight/admission/lease/controller contracts; see ASYNC_ACTIONS.md.
+The next family completes Capture's provider boundary with its five synchronous
+start/close/language entries; see CAPTURE_ENTRY_PLAN.md. Its controller, UI and
+pending/shutdown semantics stay unchanged; no additional worker/process is created.
 Existing stable legacy ownership is acceptable; full conversion is not the goal.
 
 ## Proposed order after resource/lifecycle review
 
-1. **Close release evidence.** Review F5 command bounds, F4 log/relay cost and the
-   21 converted async entries. Complete RELEASE_CHECKLIST.md on the laptop and
+1. **Close release evidence.** F5 command bounds, F4 log/relay cost and the
+   21 converted async entries are merged. Complete RELEASE_CHECKLIST.md on the laptop and
    assess the combined memory scenario with its profile/worker scope stated.
    Hardware/GPU success cannot be inferred from private software-rendered checks.
-2. **Choose the next useful small family.** There are 31 legacy coordinator IDs
-   and 81 legacy schema keys. Prefer cohesive groups whose move reduces actual
-   change cost; characterize first and retain public facades/transaction semantics.
+2. **Choose the next useful small family after Capture review.** There are 26
+   legacy coordinator IDs and 81 legacy schema keys. Prefer cohesive groups whose
+   move reduces actual change cost; characterize first and retain public facades/
+   transaction semantics. Display rollback/mirroring, preference transactions and
+   the remaining wallpaper/Weather selection routes need their own scoped contracts.
 3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
    an adapter. A descriptor backend contract must preserve disabled/broken-catalog
    fallback and ownership before replacing them; no competing registry.

@@ -61,6 +61,22 @@ class LaunchpadLogCase(Fixture, unittest.TestCase):
         with self.assertRaises(OSError): self.launch('print("should not run")')
         self.assertEqual(target.read_text(),'keep')
 
+    def test_child_sigkill_exit_status_is_preserved(self):
+        tool,_ = self.launch('import os,signal;os.kill(os.getpid(),signal.SIGKILL)')
+        self.assertEqual(self.finished(tool)['exitCode'],-signal.SIGKILL)
+
+    @unittest.skipUnless(RELAY,'F4 relay not implemented on baseline')
+    def test_silent_stubborn_job_is_force_stopped_without_a_polling_service(self):
+        marker=self.root/'stubborn'
+        tool,child=self.launch(f'import os,signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);open({str(marker)!r},"w").write(str(os.getpid()));time.sleep(30)')
+        deadline=time.monotonic()+3
+        while not marker.exists() and time.monotonic()<deadline: time.sleep(.01)
+        self.assertTrue(marker.exists())
+        child.terminate();child.wait(timeout=2)
+        self.assertEqual(tool.snapshot()['job']['exitCode'],-signal.SIGKILL)
+        stat=Path('/proc')/marker.read_text()/'stat'
+        self.assertTrue(not stat.exists() or stat.read_text().rsplit(')',1)[1].split()[0]=='Z')
+
     @unittest.skipUnless(RELAY,'F4 relay not implemented on baseline')
     def test_detached_job_and_logging_survive_initiator_exit(self):
         marker = self.root/'finished'

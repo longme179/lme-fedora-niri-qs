@@ -50,3 +50,11 @@ Adapters: public dispatch/controller/import/snapshot facades retire only at zero
 consumers plus owner approval; explicit provider discovery retires with equivalent
 descriptor ownership/withdrawal/fallback. Real capture protocols/multiple physical
 outputs remain needs real-session check, even when simulated lifecycle tests pass.
+
+## Execution result
+
+Implemented on runtime/test head `c174f14`. The owner approved the old test's
+legacy-input replacement (844707c), proved passing against unchanged main before
+committing. Three entries now use the existing sync registry; controller, shell
+IPC and UI stay byte-identical. Final gates/sanity and laptop checks are summarized
+in MIGRATION_LOG.md. No subsequent family is implemented by this branch.

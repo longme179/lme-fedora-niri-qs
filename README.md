@@ -467,6 +467,13 @@ if unwanted; niri owns that policy.
 [Report a problem](https://github.com/longme179/lme-fedora-niri-qs/issues) with
 reproduction steps, logs, doctor output, `niri --version` and `qs --version`.
 
+For a one-shot RAM inventory, run `python3 scripts/memory_report.py --label steady`,
+then repeat with Settings open and during ordinary use. It reports per-process
+PSS/RSS, all detected LME instances and detached relays; `--json` prints structured
+output and `--pid PID` adds confirmed missing helpers. Review the ownership and
+incomplete-report notes in [Release checks](docs/RELEASE_CHECKLIST.md) before
+accepting a whole-shell total. This command does not change the running shell.
+
 Wi-Fi keeps the selected network open after a connection error so you can retry. Repeated password prompts fail early; a 15-second authentication guard preserves the longer timeout for IP configuration. Closing the dialog during an attempt lets it continue. Enterprise networks use Advanced network settings.
 
 Bluetooth Connect/Disconnect runs in the background so other shell controls remain responsive. Wi-Fi accepts one connection/profile/radio change at a time; scans can still run independently.

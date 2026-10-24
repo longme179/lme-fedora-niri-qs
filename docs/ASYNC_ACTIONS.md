@@ -7,7 +7,7 @@ entries: **63/89, 37 sync entry calls and 26 workers**. Merged Display preview m
 b73a7b0 has **68/89, 42 sync entry calls and 26 workers**. The
 Mirroring merge (2390d8d) adds three synchronous mirror routes:
 **71/89, 45 sync entry calls and 26 workers**. The subsequent
-`refactor/selection-application-actions` review branch adds paletteApply,
+selection/application merge (d72e48a) adds paletteApply,
 glassBlurApply, gowallSetup and weatherSelect: **75/89, 49 sync entry calls and
 26 workers**. These are synchronous domain/service calls, not worker conversions.
 Existing controllers/watchdogs/transactions stay authoritative; no async contract,

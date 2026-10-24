@@ -7,6 +7,7 @@ from unittest.mock import patch
 from test_backend import Fixture, backend
 from launchpad import Launchpad, entries
 from settings_transfer import document
+from launchpad_fixture import direct_spawn
 
 class LaunchpadCase(Fixture,unittest.TestCase):
     def entry(self,command='printf hello',**changes):
@@ -56,7 +57,7 @@ class LaunchpadCase(Fixture,unittest.TestCase):
         from unittest.mock import Mock
         tool=Launchpad();process=Mock();process.poll.return_value=None
         item={**self.entry('/bin/echo "a b"'),'terminal':True,'cwd':str(self.root)}
-        with patch.dict(os.environ,XDG_STATE_HOME=str(self.root/'state')),patch('launchpad.shutil.which',side_effect=lambda name:'/usr/bin/kitty' if name=='kitty' else name),patch('launchpad.subprocess.Popen',return_value=process) as launch:
+        with patch('launchpad.start_detached',side_effect=direct_spawn,create=True), patch.dict(os.environ,XDG_STATE_HOME=str(self.root/'state')),patch('launchpad.shutil.which',side_effect=lambda name:'/usr/bin/kitty' if name=='kitty' else name),patch('launchpad.subprocess.Popen',return_value=process) as launch:
             tool.run('a',{'a':item},'kitty')
             args,kwargs=launch.call_args
             self.assertEqual(args[0][-2:],['/bin/echo','a b'])

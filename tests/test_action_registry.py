@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from test_backend import Fixture, backend
+from launchpad_fixture import direct_spawn
 
 REGISTRY = importlib.util.find_spec('backend_actions') is not None
 DEMO_MESSAGE = 'Demo preview: no system command executed'
@@ -36,7 +37,8 @@ class LaunchpadDispatchCase(Fixture, unittest.TestCase):
                     with self.subTest(demo=demo, settings=settings, mode=mode):
                         live = self.configured(demo, settings)
                         process = Mock(); process.poll.return_value = None
-                        with patch.dict(os.environ, XDG_STATE_HOME=str(self.root/'state')), \
+                        with patch('launchpad.start_detached', side_effect=direct_spawn, create=True), \
+                             patch.dict(os.environ, XDG_STATE_HOME=str(self.root/'state')), \
                              patch('launchpad.shutil.which', side_effect=lambda name: '/usr/bin/kitty' if name == 'kitty' else name), \
                              patch('launchpad.time.time', return_value=123), \
                              patch('launchpad.subprocess.Popen', return_value=process) as spawn:
@@ -143,7 +145,8 @@ class LaunchpadDispatchCase(Fixture, unittest.TestCase):
         live = self.configured()
         self.preferences.values['launchpadEntries'] = {str(i): self.entry() for i in range(9)}
         process = Mock(); process.poll.return_value = None
-        with patch.dict(os.environ, XDG_STATE_HOME=str(self.root/'state')), \
+        with patch('launchpad.start_detached', side_effect=direct_spawn, create=True), \
+             patch.dict(os.environ, XDG_STATE_HOME=str(self.root/'state')), \
              patch('launchpad.shutil.which', side_effect=lambda name: name), \
              patch('launchpad.subprocess.Popen', return_value=process) as spawn:
             for i in range(8): self.assertTrue(live.handle(dict(action='launchpadRun', id=str(i)))['ok'])

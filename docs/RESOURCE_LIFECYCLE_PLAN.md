@@ -40,6 +40,15 @@ existing job/controller ownership and all ordinary error/result/sequence behavio
   retain a useful diagnostic when possible. Never rotate/delete an active writer.
 - Per-log bounds do not bound old entry IDs/directories. Completed-log retention
   cleanup is separate; do not silently delete user logs in this branch.
+- Chosen relay uses stdlib posix_spawnp and -S, with no parent-death signal.
+  Actual idle relay-only sample: one RSS/PSS 7,768/5,188 KiB; eight aggregate
+  RSS/PSS 62,152/34,455 KiB, 5 FD each. User command memory is separate; these
+  samples do not prove the combined-shell target. None persist at idle.
+  Truncation preserves the command exit status. A log sink failure drains output
+  and reports exit 74 only if the command itself succeeded; nonzero/signal command
+  exits keep precedence. The job remains running until inherited writers close.
+  Eight is the existing per-controller limit, not a global limit: detached jobs
+  surviving a shell restart can add relays. Count those in whole-shell samples.
 - Tests: prefix/marker, stdout+stderr, ENOSPC, missing exec/cwd, exit/signals,
   inherited writers, repeated jobs, shell-exit survival, terminal mode and symlinks.
   Ask before adapting existing mocked launch assertions to the relay boundary.

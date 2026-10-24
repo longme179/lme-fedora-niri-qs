@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from backend_actions import ActionSpec, PreparedWork
+from backend_actions import ActionSpec
 from command_runner import CommandError
 
 
@@ -68,44 +68,3 @@ def provide_daemon(capabilities):
         ActionSpec('wallpaperEnsure', {'shell', 'settings'}, ensure, lambda request: None,
                    execution='worker', complete=lambda value: None))
     return specs, lambda: {}
-
-
-@dataclass(frozen=True)
-class WallpaperChangeCapabilities:
-    pending: Callable
-    apply: Callable
-    advance: Callable
-    reset: Callable
-    preferences: Callable
-    validate_path: Callable
-    validate_outputs: Callable
-
-
-def provide_changes(cap):
-    def prepare(action, request):
-        if any(key.startswith('wallpaper') for key in cap.pending()):
-            raise ValueError('A wallpaper change is already running')
-        if action=='wallpaper':
-            operation=lambda:cap.apply(request.get('path'),output=request.get('output',''))
-        elif action=='wallpaperNext': operation=lambda:cap.advance(request.get('output'))
-        else: operation=lambda:cap.reset(request.get('output'))
-        return PreparedWork(operation)
-    def demo(action, request):
-        prefs=cap.preferences()
-        if action=='wallpaper':
-            value=request.get('path')
-            if not isinstance(value,str): raise ValueError('A wallpaper file path is required')
-            path=str(Path(value).expanduser().resolve())
-            if request.get('output'):
-                prefs['wallpaperOutputs']={**prefs['wallpaperOutputs'],**cap.validate_outputs({request['output']:path})}
-            else: prefs['wallpaper']=cap.validate_path(path)
-        elif action=='wallpaperNext':
-            if not prefs['wallpaperPlaylist']: raise ValueError('The playlist is empty')
-        else:
-            output=request.get('output')
-            cap.validate_outputs({output:'/preview.png'})
-            prefs['wallpaperOutputs']={key:value for key,value in prefs['wallpaperOutputs'].items() if key!=output}
-    names=('wallpaper','wallpaperNext','wallpaperResetOutput')
-    return tuple(ActionSpec(name,{'shell','settings'},lambda request:None,
-        lambda request,name=name:demo(name,request),execution='worker',complete=lambda value:None,
-        prepare=lambda request,name=name:prepare(name,request)) for name in names),lambda:{}

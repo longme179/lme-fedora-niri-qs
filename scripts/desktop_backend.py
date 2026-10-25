@@ -275,7 +275,6 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == 'launchpadEntries': return launchpad_entries(value)
     if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value
-    if key == 'batterySaverBrightness' and type(value) is int and 1 <= value <= 100: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name

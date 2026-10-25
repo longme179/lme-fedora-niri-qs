@@ -512,6 +512,8 @@ contracts and release criteria; the [migration log](docs/MIGRATION_LOG.md) recor
 Start development tasks with [current agent state](docs/STATE.md).
 `./scripts/check-architecture.sh` checks static dependencies, cycles and source sizes;
 its legacy exceptions are recorded in `config/architecture.json`.
+The [release checklist](docs/RELEASE_CHECKLIST.md) records scoped combined-session
+PSS and remaining laptop checks; private lifecycle passes do not certify the RAM budget.
 Use `./scripts/run-gates.sh --gates G0` for isolated checks; the
 [migration log](docs/MIGRATION_LOG.md) records final milestone summaries.
 

@@ -1,4 +1,4 @@
-# Agent state (2026-10-25)
+# Agent state (2026-10-26)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven schema-only).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Release memory/shared values/layout and device schema merged (8aea87f). refactor/content-preference-schema moves nine Lyrics/search/Bluetooth keys to schema-only fragments; see CONTENT_SCHEMA_PLAN.md. Legacy UI/controllers stay; laptop release/PSS checks remain pending; no later family authorized.
+- Content schema merged (83f9cad). test/release-session-verification adds combined lifecycle/PSS checks and repairs the Wi-Fi test wire; production unchanged. Warmed software VM exceeds budget; owner steady 169.64 MB PSS, active/Settings/theme/ownership review pending. See RELEASE_SESSION_PLAN.md and RELEASE_CHECKLIST.md; no later family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

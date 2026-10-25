@@ -48,3 +48,17 @@ Desktop/media/device/encoder-heavy workloads remain real-session checks.
 Do not convert another schema/action/UI family, extend provider discovery, move
 files, delete logs/jobs, publish a release or alter existing test assertions.
 The scoped VM totals are release evidence for the fixture workload only.
+
+## Execution
+
+Plan 9c12cd5 precedes coverage f7e290e. Existing memory/relay/native contracts pass
+11/0/0 on unchanged production. An uncommitted readiness correction waits for
+legitimate notificationSave completion without changing assertions/deadlines;
+final combined cases pass, plus a separate bounded 48-cycle Liquid probe.
+Extended checks expose two existing Wi-Fi fixture failures, reproduced on main:
+the fake backend copied current ownership metadata but never advanced ACK.
+17b2064 updates only that fake wire; the whole existing test class AST stays
+identical and extended checks pass 22/0/0. Product sources remain byte-identical.
+RELEASE_CHECKLIST.md records VM budget misses, stable loader/process/registry
+counts, the owner's steady snapshot and remaining laptop checks. Final gate
+accounting is in MIGRATION_LOG.md; no runtime/cache/render fix is claimed.

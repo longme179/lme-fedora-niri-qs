@@ -85,6 +85,8 @@ class DeviceSchemaContractsCase(unittest.TestCase):
         code = f'''
 import desktop_backend as b
 from settings_schema import Schema
+from functools import partial
+Schema = partial(Schema, resolvers=b.PREFERENCE_SCHEMA._resolvers)
 assert b.DEFAULT_PREFERENCES[{key!r}] == {changes['default']!r}
 assert Schema().defaults()[{key!r}] == {changes['default']!r}
 assert b.validate_preference({key!r}, {valid!r}) == {valid!r}

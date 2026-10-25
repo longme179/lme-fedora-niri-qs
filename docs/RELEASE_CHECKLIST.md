@@ -101,6 +101,15 @@ for the detected inventory. Theme/revision and helper ownership are not recorded
 Settings-open/ordinary-active and independent-helper review remain pending.
 Keep the laptop memory row open until those contexts and inventories are reviewed.
 
+Follow-up at e91ca29: the owner identified the second Quickshell as standalone
+Settings; normal close left 186.12 MB PSS and no Settings/backend pair. The earlier
+318.27 MB two-instance PSS is below the active target; its 633.77 MB summed RSS
+does not establish an overrun. These separate snapshots are not an optimization
+comparison. Warmed laptop/theme and independent-helper review remain pending.
+The [render lifetime follow-up](RENDER_LIFETIME_RESULTS.md) records 48-cycle object/
+layer counters, normal Settings shutdown, rejected scratch candidates and the
+remaining over-budget software VM result. It does not claim a production RAM fix.
+
 To repeat only the private integration cases, inside the disposable session set
 `LME_TEST_RELEASE_SESSION=1` and run `python3 -m unittest -v test_release_session`.
 Do not run this opt-in against the real desktop/session.

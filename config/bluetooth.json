@@ -1,0 +1,19 @@
+{
+  "id": "bluetooth",
+  "preferences": {
+    "bluetoothPairing": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "bluetoothAdapter": {
+      "type": "string",
+      "validator": "bluetoothAdapter",
+      "portable": false,
+      "appearance": false,
+      "default": ""
+    }
+  }
+}

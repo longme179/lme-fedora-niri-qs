@@ -90,7 +90,7 @@ from feature_catalog import CatalogError, catalog as feature_catalog, empty_cata
 
 PREFERENCE_SCHEMA = PreferenceSchema(
     legacy_validator=lambda key, value: _validate_legacy_preference(key, value),
-    validators={**{key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("lyricsMode", "weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles", "niriConfigPath", "weatherLocation")}, "fileSearchRoots": search_roots},
+    validators={**{key: lambda value, key=key: _validate_legacy_preference(key, value) for key in ("bluetoothAdapter", "lyricsMode", "weatherUnit", "osdPosition", "osdLayout", "osdOutput", "nightLightMode", "nightLightStart", "nightLightEnd", "idleProfiles", "niriConfigPath", "weatherLocation")}, "fileSearchRoots": search_roots},
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
@@ -286,7 +286,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
         if low <= value <= high: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"desktopEnabled", "desktopShapes", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "desktopShapes", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value

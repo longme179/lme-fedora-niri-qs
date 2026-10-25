@@ -52,3 +52,13 @@ Expected coverage: 70 descriptor keys / 77 legacy; action/UI coverage unchanged.
 Physical devices/backlight/display restore and reviewed aggregate laptop PSS
 remain RELEASE_CHECKLIST.md checks. D1, A6, provider discovery, core-page conversion
 and retention/deletion are outside this branch.
+
+## Execution
+
+Plan 8e7df8f precedes characterization 7f9eb06 on unchanged main production.
+The initial authority probe needed full-schema runtime resolver bindings: the
+uncommitted extraction was discarded, f991013 corrected only that fixture and
+kept assertion/expectation lines unchanged, then extraction resumed.
+Peripherals 4850204, saver 6196245 and mirroring 4cde2ae each pass their focused
+parity, catalog and architecture checks. Existing tests/frozen fixtures are
+unchanged. Final verification, sanity and laptop checks are in MIGRATION_LOG.md.

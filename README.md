@@ -499,6 +499,8 @@ Converted pages, panels, bar entries and bootstraps are registered through
 [config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor
 fragments and `config/preferences-legacy.json`.
+OSD, peripheral battery alerts, saver brightness and mirroring use schema-only
+records: disabling those records retains settings and does not withdraw legacy UI.
 Settings stay in the same flat JSON file, and Clipboard keeps its worker protocol.
 `scripts/backend_actions.py` dispatches sync/worker actions through narrow callbacks;
 the host retains scheduling/completion and unconverted live/demo routes.

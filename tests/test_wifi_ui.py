@@ -58,15 +58,18 @@ BACKEND = '''import json,sys,time
 from pathlib import Path
 state=json.loads(Path(__file__).with_name('wifi-snapshot.json').read_text())
 sequence=0
+acknowledged=0
 def emit(action,ok=True,message='',pending=False):
     global sequence
     sequence+=1
     state['lastResult']=dict(action=action,ok=ok,message=message,sequence=sequence)
+    state['actionPending']=dict(acknowledged=acknowledged,active=[action] if pending else [])
     if pending: state['lastResult']['pending']=True
     print(json.dumps(state),flush=True)
 print(json.dumps(state),flush=True)
 for line in sys.stdin:
     request=json.loads(line);action=request['action']
+    acknowledged=request.get('clientSerial',acknowledged)
     if action not in ('wifiConnect','wifiSaved'): emit(action);continue
     emit(action,message='Working…',pending=True)
     if request.get('password')=='slow password': time.sleep(.8)

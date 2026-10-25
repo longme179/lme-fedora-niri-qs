@@ -1,6 +1,6 @@
 # LME Shell: position and next boundaries
 
-2026-10-25. This is a roadmap, not authorization for another implementation.
+2026-10-26. This is a roadmap, not authorization for another implementation.
 Read STATE.md for current ownership/process rules; archive documents are history.
 
 ## Destination
@@ -23,12 +23,12 @@ migration coverage, not product stability or remaining engineering effort.
 
 | Area | Current coverage | What remains |
 | --- | --- | --- |
-| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema, device fragments and sync/worker registry merged; Lyrics/search/Bluetooth schema implemented for review | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
+| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema fragments and sync/worker registry merged | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 17 catalog records (seven schema-only), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 79 of 147 keys descriptor-owned; 68 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
 | Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged | Laptop integration, scoped combined memory and normal release sign-off |
-| Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity; one-shot memory inventory tool merged | Reviewed real-session shell + Settings/worker inventory and physical device/GPU checks remain necessary |
+| Resource confidence | One-shot memory inventory merged; combined lifecycle/PSS tests implemented for review, warmed software VM over budget; owner steady snapshot 169.64 MB | Settings/active/theme/helper review, actual GPU allocation behavior and physical device checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
 We have passed the infrastructure/pilot stage and are hardening integration before
@@ -52,10 +52,14 @@ Device schema merged (8aea87f), moving four scalar keys to preference-only
 peripherals, batterySaver and mirroring descriptors, following OSD. Their existing
 UI/controllers and action registrations stay legacy; empty startup metadata adds
 no navigation entry. This is schema ownership, not full UI/feature conversion.
-The content-preference-schema branch follows the same pattern for Lyrics (five),
+Content schema merged (83f9cad), following the same pattern for Lyrics (five),
 File search (two) and Bluetooth (two). Home-dependent search defaults and private
 root/adapter exclusions stay; direct roots validation and existing named mode/
 adapter callbacks reuse domain policy. Lookup/scanning/pairing and UI stay legacy.
+The release-session-verification branch adds copied-checkout Smoked/Liquid
+panel/Settings/restart/job checks, without runtime changes. See the combined PSS
+table in RELEASE_CHECKLIST.md: process/loader/registry lifecycles pass, warmed
+software-rendered memory is over budget; a bounded probe is not a leak verdict.
 
 ## Proposed order after resource/lifecycle review
 
@@ -64,6 +68,9 @@ adapter callbacks reuse domain policy. Lookup/scanning/pairing and UI stay legac
    21 converted async entries are merged. Complete RELEASE_CHECKLIST.md on the laptop and
    assess the combined memory scenario with its profile/worker scope stated.
    Hardware/GPU success cannot be inferred from private software-rendered checks.
+   Owner steady: 169.64 MB PSS (8 PIDs, complete counters); obtain Settings-open
+   and ordinary-active samples plus theme/revision/helper ownership before closing
+   the memory row. Diagnose the actual GPU path before changing render/cache policy.
 2. **Selection/application merged; prefer release evidence.** Four entries
    (paletteApply, glassBlurApply, gowallSetup, weatherSelect) reuse their existing
    domain providers/services. Preview matching, setup admission, preferences and

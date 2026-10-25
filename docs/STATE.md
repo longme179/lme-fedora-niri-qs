@@ -6,9 +6,9 @@ Do not read archive/ unless answering a specific historical question.
 ## Merged and authorized
 
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
-  Ten catalog pages; 70 descriptor keys/77 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (14 catalog records, four schema-only).
+  Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven schema-only).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Release memory/shared values/layout merged (8d1764e). refactor/device-preference-schema moves four device scalar keys into three schema-only fragments; see DEVICE_SCHEMA_PLAN.md. Legacy UI/controllers stay; laptop release/PSS checks remain pending; no later family authorized.
+- Release memory/shared values/layout and device schema merged (8aea87f). refactor/content-preference-schema moves nine Lyrics/search/Bluetooth keys to schema-only fragments; see CONTENT_SCHEMA_PLAN.md. Legacy UI/controllers stay; laptop release/PSS checks remain pending; no later family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -30,7 +30,7 @@ Do not read archive/ unless answering a specific historical question.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema
   facades; retain public names until explicit owner-approved compatibility changes.
-- Legacy fragment (77 keys), validator/default bindings, inventory, bar-layout resolver
+- Legacy fragment (68 keys), validator/default bindings, inventory, bar-layout resolver
   and bundled-fragment fallback retire at their last consumer/fault contract. Worker policy is separate.
 - Architecture exceptions/size ceilings: remove vanished edges, lower shrunken
   large-file ceilings; no new cross-feature edges or cycles.

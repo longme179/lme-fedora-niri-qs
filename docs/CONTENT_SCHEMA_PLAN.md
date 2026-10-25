@@ -51,3 +51,12 @@ conversion or M8 moves. Schema coverage becomes 79 descriptor / 68 legacy keys;
 action/UI coverage stays. Existing schema facades and bundled-fragment fallback
 retain STATE.md conditions. Physical radios/media/compositor behavior and reviewed
 whole-shell PSS remain laptop checks. D1 and A6 stay closed/out of scope.
+
+## Execution
+
+Plan 3c2cb4b precedes characterization 1c82d76 on unchanged main production.
+Lyrics dc9556f, search 4bff067 and Bluetooth 7e9670b each pass focused golden/schema
+parity plus architecture/catalog checks. No old assertions or frozen fixtures
+changed. Private Lyrics/MPRIS and BlueZ protocol cases run before and after.
+Final gates, normal sanity, adapter conditions and laptop checks are recorded in
+MIGRATION_LOG.md; the final commit changes README/docs only.

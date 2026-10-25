@@ -11,5 +11,6 @@
 {"id":"desktop","descriptor":"config/desktop.json","enabled":true,"startup":{"settingsPage":{"key":"desktop","title":"Desktop widgets","icon":"overview","description":"Clock, notes and media on your desktop","keywords":"canvas drag resize widget output screen edit","entry":"qml/settings/DesktopPage.qml","after":"nightLight"},"bootstrap":{"id":"desktop","entry":"qml/panels/DesktopCanvas.qml","contexts":["live-main","demo"]}}},
 {"id":"update","descriptor":"config/update.json","enabled":true,"startup":{"settingsPage":{"key":"about","title":"About","icon":"bell","description":"Your desktop and its contributors","keywords":"update upgrade github git commit version license requirements credits inir","entry":"qml/settings/AboutPage.qml","after":"behavior"}}},
 {"id":"peripherals","descriptor":"config/peripherals.json","enabled":true,"startup":{}},
-{"id":"batterySaver","descriptor":"config/batterySaver.json","enabled":true,"startup":{}}
+{"id":"batterySaver","descriptor":"config/batterySaver.json","enabled":true,"startup":{}},
+{"id":"mirroring","descriptor":"config/mirroring.json","enabled":true,"startup":{}}
 ]}

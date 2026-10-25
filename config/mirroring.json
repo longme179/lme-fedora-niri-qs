@@ -1,0 +1,12 @@
+{
+  "id": "mirroring",
+  "preferences": {
+    "mirroringEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    }
+  }
+}

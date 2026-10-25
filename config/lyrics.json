@@ -1,0 +1,40 @@
+{
+  "id": "lyrics",
+  "preferences": {
+    "lyricsEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "lyricsOnline": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    },
+    "lyricsMode": {
+      "type": "string",
+      "validator": "lyricsMode",
+      "portable": true,
+      "appearance": false,
+      "default": "scroll"
+    },
+    "lyricsFollow": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "activityLyrics": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    }
+  }
+}

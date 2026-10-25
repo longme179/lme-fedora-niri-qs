@@ -615,3 +615,26 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. Change starting saver brightness, toggle saver on/off and confirm the configured start plus original mode/brightness/profile/theme restoration.
   3. Toggle Display mirroring availability; with two outputs, start/stop mirroring and verify the existing Settings-to-shell route.
   4. Export/import a preset, restart, confirm all four values and expected private backups/0600 permissions; complete RELEASE_CHECKLIST.md and reviewed aggregate PSS inventory.
+
+## Lyrics/search/Bluetooth schema fragments — 2026-10-25
+
+- Branch refactor/content-preference-schema, main 8aea87f (device schema PR34 merged). Plan 3c2cb4b before characterization 1c82d76; Lyrics dc9556f, search 4bff067, Bluetooth 7e9670b; final docs separate. No main merge or later milestone.
+- Three preference-only fragments own Lyrics (five keys), File search (two) and Bluetooth (two). Existing boolean validation, named lyricsMode/bluetoothAdapter callbacks and direct search_roots binding reuse existing policy; redundant roots dispatch is removed.
+- Seventeen records (seven schema-only), ten Settings pages; 79 descriptor/68 legacy keys, all 147 flat keys/default order and portable/profile sets unchanged. No page/bar/gesture/bootstrap/provider entry; no new enum field or schema mechanism. Disabled schema-only records retain definitions/data, not withdrawal of legacy UI/services.
+- Focused baseline on unchanged production 99/0/7; Lyrics 100/0/6, search 101/0/5, Bluetooth 103/0/3 (106 cases). Counts pass/fail/skip. Four descriptor cases are N/A before and execute after; three personalization opt-ins run in final G2. Existing assertions/frozen fixtures unchanged; no failed trial or corrective implementation commit.
+- Baseline G0 with new characterization 681/0/157 (113.144s); final G0 685/0/153 (112.022s). Four N/A cases become passes; no test removal. qmllint 148 files/0 errors/71 existing warnings.
+- Default skips: 141 session/UI opt-ins, 5 BlueZ, 5 MPRIS, 1 real Matugen, 1 detached fake-niri. The five BlueZ and five Lyrics/MPRIS tests explicitly execute separately below; skips are not passes.
+- Native before 10/0/0 (10.342s), after 10/0/0 (9.198s): cue/follow/seek/pause/track/disconnect lifecycle through private MPRIS, plus scan/pair/PIN/passkey/reconnect/adapter-change/cancel through private BlueZ. No physical radio/media-session claim.
+- Golden 147-key default/type/validation/context/membership tests remain unchanged. New tests pin home-dependent search defaults, exact errors, deduplicated normalized paths, root limits/input immutability, private root/adapter preset rejection, old-file/backup/stale-writer/last-valid reload and disabled/broken-index preservation.
+- Other backend functions/classes are AST-identical, including Preferences/controllers. QML, workers, shared schema reader, transfer implementation and frozen fixtures byte-identical. No process, dependency, executor/timer, lookup/network/scan/retry/polling/cache/power-policy change; online lyrics remains opt-in.
+- Architecture: seven legacy QML exceptions/twelve cycle edges unchanged; coordinator ceiling 1631->1630. Actions remain 75/89 (49 sync entry calls/26 workers); six core pages stay legacy. No new source helper, provider discovery or M8 move.
+- Final runtime/test head 7e9670b; full set once: G1 3/0/0 (11.198s), G2 4/0/0 (36.984s), G3 53/0/0 (124.945s), G4 34/0/0 (52.983s), G6 polling 1/0/0 (19.956s), G0 above. Final commit is README/docs only.
+- One normal sanity, ten fresh-process/fresh-XDG launches each: main/head preview medians 813.59/802.40ms, Settings 825.20/831.57ms. Warm OS cache, private Sway pixman/software OpenGL, mapped-window endpoint/20ms poll. No D1 profiling/CIs/raw evidence or performance-saving claim.
+- T+10s RSS KiB main/head: preview QS 279200/279328, backend 25720/25688; Settings QS 231248/230828, backend 25688/25668. Largest increase 0.046%; no +100ms/+10% flags. Separate pairs do not establish whole-shell PSS/budget or a memory saving.
+- Adapters: DEFAULT_PREFERENCES/validate_preference and portable/profile exports retain STATE.md conditions; inventory/default resolvers/bundled-fragment fallback remain. The two named legacy mode/adapter callbacks stay until equivalent domain-owned validation replaces them with parity coverage; public root/CLI/IPC facades stay.
+- No exercised UI/CLI/preset/settings-file difference; only schema ownership/bindings change. Search roots and selected adapter remain private; metadata-only disable never rewrites user data or stops legacy services. Laptop release/PSS checks remain pending.
+- Laptop checklist (needs real-session check):
+  1. Change Lyrics scroll/line/follow/Island options; play/pause/seek and switch tracks, checking online lookup remains opt-in and fallback still works.
+  2. Change local search folders/toggle, restart Settings/shell and search/open a file through the launcher; confirm folders persist.
+  3. Change adapter/pairing, rescan/pair/reconnect and restart; confirm selected adapter and normal cancellation/error behavior.
+  4. Export/import a preset: Lyrics options restore, roots/adapter are absent and retained locally; complete RELEASE_CHECKLIST.md plus reviewed aggregate PSS inventory.

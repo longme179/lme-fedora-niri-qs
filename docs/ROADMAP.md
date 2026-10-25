@@ -23,9 +23,9 @@ migration coverage, not product stability or remaining engineering effort.
 
 | Area | Current coverage | What remains |
 | --- | --- | --- |
-| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry merged; three device schema fragments implemented for review | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
-| UI composition | 14 catalog records (four schema-only), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
-| Preferences | 70 of 147 keys descriptor-owned; 77 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
+| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema, device fragments and sync/worker registry merged; Lyrics/search/Bluetooth schema implemented for review | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
+| UI composition | 17 catalog records (seven schema-only), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
+| Preferences | 79 of 147 keys descriptor-owned; 68 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
 | Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged | Laptop integration, scoped combined memory and normal release sign-off |
 | Resource confidence | Per-branch native tests, source-size caps and launch/RSS sanity; one-shot memory inventory tool merged | Reviewed real-session shell + Settings/worker inventory and physical device/GPU checks remain necessary |
@@ -48,10 +48,14 @@ the three layout helpers used by BatterySaver and DisplayControl, retaining old
 exports (SHARED_DISPLAY_LAYOUT_PLAN.md). Seven exact legacy exceptions remain,
 all QML composition edges; no Python cross-feature exception remains. Controllers,
 polling and power policy stay unchanged. Physical release/PSS checks remain pending.
-The device-preference-schema branch moves four scalar keys to preference-only
+Device schema merged (8aea87f), moving four scalar keys to preference-only
 peripherals, batterySaver and mirroring descriptors, following OSD. Their existing
 UI/controllers and action registrations stay legacy; empty startup metadata adds
 no navigation entry. This is schema ownership, not full UI/feature conversion.
+The content-preference-schema branch follows the same pattern for Lyrics (five),
+File search (two) and Bluetooth (two). Home-dependent search defaults and private
+root/adapter exclusions stay; direct roots validation and existing named mode/
+adapter callbacks reuse domain policy. Lookup/scanning/pairing and UI stay legacy.
 
 ## Proposed order after resource/lifecycle review
 
@@ -68,7 +72,7 @@ no navigation entry. This is schema ownership, not full UI/feature conversion.
    suspend, reboot, poweroff, desktopEdit and openSettings. These mostly coordinate
    shared state, transactions or lifecycle; moving them just to reach 89/89 is not
    a goal. No later family is authorized; choose another boundary only if it
-   reduces real change cost. Schema remains 77 legacy keys.
+   reduces real change cost. Schema remains 68 legacy keys.
 3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
    an adapter. A descriptor backend contract must preserve disabled/broken-catalog
    fallback and ownership before replacing them; no competing registry.

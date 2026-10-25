@@ -1,0 +1,19 @@
+{
+  "id": "fileSearch",
+  "preferences": {
+    "fileSearchEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "fileSearchRoots": {
+      "type": "array",
+      "validator": "fileSearchRoots",
+      "portable": false,
+      "appearance": false,
+      "defaultResolver": "fileSearchRoots"
+    }
+  }
+}

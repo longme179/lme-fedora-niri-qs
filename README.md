@@ -493,6 +493,8 @@ and `scripts/action_pending.py` (JSON-line acknowledgement and ownership project
 The original backend, display and Clipboard imports remain available for compatibility.
 Pairing and device batteries share pure normalization in `scripts/peripheral_values.py`;
 the original `peripheral_battery` and `wallpaper` value imports remain compatible.
+Display preview and Battery saver share validation and runner-injected layout
+application in `scripts/display_layout.py`; `display_control` retains its old exports.
 Converted pages, panels, bar entries and bootstraps are registered through
 [config/features.json](config/features.json).
 Preference definitions are assembled by `scripts/settings_schema.py` from descriptor

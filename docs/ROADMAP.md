@@ -23,7 +23,7 @@ migration coverage, not product stability or remaining engineering effort.
 
 | Area | Current coverage | What remains |
 | --- | --- | --- |
-| Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry; shared image/peripheral values implemented for review | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
+| Infrastructure | Shared runner/storage/content helpers, dependency ratchet, catalog, tab IDs, schema and sync/worker registry; shared image/peripheral values merged, shared display layout implemented for review | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 11 catalog records, 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 66 of 147 keys descriptor-owned; 81 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
@@ -42,10 +42,12 @@ Selection/application is merged (d72e48a), reusing four domain/service registrat
 SELECTION_APPLICATION_PLAN.md. Demo remains isolated. Controllers/UI/pending/shutdown semantics stay, including
 watchdog/guard/confirmation policy; no additional worker/process.
 Existing stable legacy ownership is acceptable; full conversion is not the goal.
-The shared-values branch removes Gowall->Wallpaper and Pairing->Peripheral battery
-imports by extracting their pure helpers (SHARED_VALUES_PLAN.md). Eight exact
-legacy dependency exceptions remain: seven QML composition edges and the existing
-battery-saver/display-layout edge. Controllers, polling and power policy stay.
+Shared values merged (53e321a), removing Gowall->Wallpaper and Pairing->Peripheral
+battery imports (SHARED_VALUES_PLAN.md). The shared-display-layout branch extracts
+the three layout helpers used by BatterySaver and DisplayControl, retaining old
+exports (SHARED_DISPLAY_LAYOUT_PLAN.md). Seven exact legacy exceptions remain,
+all QML composition edges; no Python cross-feature exception remains. Controllers,
+polling and power policy stay unchanged. Physical release/PSS checks remain pending.
 
 ## Proposed order after resource/lifecycle review
 

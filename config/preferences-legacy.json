@@ -28,8 +28,6 @@
     "recordingFps": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 30},
     "recordingBitrate": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 12000},
     "captureEditor": {"type": "string", "validator": "legacy", "portable": true, "appearance": false, "default": "auto"},
-    "fileSearchEnabled": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
-    "fileSearchRoots": {"type": "array", "validator": "legacy", "portable": false, "appearance": false, "defaultResolver": "fileSearchRoots"},
     "accent": {"type": "string", "validator": "legacy", "portable": true, "appearance": true, "default": "#9580ff"},
     "density": {"type": "string", "validator": "legacy", "portable": true, "appearance": true, "default": "comfortable"},
     "appearanceProfiles": {"type": "array", "validator": "legacy", "portable": false, "appearance": false, "defaultResolver": "profiles"},

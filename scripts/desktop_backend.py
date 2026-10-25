@@ -275,9 +275,6 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == 'launchpadEntries': return launchpad_entries(value)
     if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value
-    if key == 'peripheralBatteryAlerts' and type(value) is bool: return value
-    if key == 'peripheralBatteryThreshold' and type(value) is int and 5 <= value <= 50: return value
-    if key == 'batterySaverBrightness' and type(value) is int and 1 <= value <= 100: return value
     if key == "shellName" and isinstance(value, str):
         name = value.strip()
         if 1 <= len(name) <= 48 and not any(ord(c) < 32 or ord(c) == 127 for c in value): return name
@@ -289,7 +286,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
         if low <= value <= high: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "mirroringEnabled", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "desktopShapes", "lyricsEnabled", "lyricsOnline", "lyricsFollow", "activityLyrics", "bluetoothPairing", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "fileSearchEnabled", "recordingEnabled"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value

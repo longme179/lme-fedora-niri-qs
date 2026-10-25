@@ -592,3 +592,26 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. Let an unconfirmed preview time out after closing Settings; confirm independent rollback still restores the original layout.
   3. Toggle saver on/off from 120 Hz; check exact supported ~60 Hz timing and original mode/brightness/profile/theme restore, including a disconnected/reconnected output.
   4. Complete RELEASE_CHECKLIST.md and reviewed steady/Settings-open/ordinary-active memory inventories; private VM tests do not certify hardware or total RAM.
+
+## Device preference schema fragments — 2026-10-25
+
+- Branch refactor/device-preference-schema, main 8d1764e (shared layout PR33 merged). Plan 8e7df8f; characterization 7f9eb06, fixture binding f991013; peripherals 4850204, saver 6196245, mirroring 4cde2ae; final docs separate. No main merge or later milestone.
+- Three OSD-style preference-only descriptors own peripheralBatteryAlerts/Threshold, batterySaverBrightness and mirroringEnabled. Defaults true/20/70/true, strict integer ranges 5..50/1..100, portable=true and appearance=false stay. Remove corresponding legacy definitions/validation in the same domain commit; use existing Schema boolean/integer validators.
+- Fourteen catalog records, ten Settings pages, 70 descriptor/77 legacy keys; all 147 flat keys/default order and frozen portable/profile sets unchanged. Empty startup metadata adds no page/bar/gesture/provider/bootstrap entry. These are schema-only records: disable retains schema/data, not withdrawal of legacy UI/controllers.
+- Corrected baseline focused 107/0/7; peripherals 108/0/6, saver 109/0/5, final 111/0/3 (114 cases). Counts pass/fail/skip. Four ownership/authority cases are N/A before fragments and pass afterward; three personalization opt-ins execute in final G2.
+- Failed scratch trials: one module-selection import error (plural test name), corrected command only; one new authority-fixture failure (unbound glass default resolver), uncommitted extraction discarded before fixture-only binding f991013. Assertion/expectation lines stayed identical; no production corrective commit or old-test/frozen-fixture edit.
+- Baseline G0 with new characterization: 672/0/157 (133.190s). Final G0 676/0/153 (134.471s): the four N/A cases now execute; no test removal. qmllint 148 files/0 errors/71 existing warnings.
+- Final runtime/test head 4cde2ae, disposable XDG/private Sway/D-Bus, full set once: G1 3/0/0 (18.529s), G2 4/0/0 (41.558s), G3 53/0/0 (147.524s), G4 34/0/0 (74.919s), G6 polling 1/0/0 (20.698s); G0 above. Final commit is README/docs only.
+- Default G0 skips: 141 session/UI opt-ins, 5 BlueZ, 5 MPRIS, 1 real Matugen, 1 detached fake-niri; not reported as passes. This data-only branch does not certify radios, backlight or display hardware.
+- Private saver/peripheral UI before 7/0/0 (9.971s), after 7/0/0 (9.029s). Includes low-battery/DND/latch/hysteresis/zero-vs-unknown, opaque saver overlay, canvas/settings/spectrum and visual restore checks. Mirror action contracts execute in focused units and legacy UI projections in G3.
+- Runtime changes are limited to schema ownership and removing three legacy branches/one boolean-set member. Other backend functions/classes are AST-identical; QML, controllers/workers, Preferences, settings transfer, shared schema reader and frozen fixtures byte-identical. No new process, dependency, timer, executor, cache/polling/power-policy change.
+- Architecture: seven QML legacy exceptions/twelve cycle edges unchanged, no new exceptions. Coordinator ceiling ratcheted 1634->1632->1631. Action coverage stays 75/89 (49 sync entry calls/26 workers); six core pages remain legacy.
+- One normal sanity: ten fresh-process/fresh-XDG launches each, main/head medians preview 1076.31/1063.90ms, Settings 1155.20/1151.72ms. Warm OS cache, private software OpenGL/pixman, mapped-window endpoint/20ms poll. No D1 profiling/CIs, raw evidence or performance-saving claim.
+- T+10s RSS KiB main/head: preview QS 279740/279728, backend 25740/25716; Settings QS 230520/231060, backend 25700/25660. Largest increase 0.234%; no +100ms/+10% flags. Separate process pairs do not establish whole-shell PSS/budget; laptop inventory remains pending.
+- Adapters: DEFAULT_PREFERENCES/validate_preference and portable/profile exports remain, retiring only with owner-approved compatibility changes. Legacy inventory/default resolver/bundled-fragment fallback retain STATE.md conditions; descriptors remain in config, no M8 moves.
+- No exercised UI/CLI/preset/settings-format difference. Schema ownership/limits are intentionally descriptor metadata; private legacy validation no longer handles those four keys. Laptop release/PSS evidence remains pending.
+- Laptop checklist (needs real-session check):
+  1. In Behavior, change low-device-battery alerts/threshold, restart shell and Settings, and confirm values/alert behavior persist.
+  2. Change starting saver brightness, toggle saver on/off and confirm the configured start plus original mode/brightness/profile/theme restoration.
+  3. Toggle Display mirroring availability; with two outputs, start/stop mirroring and verify the existing Settings-to-shell route.
+  4. Export/import a preset, restart, confirm all four values and expected private backups/0600 permissions; complete RELEASE_CHECKLIST.md and reviewed aggregate PSS inventory.

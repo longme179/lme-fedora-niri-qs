@@ -1,0 +1,21 @@
+{
+  "id": "peripherals",
+  "preferences": {
+    "peripheralBatteryAlerts": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "peripheralBatteryThreshold": {
+      "type": "integer",
+      "validator": "integer",
+      "portable": true,
+      "appearance": false,
+      "default": 20,
+      "min": 5,
+      "max": 50
+    }
+  }
+}

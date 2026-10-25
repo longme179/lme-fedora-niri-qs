@@ -66,7 +66,7 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 281,
-    "scripts/desktop_backend.py": 1634,
+    "scripts/desktop_backend.py": 1632,
     "tests/fixtures/catalog-legacy.json": 323,
     "tests/test_backend.py": 486,
     "tests/test_battery_saver.py": 359,

@@ -24,8 +24,6 @@
     "batteryDetails": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "quickNotes": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "audioVisualizer": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": false},
-    "peripheralBatteryAlerts": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
-    "peripheralBatteryThreshold": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 20},
     "batterySaverBrightness": {"type": "integer", "validator": "legacy", "portable": true, "appearance": false, "default": 70},
     "mirroringEnabled": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},
     "recordingEnabled": {"type": "boolean", "validator": "legacy", "portable": true, "appearance": false, "default": true},

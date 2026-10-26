@@ -37,6 +37,9 @@ python3 scripts/memory_report.py --label ordinary-active --json
 
 The tool is read-only and runs once; it does not launch/stop applications, read
 environment variables, print user command arguments or save a report itself.
+For an explicitly invoked timed workload and automatic PSS/budget/Settings-exit
+checks, see [Laptop memory workload](LAPTOP_MEMORY_CHECK.md). That separate optional
+tool opens panels and Settings; its private native baseline is currently unresolved.
 It includes recognized current-user LME scripts across checkouts, their Quickshell
 ancestors, workers and descendants, including surviving detached log relays.
 PSS/RSS are KiB; the displayed MB are decimal. The inclusive PSS includes job

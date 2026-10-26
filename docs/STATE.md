@@ -38,7 +38,7 @@ Do not read archive/ unless answering a specific historical question.
 ## Gates and working rules
 
 - `./scripts/check.sh`: architecture/catalog + unit discovery + Bash/demo checks.
-- `python3 scripts/memory_report.py --label steady`: read-only PSS inventory; review ownership/partial counters before accepting totals.
+- `python3 scripts/memory_report.py --label steady`: read-only PSS inventory; optional owner-run memory_workload.py is an unmerged prototype with unresolved native/G0 results (LAPTOP_MEMORY_CHECK.md). Review ownership/partial counters before accepting totals.
 - `./scripts/run-gates.sh --gates G0` isolates XDG, Sway/Wayland and D-Bus;
   optional `--env-file FILE --pointer-dir DIR`. Gate cases: tests/migration_checks.py.
 - During work: Python = G0 + relevant units; QML = G0 + G1 + relevant native case.

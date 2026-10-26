@@ -661,3 +661,21 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. In Smoked/Liquid, repeat panel/Settings open/close/reopen and shell restart; check Clipboard/history, notifications and idle detached jobs.
   3. Recheck Wi-Fi wrong-password/retry and Bluetooth/media/lyrics/device reconnect while controls remain responsive.
   4. Complete actual capture/recording, display apply/confirm/revert and Battery Saver restore checks in RELEASE_CHECKLIST.md; no fully validated release before these pass.
+
+## Optional laptop memory workload — 2026-10-26 (prototype, not merge-ready)
+
+- Branch chore/laptop-memory-check, base e91ca29. Plan 43d5be2; contracts eb27a10/3319e1d/3f41415; opt-in tool 21f6496; final docs separate. No normal-runtime integration, main merge or later family.
+- Owner explicitly invokes the stdlib tool; agents tested only copied XDG/private Sway/D-Bus. Reuse memory_report.collect, feature_catalog.load_catalog and public shell/settings IPC. One host classification; no dependency exception, service, queue, schema or settings/renderer/polling/power change.
+- Require one live main and no pre-opened Settings, pin its ID, refuse missing catalog panels; send 48 timed cycles, sample steady/warm-24/warm-48/Settings-open. Optional --wait-close observes the actual close request, checks Settings/backend exit and samples Settings-closed; never kills a process.
+- Inclusive PSS 400/500 decimal-MB comparisons, persistent core PID continuity, private new 0600 JSON, partial/error/Ctrl-C recording; growth is not a leak verdict. Explicit helper --pid roots remain reviewable. No actual-panel-completion, GPU/FPS, peak/VRAM or release-approval claim.
+- New unit contracts 13/0/0 (0.076s). Settings readiness, duplicate/demo/context admission, pinned commands, exact PSS boundary, incomplete/changed inventory, 48 requests, exclusive/private output, error/interrupt, zombie/unreadable exit and timeout covered. Original nine committed assertion trees remain unchanged.
+- Initial rapid 100ms native trials include timeouts; an earlier shortened CLI pair passes but does not certify the final workload. Final native fixture uses default 2s/5s waits, static Qt software UI/demo backend: 1/1/0 (refusal passes; healthy workload times out on IPC 5s). Full physical GPU/Jelly behavior not verified.
+- A separate unchanged-host probe also fails during existing IPC readiness before tool invocation (4s fixture limit). Cause unverified; no environment/product classification or native-pass claim. No production fix-forward or weakened baseline assertion/timeout.
+- Initial affected G0 694/0/157 (178.969s). Final test head 3f41415 G0 695/3/157 (241.096s): existing PendingWireCase batched-input pipe times out at 8s, BarGestureQmlCase mouse/wheel returns phase-3 timeout, BatterySaverVisualCase fast-reversal spectrum times out at 15s. Not passed.
+- Those three unchanged cases in isolation: baseline e91ca29 3/0/0 (7.568s), head 3/0/0 (9.127s). This narrower success does not clear the full-gate result or classify suite-order/intermittent timing. No corresponding runtime/old-test source changed.
+- qmllint 148 files/0 errors/71 existing warnings. G0 skips 145 UI/session opt-ins (+2 new native cases), 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri; skips not passes. G1-G4/G6/full-set merge review not run; prototype held for unresolved baseline results. No startup/RSS sanity of unintegrated tooling or D1 work.
+- Existing public facades/compatibility adapters and STATE retirement conditions stay unchanged; no new runtime adapter. Current Settings launch uses existing settings.sh/caller environment. Optional Gear-route test diff awaits approval in LAPTOP_MEMORY_TEST_REVIEW.md and is NOT applied.
+- Laptop checklist (needs real-session check):
+  1. Close Settings; keep the same theme/GPU environment and normal media/output context, display awake; avoid clicking/typing in panels (Notifications become read).
+  2. Run the standalone command in LAPTOP_MEMORY_CHECK.md; observe actual openings/blur/sharpness/motion. When requested, close Settings with X.
+  3. Return the five PSS lines, warm delta and any INCOMPLETE issue; review additional/shared helper roots. Do not treat partial, VM or budget-only results as release approval.

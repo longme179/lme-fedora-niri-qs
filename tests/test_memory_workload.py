@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import stat
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -150,6 +151,21 @@ class MemoryWorkloadCase(unittest.TestCase):
         for value, expected in [('State:\tZ (zombie)\n', False), ('State:\tS (sleeping)\n', True)]:
             with patch('memory_workload.Path.read_text', return_value=value):
                 self.assertEqual(running(123), expected)
+
         for error, expected in [(FileNotFoundError(), False), (PermissionError(), True)]:
             with patch('memory_workload.Path.read_text', side_effect=error):
                 self.assertEqual(running(123), expected)
+
+    def test_preflight_error_or_interrupt_saves_a_private_incomplete_report(self):
+        from memory_workload import main
+        with tempfile.TemporaryDirectory() as directory:
+            for index, error in enumerate((ValueError('fixture offline'), KeyboardInterrupt())):
+                path = Path(directory)/f'{index}.json'
+                with patch('memory_workload.Session.attach', side_effect=error), \
+                     contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    code = main(['--checkout', str(ROOT), '--theme', 'liquid', '--output', str(path)])
+                report = json.loads(path.read_text())
+                self.assertEqual(code, 1)
+                self.assertTrue(report['error'])
+                self.assertEqual(report['samples'], [])
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)

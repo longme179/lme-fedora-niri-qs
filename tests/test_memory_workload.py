@@ -84,7 +84,9 @@ class MemoryWorkloadCase(unittest.TestCase):
 
     def test_workload_orders_48_cycles_and_checkpoints_without_setting_commands(self):
         s = self.session()
-        with patch.object(s, 'command') as call, patch.object(s, 'measure') as measure, \
+        def record(label, limit):
+            s.report['samples'].append(dict(label=label, memory=inventory()))
+        with patch.object(s, 'command') as call, patch.object(s, 'measure', side_effect=record) as measure, \
              patch.object(s, 'open_settings') as settings, patch('memory_workload.time.sleep'):
             s.exercise(.1, .1)
         toggles = [c.args for c in call.call_args_list if c.args[0] == 'toggle']
@@ -114,3 +116,40 @@ class MemoryWorkloadCase(unittest.TestCase):
                 self.assertEqual(main(['--checkout', str(ROOT), '--theme', 'liquid', '--output', str(path)]), 1)
             self.assertEqual(path.read_text(), 'keep')
             attach.assert_not_called()
+
+    def test_wait_close_requires_backend_exit_and_never_sends_a_kill(self):
+        s = self.session(); s.settings = SETTINGS
+        s.baseline = {(101, 'Quickshell'), (102, 'backend'), (103, 'clipboard worker')}
+        s.report['samples'] = [dict(memory=inventory(settings=True))]
+        with patch.object(s, 'instances', side_effect=[[MAIN], [MAIN]]) as instances, \
+             patch('memory_workload.running', side_effect=[False, True, False, False]) as exists, \
+             patch('memory_workload.time.sleep'), patch.object(s, 'measure') as measure, \
+             patch.object(s, 'qs') as qs:
+            s.wait_closed(.1)
+        measure.assert_called_once_with('Settings-closed', 400)
+        self.assertIsNone(s.settings)
+        self.assertTrue(s.report['settings_exit_confirmed'])
+        self.assertEqual(instances.call_count, 2)
+        self.assertEqual(exists.call_count, 4)
+        qs.assert_not_called()
+
+    def test_wait_close_timeout_never_claims_confirmed_exit(self):
+        s = self.session(); s.settings = SETTINGS
+        s.baseline = {(101, 'Quickshell'), (102, 'backend'), (103, 'clipboard worker')}
+        s.report['samples'] = [dict(memory=inventory(settings=True))]
+        with patch.object(s, 'instances', return_value=[MAIN, SETTINGS]), \
+             patch('memory_workload.time.monotonic', side_effect=[0, 1, 121]), \
+             patch('memory_workload.time.sleep'), patch.object(s, 'measure') as measure, \
+             self.assertRaisesRegex(ValueError, 'Could not confirm'):
+            s.wait_closed(.1)
+        measure.assert_not_called()
+        self.assertNotIn('settings_exit_confirmed', s.report)
+
+    def test_zombie_and_missing_process_are_exited_but_unreadable_is_not(self):
+        from memory_workload import running
+        for value, expected in [('State:\tZ (zombie)\n', False), ('State:\tS (sleeping)\n', True)]:
+            with patch('memory_workload.Path.read_text', return_value=value):
+                self.assertEqual(running(123), expected)
+        for error, expected in [(FileNotFoundError(), False), (PermissionError(), True)]:
+            with patch('memory_workload.Path.read_text', side_effect=error):
+                self.assertEqual(running(123), expected)

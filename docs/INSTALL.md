@@ -6,6 +6,23 @@ installation; running Quickshell as root breaks access to the user's session.
 
 ## Quick setup
 
+For verified one-command deployment **including niri integration**, use
+[deploy.sh](DEPLOYMENT.md):
+
+```bash
+./deploy.sh                         # Read-only plan
+./deploy.sh --install --copr --build-quickshell --charge-helper
+```
+
+Run from a permanent checkout as your desktop user. It backs up and validates
+niri edits, writes a readable diff and provides rollback. An installed
+Quickshell 0.2.x is not enough: deploy probes >=0.3.2 and the required Region APIs,
+then upgrades or builds a private pinned fallback only with the explicit flags
+above. DNF/sudo still ask normally. See [what changes](DEPLOYMENT.md#exactly-what-changes),
+replacement conflicts, optional tools and logout/start instructions there.
+
+### Conservative setup (manual niri integration)
+
 For the complete shell and recommended feature tools, use the combined installer.
 Keep the checkout in a permanent directory and run it as your desktop user:
 

@@ -37,7 +37,7 @@ Do not read archive/ unless answering a specific historical question.
 
 ## Gates and working rules
 
-- `./scripts/check.sh`: architecture/catalog + unit discovery + Bash/demo checks.
+- `./deploy.sh`: deployment plan/apply/rollback (DEPLOYMENT.md). `./scripts/check.sh`: architecture/catalog + unit discovery + Bash/demo checks.
 - `python3 scripts/memory_report.py --label steady`: read-only PSS inventory; review ownership/partial counters before accepting totals.
 - `./scripts/run-gates.sh --gates G0` isolates XDG, Sway/Wayland and D-Bus;
   optional `--env-file FILE --pointer-dir DIR`. Gate cases: tests/migration_checks.py.

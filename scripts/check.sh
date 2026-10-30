@@ -6,7 +6,7 @@ cd -- "$repo_dir"
 ./scripts/check-architecture.sh
 python3 scripts/feature_catalog.py --check
 python3 -m unittest discover -s tests -v
-for script in scripts/*.sh; do
+for script in ./*.sh scripts/*.sh; do
     bash -n "$script"
 done
 python3 scripts/desktop_backend.py --demo --once | python3 -c '

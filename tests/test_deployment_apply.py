@@ -114,6 +114,19 @@ class DeployApplyCase(unittest.TestCase):
 
 
 class NiriEditEdgeCase(unittest.TestCase):
+    def test_unicode_include_paths_are_literal_kdl_strings(self):
+        with tempfile.TemporaryDirectory() as raw:
+            folder = Path(raw)/'đường dẫn'; folder.mkdir(); root = folder/'config.kdl'
+            changes, _ = plan(root, ROOT, folder/'lme', folder/'lme-shell', (26, 4))
+            self.assertIn(str(folder).encode(), changes[root])
+            self.assertNotIn(b'\\u0111', changes[root])
+            def inspect(argv, **kwargs):
+                text = Path(argv[-1]).read_text()
+                self.assertIn(str(folder), text)
+                self.assertNotIn('\\u0111', text)
+                return subprocess.CompletedProcess(argv, 0, '', '')
+            with patch('deploy_niri_tree.subprocess.run', side_effect=inspect): validate(root, changes)
+
     def test_customized_old_fragment_keeps_its_own_settings(self):
         with tempfile.TemporaryDirectory() as raw:
             folder = Path(raw); root = folder/'config.kdl'; old = folder/'popup-blur.kdl'

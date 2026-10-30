@@ -20,7 +20,8 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.Notifications
 ShellRoot {
     Region { width: 20; height: 20; topLeftRadius: 2; topRightRadius: 2; bottomLeftRadius: 2; bottomRightRadius: 2 }
-    Component.onCompleted: console.log("LME_RUNTIME_OK")
+    FileView { id: receipt; path: Quickshell.env("HOME") + "/probe.ok"; preload: false; blockWrites: true }
+    Component.onCompleted: { receipt.setText("LME_RUNTIME_OK"); console.log("LME_RUNTIME_OK") }
     Timer { interval: 50; running: true; onTriggered: Qt.quit() }
 }
 '''
@@ -49,7 +50,10 @@ def probe(binary):
             path = folder/key; path.mkdir(mode=0o700); env[key] = str(path)
         reply = subprocess.run([str(binary), '-p', str(entry)], env=env, capture_output=True, text=True, timeout=20)
         output = reply.stdout+reply.stderr
-        if reply.returncode or 'LME_RUNTIME_OK' not in output or 'Failed to load configuration' in output:
+        receipt = folder/'probe.ok'
+        confirmed = receipt.is_file() and receipt.read_text() == 'LME_RUNTIME_OK'
+        # console.log is debug-level and can be suppressed by distro/user logging rules.
+        if reply.returncode or not (confirmed or 'LME_RUNTIME_OK' in output) or 'Failed to load configuration' in output:
             raise ValueError(f'{binary}: required QML capabilities unavailable:\n{output[-4000:]}')
     return found
 

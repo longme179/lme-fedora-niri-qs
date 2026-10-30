@@ -98,6 +98,8 @@ changes when the installation is already correct.
    replacing unrelated install targets with backups. No GPU driver/service policy.
 2. Reuse the Fedora package helper. Verify the selected executable (not just RPM
    presence): Quickshell >=0.3.2 and isolated QML imports/per-corner Region APIs.
+   Completion is confirmed by a file inside the private probe directory; muted
+   QML debug logs do not make a compatible binary fail.
    If unsuitable, `--copr` allows the documented repository and upgrade; the
    explicitly allowed `--build-quickshell` fallback builds pinned upstream
    4f508be500dea6e5732cc3d50382a0048b17e7b1 into a private Qt-versioned prefix.

@@ -70,6 +70,19 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 
 ## Installation
 
+For one-command Fedora deployment **including niri config integration**:
+
+```bash
+./scripts/deploy.sh                         # Read-only plan, from your checkout
+./scripts/deploy.sh --install --copr --build-quickshell --charge-helper
+```
+
+It verifies the actual Quickshell APIs, backs up and validates niri edits, and
+records a diff with rollback instructions. Run as your desktop user; DNF/sudo
+prompt for privileged steps. Log out/in to switch session agents cleanly.
+See [deployment details and exactly what changes](docs/DEPLOYMENT.md).
+The `setup.sh` flow below keeps niri integration manual.
+
 ### Requirements
 
 The supported target is **Fedora 44 with an existing niri Wayland session**.

@@ -154,5 +154,43 @@ class WorkloadContractsCase(unittest.TestCase):
                 self.assertEqual(main(['--theme','liquid','--output',str(output)]),1)
             attach.assert_not_called(); self.assertEqual(output.read_bytes(),before)
 
+    def test_cli_interrupt_preserves_checkpoint_and_only_closes_pinned_panels(self):
+        from memory_workload import Session, main
+        def interrupted(s, *_):
+            s.report['samples'].append(dict(label='steady',within_budget=True,memory=inventory()))
+            s.save()
+            raise KeyboardInterrupt()
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw)/'report.json'
+            with patch.object(Session,'attach',lambda s:setattr(s,'main',MAIN)), \
+                 patch.object(Session,'exercise',interrupted), patch.object(Session,'command') as close, \
+                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(['--theme','smoked','--output',str(output)]),1)
+            report = json.loads(output.read_text())
+            self.assertEqual(report['error'],'Interrupted by user')
+            self.assertEqual(report['samples'][0]['label'],'steady')
+            close.assert_called_once_with('close')
+
+    def test_same_process_distinguishes_exit_reuse_and_unreadable_identity(self):
+        from memory_workload import same_process
+        for value, expected in ((FileNotFoundError(),False),(PermissionError(),True)):
+            with patch('memory_workload.read_identity',side_effect=value):
+                self.assertIs(same_process(201,2010),expected)
+        with patch('memory_workload.read_identity',return_value=(1,999)):
+            self.assertFalse(same_process(201,2010))
+
+    def test_cli_does_not_follow_a_report_symlink_or_fallback_from_explicit_binary(self):
+        from memory_workload import main
+        with tempfile.TemporaryDirectory() as raw:
+            target = Path(raw)/'existing'; target.write_text('private existing data')
+            link = Path(raw)/'report.json'; link.symlink_to(target)
+            with patch('memory_workload.Session.attach') as attach, contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(['--theme','smoked','--output',str(link)]),1)
+            attach.assert_not_called(); self.assertEqual(target.read_text(),'private existing data')
+            with patch('memory_workload.shutil.which',return_value=None) as which, \
+                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(['--theme','smoked','--quickshell','/missing','--output',str(Path(raw)/'new.json')]),1)
+            which.assert_called_once_with('/missing')
+
 
 if __name__ == '__main__': unittest.main()

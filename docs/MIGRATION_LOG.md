@@ -661,3 +661,28 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. In Smoked/Liquid, repeat panel/Settings open/close/reopen and shell restart; check Clipboard/history, notifications and idle detached jobs.
   3. Recheck Wi-Fi wrong-password/retry and Bluetooth/media/lyrics/device reconnect while controls remain responsive.
   4. Complete actual capture/recording, display apply/confirm/revert and Battery Saver restore checks in RELEASE_CHECKLIST.md; no fully validated release before these pass.
+
+## One-command deployment — 2026-10-30
+- Branch `feat/oneshot-deploy`, base `e91ca29`; owner explicitly authorized reversible niri edits.
+- Plan `5ec16b5`; new tests `cb5a03c`, `1239073`, `d0e73a1`, `639397c`; effective implementation `a7e24cd`; documentation `db276c1` plus this summary.
+- `948af20` reverted by `142aacf` after a real niri edge check rejected JSON Unicode escapes; new regression failed first, corrected literal UTF-8 includes then passed. No existing assertion/fixture edits.
+- New deploy: read-only default; Fedora packages, actual QS >=0.3.2/Region API probe, explicit COPR/private pinned source fallback; journalled shell/launcher/niri integration and conservative rollback.
+- User differences are opt-in deploy/start flags; start/Settings/doctor prefer the managed verified runtime, with explicit LME_QS_BINARY precedence. Legacy installers retain behavior; settings/history bytes stay untouched.
+- New adapter: verified runtime link + wrapper, retained until an owner-approved deployment migration has no consumers. Optional KDL token/node positions preserve the default API; retain while the patcher consumes them.
+- Main G0: 685 passed / 0 failed / 155 skipped (840 total); qmllint 148 files, 0 errors/71 warnings.
+- Before Unicode correction (`db276c1`): G0 711/0/155; G1 3/0/0; G2 4/0/0; G3 53/0/0; G4 34/0/0; G6 polling 1/0/0. These are NOT final corrected-head results.
+- Corrected-head focused checks: 49 passed / 0 failed / 2 skipped (51 total); 27 new deployment contracts execute. Skips are the existing laptop-feature private-Wayland cases.
+- G0's 155 skips were unchanged: 143 opt-in/private UI cases, 5 BlueZ, 5 MPRIS, 1 portable Matugen, 1 detached fake-niri. Skipped tests are not counted as passes.
+- Real binaries: QS 0.3.2 offscreen API probe; niri 26.04 fresh/included config validation; private-XDG apply/repeat/rollback; literal Unicode/spaces validation. No real config/session modified.
+- Sanity: 10 launches/path/arm, disposable XDG + Sway/private D-Bus, software-rendered VM, fresh per-launch cache; medians only. One collector attempt aborted before a result because /proc/.../children is unavailable; completed run uses PPid discovery.
+- Preview median main/head 1626.74/1388.37 ms; Settings 1354.33/1480.51 ms: +126.18 ms, ABOVE STATE's +100 ms threshold. No second timing run or startup optimization performed.
+- RSS at T+10 s, KiB main/head: preview QS 279324/280040, backend 25664/25672; Settings QS 231620/231328, backend 25632/25644. No +10% RSS flag; these are per-process RSS, not total-shell PSS.
+- STOP for owner review of the timing flag. Full G0-G4/G6 repeat on corrected head remains pending; do not call this merge-ready.
+- Fedora DNF/COPR transactions, fresh Fedora source compilation, privileged charge helper and hardware/session integration: needs real-session check; command selection/failure paths tested with fakes.
+- Laptop checklist:
+  1. Run deploy dry-run; inspect listed conflicts/targets and choose the actual --niri-config if custom.
+  2. Apply as desktop user; add --replace only for intentionally replaced old install targets.
+  3. Read report.txt/changes.diff; run niri validate and ~/.local/bin/lme-shell doctor.
+  4. Log out/in; check one bar/notification server/Polkit agent and all nine shortcuts.
+  5. Open Settings by Gear and launcher; confirm existing preferences, wallpaper and blur.
+  6. Re-run for zero file changes; optionally test the printed rollback before further manual edits.

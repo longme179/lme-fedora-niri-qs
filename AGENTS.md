@@ -94,4 +94,5 @@ ratchet their recorded ceiling down when shrinking them. No tree reorganization.
 - Replies <=40 lines; one migration entry <=30 lines per milestone, checklist <=6
   lines. Commit a final gate summary only, no raw logs/evidence directories.
 - Keep Preferences file-lock/merge/fsync/atomic-write semantics; stdlib backend;
-  installers must never overwrite `~/.config/niri/config.kdl`.
+  legacy installers must never overwrite `~/.config/niri/config.kdl`. Owner-invoked
+  `deploy.sh` may patch niri with backups, staged validation, a diff and rollback (2026-10-30).

@@ -22,10 +22,7 @@ optional() {
 }
 
 printf 'LME Shell: read-only runtime checks\n\n'
-qs_binary="${LME_QS_BINARY:-}"
-managed_binary="${XDG_DATA_HOME:-$HOME/.local/share}/lme-shell/deployment/bin/quickshell"
-if [[ -z "$qs_binary" && -x "$managed_binary" ]]; then qs_binary="$managed_binary"; fi
-if [[ -z "$qs_binary" ]]; then qs_binary="$(command -v quickshell || command -v qs || true)"; fi
+qs_binary="$(command -v quickshell || command -v qs || true)"
 if [[ -n "$qs_binary" ]]; then
     printf 'OK       %-22s %s\n' Quickshell "$qs_binary"
 else

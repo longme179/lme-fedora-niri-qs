@@ -44,8 +44,6 @@ case "$page" in
         ;;
 esac
 qs_binary="${LME_QS_BINARY:-}"
-managed_binary="${XDG_DATA_HOME:-$HOME/.local/share}/lme-shell/deployment/bin/quickshell"
-if [[ -z "$qs_binary" && -x "$managed_binary" ]]; then qs_binary="$managed_binary"; fi
 if [[ -z "$qs_binary" ]]; then
     parent_binary="$(readlink -f "/proc/$PPID/exe" 2>/dev/null || true)"
     case "${parent_binary##*/}" in quickshell|qs) qs_binary="$parent_binary" ;; esac

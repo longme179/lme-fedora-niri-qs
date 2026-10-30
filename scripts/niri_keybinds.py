@@ -9,7 +9,7 @@ import re
 TOKEN = re.compile(r'(?P<space>[^\S\n]+)|(?P<line>\n)|(?P<continuation>\\\r?\n)|(?P<comment>//[^\n]*)|(?P<block>/\*)|(?P<disabled>/-)|(?P<raw>r?#+"|r")|(?P<string>")|(?P<mark>[{};=()])|(?P<word>[^\s{};=()"]+)')
 
 
-def tokens(text, *, positions=False):
+def tokens(text):
     result, offset, line = [], 0, 1
     while offset < len(text):
         match = TOKEN.match(text, offset)
@@ -42,20 +42,19 @@ def tokens(text, *, positions=False):
             except (ValueError, UnicodeError): raise ValueError(f'Invalid string at line {begin}') from None
             end = finish + 1
         line += text[offset:end].count('\n')
-        if kind not in {'space', 'comment', 'block', 'continuation'}:
-            result.append((value, kind, begin, offset, end) if positions else (value, kind, begin))
+        if kind not in {'space', 'comment', 'block', 'continuation'}: result.append((value, kind, begin))
         offset = end
     return result
 
 
-def nodes(text, *, positions=False):
-    stream, index = tokens(text, positions=positions), 0
+def nodes(text):
+    stream, index = tokens(text), 0
     def parse(children=False, depth=0):
         nonlocal index
         if depth > 32: raise ValueError('KDL nesting is too deep')
         output = []
         while index < len(stream):
-            value, kind, line = stream[index][:3]
+            value, kind, line = stream[index]
             if kind == 'line' or value == ';': index += 1; continue
             if kind == 'mark' and value == '}':
                 if not children: raise ValueError(f'Unexpected closing brace at line {line}')
@@ -64,14 +63,13 @@ def nodes(text, *, positions=False):
             if disabled:
                 index += 1
                 if index >= len(stream): raise ValueError('Missing disabled node')
-                value, kind, line = stream[index][:3]
+                value, kind, line = stream[index]
             if kind not in {'word', 'string'}: raise ValueError(f'Missing node name at line {line}')
             node = {'name': value, 'args': [], 'props': {}, 'children': [], 'line': line, 'disabled': disabled}
-            if positions: node.update(offset=stream[index][3], argument_spans=[])
             index += 1
             skip = False
             while index < len(stream):
-                value, kind, _ = stream[index][:3]
+                value, kind, _ = stream[index]
                 if kind == 'line' or (kind == 'mark' and value in ';}'):
                     if value != '}': index += 1
                     break
@@ -88,9 +86,7 @@ def nodes(text, *, positions=False):
                     key = value; index += 2
                     if index >= len(stream) or stream[index][1] not in {'word','string'}: raise ValueError('Missing property value')
                     if not skip: node['props'][key] = stream[index][0]
-                elif not skip:
-                    node['args'].append(value)
-                    if positions: node['argument_spans'].append(stream[index][3:5])
+                elif not skip: node['args'].append(value)
                 skip = False; index += 1
             output.append(node)
         if children: raise ValueError('Unclosed KDL block')

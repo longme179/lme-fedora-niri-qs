@@ -5,7 +5,7 @@ repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 usage() {
     cat <<'EOF'
-Usage: scripts/start.sh [--demo] [--preview] [--config NAME] [--wallpaper FILE] [--no-wallpaper] [--no-duplicate] [--daemonize]
+Usage: scripts/start.sh [--demo] [--preview] [--config NAME] [--wallpaper FILE] [--no-wallpaper]
 
 Start the installed LME Quickshell configuration. If a wallpaper was saved in
 the shell settings, start awww-daemon when necessary and restore that wallpaper.
@@ -16,8 +16,6 @@ Also restore confirmed settings for supported, currently attached niri displays.
   --config NAME   Quickshell configuration name (default: lme-shell).
   --wallpaper     Restore this raster image instead of the saved wallpaper.
   --no-wallpaper  Preserve the current wallpaper without starting a daemon.
-  --no-duplicate Reuse an existing instance of this configuration.
-  --daemonize    Detach after Quickshell loads the configuration.
   --help          Show this help.
 EOF
 }
@@ -27,7 +25,6 @@ preview=false
 if [[ "${LME_SHELL_DEMO:-0}" == 1 ]]; then demo=true; fi
 if [[ "${LME_SHELL_PREVIEW:-0}" == 1 ]]; then preview=true; demo=true; fi
 restore_wallpaper=true
-duplicate_args=()
 config_name=lme-shell
 wallpaper=""
 while (($#)); do
@@ -35,8 +32,6 @@ while (($#)); do
         --demo) demo=true ;;
         --preview) preview=true; demo=true ;;
         --no-wallpaper) restore_wallpaper=false ;;
-        --no-duplicate) duplicate_args+=(--no-duplicate) ;;
-        --daemonize) duplicate_args+=(--daemonize) ;;
         --config|--wallpaper)
             if (($# < 2)) || [[ -z "$2" ]]; then
                 printf 'Error: %s requires a value.\n' "$1" >&2
@@ -51,11 +46,7 @@ while (($#)); do
     shift
 done
 if ! "$restore_wallpaper"; then export LME_NO_WALLPAPER=1; fi
-qs_binary="${LME_QS_BINARY:-}"
-managed_binary="${XDG_DATA_HOME:-$HOME/.local/share}/lme-shell/deployment/bin/quickshell"
-if [[ -z "$qs_binary" && -x "$managed_binary" ]]; then qs_binary="$managed_binary"; fi
-if [[ -z "$qs_binary" ]]; then qs_binary="$(command -v quickshell || command -v qs || true)"; fi
-export LME_QS_BINARY="$qs_binary"
+qs_binary="$(command -v quickshell || command -v qs || true)"
 if [[ -z "$qs_binary" ]]; then
     printf 'Error: Quickshell is missing. See docs/INSTALL.md.\n' >&2
     exit 1
@@ -96,4 +87,4 @@ if ! "$demo" && command -v python3 >/dev/null; then
         printf 'Warning: confirmed display restoration failed; starting the shell anyway.\n' >&2
     fi
 fi
-exec "$qs_binary" -c "$config_name" "${duplicate_args[@]}"
+exec "$qs_binary" -c "$config_name"

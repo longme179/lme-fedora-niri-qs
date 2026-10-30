@@ -76,6 +76,10 @@ class WorkloadContractsCase(unittest.TestCase):
             with self.assertRaises(subprocess.TimeoutExpired): s.command('toggle', 'control')
         self.assertEqual(command.call_count, 1)
 
+    def test_zero_exit_with_stderr_is_not_a_successful_void_reply(self):
+        with patch('memory_workload.subprocess.run', return_value=subprocess.CompletedProcess([],0,'','Target not found.')):
+            with self.assertRaises(ValueError): self.attached().command('close')
+
     def test_settings_uses_gear_route_and_requires_visible_ack_without_caller_launch(self):
         s = self.attached()
         with patch.object(s, 'instances', side_effect=[[MAIN], [MAIN, SETTINGS]]), \

@@ -114,6 +114,16 @@ class DeployApplyCase(unittest.TestCase):
 
 
 class NiriEditEdgeCase(unittest.TestCase):
+    def test_customized_old_fragment_keeps_its_own_settings(self):
+        with tempfile.TemporaryDirectory() as raw:
+            folder = Path(raw); root = folder/'config.kdl'; old = folder/'popup-blur.kdl'
+            old.write_text((ROOT/'config/niri/popup-blur.kdl').read_text().replace('passes 2', 'passes 4'))
+            root.write_bytes(b'include "popup-blur.kdl"\r\n// keep CRLF\r\n')
+            changes, _ = plan(root, ROOT, folder/'lme', folder/'bin/lme-shell', (26, 4))
+            self.assertIn(b'include "popup-blur.kdl"\r\n// keep CRLF\r\n', changes[root])
+            self.assertNotIn(old, changes)
+            self.assertNotIn('\nblur {', changes[folder/'lme-shell-deploy.kdl'].decode())
+
     def test_position_view_does_not_change_old_token_or_node_contract(self):
         text = '/* nested /* comment */ */ binds { "Mod+A" { spawn r#"a}b"#; }; }\n'
         positioned = tokens(text, positions=True)

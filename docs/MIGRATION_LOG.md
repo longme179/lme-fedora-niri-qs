@@ -722,3 +722,25 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Existing console acknowledgement remains a compatibility path; retire only alongside its test/consumer migration. No new dependency, runtime daemon or polling change.
 - Fedora COPR retry remains a real-machine confirmation; this diagnosis does not require another source build or package reinstall.
 - Laptop checklist: update to the fix and rerun the original deployment command with installed QS 0.3.2; confirm it advances beyond the capability probe and still validates niri before applying files.
+
+## Laptop memory workload — 2026-10-31
+- Owner reports deployment complete and authorizes resuming ROADMAP with planning plus execution. Scope: release evidence, not another feature migration or speculative RAM fix.
+- Branch `chore/laptop-memory-workload`, main `a9108b0`; plan `32ce33f`, tests `4b4a488`/`7b1cd6d`/`1cd112c`, implementation `bcf5fa2`; final docs separate.
+- Baseline collector contracts pass 10/0/0 on unmodified main. New diagnostic contracts are N/A before the module exists; the zero-exit/stderr regression fails before its guard and passes afterwards. Existing assertions/frozen fixtures untouched.
+- New opt-in stdlib CLI reuses collect/read_identity and pinned public IPC; preflights live/unique main, catalog availability and complete ownership before changing UI. No startup integration, extra backend/daemon or schema change.
+- Checkpoints: steady, warm-24, warm-48, simultaneous Settings-open, optional normal-X Settings-closed; inclusive PSS budgets 400/500 decimal MB. PID/start-time continuity guards main/backend/history and the Settings pair; unknown counters never become zero/pass.
+- Settings opens through the main Gear route, preserving graphics environment and selected executable; no terminal-owned Settings launch. Copied-checkout tests prove owner-environment inheritance with a sentinel, not GPU identity.
+- Exclusive mode-0600 JSON records progress/errors/Ctrl-C; existing paths/symlinks refused. Mutating IPC timeouts are never replayed; ambiguous stderr fails closed. No process kill, theme/renderer/preferences/quality or A6/D1 change. Notifications become read and are announced.
+- Focused collector/tool units: 26 passed / 0 failed / 0 skipped. Private Wayland native cases: 3/0/0 (20.780 s): 48-cycle CLI/normal close, existing-Settings refusal, unchanged-host Gear contract.
+- Native fixture uses short .1/.2-second timings, static software UI, demo backend and real private history; functional wiring only. These numbers are NOT normal-animation warming, GPU allocation or laptop budget evidence.
+- Final implementation head `bcf5fa2`: G0 737/0/162 (899 total); G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. Counts pass/fail/skip; disposable XDG/Sway/private D-Bus.
+- Skips: previous 159 plus the three new native opt-ins, explicitly exercised above. qmllint 148 files, 0 errors/71 existing warnings. Architecture/size/catalog/Bash/demo checks pass; no new dependency exception or cycle.
+- Application QML/hosts/backend/start scripts are byte-identical to main; no duplicate launch/RSS sanity or startup profiling. The new process exists only for an explicit diagnostic and is excluded by the existing collector as documented.
+- Unmerged `chore/laptop-memory-check` prototype is not imported or claimed green; new tests pin Gear semantics directly. This branch supersedes that experimental diagnostic without editing its assertions or classifying its old unresolved failures.
+- Adapters unchanged: stable collector/public IPC retained; no new runtime adapter or retirement. Report and workflow limitations are in LAPTOP_MEMORY_WORKLOAD.md; STATE/ROADMAP/release checklist updated.
+- Next: review laptop helper ownership, real warm trend and Settings exit; fix only a demonstrated retained resource, or close only the memory row when its criteria pass. Radio/capture/display/power checks still need real-session check; no release/100% claim.
+- Laptop checklist:
+  1. Update to this tool; close Settings; choose actual --theme liquid or smoked and keep normal GPU/outputs/media unchanged.
+  2. Run python3 scripts/memory_workload.py --theme liquid --wait-close; keep screen awake and avoid input; Notifications become read.
+  3. At the prompt close Settings normally; wait for Settings-closed and review the private report's helper/job scope (add reviewed --pid roots if needed).
+  4. Send the five PSS lines, warm delta, theme/GPU context and all OVER/INCOMPLETE lines; complete the remaining hardware release checklist separately.

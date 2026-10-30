@@ -709,3 +709,16 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   4. Log out/in; check one bar/notification server/Polkit agent and all nine shortcuts.
   5. Open Settings by Gear and launcher; confirm existing preferences, wallpaper and blur.
   6. Re-run for zero file changes; optionally test the printed rollback before further manual edits.
+
+## Deployment probe confirmation — 2026-10-30
+- Branch `fix/deploy-probe-confirmation`, base merged main `b5ffbfd`; tests `d31d2bb`, fix `ca0a415`, final docs separate.
+- Root cause reproduced on unmodified real QS 0.3.2: `QT_LOGGING_RULES=*.debug=false` hides the console.log success marker even though configuration loads successfully; the installer falsely rejects it.
+- Tests first: 6/0/2 (pass/failure/error) before fix, with the real muted-log and simulated receipt-success cases reproducing rejection. No existing assertion/fixture edits.
+- The isolated QML probe now synchronously writes a private completion receipt; Python accepts that receipt alongside the existing console marker. Minimum version, imports, Region APIs, nonzero exit/load-error rejection and the 20-second timeout stay in place.
+- Focused deployment/installation regression: 44 passed, 0 failed, 0 skipped, including two real offscreen QS cases (debug disabled succeeds; deliberately missing Region property fails).
+- G0: 721 passed / 0 failed / 159 skipped, 880 total; qmllint 148 files, 0 errors/71 existing warnings. Bash/architecture/catalog/demo checks passed.
+- Skips: prior 157 plus the two new real offscreen opt-ins, both explicitly run above. G0 skips are not reported as passes.
+- Installer-only fix: no application QML/startup/backend behavior or persistence protocol change; no GUI gates, launch/RSS comparison, D1 work or privileged package/build operations.
+- Existing console acknowledgement remains a compatibility path; retire only alongside its test/consumer migration. No new dependency, runtime daemon or polling change.
+- Fedora COPR retry remains a real-machine confirmation; this diagnosis does not require another source build or package reinstall.
+- Laptop checklist: update to the fix and rerun the original deployment command with installed QS 0.3.2; confirm it advances beyond the capability probe and still validates niri before applying files.

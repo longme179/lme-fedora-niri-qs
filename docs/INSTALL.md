@@ -10,8 +10,8 @@ For verified one-command deployment **including niri integration**, use
 [deploy.sh](DEPLOYMENT.md):
 
 ```bash
-./scripts/deploy.sh                         # Read-only plan
-./scripts/deploy.sh --install --copr --build-quickshell --charge-helper
+./deploy.sh                         # Read-only plan
+./deploy.sh --install --copr --build-quickshell --charge-helper
 ```
 
 Run from a permanent checkout as your desktop user. It backs up and validates

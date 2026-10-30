@@ -73,8 +73,8 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 For one-command Fedora deployment **including niri config integration**:
 
 ```bash
-./scripts/deploy.sh                         # Read-only plan, from your checkout
-./scripts/deploy.sh --install --copr --build-quickshell --charge-helper
+./deploy.sh                         # Read-only plan, from your checkout
+./deploy.sh --install --copr --build-quickshell --charge-helper
 ```
 
 It verifies the actual Quickshell APIs, backs up and validates niri edits, and

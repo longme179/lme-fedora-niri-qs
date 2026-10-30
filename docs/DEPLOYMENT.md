@@ -10,9 +10,12 @@ Use Ponytail + Modularity; no new daemon, runtime settings schema or dependencie
 From a permanent checkout, as your desktop user (do **not** sudo this command):
 
 ```bash
-./scripts/deploy.sh                         # Read-only plan
-./scripts/deploy.sh --install --copr --build-quickshell --charge-helper
+./deploy.sh                         # Read-only plan
+./deploy.sh --install --copr --build-quickshell --charge-helper
 ```
+
+`deploy.sh` at the repository root runs the complete flow using the tested
+helpers in `scripts/`. The old `scripts/deploy.sh` forwards to this same command.
 
 DNF and sudo retain their interactive confirmations. `--copr` authorizes the
 documented third-party repository only if needed; `--build-quickshell` permits
@@ -76,7 +79,7 @@ The command prints its report directory and an exact rollback command. Read
 `report.txt` and `changes.diff` there, then, if needed:
 
 ```bash
-./scripts/deploy.sh --rollback /path/printed/by/deploy
+./deploy.sh --rollback /path/printed/by/deploy
 ```
 
 Rollback checks **all** targets first and refuses later user edits; review/restore

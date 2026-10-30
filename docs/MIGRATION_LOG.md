@@ -677,8 +677,10 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Sanity: 10 launches/path/arm, disposable XDG + Sway/private D-Bus, software-rendered VM, fresh per-launch cache; medians only. One collector attempt aborted before a result because /proc/.../children is unavailable; completed run uses PPid discovery.
 - Preview median main/head 1626.74/1388.37 ms; Settings 1354.33/1480.51 ms: +126.18 ms, ABOVE STATE's +100 ms threshold. No second timing run or startup optimization performed.
 - RSS at T+10 s, KiB main/head: preview QS 279324/280040, backend 25664/25672; Settings QS 231620/231328, backend 25632/25644. No +10% RSS flag; these are per-process RSS, not total-shell PSS.
-- STOP for owner review of the timing flag. Full G0-G4/G6 repeat on corrected head remains pending; do not call this merge-ready.
+- STOP for owner review of the timing flag. Full G1-G4/G6 repeat on corrected head remains pending; do not call this merge-ready.
 - Fedora DNF/COPR transactions, fresh Fedora source compilation, privileged charge helper and hardware/session integration: needs real-session check; command selection/failure paths tested with fakes.
+- Root entry followup: tests `5db1cd1`, implementation `1d00dde`; `./deploy.sh` runs the full flow, old scripts/ path forwards unchanged args/status. Docs and generated rollback commands use the root. Focused checks 36/0/0; Bash/architecture checks pass.
+- Root/corrected-head G0: 715 passed / 0 failed / 155 skipped (870 total); qmllint 148 files, 0 errors/71 warnings. Three new root-entry contracts execute; skipped tests unchanged. No new runtime timing/memory measurement.
 - Laptop checklist:
   1. Run deploy dry-run; inspect listed conflicts/targets and choose the actual --niri-config if custom.
   2. Apply as desktop user; add --replace only for intentionally replaced old install targets.

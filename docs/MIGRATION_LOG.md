@@ -662,6 +662,25 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Recheck Wi-Fi wrong-password/retry and Bluetooth/media/lyrics/device reconnect while controls remain responsive.
   4. Complete actual capture/recording, display apply/confirm/revert and Battery Saver restore checks in RELEASE_CHECKLIST.md; no fully validated release before these pass.
 
+## Render resource lifetime verification — 2026-10-26
+
+- Branch fix/render-resource-lifetime, main e91ca29. Plan abcc92f; characterization dfd7253; final docs separate. Owner-authorized investigation, no later family/release or main merge.
+- Owner identifies main shell plus standalone Settings; normal Settings close leaves 186.12 MB inclusive PSS with no Settings/backend pair. Earlier two-instance PSS 318.27 MB is below active budget; summed RSS 633.77 MB is not an overrun proof. Separate snapshots are not a measured optimization; theme/warmed/Settings-open/helper review remains pending.
+- Native characterization on unchanged runtime: 2/0/0 (81.144s), copied checkout/private Sway/D-Bus/XDG. Settings close-request signal (X handler) exits/reopens twice with original main PIDs preserved, Settings worker isolation/first-frame readiness intact. Physical pointer delivery is not claimed.
+- Forty-eight Liquid/Jelly-v2 panel cycles return material/optics/backdrop/Jelly counts to baseline after each close; layers disabled, Loaders unmounted, pending empty; five PIDs stable, one bar backdrop/consumer and no popup regions. Counters do not establish native GPU texture release or unlimited leak freedom.
+- Complete-counter PSS MB: initial shell+Settings 406.07; cycles 6/12/18 =754.19/770.71/781.48; 24/30/36 =783.69/783.42/785.51; 42/48 =786.64/786.73. Separate close test 226.43 main-only; Settings open/closed 483.83/227.84, then 471.99/227.38. Warmed software VM fails budget; see RENDER_LIFETIME_RESULTS.md for scope.
+- Scratch-only: removing Jelly and reducing llvmpipe threads still exceed budget. Paired 24 Activity cycles with automatic/fixed maximum layer texture size end 748.75/748.47 MB; no useful saving, candidate discarded. No proven native allocation owner or production RAM fix.
+- Paired 18-cycle glibc default/two-arena probe ends 786.97/763.33 MB (initial 482.98/472.99); both miss budget. Single-pair allocation sensitivity does not establish a reliable saving or safe FPS trade-off; allocator policy unchanged.
+- Initial uncommitted harness trials hit startup-toast/count and pointer-delivery problems; setup now excludes synthetic alerts and invokes the actual close signal. Overlapping scratch sessions made cross-parent /proc counters unreadable; incomplete trials excluded, final tests sequential.
+- Full test head dfd7253, once: G0 685/0/157 (138.641s); G1 3/0/0 (12.342s), G2 4/0/0 (42.358s), G3 53/0/0 (141.306s), G4 34/0/0 (59.767s), G6 polling 1/0/0 (20.320s). Counts pass/fail/skip; final commit docs only.
+- G0 skips 145 session/UI opt-ins, 5 BlueZ, 5 MPRIS, 1 Matugen, 1 detached fake-niri. Versus main: +2 skips are NativeRenderLifetimeCase's close/reopen and 48-cycle cases; both explicitly pass above. qmllint 148 files/0 errors/71 existing warnings. No existing assertions, expected cases or frozen fixtures edited.
+- All production scripts/QML/config/assets/entries byte-identical to e91ca29. No extra launch/RSS sanity of identical runtime; no startup/CI/D1 work, visual/cadence/cache/power change or claimed saving. Existing compatibility adapters, dependencies and retirement conditions remain per STATE.md; no new runtime adapter.
+- Laptop checklist (needs real-session check):
+  1. Record theme/GPU/output context; review main/Settings/shared-helper ownership including any independent wallpaper daemon.
+  2. Keep the same session/theme; after 24 and 48 normal panel cycles collect warm-24/warm-48 PSS and check whether growth settles.
+  3. Collect simultaneous Settings-open PSS, close by X and confirm its two processes disappear; target <=400 MB steady / <=500 MB active.
+  4. Confirm blur/sharpness/Jelly visually and complete remaining RELEASE_CHECKLIST.md hardware checks; do not declare 100% release validation yet.
+
 ## One-command deployment — 2026-10-30
 - Branch `feat/oneshot-deploy`, base `e91ca29`; owner explicitly authorized reversible niri edits.
 - Plan `5ec16b5`; new tests `cb5a03c`, `1239073`, `d0e73a1`, `639397c`; effective implementation `a7e24cd`; documentation `db276c1` plus this summary.
@@ -677,7 +696,7 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Sanity: 10 launches/path/arm, disposable XDG + Sway/private D-Bus, software-rendered VM, fresh per-launch cache; medians only. One collector attempt aborted before a result because /proc/.../children is unavailable; completed run uses PPid discovery.
 - Preview median main/head 1626.74/1388.37 ms; Settings 1354.33/1480.51 ms: +126.18 ms, ABOVE STATE's +100 ms threshold. No second timing run or startup optimization performed.
 - RSS at T+10 s, KiB main/head: preview QS 279324/280040, backend 25664/25672; Settings QS 231620/231328, backend 25632/25644. No +10% RSS flag; these are per-process RSS, not total-shell PSS.
-- STOP for owner review of the timing flag. Full G1-G4/G6 repeat on corrected head remains pending; do not call this merge-ready.
+- Owner requested conflict resolution and merging on 2026-10-30 after disclosure of the +126.18 ms VM timing flag. Proceed under that instruction; no threshold redefinition or new profiling. Final integration gates are recorded below.
 - Fedora DNF/COPR transactions, fresh Fedora source compilation, privileged charge helper and hardware/session integration: needs real-session check; command selection/failure paths tested with fakes.
 - Root entry followup: tests `5db1cd1`, implementation `1d00dde`; `./deploy.sh` runs the full flow, old scripts/ path forwards unchanged args/status. Docs and generated rollback commands use the root. Focused checks 36/0/0; Bash/architecture checks pass.
 - Root/corrected-head G0: 715 passed / 0 failed / 155 skipped (870 total); qmllint 148 files, 0 errors/71 warnings. Three new root-entry contracts execute; skipped tests unchanged. No new runtime timing/memory measurement.

@@ -700,6 +700,8 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Fedora DNF/COPR transactions, fresh Fedora source compilation, privileged charge helper and hardware/session integration: needs real-session check; command selection/failure paths tested with fakes.
 - Root entry followup: tests `5db1cd1`, implementation `1d00dde`; `./deploy.sh` runs the full flow, old scripts/ path forwards unchanged args/status. Docs and generated rollback commands use the root. Focused checks 36/0/0; Bash/architecture checks pass.
 - Root/corrected-head G0: 715 passed / 0 failed / 155 skipped (870 total); qmllint 148 files, 0 errors/71 warnings. Three new root-entry contracts execute; skipped tests unchanged. No new runtime timing/memory measurement.
+- Final integration `63304a1` onto main `102a81a`: G0 715/0/157 (872 total); G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. Counts pass/fail/skip; disposable XDG/Sway/D-Bus, no real-session writes.
+- Integration skips: the previous 155 plus two existing render-lifetime opt-ins from merged PR #37; none counted as passes. qmllint 148 files/0 errors/71 existing warnings. Both historical records retained; no assertions changed. Final following commit is docs only.
 - Laptop checklist:
   1. Run deploy dry-run; inspect listed conflicts/targets and choose the actual --niri-config if custom.
   2. Apply as desktop user; add --replace only for intentionally replaced old install targets.

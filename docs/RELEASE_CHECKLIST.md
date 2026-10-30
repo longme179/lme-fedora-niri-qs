@@ -25,6 +25,18 @@ Do not publish a fully validated release while a relevant laptop check is pendin
 
 ## One-shot memory inventory
 
+For automated steady/warm-24/warm-48/Settings-open/closed checkpoints, see the
+[opt-in laptop workload](LAPTOP_MEMORY_WORKLOAD.md):
+
+```bash
+python3 scripts/memory_workload.py --theme liquid --wait-close
+```
+
+Use `--theme smoked` for Smoked. This labels the current theme; it never changes
+it. Close Settings first, watch the timed workload and close Settings when prompted.
+Notifications become read; keep other input idle. The passive commands below
+remain useful for ordinary-active/media/device contexts and independent samples.
+
 From the checkout directory, run each command after the described state settles:
 
 ```bash

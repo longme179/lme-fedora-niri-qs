@@ -1,6 +1,6 @@
 # LME Shell: position and next boundaries
 
-2026-10-26. This is a roadmap, not authorization for another implementation.
+2026-10-31. This is a roadmap, not authorization for another implementation.
 Read STATE.md for current ownership/process rules; archive documents are history.
 
 ## Destination
@@ -28,7 +28,7 @@ migration coverage, not product stability or remaining engineering effort.
 | Preferences | 79 of 147 keys descriptor-owned; 68 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
 | Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged | Laptop integration, scoped combined memory and normal release sign-off |
-| Resource confidence | One-shot memory inventory merged; combined lifecycle/PSS tests implemented for review, warmed software VM over budget; owner steady snapshot 169.64 MB | Settings/active/theme/helper review, actual GPU allocation behavior and physical device checks remain necessary |
+| Resource confidence | Inventory and render-lifetime checks merged; opt-in laptop workload adds timed checkpoints through existing IPC; owner steady 169.64 MB and Settings-closed 186.12 MB | Warm-24/warm-48, simultaneous Settings/theme/helper review, actual GPU behavior and hardware release checks remain necessary |
 
 M0-M3, M4a/b, M5/M6, M4c-1/2/3 and M7a/b/c/d established the reusable contracts.
 We have passed the infrastructure/pilot stage and are hardening integration before
@@ -56,7 +56,7 @@ Content schema merged (83f9cad), following the same pattern for Lyrics (five),
 File search (two) and Bluetooth (two). Home-dependent search defaults and private
 root/adapter exclusions stay; direct roots validation and existing named mode/
 adapter callbacks reuse domain policy. Lookup/scanning/pairing and UI stay legacy.
-The release-session-verification branch adds copied-checkout Smoked/Liquid
+Merged release-session/render-lifetime verification adds copied-checkout Smoked/Liquid
 panel/Settings/restart/job checks, without runtime changes. See the combined PSS
 table in RELEASE_CHECKLIST.md: process/loader/registry lifecycles pass, warmed
 software-rendered memory is over budget; a bounded probe is not a leak verdict.
@@ -71,6 +71,10 @@ software-rendered memory is over budget; a bounded probe is not a leak verdict.
    Owner steady: 169.64 MB PSS (8 PIDs, complete counters); obtain Settings-open
    and ordinary-active samples plus theme/revision/helper ownership before closing
    the memory row. Diagnose the actual GPU path before changing render/cache policy.
+   The [laptop workload](LAPTOP_MEMORY_WORKLOAD.md) now automates the missing timed
+   checkpoints and normal Settings close via the main-owned Gear route. Keep its
+   default timings on the laptop; shortened native cases prove CLI wiring only.
+   Review that report before choosing a resource fix or claiming the memory row done.
 2. **Selection/application merged; prefer release evidence.** Four entries
    (paletteApply, glassBlurApply, gowallSetup, weatherSelect) reuse their existing
    domain providers/services. Preview matching, setup admission, preferences and

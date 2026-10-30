@@ -85,7 +85,7 @@ def deploy(args):
     report = state/'lme-shell/deployments'/(datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')+'-'+str(os.getpid()))
     tx = Transaction(report)
     print('Report and rollback journal: '+str(report), flush=True)
-    rollback = shlex.join([str(ROOT/'scripts/deploy.sh'), '--rollback', str(report)])
+    rollback = shlex.join([str(ROOT/'deploy.sh'), '--rollback', str(report)])
     summary = report/'report.txt'
     summary.write_text('\n'.join([f'Checkout: {ROOT}', f'Request: {vars(args)}',
         'Packages, repositories, source builds and the optional charge helper are not uninstalled by rollback.',

@@ -35,5 +35,9 @@
       "appearance": false,
       "default": true
     }
+  },
+  "backend": {
+    "entry": "scripts/idle_actions.py",
+    "factory": "provide"
   }
 }

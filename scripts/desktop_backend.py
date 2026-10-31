@@ -79,13 +79,14 @@ from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wal
                                WallpaperDaemonCapabilities, provide_daemon as provide_wallpaper_daemon)
 from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi, busy as wifi_busy, toggle as toggle_wifi
 from backend_actions import ActionRegistry
+from backend_providers import provider_factories
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
 from night_light_actions import NightLightCapabilities, provide as provide_night_light
 from idle_actions import IdleCapabilities, provide as provide_idle
 from keybind_actions import KeybindCapabilities, provide as provide_keybinds
 from image_utilities import ImageUtilities
 from battery_saver import BatterySaver, brightness_state
-from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy
+from feature_catalog import CatalogError, catalog as feature_catalog, empty_catalog, legacy_ids, validate_legacy, bounded
 
 
 PREFERENCE_SCHEMA = PreferenceSchema(
@@ -102,18 +103,17 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
-FEATURE_CATALOG_ERROR = ''
-FEATURE_CATALOG = empty_catalog()
-_catalog_initialized = False
+FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds}
 
 
 def initialize_catalog():
-    """Validate once in the backend process, never in its importing callers."""
-    global FEATURE_CATALOG, FEATURE_CATALOG_ERROR, BAR_MODULES, _catalog_initialized
+    global FEATURE_CATALOG, FEATURE_CATALOG_ERROR, BAR_MODULES, _catalog_initialized, BACKEND_FACTORIES
     if _catalog_initialized: return
     _catalog_initialized = True
     try:
-        FEATURE_CATALOG = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, PREFERENCE_SCHEMA.legacy_keys)
+        data = validate_legacy(feature_catalog(), {**legacy_ids(Path(__file__).resolve().parents[1]), 'bar': BAR_MODULES}, PREFERENCE_SCHEMA.legacy_keys)
+        FEATURE_CATALOG, BACKEND_FACTORIES = data, bounded(lambda: provider_factories(data, BACKEND_PROVIDER_FALLBACKS))
     except CatalogError as error:
         FEATURE_CATALOG_ERROR = str(error)
         print(f'Feature catalog: {error}', file=sys.stderr)
@@ -618,11 +618,11 @@ class DesktopBackend:
                 self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
                 lambda value: self.demo_snapshot().__setitem__('calculator', value))),
             (provide_launchpad, LaunchpadCapabilities(lambda: self.preferences.values, self.launchpad.run, self.launchpad.snapshot)),
-            (provide_night_light, NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
-                self.runner.available, self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
-            (provide_idle, IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry,
-                lambda: self.ac_online(), self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value))),
-            (provide_keybinds, KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state)))])
+            (BACKEND_FACTORIES['nightLight'], NightLightCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry, self.runner.available,
+                self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
+            (BACKEND_FACTORIES['idle'], IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry, lambda: self.ac_online(),
+                self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value))),
+            (BACKEND_FACTORIES['keybinds'], KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state)))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}

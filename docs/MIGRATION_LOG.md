@@ -744,3 +744,27 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. Run python3 scripts/memory_workload.py --theme liquid --wait-close; keep screen awake and avoid input; Notifications become read.
   3. At the prompt close Settings normally; wait for Settings-closed and review the private report's helper/job scope (add reviewed --pid roots if needed).
   4. Send the five PSS lines, warm delta, theme/GPU context and all OVER/INCOMPLETE lines; complete the remaining hardware release checklist separately.
+
+## Descriptor provider ownership pilot — 2026-10-31
+- Branch `refactor/catalog-provider-ownership`, main `edcda3c`; plan `fd7543b`, tests `4fe7069`, implementation `f80b631`; final docs separate. Scope: Night Light, Idle and Keybinds only.
+- Characterization on an archive of unchanged main production + new tests: 71/0/17 (pass/fail/skip), including the existing 67 focused cases and four new parity cases; 16 new capability cases N/A, one native opt-in skipped.
+- Four incorrect expectations in the uncommitted test draft were corrected to the read baseline before the tests commit: empty jobs object, actionPending envelope, demo snapshot fields, and the fixture's domain-state marker. No assertion, timeout or frozen fixture from main changed.
+- Descriptor backend.entry/factory references are validated for declared canonical flat scripts/ sources, containment, synchronous top-level factory and duplicate ownership. No JSON code, sys.path change or new registry; only the root resolves factories and supplies existing narrow capabilities.
+- Resolution reuses imported modules and the existing three-second bounded() guard. A copied slow-import reproduction timed out before the guard; afterwards it returns the ordinary diagnostic/legacy fallback, without hanging backend startup.
+- Publication is atomic: invalid/unbound references retain legacy UI plus the existing diagnostic and original pilot factories. Disabled/missing entries keep actions/controllers, as before; no settings/history deletion. Factory/action errors never retry via fallback.
+- Registered actions remain 75/89 (49 sync entry calls, 26 workers); descriptor/legacy preference keys remain 79/68. Context, live/demo routing, sequences, projection and worker/controller lifetime stay unchanged on exercised paths.
+- Focused final units: 87/0/0. Final copied-checkout native suite: 4/0/0 in 26.220 s with LME_TEST_LIGHT_FEATURES=1 (three existing light-feature cases + new shell/Settings provider-fault case).
+- Main G0: 737/0/162; final runtime head f80b631: G0 757/0/163 (920 total), G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. Full set run once after implementation; following changes are docs only.
+- Default skips: previous 162 + NativeProviderCatalogCase.test_invalid_or_unbound_provider_settles_and_retains_legacy_navigation (private Wayland opt-in), explicitly exercised above; no skips counted as passes. Native gates use disposable XDG/private Sway/D-Bus.
+- qmllint: 148 files, 0 errors/71 existing warnings. Architecture/catalog/Bash/demo checks pass; no new dependency exception/cycle; desktop_backend remains at its 1,630-nonblank-line ceiling; new helper is 32 nonblank lines.
+- One sanity check, ten fresh-XDG launches per path/head on the same software-rendered private Sway machine: preview median main/head 716.72/680.36 ms; Settings 721.18/732.17 ms (+10.99). No D1 profiling or optimization claim.
+- RSS KiB at T+10s (QS/backend): preview main 279668/25736 -> head 281084/25856; Settings 231320/25700 -> 231340/25840. Maximum increase 0.55%; neither sanity flag fires. These per-process RSS samples are not aggregate laptop PSS evidence.
+- Adapters: original factory imports/fallback map remain for missing/broken catalog and public callers; narrow capabilities remain host-owned. Retire fallbacks/imports only with equivalent fault/withdrawal coverage and owner-approved removal. Other explicit providers remain untouched.
+- Intentional new contract: descriptor backend metadata is accepted/validated; malformed/new references fail closed. No existing public IPC/CLI/settings format or visual change. No new executor/process/polling/cache/power policy; rollback needs no saved-data migration.
+- Next: owner review before choosing another provider family; main laptop warm/Settings/GPU and physical release rows stay open. No further conversion or release approval implied.
+- Laptop checklist:
+  1. Open Night Light, Idle and Keyboard shortcuts via Settings, CLI page IDs and search; confirm order/navigation.
+  2. Toggle/retry Night Light with the main shell running; check Settings reads the same actual state, then restore your preference.
+  3. Pause/resume Idle and check charger profile reporting; restore your previous enabled state/timeouts.
+  4. Refresh Keyboard shortcuts from your configured niri path; confirm existing entries and a known shortcut.
+  5. Restart Settings/shell and confirm preferences persist; perform LAPTOP_MEMORY_WORKLOAD.md separately for real GPU/PSS evidence.

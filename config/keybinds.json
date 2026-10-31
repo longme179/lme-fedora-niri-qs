@@ -21,5 +21,9 @@
       "appearance": false,
       "default": ""
     }
+  },
+  "backend": {
+    "entry": "scripts/keybind_actions.py",
+    "factory": "provide"
   }
 }

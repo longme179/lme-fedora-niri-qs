@@ -25,7 +25,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Explicit providers retire with descriptor discovery/ownership/fallback parity; PreparedWork/complete/presentation retain the host scheduler/emitter and Future tags. Charge/Weather controllers keep their lifecycle. Public perform/perform_demo/wifi_action facades retire at zero callers + owner approval; state facades retain cadence.
+- Night Light/Idle/Keybinds descriptor-provider pilot: explicit fallback factories and narrow capability bindings remain; disabled/missing entries keep actions, broken references retain legacy UI + diagnostic. Other providers stay explicit. Retire fallbacks/import facades only with equivalent fault/withdrawal coverage + owner approval. PreparedWork/complete/presentation retain the host scheduler/emitter/Future tags; Charge/Weather keep lifecycle. Public perform/perform_demo/wifi_action facades retain their zero-consumer retirement rule and cadence.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema

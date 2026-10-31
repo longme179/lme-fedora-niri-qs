@@ -6,7 +6,7 @@ import re
 import signal
 import sys
 
-from catalog_metadata import KINDS, FIELDS, validate_indices, validate_contexts
+from catalog_metadata import KINDS, FIELDS, validate_indices, validate_contexts, validate_backend
 
 
 class CatalogError(ValueError):
@@ -124,7 +124,7 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         if ident in result['ids']['features']: raise CatalogError(f'Duplicate feature ID: {ident}')
         result['ids']['features'].append(ident)
         descriptor = document(resource(root, record['descriptor'], '.json'))
-        shape(descriptor, {'id', 'sources', 'preferences', 'preferenceMetadata', *KINDS}, {'id'})
+        shape(descriptor, {'id', 'sources', 'preferences', 'preferenceMetadata', 'backend', *KINDS}, {'id'})
         if descriptor['id'] != ident: raise CatalogError(f'Descriptor ID does not match index: {ident}')
         startup = record.get('startup', {})
         shape(startup, set(KINDS), set())
@@ -135,6 +135,10 @@ def load_catalog(root=None, *, legacy=None, setting_keys=()):
         sources = descriptor.get('sources', [])
         if not isinstance(sources, list): raise CatalogError('Invalid sources')
         for source in sources: resource(root, source)
+        if 'backend' in descriptor:
+            provider = validate_backend(descriptor['backend'], sources, lambda entry: resource(root, entry, '.py'), CatalogError, root=root)
+            if provider in result.get('backend', {}).values(): raise CatalogError(f'Duplicate backend provider: {ident}')
+            result.setdefault('backend', {})[ident] = provider
         metadata = descriptor.get('preferenceMetadata', {})
         if not isinstance(metadata, dict): raise CatalogError('Invalid preference metadata')
         for key, definition in metadata.items():

@@ -54,7 +54,7 @@ Do not read archive/ unless answering a specific historical question.
 - Future family batches: 3-6 features per branch; one review stop per branch.
 - Ask only for unapproved behavior/API/data-format changes, unclassifiable baseline failure,
   or sanity flags. Never start an unauthorized milestone or merge/push main.
-- Replies <=40 lines; one MIGRATION entry <=30 lines, laptop checklist <=6 lines.
+- Replies <=40 lines; report ROADMAP acceptance % and current branch delivery %. One MIGRATION entry <=30 lines, laptop checklist <=6 lines.
   Commit only final gate summaries; no raw evidence directories.
 - Preserve stdlib/unprivileged backend, English text, Preferences lock/merge/atomic
   writes, preview/standalone Settings and non-destructive installers.

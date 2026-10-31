@@ -11,6 +11,7 @@ Each descriptor declares `backend: {entry, factory}`. The existing catalog reade
 validates a flat Python file beneath scripts/, declared source ownership, a named
 top-level factory, unique provider references and checkout containment. No JSON
 expression, arbitrary import path, callback or extra discovery mechanism.
+Backend entries must use their canonical path; symlink aliases are rejected.
 
 The backend composition root resolves these references once after deep catalog
 validation. It keeps explicit narrow capability construction and original factory
@@ -24,6 +25,8 @@ catalog/provider references publish the existing catalog diagnostic, fall back
 to legacy UI and use the same original factories for all three pilot domains.
 Resolve all references before publishing a valid catalog. A provider factory or
 registered action error never triggers a retry through a fallback dispatcher.
+Resolution uses the existing bounded() helper with a three-second deadline;
+the QML startup barrier and its failure policy stay unchanged.
 
 The fallback factory map also declares capability ownership; an unbound backend
 record is rejected rather than silently getting the whole DesktopBackend.

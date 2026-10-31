@@ -23,7 +23,7 @@ migration coverage, not product stability or remaining engineering effort.
 
 | Area | Current coverage | What remains |
 | --- | --- | --- |
-| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema fragments and sync/worker registry merged | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
+| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema fragments and sync/worker registry merged; three light-provider descriptor references on the review branch | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
 | UI composition | 17 catalog records (seven schema-only), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 79 of 147 keys descriptor-owned; 68 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
@@ -82,11 +82,19 @@ software-rendered memory is over budget; a bounded probe is not a leak verdict.
    wifiWatch, monitor, launcherHistoryClear, wifiToggle, powerProfile, logout,
    suspend, reboot, poweroff, desktopEdit and openSettings. These mostly coordinate
    shared state, transactions or lifecycle; moving them just to reach 89/89 is not
-   a goal. No later family is authorized; choose another boundary only if it
+   a goal. No further action family is authorized; choose another boundary only if it
    reduces real change cost. Schema remains 68 legacy keys.
-3. **Provider discovery/withdrawal policy.** Explicit composition bindings remain
-   an adapter. A descriptor backend contract must preserve disabled/broken-catalog
-   fallback and ownership before replacing them; no competing registry.
+3. **Provider discovery/withdrawal pilot (review branch).** Night Light, Idle and
+   Keybinds now declare their single provider via backend.entry/factory in their
+   existing descriptors. The root retains narrow capabilities and original
+   fallback factories; it resolves references atomically before accepting a valid
+   catalog. Disabled entries hide UI and retain backend/controller access, as
+   before; broken references retain legacy-only UI plus the existing diagnostic.
+   Missing metadata keeps the compatibility factory. See PROVIDER_OWNERSHIP_PLAN.md.
+   Review this boundary before naming another provider family. There is no new
+   action registry, async contract, process, polling or controller change; the
+   registered ID and preference counts above stay the same. Original fallbacks
+   and import facades retire only with equivalent fault coverage and owner approval.
 4. **Remaining UI seams only when warranted.** Six core Settings pages and most
    bar/Controls/Launcher/Activity registrations stay legacy by owner decision.
    New migrations need a useful named scope; M8 physical moves are optional/last.

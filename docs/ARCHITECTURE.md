@@ -132,15 +132,22 @@ ActionSpec("launchpadRun", contexts={"shell", "settings"},
 
 Each domain exports action specs and its public state projection; the composition
 root binds required services. It must not pass the entire `DesktopBackend` object.
-The target discovery mechanism is explicit bundled descriptor references, loaded only
-by the composition root; registration must not execute commands. A future descriptor adds
-`"backend":{"entry":"scripts/launchpad_actions.py","factory":"provide"}`;
-`provide(capabilities)` returns specs and a state callback using the existing controller.
-M6 uses the authorized explicit provider list in the composition root instead: the
-current catalog rejects backend fields and exports UI projections only. Adding provider
-discovery also requires ownership/fallback policy when the UI index is broken or disabled;
-that exceeds a small validated field. Retire this binding when Launchpad UI converts.
-The list passes only current-preference, run and snapshot callbacks. Factory execution
+The composition root resolves bundled descriptor references; registration must not
+execute commands. The bounded ownership pilot declares
+`"backend":{"entry":"scripts/night_light_actions.py","factory":"provide"}`
+for Night Light, Idle and Keybinds. `provide(capabilities)` returns specs and a
+state callback; the host still constructs narrow capabilities. Other providers,
+including Launchpad, retain their explicit bindings. See PROVIDER_OWNERSHIP_PLAN.md.
+The Python reader validates canonical flat scripts/ sources and named synchronous
+top-level factories without importing them. The root resolves all references
+before publishing a valid catalog, reusing already imported modules. Duplicate
+references and unbound capability ownership are rejected. Disabled entries hide
+UI but retain actions/controllers, as before. Missing metadata uses the original
+factory; invalid references preserve legacy-only UI plus the existing diagnostic
+and original pilot factories. Factory/action errors never retry via fallback.
+The fallback map and public imports remain until owner-approved retirement with
+equivalent withdrawal/fault coverage; there is no change to saved data or IPC.
+Bindings pass only domain callbacks. Factory execution
 and registration do not read preferences, project state or start a job.
 Context checks occur before demo/live selection, as in `handle()` today.
 Registered actions never fall back to legacy routing after an error.

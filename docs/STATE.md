@@ -1,4 +1,4 @@
-# Agent state (2026-10-31)
+# Agent state (2026-11-01)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Release verification merged (e91ca29). Render-lifetime verification adds normal Settings shutdown and 48-cycle object/layer guards; runtime unchanged. Owner confirms main + Settings, closed 186.12 MB PSS; warmed laptop/theme/helper review pending. Software VM still exceeds budget; no proven retention fix. Opt-in laptop workload adds pinned PSS checkpoints/Gear-owned Settings; GPU/warm samples remain pending. See LAPTOP_MEMORY_WORKLOAD.md and RELEASE_CHECKLIST.md; no later migration family authorized.
+- Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. Owner explicitly accepts this practical evidence without an all-features-at-once stress requirement. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. Historical VM results stay recorded; tools remain optional diagnostics. PR #42 still awaits owner merge; no later family/release publication authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

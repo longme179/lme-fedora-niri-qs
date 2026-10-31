@@ -792,3 +792,12 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. With two outputs, start/stop/disconnect mirroring from shell and Settings; check the main shell owns the single mirror child.
   4. Restart shell/Settings; confirm preferences and ordinary panels/media/radio behavior remain intact.
   5. Run LAPTOP_MEMORY_WORKLOAD.md with the actual theme/GPU and review ownership/PSS; software RSS checks do not certify the 400/500 MB targets.
+
+## Owner practical acceptance — 2026-11-01
+- Owner reports tested laptop functionality behaves as expected and confirms the btop observation is the aggregate shell/process total, not separate PID values; reported normal use does not exceed 400 MB.
+- Owner explicitly closes RAM and the current roadmap at 100% (10/10 checkpoints). Acceptance covers practical ordinary use; opening every feature at once is not required. The <=400 MB steady / <=500 MB ordinary-active targets are unchanged.
+- This owner-approved method replaces the earlier pending warm/Settings/GPU PSS acceptance requirement. No new quantitative PSS/GPU evidence, independent per-case hardware trace or production RAM-saving fix is claimed.
+- STATE/ROADMAP/release status and the optional workload guide record that decision. Prior VM overruns, PSS snapshots, gate skips and dated migration entries retain their original values/status as historical evidence.
+- Documentation-only verification: G0 764 passed / 0 failed / 163 skipped (927 total), 114.141 s; qmllint 148 files, 0 errors/71 existing warnings. Default skip count unchanged; no new GUI, launch/RSS sanity or profiling round.
+- Runtime/config/tests remain byte-identical to 74d6c5e. No compatibility adapter, persistence protocol, public API or user file changes; existing retirement conditions stay.
+- Decision is appended to PR #42 for owner merge. It does not authorize publishing a release, further migrations or reopening broad audits; future work needs a concrete request/regression. No additional laptop run requested for this accepted milestone.

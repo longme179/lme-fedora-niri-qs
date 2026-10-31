@@ -12,7 +12,6 @@
     "peripherals": ["qml/panels/PeripheralBatteryList.qml", "qml/services/PeripheralBatteries.qml", "scripts/peripheral_battery.py"],
     "charging": ["qml/panels/ChargingWidget.qml", "scripts/charge_control.py", "scripts/charge_actions.py"],
     "battery": ["scripts/battery_info.py"],
-    "batterySaver": ["scripts/battery_saver.py", "scripts/saver_actions.py"],
     "capture": ["qml/panels/ScreenshotEditor.qml", "scripts/screen_capture.py", "scripts/capture_actions.py"],
     "recording": ["qml/panels/RecorderWidget.qml", "scripts/screen_recording.py", "scripts/recording_actions.py"],
     "display": ["qml/settings/DisplayPage.qml", "scripts/display_control.py", "scripts/display_mirror.py", "scripts/display_actions.py", "scripts/mirror_actions.py"],

@@ -1,18 +1,24 @@
 # Resource/lifecycle release checks
 
-2026-10-24. Private test results are in MIGRATION_LOG.md. A release still needs
-owner sign-off on the real laptop; simulated device/GPU success is insufficient.
-Test the review branch through the normal installation, with the previous shell
-instance stopped. Preserve the normal saved preferences for the restore checks.
+2026-11-01: owner accepted the current roadmap in practical laptop use. The owner
+reports tested functionality works as expected and explicitly confirms btop's
+observation of no more than 400 MB covers the aggregate shell/processes. The owner closes
+the RAM checkpoint and 100% of the current roadmap without an all-features-at-once
+stress requirement. This is owner-reported acceptance, not a new instrumented
+PSS/GPU result or a per-case hardware trace. Earlier quantitative results stay below.
+
+The table retains diagnostic scenarios; statuses record acceptance of the tested
+ordinary-use scope. Optional/unsupported paths were not separately itemized.
+This decision does not publish a release or authorize more implementation.
 
 | Check | Pass criterion | Laptop status |
 | --- | --- | --- |
-| Startup and integration | Open/close/reopen shell panels and standalone Settings; try Smoked and Liquid, app launch, clipboard copy/search/image annotation, notifications and save Retry | Needs real-session check |
-| Radio and media | Bluetooth connect/disconnect/unplug and Wi-Fi bad-password/retry/reconnect; volume/brightness stay responsive; media/lyrics/desktop widgets still behave normally | Needs real-session check |
-| Capture and recorder | Image export/annotation/OCR and stale-session close; start/stop recording with audio/region and actual encoders; no stuck pending, retained output on failures | Needs real-session check |
-| Detached jobs | Run literal argv, explicit Bash and terminal entries; verify cap marker, exit/error, eight-job admission and survival across shell restart; inspect surviving relays | Needs real-session check |
-| Display and power restore | Display apply/confirm/revert and reconnect; battery saver on/off restores prior mode/brightness/theme; charge apply/cancel if supported | Needs real-session check |
-| Total memory | Inventory all LME instances, both Quickshells/backends, persistent workers and surviving relays; sum /proc/PID/smaps_rollup Pss for steady, Settings-open and ordinary active use; separate heavy user-job peaks | Needs real-session check |
+| Startup and integration | Open/close/reopen shell panels and standalone Settings; try Smoked and Liquid, app launch, clipboard copy/search/image annotation, notifications and save Retry | Owner accepted practical scope, 2026-11-01 |
+| Radio and media | Bluetooth connect/disconnect/unplug and Wi-Fi bad-password/retry/reconnect; volume/brightness stay responsive; media/lyrics/desktop widgets still behave normally | Owner accepted practical scope, 2026-11-01 |
+| Capture and recorder | Image export/annotation/OCR and stale-session close; start/stop recording with audio/region and actual encoders; no stuck pending, retained output on failures | Owner accepted practical scope, 2026-11-01 |
+| Detached jobs | Run literal argv, explicit Bash and terminal entries; verify cap marker, exit/error, eight-job admission and survival across shell restart; inspect surviving relays | Owner accepted practical scope, 2026-11-01 |
+| Display and power restore | Display apply/confirm/revert and reconnect; battery saver on/off restores prior mode/brightness/theme; charge apply/cancel if supported | Owner accepted practical scope, 2026-11-01 |
+| Total memory | <=400 MB steady / <=500 MB ordinary active, aggregate shell/process scope; prefer reviewed PSS for quantitative diagnostics | Owner accepted aggregate btop total <=400 MB, 2026-11-01 |
 
 Use KiB/PSS consistently; summed RSS double-counts shared Qt/Python pages. Verify
 the process inventory before accepting a total. A single PID or separate-instance
@@ -21,7 +27,8 @@ Include the actual theme, monitors, media/widgets and active-job count in the re
 The private simultaneous scenario uses default Smoked and no physical GPU/radios;
 its scoped outcome cannot close the laptop column above.
 
-Do not publish a fully validated release while a relevant laptop check is pending.
+The current practical gate is closed by the owner decision above. Future changes
+need their relevant checks; do not relabel old VM skips or overruns as passes.
 
 ## One-shot memory inventory
 
@@ -69,11 +76,14 @@ Exit 1 means incomplete/no selected processes: inspect issues and repeat after
 transient processes settle. Missing PSS, permission failures and PID reuse never
 become zero or a successful total. Summed RSS double-counts shared pages.
 
-Record theme, outputs, media/widgets, instance/worker/relay counts and temporary
-heavy jobs with the result. Only an inventory reviewed on the laptop can close
-the table's memory row; the other hardware/integration rows remain manual checks.
+For future quantitative reports, record theme, outputs, media/widgets,
+instance/worker/relay counts and temporary heavy jobs. These optional inventory
+recipes do not reopen the owner-accepted practical memory row above.
 
 ## Combined private-session result (2026-10-26)
+
+The following figures and then-pending checks are historical. The owner decision
+above supersedes their acceptance status without changing the measurements.
 
 Main 83f9cad, verification head 17b2064; production runtime is byte-identical.
 The copied real shell/Settings have read-only probes; the original Clipboard

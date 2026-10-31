@@ -15,9 +15,32 @@ main Quickshell, backend, persistent workers and open Settings/backends. Prefer
 aggregate PSS; label heavy temporary tools separately. Separate-instance samples
 do not establish this total. Hardware/GPU/session behavior needs laptop checks.
 
-There is no meaningful single completion percentage: a capture lease or display
-rollback has greater risk than several scalar settings. Counts below measure
-migration coverage, not product stability or remaining engineering effort.
+The owner requests percentage progress. Use the fixed acceptance score below;
+migration counts remain coverage, not product stability or remaining effort.
+
+## Acceptance progress: 80% (8/10 checkpoints)
+
+Each checkpoint is worth 10% as a reporting convention, not an estimate of time
+or engineering effort. A checkpoint closes only on its stated evidence. Default
+skips are not passes; real-device evidence cannot be substituted with VM results.
+
+| # | Checkpoint and evidence | State |
+| --- | --- | --- |
+| 1 | Shared runner, atomic storage, content and layout contracts extracted/tested | Verified |
+| 2 | One assembled preference schema, compatibility and persistence/export parity | Verified |
+| 3 | Sync/worker dispatch, context, pending/completion and demo contracts | Verified |
+| 4 | Catalog UI/schema/bootstrap/withdrawal patterns proven in copied checkouts | Verified |
+| 5 | Dependency/size guardrails, isolated gates and public compatibility facades | Verified |
+| 6 | Ported integration/failure recovery contracts (F1-F5, capture/display/radios) | Verified in automated scope |
+| 7 | Safe deployment/update tooling; owner confirms deployment completed | Verified |
+| 8 | Preview/Settings/native release automation and launch/RSS sanity | Verified in automated scope |
+| 9 | Owner's physical-device/integration/restore checklist sign-off | Pending |
+| 10 | Reviewed aggregate laptop PSS <=400 MB steady / <=500 MB active, warm/Settings/GPU contexts | Pending |
+
+Report overall acceptance and current-branch delivery separately. More descriptors
+do not increase a completed checkpoint. Keep this denominator fixed; record why a
+checkpoint reopens after a regression, and label any owner-authorized goal changes.
+The real-session rows in RELEASE_CHECKLIST.md still govern release approval.
 
 ## Where we are
 

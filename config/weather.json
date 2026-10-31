@@ -36,5 +36,9 @@
     "keywords": "location city automatic ip forecast celsius fahrenheit temperature",
     "entry": "qml/settings/WeatherPage.qml",
     "after": "utilities"
+  },
+  "backend": {
+    "entry": "scripts/weather_actions.py",
+    "factory": "provide"
   }
 }

@@ -104,7 +104,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather}
 
 
 def initialize_catalog():
@@ -577,7 +577,7 @@ class DesktopBackend:
                 lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
             (provide_controls, ControlCapabilities(lambda mode:self.capture.start(mode),lambda:self.capture.close(),
                 lambda:self.capture.languages(),lambda:self.capture.state)),
-            (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
+            (BACKEND_FACTORIES['weather'], WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
                 lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot(),
                 lambda values:self.preferences.update(values))),
             (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,

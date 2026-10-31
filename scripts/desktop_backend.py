@@ -104,7 +104,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather}
 
 
 def initialize_catalog():
@@ -568,7 +568,7 @@ class DesktopBackend:
                 lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
                 lambda value:setattr(self.image_utilities,'state',value),
                 lambda path,terminal:self.image_utilities.setup(path,terminal),lambda:self.preferences.values['terminal'])),
-            (BACKEND_FACTORIES['batterySaver'], SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
+            (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
                 lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),

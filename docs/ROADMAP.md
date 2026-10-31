@@ -46,8 +46,8 @@ The real-session rows in RELEASE_CHECKLIST.md still govern release approval.
 
 | Area | Current coverage | What remains |
 | --- | --- | --- |
-| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema fragments and sync/worker registry merged; three light-provider descriptor references on the review branch | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
-| UI composition | 17 catalog records (seven schema-only), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
+| Infrastructure | Shared runner/storage/content/layout helpers, dependency ratchet, catalog, tab IDs, schema fragments and sync/worker registry; six descriptor-selected backend providers | Retain stable compatibility facades; remove an adapter only at its stated retirement condition |
+| UI composition | 17 catalog records (seven with empty startup UI metadata), 10 of 16 Settings pages, Clipboard bar/panel; Notifications tab and context-aware bootstraps | Six core pages and most bar/panel hosts stay legacy by owner decision; no bulk conversion implied |
 | Preferences | 79 of 147 keys descriptor-owned; 68 in the single legacy schema fragment | Later small cohesive batches when they reduce real change cost; same flat settings.json and transaction protocol |
 | Backend dispatch | Merged: 75 of 89 IDs registered, 49 sync entry calls + 26 workers | 14 legacy IDs; separate charge/weather controllers keep their lifecycle; conditional suspend/internal wallpaperCycle stay outside this batch |
 | Cross-feature reliability | Wi-Fi/Bluetooth/persistence, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged | Laptop integration, scoped combined memory and normal release sign-off |
@@ -107,14 +107,17 @@ software-rendered memory is over budget; a bounded probe is not a leak verdict.
    shared state, transactions or lifecycle; moving them just to reach 89/89 is not
    a goal. No further action family is authorized; choose another boundary only if it
    reduces real change cost. Schema remains 68 legacy keys.
-3. **Provider discovery/withdrawal pilot (review branch).** Night Light, Idle and
-   Keybinds now declare their single provider via backend.entry/factory in their
-   existing descriptors. The root retains narrow capabilities and original
+3. **Provider ownership: six domains.** Night Light, Idle, Keybinds, Weather,
+   Battery Saver and Mirroring declare their single provider via backend.entry/
+   factory in their existing descriptors. The root retains narrow capabilities and original
    fallback factories; it resolves references atomically before accepting a valid
    catalog. Disabled entries hide UI and retain backend/controller access, as
    before; broken references retain legacy-only UI plus the existing diagnostic.
-   Missing metadata keeps the compatibility factory. See PROVIDER_OWNERSHIP_PLAN.md.
-   Review this boundary before naming another provider family. There is no new
+   Missing metadata keeps the compatibility factory. See PROVIDER_OWNERSHIP_PLAN.md
+   and CONTROLLER_PROVIDERS_PLAN.md. Saver/Mirror keep legacy UI because their
+   startup metadata stays empty; source ownership moves without file moves.
+   Review frozen schema-only descriptor-shape tests before a future family;
+   owner approval is required for any existing assertion change. There is no new
    action registry, async contract, process, polling or controller change; the
    registered ID and preference counts above stay the same. Original fallbacks
    and import facades retire only with equivalent fault coverage and owner approval.

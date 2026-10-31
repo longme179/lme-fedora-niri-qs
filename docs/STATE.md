@@ -6,7 +6,7 @@ Do not read archive/ unless answering a specific historical question.
 ## Merged and authorized
 
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
-  Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven schema-only).
+  Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
 - Release verification merged (e91ca29). Render-lifetime verification adds normal Settings shutdown and 48-cycle object/layer guards; runtime unchanged. Owner confirms main + Settings, closed 186.12 MB PSS; warmed laptop/theme/helper review pending. Software VM still exceeds budget; no proven retention fix. Opt-in laptop workload adds pinned PSS checkpoints/Gear-owned Settings; GPU/warm samples remain pending. See LAPTOP_MEMORY_WORKLOAD.md and RELEASE_CHECKLIST.md; no later migration family authorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
@@ -25,7 +25,7 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Night Light/Idle/Keybinds descriptor-provider pilot: explicit fallback factories and narrow capability bindings remain; disabled/missing entries keep actions, broken references retain legacy UI + diagnostic. Other providers stay explicit. Retire fallbacks/import facades only with equivalent fault/withdrawal coverage + owner approval. PreparedWork/complete/presentation retain the host scheduler/emitter/Future tags; Charge/Weather keep lifecycle. Public perform/perform_demo/wifi_action facades retain their zero-consumer retirement rule and cadence.
+- Six descriptor-provider domains (light + controller batches): explicit fallback factories/narrow capabilities remain; disabled/missing entries keep actions, broken references retain legacy UI + diagnostic. Others stay explicit. Retire fallbacks/import facades only with equivalent fault/withdrawal coverage + owner approval. PreparedWork/complete/presentation retain host scheduling/Future tags; Weather/Saver/Mirror keep lifecycle, journals and child ownership. Public perform/perform_demo/wifi_action facades retain their zero-consumer retirement rule and cadence.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema

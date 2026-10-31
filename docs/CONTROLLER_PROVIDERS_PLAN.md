@@ -36,13 +36,16 @@ New descriptor-selection/fault cases are N/A until the complete family converts.
 Prove each copied descriptor selects its own factory without composition edits;
 verify complete current bindings and missing/disabled/invalid reference behavior.
 
-Two existing test setup inputs must track the expanded catalog; assertions,
-timeouts and frozen fixtures stay unchanged:
+Two existing test setup inputs track the expanded catalog without assertion edits:
 - The old three-provider test explicitly filters input metadata to its original
   PILOTS tuple; a new full-catalog case guards all six capability bindings.
 - The native unbound-provider fixture changes weather/weather_actions to
   fileSearch/file_search_actions, because Weather becomes bound in this batch.
   The same unbound/fallback/navigation assertions still execute.
+
+The old device-schema descriptor-shape assertion additionally needs the two new
+metadata fields for Saver/Mirroring. The owner approved that limited update in
+CONTROLLER_PROVIDER_TEST_REVIEW.md; other assertions/timeouts/frozen fixtures stay.
 
 ## Delivery and verification
 

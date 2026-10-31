@@ -768,3 +768,27 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Pause/resume Idle and check charger profile reporting; restore your previous enabled state/timeouts.
   4. Refresh Keyboard shortcuts from your configured niri path; confirm existing entries and a known shortcut.
   5. Restart Settings/shell and confirm preferences persist; perform LAPTOP_MEMORY_WORKLOAD.md separately for real GPU/PSS evidence.
+
+## Controller-provider catalog batch — 2026-10-31
+- Branch `refactor/catalog-controller-providers`, main `5e4a4d8`; plan `6f78cd2`, tests `f04a50c`, Weather `bb09686`, restored Saver `3d5f48c`, Mirror/final runtime `74d6c5e`; final docs separate.
+- Scope: existing Weather/Saver/Mirror factories selected by descriptor metadata. WeatherClient keeps async work; Saver keeps prepare/worker/journal/restore; main keeps the mirror child and Settings IPC. No controller/action algorithm change.
+- Initial Saver `e393dbd` passed focused cases but failed the existing schema-only fieldset assertion (sources/backend); reverted by `f2c467d`, unchanged targeted guard passed again. Owner approved the limited two-group assertion update in `1dcf2bb` before reapplying Saver; see CONTROLLER_PROVIDER_TEST_REVIEW.md.
+- Baseline before production edits: 93/0/3 (pass/fail/skip; three new family cases N/A), plus native fault fixture 1/0/0. Approved schema update passes 7/0/0 before conversion; final affected units including those seven: 103/0/0.
+- Existing setup-only diffs: old provider test filters metadata to original PILOTS; native unbound fixture weather/weather_actions -> fileSearch/file_search_actions. Their assertions/timeouts stay unchanged. Only the approved device fieldset/name assertion changes; no frozen JSON edits.
+- New contracts cover pure specs, exact demo contexts/results/sequences/pending, retained state/data on disable/missing/broken catalog, full six-binding identity, copied-descriptor factory selection without host edits, and atomic fault fallback.
+- Descriptor/source ownership replaces legacy Saver ownership and removes mirror files from legacy Display ownership in the same commits. No file moves, new dependency exceptions/cycles, QML changes or new registry/helper/process/executor/polling/power policy.
+- Registered IDs remain 75/89 (49 sync entries + 26 workers); six descriptor-selected domains cover 12 existing IDs. Preferences remain 79 descriptor/68 legacy, 147 total; index/order/bootstrap/legacy UI stay. Seven records have empty startup UI metadata, not all schema-only anymore.
+- Weather-only work G0: 761/0/166. Final runtime head 74d6c5e: G0 764/0/163 (927 total), G1 3/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. Full set ran once after all conversions; following changes are docs only.
+- Final default skips equal accepted main's 163; the temporary three family N/A cases now execute. Relevant final native suite explicitly enabled: 6/0/0 in 28.415 s (catalog fault, three light-feature navigation/withdrawal, Saver UI restore/brightness, Mirror start/stop); not hardware evidence.
+- qmllint: 148 files, 0 errors/71 existing warnings. Architecture/catalog/Bash/demo checks pass; desktop_backend stays at 1,630 nonblank lines and new test source at 142. Native gates use disposable XDG/private Wayland/D-Bus; no real-session writes.
+- One ten-launch sanity comparison per path/head, same private software-rendered machine: preview median main/head 678.30/679.77 ms; Settings 719.62/740.40 ms (+20.78). Neither threshold fires; no D1 profiling/optimization claim.
+- RSS KiB at T+10s (QS/backend): preview main 279752/27144 -> head 279136/26040; Settings 230748/25852 -> 230968/26024. Maximum increase 0.67%; per-process RSS does not close aggregate laptop PSS acceptance.
+- Adapters: original imports/fallback factories, narrow capabilities, controllers and perform/perform_demo facades remain. Retire fallbacks/imports only with equivalent fault/withdrawal coverage and owner approval; no saved-data migration required to roll back.
+- Existing exercised behavior stays: disabled/missing records retain actions/controllers; only existing Weather UI guards withdraw. Saver/Mirror retain legacy UI. Invalid references use the existing diagnostic/legacy fallback; registered errors never retry via legacy.
+- Progress convention requested by owner: fixed ten acceptance checkpoints, eight verified in their stated scope = 80%; physical-device sign-off and reviewed warm/GPU/Settings PSS remain pending. Branch delivery is separate; further metadata coverage does not inflate the acceptance score.
+- Laptop checklist:
+  1. Open Weather via Gear/CLI/search; search/select a city and confirm location/unit survive Settings restart.
+  2. Enable Saver, adjust brightness, then disable; verify supported low-rate mode and exact prior mode/theme/brightness restoration.
+  3. With two outputs, start/stop/disconnect mirroring from shell and Settings; check the main shell owns the single mirror child.
+  4. Restart shell/Settings; confirm preferences and ordinary panels/media/radio behavior remain intact.
+  5. Run LAPTOP_MEMORY_WORKLOAD.md with the actual theme/GPU and review ownership/PSS; software RSS checks do not certify the 400/500 MB targets.

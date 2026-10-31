@@ -104,7 +104,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror}
 
 
 def initialize_catalog():
@@ -550,7 +550,7 @@ class DesktopBackend:
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
             (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
-            (provide_mirror, MirrorCapabilities(settings_only=lambda:self.settings_only,
+            (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
                 available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),
                 try_run=lambda *args:self.try_run(*args),start=lambda *args:self.mirror.start(*args),

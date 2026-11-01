@@ -104,7 +104,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror}
 
 
 def initialize_catalog():
@@ -550,7 +550,7 @@ class DesktopBackend:
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
             (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
-            (provide_mirror, MirrorCapabilities(settings_only=lambda:self.settings_only,
+            (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
                 available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),
                 try_run=lambda *args:self.try_run(*args),start=lambda *args:self.mirror.start(*args),
@@ -568,7 +568,7 @@ class DesktopBackend:
                 lambda path,output:self.image_utilities.apply(path,output),lambda:self.image_utilities.state,
                 lambda value:setattr(self.image_utilities,'state',value),
                 lambda path,terminal:self.image_utilities.setup(path,terminal),lambda:self.preferences.values['terminal'])),
-            (provide_saver, SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
+            (BACKEND_FACTORIES['batterySaver'], SaverCapabilities(lambda:self.saver_snapshot(),lambda *args:self.saver_preflight(*args),
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
                 lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),
@@ -577,7 +577,7 @@ class DesktopBackend:
                 lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
             (provide_controls, ControlCapabilities(lambda mode:self.capture.start(mode),lambda:self.capture.close(),
                 lambda:self.capture.languages(),lambda:self.capture.state)),
-            (provide_weather, WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
+            (BACKEND_FACTORIES['weather'], WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
                 lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot(),
                 lambda values:self.preferences.update(values))),
             (provide_charge, ChargeCapabilities(lambda:self.charging(),lambda:self.charge_job is not None,

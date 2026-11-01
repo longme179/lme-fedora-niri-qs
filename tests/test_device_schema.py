@@ -111,14 +111,15 @@ for value in {invalid!r}:
 
     @unittest.skipUnless(all((ROOT/'config'/f'{g}.json').exists() for g in GROUPS),
                          'All device schema fragments are N/A before extraction')
-    def test_unique_ownership_empty_startup_and_no_new_ui_or_provider_entries(self):
+    def test_unique_ownership_empty_startup_and_no_new_ui_entries(self):
         legacy = json.loads((ROOT/'config/preferences-legacy.json').read_text())
         index = json.loads((ROOT/'config/features.json').read_text())
         for group, keys in GROUPS.items():
             record = next(item for item in index['features'] if item['id'] == group)
             self.assertEqual(record['startup'], {})
             descriptor = json.loads((ROOT/record['descriptor']).read_text())
-            self.assertEqual(set(descriptor), {'id', 'preferences'})
+            metadata = {'sources', 'backend'} if group in ('batterySaver', 'mirroring') else set()
+            self.assertEqual(set(descriptor) - metadata, {'id', 'preferences'})
             self.assertEqual(set(descriptor['preferences']), set(keys))
             for key in keys:
                 self.assertNotIn(key, legacy['preferences'])

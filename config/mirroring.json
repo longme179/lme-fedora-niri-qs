@@ -1,5 +1,9 @@
 {
   "id": "mirroring",
+  "sources": [
+    "scripts/display_mirror.py",
+    "scripts/mirror_actions.py"
+  ],
   "preferences": {
     "mirroringEnabled": {
       "type": "boolean",
@@ -8,5 +12,9 @@
       "appearance": false,
       "default": true
     }
+  },
+  "backend": {
+    "entry": "scripts/mirror_actions.py",
+    "factory": "provide"
   }
 }

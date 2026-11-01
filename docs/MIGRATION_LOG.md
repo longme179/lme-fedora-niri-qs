@@ -801,3 +801,15 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Documentation-only verification: G0 764 passed / 0 failed / 163 skipped (927 total), 114.141 s; qmllint 148 files, 0 errors/71 existing warnings. Default skip count unchanged; no new GUI, launch/RSS sanity or profiling round.
 - Runtime/config/tests remain byte-identical to 74d6c5e. No compatibility adapter, persistence protocol, public API or user file changes; existing retirement conditions stay.
 - Decision is appended to PR #42 for owner merge. It does not authorize publishing a release, further migrations or reopening broad audits; future work needs a concrete request/regression. No additional laptop run requested for this accepted milestone.
+
+## Proposed QoL expansion plan — 2026-11-01 (owner revision)
+- Branch `docs/qol-expansion-plan`, stacked on PR #42 head `c09c8a4` (runtime `74d6c5e`); main was `5e4a4d8`. Initial plan commit `ab0010c`; owner then requested useful capabilities over small conveniences. Documentation only.
+- Existing acceptance remains 100% (10/10), including aggregate ordinary-use RAM sign-off. New planning/delivery progress is separate; D1/A6 stay closed/out of scope.
+- Revision replaces the shortcut-first A–E order with six task-level workflows: audio/headsets; saved network connections; display setups; removable media; app/workspace sets; selective personal-data recovery. Small Q01–Q16 ideas are supporting backlog, not first milestones.
+- Recommend W1's bounded identity/capability check followed by proven ports/profiles/live-stream destinations. Other workflows depend on actual use and separate authorization; no feature/schema/action/archive format or dependency is implemented.
+- Nine pinned shells plus UDisks service source inform the plan; references separate real APIs from LME compositions. Work-set placement needs launch/window proof; multi-domain restore needs owner fencing and truthful partial outcomes. No upstream efficiency claim.
+- Resource caps/effort ranges are unmeasured planning allocations, not spare headroom or guarantees. No new daemon/poller/executor, quality downgrade, profiling or raw evidence tree.
+- Initial plan G0: 764 passed / 0 failed / 163 skipped (927), 114.797 s; qmllint 148 files, 0 errors / 71 existing warnings. Revised-plan G0 via `run-gates.sh --gates G0` with installed private env: 764 / 0 / 163, 113.538 s; same qmllint/counts. Architecture/catalog/Bash/demo checks pass.
+- Default skips are opt-in native Wayland/OpenGL/D-Bus/hardware/helper cases, not proof of the proposed features. Docs-only scope requires no GUI gates or launch/RSS sanity.
+- Adapters: none introduced/retired; current facades, Preferences protocol and retirement conditions remain. Runtime/config/tests unchanged; no existing assertion or frozen fixture edited.
+- Laptop checklist: none for planning. Future workflows carry <=6-line scoped checks; no repeat of the accepted baseline requested. Implementation remains unauthorized.

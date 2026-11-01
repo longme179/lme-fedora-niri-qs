@@ -14,7 +14,7 @@ from light_feature_fixture import LightWorld
 class NativeProviderCatalogCase(unittest.TestCase):
     def test_invalid_or_unbound_provider_settles_and_retains_legacy_navigation(self):
         for feature, entry, factory in [('keybinds', 'keybind_actions', 'missing'),
-                                         ('weather', 'weather_actions', 'provide')]:
+                                         ('fileSearch', 'file_search_actions', 'provide')]:
             with self.subTest(feature=feature), tempfile.TemporaryDirectory(prefix='provider-ui-') as temporary:
                 world = LightWorld(Path(temporary))
                 descriptor = world.root/'config'/f'{feature}.json'

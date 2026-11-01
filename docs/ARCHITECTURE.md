@@ -135,9 +135,14 @@ root binds required services. It must not pass the entire `DesktopBackend` objec
 The composition root resolves bundled descriptor references; registration must not
 execute commands. The bounded ownership pilot declares
 `"backend":{"entry":"scripts/night_light_actions.py","factory":"provide"}`
-for Night Light, Idle and Keybinds. `provide(capabilities)` returns specs and a
-state callback; the host still constructs narrow capabilities. Other providers,
-including Launchpad, retain their explicit bindings. See PROVIDER_OWNERSHIP_PLAN.md.
+for Night Light, Idle and Keybinds. The controller batch adds Weather, Battery
+Saver and Mirroring through the same interface. WeatherClient retains async
+work, Saver its existing prepared worker/journal, and the main shell its mirror
+child. Their UI/bootstrap and context/withdrawal policy stay unchanged.
+`provide(capabilities)` returns specs and a state callback; the host still
+constructs narrow capabilities. Other providers,
+including Launchpad, retain their explicit bindings. See PROVIDER_OWNERSHIP_PLAN.md
+and CONTROLLER_PROVIDERS_PLAN.md.
 The Python reader validates canonical flat scripts/ sources and named synchronous
 top-level factories without importing them. The root resolves all references
 before publishing a valid catalog, reusing already imported modules. Duplicate

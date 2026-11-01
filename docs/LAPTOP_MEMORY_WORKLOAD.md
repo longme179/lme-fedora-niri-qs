@@ -1,8 +1,9 @@
 # Laptop memory checkpoints
 
-This optional one-shot tool completes the next release-evidence boundary in
-[ROADMAP.md](ROADMAP.md). It uses the current shell, collector and public IPC;
-it is not a memory optimization or an automatic release approval.
+This optional one-shot diagnostic uses the current shell, collector and public
+IPC. The owner closed the practical RAM/roadmap milestone on 2026-11-01 using
+aggregate btop observations; this workload is available for future investigations,
+not required to repeat that acceptance. See [ROADMAP.md](ROADMAP.md).
 
 ## Run
 
@@ -79,8 +80,7 @@ Keep defaults for the real laptop run; watch that panels actually appear and
 finish animating. Stop if authentication interrupts the workload: existing
 public IPC cannot certify that every animation rendered or detect that dialog.
 
-After the laptop report, review actual owners and the warm trend. Make a resource
-fix only if the evidence identifies an expired resource; otherwise close only
-the memory checklist row when its criteria pass. Radio, capture, display and
-Battery Saver restore still need the separate [release checklist](RELEASE_CHECKLIST.md).
-No further schema/provider/UI conversion is part of this diagnostic branch.
+For a future regression, review actual owners and the warm trend before choosing
+a resource fix. The dated owner acceptance in the [release checklist](RELEASE_CHECKLIST.md)
+closes the current practical milestone; new investigations need a concrete scope.
+This tool does not authorize another schema/provider/UI conversion.

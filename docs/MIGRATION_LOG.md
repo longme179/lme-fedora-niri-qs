@@ -848,3 +848,26 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   2. Close Firefox normally, open it through Launcher and leave it running beyond ten seconds; confirm no gio timeout/forced close.
   3. Launch Firefox again while open; check app ranking, a terminal desktop entry and file opening still work.
   4. Restart the shell with Firefox open; confirm the app remains. If it still exits, launch firefox in a terminal and retain its own error output.
+
+
+## W2 — Saved network connections and confirmed hotspot — 2026-11-01
+- Branch feature/network-connections from main 4e5fbf1; plan 6a94d10, characterization/contracts 743ef07/56f659a, backend 83b8839, UI/retry/bounds 3b790c6; native contracts 86c6b33/f74ec5b and focused follow-ups. Docs separate; owner merges.
+- Before runtime: unchanged-main Wi-Fi/auth/control characterization 33/0/0 plus two startup/registration contracts passing; 13 new provider contracts explicitly N/A before implementation, native UI N/A until present. Golden fixtures unchanged.
+- Recorded main G0 793/0/175; backend checkpoint 818/0/175; affected UI checkpoint G0 819/0/181, G1 9/0/0. Final units 67/0/0 include 27 new network contracts/boundaries and existing Wi-Fi/control/provider tests.
+- Final gates on runtime 3b790c6: G0 820/0/181, G1 9/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0 (pass/fail/skip). Full set run once in disposable XDG/private Sway/D-Bus; no real session/config/network touched.
+- G0 skips: main's 175 existing opt-ins plus six W2 NativeNetworkCase cases, exercised explicitly on final runtime: 6/0/0. Fake NM CLI, real backend/runner/workers; no claim of hardware, keyring/plugin/agent or shared-Internet validation.
+- qmllint 153 files, 0 errors/71 existing warnings; catalog/architecture/size/Bash/demo checks pass. No dependency exceptions/cycles; desktop_backend remains 1,630 nonblank lines, new sources <=250. Schema stays 147 keys (79 descriptor/68 legacy).
+- Only existing expected-set edit is owner-approved addition of wifi to provider BINDINGS. Native fixture searches the Qt Overlay and visible controls, waits for refresh ownership; assertions/timeouts/frozen fixtures retained. A repeated hotspot review exposed stale-plan publication; UI now waits for its final successful result.
+- Discovery: backend-only wifi descriptor composes old WifiCapabilities/provide with ConnectionsCapabilities/provide_connections; six new workers and one sync cancel use the existing two-worker pool/completion publisher. Registry 86/100 IDs (50 sync +36 workers); no daemon, monitor, executor, preferences or polling/power change.
+- Data: exact UUID/device/activation path plus bus/NM epoch; fresh secure-AP plan token; literal argv; secret-free bounded metadata (64 profiles/128 KiB). Read-back gates success; auth/plugin errors are sanitized. Cancellation stops only the new attempted activation and retains ownership through observed cleanup.
+- Intentional new UI: lazy VPN/WireGuard/Ethernet/saved-hotspot view in Wi-Fi/Devices; IP/DNS editing uses the existing system editor. Mutations close panels for external agents; retry retains the selected adapter only within the same NM epoch. AP active does not claim Internet or automatic Wi-Fi restoration.
+- Adapters: existing wifi_action/import/WifiCapabilities/provide and descriptor fallback remain until zero consumers plus owner-approved retirement. Disabled/broken catalog hides W2 UI; legacy Wi-Fi/actions, saved NM profiles and settings/history bytes remain. No page/bar/tab order or saved IDs change.
+- One sanity, ten cold launches/path/head vs main 4e5fbf1: preview 672.46 ->675.46 ms; Settings 744.23 ->742.68 ms. RSS KiB T+10s (QS/backend): preview 280292/27336 ->282396/26540; Settings 222908/26148 ->231680/26524. Largest increase 3.94%; no +100 ms/+10% flag. Software VM per-process RSS is not aggregate laptop PSS.
+- Practical old roadmap remains owner-accepted 100%; W2 implementation/VM verification is separate from physical-network acceptance. Guide: NETWORK_CONNECTIONS.md. W3+ not started; no merge performed.
+- Laptop checklist (needs real-session check):
+  1. Restart the updated shell; open Wi-Fi and Devices → VPN, Ethernet & hotspot; refresh and check saved profiles/adapters.
+  2. Connect/disconnect a saved VPN/WireGuard; check nmcli connection show --active and keyring/agent/plugin behavior; errors must clear pending.
+  3. Choose the correct Ethernet profile/adapter, edit IP/DNS, refresh; other adapters must remain connected.
+  4. Review hotspot while on Wi-Fi: cancel preserves it; confirm explicitly disconnects the warned connection; verify AP and Internet separately.
+  5. Cancel an activation, reopen and retry on the same adapter; stop hotspot and reconnect Wi-Fi explicitly if needed.
+  6. Disable catalog wifi in a disposable copy: W2 hides, legacy Wi-Fi works, saved profiles/settings stay; re-enable restores access.

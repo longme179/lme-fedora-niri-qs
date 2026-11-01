@@ -78,7 +78,7 @@ from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
                                WallpaperDaemonCapabilities, provide_daemon as provide_wallpaper_daemon)
-from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi, busy as wifi_busy, toggle as toggle_wifi
+from wifi_actions import WifiCapabilities, provide as provide_wifi, perform as perform_wifi, busy as wifi_busy, toggle as toggle_wifi, ConnectionsCapabilities, provide_connections
 from backend_actions import ActionRegistry
 from backend_providers import provider_factories
 from launchpad_actions import LaunchpadCapabilities, provide as provide_launchpad
@@ -105,7 +105,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices, 'wifi': provide_connections}
 
 
 def initialize_catalog():
@@ -597,7 +597,7 @@ class DesktopBackend:
                 lambda:self.palette_preview,lambda values:self.preferences.update(values))),
             (provide_image, ImageCapabilities(lambda:self.preferences.values,lambda editor,path:annotate_image(self.runner,editor,path))),
             (provide_lock, LockCapabilities(self.runner.executable,lambda:self.lock_session)),
-            (provide_wifi, self._wifi_capabilities),
+            (BACKEND_FACTORIES['wifi'], ConnectionsCapabilities(self._wifi_capabilities, self.runner.available, lambda:tuple(self.feature_jobs), split_nmcli, lambda argv:self.runner.spawn(argv), lambda name:self.runner.executable(name))),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
                 lambda: self.wallpaper_library, lambda value: setattr(self, 'wallpaper_library', value))),
             (provide_wallpaper_daemon, WallpaperDaemonCapabilities(lambda name: self.runner.available(name),

@@ -2,13 +2,12 @@
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
-
 ## Merged and authorized
 
-- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
-  Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (17 catalog records, seven with empty startup UI metadata).
+- M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged; registry including W1: 79/93 IDs (49 sync entry calls + 30 workers).
+  Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (18 catalog records, eight with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. Owner explicitly accepts this practical evidence without an all-features-at-once stress requirement. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. Historical VM results stay recorded; tools remain optional diagnostics. PR #42 still awaits owner merge; no later family/release publication authorized.
+- Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. PR #42 is merged. W1 Audio/headset (PR #44) adds four on-demand workers and observed ports/profiles/routes; native revisions approved/applied, physical headset checks remain. Owner authorizes conflict resolution/audit/merge of #44; W2/later workflows remain unauthorized. See AUDIO_HEADSET.md.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -25,8 +24,9 @@ Do not read archive/ unless answering a specific historical question.
   preserves main-only once semantics and Settings/demo/preview guards.
 - ClipboardButton -> ActionBarButton: retain until an equivalent entry preserves
   geometry, gestures and screen context. No Clipboard implementation files moved.
-- Six descriptor-provider domains (light + controller batches): explicit fallback factories/narrow capabilities remain; disabled/missing entries keep actions, broken references retain legacy UI + diagnostic. Others stay explicit. Retire fallbacks/import facades only with equivalent fault/withdrawal coverage + owner approval. PreparedWork/complete/presentation retain host scheduling/Future tags; Weather/Saver/Mirror keep lifecycle, journals and child ownership. Public perform/perform_demo/wifi_action facades retain their zero-consumer retirement rule and cadence.
+- Seven descriptor-provider domains (light + controller batches + audio): explicit fallback factories/narrow capabilities remain; disabled/missing entries keep actions, broken references retain legacy UI + diagnostic. Others stay explicit. Retire fallbacks/import facades only with equivalent fault/withdrawal coverage + owner approval. PreparedWork/complete/presentation retain host scheduling/Future tags; Weather/Saver/Mirror keep lifecycle, journals and child ownership. Public perform/perform_demo/wifi_action facades retain their zero-consumer retirement rule and cadence.
 - PageNavigation forwards navigateRequested(pageId); retain old page signals until owner-approved retirement.
+- W1 audio composes the existing AudioCapabilities/provider facades and descriptor fallback; retain until zero consumers and owner-approved retirement. Demo projection excludes legacy launchpadJobs until an approved contract change. No new daemon/poller; routing requires verified server/object identity and read-back.
 - Notifications.start/demo readiness and legacy bar availability guards retire only with equivalent catalog composition/worker isolation; public flags/IDs stay.
 - DEFAULT_PREFERENCES/validate_preference and PORTABLE/APPEARANCE_KEYS are schema
   facades; retain public names until explicit owner-approved compatibility changes.

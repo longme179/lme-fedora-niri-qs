@@ -18,7 +18,7 @@ from test_backend import Fixture, backend
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY = {'weather': 'weather_actions', 'batterySaver': 'saver_actions', 'mirroring': 'mirror_actions'}
-BINDINGS = ('nightLight', 'idle', 'keybinds', *FAMILY)
+BINDINGS = ('nightLight', 'idle', 'keybinds', *FAMILY, 'audio')
 COMPLETE = all(json.loads((ROOT/'config'/f'{name}.json').read_text()).get('backend') for name in FAMILY)
 PLACE = dict(name='Oslo', country='Norway', latitude=59.91, longitude=10.75)
 REQUESTS = [dict(action='mirrorRefresh'), dict(action='mirrorStart', source='eDP-1', target='HDMI-A-1'),

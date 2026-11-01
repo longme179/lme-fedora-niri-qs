@@ -216,10 +216,11 @@ class ProviderHostCase(ProviderParityCase):
 
     def test_pilot_capability_order_and_exact_registered_set_remain_unchanged(self):
         from backend_providers import provider_factories
+        expected = (*PILOTS, 'audio')
         data = load_catalog(ROOT)
-        data = dict(data, backend={key: value for key, value in data.get('backend', {}).items() if key in PILOTS})
-        providers = provider_factories(data, {key: Mock() for key in PILOTS})
-        self.assertEqual(tuple(providers), PILOTS)
+        data = dict(data, backend={key: value for key, value in data.get('backend', {}).items() if key in expected})
+        providers = provider_factories(data, {key: Mock() for key in expected})
+        self.assertEqual(tuple(providers), expected)
         callbacks = Mock()
         self.assertEqual([spec.name for spec in providers['idle'](callbacks)[0]], ['idleRefresh', 'idleInhibit'])
         callbacks.assert_not_called()

@@ -73,6 +73,7 @@ from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
 from audio_actions import AudioCapabilities, provide as provide_audio
+from audio_device_actions import DeviceCapabilities, provide as provide_audio_devices
 from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
@@ -104,7 +105,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices}
 
 
 def initialize_catalog():
@@ -611,9 +612,8 @@ class DesktopBackend:
                 lambda: self.preferences.values, lambda: self.applications.entries, lambda: self.file_search['entries'],
                 lambda ident: self.launcher_history.record(ident), self.identifier, lambda: self.niri, refresh_action_niri,
                 lambda value: self.niri_action(value), lambda: self.demo_snapshot()['niri'], lambda: self.demo_snapshot()['apps'])),
-            (provide_audio, AudioCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), self.percentage,
-                lambda: self.bluetooth(), lambda enabled: self.set_bluetooth(enabled),
-                lambda: {key: value for key, value in self.demo_snapshot()['system'].items() if key in ('audio', 'microphone', 'brightness', 'bluetooth')}, lambda: setattr(self, 'bluetooth_cache', None))),
+            (BACKEND_FACTORIES['audio'], DeviceCapabilities(AudioCapabilities(lambda *args, **kwargs:self.runner.run(*args, **kwargs),self.percentage,lambda:self.bluetooth(),lambda enabled:self.set_bluetooth(enabled),
+                lambda:{key:value for key,value in self.demo_snapshot()['system'].items() if key in ('audio','microphone','brightness','bluetooth')},lambda:setattr(self,'bluetooth_cache',None)),self.runner.available,lambda:tuple(self.feature_jobs))),
             (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
                 self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
                 lambda value: self.demo_snapshot().__setitem__('calculator', value))),
@@ -1258,7 +1258,7 @@ class DesktopBackend:
                 self._demo_state["weather"]["location"] = self.preferences.values["weatherLocation"]
             else:
                 self._demo_state["weather"]["location"] = {"name": "Ho Chi Minh City", "country": "Vietnam", "latitude": 10.82, "longitude": 106.63}
-            return self._demo_state
+            self._demo_state.update({k:v for k,v in self.action_state().items() if k!='launchpadJobs'}); return self._demo_state
         self._demo_state = {
             "apps": [{"id": "org.mozilla.firefox.desktop", "name": "Firefox", "icon": "firefox", "path": "", "terminal": False},
                      {"id": "kitty.desktop", "name": "Kitty", "icon": "kitty", "path": "", "terminal": False},

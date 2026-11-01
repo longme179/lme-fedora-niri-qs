@@ -20,7 +20,7 @@ class NativeNetworkCase(unittest.TestCase):
     def open(self, probe):
         probe.call('open');probe.wait(lambda s:s['button'])
         self.assertEqual(probe.call('click','networkDetails'),'true')
-        return probe.wait(lambda s:s['popup'] and s['model'].get('available'))
+        return probe.wait(lambda s:s['popup'] and s['model'].get('available') and not s['pending'].get('networkRefresh'))
 
     def test_wired_connect_readback_reopen_and_worker_isolation(self):
         with tempfile.TemporaryDirectory(prefix='network-ui-') as d:

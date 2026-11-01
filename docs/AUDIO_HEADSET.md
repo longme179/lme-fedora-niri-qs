@@ -39,6 +39,10 @@ of LME; this feature does not replace or disable that policy.
   expose neither. Unknown current values display **Not reported**, not the first
   option. Native-only streams without a Pulse playback record are not routed by
   this version; **Advanced audio settings** remains available.
+- Port availability accepts pactl's native `availability` strings (`available`,
+  `not available`, `availability unknown`), separately from profile `available`
+  booleans. An unplugged port is disabled and rejected before mutation; an unknown
+  availability remains selectable because the server has not ruled it out.
 - Real headset/HDMI ports, call modes and hardware unplug behavior still need a
   real-session check. Virtual audio tests do not establish every device's support.
 
@@ -92,6 +96,10 @@ unavailable options, pending/errors, no demo spawn/write, native core validation
 and exact metadata targets. Native G1 covers controls/demo/error/withdrawal and
 stable open menus. Additional opt-in virtual audio tests use private PipeWire,
 WirePlumber, two null sinks and two clients; hardware monitors are disabled.
+Merge-audit cases cover timeout recovery, mid-read server restart, reused sink
+indexes, partial metadata side effects and native port availability. The copied
+UI probe retains audio completions across unrelated notification acknowledgements;
+this observation aid adds no cache or hook to the installed shell.
 
 In an already private D-Bus/Wayland test environment with the tools installed:
 

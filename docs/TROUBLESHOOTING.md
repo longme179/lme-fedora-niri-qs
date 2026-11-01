@@ -67,6 +67,21 @@ The backend's JSON includes tool availability and a result message. Missing
 tools produce unavailable controls. Demo mode intentionally shows sample data
 and does not execute desktop actions.
 
+## Firefox or another app closes with `gio timed out`
+
+Older Launcher code ran `gio launch` as a bounded control command. A newly
+started app could inherit its output pipes; the runner then waited until its
+three-second deadline and terminated the process group, including the app.
+Update to the Launcher lifetime fix and restart the shell. Desktop entries now
+use detached launching with Gio; terminal selection and desktop-file metadata
+are preserved. Other control-command timeouts keep their existing behavior.
+
+While using an older checkout, launch Firefox directly with `firefox` in a
+terminal. After updating, check a cold launch with Firefox previously closed.
+Launcher success acknowledges dispatch to Gio; it does not monitor the app's
+subsequent startup or lifetime. If Firefox still exits, run it in a terminal
+and collect its own error output.
+
 ## Duplicate bars or panels reserve too much screen space
 
 Keep one startup entry for LME Shell and remove the previous bar's startup

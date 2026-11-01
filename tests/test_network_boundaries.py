@@ -99,3 +99,15 @@ class NetworkBoundariesCase(Fixture, unittest.TestCase):
             path='/org/freedesktop/NetworkManager/ActiveConnection/4', state='activating'))
         result = complete_action(live, dict(action='networkConnect', serverId=m['serverId'], uuid=UUIDS[0], deviceId=DEV[1]))
         self.assertFalse(result['ok']); self.assertFalse(runner.writes)
+
+    def test_retry_hint_keeps_only_the_selected_adapter_for_the_same_server_epoch(self):
+        live, runner, m = self.live()
+        runner.fail = backend.CommandError('No secrets were provided')
+        result = complete_action(live, dict(action='networkConnect', serverId=m['serverId'], uuid=UUIDS[0], deviceId=DEV[1]))
+        self.assertFalse(result['ok'])
+        self.assertEqual(live.action_state()['networkConnections']['lastRequest']['deviceId'], DEV[1])
+        self.assertTrue(complete_action(live, {'action': 'networkRefresh'})['ok'])
+        self.assertEqual(live.action_state()['networkConnections']['lastRequest']['deviceId'], DEV[1])
+        runner.model['owner'] = ':1.999'
+        self.assertTrue(complete_action(live, {'action': 'networkRefresh'})['ok'])
+        self.assertFalse(live.action_state()['networkConnections'].get('lastRequest'))

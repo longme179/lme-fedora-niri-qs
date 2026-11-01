@@ -7,7 +7,7 @@ Do not read archive/ unless answering a specific historical question.
 - M0-M3, M4a/M4b, M5/M6, M4c-1/2/3, M7a/b/c/d, F1-F5, resource/lifecycle, Capture, Display preview, Mirroring and selection/application merged: 75/89 IDs (49 sync entry calls + 26 workers).
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (18 catalog records, seven schema-only, including W1 audio).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
-- Owner accepts the previous roadmap as 100% complete and aggregate ordinary-use RAM below 400 MB (2026-10-31). Do not reopen D1 or prior memory acceptance; retain hardware-check limitations. W1 Audio/headset is authorized on feature/audio-headset-controls: four new on-demand workers, observed ports/profiles/routes; no preference migration. See AUDIO_HEADSET.md. W2/later workflows remain unauthorized.
+- Owner accepts the previous roadmap as 100% complete and aggregate ordinary-use RAM below 400 MB (2026-10-31). Do not reopen D1 or prior memory acceptance; retain hardware-check limitations. W1 Audio/headset is implemented on feature/audio-headset-controls (PR #44): four on-demand workers, observed ports/profiles/routes; no preference migration. Native test revisions approved/applied; hardware checks await laptop. See AUDIO_HEADSET.md. W2/later workflows remain unauthorized.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

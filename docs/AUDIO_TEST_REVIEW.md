@@ -1,8 +1,9 @@
-# Audio native test review (pending owner approval)
+# Audio native test review (approved 2026-11-01)
 
 AGENTS.md requires asking before editing existing assertions/expected cases.
 The provider-set update was approved separately and is already committed.
-These two native routing test revisions remain unapplied.
+The owner approved both native routing revisions on 2026-11-01; the exact diff
+below is applied. No production code, timeouts or golden fixtures changed.
 
 1. Exercise the chosen same-core-verified metadata route; a raw Pulse move can
    be overridden by the session manager for explicitly targeted clients.

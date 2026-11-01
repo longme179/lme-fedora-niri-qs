@@ -37,7 +37,8 @@ def provide(capabilities):
             terminal = shutil.which(capabilities.preferences()['terminal'])
             if not terminal: raise CommandError('The configured terminal is unavailable')
             capabilities.spawn([terminal, '-e', *app['argv']])
-        elif capabilities.available('gio'): capabilities.run('gio', 'launch', app['path'])
+        # Desktop apps must outlive the request, without timeout-owned output pipes.
+        elif capabilities.available('gio'): capabilities.spawn([capabilities.executable('gio'), 'launch', app['path']])
         else: capabilities.spawn(list(app['argv']))
         if capabilities.preferences()['launcherRanking']: capabilities.record_launch(app_id)
         return f"Launched {app['name']}"

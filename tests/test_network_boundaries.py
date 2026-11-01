@@ -111,3 +111,9 @@ class NetworkBoundariesCase(Fixture, unittest.TestCase):
         runner.model['owner'] = ':1.999'
         self.assertTrue(complete_action(live, {'action': 'networkRefresh'})['ok'])
         self.assertFalse(live.action_state()['networkConnections'].get('lastRequest'))
+
+    def test_oversized_object_identity_cannot_escape_the_snapshot_bound(self):
+        module = importlib.import_module('network_inventory')
+        for kind in ('Devices', 'ActiveConnection'):
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                module.path(module.BASE+kind+'/'+'1'*4096, kind)

@@ -1,6 +1,8 @@
 """Observe actual AudioMixer only in a copied checkout/private Wayland session."""
 from pathlib import Path
+import json
 from clipboard_slice_fixture import World
+from audio_device_fixture import documents
 
 OBSERVE = '''
     IpcHandler {
@@ -22,6 +24,11 @@ OBSERVE = '''
             if(!field || !field.enabled) return false;
             field.currentIndex=index; field.activated(index); return true;
         }
+        function choice(name: string): string {
+            const field=root.sliceFind(root.sliceSurface,name);
+            return JSON.stringify(field?{index:field.currentIndex,text:field.displayText,
+                enabled:field.enabled,disabled:field.disabledIndices}:null);
+        }
     }
 '''
 
@@ -31,3 +38,23 @@ class AudioWorld(World):
         super().__init__(Path(directory))
         path=self.root/'shell.qml'
         path.write_text(path.read_text().replace('    id: root\n','    id: root\n'+OBSERVE,1))
+
+    def fake_audio(self):
+        self.audio_file=self.home/'audio.json';self.audio_calls=self.home/'audio-calls.jsonl'
+        self.audio_file.write_text(json.dumps(dict(documents=documents(),apply=True)))
+        self.audio_file.chmod(0o600)
+        self.env.update(AUDIO_FIXTURE=str(self.audio_file),AUDIO_CALLS=str(self.audio_calls))
+        path=self.home/'bin/pactl'
+        path.write_text('''#!/usr/bin/env python3
+import json,os,sys
+from pathlib import Path
+path=Path(os.environ['AUDIO_FIXTURE']);state=json.loads(path.read_text());d=state['documents'];a=sys.argv[1:]
+with Path(os.environ['AUDIO_CALLS']).open('a') as log:log.write(json.dumps(a)+'\\n')
+if a[0]=='--format=json':print(json.dumps(d['info' if a[1]=='info' else a[2]]))
+elif state['apply']:
+ command,index,value=a[1:];index=int(index)
+ if command=='set-card-profile':next(x for x in d['cards'] if x['index']==index)['active_profile']=value
+ elif command in ('set-sink-port','set-source-port'):next(x for x in d['sinks' if command=='set-sink-port' else 'sources'] if x['index']==index)['active_port']=value
+ elif command=='move-sink-input':next(x for x in d['sink-inputs'] if x['index']==index)['sink']=int(value)
+ path.write_text(json.dumps(state))
+''');path.chmod(0o700)

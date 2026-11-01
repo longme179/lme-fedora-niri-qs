@@ -28,3 +28,9 @@ class NativeRouteIdentityCase(unittest.TestCase):
                        lambda x:x[2]['info']['props'].update({'media.class':'Audio/Source'})):
             info,objects=self.fixture();change(objects)
             with self.assertRaises(ValueError):module.route_plan(info,objects,'120','111')
+
+    def test_unready_or_malformed_native_objects_are_validation_errors(self):
+        module=importlib.import_module('audio_pipewire')
+        for position in (0,1,2):
+            info,objects=self.fixture();objects[position]['info']=None
+            with self.subTest(position=position),self.assertRaises(ValueError):module.route_plan(info,objects,'120','111')

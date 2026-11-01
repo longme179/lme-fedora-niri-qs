@@ -768,3 +768,28 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   3. Pause/resume Idle and check charger profile reporting; restore your previous enabled state/timeouts.
   4. Refresh Keyboard shortcuts from your configured niri path; confirm existing entries and a known shortcut.
   5. Restart Settings/shell and confirm preferences persist; perform LAPTOP_MEMORY_WORKLOAD.md separately for real GPU/PSS evidence.
+
+## W1 Audio/headset — 2026-11-01
+- Branch `feature/audio-headset-controls`, main `5e4a4d8`; tests `4ab9e04`/`a7391a7`/`e6d3a4b`/`6a4865a`/`3c05c46`/`68fdabd`; implementation `0b76136`; docs separate.
+- Owner accepted the previous roadmap at 100% and aggregate ordinary-use RAM below 400 MB; W1 is an additional workflow, not a reopening of D1/memory acceptance. W2/later work is unauthorized.
+- Characterization on unchanged production: seven focused cases pass; native existing-mixer case passes. G0 761/0/164 with four new characterization cases and one native opt-in. New provider contracts N/A before implementation; no N/A reported passed.
+- Adds four shell-only workers in the existing pool: audioDevicesRefresh, audioPort, audioProfile, audioRoute. Context admission, pending/sequence/emission and old volume/mute/default selectors remain.
+- Catalog selects the composed audio provider via existing metadata; startup entries/schema/layout are unchanged. 79 descriptor/68 legacy preference keys; no settings-file writes, extra daemon, watcher, executor or background polling.
+- On-demand bounded inventories validate Pulse server identity and PW serials. Local routing proves native/Pulse core identity and writes per-stream metadata, never equating Pulse indexes to PW node IDs. Pulse fallback must also confirm actual state.
+- Bounded read-back publishes observed or explicitly unknown state; unavailable/stale/ambiguous targets fail visibly. Refresh after external changes; native-only streams remain an Advanced audio settings case. Profiles/ports require real-session check.
+- Approved existing test edit: exact provider order/set adds audio, retaining all other assertions/timeouts/frozen fixtures. Demo projections preserve the legacy launchpadJobs absence contract.
+- Final full gates at runtime head 0b76136: G0 777/0/173, G1 9/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 polling 1/0/0. Counts are pass/fail/skip; disposable XDG/private Sway/D-Bus.
+- G0 skip change vs main's previous 163: seven new native audio UI cases and three private-audio cases. G1 explicitly runs six of those UI cases plus three existing startup cases. No skipped case is claimed passed.
+- Additional isolated UI/PipeWire run: 7/0/0, including actual UI-to-stream routing. Two separate backend native tests still require owner-approved revisions (AUDIO_TEST_REVIEW.md): raw Pulse move can be overridden; default-sink setup can already move the other app. These remain unapplied/unresolved; do not claim the private backend suite green.
+- qmllint 151 files, 0 errors/71 existing warnings; architecture/catalog/size/Bash/demo checks pass. No new dependency exceptions/cycles; desktop_backend stays 1,630 nonblank lines; new source files stay below 250.
+- Once-per-branch sanity, 10 launches/path/head: preview main/head 693.13/677.95 ms; Settings 736.78/739.81 ms (+3.03). Software-rendered private Sway; medians only, no D1 optimization claim.
+- RSS KiB at T+10s (QS/backend): preview 278436/27160 -> 281832/26064; Settings 230864/25840 -> 231220/26068. Largest increase 1.22%; neither sanity flag fires. Per-process RSS is not aggregate laptop PSS.
+- Adapters: AudioCapabilities/provide_audio import facades and descriptor fallback remain; retire only at zero consumers plus owner-approved equivalent fault coverage. Demo launchpadJobs exclusion retires only after an approved API/fixture change.
+- Intentional additive behavior: ports/profiles/live-stream destinations, manual/open refresh and inline observed errors. No LME per-app routing database or automatic profile/default policy; system WirePlumber may remember routes independently. Existing public APIs/formats remain compatible.
+- Laptop checklist (needs real-session check):
+  1. Open Control Center -> Audio, Refresh; compare devices, profile and current physical input/output ports.
+  2. Select headset/speaker ports and playback/call profiles; verify actual sound/mic and the read-back label.
+  3. Play two apps; move one to headphones and leave the other on speakers; confirm each destination.
+  4. Unplug/reconnect during use; Refresh; verify a clear error/actual state and no stuck pending or wrong target.
+  5. Check existing volume/mute/defaults and Liquid/Smoked/Saver/reopen behavior; restart and check ordinary RAM.
+  6. Disable the audio index entry in a backed-up test checkout: addon disappears, old mixer/layout/settings remain.

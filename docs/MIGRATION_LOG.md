@@ -801,3 +801,16 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Documentation-only verification: G0 764 passed / 0 failed / 163 skipped (927 total), 114.141 s; qmllint 148 files, 0 errors/71 existing warnings. Default skip count unchanged; no new GUI, launch/RSS sanity or profiling round.
 - Runtime/config/tests remain byte-identical to 74d6c5e. No compatibility adapter, persistence protocol, public API or user file changes; existing retirement conditions stay.
 - Decision is appended to PR #42 for owner merge. It does not authorize publishing a release, further migrations or reopening broad audits; future work needs a concrete request/regression. No additional laptop run requested for this accepted milestone.
+
+## Proposed QoL expansion plan — 2026-11-01
+- Branch `docs/qol-expansion-plan`, stacked on accepted PR #42 head `c09c8a4` (runtime `74d6c5e`); main was `5e4a4d8`. Documentation only, no feature implementation or release authorized.
+- Existing acceptance remains 100% (10/10), including the owner's aggregate ordinary-use RAM sign-off. New planning/delivery progress is separate; D1/A6 stay closed/out of scope.
+- QOL_ROADMAP / FEATURE_SPECS / DELIVERY_PLAN / REFERENCE_NOTES distinguish existing functions from sixteen proposals, five optional families, contracts/edge cases, sizing and resource bounds, withdrawal, tests and deferred infrastructure.
+- Nine inspected upstream shells are pinned with source links; borrow flows/contracts, not Go/C++/Rust/native service stacks. No upstream RAM benchmark or drop-in API compatibility is claimed.
+- Recommended first authorization: Q01 Settings jump, Q02 window destination menu, Q03 output cycle; no new durable preferences. Remaining families need separate authorization and additive-contract review.
+- Review clarified numeric-only current OSD, paused timer/preset and same-key edit semantics, and Q10's required under-lock two-key mutation. Stream routing stays gated on actual Pulse/PipeWire identity; history restore never revives native actions.
+- All resource allocations/effort ranges are planning estimates, not measured deltas or spare-headroom claims. No new daemon/poller/executor, quality downgrade, startup profiling or raw evidence tree.
+- Verification: `./scripts/run-gates.sh --env-file /workspace/.lme-dev/env.sh --pointer-dir /workspace/.lme-dev --gates G0`: 764 passed / 0 failed / 163 skipped (927), 114.797 s; same counts as acceptance head. qmllint 148 files, 0 errors / 71 existing warnings; architecture/catalog/Bash/demo checks pass.
+- Skips are unchanged opt-in native Wayland/OpenGL/D-Bus/hardware/helper cases (including five PyGObject/private-D-Bus cases), not passes or evidence for proposed features. No GUI gates or launch/RSS sanity required by STATE for Markdown; no raw gate artifacts committed.
+- Adapters: none introduced/retired; current public facades, Preferences protocol and all retirement conditions stay. Runtime/config/tests remain unchanged; no existing assertion or frozen fixture edited.
+- Laptop checklist: none for this planning branch. Future runtime families carry their scoped <=6-line checklists; no repeat of the accepted baseline is requested.

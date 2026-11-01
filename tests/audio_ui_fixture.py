@@ -27,7 +27,14 @@ OBSERVE = '''
         function choice(name: string): string {
             const field=root.sliceFind(root.sliceSurface,name);
             return JSON.stringify(field?{index:field.currentIndex,text:field.displayText,
-                enabled:field.enabled,disabled:field.disabledIndices}:null);
+                enabled:field.enabled,disabled:field.disabledIndices,popup:field.popup.visible}:null);
+        }
+        function popup(name: string): bool {
+            const field=root.sliceFind(root.sliceSurface,name);
+            if(!field || !field.enabled) return false;field.popup.open();return true;
+        }
+        function cloneAudio(): void {
+            ShellState.snapshot=Object.assign({},ShellState.snapshot,{audioDevices:JSON.parse(JSON.stringify(ShellState.snapshot.audioDevices))});
         }
     }
 '''

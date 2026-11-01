@@ -24,12 +24,18 @@ class NativeAudioBaselineCase(unittest.TestCase):
                     probe.wait(lambda s:not s['panelOpen'])
 
 
+class AudioProbeMixin:
+    def state(self,probe):return json.loads(probe.call('state',target='audioHeadset'))
+
+    def completed(self,probe,action):
+        state=self.state(probe)
+        return state['result'].get('action')==action and not state['result'].get('pending') and not state['pending'].get(action)
+
+
 @unittest.skipUnless(os.environ.get('LME_TEST_AUDIO_UI')=='1','private Wayland audio/headset UI')
 @unittest.skipUnless((Path(__file__).resolve().parents[1]/'qml/panels/AudioHardware.qml').exists(),
     'W1 device UI absent on unmodified baseline')
-class NativeAudioControlsCase(unittest.TestCase):
-    def state(self,probe):return json.loads(probe.call('state',target='audioHeadset'))
-
+class NativeAudioControlsCase(AudioProbeMixin, unittest.TestCase):
     def test_demo_profile_and_app_output_follow_observed_state_and_reopen(self):
         with tempfile.TemporaryDirectory(prefix='audio-demo-') as directory:
             world=AudioWorld(Path(directory));world.fake_audio()
@@ -58,7 +64,7 @@ class NativeAudioControlsCase(unittest.TestCase):
                 self.assertFalse(any(json.loads(line)[0]=='--' for line in world.audio_calls.read_text().splitlines()))
                 data=json.loads(world.audio_file.read_text());data['apply']=False;world.audio_file.write_text(json.dumps(data))
                 self.assertEqual(probe.call('select',name,'1',target='audioHeadset'),'true')
-                probe.wait(lambda _:self.state(probe)['result'].get('action')=='audioProfile' and not self.state(probe)['result'].get('pending'))
+                probe.wait(lambda _:self.completed(probe,'audioProfile'))
                 current=self.state(probe)
                 self.assertFalse(current['result']['ok']);self.assertFalse(current['pending'].get('audioProfile'))
                 self.assertEqual(current['audio']['cards'][0]['activeProfile'],'output:stereo')
@@ -76,7 +82,30 @@ class NativeAudioControlsCase(unittest.TestCase):
                 self.assertFalse(world.audio_calls.exists())
             self.assertEqual(world.settings.read_bytes(),saved)
 
-    @unittest.skipUnless(os.environ.get('LME_TEST_AUDIO_SESSION')=='1','opt-in private virtual PipeWire/Pulse session')
+    def test_caption_shows_the_observed_profile_before_the_menu_has_opened(self):
+        with tempfile.TemporaryDirectory(prefix='audio-label-') as directory:
+            world=AudioWorld(Path(directory));world.fake_audio()
+            with world.launch() as probe:
+                probe.call('open',target='audioHeadset');probe.wait(lambda _:self.state(probe)['audio'].get('available'))
+                field=json.loads(probe.call('choice','audioProfile-card/1/101',target='audioHeadset'))
+                self.assertEqual(field['text'],'High quality playback')
+
+    def test_unrelated_snapshots_preserve_an_open_audio_choice(self):
+        with tempfile.TemporaryDirectory(prefix='audio-stable-') as directory:
+            world=AudioWorld(Path(directory));world.fake_audio()
+            with world.launch() as probe:
+                probe.call('open',target='audioHeadset');probe.wait(lambda _:self.state(probe)['audio'].get('available'))
+                name='audioProfile-card/1/101'
+                self.assertEqual(probe.call('popup',name,target='audioHeadset'),'true')
+                probe.wait(lambda _:json.loads(probe.call('choice',name,target='audioHeadset'))['popup'])
+                probe.call('cloneAudio',target='audioHeadset')
+                self.assertTrue(json.loads(probe.call('choice',name,target='audioHeadset'))['popup'])
+
+
+@unittest.skipUnless(os.environ.get("LME_TEST_AUDIO_UI")=="1","private Wayland audio/headset UI")
+@unittest.skipUnless(os.environ.get("LME_TEST_AUDIO_SESSION")=="1","opt-in private virtual PipeWire/Pulse session")
+@unittest.skipUnless((Path(__file__).resolve().parents[1]/"qml/panels/AudioHardware.qml").exists(),"W1 device UI absent on baseline")
+class NativeAudioSessionUiCase(AudioProbeMixin, unittest.TestCase):
     def test_actual_mixer_selects_a_real_private_stream_destination(self):
         from audio_session_fixture import AudioSession
         with AudioSession() as session,tempfile.TemporaryDirectory(prefix='audio-native-') as directory:
@@ -88,7 +117,7 @@ class NativeAudioControlsCase(unittest.TestCase):
                 model=self.state(probe)['audio'];stream=model['streams'][0];target=next(x for x in model['sinks'] if x['name']=='TestHeadset')
                 index=model['sinks'].index(target)
                 self.assertEqual(probe.call('select','audioRoute-'+stream['id'],str(index),target='audioHeadset'),'true')
-                probe.wait(lambda _:self.state(probe)['result'].get('action')=='audioRoute' and not self.state(probe)['result'].get('pending'))
+                probe.wait(lambda _:self.completed(probe,'audioRoute'))
                 state=self.state(probe)
                 self.assertTrue(state['result']['ok'],state)
                 self.assertEqual(next(x for x in state['audio']['streams'] if x['id']==stream['id'])['sinkId'],target['id'])

@@ -57,6 +57,8 @@ context.objects = [
             self.start([self.tools['wireplumber']])
             self.wait(lambda:len(self.json('list','sinks'))==2)
             self.wait(lambda:self.json('info')['default_sink_name'] in ('TestSpeaker','TestHeadset'))
+            self.pulse('--','set-default-sink','TestSpeaker')
+            self.wait(lambda:self.json('info')['default_sink_name']=='TestSpeaker')
             return self
         except BaseException:
             self.__exit__(None,None,None);raise

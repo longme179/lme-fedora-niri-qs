@@ -44,3 +44,17 @@ class PrivateAudioCase(Fixture,unittest.TestCase):
             self.assertEqual(actual['streams'][0]['sinkId'],target['id'])
             self.assertNotEqual(actual['streams'][1]['sinkId'],target['id'])
             self.assertFalse(live.feature_jobs)
+
+    @unittest.skipUnless((Path(__file__).resolve().parents[1]/'scripts/audio_pipewire.py').exists(),
+        'W1 native routing absent on baseline')
+    def test_explicit_client_target_can_move_to_the_default_sink_without_moving_other_apps(self):
+        with AudioSession() as session,patch.dict(os.environ,session.env):
+            session.streams();session.pulse('--','set-default-sink','TestHeadset')
+            session.wait(lambda:session.json('info')['default_sink_name']=='TestHeadset')
+            from audio_devices import AudioDevices
+            runner=backend.CommandRunner();self.addCleanup(runner.close)
+            devices=AudioDevices(runner.run,runner.available);m=devices.refresh()['state']
+            target=next(s for s in m['sinks'] if s['name']=='TestHeadset')
+            result=devices.change('audioRoute',dict(serverId=m['serverId'],streamId=m['streams'][0]['id'],sinkId=target['id']))
+            self.assertEqual(result['state']['streams'][0]['sinkId'],target['id'])
+            self.assertNotEqual(result['state']['streams'][1]['sinkId'],target['id'])

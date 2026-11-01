@@ -6,6 +6,7 @@ import "../theme"
 
 ComboBox {
     id: root
+    property var disabledIndices: []
     implicitWidth: Math.max(132, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: 40
     leftPadding: 10
@@ -70,6 +71,7 @@ ComboBox {
     delegate: ItemDelegate {
         id: option
         required property int index
+        enabled: root.enabled && !root.disabledIndices.includes(index)
         width: menuList.width
         height: 36
         leftPadding: 12

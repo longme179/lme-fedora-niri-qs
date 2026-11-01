@@ -1,0 +1,17 @@
+{
+  "id": "audio",
+  "sources": [
+    "qml/panels/AudioMixer.qml",
+    "qml/panels/AudioChoice.qml",
+    "qml/panels/AudioHardware.qml",
+    "qml/panels/AudioRoute.qml",
+    "qml/services/VisualizerState.qml",
+    "scripts/audio_visualizer.py",
+    "scripts/audio_actions.py",
+    "scripts/audio_inventory.py",
+    "scripts/audio_devices.py",
+    "scripts/audio_pipewire.py",
+    "scripts/audio_device_actions.py"
+  ],
+  "backend": {"entry": "scripts/audio_device_actions.py", "factory": "provide"}
+}

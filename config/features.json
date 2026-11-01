@@ -15,5 +15,6 @@
 {"id":"mirroring","descriptor":"config/mirroring.json","enabled":true,"startup":{}},
 {"id":"lyrics","descriptor":"config/lyrics.json","enabled":true,"startup":{}},
 {"id":"fileSearch","descriptor":"config/fileSearch.json","enabled":true,"startup":{}},
-{"id":"bluetooth","descriptor":"config/bluetooth.json","enabled":true,"startup":{}}
+{"id":"bluetooth","descriptor":"config/bluetooth.json","enabled":true,"startup":{}},
+{"id":"audio","descriptor":"config/audio.json","enabled":true,"startup":{}}
 ]}

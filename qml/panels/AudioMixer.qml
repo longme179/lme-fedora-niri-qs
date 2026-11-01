@@ -15,13 +15,24 @@ Flickable {
     readonly property var outputs: nodes.filter(node => !node.isStream && node.isSink)
     readonly property var inputs: nodes.filter(node => !node.isStream && !node.isSink)
     readonly property var streams: nodes.filter(node => node.isStream)
+    readonly property bool deviceTools: FeatureCatalog.ready && !FeatureCatalog.error && FeatureCatalog.records.some(record => record.id === "audio" && record.enabled)
+    readonly property var devices: deviceTools ? ShellState.snapshot.audioDevices || {} : {}
+    readonly property bool audioBusy: ["audioDevicesRefresh", "audioPort", "audioProfile", "audioRoute", "bluetoothDevice"].some(action => ShellState.pendingActions[action])
+    readonly property var extraStreams: (devices.streams || []).filter(entry => !streams.some(node => node.ready && String(node.properties["object.serial"]) === entry.serial))
+    property bool initialized: false
+    function refreshDevices() { if (initialized && visible && deviceTools && ShellState.backendReady && !audioBusy) ShellState.run("audioDevicesRefresh"); }
+    Component.onCompleted: { initialized = true; refreshDevices(); }
+    onDeviceToolsChanged: if (deviceTools) refreshDevices()
+    onVisibleChanged: if (visible) refreshDevices()
+    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.refreshDevices(); } }
     PwObjectTracker { objects: root.nodes }
     ScrollBar.vertical: ScrollBar {}
     function label(node) { return node.description || node.nickname || node.name; }
     component MixerRow: Rectangle {
         id: row
         required property var node
-        Layout.fillWidth: true; implicitHeight: 86; radius: 14; color: Theme.surface
+        readonly property var routeEntry: root.deviceTools && node.isStream && node.ready ? (root.devices.streams || []).find(item => item.serial === String(node.properties["object.serial"])) || null : null
+        Layout.fillWidth: true; implicitHeight: routeEntry ? 132 : 86; radius: 14; color: Theme.surface
         ColumnLayout {
             anchors.fill: parent; anchors.margins: 12; spacing: 6
             RowLayout {
@@ -37,6 +48,10 @@ Flickable {
                 onMoved: row.node.audio.volume = value
             }
             Binding { target: level; property: "value"; value: row.node.ready ? row.node.audio.volume : 0; when: !level.pressed; restoreMode: Binding.RestoreNone }
+            Loader {
+                Layout.fillWidth: true; active: !!row.routeEntry; visible: active
+                sourceComponent: Component { AudioRoute { inventory: root.devices; busy: root.audioBusy; entry: row.routeEntry } }
+            }
         }
     }
     ColumnLayout {
@@ -44,6 +59,10 @@ Flickable {
         x: 4; width: parent.width - 8; spacing: 14
         LabelText { text: "Audio devices & mixer"; font.pixelSize: 18; font.weight: Font.Bold; Layout.topMargin: 8 }
         LabelText { Layout.fillWidth: true; text: "Choose default devices and adjust each app independently."; color: Theme.muted; wrapMode: Text.Wrap }
+        Loader {
+            Layout.fillWidth: true; active: root.deviceTools; visible: active
+            sourceComponent: Component { AudioHardware { inventory: root.devices; busy: root.audioBusy; onRefreshRequested: root.refreshDevices() } }
+        }
         LabelText { text: "Output device"; color: Theme.cyan }
         LiquidComboBox {
             Layout.fillWidth: true; enabled: root.outputs.length > 0
@@ -64,6 +83,21 @@ Flickable {
         Repeater { model: root.inputs; delegate: MixerRow { required property var modelData; node: modelData } }
         LabelText { text: "Applications"; color: Theme.accent }
         Repeater { model: root.streams; delegate: MixerRow { required property var modelData; node: modelData } }
+        Repeater {
+            model: root.extraStreams
+            delegate: ColumnLayout {
+                id: extra
+                required property var modelData
+                Layout.fillWidth: true
+                LabelText { text: extra.modelData.title + " · " + extra.modelData.detail; Layout.fillWidth: true; elide: Text.ElideRight }
+                AudioRoute { Layout.fillWidth: true; entry: extra.modelData; inventory: root.devices; busy: root.audioBusy }
+            }
+        }
+        LabelText {
+            visible: root.deviceTools && (root.streams.length > 0 || root.extraStreams.length > 0)
+            text: "Output routing is available for reported PipeWire Pulse playback streams. Native-only or newly started streams may need Refresh or Advanced audio settings."
+            Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12
+        }
         LabelText { visible: root.streams.length === 0; text: "App sliders appear while audio streams are active."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
         LiquidButton { text: "Advanced audio settings"; onClicked: ShellState.run("openSettings", {target: "audio"}); Layout.fillWidth: true }
     }

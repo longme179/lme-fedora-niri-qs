@@ -56,6 +56,13 @@ class AudioInventoryCase(unittest.TestCase):
         d['sinks']=[dict(documents()['sinks'][0],index=i) for i in range(129)]
         with self.assertRaises(ValueError):self.normalize(d)
 
+    def test_malformed_nested_values_raise_validation_errors_not_type_errors(self):
+        for change in (lambda d:d['cards'][0].update(profiles={'broken':None}),
+                       lambda d:d['sinks'][0].update(card=[]),
+                       lambda d:d['sinks'][0]['ports'][0].update(available=0)):
+            d=documents();change(d)
+            with self.subTest(change=change),self.assertRaises(ValueError):self.normalize(d)
+
 
 @unittest.skipUnless(PRESENT,'W1 provider not present on unmodified baseline')
 class AudioDeviceActionsCase(Fixture, unittest.TestCase):
@@ -123,6 +130,19 @@ class AudioDeviceActionsCase(Fixture, unittest.TestCase):
             result=live.handle({'action':'audioDevicesRefresh'})
             self.assertEqual(result['message'],'This action is unavailable in the settings app')
             self.assertEqual(runner.calls,[])
+
+    def test_delayed_policy_confirmation_is_bounded_and_does_not_claim_the_old_route(self):
+        live,runner=self.live();m=self.inventory(live);runner.apply=False;original=runner.run;reads=[]
+        def run(*args,**kwargs):
+            if runner.mutations and args==('pactl','--format=json','list','sink-inputs'):
+                reads.append(1)
+                if len(reads)==5:runner.docs['sink-inputs'][0]['sink']=11
+            return original(*args,**kwargs)
+        runner.run=run
+        with patch('audio_devices.time.sleep',return_value=None):
+            result=complete_action(live,dict(action='audioRoute',serverId=m['serverId'],streamId=m['streams'][0]['id'],sinkId=m['sinks'][1]['id']))
+        self.assertTrue(result['ok'],result)
+        self.assertLessEqual(len(reads),9)
 
     def test_audio_actions_share_admission_and_clear_pending_after_completion(self):
         live,runner=self.live();started=threading.Event();release=threading.Event();original=runner.run

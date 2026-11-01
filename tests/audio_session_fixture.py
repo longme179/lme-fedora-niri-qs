@@ -56,6 +56,7 @@ context.objects = [
             self.wait(lambda:(runtime/'pipewire-0').exists())
             self.start([self.tools['wireplumber']])
             self.wait(lambda:len(self.json('list','sinks'))==2)
+            self.wait(lambda:self.json('info')['default_sink_name'] in ('TestSpeaker','TestHeadset'))
             return self
         except BaseException:
             self.__exit__(None,None,None);raise

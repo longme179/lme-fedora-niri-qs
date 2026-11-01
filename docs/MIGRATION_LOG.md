@@ -830,3 +830,21 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   4. Unplug/reconnect during use; Refresh; verify a clear error/actual state and no stuck pending or wrong target.
   5. Check existing volume/mute/defaults and Liquid/Smoked/Saver/reopen behavior; restart and check ordinary RAM.
   6. Disable the audio index entry in a backed-up test checkout: addon disappears, old mixer/layout/settings remain.
+
+## Launcher application lifetime fix — 2026-11-01
+- Branch fix/launcher-gio-lifetime, main bcbb359; regression tests 0e360af, runtime 4a0fdd0; tests restored within the cap in e19b0d5 after reverting the first test commit in 571d93e. Docs separate; no new workflow/migration authorized.
+- Reproduced with real Gio/private D-Bus and an inert desktop app: gio launch inherits stdout/stderr pipes into the app; the control runner waits three seconds and kills the group. Native reproduction returns gio timed out in 3.107 s; the dummy app is killed. No real Firefox/profile or user session touched.
+- Existing desktop-entry/window characterization: 8/0/0 on unchanged production. Two new unit regressions and one native lifetime regression fail before the fix, then pass after it; no timeout relaxation.
+- Fix: the existing window provider uses runner.spawn([executable('gio'), 'launch', known_desktop_path]). Terminal choice, validated app ID/path, literal-argv fallback, history opt-out, demo/settings admission, result/sequence and desktop metadata remain.
+- Success acknowledges dispatch to Gio, as with other detached app/file paths; later application startup/crashes are outside the control result. OS spawn failures still report an error and do not record usage/retry via fallback. No new daemon/helper/worker, preferences, polling/cache/power or shared-runner timeout changes.
+- Owner-approved assertion updates pin no spawn for invalid IDs and detached Gio for a known entry. Frozen sync-windows JSON changes only calls/spawns in 20 shell/live observations; reverse transformation equals original JSON. Messages/sequences/other commands/demo/Settings rows unchanged.
+- Initial G0 stopped at architecture before units: test_backend 488 > 486 nonblank lines. Reverted the responsible test commit; retained identical approved assertions on existing lines, cap 486. Prior interrupted run is not a full passing gate set; no size policy was raised.
+- Focused final units: 20/0/3; three skipped UI cases explicitly enabled separately: 3/0/0. Real Gio/native lifetime: 1/0/0 (3.248 s), app alive after the old deadline and runner.close(); owned commands pending remains empty.
+- Final full gates at e19b0d5 (runtime 4a0fdd0): G0 793/0/175, G1 9/0/0, G2 4/0/0, G3 53/0/0, G4 34/0/0, G6 1/0/0. Counts pass/fail/skip; G0 skips are main 174 + one new native Gio opt-in, explicitly exercised. qmllint 151 files, 0 errors/71 existing warnings; architecture/catalog/size/Bash/demo checks pass. Disposable XDG/private Sway/D-Bus.
+- One sanity check, ten launches/path/head: preview main/head 678.49/678.06 ms; Settings 739.81/742.63 ms (+2.82). RSS KiB T+10s (QS/backend): preview 279524/27348 -> 279776/26232; Settings 231416/26148 -> 230984/26140. Maximum increase <0.1%; no flag. Software-session per-process RSS is not aggregate laptop PSS evidence.
+- Adapters unchanged; existing WindowCapabilities and registry facades retain their zero-consumer/owner-approved retirement conditions. No source move, new dependency edge/cycle or data migration. Previous roadmap practical acceptance stays 100%; this is a separate reported bugfix.
+- Laptop checklist:
+  1. Update to the fix and restart the shell normally; keep one main instance.
+  2. Close Firefox normally, open it through Launcher and leave it running beyond ten seconds; confirm no gio timeout/forced close.
+  3. Launch Firefox again while open; check app ranking, a terminal desktop entry and file opening still work.
+  4. Restart the shell with Firefox open; confirm the app remains. If it still exits, launch firefox in a terminal and retain its own error output.

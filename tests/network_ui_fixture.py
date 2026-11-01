@@ -8,6 +8,10 @@ from clipboard_slice_fixture import World, Probe
 from network_fixture import data
 
 OBSERVE = '''
+    function networkFind(name) {
+        let top=root.sliceSurface;while(top && top.parent) top=top.parent;
+        return root.sliceFind(top,name);
+    }
     property var networkObservedResult: ({})
     Connections {
         target: ShellState
@@ -21,19 +25,20 @@ OBSERVE = '''
         function open(): void { if(!ShellState.panelOpen) ShellState.togglePanel("wifi"); }
         function close(): void { ShellState.closePanels(); }
         function click(name: string): bool {
-            const button=root.sliceFind(root.sliceSurface,name);
+            const button=root.networkFind(name);
             if(!button || !button.enabled) return false;button.clicked();return true;
         }
         function choose(name: string, index: int): bool {
-            const field=root.sliceFind(root.sliceSurface,name);
+            const field=root.networkFind(name);
             if(!field || !field.enabled) return false;field.currentIndex=index;field.activated(index);return true;
         }
         function send(action: string, payload: string): void { ShellState.run(action,JSON.parse(payload)); }
         function state(): string {
-            const body=root.sliceFind(root.sliceSurface,"networkConnectionsBody");
-            const warning=root.sliceFind(root.sliceSurface,"networkHotspotWarning");
+            const body=root.networkFind("networkConnectionsBody");
+            const warning=root.networkFind("networkHotspotWarning");
+            const button=root.networkFind("networkDetails");
             return JSON.stringify({ready:ShellState.backendReady && FeatureCatalog.ready && Theme.ready,
-                popup:!!body && body.visible, button:!!root.sliceFind(root.sliceSurface,"networkDetails"),
+                popup:!!body && body.visible, button:!!button && button.visible,
                 warning:warning && warning.visible ? warning.text : "",
                 model:ShellState.snapshot.networkConnections || {},pending:ShellState.pendingActions,
                 result:root.networkObservedResult,panelOpen:ShellState.panelOpen});

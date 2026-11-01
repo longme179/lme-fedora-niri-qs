@@ -80,3 +80,28 @@ class NativeNetworkCase(unittest.TestCase):
                 state=probe.wait(lambda s:s['result'].get('action')=='networkRefresh')
                 self.assertEqual(state['result']['message'],'This action is unavailable in the settings app')
                 self.assertFalse(any('connection.uuid' in ' '.join(c) for c in world.commands()))
+
+    def test_hotspot_confirmed_start_reports_actual_ap_without_internet_claim(self):
+        with tempfile.TemporaryDirectory(prefix='network-start-') as d:
+            world=NetworkWorld(Path(d))
+            with world.launch() as probe:
+                self.open(probe);probe.call('click','networkConnect-'+UUIDS[4])
+                probe.wait(lambda s:'disconnect' in s['warning'].lower())
+                self.assertEqual(probe.call('click','networkHotspotConfirm'),'true')
+                state=probe.wait(lambda s:any(a['uuid']==UUIDS[4] for a in s['model'].get('active',[])) and not s['pending'].get('networkHotspotStart'))
+                self.assertTrue(state['result']['ok']);self.assertIn('not verified',state['result']['message'])
+                self.assertTrue(any(a['uuid']==UUIDS[1] for a in state['model']['active']))
+
+    def test_cancel_after_activation_stops_only_the_attempt_and_releases_pending(self):
+        with tempfile.TemporaryDirectory(prefix='network-cancel-') as d:
+            world=NetworkWorld(Path(d));world.update(delay=4)
+            with world.launch() as probe:
+                self.open(probe);probe.call('click','networkConnect-'+UUIDS[2])
+                probe.wait(lambda _:any(a['uuid']==UUIDS[2] for a in json.loads(world.nm.read_text())['model']['active']))
+                self.open(probe)
+                self.assertEqual(probe.call('click','networkCancel'),'true')
+                state=probe.wait(lambda s:not s['pending'].get('networkConnect'))
+                self.assertIn('cancel',state['result']['message'].lower())
+                self.assertFalse(any(a['uuid']==UUIDS[2] for a in state['model']['active']))
+                self.assertTrue(any(a['uuid']==UUIDS[1] for a in state['model']['active']))
+                self.assertFalse(state['model']['operation'])

@@ -517,9 +517,9 @@ class DesktopEntryCase(Fixture, unittest.TestCase):
                                       apps=backend.Applications([self.root / "apps"]),
                                       proc=self.root / "proc", sysfs=self.root / "sys")
         self.assertFalse(live.handle({"action": "launch", "id": "../../malicious.desktop"})["ok"])
-        self.assertEqual(runner.calls, [])
+        self.assertEqual(runner.calls, []); self.assertEqual(runner.spawns, [])
         self.assertTrue(live.handle({"action": "launch", "id": "safe.desktop"})["ok"])
-        self.assertEqual(runner.calls, [("gio", "launch", str(path.resolve()))])
+        self.assertEqual(runner.calls, []); self.assertEqual(runner.spawns, [["/usr/bin/gio", "launch", str(path.resolve())]])
 
     def test_terminal_app_honors_user_choice_even_with_gio_installed(self):
         self.desktop("apps/console.desktop", Type="Application", Name="Console", Terminal="true",

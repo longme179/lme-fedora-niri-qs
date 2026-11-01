@@ -5,6 +5,15 @@ from clipboard_slice_fixture import World
 from audio_device_fixture import documents
 
 OBSERVE = '''
+    property var audioObservedResult: ({})
+    Connections {
+        target: ShellState
+        function onLastResultChanged() {
+            const result = ShellState.lastResult;
+            if (["audioDevicesRefresh", "audioPort", "audioProfile", "audioRoute"].includes(result.action))
+                root.audioObservedResult = Object.assign({}, result);
+        }
+    }
     IpcHandler {
         target: "audioHeadset"
         function state(): string {
@@ -15,7 +24,7 @@ OBSERVE = '''
                 labels: names.filter(name => !!root.sliceFind(root.sliceSurface,name)),
                 fields: fields.filter(name => !!root.sliceFind(root.sliceSurface,name)),
                 audio: ShellState.snapshot.audioDevices || {}, pending: ShellState.pendingActions,
-                result: ShellState.lastResult, progress: root.sliceProgress});
+                result: root.audioObservedResult.action ? root.audioObservedResult : ShellState.lastResult, progress: root.sliceProgress});
         }
         function open(): void { ShellState.selectControlTab("audio"); ShellState.togglePanel("control"); }
         function send(action: string, request: string): void { ShellState.run(action,JSON.parse(request)); }

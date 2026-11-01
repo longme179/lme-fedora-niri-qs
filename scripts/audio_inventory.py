@@ -50,7 +50,9 @@ def options(values):
     result=[]
     for item in values:
         if not isinstance(item,dict): raise ValueError('Invalid audio option')
-        key=name(item.get('name'));available=item.get('available','unknown')
+        key=name(item.get('name'));available=item.get('availability',item.get('available','unknown'))
+        if type(available) is str:
+            available={'available':'yes','not available':'no','availability unknown':'unknown'}.get(available,available)
         if not (available is None or type(available) is bool or type(available) is str and available in ('yes','no','unknown')):
             raise ValueError('Invalid audio availability')
         result.append(dict(name=key,title=label(item.get('description'),key),available=available not in ('no',False)))

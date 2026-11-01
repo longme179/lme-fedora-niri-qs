@@ -35,7 +35,7 @@ def interface(value):
 
 
 def path(value, kind):
-    if not isinstance(value, str) or not re.fullmatch(re.escape(BASE+kind+'/')+r'[0-9]+', value):
+    if not isinstance(value, str) or len(value) > 256 or not re.fullmatch(re.escape(BASE+kind+'/')+r'[0-9]+', value):
         raise ValueError('Invalid NetworkManager object identity')
     return value
 
@@ -147,7 +147,8 @@ def inventory(server, device_raw, rows, detail_raw, radio_raw, split):
         raise ValueError('Ambiguous or oversized active connections')
     model = dict(available=True, serverId=server, devices=devs, profiles=profiles, active=active,
                  error='', notice='', hotspotPlan=None)
-    if len(json.dumps(model, ensure_ascii=True).encode()) > 128*1024: raise ValueError('Network metadata exceeds 128 KiB')
+    # Leave room for the bounded operation/retry identifiers installed by the owner.
+    if len(json.dumps(model, ensure_ascii=True).encode()) > 126*1024: raise ValueError('Network metadata exceeds 128 KiB')
     return model
 
 

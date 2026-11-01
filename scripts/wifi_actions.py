@@ -108,6 +108,9 @@ def provide_connections(cap):
             observed = getattr(value, 'state', None)
             model = dict(observed or dict(available=False, devices=[], profiles=[], active=[], hotspotPlan=None), error=str(value)[:400])
         else: model = value['state']
+        previous = state.get('value', {}).get('lastRequest', {})
+        hint = {k: current[k] for k in ('serverId', 'action', 'uuid', 'deviceId')} if current and action in CONNECTION_MUTATIONS else previous
+        if hint and hint.get('serverId') == model.get('serverId'): model['lastRequest'] = hint
         state['value'] = model
         if action in CONNECTION_MUTATIONS: current = None
 
@@ -118,7 +121,7 @@ def provide_connections(cap):
         if any(name in pending for name in CONNECTION_ACTIONS) or busy(action, pending):
             raise ValueError('This operation is already running')
         if action in CONNECTION_MUTATIONS:
-            current = dict(action=action, uuid=request['uuid'], deviceId=request.get('deviceId', ''), cancel=Event(), done=Event())
+            current = dict(serverId=request['serverId'], action=action, uuid=request['uuid'], deviceId=request.get('deviceId', ''), cancel=Event(), done=Event())
             attempt = current
             def operation():
                 try:

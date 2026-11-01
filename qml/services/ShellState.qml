@@ -155,7 +155,7 @@ QtObject {
         }
         // Release the layer-shell keyboard grab before any external agent opens.
         // The built-in Polkit agent also closes panels for requests from apps.
-        if (action === "imageAnnotate" || action === "chargeMode" && !demo) closePanels();
+        if (action === "imageAnnotate" || action === "chargeMode" && !demo || ["networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].includes(action)) closePanels();
         let sent;
         try { sent = Pending.sent(pendingState, action); }
         catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
@@ -205,7 +205,7 @@ QtObject {
                 lastResult = next.lastResult;
                 if (String(next.lastResult.action).startsWith("wifi") && next.lastResult.action !== "wifiWatch") wifiResult = next.lastResult;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
+                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

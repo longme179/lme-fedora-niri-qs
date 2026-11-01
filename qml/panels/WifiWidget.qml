@@ -8,13 +8,16 @@ import "../theme"
 ColumnLayout {
     id: root
     Component.onCompleted: ShellState.watchWifi(root, visible)
-    onVisibleChanged: { ShellState.watchWifi(root, visible); if (!visible) { forgetUuid = ""; if (connectionDialog) connectionDialog.close(); } }
+    onVisibleChanged: { ShellState.watchWifi(root, visible); if (!visible) { forgetUuid = ""; networkDetailsActive = false; if (connectionDialog) connectionDialog.close(); } }
     Component.onDestruction: ShellState.watchWifi(root, false)
     spacing: 12
     readonly property var network: ShellState.system.network || {}
     readonly property bool connected: network.wifiConnected === undefined ? !!network.connected : !!network.wifiConnected
     readonly property var result: ShellState.wifiResult || {}
-    readonly property bool busy: ["wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle"].some(a => ShellState.pendingActions[a])
+    readonly property bool busy: ["wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle", "networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].some(a => ShellState.pendingActions[a])
+    readonly property bool connectionsEnabled: FeatureCatalog.ready && !FeatureCatalog.error && FeatureCatalog.records.some(record => record.id === "wifi" && record.enabled)
+    property bool networkDetailsActive: false
+    onConnectionsEnabledChanged: if (!connectionsEnabled) networkDetailsActive = false
     property var selectedNetwork: null
     property string selectedDevice: ""
     property string connectAction: ""
@@ -51,6 +54,19 @@ ColumnLayout {
         text: root.result.pending ? "Connecting or updating networks…" : root.result.message || ""
         color: root.result.ok === false ? Theme.red : Theme.muted
         Layout.fillWidth: true; wrapMode: Text.Wrap
+    }
+    LiquidButton {
+        objectName: "networkDetails"; text: "VPN, Ethernet & hotspot"; Layout.fillWidth: true
+        visible: root.connectionsEnabled; onClicked: root.networkDetailsActive = true
+    }
+    Loader {
+        active: root.networkDetailsActive && root.connectionsEnabled
+        sourceComponent: Component {
+            NetworkConnectionsPopup {
+                Component.onCompleted: open()
+                onClosed: root.networkDetailsActive = false
+            }
+        }
     }
     Repeater {
         model: root.network.enabled ? root.network.networks || [] : []

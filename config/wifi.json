@@ -7,7 +7,9 @@
     "scripts/network_plans.py",
     "scripts/network_profiles.py",
     "qml/panels/WifiWidget.qml",
-    "qml/panels/WifiPanel.qml"
+    "qml/panels/WifiPanel.qml",
+    "qml/panels/NetworkConnectionsPopup.qml",
+    "qml/panels/NetworkProfilesGroup.qml"
   ],
   "backend": {
     "entry": "scripts/wifi_actions.py",

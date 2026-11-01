@@ -20,8 +20,10 @@ class PrivateAudioCase(Fixture,unittest.TestCase):
                 for o in dump if o['type']=='PipeWire:Interface:Node'}
             for item in before:self.assertIn(item['properties']['object.serial'],nodes)
             self.assertTrue(any(item['index']!=nodes[item['properties']['object.serial']] for item in before))
-            target=next(s['index'] for s in session.json('list','sinks') if s['name']=='TestHeadset')
-            session.pulse('--','move-sink-input',str(stream['index']),str(target))
+            from audio_pipewire import route_plan, apply_route
+            sink=next(s for s in session.json('list','sinks') if s['name']=='TestHeadset');target=sink['index']
+            route=route_plan(session.json('info'),dump,stream['properties']['object.serial'],sink['properties']['object.serial'])
+            apply_route(lambda *argv:subprocess.check_output(argv,env=session.env,text=True,timeout=3),route)
             session.wait(lambda:next(s for s in session.json('list','sink-inputs') if s['index']==stream['index'])['sink']==target)
             after=session.json('list','sink-inputs')
             self.assertEqual(next(s for s in after if s['index']==other['index'])['sink'],other['sink'])
@@ -57,4 +59,4 @@ class PrivateAudioCase(Fixture,unittest.TestCase):
             target=next(s for s in m['sinks'] if s['name']=='TestHeadset')
             result=devices.change('audioRoute',dict(serverId=m['serverId'],streamId=m['streams'][0]['id'],sinkId=target['id']))
             self.assertEqual(result['state']['streams'][0]['sinkId'],target['id'])
-            self.assertNotEqual(result['state']['streams'][1]['sinkId'],target['id'])
+            self.assertEqual(result['state']['streams'][1]['sinkId'],m['streams'][1]['sinkId'])

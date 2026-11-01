@@ -12,7 +12,7 @@ import unittest
 
 class AudioSession:
     def __enter__(self):
-        self.tools={name:shutil.which(name) for name in ('pipewire','wireplumber','pactl','pacat','pw-dump')}
+        self.tools={name:shutil.which(name) for name in ('pipewire','wireplumber','pactl','pacat','pw-dump','pw-metadata')}
         if not all(self.tools.values()): raise unittest.SkipTest('private audio requires PipeWire, WirePlumber and pulseaudio-utils test tools')
         self.temp=tempfile.TemporaryDirectory(prefix='audio-session-');self.root=Path(self.temp.name)
         self.env=dict(os.environ);self.processes=[];self.logs=[]

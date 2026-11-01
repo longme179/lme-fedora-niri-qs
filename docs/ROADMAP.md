@@ -152,6 +152,8 @@ Next authorization should name one boundary above, not reopen the entire project
 
 The owner requested planning for useful new features after accepting the roadmap
 above. [QOL_ROADMAP.md](QOL_ROADMAP.md) separates existing functionality from
-sixteen proposed increments, with detailed contracts, upstream source notes,
-resource bounds and family-level delivery plans. This is planning only; it does
+six substantive workflows (audio, network, displays, removable media, work sets
+and personal-data recovery), with detailed contracts, upstream source notes,
+resource bounds and delivery plans. Small shortcuts stay supporting backlog.
+This is planning only; it does
 not reopen the 100% acceptance denominator or authorize runtime implementation.

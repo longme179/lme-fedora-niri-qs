@@ -1,197 +1,151 @@
-# Delivering QoL without growing another shell inside LME
+# Delivery and resource plan for substantive workflows
 
-2026-11-01. Planning companion to [QOL_ROADMAP.md](QOL_ROADMAP.md).
-No runtime changes, milestone authorization or new standing gate is introduced.
-Ponytail keeps the implementation small; Balanced Coupling keeps domain rules
-with their owner and stable infrastructure shared.
+2026-11-01, revision 2. Companion to [the revised roadmap](QOL_ROADMAP.md).
+Planning only. This replaces the earlier A–E shortcut-family delivery order.
+Ponytail keeps scope small; Modularity keeps rules/state with their domain owner.
+Neither skill adds an audit bureaucracy or runtime service.
 
-## Ownership and change surface
+## Work by vertical workflow
 
-| Candidate | Domain owner / existing seam | Allowed composition touch |
+| Workflow | First useful branch scope | Prior proof / existing owner |
 | --- | --- | --- |
-| Q01–Q02 | Launcher result/menu helpers; SettingsRegistry/shared page opener; existing window provider | Launcher delegates typed activation; no domain code in SettingsView |
-| Q03 | Shared audio service, current PipeWire model/OSD | AudioMixer/optional BarGestures delegate; additive text/status OSD variant |
-| Q04 | Desktop-entry parsing + existing application/window launch owner | Launcher menu, narrow provider binding |
-| Q05 | Capture controller/export state and capture action provider | ScreenshotEditor delegates validated token operation |
-| Q06 | FocusTimer + preset schema/editor | Existing TimerWidget loads own editor |
-| Q07 | Clipboard worker/state + composition reducer | ClipboardPanel selection UI only |
-| Q08–Q10 | Notifications admission/history/reducer + existing schema | Center/group menu; no separate notification daemon |
-| Q11 | Compositor state/parser + layout action, own bar entry | Existing niri stream delegates keyboard events |
-| Q12 | BlueZ device action owner | Existing Devices menu; shared battery values only |
-| Q13–Q14 | Audio identity/parser/action owner | Mixer consumes service; no Bluetooth implementation import |
-| Q15 | Display profiles + existing transaction/layout service | Existing Displays page, no direct Saver/Mirror imports |
-| Q16 | NetworkManager profile/action owner | Network details and existing network mutation admission |
+| W1 Audio | Ports, profiles, supported live-stream destination and observed outcomes | Pulse/PW mapping; existing audio provider/PipeWire model |
+| W2 Network | Saved VPN, wired profiles, common conflict/error handling; hotspot separately | NM UUID/device/auth; existing nmcli/Wi-Fi admission |
+| W3 Displays | Save/manage, topology review, protected profile recall | Existing DisplayControl/layout/watchdog |
+| W4 Removable media | Inventory, mount/open, safe-remove with busy/auth/sibling handling | UDisks/identity/auth capability; new domain owner |
+| W5 Work sets | Definitions, reviewed app launch/reuse, per-entry outcome; placement gated | Shared launch primitive + exact window association |
+| W6 Personal recovery | Domain selection, snapshots, validated per-domain restore | Existing settings export + Notes/Notifications owner readiness; Clipboard later |
 
-Keep existing files in place; own new helpers may live in feature folders or
-beside their domain. Prefer extending an existing owner over inventing a second
-provider for the same rules. Extend the owning descriptor when available. A
-genuinely new owner gets one descriptor/index entry; `startup:{}` can declare
-source/schema/backend ownership without converting legacy pages/bar modules.
-Use validated `after` anchors for new visible entries; do not reorder saved
-layouts or duplicate a legacy registration. Runtime/source/schema withdrawal
-semantics follow the current catalog contract, not a new global kill switch.
+A feature is complete when its task-level acceptance scenario works, not when a
+panel loads. Unsupported sub-capabilities remain visible limitations. Small menus,
+search shortcuts and keyboard affordances are subordinate to that useful slice.
+Do not force unrelated workflows into a branch to hit a feature count.
 
-Existing catalog kinds do not express executable command menus. Do not insert
-callbacks into JSON or create a competing command registry. Q01 uses typed
-result activation and existing services; Q03 may need one small explicit gesture
-host delegate. A general command palette is deferred until a separate contract
-is justified. New helpers cannot become an excuse to convert core legacy UI.
+## Architecture and composition
 
-For backend actions, reuse ActionSpec/providers, narrow capabilities, existing
-two-worker pool, PreparedWork/complete/presentation and result emitter. Use a
-worker for blocking system I/O, never hide a blocking busctl/nmcli/pactl call in
-the coordinator. Discovery remains the existing composition mechanism. If an
-existing owner lacks a descriptor backend binding, keep a narrow explicit root
-binding rather than inventing automatic imports. No new registry extension is
-assumed. `desktop_backend.py` cannot grow beyond its current size ceiling.
+- Extend the existing domain descriptor when it exists; new domains get own
+  sources/provider/entry/schema plus one positioned index entry. No competing
+  plugin/command registry or executable JSON. New startup metadata need not
+  convert legacy host pages/bar modules. Keep existing files/IDs/order in place.
+- Feature implementation imports own files and shared/service APIs only.
+  Composition roots inject narrow capabilities, never DesktopBackend. Hosts
+  delegate; no new domain algorithm in the coordinator or unrelated SettingsView.
+- Existing ActionSpec/PreparedWork/complete/presentation, worker pool (two),
+  admission and completion emitter remain. Blocking I/O stays off coordinator.
+  No new executor/job table/queue, universal bus or backend per widget. A bounded
+  work-set plan is a domain operation, not a second persistent scheduler.
+- Shared service extractions are justified only by actual reuse: application
+  launch semantics for W5, normalized system-device identity for W1/W4, existing
+  display transaction for W3. Characterize first; do not relabel private feature
+  rules as shared to bypass the dependency guard. No new exception/cycle.
+- No file tree reorganization. New source files <=250 nonblank lines; existing
+  large files cannot grow. Parser/state/IO boundaries should be independently
+  testable without system devices. Keep public facades and current retirement rules.
 
-The dependency guard must show no new feature-to-feature edge/cycle/exception.
-Allowed: Launcher -> shared SettingsRegistry/ShellState; Audio -> shared runner;
-Bluetooth -> shared peripheral values; Display -> shared layout. Disallowed:
-Audio -> BluetoothState implementation; Utilities -> new copy of every domain;
-Display profiles -> BatterySaver private internals. Use existing host-owned
-admission/services instead. Do not relabel feature internals “shared” merely
-to make the guard green.
+## Data and compatibility
 
-## Data, result and failure contracts
+Only W3 displayProfiles, W5 workSets and W6's additive bundle need new durable
+formats in the first proposed slices. W1/W2/W4 use current system authority/state;
+no shell credential store or persistent device-route policy. All names/formats in
+specifications are proposals to approve before coding, not changed contracts.
 
-- Settings remain one flat settings.json. New keys live in descriptor schema
-  fragments, with named validators/resolvers and explicit portable/appearance
-  membership; default deny export. Preserve lock -> reload -> merge/token patch
-  -> fsync -> atomic replace, permissions, backups and last-valid reload.
-- Proposed durable data is limited to Q06 presets, Q10 expiry rules and Q15
-  profiles. The others are session-derived or stored by the existing OS authority.
-  No per-frame/tick writes, second settings writer or hidden durable search log.
-- Q10 requires an explicit notification-owned under-lock mutation of its two
-  mute keys; the current generic theme-token path is not such an API. This is
-  an additive contract prerequisite, not permission to replace Preferences.
-  Q06 whole-list edits retain current per-key last-writer-wins semantics.
-- History/selection/undo buffers are bounded metadata, never live native handles
-  or decoded images. Disabled features retain settings/history/saved layout IDs.
-  Removing a menu cannot silently clear BlueZ pairing or user files.
-- `clientSerial`, ack sequence and actionPending are ownership/watermark signals;
-  global lastResult is not a reliable per-intent receipt for arbitrary Undo.
-  Q01/Q02 use existing navigation/actions without promising transactional Undo;
-  Q09 owns its synchronous in-memory history mutation. Q05 uses current capture
-  token/savedPath. Later complex result UI must specify exact domain correlation
-  before coding; no generic receipt framework is pre-authorized.
-- Error after side effect/read-back failure means unconfirmed state, not a safe
-  invitation to retry. Destructive operations require explicit confirmation;
-  no automatic retries for Forget, profile apply, clipboard write or VPN auth.
-  Busy/cancel/error clears pending through the existing owner and completion path.
-- Existing public IPC/CLI/env/import/result shapes remain compatible. Proposed
-  new actions/keys/gesture IDs are additive contracts to approve with each family.
-  No default hotkey/config rewrite; optional binding examples use safe deployment
-  workflow and explicit user invocation, never silently patch real niri files.
+Preferences stay one flat settings.json and one schema assembled from fragments.
+Explicit portable/appearance membership defaults deny. Preserve lock -> reload ->
+merge/token patch -> fsync -> atomic replace, backups/permissions and last-valid
+reload. New domain map edits need an explicit under-lock reducer if they promise
+entry-level merging; a stale full map is not made safe by file atomicity alone.
 
-## Resource envelope and arithmetic
+Existing JSON settings imports/deploy rollback do not change for W6. New private
+personal-data bundle is independent/additive, previewed and validated; no archive
+extraction to arbitrary paths, secret export or blind overwrite behind live owners.
+Cross-domain atomic restore is explicitly NOT promised. Each domain owns its
+snapshot/commit/recovery, and partially completed restoration remains actionable.
+Readiness acknowledgment alone is insufficient: owner revision/reservation must
+remain valid through preflight backup and commit, including delayed autosave.
+Unsupported reservation/external-writer conflicts get manual-copy recovery rather
+than an unsafe overwrite or claimed universal filesystem CAS.
 
-Owner practical acceptance (aggregate ordinary use <=400 MB) is not a new PSS
-sample and does not quantify spare headroom. Do not subtract it from a VM RSS
-number. These **raw metadata caps** guide implementation; JS/Python/QML object
-overhead, allocator retention, Qt rendering and temporary commands cost more.
+ActionPending/clientSerial/global lastResult do not provide a generic exact-intent
+receipt for every UI. Reuse exact domain token/sequence where available; explicitly
+specify correlation for new multi-step plans before implementing progress/Retry.
+Ack is not completion, requested profile is not actual device state, and failure
+after a side effect is not permission for an automatic retry or fallback mutation.
 
-| Family | Additional retained raw metadata design cap | Bounded transient payloads | Resident process / periodic timer increase |
-| --- | --- | --- | --- |
-| A | ~16 KiB audio identities; registry data already shared | <=144 KiB result/menu/device metadata | 0 / 0 |
-| B | <=12 KiB presets + current saved-path receipt | <=204 KiB selected action/capture/compose data | 0 / 0 |
-| C | <=16 KiB timed rules; collapse/undo released on close | <=288 KiB group/restore/rule data | 0 / 0 |
-| D | <=80 KiB layout model + bounded event buffer | <=272 KiB layout/device/profile metadata | 0 / 0 |
-| E | <=64 KiB saved display profiles | <=256 KiB route/profile/VPN metadata | 0 / 0 |
+## Resource envelope: bounds, not invented headroom
 
-The conservative payload sum is **<=188 KiB retained** and **<=1,164 KiB
-transient** across all candidate families, before runtime object overhead.
-This deliberately overcounts several mutually exclusive menus but **does not**
-bound total PSS: menu textures, loaded code, shared models and command buffers
-still matter. Q09 targets <2 MiB object allocation; Q13/Q14 each target <=3 MiB
-active addition, all unmeasured. Use caps to reject oversize input before work,
-not to truncate silently or claim exact physical memory usage.
+Accepted ordinary-use aggregate RAM remains <=400 MB steady / <=500 MB active,
+including main QS/backend, owned workers and open Settings/backend. The owner's
+btop acceptance is not a newly instrumented baseline and reveals no precise spare
+headroom. Do not subtract VM RSS from that observation or re-open D1 profiling.
 
-For new native/command inventories, request only needed fields, enforce runner
-output limits, and treat truncated/invalid output as unavailable. No large CLI
-JSON copied into each periodic snapshot; publish only the normalized domain
-state needed by the visible UI. Static metadata stays in the catalog, not in
-every snapshot. No separate icon/screenshot cache or thumbnail preloading.
+| Workflow | Normalized metadata / retention bound | Heavy operation and release rule |
+| --- | --- | --- |
+| W1 | <=128 records / <=256 KiB inventory, only current needed state | Bounded pactl query/action/read-back; discard stale node refs and closed detail models |
+| W2 | <=64 saved non-Wi-Fi profiles / <=128 KiB, existing Wi-Fi not duplicated | One admitted adapter/profile mutation; no monitor or credential retention |
+| W3 | <=16 profiles, 8 outputs/profile, <=64 KiB persisted payload | Reuse current preview/watchdog; no extra process lifetime |
+| W4 | <=32 drives/128 volumes / <=256 KiB normalized view | On-demand UDisks calls; no file crawl, new agent or LME daemon |
+| W5 | <=12 sets/12 entries each / <=64 KiB definitions; one active plan | Launch user payloads through existing service; no second scheduler or hidden retries |
+| W6 | <=1 MiB preview; <=256 MiB uncompressed bundle preflight | Stream <=256 KiB chunks; SQLite/parser overhead separate; remove staging on error |
 
-Before committing to a family, inspect the affected model/layer lifetime. While
-closed, release submenu delegates, undo snapshots, tracker consumers and receipts
-at their stated scope. Keep shared service objects that truly have other users;
-do not tear down the backend or user jobs to reduce one menu's number.
-One-shot operation deadlines are permitted for bounded user actions; no additional
-periodic sampler, expiry sweeper or timer per view. Existing clock/cadence stays.
+These caps limit inputs/retention, not physical memory. Python/JS/QML allocations,
+Qt layers and SQLite page cache cost more than serialized bytes. Device enumeration
+must be complete for a mutation: if capped/truncated, refuse rather than acting on
+a partial sibling/profile inventory. Streaming a large archive is not loading it
+all into RAM. Disk-space exhaustion and runtime command-output limits are tested.
 
-The acceptance inequalities remain:
+Zero added LME resident process/periodic timer is the design requirement. Existing
+NM/PipeWire/BlueZ/UDisks are shared OS services; UDisks is an explicitly disclosed
+optional prerequisite, not a new free helper or silently installed daemon. Count
+owned workers/temporary operation overhead honestly. User-launched app sets and
+external auth/file managers are payloads, reported separately rather than omitted.
 
-`steady baseline + retained additions <= 400 MB`
+Use existing models/icon providers/backdrops. No new icon/image cache, preview
+thumbnails, full-resolution texture retention, duplicate full-screen blur or lower
+quality/Jelly animation. New UI respects effective Material/reduced-motion policy
+in Battery Saver and never rewrites saved appearance settings to fit a budget.
 
-`ordinary active baseline + concurrent additions <= 500 MB`
+For a future runtime branch, use STATE's one ordinary sanity check and existing
+accepted-use envelope; if additions do not fit, reduce scope/retention or defer.
+No new all-features-at-once stress gate, memory profiler or startup-CI campaign.
 
-Count main QS/backend, owned workers and open standalone Settings/backend.
-Do not sum individual RSS as if it were unique memory; PSS is optional diagnostic
-evidence when needed, not a reopened baseline sign-off. User-launched file manager,
-audio editor and heavy temporary capture/record/upscale payloads must be labeled
-separately and never hidden. No all-features-at-once stress gate is introduced.
-If actual headroom is insufficient, reduce scope/retention or defer a candidate;
-do not reduce blur quality, texture resolution or animation to make room.
+## Per-branch execution after authorization
 
-## Integration checklist for each family
+1. Approve one named workflow and its additive contracts; confirm actual-use
+   relevance for conditional hardware. Run its short capability check first.
+   If identity/auth cannot be proven, narrow/report the scope rather than guess.
+2. Add characterization on unchanged production code. New behavior cases fail or
+   are explicitly N/A before implementation. No existing assertion/fixture edits
+   without approval. Separate tests, implementation and docs commits.
+3. Implement cohesive slices through existing owners/services. During work use
+   G0 + affected units; QML also G1 + relevant native case. Disposable XDG/private
+   Sway/D-Bus only. Revert a failing committed step rather than fixing forward.
+4. On final runtime head run G0–G4 + G6 polling once; report pass/fail/skip counts
+   and reasons. One sanity: ten preview/Settings launches main vs head, medians
+   only; QS/backend RSS at T+10 s. Existing stop flags: >+100 ms Settings / >+10% RSS.
+5. Review actual resource/lifecycle ownership and scoped laptop behavior. Record
+   <=30-line migration entry with adapters/retirement and <=6-line laptop checklist.
+   Owner reviews/merges. Next workflow is a new authorization, not automatic scope.
 
-| Shared concern | Required behavior |
-| --- | --- |
-| Liquid / Smoked / Material | Existing controls/tokens, no new contrast/inverted-black selected-text rule |
-| Battery Saver | Effective no-blur/no-animation/material policy honored; new UI does not rewrite saved appearance/brightness |
-| Open/close | Reuse popup host, backdrop/Jelly lifetime and input grabs; no duplicate offscreen FBO for a menu |
-| Settings startup | Existing first-frame readiness, openPage confirmation, startupPending and instance reuse |
-| Concurrent UI | Main + standalone Settings share lock/merge; stale writers cannot drop unrelated keys |
-| Disabled catalog entry | Hide affordance, preserve saved IDs/data; no dead Gear link or new work; retain current action/controller policy |
-| Screen sharing / auth | Existing DND/suppression and input-grab release; no secret/notification leakage |
-| External changes | Revalidate live IDs; no optimistic policy success, stale object reference or blind restore |
-| Demo / preview | No real device mutation/process/user-file write; use existing demo bootstrap rules |
-| Accessibility | Tab/arrow/Menu/Escape paths, focus restoration, accessible names/state; no color-only status or hover-only action |
+Hardware validation is essential but proportionate: W1 actual headset/routing,
+W2 actual NM/keyring/AP, W3 actual output/hotplug, W4 actual USB/SD/auth, W5 actual
+niri window association, W6 actual owner coordination. Mark each “needs real-session
+check” until run; a mocked success or skipped native test does not prove it.
 
-## Implementation sequence after explicit authorization
+## Recommended first authorization: W1
 
-1. Confirm selected family's scope/defaults and list additive contracts from its
-   cards. Characterize current routes/data/error messages first on unchanged
-   production code. New behavior cases should fail or be explicitly N/A before
-   implementation; do not edit an existing assertion without asking.
-2. Commit characterization; then small domain-owned implementation commits, one
-   feature at a time. Tests and public docs travel with each feature. Reuse the
-   registry/service rather than extending the root switch. Revert a failing
-   committed step instead of stacking corrective implementation commits.
-3. While working, Python: G0 + relevant units; QML: G0 + G1 + relevant native
-   case. Use disposable XDG/private Sway/D-Bus/copied checkouts. No real config,
-   running shell or physical-device mutation in the test harness.
-4. On final runtime head, run G0–G4 and G6 polling once. Report actual pass/fail/
-   skip counts and reasons. One branch sanity: ten preview/Settings launches,
-   main vs head medians only, QS/backend RSS at T+10 s. Stop for the existing
-   >+100 ms Settings or >+10% RSS flags; no D1 statistics or raw evidence trees.
-5. Record <=30-line migration entry, adapter retirement conditions and <=6-line
-   laptop checklist. Hardware checks say “needs real-session check” until the
-   owner runs them. Owner reviews/merges; next family needs a new authorization.
+Capability check: identify real server/streams/sinks/cards, prove stable mappings
+and profile read-back. Then ports/profile controls and supported live-stream routes
+in one bounded audio branch. Keep current defaults, volume/mute, Bluetooth pending
+and theme behavior unchanged. Do not implement persistent app policy or Follow
+default unless its distinct metadata-clearing contract is separately proven.
 
-Suggested family-A unit/native cases are named in the cards. Notification work
-also reuses history persistence/retry and capture annotation cases; audio uses
-hotplug/read-back fixtures; Q15 retains display watchdog/Saver regression; Q16
-retains network mutation/redaction cases. Never report a skipped native test as
-proof of real Bluetooth/Pulse/NM/monitor behavior.
+Laptop checklist for that future branch (max six lines):
+1. Use wired/Bluetooth headphones and speakers; inspect actual ports/profiles.
+2. Change a supported port/profile; verify real audio and visible read-back.
+3. Route two supported active apps to different sinks; verify by listening/state.
+4. Disconnect/reconnect during a selection; no wrong target or stuck pending.
+5. Use a microphone/call; no automatic profile switch or hidden mute change.
+6. Close/reopen with Liquid/Saver/Settings; normal RAM and lifecycle remain intact.
 
-## First-family acceptance and review packet
-
-- Q01 finds exactly available Settings pages and opens the right one in the
-  current theme without another Settings instance; app ranking stays unchanged.
-- Q02 moves only the selected live window to the chosen live workspace, with
-  existing focus:false behavior and usable keyboard/focus recovery.
-- Q03 cycles only ready outputs, confirms actual default and never changes mic,
-  default gestures or audio profile. Status OSD preserves numeric OSD behavior;
-  disabled OSD has inline/status fallback. Unsupported state gives useful feedback.
-- No new resident process/periodic timer/dependency exception. Gate counts,
-  branch sanity and ordinary-use memory are honestly scoped; no savings claimed
-  without measurement. Existing glass/animations remain visually equivalent.
-- Proposed laptop checklist: (1) Launcher `,` query → existing Settings; (2)
-  disabled page absent; (3) `@` move + Esc/focus; (4) output cycle/unplug;
-  (5) Liquid/Saver/restore; (6) restart + ordinary main/Settings use.
-
-The planning branch itself runs **G0 only**, once, per STATE. No launch/RSS,
-native-device test or benchmark is needed for Markdown. Its final migration
-entry records that limited verification; no runtime behavior changed.
+The current branch changes Markdown only: G0 once, no native gates or launch/RSS
+sanity. This verification cannot establish any of the proposed runtime capabilities.

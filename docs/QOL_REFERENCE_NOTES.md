@@ -1,9 +1,12 @@
 # QoL reference notes
 
-2026-11-01. Source inspection only; no upstream shell was benchmarked or run.
+2026-11-01, revised for substantive workflows W1–W6. Source inspection only;
+no upstream shell was benchmarked or run.
 Pins identify researched snapshots, not recommended dependency versions. The
-owner's existing LME roadmap/RAM acceptance remains closed. Feature IDs refer to
-[the proposed roadmap](QOL_ROADMAP.md).
+owner's existing LME roadmap/RAM acceptance remains closed. Current workflow IDs
+refer to [the proposed roadmap](QOL_ROADMAP.md). Q01–Q16 below identify the earlier
+supporting proposals; R12–R16 deepen evidence for the revised priorities. Nine
+shells were inspected; UDisks is an additional service source, not a tenth shell.
 
 ## Inspected repositories
 
@@ -134,7 +137,75 @@ DMS's [broader VPN service](https://github.com/AvengeMedia/DankMaterialShell/blo
 also handles plugins/import; those are excluded. Reuse NM/keyring, no credentials
 in shell settings, new monitor or automatic connection policy.
 
-## Evidence limits
+## Additional evidence for substantive workflows
+
+The following additions support the revised workflow priority. Earlier R1–R11
+remain useful source notes for the supporting backlog; they are not a competing
+implementation order.
+
+## R12 — Full audio workflow: W1
+
+R7 covers port/profile and menu mechanisms. The important deeper contract is
+Noctalia's [pipewire_service.cpp, lines 2462–2507](https://github.com/noctalia-dev/noctalia-shell/blob/5d5cda62e972469fea595cbe9a08da4be538fec2/src/pipewire/pipewire_service.cpp#L2462-L2507):
+it validates stream/sink, uses sink object.serial in target.object and removes
+both target.object and deprecated target.node for clear-route. Copying a menu
+without this state contract can silently leave a stream pinned. This is native
+PipeWire policy, not a proven Quickshell or one-shot pactl capability. W1 limits
+its first scope to independently verified live destinations; no automatic policy.
+
+## R13 — Network connections: W2
+
+DMS [saved VPN UUID/busy handling](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Services/DMSNetworkService.qml#L1109-L1152)
+and [wired profile activation](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Services/DMSNetworkService.qml#L581-L600)
+support a substantive manual connection workflow. Its
+[connection-aware menu](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Modules/ControlCenter/Details/NetworkDetail.qml#L200-L226)
+is useful; generic Ethernet disconnect is not safe to copy for multiple adapters.
+Its [hotspot capability/start/stop handling](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Services/DMSNetworkService.qml#L1269-L1308)
+and [single-radio disconnect confirmation](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Modules/ControlCenter/Details/NetworkDetail.qml#L137-L155)
+show why sharing needs topology/side-effect UX. Borrow UUID identity and explicit
+confirmation, not DMS's monitor/timer/backend. W2 starts with saved profiles;
+in-shell hotspot credential creation is not silently assumed to be solved.
+
+## R14 — Display profile lifecycle: W3
+
+Beyond R10's widget, DMS [captures a profile from current outputs](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Modules/Settings/DisplayConfig/DisplayConfigState.qml#L681-L713)
+and [resolves stored profile IDs for deletion/activation](https://github.com/AvengeMedia/DankMaterialShell/blob/d70d35316da1cfb6569af66415b1612fc8089a5d/quickshell/Modules/Settings/DisplayConfig/DisplayConfigState.qml#L735-L773).
+Session/topology preview validation remains the relevant safety boundary. LME
+already has arrangement/mirroring/Keep-Revert; new value is saved compatible recall,
+not another output editor, automatic dock mode or duplicate watchdog.
+
+## R15 — UDisks safe-removal contract: W4
+
+Additional authoritative source: [storaged-project/udisks](https://github.com/storaged-project/udisks),
+pin `f6930dd6c16cec306ca34e9ba02cdc4d2dbe3ff3`. Only selected XML/CLI source
+was read; no service was started or device mutated.
+
+- [Unmount, authorization and DeviceBusy](https://github.com/storaged-project/udisks/blob/f6930dd6c16cec306ca34e9ba02cdc4d2dbe3ff3/data/org.freedesktop.UDisks2.xml#L2754-L2775): force is not the safe default.
+- [PowerOff, CanPowerOff and sibling effects](https://github.com/storaged-project/udisks/blob/f6930dd6c16cec306ca34e9ba02cdc4d2dbe3ff3/data/org.freedesktop.UDisks2.xml#L757-L804): flush/usage checks and whole-reader side effects matter.
+- [Eject](https://github.com/storaged-project/udisks/blob/f6930dd6c16cec306ca34e9ba02cdc4d2dbe3ff3/data/org.freedesktop.UDisks2.xml#L719-L735): not synonymous with filesystem unmount or USB power-off.
+- [CLI operation/auth path](https://github.com/storaged-project/udisks/blob/f6930dd6c16cec306ca34e9ba02cdc4d2dbe3ff3/tools/udisksctl.c#L2351-L2378): may supply an agent; LME must retain its existing session polkit path rather than create a second one.
+
+Counterexample to copying blindly: GNOME's
+[hardware eject-button path](https://github.com/GNOME/gnome-shell/blob/9a753aa969709d351632dbefd23333681cc5b3c2/js/ui/components/automountManager.js#L104-L129)
+is explicitly marked untested and uses force. It is not LME's safe-remove design
+or proof that every upstream feature is fully optimized/reliable. UDisks is the
+service authority here, not an inspected drop-in shell widget.
+
+## R16 — Work sets and personal recovery: W5/W6 evidence boundary
+
+end4-pC [NiriBackend.qml, lines 20–47](https://github.com/pctrade/end4-pC/blob/8840bd0be8b433af5cdab26944415a09d4858252/services/NiriBackend.qml#L20-L47)
+normalizes window/workspace IDs and provides explicit placement primitives. It
+does not prove saved-session restore or reliable new-window association. Noctalia's
+session_provider is a power/session-action menu, not application-session recovery.
+W5 is an LME composition with an explicit identity gate, not a claimed upstream port.
+
+W6 is likewise LME design. Existing BehaviorPage describes settings backups as
+excluding notes/clipboard/notifications; NotesState has a dirty/conflict owner;
+Clipboard stores canonical bytes in SQLite BLOBs with derived image files.
+These observed gaps/contracts motivate selective recovery. No inspected upstream
+is claimed to prove a safe multi-domain restore, privacy or memory implementation.
+
+## Evidence limits (all sources)
 
 Q02 combines LME's already-tested move action with keyboard access; Q07 is an
 LME clipboard composition proposal. No inspected citation is presented as proof

@@ -1,13 +1,19 @@
 """Wi-Fi operations; the host retains network sampling and worker publication."""
 from dataclasses import dataclass
+import copy
+from threading import Event
+import time
 from typing import Callable
 
-from backend_actions import ActionSpec
+from backend_actions import ActionSpec, PreparedWork
 from command_runner import CommandError
 from wifi_auth import connect
+from network_profiles import NetworkProfiles
+from network_inventory import BASE, demo_inventory
+from network_plans import ACTIONS as CONNECTION_ACTIONS, MUTATIONS as CONNECTION_MUTATIONS, active_for, hotspot_plan, select, validate
 
 ACTIONS = ('wifiScan', 'wifiConnect', 'wifiSaved', 'wifiDisconnect', 'wifiForget')
-MUTATIONS = frozenset((*ACTIONS[1:], 'wifiToggle'))
+MUTATIONS = frozenset((*ACTIONS[1:], 'wifiToggle')) | CONNECTION_MUTATIONS
 
 
 def busy(action, pending):
@@ -81,3 +87,86 @@ def provide(capabilities):
         lambda request, action=action: demo(action, request), execution='worker', complete=complete)
         for action in ACTIONS)
     return specs, lambda: {}
+
+
+@dataclass(frozen=True)
+class ConnectionsCapabilities:
+    wifi: WifiCapabilities
+    available: Callable
+    pending: Callable
+    split: Callable
+    spawn: Callable
+    executable: Callable
+
+
+def provide_connections(cap):
+    old, project = provide(cap.wifi)
+    domain = NetworkProfiles(cap); state = {}; current = None
+    def install(action, value):
+        nonlocal current
+        if isinstance(value, Exception):
+            observed = getattr(value, 'state', None)
+            model = dict(observed or dict(available=False, devices=[], profiles=[], active=[], hotspotPlan=None), error=str(value)[:400])
+        else: model = value['state']
+        state['value'] = model
+        if action in CONNECTION_MUTATIONS: current = None
+
+    def prepare(action, request):
+        nonlocal current
+        validate(action, request)
+        pending = cap.pending()
+        if any(name in pending for name in CONNECTION_ACTIONS) or busy(action, pending):
+            raise ValueError('This operation is already running')
+        if action in CONNECTION_MUTATIONS:
+            current = dict(action=action, uuid=request['uuid'], deviceId=request.get('deviceId', ''), cancel=Event(), done=Event())
+            attempt = current
+            def operation():
+                try:
+                    return domain.inspect(action, request) if action == 'networkEdit' else domain.change(action, request, attempt['cancel'])
+                finally: attempt['done'].set()
+        else: operation = lambda: domain.inspect(action, request)
+        return PreparedWork(operation)
+
+    def cancel(request):
+        if current is None or current['action'] not in ('networkConnect', 'networkHotspotStart'):
+            raise ValueError('No network activation is running')
+        if current['done'].is_set(): return 'Activation already finished; check observed connections'
+        current['cancel'].set()
+        return 'Cancellation requested; waiting for the observed outcome'
+
+    def demo(action, request):
+        validate(action, request)
+        model = copy.deepcopy(state.get('value') or demo_inventory())
+        if action == 'networkHotspotPlan': model['hotspotPlan'] = hotspot_plan(model, request)
+        elif action != 'networkRefresh':
+            if action == 'networkEdit':
+                if request['serverId'] != model['serverId'] or not any(p['uuid'] == request['uuid'] for p in model['profiles']):
+                    raise ValueError('Saved connection disappeared; refresh')
+            else:
+                profile, device = select(model, request, disconnect=action == 'networkDisconnect')
+                if action == 'networkDisconnect':
+                    if not any(a['path'] == request['activePath'] for a in active_for(model, profile, device)):
+                        raise ValueError('Activation changed; refresh')
+                    model['active'] = [a for a in model['active'] if a['path'] != request['activePath']]
+                else:
+                    if action == 'networkHotspotStart':
+                        if hotspot_plan(model, request)['token'] != request['planToken']: raise ValueError('Review a fresh hotspot warning')
+                        cap.wifi.demo_network().update(wifiConnected=False, ssid='Hotspot')
+                    elif profile['kind'] == 'hotspot': raise ValueError('Review the hotspot warning first')
+                    if profile['kind'] != 'vpn': model['active'] = [a for a in model['active'] if a['deviceId'] != device['id']]
+                    model['active'].append(dict(uuid=profile['uuid'], deviceId=device['id'], interface=device['interface'],
+                        path=BASE+'ActiveConnection/'+str(20+len(model['active'])), state='activated'))
+        model.update(checkedAt=int(time.time()*1000), error='')
+        state['value'] = model
+
+    specs = tuple(ActionSpec(action, {'shell'}, lambda request: None,
+        lambda request, action=action: demo(action, request), execution='worker',
+        prepare=lambda request, action=action: prepare(action, request),
+        complete=lambda value, action=action: install(action, value), presentation=lambda value: value['message'])
+        for action in CONNECTION_ACTIONS)
+    def projection():
+        if not state and current is None: return project()
+        operation = {k: current[k] for k in ('action', 'uuid', 'deviceId')} if current else {}
+        if current: operation.update(cancellable=current['action'] in ('networkConnect', 'networkHotspotStart'), cancelling=current['cancel'].is_set())
+        return {**project(), 'networkConnections': {**state.get('value', {}), 'operation': operation}}
+    return (*old, *specs, ActionSpec('networkCancel', {'shell'}, cancel, lambda request: None)), projection

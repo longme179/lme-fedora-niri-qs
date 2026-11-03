@@ -1,6 +1,6 @@
 # LME Shell — improvement plan
 
-**Date:** 2026-11-03 · **Baseline:** `578c135` · **Audit:** [AUDIT.md](AUDIT.md) (38 findings) · **Status:** I-01, I-02, I-03, I-06 and I-08 implemented (§9); the rest are proposals.
+**Date:** 2026-11-03 · **Baseline:** `578c135` · **Audit:** [AUDIT.md](AUDIT.md) (38 findings) · **Status:** I-01, I-02, I-03, I-04, I-06 and I-08 implemented (§9); the rest are proposals.
 
 ## 1. Summary
 
@@ -342,8 +342,9 @@ No other item copies or adapts third-party code, so no other attribution is need
 
 ## 9. Implementation status (2026-11-03)
 
-The owner selected I-01, I-02, I-03, I-06 and I-08 for implementation in this
-checkout. All five are implemented and verified; nothing was committed.
+The owner selected I-01, I-02, I-03, I-06 and I-08 for implementation, then I-04 to
+finish the gate. All six are implemented, verified and pushed on
+`fix/audit-gate-settings-backend`.
 
 | Item | State | Evidence |
 | --- | --- | --- |
@@ -351,9 +352,10 @@ checkout. All five are implemented and verified; nothing was committed.
 | I-02 | done | `tests/catalog_admission_fixture.py` copies `catalog_metadata.py` and self-checks the disposable CLI; 9/9 pass (13 before). |
 | I-03 | done | cwd-first normalization in `tests/schema_fixture.py`; `XDG_DATA_HOME` isolation in the two launcher tests; `sys.path` for child interpreters; `scripts/check.sh` exports `PYTHONPATH`. The five affected modules pass. |
 | I-06 | done | Unknown-but-not-retired keys survive a rewrite, retired keys (`settings_transfer.RETIRED_PERSISTENCE`) stay dropped, a corrupt file is left untouched and `update()` refuses, and `storage.finite_number` rejects oversized integers; `reload()`/`update()` share a lock. New `tests/test_preferences_durability.py` (5/5). `desktop_backend.py` ratcheted to 1628 lines. |
+| I-04 | done | `tests/test_recording.py` probes `ffmpeg -encoders` and skips the container/audio checks with the missing encoder name (`libx264` here); 13 tests, 3 skips, 0 errors on `ffmpeg-free`. |
 | I-08 | done | `action_pending.emit` survives a broken snapshot; `handle_line` turns parse failures (`RecursionError` included) and handler exceptions into one `ok:false` result; `storage.read_json` is size-bounded; `command_runner.stop` keeps the original error; QML retries with capped backoff, clears the “backend stopped” banner on reconnect and exposes `shell restartBackend`. New `tests/test_backend_supervisor.py` (6/6). |
 
-Gate after these changes: `Ran 1012 tests`, `FAILED (errors=3, skipped=181)` — the
-three remaining errors are the `libx264` encoder tests tracked by I-04, which was
-not part of this selection. I-05 (gate summary) is still open, so `check.sh` exits
-non-zero until I-04 is applied.
+Gate after these changes: `./scripts/check.sh` → `Ran 1012 tests`, `OK (skipped=184)`,
+exit 0 (it was `59 failures, 4 errors` before the branch). The 184 skips are the
+existing opt-in native/device cases plus the three encoder checks I-04 now skips
+with a reason. I-05's richer gate summary is still a proposal.

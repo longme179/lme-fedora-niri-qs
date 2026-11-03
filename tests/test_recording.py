@@ -138,11 +138,21 @@ class RecordingCase(Fixture, unittest.TestCase):
         recorder.info={'active':True,'owned':True,'path':str(path),'target':str(target),'error':''}
         return recorder,child
 
+    @staticmethod
+    def ffmpeg_encoders(runner):
+        try: return set(runner.run('ffmpeg','-hide_banner','-encoders',timeout=10).split())
+        except backend.CommandError: return set()
+
+    def require_encoders(self, runner, *names):
+        missing=[name for name in names if name not in self.ffmpeg_encoders(runner)]
+        if missing: self.skipTest('ffmpeg build does not provide '+', '.join(missing))
+
     @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg unavailable for actual container checks')
     def test_real_ffmpeg_remuxes_private_mp4_mov_webm_and_decodes_results(self):
-        runner=backend.CommandRunner()
+        runner=backend.CommandRunner(); available=self.ffmpeg_encoders(runner)
         for container,codec in [('mp4','libx264'),('mov','libx264'),('webm','libvpx-vp9')]:
             with self.subTest(container=container):
+                if codec not in available: self.skipTest('ffmpeg build does not provide '+codec)
                 source=self.root/(container+'.mkv');target=source.with_suffix('.'+container)
                 runner.run('ffmpeg','-v','error','-f','lavfi','-i','color=size=128x128:rate=30','-t','0.2','-c:v',codec,'-threads','1',str(source),timeout=15)
                 source.chmod(0o600);recorder,child=self.stopped_fixture(runner,source,target)
@@ -163,6 +173,7 @@ class RecordingCase(Fixture, unittest.TestCase):
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'FFmpeg/ffprobe unavailable')
     def test_real_audio_track_survives_remux_and_missing_audio_retains_video(self):
         runner = backend.CommandRunner()
+        self.require_encoders(runner, 'libx264', 'aac')
         source = self.root/'audio.mkv'; target = self.root/'audio.mp4'
         runner.run('ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=size=128x128:rate=30',
                    '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000', '-t', '0.3',

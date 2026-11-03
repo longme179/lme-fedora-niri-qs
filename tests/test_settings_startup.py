@@ -95,6 +95,7 @@ import "qml/settings"
 import "qml/theme"
 ''' + source)
             env = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software',
+                       QT_LOGGING_RULES='qml.debug=true',
                        LME_SHELL_DEMO='0', LME_SHELL_SETTINGS='1',
                        XDG_CONFIG_HOME=str(root/'user-config'), XDG_STATE_HOME=str(root/'state'),
                        XDG_DATA_HOME=str(root/'data'), DBUS_SYSTEM_BUS_ADDRESS='unix:path='+str(root/'no-system-bus'))

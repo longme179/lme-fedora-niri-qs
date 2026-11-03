@@ -44,7 +44,8 @@ EXTRA = {
 
 def normalize(value):
     if isinstance(value, str):
-        return value.replace(str(Path.home()), '<HOME>').replace(str(Path.cwd()), '<ROOT>')
+        # Replace cwd first: a checkout under $HOME would otherwise lose the <ROOT> form.
+        return value.replace(str(Path.cwd()), '<ROOT>').replace(str(Path.home()), '<HOME>')
     if isinstance(value, list): return [normalize(v) for v in value]
     if isinstance(value, dict): return {k:normalize(v) for k,v in value.items()}
     return value

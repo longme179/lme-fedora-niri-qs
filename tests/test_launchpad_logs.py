@@ -90,7 +90,8 @@ class LaunchpadLogCase(Fixture, unittest.TestCase):
         marker = self.root/'finished'
         command = shlex.join([sys.executable,'-c',f'import time;from pathlib import Path;time.sleep(.2);Path({str(marker)!r}).touch();print("survived")'])
         entry = dict(name='Detached',kind='command',terminal=False,cwd=str(self.root),command=command)
-        code = f'from launchpad import Launchpad;t=Launchpad();t.run("job",{{"job":{entry!r}}},"kitty");print(t.jobs["job"]["process"].pid)'
+        scripts = Path(__file__).resolve().parents[1]/'scripts'
+        code = 'import sys; sys.path.insert(0, ' + repr(str(scripts)) + ')\n' + f'from launchpad import Launchpad;t=Launchpad();t.run("job",{{"job":{entry!r}}},"kitty");print(t.jobs["job"]["process"].pid)'
         env = dict(os.environ,XDG_STATE_HOME=str(self.root/'state'))
         result = subprocess.run([sys.executable,'-c',code],env=env,capture_output=True,text=True,timeout=3)
         self.assertEqual(result.returncode,0,result.stderr)

@@ -38,7 +38,7 @@ ShellRoot {
         }
     }
 }''')
-            env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", LME_SHELL_DEMO="1",
+            env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", QT_LOGGING_RULES="qml.debug=true", LME_SHELL_DEMO="1",
                        XDG_CONFIG_HOME=str(root / "home"), XDG_STATE_HOME=str(root / "state"),
                        XDG_DATA_HOME=str(root / "data"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"))
             env.update(environment or {})

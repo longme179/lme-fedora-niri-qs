@@ -25,7 +25,7 @@ class Checkout:
         else:
             (root/'scripts').mkdir(parents=True)
             (root/'config').mkdir()
-            for name in ('settings.sh', 'feature_catalog.py'):
+            for name in ('settings.sh', 'feature_catalog.py', 'catalog_metadata.py'):
                 shutil.copy2(ROOT/'scripts'/name, root/'scripts'/name)
         (root/'bin').mkdir(exist_ok=True)
         self.trace = root/'catalog-processes.log'
@@ -48,6 +48,13 @@ class Checkout:
         self.add('barOnly', True, bar=dict(id='barOnly', title='Bar', entry='odd}page.qml', icon='settings'))
         self.add('preferenceFeature', True, preferences={'preferenceOnly': dict(type='boolean', default=True)})
         self.save()
+        self.verify_copy()
+
+    def verify_copy(self):
+        """Fail here, once, if the disposable checkout cannot run the CLI."""
+        result = self.python('--check')
+        if result.returncode:
+            raise AssertionError('Disposable catalog checkout cannot run the CLI:\n' + (result.stderr or result.stdout))
 
     def add(self, ident, enabled, **parts):
         descriptor = dict(id=ident, **parts)

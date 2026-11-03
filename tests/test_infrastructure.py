@@ -136,7 +136,8 @@ with open(sys.argv[1], 'a') as stream:
 
     def test_watchdog_module_import_and_injected_run_without_desktop_backend(self):
         # The baseline CLI imports the backend lazily; module import must remain independent.
-        code = '''import importlib.abc, json, pathlib, sys
+        scripts = Path(__file__).resolve().parents[1]/'scripts'
+        code = 'import sys; sys.path.insert(0, ' + repr(str(scripts)) + ')\n' + '''import importlib.abc, json, pathlib, sys
 class Block(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
         if fullname == 'desktop_backend': raise ImportError('desktop_backend deliberately unavailable')

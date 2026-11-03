@@ -62,7 +62,7 @@ QtObject {
         if (backendReady && wasWatching !== (wifiConsumers.length > 0)) run("wifiWatch", {enabled: wifiConsumers.length > 0});
     }
     onBackendReadyChanged: if (backendReady && wifiConsumers.length) run("wifiWatch", {enabled: true})
-    property int restartAttempts: 0
+    property int restartDelay: 2000
     property var lastResult: null
     property var wifiResult: null
     property string osdLabel: ""
@@ -184,7 +184,8 @@ QtObject {
             snapshot = next;
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
-            backendReady = true; restartAttempts = 0;
+            backendReady = true; restartDelay = 2000;
+            if (statusError && statusMessage.indexOf("Desktop backend stopped") === 0) { statusMessage = ""; statusError = false; }
             if (!demo && !settingsApp) {
                 const low = PeripheralBatteries.check(system.peripheralBatteries || [], preferences.peripheralBatteryAlerts !== false,
                     preferences.peripheralBatteryThreshold);
@@ -225,8 +226,8 @@ QtObject {
             root.backendReady = false;
             if (root.wifiResult && root.wifiResult.pending) root.wifiResult = {ok: false, message: "Desktop backend stopped during the Wi-Fi operation. Retry after it reconnects."};
             root.statusMessage = "Desktop backend stopped (" + exitCode + ").";
-            root.statusError = true;
-            if (root.restartAttempts < 3) { root.restartAttempts++; root.restartTimer.restart(); }
+            root.statusError = true; root.statusTimer.restart();
+            root.restartTimer.interval = root.restartDelay; root.restartTimer.restart(); root.restartDelay = Math.min(60000, root.restartDelay * 2);
         }
     }
     property Timer restartTimer: Timer { interval: 2000; onTriggered: root.backend.running = true }

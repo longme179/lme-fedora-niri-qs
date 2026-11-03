@@ -26,12 +26,13 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from typing import Any
 
 from command_runner import CommandError, CommandRunner, TOOLS
 from wallpaper_actions import WallpaperChangeCapabilities, provide_changes as provide_wallpaper_changes
-from action_pending import acknowledge, emit_snapshot, handle_line
+from action_pending import acknowledge, emit as publish, handle_line
 from settings_schema import Schema as PreferenceSchema
 
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
@@ -43,7 +44,7 @@ from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_
                               appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, apply_layout, current_layout
 from display_actions import PreviewCapabilities, PlatformCapabilities, provide as provide_display, provide_platform
-from storage import read_json, write_json
+from storage import finite_number, read_json, write_json
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
 from niri_keybinds import read_keybinds
@@ -66,7 +67,7 @@ from threading import Event
 from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
-from settings_transfer import export_document, read_document, document
+from settings_transfer import export_document, read_document, document, RETIRED_PERSISTENCE
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur, provide_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
@@ -291,13 +292,13 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value
-    if key in {"desktopShapeScale", "desktopShapeOpacity", "desktopShapeSpeed"} and type(value) in (int, float) and math.isfinite(value):
+    if key in {"desktopShapeScale", "desktopShapeOpacity", "desktopShapeSpeed"} and finite_number(value):
         low, high = {"desktopShapeScale": (.5, 2), "desktopShapeOpacity": (.02, .6), "desktopShapeSpeed": (.1, 3)}[key]
         if low <= value <= high: return float(value)
     if key == "lyricsMode" and value in ("scroll", "line"): return value
     if key == "notificationIdleAnimation" and type(value) is bool: return value
     if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
-    if key == "notificationOpacity" and type(value) in (int, float) and math.isfinite(value) and .6 <= value <= 1: return float(value)
+    if key == "notificationOpacity" and finite_number(value) and .6 <= value <= 1: return float(value)
     if key in {"notificationWidth", "notificationMargin", "notificationRadius", "notificationPadding", "notificationBorderWidth", "notificationTitleSize", "notificationBodySize", "notificationIdleSpeed"} and type(value) is int:
         low, high = {"notificationWidth": (300, 640), "notificationMargin": (0, 64), "notificationRadius": (0, 48),
                      "notificationPadding": (12, 28), "notificationBorderWidth": (0, 4), "notificationTitleSize": (12, 24),
@@ -310,7 +311,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "palettePreset" and isinstance(value,str) and value in PALETTE_IDS: return value
     if key == "paletteScheme" and value in PALETTE_SCHEMES: return value
     if key == "paletteMode" and value in ("dark","light"): return value
-    if key == "paletteContrast" and type(value) in (float,int) and math.isfinite(value) and -1 <= value <= 1: return float(value)
+    if key == "paletteContrast" and finite_number(value) and -1 <= value <= 1: return float(value)
     if key == "wallpaperPalette": return validate_palette(value)
     if key == "recordingEncoder" and value in ("auto","nvidia","cpu","radeon"): return value
     if key == "recordingAudio" and value in ("none","system","microphone"): return value
@@ -321,8 +322,8 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "captureEditor" and value in ("auto","satty","swappy"): return value
     if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly", "jelly-v2"): return value
-    if key == "motionSpeed" and type(value) in (int, float) and math.isfinite(value) and .5 <= value <= 2: return float(value)
-    if key == "motionBounce" and type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1: return float(value)
+    if key == "motionSpeed" and finite_number(value) and .5 <= value <= 2: return float(value)
+    if key == "motionBounce" and finite_number(value) and 0 <= value <= 1: return float(value)
     if key in {"popupBlur", "barBlur"} and type(value) is bool: return value
     if key == "idleProfiles": return validate_profiles(value)
     if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
@@ -420,35 +421,32 @@ class Preferences:
         self.path = path or config / "lme-shell/settings.json"
         self.values = copy.deepcopy(DEFAULT_PREFERENCES)
         self._stamp: tuple[int, int, int] | None = None
+        self._corrupt = False; self._unknown = {}; self._lock = threading.RLock()
         self.reload()
 
     def reload(self, force: bool = False) -> None:
-        """Observe atomic writes from the standalone settings app or shell."""
-        try:
-            stat = self.path.stat()
-            stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
-            if not force and stamp == self._stamp:
-                return
-            saved = json.loads(self.path.read_text(encoding="utf-8"))
-            if isinstance(saved, dict):
-                values = copy.deepcopy(DEFAULT_PREFERENCES)
-                for key, value in saved.items():
-                    try:
-                        values[key] = validate_preference(key, value)
-                    except ValueError:
-                        pass
-                # The original CPU default predates format controls; upgrade it once to GPU-first.
-                if saved.get("recordingEncoder") == "cpu" and "recordingFormat" not in saved:
-                    values["recordingEncoder"] = "auto"
-                self.values = values
-                self._stamp = stamp
-        except FileNotFoundError:
-            if self._stamp is not None:
-                self.values = copy.deepcopy(DEFAULT_PREFERENCES)
-                self._stamp = None
-        except (OSError, UnicodeError, json.JSONDecodeError):
-            # Retain the last valid snapshot while an external editor is writing.
-            pass
+        with self._lock:
+            try:
+                stat = self.path.stat()
+                stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+                if not force and stamp == self._stamp:
+                    return
+                saved = json.loads(self.path.read_text(encoding="utf-8"))
+                if isinstance(saved, dict):
+                    values = copy.deepcopy(DEFAULT_PREFERENCES)
+                    for key, value in saved.items():
+                        try: values[key] = validate_preference(key, value)
+                        except ValueError: pass
+                    if saved.get("recordingEncoder") == "cpu" and "recordingFormat" not in saved:
+                        values["recordingEncoder"] = "auto"
+                    self.values = values
+                    self._unknown = {k: v for k, v in saved.items() if k not in DEFAULT_PREFERENCES and k not in RETIRED_PERSISTENCE}
+                    self._stamp = stamp
+                    self._corrupt = False
+            except FileNotFoundError:
+                if self._stamp is not None:
+                    self.values = copy.deepcopy(DEFAULT_PREFERENCES); self._stamp = None; self._unknown = {}; self._corrupt = False
+            except (OSError, UnicodeError, json.JSONDecodeError, ArithmeticError): self._corrupt = True
 
     def set(self, key: str, value: Any, token: str | None = None) -> None:
         if token is not None:
@@ -460,28 +458,29 @@ class Preferences:
         self.update({key:value}, token=token)
 
     def update(self, values: dict[str, Any], token: str | None = None, backup: bool = False) -> Path | None:
-        values = dict(values)
-        for key, value in values.items():
-            if token is not None and key == 'liquidGlass': values[key] = validate_glass(value, partial=True)
-            elif token is not None and key == 'desktopWidgets': values[key] = desktop_widgets(value, partial=True)
-            else: values[key] = validate_preference(key, value)
-        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        # Serialize the app and shell's writers, including task updates.
-        lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
-        with os.fdopen(lock_fd, "w") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
-            self.reload(force=True)
-            if token is not None:
-                key = next(iter(values))
-                if key == "desktopWidgets": values[key] = merge_widgets(self.values[key],values[key],token)
-                else:
-                    merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
-                    values[key] = merged
-                    if key == 'wallpaperOutputs': values[key] = validate_wallpaper(key,values[key])
-            backup_path = self.path.parent / ("settings-before-import-" + str(time.time_ns()) + ".json") if backup else None
-            if backup_path: write_json(backup_path, document(self.values,"backup"))
-            self._write({**self.values, **values})
-            return backup_path
+        with self._lock:
+            values = dict(values)
+            for key, value in values.items():
+                if token is not None and key == 'liquidGlass': values[key] = validate_glass(value, partial=True)
+                elif token is not None and key == 'desktopWidgets': values[key] = desktop_widgets(value, partial=True)
+                else: values[key] = validate_preference(key, value)
+            self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
+            with os.fdopen(lock_fd, "w") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                self.reload(force=True)
+                if self._corrupt: raise CommandError("settings.json could not be read; it was left unchanged. Repair it before changing settings.")
+                if token is not None:
+                    key = next(iter(values))
+                    if key == "desktopWidgets": values[key] = merge_widgets(self.values[key],values[key],token)
+                    else:
+                        merged = dict(self.values[key]); merged.pop(token, None); merged.update(values[key])
+                        values[key] = merged
+                        if key == 'wallpaperOutputs': values[key] = validate_wallpaper(key,values[key])
+                backup_path = self.path.parent / ("settings-before-import-" + str(time.time_ns()) + ".json") if backup else None
+                if backup_path: write_json(backup_path, document({**self._unknown, **self.values}, "backup"))
+                self._write({**self.values, **values})
+                return backup_path
 
     def _write(self, updated: dict[str, Any]) -> None:
         temporary: str | None = None
@@ -490,17 +489,20 @@ class Preferences:
                                              prefix=".settings-", suffix=".json", delete=False) as handle:
                 temporary = handle.name
                 os.chmod(temporary, 0o600)
-                json.dump(updated, handle, indent=2, allow_nan=False)
+                json.dump({**self._unknown, **updated}, handle, indent=2, allow_nan=False)
                 handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, self.path)
             self.values = updated
-            stat = self.path.stat()
-            self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+            stat = self.path.stat(); self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         finally:
             if temporary and os.path.exists(temporary):
                 os.unlink(temporary)
+
+
+def emit(backend: DesktopBackend) -> None:
+    publish(backend, FEATURE_CATALOG_ERROR)
 
 
 def split_nmcli(line: str) -> list[str]:
@@ -1373,7 +1375,7 @@ class DesktopBackend:
             if action in {"refresh", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
                 self.system_cache = None
             self.last_result = {"ok": True, "action": action, "message": message}
-        except (CommandError, ValueError, TypeError, KeyError, OSError) as exc:
+        except Exception as exc:
             self.last_result = {"ok": False, "action": action if isinstance(action, str) else "", "message": str(exc)[:400]}
             if isinstance(action, str) and action in {"bluetoothToggle", "bluetoothDevice"}:
                 self.system_cache = None
@@ -1560,10 +1562,6 @@ class DesktopBackend:
                 raise CommandError("Invalid niri reply") from exc
             if not isinstance(reply, dict) or "Ok" not in reply:
                 raise CommandError(str(reply.get("Err", "The niri action failed")) if isinstance(reply, dict) else "Invalid niri reply")
-
-def emit(backend: DesktopBackend) -> None:
-    emit_snapshot(backend.snapshot(), FEATURE_CATALOG_ERROR, backend.client_serial, backend.feature_jobs, backend.charge_job is not None)
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)

@@ -57,7 +57,7 @@ class PersonalizationCase(Fixture, unittest.TestCase):
         (binaries/'dirname').symlink_to(shutil.which('dirname'))
         fake = binaries/'qs'
         fake.write_text('#!/usr/bin/python3\nimport sys,json\nif "ipc" in sys.argv:sys.exit(1)\nprint(json.dumps(sys.argv[1:]))\n');fake.chmod(0o755)
-        env = {**os.environ, 'PATH': str(binaries), 'LME_SHELL_DEMO': '1'}
+        env = {**os.environ, 'PATH': str(binaries), 'LME_SHELL_DEMO': '1', 'XDG_DATA_HOME': str(self.root/'data')}
         for key in ('LME_QS_BINARY', 'LME_SHELL_PREVIEW'): env.pop(key, None)
         result = subprocess.run(['/bin/bash', str(repo/'scripts/settings.sh'), '--page', 'elements'], env=env, capture_output=True, text=True, timeout=4)
         self.assertEqual(result.returncode, 0, result.stderr)

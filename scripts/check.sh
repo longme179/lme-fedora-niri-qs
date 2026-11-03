@@ -3,6 +3,8 @@
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd -- "$repo_dir"
+# Child interpreters (and focused runs) need the backend modules on the path.
+export PYTHONPATH="$repo_dir/scripts${PYTHONPATH:+:$PYTHONPATH}"
 ./scripts/check-architecture.sh
 python3 scripts/feature_catalog.py --check
 python3 -m unittest discover -s tests -v

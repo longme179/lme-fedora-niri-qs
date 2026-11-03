@@ -1,5 +1,6 @@
 """JSON-line acknowledgement and projection of existing coordinator ownership."""
 import json
+import sys
 
 MAX_SERIAL = 9007199254740991
 
@@ -17,9 +18,24 @@ def emit_snapshot(state, catalog_error, acknowledged, active, charging):
     print(json.dumps(state, ensure_ascii=False, allow_nan=False, separators=(',', ':')), flush=True)
 
 
+def emit(backend, catalog_error):
+    """Publish one snapshot; a broken probe must not stop the shell."""
+    try:
+        emit_snapshot(backend.snapshot(), catalog_error, backend.client_serial,
+                      backend.feature_jobs, backend.charge_job is not None)
+    except Exception as error:
+        print(f"Snapshot failed: {type(error).__name__}: {error}", file=sys.stderr)
+
+
 def handle_line(handle, line):
     try:
-        handle(json.loads(line.decode('utf-8')))
-    except (UnicodeError, json.JSONDecodeError):
+        request = json.loads(line.decode('utf-8'))
+    except (UnicodeError, json.JSONDecodeError, RecursionError):
         return {'ok': False, 'action': '', 'message': 'Invalid JSON input'}
+    try:
+        handle(request)
+    except Exception as error:
+        action = request.get('action', '') if isinstance(request, dict) else ''
+        message = str(error)[:300] or type(error).__name__
+        return {'ok': False, 'action': action if isinstance(action, str) else '', 'message': message}
     return None

@@ -95,7 +95,7 @@ class WallpaperCase(Fixture, unittest.TestCase):
         executable.chmod(0o755)
         script = Path(__file__).resolve().parents[1] / 'scripts/start.sh'
         import os
-        env = {**os.environ, 'PATH': str(executable.parent) + ':' + os.environ['PATH']}
+        env = {**os.environ, 'PATH': str(executable.parent) + ':' + os.environ['PATH'], 'XDG_DATA_HOME': str(executable.parent.parent/'data')}
         result = subprocess.run(['bash', str(script), '--demo', '--wallpaper', '/missing.png', '--config', 'demo config'], env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, '-c\ndemo config\n')

@@ -22,6 +22,9 @@ def document(values, kind):
     return {'schema':1,'kind':kind,'settings':{k:v for k,v in values.items() if kind=='backup' or k in PORTABLE}}
 
 
+RETIRED_PERSISTENCE = frozenset({'connectedPopups', 'favoriteApps', 'wallpaperFavorites'})
+
+
 def validate_document(data, validator, defaults):
     if not isinstance(data,dict) or set(data) != {'schema','kind','settings'} or type(data['schema']) is not int or data['schema']!=1 or data['kind'] not in ('preset','backup'):
         raise ValueError('Expected an LME schema 1 settings preset or backup')

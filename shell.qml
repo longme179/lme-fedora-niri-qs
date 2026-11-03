@@ -27,6 +27,7 @@ ShellRoot {
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function desktopEdit(): bool { if (!DesktopState.enabled) return false; DesktopState.editing = !DesktopState.editing; return true; }
         function close(): void { ShellState.closePanels(); }
+        function restartBackend(): bool { ShellState.backend.running = true; return true; }
         function mirrorStatus(): string { return JSON.stringify(ShellState.snapshot.mirror || {}); }
         function mirrorStart(source: string, target: string): bool {
             if (!ShellState.backendReady) return false;

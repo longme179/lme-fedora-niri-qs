@@ -111,6 +111,7 @@ class CommandRunner:
             try: os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError: pass
         try: process.wait(timeout=.5)
+        except subprocess.TimeoutExpired: pass
         finally:
             for stream in (process.stdin, process.stdout, process.stderr):
                 if stream: stream.close()

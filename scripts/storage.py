@@ -2,6 +2,7 @@
 import contextlib
 import fcntl
 import json
+import math
 import os
 import tempfile
 
@@ -20,8 +21,10 @@ def write_json(path, value):
         if temporary and os.path.exists(temporary): os.unlink(temporary)
 
 
-def read_json(path, default):
-    try: return json.loads(path.read_text(encoding="utf-8"))
+def read_json(path, default, limit=8 * 1024 * 1024):
+    try:
+        if path.stat().st_size > limit: return default
+        return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, UnicodeError): return default
 
 
@@ -32,3 +35,11 @@ def locked(path):
         os.chmod(path, 0o600)
         fcntl.flock(stream, fcntl.LOCK_EX)
         yield
+
+
+def finite_number(value):
+    """Accept only numbers a float conversion and range check can handle."""
+    if type(value) not in (int, float): return False
+    if type(value) is int and abs(value) > 2 ** 53: return False
+    try: return math.isfinite(value)
+    except (OverflowError, TypeError): return False

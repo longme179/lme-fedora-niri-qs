@@ -12,7 +12,8 @@ Singleton {
 
     property bool started: false
     function start() { started = true; }
-    readonly property bool enabled: !ShellState.backendReady || ShellState.settingsPageAvailable("notifications")
+    readonly property bool enabled: !ShellState.backendReady || ShellState.featureEnabled("notifications")
+        || ShellState.settingsPageAvailable("notifications")
     property var history: []
     property var live: ({})
     property real localSequence: 0
@@ -26,6 +27,7 @@ Singleton {
     property int historyRevision: 0
     property int savedRevision: 0
     property int submittedRevision: -1
+    property string persistedFingerprint: ""
     property string saveError: ""
     readonly property bool historyDirty: historyRevision > savedRevision
     readonly property bool saving: submittedRevision >= 0
@@ -60,16 +62,26 @@ Singleton {
         }
     }
     onHistoryChanged: {
-        if (enabled && historyLoaded && !ShellState.demo && !ShellState.settingsApp) {
-            historyRevision++;
-            if (!saving) persistDelay.restart();
-        }
+        if (!enabled || !historyLoaded || ShellState.demo || ShellState.settingsApp) return;
+        const projection = persistedProjection();
+        if (projection === persistedFingerprint) return;
+        persistedFingerprint = projection;
+        historyRevision++;
+        if (!saving) persistDelay.restart();
     }
     onEnabledChanged: if (!enabled) { persistDelay.stop(); submittedRevision = -1; }
+    function savedEntry(entry) {
+        return {id: String(entry.id), appName: entry.appName, appIcon: entry.appIcon || "", imagePath: entry.imagePath || "",
+            summary: String(entry.summary || "").substring(0, 512), body: String(entry.body || "").substring(0, 4096),
+            timestamp: entry.timestamp, urgency: entry.urgency, transient: false};
+    }
+    function persistedProjection() {
+        return JSON.stringify(history.filter(entry => !entry.transient).map(savedEntry));
+    }
     function saveHistory() {
         if (!enabled || !historyLoaded || !historyDirty || saving || !ShellState.backendReady || ShellState.demo || ShellState.settingsApp) return;
         submittedRevision = historyRevision;
-        ShellState.run("notificationSave", {entries: history.filter(e => !e.transient).map(e => ({id: String(e.id), appName: e.appName, appIcon: e.appIcon || "", imagePath: e.imagePath || "", summary: e.summary.substring(0, 512), body: e.body.substring(0, 4096), timestamp: e.timestamp, urgency: e.urgency, transient: false}))});
+        ShellState.run("notificationSave", {entries: history.filter(entry => !entry.transient).map(savedEntry)});
     }
     function retrySave() { persistDelay.stop(); saveHistory(); }
     Timer {

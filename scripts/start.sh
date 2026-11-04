@@ -96,4 +96,15 @@ if ! "$demo" && command -v python3 >/dev/null; then
         printf 'Warning: confirmed display restoration failed; starting the shell anyway.\n' >&2
     fi
 fi
+if ! "$demo"; then
+    log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/lme-shell/log"
+    log_file="$log_dir/lme-shell.log"
+    mkdir -p -m 700 "$log_dir"
+    if [[ -f "$log_file" ]] && (($(stat -c %s "$log_file" 2>/dev/null || printf 0) > 1048576)); then
+        if [[ -f "$log_file.1" ]]; then mv -f "$log_file.1" "$log_file.2"; fi
+        mv -f "$log_file" "$log_file.1"
+    fi
+    (umask 077; : >> "$log_file")
+    exec >> "$log_file" 2>&1
+fi
 exec "$qs_binary" -c "$config_name" "${duplicate_args[@]}"

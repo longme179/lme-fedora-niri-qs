@@ -1,10 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import "../components"
 import "../theme"
 import "../services"
 ColumnLayout {
+    id: root
     spacing: 20
+    readonly property string logPath: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") || "") + "/.local/state") + "/lme-shell/log/lme-shell.log"
     Component.onCompleted: UpdateState.run("inspect")
     SettingsCard {
         objectName: "aboutShellName"
@@ -13,6 +16,7 @@ ColumnLayout {
         LabelText { text: "Smoked glass meets Material 3 Expressive. Dracula Pro inspired colors, Roboto typography and a desktop you can arrange yourself."; Layout.fillWidth: true; wrapMode: Text.Wrap }
         LabelText { text: "Inspired by end-4/dots-hyprland and snowarch/iNiR. The settings registry, modular bar and Material treatment are implemented for this shell."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
         LabelText { text: "Based on iNiR by snowarch (https://github.com/snowarch/inir)"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
+        LabelText { visible: !ShellState.demo; text: "Shell log · " + root.logPath; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }
         LiquidButton { text: "Project on GitHub ↗"; onClicked: Qt.openUrlExternally("https://github.com/longme179/lme-fedora-niri-qs") }
     }
     SettingsCard {

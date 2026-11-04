@@ -78,8 +78,8 @@ if 'ipc' in args:
 elif 'kill' in args:
     if os.environ.get('QS_KILL_FAIL') == '1': sys.exit(1)
 elif 'list' in args:
-    with open(os.environ['QS_CALLS']) as log: queries = sum('list' in json.loads(line) for line in log)
-    print(('[{"pid": 123}]' if queries == 1 else 'No running instances.') if os.environ.get('QS_LIST_DELAY') == '1' else '[]')
+    with open(os.environ['QS_CALLS']) as log: queries = [json.loads(line) for line in log]
+    killed = any('kill' in call for call in queries); count = sum('list' in call for call in queries); print(('[{"pid": 123}]' if killed and count == 2 else 'No running instances.') if os.environ.get('QS_LIST_DELAY') == '1' else '[]')
 else: print(json.dumps(args))
 '''); fake.chmod(0o755)
         env = {**os.environ, 'LME_QS_BINARY': str(fake), 'LME_SHELL_DEMO': '1', 'QS_CALLS': str(calls)}
@@ -93,7 +93,7 @@ else: print(json.dumps(args))
                 if reply == 'true':
                     self.assertEqual(len(recorded), 1)
                 else:
-                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'startupPending'], ['-p', str(repo/'settings-demo.qml'), 'kill'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
+                    self.assertEqual(recorded[1:], [['-p', str(repo/'settings-demo.qml'), 'ipc', 'call', 'settings', 'startupPending'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['-p', str(repo/'settings-demo.qml'), 'kill'], ['-p', str(repo/'settings-demo.qml'), 'list', '--json'], ['--no-duplicate', '-p', str(repo/'settings-demo.qml'), '--daemonize']])
                     self.assertIn('restarting', result.stderr)
         calls.write_text('')
         loading = subprocess.run(['bash', str(repo/'scripts/settings.sh'), '--page', 'elements'],
@@ -107,11 +107,11 @@ else: print(json.dumps(args))
         delayed = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_LIST_DELAY': '1'}, capture_output=True, text=True, timeout=5)
         self.assertEqual(delayed.returncode, 0, delayed.stderr)
         recorded = [json.loads(line) for line in calls.read_text().splitlines()]
-        self.assertEqual(sum('list' in call for call in recorded), 2, 'Wait until shutdown releases the configuration before relaunching')
+        self.assertEqual(sum('list' in call for call in recorded), 3, 'Wait until shutdown releases the configuration before relaunching')
         calls.write_text('')
         result = subprocess.run(['bash', str(repo/'scripts/settings.sh')], env={**env, 'QS_REPLY': 'false', 'QS_KILL_FAIL': '1'}, capture_output=True, text=True, timeout=5)
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(calls.read_text().splitlines()), 3, 'Do not spawn a duplicate when stopping the stale Settings instance fails')
+        self.assertEqual(len(calls.read_text().splitlines()), 4, 'Do not spawn a duplicate when stopping the stale Settings instance fails')
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'opt-in private Wayland personalization and Settings launch')

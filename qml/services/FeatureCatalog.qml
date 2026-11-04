@@ -21,18 +21,39 @@ QtObject {
     property var components: ({})
     signal descriptorLoaded(string id)
     readonly property var data: publication.data
+    property real retryAt: 0
+    property int retryDelayMs: 5000
+    property bool errorReported: false
+    function emptyData() { return {bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}}; }
     function fail(message) {
         if (error) return;
-        publication = {settled: true, error: "Feature catalog: " + message,
-            data: {bar: [], settingsPage: [], controlTab: [], all: {}, ids: {}, preferences: {}}};
+        publication = {settled: true, error: "Feature catalog: " + message, data: emptyData()};
         console.warn(error);
-        ShellState.statusMessage = error;
-        ShellState.statusError = true;
+        if (!errorReported) {
+            ShellState.statusMessage = error;
+            ShellState.statusError = true;
+            errorReported = true;
+        }
+        retryAt = Date.now() + retryDelayMs;
     }
     function validate(verdict) {
-        if (!verdict || settled && error) return;
-        if (verdict.error) fail(verdict.error);
-        else verified = true;
+        if (!verdict) return;
+        if (verdict.error) { fail(verdict.error); return; }
+        if (error) {
+            if (Date.now() < retryAt) return;
+            // The backend accepted a later snapshot: retry the local index and descriptors.
+            retryAt = 0;
+            publication = {settled: false, error: "", data: emptyData()};
+            verified = false; descriptors = {}; components = {}; requested = [];
+            indexLoaded = false; records = [];
+            indexFile.reload();
+            return;
+        }
+        if (!verified) verified = true;
+    }
+    function featureEnabled(id) {
+        const record = records.find(item => item.id === id);
+        return !!record && record.enabled === true;
     }
     function descriptor(id) {
         if (error || !records.some(record => record.id === id)) return null;
@@ -67,6 +88,7 @@ QtObject {
                 }
             });
             publication = {data: result, settled: true, error: ""};
+            errorReported = false;
         } catch (exception) { fail(String(exception)); }
     }
     function project(kind, legacy, key, includeDisabled = false) {
@@ -135,7 +157,7 @@ QtObject {
                 for (const item of value.features)
                     if (!item || typeof item.id !== "string" || typeof item.descriptor !== "string" || typeof item.enabled !== "boolean") throw new Error("Invalid index record");
                 root.records = value.features; root.indexLoaded = true; root.assemble();
-                if (!root.records.length) root.publication = {data: root.data, settled: true, error: ""};
+                if (!root.records.length) { root.publication = {data: root.data, settled: true, error: ""}; root.errorReported = false; }
             } catch (exception) { root.fail(String(exception)); }
         }
         onLoadFailed: root.fail("Index could not be read")

@@ -60,25 +60,8 @@ entry="$repo_dir/settings.qml"
 if [[ "${LME_SHELL_DEMO:-}" == 1 ]]; then entry="$repo_dir/settings-demo.qml"; fi
 # Quickshell 0.3.2 can return status 0 for an IPC error; require the window's reply.
 if opened="$("$qs_binary" -p "$entry" ipc call settings openPage "$page" 2>/dev/null)"; then
-    if [[ "$opened" != true ]]; then
-        # Reuse a cold instance that has queued the page and is still loading its appearance.
-        if [[ "$("$qs_binary" -p "$entry" ipc call settings startupPending 2>/dev/null || true)" == true ]]; then exit 0; fi
-        printf 'Settings did not confirm a visible window; restarting this Settings instance.\n' >&2
-        "$qs_binary" -p "$entry" kill >&2
-        # IPC acknowledges shutdown before the instance necessarily exits.
-        python3 - "$qs_binary" "$entry" <<'PY'
-import json, subprocess, sys, time
-deadline = time.monotonic() + 5
-while True:
-    reply = subprocess.check_output([sys.argv[1], '-p', sys.argv[2], 'list', '--json'], text=True, timeout=2).strip()
-    # 0.3.2 prints a plain-text message for an empty list, even with --json.
-    if not reply or reply.startswith('No running instances') or not json.loads(reply):
-        break
-    if time.monotonic() >= deadline:
-        raise SystemExit('Settings is still stopping; retry after it exits.')
-    time.sleep(.05)
-PY
-    else
+    if [[ "$opened" == true ]]; then
+        printf '%s settings launcher: openPage=true\n' "$(date -Is)" >&2
         if [[ "${LME_SHELL_DEMO:-}" != 1 ]] && command -v niri >/dev/null 2>&1; then
             python3 - <<'PY'
 import json, subprocess
@@ -94,5 +77,35 @@ PY
         fi
         exit 0
     fi
+    startup_pending="$("$qs_binary" -p "$entry" ipc call settings startupPending 2>/dev/null || true)"
+    printf '%s settings launcher: openPage=%s startupPending=%s\n' "$(date -Is)" "$opened" "$startup_pending" >&2
+    # Reuse a cold instance that has queued the page and is still loading its appearance.
+    if [[ "$startup_pending" == true ]]; then exit 0; fi
+    instance_list="$("$qs_binary" -p "$entry" list --json 2>/dev/null || true)"
+    if [[ -n "$instance_list" && "$instance_list" != "No running instances"* ]] && python3 -c '
+import json, sys
+try: value = json.loads(sys.argv[1])
+except ValueError: raise SystemExit(1)
+raise SystemExit(0 if isinstance(value, list) and value else 1)
+' "$instance_list"; then
+        printf '%s settings launcher: listed instance is running; leaving it open after openPage=%s\n' "$(date -Is)" "$opened" >&2
+        exit 0
+    fi
+    printf '%s settings launcher: restarting this Settings instance after openPage=%s\n' "$(date -Is)" "$opened" >&2
+    printf 'Settings did not confirm a visible window; restarting this Settings instance.\n' >&2
+    "$qs_binary" -p "$entry" kill >&2
+    # IPC acknowledges shutdown before the instance necessarily exits.
+    python3 - "$qs_binary" "$entry" <<'PY'
+import json, subprocess, sys, time
+deadline = time.monotonic() + 5
+while True:
+    reply = subprocess.check_output([sys.argv[1], '-p', sys.argv[2], 'list', '--json'], text=True, timeout=2).strip()
+    # 0.3.2 prints a plain-text message for an empty list, even with --json.
+    if not reply or reply.startswith('No running instances') or not json.loads(reply):
+        break
+    if time.monotonic() >= deadline:
+        raise SystemExit('Settings is still stopping; retry after it exits.')
+    time.sleep(.05)
+PY
 fi
 exec "$qs_binary" --no-duplicate -p "$entry" "${qs_args[@]}"

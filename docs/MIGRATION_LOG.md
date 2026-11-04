@@ -871,3 +871,10 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   4. Review hotspot while on Wi-Fi: cancel preserves it; confirm explicitly disconnects the warned connection; verify AP and Internet separately.
   5. Cancel an activation, reopen and retry on the same adapter; stop hotspot and reconnect Wi-Fi explicitly if needed.
   6. Disable catalog wifi in a disposable copy: W2 hides, legacy Wi-Fi works, saved profiles/settings stay; re-enable restores access.
+
+## M1 — Correct trio and bounded startup diagnostics — 2026-11-05
+- Branch fix/audit-gate-settings-backend; M1 P-01…P-06 only. P-01 saves only when a persisted field changes; P-02 keys notifications on the feature record and retries a latched catalog failure on a clean backend verdict; P-03 quits the preview after a 10 s screenshot deadline; P-04 redirects live stderr to a rotated state log; P-05 logs launcher replies and leaves a listed instance open; P-06 fixes status precedence, surfaces `ok:false`, and warns once per malformed-snapshot streak.
+- `./scripts/check.sh` 1018 passed / 0 failed / 184 skipped; six new focused cases pass. With owner approval the existing launcher sequence gained the pre-kill `list --json` call; an empty list still kills and relaunches.
+- G0/G1 unavailable here: `run-gates.sh --gates G0` exits 2 because `sway`, `swaymsg` and `qmllint` are absent. Preview deadline, log path/rotation and launcher replies need a private Wayland or real-session check.
+- Behavior: transient-only history changes do not save because the payload excludes them; errors always reach the banner; the catalog error appears once and then only in the log; live start output goes to `$XDG_STATE_HOME/lme-shell/log/lme-shell.log` with two rotations, while demo/preview keep terminal output.
+- No new dependency, daemon, polling/cache change, source move or architecture cycle. ShellState stays at the 250-nonblank cap.

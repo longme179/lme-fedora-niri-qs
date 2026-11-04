@@ -196,6 +196,7 @@ ShellRoot {
             fullscreen: root.screenshotPath !== ""
             color: Theme.background
             DesktopPreview { id: previewContent; anchors.fill: parent }
+            property real screenshotDeadline: Date.now() + 10000
             Timer {
                 interval: 1200; repeat: true; running: root.screenshotPath !== ""
                 onTriggered: {
@@ -206,6 +207,15 @@ ShellRoot {
                         else console.log("Preview screenshot saved");
                         Qt.quit();
                     });
+                }
+            }
+            Timer {
+                interval: 500; repeat: true; running: root.screenshotPath !== ""
+                onTriggered: {
+                    if (Date.now() < previewWindow.screenshotDeadline) return;
+                    stop();
+                    console.error("Preview screenshot deadline exceeded; quitting without a PNG");
+                    Qt.quit();
                 }
             }
         }

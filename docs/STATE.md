@@ -13,6 +13,10 @@ Do not read archive/ unless answering a specific historical question.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
   Prefer aggregate PSS, label summed RSS limitations and temporary-job peaks; individual PID samples are not the total.
 
+## In progress
+
+- M1 (P-01…P-06) implemented on fix/audit-gate-settings-backend: persisted-field save projection, feature availability plus catalog retry, 10 s preview screenshot deadline, live log rotation/redirect, Settings launcher kill guard, and ShellState status fixes. `./scripts/check.sh` green (1018 passed / 0 failed / 184 skipped) plus six focused cases. G0/G1 could not run here because `sway`, `swaymsg` and `qmllint` are absent; preview/log/launcher checks need a private Wayland or real-session check.
+
 ## Compatibility adapters and retirement
 
 - Runner/errors/TOOLS, storage/content-type/image-path/peripheral-value/display-layout re-exports: retain until zero consumers plus owner-approved retirement.

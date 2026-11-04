@@ -107,6 +107,7 @@ QtObject {
         return ["appearance", "elements", "topbar", "controlLayout", "display", "behavior"].includes(page)
                 || (FeatureCatalog.data.settingsPage || []).some(entry => entry.key === page);
     }
+    function featureEnabled(id) { return FeatureCatalog.featureEnabled(id); }
     function openSettingsPage(page) {
         if (!settingsPageAvailable(page)) return;
         closePanels(); settingsPage = page;
@@ -133,10 +134,9 @@ QtObject {
         closePanels();
         nativeOverviewDelay.restart();
     }
-    property bool overlayVisible: false
-    property real captureDeadline: 0
+    property bool overlayVisible: false; property real captureDeadline: 0
     property real recordDeadline: 0
-    property var recordingRequest: ({})
+    property var recordingRequest: ({}); property bool snapshotWarning: false
     function startRecording(request) { if(demo || authenticationActive) return; closePanels(); captureDelay.stop(); statusMessage=""; recordingRequest=request; recordDeadline=Date.now()+3000; recordDelay.restart(); }
     property Timer recordDelay: Timer { interval: 80; onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.recordDeadline) restart(); else { root.statusMessage="Recording cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run("recordStart",root.recordingRequest); } }
     property string captureMode: "screen"
@@ -155,7 +155,7 @@ QtObject {
         }
         // Release the layer-shell keyboard grab before any external agent opens.
         // The built-in Polkit agent also closes panels for requests from apps.
-        if (action === "imageAnnotate" || action === "chargeMode" && !demo || ["networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].includes(action)) closePanels();
+        if ((action === "imageAnnotate" || action === "chargeMode") && !demo || ["networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].includes(action)) closePanels();
         let sent;
         try { sent = Pending.sent(pendingState, action); }
         catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
@@ -168,8 +168,10 @@ QtObject {
     function accept(data) {
         try {
             const next = JSON.parse(data);
-            if (!next.apps || !next.system || !next.niri) return;
-            const resultChanged = next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult);
+            if (!next.apps || !next.system || !next.niri) {
+                if (!snapshotWarning) { snapshotWarning = true; console.warn("Incomplete desktop backend snapshot; keeping the previous state."); statusMessage = "Desktop backend sent an incomplete snapshot. Check the shell log."; statusError = true; statusTimer.restart(); } return;
+            }
+            snapshotWarning = false; const resultChanged = next.lastResult && JSON.stringify(next.lastResult) !== JSON.stringify(lastResult);
             const ownership = Pending.received(pendingState, next.actionPending, resultChanged ? next.lastResult : null);
             if (ownership.invalid) console.warn("Invalid desktop backend message: actionPending ownership");
             pendingState = ownership.state;
@@ -206,7 +208,8 @@ QtObject {
                 lastResult = next.lastResult;
                 if (String(next.lastResult.action).startsWith("wifi") && next.lastResult.action !== "wifiWatch") wifiResult = next.lastResult;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                if (next.lastResult.message && !["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) && (!next.lastResult.ok || (!settingsApp || next.lastResult.action !== "setting") && !["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action))) {
+                const routine = ["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) || ["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart"].includes(next.lastResult.action);
+                if (next.lastResult.message && (!next.lastResult.ok || !routine && (!settingsApp || next.lastResult.action !== "setting"))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();
                 }

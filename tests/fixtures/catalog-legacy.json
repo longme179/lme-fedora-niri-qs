@@ -67,6 +67,12 @@
       "icon": "audio"
     },
     {
+      "id": "equalizer",
+      "title": "Equalizer",
+      "detail": "Serpantinum equalizer bands and dynamics",
+      "icon": "audio"
+    },
+    {
       "id": "network",
       "title": "Network",
       "detail": "Connection status",

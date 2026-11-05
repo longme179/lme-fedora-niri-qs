@@ -2,6 +2,7 @@
   "id": "equalizer",
   "sources": [
     "qml/settings/EqualizerPage.qml",
+    "qml/panels/EqualizerPanel.qml",
     "scripts/equalizer_actions.py"
   ],
   "settingsPage": {
@@ -25,5 +26,11 @@
   "backend": {
     "entry": "scripts/equalizer_actions.py",
     "factory": "provide"
+  },
+  "panel": {
+    "id": "equalizer",
+    "entry": "qml/panels/EqualizerPanel.qml",
+    "centered": true,
+    "scrim": 0.4
   }
 }

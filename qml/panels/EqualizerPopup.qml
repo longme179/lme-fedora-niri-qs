@@ -173,6 +173,7 @@ MotionPopup {
         }
         ColumnLayout {
             Layout.fillWidth: true; spacing: 6
+            enabled: !root.dyneq; opacity: root.dyneq ? 0.45 : 1.0
             LabelText { text: "Output and dynamics"; font.weight: Font.Medium }
             RowLayout {
                 Layout.fillWidth: true
@@ -213,6 +214,12 @@ MotionPopup {
                 LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
                 ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } }
             }
+        }
+        Item {
+            Layout.fillWidth: true; Layout.preferredHeight: 30
+            visible: root.dyneq
+            Rectangle { anchors.fill: parent; color: Qt.rgba(0,0,0,.35); radius: 8 }
+            LabelText { anchors.centerIn: parent; text: "Adapting to your sound"; color: Theme.text; font.pixelSize: 14; font.weight: Font.Medium }
         }
         LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {

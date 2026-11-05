@@ -140,7 +140,7 @@ Keep your working TuneD/tuned-ppd or power-profiles-daemon provider.
 | Option | Use it when… |
 | --- | --- |
 | `--copr` | Quickshell is unavailable; you have reviewed the [Quickshell COPR](https://copr.fedorainfracloud.org/coprs/errornointernet/quickshell/) and want to allow it as a fallback |
-| `--replace` | An older config or Settings launcher already exists; preserve it in a timestamped backup before replacing it |
+| `--replace` | An empty or linked shell target, or an older Settings launcher, exists; preserve it in a timestamped backup before replacing it. Non-empty directories are refused |
 | `--charge-helper` | You want to install the privileged helper for Lenovo battery charging controls |
 
 Options can be combined, for example:
@@ -436,8 +436,8 @@ quickshell -c lme-shell kill
 Restart Settings as well. If an update adds dependencies, use `./scripts/setup.sh`
 to preview and `./scripts/setup.sh --install` to install them. For a release ZIP
 installation, extract into a permanent directory and run
-`./scripts/setup.sh --install --replace` to update the default targets with backups.
-Custom config names use the individual installers below.
+`./scripts/setup.sh --install --replace` to update empty or linked default targets
+with backups. Custom config names use the individual installers below.
 
 <details>
 <summary><strong>I use a configuration named gpt</strong></summary>
@@ -446,10 +446,13 @@ Keep the checkout outside `~/.config/quickshell/gpt`, then link it and start wit
 that configuration name:
 
 ```bash
-./scripts/install.sh --replace --target "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/gpt"
+./scripts/install.sh --target "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/gpt"
 ./scripts/install-settings.sh --replace
 ./scripts/start.sh --config gpt
 ```
+
+If `gpt` is an existing symlink, add `--replace` to back it up first. A non-empty
+directory at that path is refused rather than moved.
 
 Replace `lme-shell` with `gpt` in niri includes, startup and IPC bindings. The
 supplied fragment targets `lme-shell` by default, so adapt it before inclusion.

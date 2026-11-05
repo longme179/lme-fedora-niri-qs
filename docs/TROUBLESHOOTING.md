@@ -31,9 +31,9 @@ Start with `./scripts/doctor.sh` inside the target niri session, then run
 
 Confirm that `~/.config/quickshell/lme-shell/shell.qml` exists and that the
 symlink points to the current checkout. Moving or deleting the checkout breaks
-the installed link. Rerun `./scripts/install.sh`; use `--replace` only if you
-intend to back up and replace a different target. If `XDG_CONFIG_HOME` is set,
-Quickshell and the installer must use the same config home.
+the installed link. Rerun `./scripts/install.sh`; use `--replace` only for an
+empty or linked target, since non-empty directories are refused. If
+`XDG_CONFIG_HOME` is set, Quickshell and the installer must use the same config home.
 
 ## A QML type or module is unavailable
 

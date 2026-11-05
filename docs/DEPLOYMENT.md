@@ -23,8 +23,9 @@ the pinned private fallback only if package/runtime probes fail. The fallback
 uses two compiler jobs by default (`--jobs 1` for less temporary build memory).
 Building can take several minutes; it is not a new persistent process.
 
-Add `--replace` to back up and replace an unrelated existing shell link, Settings
-desktop entry or command. Conflicts are checked before installing packages.
+Add `--replace` to back up and replace an existing shell link, empty shell
+directory, Settings desktop entry or command. A non-empty shell directory such as
+`~/.config` is refused. Conflicts are checked before installing packages.
 Old `setup.sh` remains available for manual niri integration.
 
 After deployment, log out and select **niri** at your login screen, then log in.

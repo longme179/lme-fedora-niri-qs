@@ -192,7 +192,9 @@ cd ~/src/lme-fedora-niri-qs
 
 This creates a symlink from `~/.config/quickshell/lme-shell` to the checkout.
 It respects `XDG_CONFIG_HOME` when set. If a different configuration already
-exists at that target, the installer stops. To back it up and then replace it:
+exists at that target, the installer stops. `--replace` preserves an empty
+directory or an existing symlink in a timestamped backup; non-empty directories
+are refused:
 
 ```bash
 ./scripts/install.sh --replace

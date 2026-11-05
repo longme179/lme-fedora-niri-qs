@@ -81,15 +81,38 @@ sys.exit(int(os.environ.get('LME_TEST_PACKAGE_EXIT', '0')) if 'fedora' in sys.ar
         self.target.unlink()
         self.target.mkdir()
         (self.target / 'previous.qml').write_text('previous shell')
-        self.desktop.write_text('previous launcher')
         before = self.calls()
         self.assertNotEqual(self.setup('--install').returncode, 0)
         self.assertEqual(self.calls(), before, 'Check target conflicts before installing packages')
         result = self.setup('--install', '--replace')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.calls(), before, 'Refuse unsafe replacement before installing packages')
+        self.assertEqual((self.target / 'previous.qml').read_text(), 'previous shell')
+        self.assertFalse(list(self.target.parent.glob('lme-shell.backup-*')))
+        (self.target / 'previous.qml').unlink()
+        self.desktop.write_text('previous launcher')
+        result = self.setup('--install', '--replace')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(next(self.target.parent.glob('lme-shell.backup-*')).joinpath('previous.qml').read_text(), 'previous shell')
+        self.assertTrue(next(self.target.parent.glob('lme-shell.backup-*')).is_dir())
         self.assertEqual(next(self.desktop.parent.glob('*.backup-*')).read_text(), 'previous launcher')
         self.assertEqual(preferences.read_text(), '{"surfaceStyle":"liquid"}')
+
+    @unittest.skipIf(os.geteuid() == 0, 'user installation deliberately refuses root')
+    def test_replace_backs_up_a_linked_target_without_touching_its_destination(self):
+        elsewhere = self.root / 'elsewhere'
+        elsewhere.mkdir()
+        marker = elsewhere / 'keep'
+        marker.write_text('keep this')
+        self.target.parent.mkdir(parents=True)
+        self.target.symlink_to(elsewhere)
+        result = subprocess.run([str(self.repo / 'scripts/install.sh'), '--replace', '--target', str(self.target)],
+                                env=self.env, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        backup, = self.target.parent.glob('lme-shell.backup-*')
+        self.assertTrue(backup.is_symlink())
+        self.assertEqual(backup.resolve(), elsewhere)
+        self.assertEqual(self.target.resolve(), self.repo)
+        self.assertEqual(marker.read_text(), 'keep this')
 
     @unittest.skipIf(os.geteuid() == 0, 'user installation deliberately refuses root')
     def test_package_failure_leaves_user_files_and_niri_config_untouched(self):

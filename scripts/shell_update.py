@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 BUSY = {'checking', 'updating'}
@@ -164,8 +165,15 @@ class ShellUpdate:
                 raise ValueError('The downloaded checkout is missing the shell installer.')
             if target.exists() or target.is_symlink(): raise ValueError('The checkout destination appeared while cloning. Retry after reviewing it.')
             temporary.rename(target)
-            result = subprocess.run(['bash', str(target/'scripts/install.sh'), '--replace', '--target', str(self.repo)], capture_output=True, text=True, timeout=30)
-            if result.returncode: raise ValueError(result.stderr.strip() or 'The installer could not switch source paths. The original installation was retained.')
+            backup = self.repo.with_name(self.repo.name + '.backup-' + time.strftime('%Y%m%d-%H%M%S') + '-' + str(os.getpid()))
+            self.repo.rename(backup)
+            try:
+                result = subprocess.run(['bash', str(target/'scripts/install.sh'), '--target', str(self.repo)], capture_output=True, text=True, timeout=30)
+                if result.returncode: raise ValueError(result.stderr.strip() or 'The installer could not switch source paths. The original installation was retained.')
+            except BaseException:
+                if self.repo.is_symlink(): self.repo.unlink()
+                if not self.repo.exists(): backup.rename(self.repo)
+                raise
             current = self.git('rev-parse', '--verify', 'HEAD^{commit}')
             value = self.state('updated', 'Git updates enabled. The original folder is retained next to it as .backup-*. Restart the shell and Settings.', current=current, checkout=str(target))
             fresh = ShellUpdate(target, self.path.parent)

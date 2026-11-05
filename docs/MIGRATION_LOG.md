@@ -878,3 +878,11 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Verified after installing the gate tools: G0 completed with 834 passed / 0 failed / 184 skipped and qmllint 153 files with 0 errors and 0 warnings; G1 passed 9 / 0 failed / 0 skipped. The start-log case clears `LME_SHELL_DEMO`/`LME_SHELL_PREVIEW`, and the gate runner now counts indented `subTest` skips instead of misreporting a skip-parse failure. Preview deadline, log path/rotation and launcher replies still need a real-session check.
 - Behavior: transient-only history changes do not save because the payload excludes them; errors always reach the banner; the catalog error appears once and then only in the log; live start output goes to `$XDG_STATE_HOME/lme-shell/log/lme-shell.log` with two rotations, while demo/preview keep terminal output.
 - No new dependency, daemon, polling/cache change, source move or architecture cycle. ShellState stays at the 250-nonblank cap.
+
+## M2 — Durability and installer defaults — 2026-11-05
+- Branch fix/m2-durability-installer; P-07 and P-09 only; P-08 skipped as a non-issue.
+- P-07: `storage.locked` and `Preferences.update` use a non-blocking 2 s `flock` loop; `write_json` and `Preferences._write` fsync the parent directory after `os.replace`. Timeouts surface as `TimeoutError`/`CommandError` with the path; rename or directory-fsync failures surface without a retry loop.
+- P-09: `install.sh --replace` accepts links and empty directories only; regular files and non-empty directories such as `~/.config` are refused before any backup. The ZIP→Git bootstrap moves its old source to the timestamped backup itself, then calls the stricter installer. README/INSTALL/DEPLOYMENT/TROUBLESHOOTING updated.
+- Tests: new `test_storage_durability.py` (five cases); install/updater fixtures cover non-empty refusal, linked replacement, empty-directory backup and bootstrap restoration. Existing fsync-event and non-empty `--replace` assertions updated with owner approval.
+- G0 completed with 840 passed / 0 failed / 184 skipped; qmllint 153 files with 0 errors and 0 warnings. No QML changes, so no G1/G2.
+- No new dependency, daemon, polling/cache change, source move or architecture cycle; `desktop_backend.py` stays at its 1628-nonblank ceiling.

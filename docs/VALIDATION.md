@@ -1822,3 +1822,22 @@ after updating the installed `gpt` configuration.
 3. Switch players and rapidly change tracks while watching both media cards. Metadata retention is bounded; controls must immediately follow the live player's capabilities.
 4. Pause, close the media panel, disable animations and toggle Moving media shapes. Check that motion stops and the controls stay readable with the configured font size.
 5. With `python3-gobject-base` installed, scan in Control center → Devices. Test a headset and, if available, a PIN/passkey keyboard. Confirm, reject and cancel a request, switch adapters if present, and close/reopen Devices while scanning or pairing. Check that only the shell's discovery/pairing session stops. These hardware tests have not been performed in the cloud.
+
+## Hardware checks
+
+The rows below collect every claim recorded in this file as not verified. They
+are owner/laptop checks; private Sway cannot prove them.
+
+| Claim | Manual check |
+| --- | --- |
+| Native full-screen blur, niri blur composition and Radeon 120 Hz pacing | `niri validate`; start the shell, open Settings and Control Center, inspect blur/rim settling, then `niri msg outputs` for the active mode. |
+| Physical backlight/power-profile switching, AC detection, privileged charging writes, PAM/logind suspend/lock, AMD temperature sensors and GPU telemetry | `brightnessctl`, `powerprofilesctl`, `cat /sys/class/power_supply/*/online`, `sensors` and the relevant `/sys/class/hwmon/*/temp*_input`; run the charge-helper threshold change; `systemctl suspend` then unlock; compare System Monitor with a GPU tool. |
+| Scaled multi-monitor placement, output hotplug and live Fedora/niri device behavior | Connect two outputs, set different scales, run `niri msg outputs`, preview/confirm Display settings, then unplug and replug. |
+| Chromium/browser playback, player metadata and 120 Hz smoothness | Play a local video in Chromium; run `playerctl status`; check the media panel and motion smoothness. |
+| Real Satty/Swappy windows, save/copy UI and target Fedora/niri behavior | Trigger screenshot → annotate; save and copy in each editor. |
+| Fedora DNF transactions, Fedora source-build commands and resource savings | Run `./scripts/setup.sh` once interactively; run `./scripts/memory_report.py --label steady` with normal panels open. |
+
+Historical sections dated before 2026-10-20 are kept unchanged; their claims
+are covered by these rows or by the same manual checks above. GPU telemetry,
+privileged charging writes and real suspend/lock were not performed in cloud
+validation.

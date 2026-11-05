@@ -138,7 +138,13 @@ GlassPanel {
                         Layout.fillWidth: true; from: -12; to: 12; stepSize: 0.5
                         value: root.gains[index] || 0
                         onMoved: if (!pressed) { const next = root.gains.slice(); next[index] = value; root.gains = next; }
-                        onPressedChanged: if (pressed) { root.adjusting = true; return; } const next = root.gains.slice(); next[index] = value; root.gains = next; Qt.callLater(() => { root.adjusting = false; });
+                        onPressedChanged: {
+                        if (pressed) { root.adjusting = true; return; }
+                        const next = root.gains.slice();
+                        next[index] = value;
+                        root.gains = next;
+                        Qt.callLater(() => { root.adjusting = false; });
+                    }
                     }
                     LabelText { text: (root.gains[index] || 0).toFixed(1) + " dB"; Layout.preferredWidth: 55 }
                 }

@@ -120,7 +120,13 @@ ColumnLayout {
                     Layout.fillWidth: true; from: -12; to: 12; stepSize: 0.5
                     value: gains[index] || 0
                     onMoved: if (!pressed) { const next = gains.slice(); next[index] = value; gains = next; }
-                    onPressedChanged: if (pressed) { root.adjusting = true; return; } const next = gains.slice(); next[index] = value; gains = next; Qt.callLater(() => { root.adjusting = false; });
+                    onPressedChanged: {
+                        if (pressed) { root.adjusting = true; return; }
+                        const next = gains.slice();
+                        next[index] = value;
+                        gains = next;
+                        Qt.callLater(() => { root.adjusting = false; });
+                    }
                 }
                 LabelText { text: (gains[index] || 0).toFixed(1) + " dB"; Layout.preferredWidth: 60 }
             }
@@ -134,7 +140,11 @@ ColumnLayout {
             LabelText { text: "Balance"; Layout.fillWidth: true }
             LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: balance
                 onMoved: if (!pressed) balance = value
-                onPressedChanged: if (pressed) { root.adjusting = true; return; } balance = value; Qt.callLater(() => { root.adjusting = false; })
+                onPressedChanged: {
+                    if (pressed) { root.adjusting = true; return; }
+                    balance = value;
+                    Qt.callLater(() => { root.adjusting = false; });
+                }
             }
             LabelText { text: balance.toFixed(2); Layout.preferredWidth: 50 }
         }

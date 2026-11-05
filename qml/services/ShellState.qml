@@ -67,7 +67,7 @@ QtObject {
     property var lastResult: null
     property var wifiResult: null
     property string osdLabel: ""; property real osdValue: 0
-    property bool osdOpen: false; property bool equalizerPopupOpen: false
+    property bool osdOpen: false
     readonly property string focusedTitle: {
         const windows = niri.windows || [];
         const focused = windows.find(w => w.is_focused);

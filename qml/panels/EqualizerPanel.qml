@@ -79,8 +79,13 @@ GlassPanel {
     }
 
     function apply() {
-        if (ShellState.backendReady)
-            ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
+        if (!ShellState.backendReady)
+            return;
+        if (ShellState.preferences.equalizerEnabled !== true) {
+            ShellState.run("setting", {key: "equalizerEnabled", value: true});
+            ShellState.run("eqStart");
+        }
+        ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
     }
 
     ColumnLayout {

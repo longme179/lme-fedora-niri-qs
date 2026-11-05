@@ -3,6 +3,12 @@
   "sources": [
     "qml/settings/EqualizerPage.qml",
     "qml/panels/EqualizerPanel.qml",
+    "qml/services/EqualizerState.qml",
+    "qml/components/SegmentSwitch.qml",
+    "qml/components/EqualizerBands.qml",
+    "qml/components/EqualizerPresets.qml",
+    "qml/components/EqualizerBalance.qml",
+    "qml/components/EqualizerAudioControls.qml",
     "scripts/equalizer_actions.py"
   ],
   "settingsPage": {

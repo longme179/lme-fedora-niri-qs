@@ -173,6 +173,7 @@ MotionPopup {
         }
         ColumnLayout {
             Layout.fillWidth: true; spacing: 6
+            enabled: !root.dyneq; opacity: root.dyneq ? 0.45 : 1.0
             LabelText { text: "Output and dynamics"; font.weight: Font.Medium }
             RowLayout {
                 Layout.fillWidth: true
@@ -188,11 +189,37 @@ MotionPopup {
                 }
                 LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
             }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Mono"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Swap"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamics"; Layout.fillWidth: true }; LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Bypass"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } } }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Mono"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Swap"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Dynamics"; Layout.fillWidth: true }
+                LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Bypass"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } }
+            }
+        }
+        Item {
+            Layout.fillWidth: true; Layout.preferredHeight: 30
+            visible: root.dyneq
+            Rectangle { anchors.fill: parent; color: Qt.rgba(0,0,0,.35); radius: 8 }
+            LabelText { anchors.centerIn: parent; text: "Adapting to your sound"; color: Theme.text; font.pixelSize: 14; font.weight: Font.Medium }
         }
         LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {

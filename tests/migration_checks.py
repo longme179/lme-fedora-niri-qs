@@ -40,7 +40,7 @@ def run_gate(name):
     text = (OUT/(name+'.log')).read_text(errors='replace')
     counts = re.findall(r'Ran (\d+) tests? in ', text)
     total = int(counts[-1]) if counts else 0
-    skipped = [{'name': match[2], 'reason': match[3]} for match in re.finditer(r'^(\w+) \(([^)]+)\) .*?skipped (.+)$', text, re.M)]
+    skipped = [{'name': match[2], 'reason': match[3]} for match in re.finditer(r'^\s*(\w+) \(([^)]+)\) .*?skipped (.+)$', text, re.M)]
     match = re.search(r'^(?:OK|FAILED)(?: \(([^\n]+)\))?$', text, re.M)
     summary = dict(re.findall(r'(\w+)=(\d+)', match[1] or '')) if match else {}
     failed = int(summary.get('failures', 0)) + int(summary.get('errors', 0))

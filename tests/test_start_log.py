@@ -29,7 +29,8 @@ class StartLogCase(unittest.TestCase):
             log.write_text("x" * (1024 * 1024 + 1))
             env = {**os.environ, "PATH": str(binaries) + ":" + os.environ["PATH"],
                    "XDG_STATE_HOME": str(state), "XDG_CONFIG_HOME": str(root / "config"),
-                   "XDG_RUNTIME_DIR": str(root / "runtime"), "LME_QS_BINARY": str(binaries / "quickshell")}
+                   "XDG_RUNTIME_DIR": str(root / "runtime"), "LME_QS_BINARY": str(binaries / "quickshell"),
+                   "LME_SHELL_DEMO": "0", "LME_SHELL_PREVIEW": "0"}
             result = subprocess.run(["bash", str(REPO / "scripts/start.sh"), "--no-wallpaper", "--config", "live"],
                                     env=env, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)

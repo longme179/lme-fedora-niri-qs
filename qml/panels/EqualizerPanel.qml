@@ -83,15 +83,9 @@ GlassPanel {
             ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
     }
 
-    background: Rectangle {
-        radius: Theme.radius
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.border
-        GlassMaterial { anchors.fill: parent; radius: parent.radius }
-    }
-
-    contentItem: ColumnLayout {
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 20
         objectName: "equalizerPopupBody"
         spacing: 12
         RowLayout {
@@ -138,7 +132,13 @@ GlassPanel {
                         Layout.fillWidth: true; from: -12; to: 12; stepSize: 0.5
                         value: root.gains[index] || 0
                         onMoved: if (!pressed) { const next = root.gains.slice(); next[index] = value; root.gains = next; }
-                        onPressedChanged: if (pressed) { root.adjusting = true; return; } const next = root.gains.slice(); next[index] = value; root.gains = next; Qt.callLater(() => { root.adjusting = false; });
+                        onPressedChanged: {
+                        if (pressed) { root.adjusting = true; return; }
+                        const next = root.gains.slice();
+                        next[index] = value;
+                        root.gains = next;
+                        Qt.callLater(() => { root.adjusting = false; });
+                    }
                     }
                     LabelText { text: (root.gains[index] || 0).toFixed(1) + " dB"; Layout.preferredWidth: 55 }
                 }
@@ -150,14 +150,45 @@ GlassPanel {
             RowLayout {
                 Layout.fillWidth: true
                 LabelText { text: "Balance"; Layout.fillWidth: true }
-                LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: root.balance; onMoved: if (!pressed) root.balance = value; onPressedChanged: if (pressed) { root.adjusting = true; return; } root.balance = value; Qt.callLater(() => { root.adjusting = false; }) }
+                LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: root.balance;
+                    onMoved: if (!pressed) root.balance = value
+                    onPressedChanged: {
+                        if (pressed) { root.adjusting = true; return; }
+                        root.balance = value;
+                        Qt.callLater(() => { root.adjusting = false; });
+                    }
+                }
                 LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
             }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Mono"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.mono; onToggled: root.mono = checked } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Swap"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.swap; onToggled: root.swap = checked } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamics"; Layout.fillWidth: true }; LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: root.dynamics = currentText } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Bypass"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.bypass; onToggled: root.bypass = checked } }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.dyneq; onToggled: root.dyneq = checked } }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Mono"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.mono; onToggled: root.mono = checked }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Swap"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.swap; onToggled: root.swap = checked }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Dynamics"; Layout.fillWidth: true }
+                LiquidComboBox {
+                    model: ["off", "balanced", "night"]
+                    currentIndex: Math.max(0, model.indexOf(root.dynamics))
+                    onActivated: root.dynamics = currentText
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Bypass"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.bypass; onToggled: root.bypass = checked }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.dyneq; onToggled: root.dyneq = checked }
+            }
         }
     }
 }

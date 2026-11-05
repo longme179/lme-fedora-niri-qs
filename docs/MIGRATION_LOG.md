@@ -902,3 +902,10 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - P-15: measured, no code change. Three read-only live samples of quickshell measured 11.8/11.8/11.7% of one core; a disposable private-Sway A/B measured 0.4% with MediaAmbient stopped and 92.0% with it running (software RHI exaggerates the absolute value). The drift loop is the dominant cost and no zero-visual frame-work removal was proven, so all 12 shapes and motion math stay. Real niri/Radeon soak is a hardware check.
 - Tests: `test_niri_events.py` (6), `test_backend_revisions.py` (1), `test_snapshot_identity.py` (2 offscreen QML). G0 851 passed / 0 failed / 184 skipped, qmllint 153 files 0/0; G1 9/0/0; G6 1/0/0. G2/G3/G4 reproduce the identical 4/4/4 baseline failures on clean main (missing `wtype`, Sway/portal window checks), so they are not branch regressions.
 - Startup: 10 cold launches per kind, main vs head medians — preview 1.001→0.993 s, Settings 0.991→1.010 s. RSS at 10 s (PSS medians): preview QS 255,863→258,798 KiB, backend 24,274→24,263 KiB; Settings QS 201,285→202,749 KiB, backend 24,232→24,255 KiB. All deltas are under +10%.
+
+## P-16 · IME indicator (2026-11-05)
+- Branch `feat/p16-ime-indicator`, default-off fcitx5 indicator + change OSD.
+- New `scripts/ime_actions.py`, `ImeState`/`ImeModule`, `imeIndicator` preference, OSD text mode.
+- Backed by tray identity + consumer-gated `fcitx5-remote -n`; added `fcitx5-remote` to TOOLS.
+- Config/feature registration; frozen fixture/assertion updates approved.
+- DMS attribution added to `THIRD_PARTY.md`. G0 1035/0/184; qmllint clean.

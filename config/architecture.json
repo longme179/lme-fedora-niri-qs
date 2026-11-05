@@ -59,7 +59,7 @@
     "qml/components/shaders/liquid-glass.frag": 277,
     "qml/components/shapes/shapes/cubic.js": 338,
     "qml/components/shapes/shapes/rounded-polygon.js": 313,
-    "qml/panels/ControlDashboard.qml": 332,
+    "qml/panels/ControlDashboard.qml": 333,
     "qml/settings/BehaviorPage.qml": 253,
     "qml/settings/TopBarPage.qml": 336,
     "scripts/battery_saver.py": 273,

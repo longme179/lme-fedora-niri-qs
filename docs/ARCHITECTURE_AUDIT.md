@@ -1,5 +1,9 @@
 # LME Shell architecture audit — Phase 0
 
+> **Superseded:** this 2026-10-20 architecture audit is retained for history.
+> Defect status is in [AUDIT.md](AUDIT.md); current architecture contracts are in
+> [ARCHITECTURE.md](ARCHITECTURE.md).
+
 **Date:** 2026-10-20  
 **Scope:** current runtime, feature integrations, settings, entry points and validation.  
 **Baseline:** `1f54934`; recording/status-lock correction committed separately as `684f372`.

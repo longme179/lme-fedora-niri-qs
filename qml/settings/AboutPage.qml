@@ -17,6 +17,7 @@ ColumnLayout {
         LabelText { text: "Inspired by end-4/dots-hyprland and snowarch/iNiR. The settings registry, modular bar and Material treatment are implemented for this shell."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
         LabelText { text: "Based on iNiR by snowarch (https://github.com/snowarch/inir)"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
         LabelText { visible: !ShellState.demo; text: "Shell log · " + root.logPath; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }
+        LabelText { visible: Theme.themeDiagnosticsText.length > 0; text: "Theme diagnostics · " + Theme.themeDiagnosticsText; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.yellow; font.pixelSize: 12 }
         LiquidButton { text: "Project on GitHub ↗"; onClicked: Qt.openUrlExternally("https://github.com/longme179/lme-fedora-niri-qs") }
     }
     SettingsCard {

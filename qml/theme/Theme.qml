@@ -7,6 +7,9 @@ import "../services"
 QtObject {
     id: root
     readonly property bool ready: glassConfig.settled && palettePresets.settled && tokenCatalog.settled && customPalette.settled
+    property string themeDiagnosticsText: ""
+    function themeProblem(message, error) { const text = message + (error === undefined ? "" : ": " + String(error));
+        if (themeDiagnosticsText.includes(text)) return; themeDiagnosticsText = themeDiagnosticsText ? themeDiagnosticsText + " · " + text : text; console.warn(text); }
     readonly property bool batterySaver: ShellState.batterySaverActive
     readonly property bool liquidGlass: !batterySaver && ShellState.preferences.surfaceStyle === "liquid"
     readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false
@@ -19,11 +22,13 @@ QtObject {
         property bool settled: false
         path: Quickshell.shellPath("config/liquid-glass.json")
         onLoaded: {
-            try { root.glassControls = JSON.parse(text()); }
-            catch (error) { console.warn("Glass controls could not be loaded:", error); }
+            try { const data = JSON.parse(text());
+                if (!data || typeof data !== "object" || Array.isArray(data) || Object.values(data).some(value => !value || typeof value !== "object" || !("default" in value))) throw new Error("expected named controls with defaults");
+                root.glassControls = data; }
+            catch (error) { root.themeProblem("Glass controls could not be loaded", error); }
             settled = true;
         }
-        onLoadFailed: settled = true
+        onLoadFailed: { root.themeProblem("Glass controls could not be read"); settled = true; }
     }
     readonly property color glassBase: glass.tint || "#f0081420"
     readonly property var glassColors: ({
@@ -53,11 +58,14 @@ QtObject {
         property bool settled: false
         path: Quickshell.shellPath("config/palettes.json")
         onLoaded: {
-            try { const data = JSON.parse(text()); root.paletteCatalog = data.palettes; root.paletteSchemes = data.schemes; }
-            catch (error) { console.warn("Palette catalog could not be loaded:", error); }
+            try { const data = JSON.parse(text());
+                if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.palettes) || data.schemes !== undefined && !Array.isArray(data.schemes)) throw new Error("palettes and schemes must be arrays");
+                root.paletteCatalog = data.palettes.filter(entry => entry && typeof entry === "object" && typeof entry.id === "string");
+                root.paletteSchemes = (data.schemes || []).filter(value => typeof value === "string"); }
+            catch (error) { root.themeProblem("Palette catalog could not be loaded", error); }
             settled = true;
         }
-        onLoadFailed: settled = true
+        onLoadFailed: { root.themeProblem("Palette catalog could not be read"); settled = true; }
     }
     function solid(color) { const value = Qt.color(color); return Qt.rgba(value.r, value.g, value.b, 1); }
     function colorFor(key, fallback) {
@@ -79,11 +87,13 @@ QtObject {
         property bool settled: false
         path: Quickshell.shellPath("config/theme-tokens.json")
         onLoaded: {
-            try { root.catalog = JSON.parse(text()); }
-            catch (error) { console.warn("Theme catalog could not be loaded:", error); }
+            try { const data = JSON.parse(text());
+                if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.colors) || !Array.isArray(data.fonts)) throw new Error("colors and fonts must be arrays");
+                root.catalog = {colors: data.colors, fonts: data.fonts}; }
+            catch (error) { root.themeProblem("Theme catalog could not be loaded", error); }
             settled = true;
         }
-        onLoadFailed: settled = true
+        onLoadFailed: { root.themeProblem("Theme catalog could not be read"); settled = true; }
     }
     readonly property color background: colorFor("background", custom.background || "#22212c")
     readonly property color panel: colorFor("panel", custom.panel || "#2d293d")
@@ -217,7 +227,7 @@ QtObject {
                 if (typeof value[key] === "string" && /^#[0-9a-fA-F]{6}$/.test(value[key])) valid[key] = value[key];
             }
             custom = valid;
-        } catch (error) { console.warn("Custom palette could not be loaded:", error); }
+        } catch (error) { root.themeProblem("Custom palette could not be loaded", error); }
     }
     property FileView palette: FileView {
         id: customPalette
@@ -230,7 +240,7 @@ QtObject {
         onLoadFailed: error => {
             settled = true;
             if (error === FileViewError.FileNotFound) root.custom = {};
-            else console.warn("Custom palette could not be read:", FileViewError.toString(error));
+            else root.themeProblem("Custom palette could not be read", FileViewError.toString(error));
         }
     }
 }

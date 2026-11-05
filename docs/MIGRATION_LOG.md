@@ -886,3 +886,11 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Tests: new `test_storage_durability.py` (five cases); install/updater fixtures cover non-empty refusal, linked replacement, empty-directory backup and bootstrap restoration. Existing fsync-event and non-empty `--replace` assertions updated with owner approval.
 - G0 completed with 840 passed / 0 failed / 184 skipped; qmllint 153 files with 0 errors and 0 warnings. No QML changes, so no G1/G2.
 - No new dependency, daemon, polling/cache change, source move or architecture cycle; `desktop_backend.py` stays at its 1628-nonblank ceiling.
+
+## M3 — Diagnosability and docs hygiene — 2026-11-05
+- Branch fix/m3-diagnostics; P-10, P-11 and P-12.
+- P-10: Theme validates glass controls, palette lists, the token catalog and the custom palette; malformed files keep safe defaults, warn once per distinct message and expose `themeDiagnosticsText` in About.
+- P-11: `OSDManager.outputName` falls back from a missing named/`all` output to the focused output, panel screen and then the first screen; the saved preference is untouched.
+- P-12: `ARCHITECTURE_AUDIT.md` carries a superseded header, the README indexes the audit docs and VALIDATION has a six-row manual-check matrix covering all ten `unverified` claims.
+- Tests: new `test_theme_osd_guards.py` mutates a copied config and asserts safe defaults/diagnostics plus fallback selection. G0 completed with 842 passed / 0 failed / 184 skipped; qmllint 153 files with 0 errors and 0 warnings. G1 passed 9 / 0 failed / 0 skipped.
+- No visual/layout change, new dependency, daemon, polling/cache change or architecture cycle. Hardware matrix rows need owner/laptop checks.

@@ -146,5 +146,6 @@
   "barIslandStyles": ["dict", "{}"],
   "barCorners": ["dict", "{\"bottomLeft\": -1, \"bottomRight\": -1, \"topLeft\": -1, \"topRight\": -1}"],
   "barLayout": ["dict", "{\"center\": [\"activity\"], \"left\": [\"launcher\", \"overview\", \"workspaces\"], \"right\": [\"privacy\", \"clipboard\", \"tray\", \"notifications\", \"audio\", \"network\", \"battery\", \"clock\", \"settings\"]}"],
-  "imeIndicator": ["bool", "false"]
+  "imeIndicator": ["bool", "false"],
+  "equalizerEnabled": ["bool", "false"]
 }

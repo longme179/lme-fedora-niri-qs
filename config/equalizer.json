@@ -1,0 +1,29 @@
+{
+  "id": "equalizer",
+  "sources": [
+    "qml/settings/EqualizerPage.qml",
+    "scripts/equalizer_actions.py"
+  ],
+  "settingsPage": {
+    "key": "equalizer",
+    "title": "Equalizer",
+    "icon": "audio",
+    "description": "Serpantinum equalizer and dynamics for PipeWire audio",
+    "keywords": "equalizer bands eq balance mono swap dynamics compressor limiter bypass serpantinum",
+    "entry": "qml/settings/EqualizerPage.qml",
+    "after": "utilities"
+  },
+  "preferences": {
+    "equalizerEnabled": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    }
+  },
+  "backend": {
+    "entry": "scripts/equalizer_actions.py",
+    "factory": "provide"
+  }
+}

@@ -18,5 +18,6 @@
 {"id":"bluetooth","descriptor":"config/bluetooth.json","enabled":true,"startup":{}},
 {"id":"audio","descriptor":"config/audio.json","enabled":true,"startup":{}},
 {"id":"wifi","descriptor":"config/wifi.json","enabled":true,"startup":{}},
-{"id":"ime","descriptor":"config/ime.json","enabled":true,"startup":{"bar":{"id":"ime","title":"Input method","detail":"Active keyboard input method","icon":"applications","entry":"qml/bar/ImeModule.qml","after":"privacy"}}}
+{"id":"ime","descriptor":"config/ime.json","enabled":true,"startup":{"bar":{"id":"ime","title":"Input method","detail":"Active keyboard input method","icon":"applications","entry":"qml/bar/ImeModule.qml","after":"privacy"}}},
+{"id":"equalizer","descriptor":"config/equalizer.json","enabled":true,"startup":{"settingsPage":{"key":"equalizer","title":"Equalizer","icon":"audio","description":"Serpantinum equalizer and dynamics for PipeWire audio","keywords":"equalizer bands eq balance mono swap dynamics compressor limiter bypass serpantinum","entry":"qml/settings/EqualizerPage.qml","after":"utilities"}}}
 ]}

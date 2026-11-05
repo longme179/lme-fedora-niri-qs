@@ -242,6 +242,13 @@
       "keywords": "keybind bindings cheatsheet hotkey keys keyboard config includes search"
     },
     {
+      "key": "equalizer",
+      "title": "Equalizer",
+      "icon": "audio",
+      "description": "Serpantinum equalizer and dynamics for PipeWire audio",
+      "keywords": "equalizer bands eq balance mono swap dynamics compressor limiter bypass serpantinum"
+    },
+    {
       "key": "behavior",
       "title": "Behavior",
       "icon": "resources",

@@ -76,6 +76,7 @@ from local_content_actions import LocalContentCapabilities, provide as provide_l
 from audio_actions import AudioCapabilities, provide as provide_audio
 from audio_device_actions import DeviceCapabilities, provide as provide_audio_devices
 from ime_actions import ImeCapabilities, provide as provide_ime
+from equalizer_actions import EqualizerCapabilities, provide as provide_equalizer
 from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
@@ -107,7 +108,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices, 'wifi': provide_connections, 'ime': provide_ime}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices, 'wifi': provide_connections, 'ime': provide_ime, 'equalizer': provide_equalizer}
 
 
 def initialize_catalog():
@@ -618,6 +619,7 @@ class DesktopBackend:
                 lambda value: self.niri_action(value), lambda: self.demo_snapshot()['niri'], lambda: self.demo_snapshot()['apps'])),
             (BACKEND_FACTORIES['audio'], DeviceCapabilities(AudioCapabilities(lambda *args, **kwargs:self.runner.run(*args, **kwargs),self.percentage,lambda:self.bluetooth(),lambda enabled:self.set_bluetooth(enabled),
                 lambda:{key:value for key,value in self.demo_snapshot()['system'].items() if key in ('audio','microphone','brightness','bluetooth')},lambda:setattr(self,'bluetooth_cache',None)),self.runner.available,lambda:tuple(self.feature_jobs))),
+            (BACKEND_FACTORIES['equalizer'], EqualizerCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda name: self.runner.available(name))),
             (provide_local_content, LocalContentCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.prepare_notes(),
                 self.valid_notifications, lambda history: setattr(self, 'notification_history', history), lambda: self.notification_path,
                 lambda value: self.demo_snapshot().__setitem__('calculator', value))),

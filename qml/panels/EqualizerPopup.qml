@@ -171,6 +171,29 @@ MotionPopup {
                 Repeater { model: ["Pop", "Rock", "Jazz", "Classic"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } }
             }
         }
+        ColumnLayout {
+            Layout.fillWidth: true; spacing: 6
+            LabelText { text: "Output and dynamics"; font.weight: Font.Medium }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Balance"; Layout.fillWidth: true }
+                LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: root.balance;
+                    onMoved: if (!pressed) root.balance = value
+                    onPressedChanged: {
+                        if (pressed) { root.adjusting = true; return; }
+                        root.balance = value;
+                        root.apply();
+                        Qt.callLater(() => { root.adjusting = false; });
+                    }
+                }
+                LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
+            }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Mono"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } } }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Swap"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } } }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamics"; Layout.fillWidth: true }; LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } } }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Bypass"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } } }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } } }
+        }
         LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {
             Layout.fillWidth: true; spacing: 8
@@ -188,6 +211,12 @@ MotionPopup {
                         from: -12; to: 12; stepSize: 0.5
                         value: root.gains[index] || 0
                         width: 40; height: 170
+                        enabled: !root.dyneq
+                        opacity: root.dyneq ? 0.35 : 1.0
+                        Behavior on value {
+                            enabled: !slider.pressed
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
                         onPressedChanged: {
                             if (pressed) { root.adjusting = true; return; }
                             const next = root.gains.slice();

@@ -217,7 +217,7 @@ Item {
             onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]})
         }
     }
-    Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.preferences.equalizerEnabled !== false; onClicked: ShellState.togglePanel("equalizer") } }
+    Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.preferences.equalizerEnabled !== false; onClicked: ShellState.equalizerPopupOpen = true } }
     Component { id: settingsModule; Tile { label: "Settings"; detail: "Shell preferences"; iconName: "settings"; onClicked: ShellState.togglePanel("settings") } }
     Component { id: powerModule; Tile { label: "Power"; detail: "Lock, sleep or shut down"; iconName: "power"; accent: Theme.pink; onClicked: ShellState.togglePanel("power") } }
     Component {

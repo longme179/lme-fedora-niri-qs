@@ -216,8 +216,8 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Volume and brightness OSD"
-        description: "Spring popups follow the focused niri output, a chosen output, or all connected displays. Each output owns its popup timer."
-        PreferenceSwitch { title: "Show OSD"; detail: "Volume and brightness feedback"; preference: "osdEnabled" }
+        description: "Spring popups follow the focused niri output, a chosen output, or all connected displays. Each output owns its popup timer. Input-method changes can be shown too."
+        PreferenceSwitch { title: "Show OSD"; detail: "Volume and brightness feedback"; preference: "osdEnabled" } PreferenceSwitch { title: "Input method changes"; detail: "Show the active input method when it switches"; preference: "imeIndicator" }
         RowLayout {
             LabelText { text: "Position"; Layout.fillWidth: true }
             LiquidComboBox { property var positions: ["top-left","top-center","top-right","center-left","center","center-right","bottom-left","bottom-center","bottom-right"]; model: positions; currentIndex: positions.indexOf(ShellState.preferences.osdPosition || "bottom-center"); onActivated: ShellState.run("setting",{key:"osdPosition",value:currentText}); Accessible.name: "OSD position" }

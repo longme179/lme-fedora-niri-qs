@@ -75,6 +75,7 @@ from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
 from audio_actions import AudioCapabilities, provide as provide_audio
 from audio_device_actions import DeviceCapabilities, provide as provide_audio_devices
+from ime_actions import ImeCapabilities, provide as provide_ime
 from window_actions import WindowCapabilities, provide as provide_windows
 from appearance_actions import AppearanceCapabilities, provide as provide_appearance
 from wallpaper_actions import (WallpaperScanCapabilities, provide as provide_wallpaper_scan,
@@ -106,7 +107,7 @@ DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
 BAR_MODULES = {"launcher", "overview", "workspaces", "windowTitle", "media", "resources", "tray",
                "notifications", "audio", "network", "battery", "clock", "settings", "activity", "privacy", "power", "desktop", "launchpad"}
 FEATURE_CATALOG_ERROR, FEATURE_CATALOG, _catalog_initialized = '', empty_catalog(), False
-BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices, 'wifi': provide_connections}
+BACKEND_PROVIDER_FALLBACKS = BACKEND_FACTORIES = {'nightLight': provide_night_light, 'idle': provide_idle, 'keybinds': provide_keybinds, 'weather': provide_weather, 'batterySaver': provide_saver, 'mirroring': provide_mirror, 'audio': provide_audio_devices, 'wifi': provide_connections, 'ime': provide_ime}
 
 
 def initialize_catalog():
@@ -625,7 +626,8 @@ class DesktopBackend:
                 self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
             (BACKEND_FACTORIES['idle'], IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry, lambda: self.ac_online(),
                 self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value))),
-            (BACKEND_FACTORIES['keybinds'], KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state)))])
+            (BACKEND_FACTORIES['keybinds'], KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state))),
+            (BACKEND_FACTORIES['ime'], ImeCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda name: self.runner.available(name)))])
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -639,8 +641,7 @@ class DesktopBackend:
         self.idle_control = IdleControl(self.runner)
         self.idle_state = {}
         self.keybinds = {"path": "", "bindings": [], "errors": []}
-        self.night_light = NightLight(self.runner)
-        self.night_state = {}
+        self.night_light = NightLight(self.runner); self.night_state = {}
         self.capture = ScreenCapture(self.runner)
         self.recorder = Recorder(self.runner,sysfs)
         self.mirror = DisplayMirror(self.runner)
@@ -1336,8 +1337,7 @@ class DesktopBackend:
         return str(value)
 
     def handle(self, request: Any) -> dict[str, Any]:
-        self.client_serial = acknowledge(self.client_serial, request)
-        self.result_sequence += 1; self.result_unemitted = True
+        self.client_serial = acknowledge(self.client_serial, request); self.result_sequence += 1; self.result_unemitted = True
         action = request.get("action", "") if isinstance(request, dict) else ""
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")

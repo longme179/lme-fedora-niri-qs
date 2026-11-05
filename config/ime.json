@@ -1,0 +1,29 @@
+{
+  "id": "ime",
+  "sources": [
+    "qml/services/ImeState.qml",
+    "qml/bar/ImeModule.qml",
+    "scripts/ime_actions.py"
+  ],
+  "bar": {
+    "id": "ime",
+    "title": "Input method",
+    "detail": "Active keyboard input method",
+    "icon": "applications",
+    "entry": "qml/bar/ImeModule.qml",
+    "after": "privacy"
+  },
+  "preferences": {
+    "imeIndicator": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    }
+  },
+  "backend": {
+    "entry": "scripts/ime_actions.py",
+    "factory": "provide"
+  }
+}

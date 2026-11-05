@@ -18,7 +18,7 @@ from test_backend import Fixture, backend
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY = {'weather': 'weather_actions', 'batterySaver': 'saver_actions', 'mirroring': 'mirror_actions'}
-BINDINGS = ('nightLight', 'idle', 'keybinds', *FAMILY, 'audio', 'wifi')
+BINDINGS = ('nightLight', 'idle', 'keybinds', *FAMILY, 'audio', 'wifi', 'ime')
 COMPLETE = all(json.loads((ROOT/'config'/f'{name}.json').read_text()).get('backend') for name in FAMILY)
 PLACE = dict(name='Oslo', country='Norway', latitude=59.91, longitude=10.75)
 REQUESTS = [dict(action='mirrorRefresh'), dict(action='mirrorStart', source='eDP-1', target='HDMI-A-1'),
@@ -124,7 +124,7 @@ class ControllerDescriptorCase(ControllerFixture, unittest.TestCase):
         self.assertNotIn('batterySaver', policy['legacyFeatures'])
         for source in ('scripts/mirror_actions.py', 'scripts/display_mirror.py'):
             self.assertNotIn(source, policy['legacyFeatures']['display'])
-        self.assertEqual(len(backend.PREFERENCE_SCHEMA.definitions), 147)
+        self.assertEqual(len(backend.PREFERENCE_SCHEMA.definitions), 148)
         self.assertEqual(len(backend.PREFERENCE_SCHEMA.legacy_keys), 68)
 
     def test_each_copied_descriptor_selects_its_own_factory_without_host_edits(self):

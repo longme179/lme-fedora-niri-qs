@@ -41,6 +41,7 @@ PanelWindow {
                         Item {
                             Layout.fillWidth: true; Layout.fillHeight: true
                             Rectangle {
+                                visible: !(root.entry && root.entry.text)
                                 anchors.centerIn: parent; width: root.vertical ? 8 : parent.width; height: root.vertical ? parent.height : 8
                                 color: Theme.sliderTrack; radius: 4
                                 Rectangle {
@@ -50,8 +51,13 @@ PanelWindow {
                                     Behavior on width { MotionAnimation {} } Behavior on height { MotionAnimation {} }
                                 }
                             }
+                            LabelText {
+                                visible: !!(root.entry && root.entry.text)
+                                anchors.centerIn: parent; text: root.entry ? root.entry.text : ""
+                                font.weight: Font.Bold; font.pixelSize: 18; color: Theme.accent; horizontalAlignment: Text.AlignHCenter
+                            }
                         }
-                        LabelText { visible: root.vertical; text: root.entry ? Math.round(root.entry.value)+"%" : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; color: Theme.accent }
+                        LabelText { visible: root.vertical && !(root.entry && root.entry.text); text: root.entry ? Math.round(root.entry.value)+"%" : ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; color: Theme.accent }
                     }
                     HoverHandler { onHoveredChanged: { if(hovered) timeout.stop(); else if(root.open) timeout.restart(); } }
                 }

@@ -78,8 +78,13 @@ MotionPopup {
     }
 
     function apply() {
-        if (ShellState.backendReady)
-            ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
+        if (!ShellState.backendReady)
+            return;
+        if (ShellState.preferences.equalizerEnabled !== true) {
+            ShellState.run("setting", {key: "equalizerEnabled", value: true});
+            ShellState.run("eqStart");
+        }
+        ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
     }
 
     function refreshFromDaemon() {
@@ -189,31 +194,13 @@ MotionPopup {
                 }
                 LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
             }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Mono"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Swap"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } }
-            }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Mono"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } } } RowLayout { Layout.fillWidth: true; LabelText { text: "Swap"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } } }
             RowLayout {
                 Layout.fillWidth: true
                 LabelText { text: "Dynamics"; Layout.fillWidth: true }
                 LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } }
             }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Bypass"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } }
-            }
+            RowLayout { Layout.fillWidth: true; LabelText { text: "Bypass"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } } } RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } } }
         }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: 30

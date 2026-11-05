@@ -126,7 +126,13 @@ ColumnLayout {
         LabelText { text: "Availability: " + (ShellState.backendReady ? "checked by backend actions" : "waiting"); color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {
             Layout.fillWidth: true
-            LiquidButton { text: "Apply"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq}) }
+            LiquidButton { text: "Apply"; enabled: ShellState.backendReady; onClicked: {
+                if (ShellState.preferences.equalizerEnabled !== true) {
+                    ShellState.run("setting", {key: "equalizerEnabled", value: true});
+                    ShellState.run("eqStart");
+                }
+                ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq});
+            } }
             LiquidButton { text: "Status"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqStatus") }
         }
         ColumnLayout {

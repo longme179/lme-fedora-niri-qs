@@ -106,3 +106,12 @@ gowall
 # Use Shell utilities > Gowall > Setup in terminal for gowall's own download prompt.
 vulkan-loader
 mesa-vulkan-drivers
+
+[optional-equalizer-ime]
+# Serpantinum equalizer daemon: external binary built from upstream, never installed
+# automatically. Until it is on PATH the Equalizer surfaces report it as unavailable.
+# https://github.com/ilyamiro/serpantinum-audio
+# serpantinum-audio
+
+# Default-off fcitx5 input-method indicator (Settings -> Behavior):
+fcitx5

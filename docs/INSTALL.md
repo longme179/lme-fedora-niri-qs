@@ -105,6 +105,15 @@ library and needs no `pip install`.
 | `polkit` | System authorization service and `pkexec` for administrator actions |
 | Noto Sans, Noto Color Emoji, Adwaita icon theme | Text and installed application icons |
 
+Two optional integrations are intentionally absent from the package list:
+
+| Optional integration | Runtime | Notes |
+| --- | --- | --- |
+| Equalizer | `serpantinum-audio` | External daemon, built and installed from [upstream](https://github.com/ilyamiro/serpantinum-audio). Until the binary is on `PATH`, the Equalizer pages report "serpantinum-audio is unavailable". |
+| IME indicator | `fcitx5-remote` (package `fcitx5`) | Default-off top-bar module (Settings → Behavior). No polling while disabled. |
+
+`scripts/doctor.sh` lists both under its optional checks.
+
 Use a Quickshell build with `Quickshell.Services.Pipewire`,
 `Quickshell.Services.Polkit` and Wayland idle
 inhibitor support. Older 0.2.x builds cannot run the expanded control center.

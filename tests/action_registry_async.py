@@ -156,3 +156,30 @@ class WallpaperScanDispatchCase(Fixture, unittest.TestCase):
         cancelled = other.feature_jobs['wallpaperScan']; self.assertTrue(cancelled.cancel())
         with self.assertRaises(CancelledError): other.finish_features()
         self.assertIs(other.feature_jobs['wallpaperScan'], cancelled)
+
+
+class UnexpectedCompletionCase(Fixture, unittest.TestCase):
+    """A worker future completing with an unexpected exception type must not wedge the loop."""
+
+    def test_unexpected_completion_errors_clear_the_owner_and_keep_snapshots_flowing(self):
+        for error in (KeyError('escape'), TypeError('bad state'), AttributeError('gone')):
+            with self.subTest(error=type(error).__name__):
+                env = patch.dict(os.environ, XDG_CONFIG_HOME=str(self.root/'config'),
+                                 XDG_STATE_HOME=str(self.root/'state'), XDG_RUNTIME_DIR=str(self.root/'runtime'))
+                env.start(); self.addCleanup(env.stop)
+                live = self.make_backend()
+                self.addCleanup(live.charge_executor.shutdown)
+                self.addCleanup(live.feature_executor.shutdown)
+                self.addCleanup(live.weather.close)
+                self.addCleanup(live.capture.close)
+                finished = Future(); finished.set_exception(error)
+                live.feature_jobs['wallpaperScan'] = finished
+                live.finish_features()  # must not raise
+                self.assertFalse(live.feature_jobs)
+                self.assertFalse(live.last_result['ok'])
+                self.assertEqual(live.last_result['action'], 'wallpaperScan')
+                self.assertIn(type(error).__name__, live.last_result['message'])
+                # The pending-owner projection recovers and later snapshots keep flowing.
+                state = live.snapshot()
+                self.assertEqual(state['lastResult'], live.last_result)
+                self.assertFalse(live.feature_jobs)

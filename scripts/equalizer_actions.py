@@ -19,7 +19,10 @@ GAINS = 10
 def _number(value, minimum=-12, maximum=12):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError("Equalizer settings must use numeric gain")
-    value = float(value)
+    try:
+        value = float(value)
+    except OverflowError:
+        raise ValueError("Equalizer gain is out of range")
     if value < minimum or value > maximum or value != value:
         raise ValueError("Equalizer gain is out of range")
     return value
@@ -33,7 +36,9 @@ def _command(capabilities, action, request):
     if action == "eqStop":
         try:
             return capabilities.run("serpantinum-audio", "ctl", "quit")
-        except CommandError:
+        except CommandError as error:
+            if "timed out" in str(error):
+                raise
             return "Equalizer stopped"
     if action == "eqStatus":
         ping = capabilities.run("serpantinum-audio", "ctl", "ping")
@@ -48,8 +53,11 @@ def _command(capabilities, action, request):
     balance = request.get("balance", 0)
     if isinstance(balance, bool) or not isinstance(balance, (int, float)):
         raise ValueError("Balance must be numeric")
-    balance = float(balance)
-    if balance < -1 or balance > 1:
+    try:
+        balance = float(balance)
+    except OverflowError:
+        raise ValueError("Balance must be between -1 and 1")
+    if balance != balance or balance < -1 or balance > 1:
         raise ValueError("Balance must be between -1 and 1")
     mono = request.get("mono", False)
     swap = request.get("swap", False)

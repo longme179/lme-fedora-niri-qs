@@ -83,6 +83,8 @@ optional blueman-manager 'external Bluetooth device settings: blueman'
 optional pavucontrol 'advanced audio setup: pavucontrol'
 optional notify-send 'notification smoke test: libnotify'
 optional kitty 'default terminal; configurable'
+optional serpantinum-audio 'Serpantinum equalizer daemon; build from upstream https://github.com/ilyamiro/serpantinum-audio'
+optional fcitx5-remote 'fcitx5 input-method indicator: fcitx5'
 required wl-copy wl-clipboard
 required wl-paste wl-clipboard
 

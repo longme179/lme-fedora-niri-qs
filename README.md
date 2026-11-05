@@ -65,6 +65,8 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Battery saver** | A reversible Control Center toggle for opaque Material surfaces, reduced motion, supported display modes up to 1080p/60 Hz, a starting brightness cap and the system's power-saving profile. |
 | **Device batteries** | Headphone, mouse and keyboard battery readings in Control Center → Devices, with configurable low-battery alerts. Uses BlueZ and kernel readings; devices that do not report a percentage stay marked as unavailable. |
 | **Audio and headsets** | Control Center → Audio: physical ports, card profiles and per-app playback destinations, with observed read-back. Existing defaults/volume/mute stay. [Audio guide and supported sessions](docs/AUDIO_HEADSET.md). |
+| **Equalizer** | Optional Serpantinum 10-band equalizer from the top-bar module, Control Center tile, Audio mixer or Settings: band gains, balance, mono, channel swap, dynamics, bypass and dynamic EQ, with presets. Requires the external `serpantinum-audio` daemon; disabling it routes audio directly again. |
+| **IME indicator** | Default-off top-bar module showing the active fcitx5 input method with a change OSD. Uses `fcitx5-remote`; no polling while disabled. |
 | **Network connections** | Wi-Fi/Devices → VPN, Ethernet & hotspot: saved VPN/WireGuard and Ethernet profiles, exact-adapter activation/disconnection, system IP/DNS editor and confirmed secure hotspot activation. [Network guide](docs/NETWORK_CONNECTIONS.md). |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
@@ -180,6 +182,9 @@ Review [the integration fragment](config/niri/lme-shell.kdl), then add this to
 include "~/.config/quickshell/lme-shell/config/niri/lme-shell.kdl"
 ```
 
+The tilde form needs a niri release with home-directory expansion in includes;
+older niri versions can use the relative form `include "../quickshell/lme-shell/config/niri/lme-shell.kdl"` (see [INSTALL](docs/INSTALL.md)).
+
 It starts LME at login, supplies its shortcuts and opens Settings/Screenshot
 studio as floating windows. Remove or rebind conflicting keys before including
 it, especially `Mod+Comma` and `Mod+Shift+E` from niri's sample config. Keep one
@@ -191,6 +196,8 @@ For **live blur behind the bar and popups** on niri 26.04+, also add:
 ```kdl
 include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
 ```
+
+(The same include-expansion note as above applies.)
 
 Place this include **after other background-effect rules**. Use the current file:
 older manually copied snippets may omit Settings and notification toasts. Niri
@@ -361,6 +368,8 @@ the supplied title/artist; a YouTube channel or video title may not identify a s
 | **External display mirroring** | `wl-mirror` (Fedora: `sudo dnf install wl-mirror`). Connect and enable both outputs, then use Settings → Displays or Control Center → Devices. Choose Source/Destination and Start mirror; Stop closes only LME’s mirror window. [Setup and hardware checks](docs/MIRRORING.md). |
 | **Recording** | `wf-recorder`, compatible FFmpeg/`ffprobe`; `pulseaudio-utils` for audio and `slurp` for regions. Auto tries NVIDIA NVENC → integrated VAAPI → CPU, probing only when capture starts. Chosen codecs depend on your driver/build. |
 | **Audio ports/profiles/routes** | `pulseaudio-utils` (`pactl`), PipeWire/WirePlumber, and `pipewire-utils` (`pw-dump`, `pw-metadata`) for verified local routes. Already in the Fedora package list. No extra daemon. [Guide](docs/AUDIO_HEADSET.md). |
+| **Equalizer** | The external `serpantinum-audio` daemon ([upstream](https://github.com/ilyamiro/serpantinum-audio)); build/install it yourself, then enable it in Settings → Equalizer. The feature reports "serpantinum-audio is unavailable" until the binary is on `PATH`. |
+| **IME indicator** | `fcitx5` with `fcitx5-remote` (Fedora: `sudo dnf install fcitx5`). Enable it in Settings → Behavior; it stays off and does not poll until then. |
 | **Network connections** | Existing NetworkManager/`nmcli`, systemd `busctl` and `nm-connection-editor`; saved VPN profiles additionally need their NetworkManager plugin and session credentials/agent. [Guide and hotspot requirements](docs/NETWORK_CONNECTIONS.md). |
 | **External annotation / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. Click clipboard images or screenshot notifications to open a saved copy in your chosen editor. Screenshot studio exports flattened PNGs including redactions. |
 | **Night Light / Idle** | `wlsunset` with working gamma control; `swayidle` and `swaylock` for idle profiles. Enable these in Settings. |

@@ -3,9 +3,7 @@
   "sources": [
     "qml/settings/EqualizerPage.qml",
     "qml/panels/EqualizerPanel.qml",
-    "scripts/equalizer_actions.py",
-    "qml/panels/EqualizerPopup.qml",
-    "qml/panels/EqualizerFeature.qml"
+    "scripts/equalizer_actions.py"
   ],
   "settingsPage": {
     "key": "equalizer",
@@ -42,14 +40,5 @@
     "icon": "audio",
     "entry": "qml/bar/EqualizerButton.qml",
     "after": "audio"
-  },
-  "bootstrap": {
-    "id": "equalizer",
-    "entry": "qml/panels/EqualizerFeature.qml",
-    "contexts": [
-      "live-main",
-      "demo",
-      "settings"
-    ]
   }
 }

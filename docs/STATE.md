@@ -1,4 +1,4 @@
-# Agent state (2026-11-01)
+# Agent state (2026-11-06)
 
 Read this file at task start; consult ARCHITECTURE.md for contracts.
 Do not read archive/ unless answering a specific historical question.
@@ -8,7 +8,7 @@ Do not read archive/ unless answering a specific historical question.
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (19 catalog records, nine with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
 - Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. PR #42 is merged. W1 Audio/headset (PR #44) adds four on-demand workers and observed ports/profiles/routes; native revisions approved/applied, physical headset checks remain. PR #44 is merged (bcbb359). Launcher Gio lifetime fix PR #45 is merged (4e5fbf1); restart the shell after updating. W2 review branch feature/network-connections adds on-demand saved connections and confirmed secure hotspot activation; physical NM/keyring/AP/wired checks remain. W3+ is unauthorized. See AUDIO_HEADSET.md and NETWORK_CONNECTIONS.md.
-- M1 (P-01…P-06) merged via PR #48; the G0/G1 follow-up merged via PR #49. M2 (P-07/P-09) merged via PR #50. M3 (P-10…P-12) merged via PR #51. M4 (P-13…P-15) merged via PR #52 (`bc15922`). P-16 is implemented on `feat/p16-ime-indicator` (default-off fcitx5 indicator/change OSD) and awaits review/merge; Serpantinum equalizer is under research.
+- M1 (P-01…P-06) merged via PR #48; the G0/G1 follow-up merged via PR #49. M2 (P-07/P-09) merged via PR #50. M3 (P-10…P-12) merged via PR #51. M4 (P-13…P-15) merged via PR #52 (`bc15922`). P-16 IME indicator merged via PR #53 (`97aae1e`). Serpantinum equalizer merged via PRs #56–#63 (`e9dd83f`); the 2026-11-06 audit (#64–#67) replaced the undisplayable bootstrap popup with the registered catalog panel, unified apply auto-start, hardened finish_features/capture snapshot paths and refreshed docs.
 - A6 remains out of scope: no polling-cadence or power-policy changes. The owner-requested M4 niri event-stream cache (P-14) is the only authorized cache exception; it reuses the already-running stream and reseeds through the existing polling path.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.

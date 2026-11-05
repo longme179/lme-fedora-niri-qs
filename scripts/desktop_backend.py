@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 import copy
 import json
 import math
@@ -209,8 +209,7 @@ class Applications:
         self.entries = {}
         seen: set[str] = set()
         for base in self.paths:
-            if not base.is_dir():
-                continue
+            if not base.is_dir(): continue
             for path in sorted(base.rglob("*.desktop")):
                 desktop_id = str(path.relative_to(base)).replace(os.sep, "-")
                 if desktop_id in seen:
@@ -431,8 +430,7 @@ class Preferences:
             try:
                 stat = self.path.stat()
                 stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
-                if not force and stamp == self._stamp:
-                    return
+                if not force and stamp == self._stamp: return
                 self.revision += 1; saved = json.loads(self.path.read_text(encoding="utf-8"))
                 if isinstance(saved, dict):
                     values = copy.deepcopy(DEFAULT_PREFERENCES)
@@ -500,8 +498,7 @@ class Preferences:
             self.values = updated; self.revision += 1
             stat = self.path.stat(); self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         finally:
-            if temporary and os.path.exists(temporary):
-                os.unlink(temporary)
+            if temporary and os.path.exists(temporary): os.unlink(temporary)
 
 
 def emit(backend: DesktopBackend) -> None:
@@ -1154,7 +1151,7 @@ class DesktopBackend:
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
-                "nightLight": self.night_state, "capture": self.capture.state}
+                "nightLight": self.night_state, "capture": dict(self.capture.state)}
 
     @staticmethod
     def valid_notifications(value):
@@ -1182,8 +1179,7 @@ class DesktopBackend:
     def finish_features(self):
         for action, job in list(self.feature_jobs.items()):
             if not job.done(): continue
-            self.result_sequence += 1
-            spec = self.actions.get(action)
+            self.result_sequence += 1; spec = self.actions.get(action)
             try:
                 if getattr(job, 'capture_token', self.capture.state.get('token')) != self.capture.state.get('token'):
                     self.last_result = {'ok': True, 'action': action, 'message': '', 'sequence': self.result_sequence}
@@ -1199,11 +1195,16 @@ class DesktopBackend:
             except (CommandError, ValueError, OSError) as error:
                 if spec is not None and spec.execution == 'worker': spec.complete(error)
                 self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}
+            except CancelledError: raise  # locked: cancelled futures still raise (action_registry_async)
+            except Exception as error:
+                # An unexpected completion type must not wedge the job registry and later snapshots.
+                if spec is not None and spec.execution == 'worker':
+                    try: spec.complete(error)
+                    except Exception: pass
+                self.last_result = {"ok": False, "action": action, "message": f"{type(error).__name__}: {str(error)[:380]}", "sequence": self.result_sequence}
             del self.feature_jobs[action]
             if action in {"recordStart", "recordStop"}: self.privacy_cache = None
-            if action == 'batterySaver':
-                self.power_cache = None
-                self.displays = self.display_control.snapshot()
+            if action == 'batterySaver': self.power_cache = None; self.displays = self.display_control.snapshot()
             self.system_cache = None
             # Deliver each completion separately so every pending QML action clears.
             break
@@ -1310,8 +1311,7 @@ class DesktopBackend:
         return "Charge mode updated" + (f" · {limit}%" if state["supports85"] else " · firmware limit")
 
     def finish_charge(self) -> None:
-        if self.charge_job is None or not self.charge_job.done():
-            return
+        if self.charge_job is None or not self.charge_job.done(): return
         self.result_sequence += 1
         try:
             self.last_result = {"ok": True, "action": "chargeMode", "message": self.charge_job.result()}

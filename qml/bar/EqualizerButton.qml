@@ -12,6 +12,6 @@ IconButton {
     iconName: BarRegistry.info("equalizer").icon
     tooltip: BarRegistry.info("equalizer").title
     Accessible.name: BarRegistry.info("equalizer").title
-    active: ShellState.equalizerPopupOpen
-    onClicked: ShellState.equalizerPopupOpen = !ShellState.equalizerPopupOpen
+    active: ShellState.isPanelOpen("equalizer")
+    onClicked: ShellState.togglePanel("equalizer", screenInfo)
 }

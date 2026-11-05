@@ -11,7 +11,7 @@ while (($#)); do
         --page)
             if (($# < 2)); then printf 'Error: --page requires a page name.\n' >&2; exit 2; fi
             page="$2"; shift ;;
-        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page utilities|appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|about]\n'; exit 0 ;;
+        --help|-h) printf 'Usage: scripts/settings.sh [--demo] [--daemonize] [--page utilities|appearance|elements|desktop|topbar|controlLayout|display|nightLight|wallpaper|weather|notifications|clipboard|idle|keybinds|behavior|equalizer|about]\n'; exit 0 ;;
         *) printf 'Error: unknown argument: %s\n' "$1" >&2; exit 2 ;;
     esac
     shift

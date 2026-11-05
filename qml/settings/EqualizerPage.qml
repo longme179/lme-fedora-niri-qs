@@ -31,6 +31,8 @@ ColumnLayout {
         const values = presetMap[name];
         if (!Array.isArray(values) || values.length !== root.gainCount)
             return;
+        if (!ShellState.backendReady)
+            return;
         gains = values.slice();
         balance = 0;
         mono = false;
@@ -38,6 +40,10 @@ ColumnLayout {
         dynamics = "off";
         bypass = false;
         dyneq = false;
+        if (ShellState.preferences.equalizerEnabled !== true) {
+            ShellState.run("setting", {key: "equalizerEnabled", value: true});
+            ShellState.run("eqStart");
+        }
         ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq});
     }
 

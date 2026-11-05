@@ -100,5 +100,6 @@ Flickable {
         }
         LabelText { visible: root.streams.length === 0; text: "App sliders appear while audio streams are active."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
         LiquidButton { text: "Advanced audio settings"; onClicked: ShellState.run("openSettings", {target: "audio"}); Layout.fillWidth: true }
+        LiquidButton { text: "Equalizer panel"; onClicked: ShellState.togglePanel("equalizer"); Layout.fillWidth: true }
     }
 }

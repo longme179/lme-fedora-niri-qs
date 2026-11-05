@@ -15,6 +15,31 @@ ColumnLayout {
     property bool dyneq: false
     property bool adjusting: false
     property string loadStatus: ""
+    property int gainCount: 10
+    readonly property var presetMap: ({
+        "Flat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Bass": [5, 7, 5, 2, 1, 0, 0, 0, 1, 2],
+        "Treble": [-2, -1, 0, 1, 2, 3, 4, 5, 6, 6],
+        "Vocal": [-2, -1, 1, 3, 5, 5, 4, 2, 1, 0],
+        "Pop": [2, 4, 2, 0, 1, 2, 4, 2, 1, 2],
+        "Rock": [5, 4, 2, -1, -2, -1, 2, 4, 5, 6],
+        "Jazz": [3, 3, 1, 1, 1, 1, 2, 1, 2, 3],
+        "Classic": [0, 1, 2, 2, 2, 2, 1, 2, 3, 4]
+    })
+
+    function applyPreset(name) {
+        const values = presetMap[name];
+        if (!Array.isArray(values) || values.length !== root.gainCount)
+            return;
+        gains = values.slice();
+        balance = 0;
+        mono = false;
+        swap = false;
+        dynamics = "off";
+        bypass = false;
+        dyneq = false;
+        ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq});
+    }
 
     function parseEqualizerLine(message) {
         const tokens = String(message || "").trim().split(/\s+/);
@@ -103,6 +128,12 @@ ColumnLayout {
             Layout.fillWidth: true
             LiquidButton { text: "Apply"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq}) }
             LiquidButton { text: "Status"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqStatus") }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true; spacing: 8
+            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true }
+            RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Flat", "Bass", "Treble", "Vocal"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
+            RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Pop", "Rock", "Jazz", "Classic"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
         }
         LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
     }

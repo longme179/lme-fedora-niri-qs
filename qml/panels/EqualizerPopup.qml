@@ -1,5 +1,4 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -165,14 +164,8 @@ MotionPopup {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
-            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true } RowLayout {
-                Layout.fillWidth: true; spacing: 8
-                Repeater { model: ["Flat", "Bass", "Treble", "Vocal"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } }
-            }
-            RowLayout {
-                Layout.fillWidth: true; spacing: 8
-                Repeater { model: ["Pop", "Rock", "Jazz", "Classic"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } }
-            }
+            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true } RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Flat","Bass","Treble","Vocal"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
+            RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Pop","Rock","Jazz","Classic"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
         }
         ColumnLayout {
             Layout.fillWidth: true; spacing: 6
@@ -205,7 +198,14 @@ MotionPopup {
             RowLayout {
                 Layout.fillWidth: true
                 LabelText { text: "Dynamics"; Layout.fillWidth: true }
-                LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } }
+                LiquidComboBox {
+                    model: ["off", "balanced", "night"]
+                    currentIndex: Math.max(0, model.indexOf(root.dynamics))
+                    onActivated: {
+                        root.dynamics = currentText
+                        root.apply()
+                    }
+                }
             }
             RowLayout {
                 Layout.fillWidth: true

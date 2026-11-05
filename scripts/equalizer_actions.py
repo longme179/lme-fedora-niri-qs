@@ -39,6 +39,8 @@ def _command(capabilities, action, request):
         ping = capabilities.run("serpantinum-audio", "ctl", "ping")
         status = capabilities.run("serpantinum-audio", "ctl", "status")
         return ping.strip() + "\n" + status.strip()
+    if action == "eqGet":
+        return capabilities.run("serpantinum-audio", "ctl", "get").strip()
     gains = request.get("gains", [])
     if not isinstance(gains, list) or len(gains) != GAINS:
         raise ValueError("Ten equalizer band gains are required")
@@ -71,10 +73,12 @@ def provide(capabilities):
     def demo(request, action):
         if action == "eqStatus":
             return "ok\nDemo Serpantinum status"
+        if action == "eqGet":
+            return "set 0 0 0 0 0 0 0 0 0 0 0 0 0 off 0 1"
         return "Demo equalizer applied"
 
     specs = []
-    for ident in ("eqStart", "eqStop", "eqStatus", "eqApply"):
+    for ident in ("eqStart", "eqStop", "eqStatus", "eqGet", "eqApply"):
         specs.append(ActionSpec(ident, {"shell", "settings"},
                                lambda request, action=ident: live(request, action),
                                lambda request, action=ident: demo(request, action)))

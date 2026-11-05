@@ -146,8 +146,7 @@ MotionPopup {
             Layout.fillWidth: true; spacing: 12
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 4
-                LabelText { text: "Enable"; font.weight: Font.Medium }
-                LabelText { text: "Start or stop the optional audio daemon"; color: Theme.muted; font.pixelSize: 12 }
+                LabelText { text: "Enable"; font.weight: Font.Medium } LabelText { text: "Start or stop the optional audio daemon"; color: Theme.muted; font.pixelSize: 12 }
             }
             ExpressiveSwitch {
                 checked: ShellState.preferences.equalizerEnabled !== false
@@ -166,8 +165,7 @@ MotionPopup {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
-            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true }
-            RowLayout {
+            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true } RowLayout {
                 Layout.fillWidth: true; spacing: 8
                 Repeater { model: ["Flat", "Bass", "Treble", "Vocal"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } }
             }
@@ -194,20 +192,34 @@ MotionPopup {
                 }
                 LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
             }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Mono"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } } } RowLayout { Layout.fillWidth: true; LabelText { text: "Swap"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } } }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Mono"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.mono; onToggled: { root.mono = checked; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Swap"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.swap; onToggled: { root.swap = checked; root.apply(); } }
+            }
             RowLayout {
                 Layout.fillWidth: true
                 LabelText { text: "Dynamics"; Layout.fillWidth: true }
                 LiquidComboBox { model: ["off", "balanced", "night"]; currentIndex: Math.max(0, model.indexOf(root.dynamics)); onActivated: { root.dynamics = currentText; root.apply(); } }
             }
-            RowLayout { Layout.fillWidth: true; LabelText { text: "Bypass"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } } } RowLayout { Layout.fillWidth: true; LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }; ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } } }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Bypass"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.bypass; onToggled: { root.bypass = checked; root.apply(); } }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
+                ExpressiveSwitch { checked: root.dyneq; onToggled: { root.dyneq = checked; root.apply(); } }
+            }'''
+
         }
-        Item {
-            Layout.fillWidth: true; Layout.preferredHeight: 30
-            visible: root.dyneq
-            Rectangle { anchors.fill: parent; color: Qt.rgba(0,0,0,.35); radius: 8 }
-            LabelText { anchors.centerIn: parent; text: "Adapting to your sound"; color: Theme.text; font.pixelSize: 14; font.weight: Font.Medium }
-        }
+        Item { Layout.fillWidth: true; Layout.preferredHeight: 30; visible: root.dyneq; Rectangle { anchors.fill: parent; color: Qt.rgba(0,0,0,.35); radius: 8 }; LabelText { anchors.centerIn: parent; text: "Adapting to your sound"; color: Theme.text; font.pixelSize: 14; font.weight: Font.Medium } }
         LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
         RowLayout {
             Layout.fillWidth: true; spacing: 8

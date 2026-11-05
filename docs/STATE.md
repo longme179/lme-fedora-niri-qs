@@ -8,16 +8,16 @@ Do not read archive/ unless answering a specific historical question.
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (19 catalog records, nine with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
 - Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. PR #42 is merged. W1 Audio/headset (PR #44) adds four on-demand workers and observed ports/profiles/routes; native revisions approved/applied, physical headset checks remain. PR #44 is merged (bcbb359). Launcher Gio lifetime fix PR #45 is merged (4e5fbf1); restart the shell after updating. W2 review branch feature/network-connections adds on-demand saved connections and confirmed secure hotspot activation; physical NM/keyring/AP/wired checks remain. W3+ is unauthorized. See AUDIO_HEADSET.md and NETWORK_CONNECTIONS.md.
-- M1 (P-01…P-06) merged via PR #48; the G0/G1 follow-up merged via PR #49. M2 (P-07/P-09) merged via PR #50. M3 (P-10…P-12) is in progress on its own branch.
-- A6 remains out of scope: no polling, cache or power-policy changes.
+- M1 (P-01…P-06) merged via PR #48; the G0/G1 follow-up merged via PR #49. M2 (P-07/P-09) merged via PR #50. M3 (P-10…P-12) merged via PR #51. M4 (P-13…P-15) is in progress on fix/m4-runtime-efficiency.
+- A6 remains out of scope: no polling-cadence or power-policy changes. The owner-requested M4 niri event-stream cache (P-14) is the only authorized cache exception; it reuses the already-running stream and reseeds through the existing polling path.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
   Prefer aggregate PSS, label summed RSS limitations and temporary-job peaks; individual PID samples are not the total.
 
 ## In progress
 
-- M3 (P-10…P-12) on fix/m3-diagnostics: theme files validate their shapes, keep safe defaults and expose `themeDiagnosticsText` in About; OSD output selection falls back from a missing named/all output to focused, panel then first screen; `ARCHITECTURE_AUDIT.md` is stamped superseded, the README indexes the audits and VALIDATION has a six-row hardware-check matrix. P-08 stayed skipped in M2.
-- M3 verification: offscreen QML guard/fallback test green; G0 completed with 842 passed / 0 failed / 184 skipped and qmllint 153 files with 0 errors/warnings; G1 passed 9 / 0 failed / 0 skipped. Hardware matrix rows still need owner/laptop checks.
+- M4 (P-13…P-15) on fix/m4-runtime-efficiency: backend snapshots carry per-section revisions and QML reuses unchanged apps/niri/preferences/launcher usage objects (stringify fallback and drag pin kept); niri workspace/window state is cached from the already-running event stream and falls back to `niri msg` whenever the stream is unavailable or an event is unknown/malformed/out of order; P-15 attributed the idle CPU to the MediaAmbient drift loop without changing the 12 shapes or motion.
+- M4 verification: G0 851 passed / 0 failed / 184 skipped with qmllint 153 files 0 errors/warnings; G1 9/0/0; G6 polling 1/0/0. G2/G3/G4 reproduce the identical 4/4/4 baseline failures on clean main (missing `wtype`, Sway/portal window checks), so they are not branch regressions. Ten cold launches: preview 1.001→0.993 s, Settings 0.991→1.010 s; PSS at 10 s stayed within +1.2% (preview QS 255,863→258,798 KiB, backend 24,274→24,263 KiB; Settings QS 201,285→202,749 KiB, backend 24,232→24,255 KiB). Real niri/Radeon idle soak remains a hardware check.
 
 ## Compatibility adapters and retirement
 

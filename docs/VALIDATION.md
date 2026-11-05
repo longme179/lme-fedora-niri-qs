@@ -1836,6 +1836,7 @@ are owner/laptop checks; private Sway cannot prove them.
 | Chromium/browser playback, player metadata and 120 Hz smoothness | Play a local video in Chromium; run `playerctl status`; check the media panel and motion smoothness. |
 | Real Satty/Swappy windows, save/copy UI and target Fedora/niri behavior | Trigger screenshot → annotate; save and copy in each editor. |
 | Fedora DNF transactions, Fedora source-build commands and resource savings | Run `./scripts/setup.sh` once interactively; run `./scripts/memory_report.py --label steady` with normal panels open. |
+| Idle CPU with the 12 decorative shapes on real niri/Radeon | Leave the shell idle for 10 minutes; sample `ps -o %cpu= -p $(pgrep -f 'quickshell -c lme-shell')` three times 10 s apart, then compare with Battery saver. Expect roughly the measured ~12% of one core and no runaway growth; the disposable A/B is not a Radeon measurement. |
 
 Historical sections dated before 2026-10-20 are kept unchanged; their claims
 are covered by these rows or by the same manual checks above. GPU telemetry,

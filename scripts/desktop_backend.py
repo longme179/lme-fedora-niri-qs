@@ -47,6 +47,7 @@ from storage import acquire_exclusive, finite_number, fsync_directory, read_json
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
 from niri_keybinds import read_keybinds
+from niri_events import NiriStateCache, read_niri_state
 from night_light import NightLight, clock_minutes
 from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
@@ -420,7 +421,7 @@ class Preferences:
         self.path = path or config / "lme-shell/settings.json"
         self.values = copy.deepcopy(DEFAULT_PREFERENCES)
         self._stamp: tuple[int, int, int] | None = None
-        self._corrupt = False; self._unknown = {}; self._lock = threading.RLock()
+        self._corrupt = False; self._unknown = {}; self._lock = threading.RLock(); self.revision = 0
         self.reload()
 
     def reload(self, force: bool = False) -> None:
@@ -430,7 +431,7 @@ class Preferences:
                 stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
                 if not force and stamp == self._stamp:
                     return
-                saved = json.loads(self.path.read_text(encoding="utf-8"))
+                self.revision += 1; saved = json.loads(self.path.read_text(encoding="utf-8"))
                 if isinstance(saved, dict):
                     values = copy.deepcopy(DEFAULT_PREFERENCES)
                     for key, value in saved.items():
@@ -494,7 +495,7 @@ class Preferences:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, self.path); fsync_directory(self.path.parent)
-            self.values = updated
+            self.values = updated; self.revision += 1
             stat = self.path.stat(); self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         finally:
             if temporary and os.path.exists(temporary):
@@ -649,7 +650,7 @@ class DesktopBackend:
         self.display_control = DisplayControl(self.runner)
         self.notification_path = self.preferences.path.parent / "notification-history.json"
         self.notification_history = self.valid_notifications(read_json(self.notification_path, [])) if not demo and not settings_only else []
-        self.apps = [] if demo or settings_only else self.applications.scan()
+        self.apps = [] if demo or settings_only else self.applications.scan(); self.apps_revision = 0
         self.last_app_scan = time.monotonic()
         self.last_cpu: tuple[int, int] | None = None
         self.system_cache: dict[str, Any] | None = None
@@ -672,7 +673,7 @@ class DesktopBackend:
         self.client_serial = 0
         self.result_unemitted = False
         self.last_result = {"ok": True, "action": "ready", "message": "Backend ready", "sequence": 0}
-        self.niri = {"available": False, "workspaces": [], "windows": []}
+        self.niri = {"available": False, "workspaces": [], "windows": []}; self.niri_cache = NiriStateCache()
 
     def try_run(self, name: str, *args: str) -> str | None:
         if not self.runner.available(name):
@@ -1078,19 +1079,7 @@ class DesktopBackend:
         return 'Battery saver ' + ('enabled' if state['active'] else 'disabled; previous settings restored')
 
     def niri_state(self) -> dict[str, Any]:
-        workspaces = self.try_run("niri", "msg", "--json", "workspaces")
-        windows = self.try_run("niri", "msg", "--json", "windows")
-        try:
-            workspaces_data = json.loads(workspaces) if workspaces is not None else None
-            windows_data = json.loads(windows) if windows is not None else None
-            if not isinstance(workspaces_data, list) or not isinstance(windows_data, list):
-                raise ValueError("No niri session")
-            if not all(isinstance(item, dict) for item in workspaces_data + windows_data):
-                raise ValueError("Invalid niri response")
-            workspaces_data.sort(key=lambda item: (str(item.get("output") or ""), item.get("idx") or 0, item.get("id") or 0))
-            return {"available": True, "workspaces": workspaces_data, "windows": windows_data}
-        except (ValueError, TypeError):
-            return {"available": False, "workspaces": [], "windows": []}
+        return read_niri_state(self.try_run)
 
     def snapshot(self) -> dict[str, Any]:
         if self.demo:
@@ -1117,12 +1106,13 @@ class DesktopBackend:
             # Only Liquid floating windows need compositor coordinates for their rim sampler.
             liquid = self.preferences.values['surfaceStyle'] == 'liquid' and not self.battery_saver_state['active']
             if liquid and self.platform['niriVersion'] == 'Not checked': self.platform = self.compositor_features()
-            self.niri = self.niri_state() if liquid else {"available": False, "windows": [], "workspaces": []}
+            self.niri = self.niri_state() if liquid else {"available": False, "windows": [], "workspaces": []}; self.niri_cache.seed(self.niri)
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
-            self.apps = self.applications.scan()
+            self.apps = self.applications.scan(); self.apps_revision += 1
             self.last_app_scan = time.monotonic()
-        self.niri = self.niri_state()
+        self.niri = self.niri_cache.snapshot() or self.niri_state()
+        if not self.niri_cache.valid: self.niri_cache.seed(self.niri)
         if self.manage_idle and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
             job=self.wallpapers.due(item.get('output') for item in self.niri['workspaces'] if item.get('output'))
             if job: self.start_feature('wallpaperCycle',job)
@@ -1153,7 +1143,7 @@ class DesktopBackend:
             self.monitor.sample(self.system_cache)
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 **self.feature_snapshot(), "notificationHistory": self.notification_history,
-                "monitor": self.monitor.state if self.monitor_enabled else {}}
+                "monitor": self.monitor.state if self.monitor_enabled else {}, "revisions": {"apps": self.apps_revision, "niri": self.niri_cache.revision, "preferences": self.preferences.revision, "launcherUsage": self.launcher_history.revision}}
 
     def feature_snapshot(self):
         return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), **self.action_state(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
@@ -1473,7 +1463,7 @@ class DesktopBackend:
             if self.settings_only:
                 self.preferences.reload(force=True)
                 return "Preferences refreshed"
-            self.apps = self.applications.scan()
+            self.apps = self.applications.scan(); self.apps_revision += 1
             self.last_app_scan = time.monotonic()
             return "State refreshed"
         if action == 'launcherHistoryClear':
@@ -1620,6 +1610,7 @@ def main(argv: list[str] | None = None) -> int:
     def stop_backend(_signal, _frame): raise KeyboardInterrupt
     def close_event_stream():
         nonlocal event_process
+        backend.niri_cache.close()
         if event_process is None: return
         if event_process.stdout:
             try: selector.unregister(event_process.stdout)
@@ -1652,7 +1643,7 @@ def main(argv: list[str] | None = None) -> int:
                         [backend.runner.executable("niri"), "msg", "--json", "event-stream"],
                         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     )
-                    selector.register(event_process.stdout, selectors.EVENT_READ, "niri")
+                    selector.register(event_process.stdout, selectors.EVENT_READ, "niri"); backend.niri_cache.connect()
                 except (OSError, CommandError):
                     close_event_stream()
                     next_event_retry = time.monotonic() + 5
@@ -1670,6 +1661,7 @@ def main(argv: list[str] | None = None) -> int:
                     next_event_retry = time.monotonic() + 5
                     continue
                 if key.data == "niri":
+                    backend.niri_cache.feed(data)
                     if event_refresh_due is None:
                         event_refresh_due = time.monotonic() + 0.1
                     continue

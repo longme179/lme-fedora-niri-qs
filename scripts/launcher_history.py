@@ -23,7 +23,7 @@ class LauncherHistory:
         self.error=''
         self.stamp=None
         self.day=None
-        self.scores={}
+        self.scores={};self.revision=0
 
     @contextmanager
     def locked(self):
@@ -70,7 +70,9 @@ class LauncherHistory:
             self.error='Usage history could not be saved: '+str(exc)[:180]
 
     def snapshot(self,enabled=True,now=None):
-        if not enabled: return {}
+        if not enabled:
+            if self.scores: self.scores={};self.revision+=1
+            return {}
         now=time.time() if now is None else now
         today=datetime.fromtimestamp(now,timezone.utc).date()
         try:
@@ -85,7 +87,7 @@ class LauncherHistory:
                 weight=0.5**(age_days/HALF_LIFE_DAYS)
                 total_weight+=count*weight
             scores[app]={'score':total_weight*LAUNCH_SECONDS_PER_EVENT,'last':min(now,item['last'])}
-        self.stamp=stamp;self.day=today;self.scores=scores
+        self.stamp=stamp;self.day=today;self.scores=scores;self.revision+=1
         return scores
 
     def clear(self):

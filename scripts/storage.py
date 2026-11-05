@@ -5,6 +5,33 @@ import json
 import math
 import os
 import tempfile
+import time
+
+LOCK_TIMEOUT = 2.0
+LOCK_RETRY_INTERVAL = 0.4
+
+
+def acquire_exclusive(stream, path, timeout=LOCK_TIMEOUT):
+    """Take an exclusive lock with a bounded wait instead of hanging forever."""
+    try:
+        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return
+    except BlockingIOError:
+        deadline = time.monotonic() + timeout
+    while True:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return
+        except BlockingIOError:
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"{path} is locked by another process") from None
+            time.sleep(LOCK_RETRY_INTERVAL)
+
+
+def fsync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try: os.fsync(descriptor)
+    finally: os.close(descriptor)
 
 
 def write_json(path, value):
@@ -17,6 +44,7 @@ def write_json(path, value):
             json.dump(value, stream, ensure_ascii=False, allow_nan=False)
             stream.flush(); os.fsync(stream.fileno())
         os.replace(temporary, path)
+        fsync_directory(path.parent)
     finally:
         if temporary and os.path.exists(temporary): os.unlink(temporary)
 
@@ -33,7 +61,7 @@ def locked(path):
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     with open(path, "a", encoding="utf-8") as stream:
         os.chmod(path, 0o600)
-        fcntl.flock(stream, fcntl.LOCK_EX)
+        acquire_exclusive(stream, path)
         yield
 
 

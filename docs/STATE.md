@@ -15,7 +15,8 @@ Do not read archive/ unless answering a specific historical question.
 
 ## In progress
 
-- M1 (P-01…P-06) implemented on fix/audit-gate-settings-backend: persisted-field save projection, feature availability plus catalog retry, 10 s preview screenshot deadline, live log rotation/redirect, Settings launcher kill guard, and ShellState status fixes. `./scripts/check.sh` green (1018 passed / 0 failed / 184 skipped) plus six focused cases. G0/G1 could not run here because `sway`, `swaymsg` and `qmllint` are absent; preview/log/launcher checks need a private Wayland or real-session check.
+- M1 (P-01…P-06) implemented on fix/audit-gate-settings-backend: persisted-field save projection, feature availability plus catalog retry, 10 s preview screenshot deadline, live log rotation/redirect, Settings launcher kill guard, and ShellState status fixes. `./scripts/check.sh` green (1018 passed / 0 failed / 184 skipped) plus six focused cases.
+- M1 gates on the verified branch: G0 completed with 834 passed / 0 failed / 184 skipped and qmllint 153 files with 0 errors/warnings; G1 passed 9 / 0 failed / 0 skipped. The start-log case clears `LME_SHELL_DEMO`/`LME_SHELL_PREVIEW`, and `migration_checks.py` now counts indented `subTest` skips. Preview deadline, log rotation and launcher replies still need a real-session check.
 
 ## Compatibility adapters and retirement
 

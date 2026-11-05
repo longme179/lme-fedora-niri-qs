@@ -32,5 +32,13 @@
     "entry": "qml/panels/EqualizerPanel.qml",
     "centered": true,
     "scrim": 0.4
+  },
+  "bar": {
+    "id": "equalizer",
+    "title": "Equalizer",
+    "detail": "Serpantinum equalizer bands and dynamics",
+    "icon": "audio",
+    "entry": "qml/bar/EqualizerButton.qml",
+    "after": "audio"
   }
 }

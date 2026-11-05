@@ -27,7 +27,7 @@ class NativeCatalogProjectionCase(unittest.TestCase):
         function heavy(): void { FeatureCatalog.descriptor("catalogFixture"); }
         function entries(): void''')
         with patch.object(fixture, 'QML', qml), fixture.session(native=True, prepare=prepare) as probe:
-            state = probe.wait(lambda state: state['settled'] and len(state['bars']) == 21)
+            state = probe.wait(lambda state: state['settled'] and len(state['bars']) == 22)
             self.assertEqual(probe.call('lookup'), '0')
             self.assertLessEqual(state['publications'], 2)
             probe.call('heavy')

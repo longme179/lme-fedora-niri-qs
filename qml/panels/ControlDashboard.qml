@@ -103,7 +103,7 @@ Item {
                     stayAwake: ShellState.settingsPageAvailable("idle") ? stayAwakeModule : null, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
-                    batterySaver: batterySaverModule, settings: settingsModule, power: powerModule})
+                    batterySaver: batterySaverModule, equalizer: equalizerModule, settings: settingsModule, power: powerModule})
             }
             LiquidButton { visible: root.editing; text: "Reset grid"; enabled: quickGrid.ready; onClicked: quickGrid.reset() }
             GridLayout {
@@ -217,6 +217,7 @@ Item {
             onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]})
         }
     }
+    Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.preferences.equalizerEnabled !== false; onClicked: ShellState.togglePanel("equalizer") } }
     Component { id: settingsModule; Tile { label: "Settings"; detail: "Shell preferences"; iconName: "settings"; onClicked: ShellState.togglePanel("settings") } }
     Component { id: powerModule; Tile { label: "Power"; detail: "Lock, sleep or shut down"; iconName: "power"; accent: Theme.pink; onClicked: ShellState.togglePanel("power") } }
     Component {

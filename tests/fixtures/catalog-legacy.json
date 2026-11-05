@@ -113,6 +113,12 @@
       "title": "Clipboard",
       "detail": "Search text and image history",
       "icon": "clipboard"
+    },
+    {
+      "id": "ime",
+      "title": "Input method",
+      "detail": "Active keyboard input method",
+      "icon": "applications"
     }
   ],
   "defaults": {

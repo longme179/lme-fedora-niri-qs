@@ -2,6 +2,26 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Full-codebase audit fixes — 2026-11-06
+- Audit issues #64–#67 (equalizer popup defects, apply-contract drift, backend
+  robustness, docs/tooling drift); branch `fix/audit-2026-11-06`.
+- Equalizer: removed the windowless bootstrap popup (`EqualizerPopup.qml`,
+  `EqualizerFeature.qml`, descriptor bootstrap, `ShellState.equalizerPopupOpen`);
+  the bar module, Control Center tile and Audio mixer now open the registered
+  catalog panel through `togglePanel("equalizer")`. Panel `apply()` and page
+  presets gained the same daemon auto-start guard as the page Apply button.
+- Backend: `finish_features` now converts unexpected completion exceptions into
+  an error result and still clears the job (CancelledError policy unchanged);
+  `snapshot()` copies the capture state dict; `eqApply` rejects NaN balance and
+  oversized gains with clean ValueErrors; `eqStop` no longer swallows timeouts.
+- Tests: new `tests/test_equalizer_actions.py` (8 cases incl. the 17-token
+  `eqGet` contract); new `UnexpectedCompletionCase` regression for
+  `finish_features`.
+- Docs: CHANGELOG Unreleased gains the equalizer/IME/network entries; README
+  adds Equalizer + IME rows and the niri include-expansion caveat; doctor.sh
+  and INSTALL.md document the optional `serpantinum-audio`/`fcitx5-remote`
+  runtimes; settings.sh help lists `equalizer`; AUDIT-2026-11-05 verification
+  commands corrected; STATE refreshed.
 ## Agent state and architecture guard — 2026-10-21
 - Branch: `chore/agent-state`, based on merged main `b751f67`.
 - Commits: `169cfc4` archive/state; `9fa207f` tests; `52bbd52` guard;

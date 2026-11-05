@@ -44,7 +44,7 @@ Source: bundled `config/features.json` names explicit descriptors; Clipboard use
 pilot contract and ordering rules are in [M4B_DESIGN.md](archive/migration/M4B_DESIGN.md).
 One generic reader per process loads/validates/caches descriptors once; widgets do not.
 ```json
-{"version":1,"features":[{"id":"clipboard","descriptor":"config/feature-clipboard.json","enabled":true}]}
+{"version":1,"features":[{"id":"clipboard","descriptor":"config/clipboard.json","enabled":true}]}
 ```
 ```json
 {
@@ -284,7 +284,7 @@ After migration, adding a comparable bar/panel/page slice changes its descriptor
 implementation/docs/tests and **one index entry**; no generic host/validator/router edit.
 Paths can remain where they are: logical ownership is enough for this acceptance test.
 For Clipboard, the resulting edit set is `config/features.json` (one entry),
-`config/feature-clipboard.json`, the four implementation files above plus the new
+`config/clipboard.json`, the four implementation files above plus the new
 `qml/panels/ClipboardFeature.qml` adapter, and the docs/tests named in the table.
 The generic `shell.qml`, ShellState, SettingsView, settings.sh and backend need no registration edits.
 To withdraw Clipboard from a build, disable its one index entry: keep schema declarations

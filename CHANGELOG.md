@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Add the optional Serpantinum equalizer: a centered equalizer panel from the
+  top-bar module, Control Center tile and Audio mixer, plus a Settings page.
+  Ten band gains, balance, mono, channel swap, dynamics modes, bypass and
+  dynamic EQ; presets and daemon state round-trip through `eqGet`. Installing
+  and starting the external `serpantinum-audio` daemon is required; disabling
+  it routes audio directly again.
+
+- Add a default-off fcitx5 input-method indicator (P-16): a top-bar module
+  shows the active IME and a change OSD, without polling when disabled.
+
+- Add saved network connections (W2): Wi-Fi/Devices gains VPN, Ethernet and
+  hotspot profiles with exact-adapter activation, a system IP/DNS editor and
+  confirmed secure hotspot activation.
+
 - Avoid false Battery saver conflicts when starting a recording after restore.
   Share status-read locks and briefly retry guarded writes while a status probe
   finishes; continue rejecting overlapping hardware transitions.

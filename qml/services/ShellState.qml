@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "ActionPending.js" as Pending
+import "SnapshotIdentity.js" as Identity
 
 QtObject {
     id: root
@@ -65,8 +66,7 @@ QtObject {
     property int restartDelay: 2000
     property var lastResult: null
     property var wifiResult: null
-    property string osdLabel: ""
-    property real osdValue: 0
+    property string osdLabel: ""; property real osdValue: 0
     property bool osdOpen: false
     readonly property string focusedTitle: {
         const windows = niri.windows || [];
@@ -179,10 +179,10 @@ QtObject {
             const oldAudio = system.audio;
             const oldBrightness = system.brightness;
             // Keep delegate identities stable between polls, especially during a drag.
-            if (draggingWindow || JSON.stringify(next.niri) === JSON.stringify(niri)) next.niri = niri;
-            if (JSON.stringify(next.apps) === JSON.stringify(apps)) next.apps = apps;
-            if (JSON.stringify(next.launcherUsage || {}) === JSON.stringify(launcherUsage)) next.launcherUsage = launcherUsage;
-            if (JSON.stringify(next.preferences) === JSON.stringify(preferences)) next.preferences = preferences;
+            if (Identity.keep(next, snapshot, "niri", niri, draggingWindow)) next.niri = niri;
+            if (Identity.keep(next, snapshot, "apps", apps)) next.apps = apps;
+            if (Identity.keep(next, snapshot, "launcherUsage", launcherUsage)) next.launcherUsage = launcherUsage;
+            if (Identity.keep(next, snapshot, "preferences", preferences)) next.preferences = preferences;
             snapshot = next;
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;

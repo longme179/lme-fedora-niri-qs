@@ -183,14 +183,19 @@ at `48cdcecb0f6089cfbb7019054602eab28e154b3b` (GPLv3) informed capability-aware
 profile cycling. These implementations were referenced, not copied; LME retains
 its existing Fedora D-Bus/CLI backend and adds no runtime package dependency.
 
-LME's optional Equalizer page and backend actions drive Serpantinum's external
-`serpantinum-audio` daemon (`https://github.com/ilyamiro/serpantinum-audio`,
-master / AGPL-3.0-only, Copyright © 2025 ilyamiro) through its local
-`serpantinum-audio ctl` command interface. LME contains no Serpantinum C++ code,
-DSP, daemon or PipeWire graph; it only maps settings UI values to that published
-command protocol and starts/stops the user-installed binary. The Serpantinum/AGPL
-notice remains in `third_party/Serpantinum-NOTICE`, and the daemon is an optional
-external dependency that is never required for the shell or Settings to run.
+LME's optional Equalizer surfaces drive Serpantinum's external `serpantinum-audio`
+daemon (`https://github.com/ilyamiro/serpantinum-audio`, master / AGPL-3.0-only,
+Copyright © 2025 ilyamiro) through its local `serpantinum-audio ctl` command
+interface. LME contains no Serpantinum C++ code, DSP, daemon or PipeWire graph;
+it maps settings UI values to that published command protocol and starts/stops the
+user-installed binary. The equalizer UI itself is an adapted port of Serpantinum
+Shell's QML equalizer (band sliders, lightning sweep, presets, audio view and the
+eq_state staging model) from `ilyamiro/serpantinum` at
+`2aa00c378b492113181d26427399a30aff1805e5` (AGPL-3.0-or-later, Copyright © 2026
+Illia Miroshnichenko); see the equalizer section of
+[`third_party/Serpantinum-NOTICE`](third_party/Serpantinum-NOTICE) for the file
+mapping and modification notes. The daemon remains an optional external dependency
+that is never required for the shell or Settings to run.
 
 Notification appearance and wrapping were reviewed against DankMaterialShell
 `quickshell/Modules/Settings/NotificationsTab.qml`,

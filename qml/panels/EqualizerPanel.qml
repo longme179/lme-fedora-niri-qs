@@ -7,192 +7,278 @@ import "../components"
 import "../services"
 import "../theme"
 
+// Serpantinum equalizer panel port: staged band editing with the lightning
+// sweep, preset chips, a dimming Dynamic EQ overlay, and the audio view with
+// balance, channel flags, dynamic range and the channel test tone.
 GlassPanel {
     id: root
     implicitWidth: 620
-    implicitHeight: 730
+    implicitHeight: 440
     focus: true
     Keys.onEscapePressed: ShellState.closePanels()
 
-    property var gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    property real balance: 0
-    property bool mono: false
-    property bool swap: false
-    property string dynamics: "off"
-    property bool bypass: false
-    property bool dyneq: false
-    property bool adjusting: false
-    property string loadStatus: ""
+    property int pageIndex: 0
+    property real introHeader: 1
+    property real introSliders: 1
+    property real introPresets: 1
+    property real introBalance: 1
+    property real introFlags: 1
+    property real introDynamics: 1
 
-    function parseEqualizerLine(message) {
-        const tokens = String(message || "").trim().split(/\s+/);
-        if (tokens.length !== 17 || tokens[0] !== "set")
-            return null;
-        const gains = tokens.slice(1, 11).map(value => Number(value));
-        if (gains.some(value => !Number.isFinite(value) || value < -12 || value > 12))
-            return null;
-        const balance = Number(tokens[11]);
-        if (!Number.isFinite(balance) || balance < -1 || balance > 1)
-            return null;
-        if (!["1", "0", "true", "false"].includes(tokens[12]) || !["1", "0", "true", "false"].includes(tokens[13]))
-            return null;
-        if (tokens[14] !== "off" && tokens[14] !== "balanced" && tokens[14] !== "night")
-            return null;
-        if (!["1", "0", "true", "false"].includes(tokens[15]) || !["1", "0", "true", "false"].includes(tokens[16]))
-            return null;
-        return { gains: gains, balance: balance, mono: tokens[12] === "1" || tokens[12] === "true",
-                 swap: tokens[13] === "1" || tokens[13] === "true", dynamics: tokens[14],
-                 bypass: tokens[15] === "1" || tokens[15] === "true",
-                 dyneq: tokens[16] === "1" || tokens[16] === "true" };
-    }
+    readonly property var eqData: EqualizerState.eqData
+    readonly property bool dynamicOn: eqData ? eqData.dyneq === true : false
+    property real dynamicDim: dynamicOn ? 1.0 : 0.0
+    Behavior on dynamicDim { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
-    Connections {
-        target: ShellState
-        function onLastResultChanged() {
-            if (!ShellState.lastResult || ShellState.lastResult.action !== "eqGet")
-                return;
-            if (!ShellState.lastResult.ok) {
-                root.loadStatus = String(ShellState.lastResult.message || "Equalizer is unavailable");
-                return;
-            }
-            const payload = root.parseEqualizerLine(ShellState.lastResult.message);
-            if (!payload || root.adjusting)
-                return;
-            root.gains = payload.gains.slice();
-            root.balance = payload.balance;
-            root.mono = payload.mono;
-            root.swap = payload.swap;
-            root.dynamics = payload.dynamics;
-            root.bypass = payload.bypass;
-            root.dyneq = payload.dyneq;
-            root.loadStatus = "";
-        }
-        function onBackendReadyChanged() {
-            if (ShellState.backendReady)
-                ShellState.run("eqGet");
-        }
-    }
-
-    Component.onCompleted: {
-        if (ShellState.backendReady)
-            ShellState.run("eqGet");
-    }
-
-    function apply() {
-        if (!ShellState.backendReady)
+    onVisibleChanged: {
+        if (!visible)
             return;
-        if (ShellState.preferences.equalizerEnabled !== true) {
-            ShellState.run("setting", {key: "equalizerEnabled", value: true});
-            ShellState.run("eqStart");
+        EqualizerState.refresh();
+        playIntro();
+    }
+    Component.onCompleted: {
+        if (visible) {
+            EqualizerState.refresh();
+            playIntro();
         }
-        ShellState.run("eqApply", {gains: root.gains, balance: root.balance, mono: root.mono, swap: root.swap, dynamics: root.dynamics, bypass: root.bypass, dyneq: root.dyneq});
+    }
+
+    function playIntro() {
+        if (!Theme.animations) {
+            introHeader = 1; introSliders = 1; introPresets = 1;
+            introBalance = 1; introFlags = 1; introDynamics = 1;
+            return;
+        }
+        introHeader = 0; introSliders = 0; introPresets = 0;
+        introBalance = 0; introFlags = 0; introDynamics = 0;
+        introAnim.restart();
+    }
+
+    function playAudioIntro() {
+        if (!Theme.animations) {
+            introBalance = 1; introFlags = 1; introDynamics = 1;
+            return;
+        }
+        audioIntroAnim.restart();
+    }
+
+    ParallelAnimation {
+        id: introAnim
+        running: false
+        SequentialAnimation {
+            PauseAnimation { duration: 60 }
+            NumberAnimation { target: root; property: "introHeader"; from: 0; to: 1.0; duration: 710; easing.type: Easing.OutQuart }
+        }
+        SequentialAnimation {
+            PauseAnimation { duration: 180 }
+            NumberAnimation { target: root; property: "introSliders"; from: 0; to: 1.0; duration: 860; easing.type: Easing.OutExpo }
+        }
+        SequentialAnimation {
+            PauseAnimation { duration: 300 }
+            NumberAnimation { target: root; property: "introPresets"; from: 0; to: 1.0; duration: 810; easing.type: Easing.OutBack; easing.overshoot: 0.8 }
+        }
+    }
+
+    SequentialAnimation {
+        id: audioIntroAnim
+        running: false
+        NumberAnimation { target: root; property: "introBalance"; from: 0; to: 1.0; duration: 560; easing.type: Easing.OutQuart }
+        PauseAnimation { duration: 60 }
+        NumberAnimation { target: root; property: "introFlags"; from: 0; to: 1.0; duration: 560; easing.type: Easing.OutQuart }
+        PauseAnimation { duration: 60 }
+        NumberAnimation { target: root; property: "introDynamics"; from: 0; to: 1.0; duration: 560; easing.type: Easing.OutQuart }
     }
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
-        objectName: "equalizerPopupBody"
         spacing: 12
+
         RowLayout {
             Layout.fillWidth: true
-            LabelText { text: "Equalizer"; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
-            IconButton { glyph: "×"; tooltip: "Close equalizer"; onClicked: ShellState.closePanels() }
+            LabelText { text: qsTr("Equalizer"); font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
+            IconButton { glyph: "×"; tooltip: qsTr("Close equalizer"); onClicked: ShellState.closePanels() }
         }
+
+        // Toolbar (MusicBottomHeader port): tabs, test, dynamic and apply.
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            opacity: root.introHeader
+            transform: Translate { y: 12 * (1 - root.introHeader) }
+
+            SegmentSwitch {
+                options: [qsTr("Equalizer"), qsTr("Audio")]
+                currentIndex: root.pageIndex
+                onActivated: index => {
+                    if (index === root.pageIndex)
+                        return;
+                    // Switching views abandons staged band edits (upstream parity).
+                    EqualizerState.revertPending();
+                    root.pageIndex = index;
+                    if (index === 1)
+                        root.playAudioIntro();
+                }
+            }
+            Item { Layout.fillWidth: true }
+
+            LiquidButton {
+                visible: root.pageIndex === 1
+                Layout.preferredHeight: 34
+                text: EqualizerState.audioTestRunning ? qsTr("Stop") : qsTr("Test")
+                selected: EqualizerState.audioTestRunning
+                selectionColor: Theme.accent
+                onClicked: EqualizerState.toggleTest()
+            }
+
+            // The Dynamic EQ control stays outside the view it dims, so it can
+            // always be switched off (the old popup locked itself here).
+            RowLayout {
+                spacing: 6
+                LabelText {
+                    text: qsTr("Dynamic")
+                    color: root.dynamicOn ? Theme.accent : Theme.muted
+                    font.pixelSize: 13
+                    font.weight: Font.Medium
+                    Behavior on color { ColorMotion {} }
+                }
+                ExpressiveSwitch {
+                    checked: root.dynamicOn
+                    onToggled: {
+                        const requested = checked;
+                        checked = Qt.binding(() => root.dynamicOn);
+                        EqualizerState.setFlag("dyneq", requested);
+                    }
+                }
+            }
+
+            LiquidButton {
+                Layout.preferredHeight: 34
+                readonly property bool dirty: root.eqData && (Math.abs(root.eqData.balance || 0) >= 0.005
+                    || root.eqData.mono === true || root.eqData.swap === true
+                    || String(root.eqData.dynamics || "off") !== "off")
+                enabled: root.pageIndex === 0
+                    ? (root.eqData && root.eqData.pending === true && !root.dynamicOn)
+                    : dirty
+                text: root.pageIndex === 0
+                    ? (root.eqData && root.eqData.pending ? qsTr("Apply") : qsTr("Saved"))
+                    : qsTr("Reset")
+                selected: root.pageIndex === 0 && root.eqData && root.eqData.pending === true
+                selectionColor: Theme.accent
+                onClicked: root.pageIndex === 0 ? EqualizerState.commit() : EqualizerState.resetAudio()
+            }
+
+            LabelText {
+                visible: root.pageIndex === 0
+                text: root.eqData && root.eqData.preset ? root.eqData.preset : "Flat"
+                color: Theme.muted
+                font.pixelSize: 13
+                font.bold: true
+            }
+        }
+
         LabelText {
             Layout.fillWidth: true
-            text: "Optional Serpantinum audio daemon. Install and start serpantinum-audio before applying."
-            color: Theme.muted; wrapMode: Text.Wrap
+            visible: EqualizerState.loadStatus.length > 0
+            text: EqualizerState.loadStatus
+            color: Theme.muted
+            wrapMode: Text.Wrap
         }
-        RowLayout {
-            Layout.fillWidth: true; spacing: 12
-            ColumnLayout {
-                Layout.fillWidth: true; spacing: 4
-                LabelText { text: "Enable"; font.weight: Font.Medium }
-                LabelText { text: "Start or stop the optional audio daemon"; color: Theme.muted; font.pixelSize: 12 }
-            }
-            ExpressiveSwitch {
-                checked: ShellState.preferences.equalizerEnabled !== false
-                onToggled: {
-                    ShellState.run("setting", {key: "equalizerEnabled", value: checked});
-                    if (checked) ShellState.run("eqStart"); else ShellState.run("eqStop");
-                }
-            }
-        }
-        RowLayout {
+
+        // Sliding pages (MusicEqView/MusicAudioView crossfade port).
+        Item {
+            id: pager
             Layout.fillWidth: true
-            LiquidButton { text: "Apply"; enabled: ShellState.backendReady; onClicked: root.apply() }
-            LiquidButton { text: "Status"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqStatus") }
-        }
-        LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
-        ColumnLayout {
-            Layout.fillWidth: true; spacing: 8
-            LabelText { text: "10-band gains"; font.weight: Font.Medium }
-            Repeater {
-                model: root.gains.length
-                delegate: RowLayout {
-                    required property int index
-                    Layout.fillWidth: true
-                    LabelText { text: "Band " + (index + 1); Layout.preferredWidth: 60 }
-                    LiquidSlider {
-                        Layout.fillWidth: true; from: -12; to: 12; stepSize: 0.5
-                        value: root.gains[index] || 0
-                        onMoved: if (!pressed) { const next = root.gains.slice(); next[index] = value; root.gains = next; }
-                        onPressedChanged: {
-                        if (pressed) { root.adjusting = true; return; }
-                        const next = root.gains.slice();
-                        next[index] = value;
-                        root.gains = next;
-                        Qt.callLater(() => { root.adjusting = false; });
+            Layout.fillHeight: true
+            clip: true
+
+            Item {
+                id: eqView
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: pager.width
+                height: eqColumn.implicitHeight
+                x: root.pageIndex === 0 ? 0 : -pager.width - 24
+                opacity: root.pageIndex === 0 ? 1.0 : 0.0
+                visible: opacity > 0.0
+                Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.OutQuart } }
+                Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+
+                ColumnLayout {
+                    id: eqColumn
+                    width: eqView.width
+                    spacing: 14
+                    enabled: !root.dynamicOn
+                    opacity: 1.0 - 0.7 * root.dynamicDim
+
+                    EqualizerBands {
+                        id: bands
+                        Layout.fillWidth: true
+                        eqData: root.eqData
+                        intro: root.introSliders
+                        onBandMoved: (band, value) => EqualizerState.setBand(band, value)
                     }
-                    }
-                    LabelText { text: (root.gains[index] || 0).toFixed(1) + " dB"; Layout.preferredWidth: 55 }
-                }
-            }
-        }
-        ColumnLayout {
-            Layout.fillWidth: true; spacing: 6
-            LabelText { text: "Output and dynamics"; font.weight: Font.Medium }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Balance"; Layout.fillWidth: true }
-                LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: root.balance;
-                    onMoved: if (!pressed) root.balance = value
-                    onPressedChanged: {
-                        if (pressed) { root.adjusting = true; return; }
-                        root.balance = value;
-                        Qt.callLater(() => { root.adjusting = false; });
+
+                    EqualizerPresets {
+                        id: presets
+                        Layout.fillWidth: true
+                        eqData: root.eqData
+                        opacity: root.introPresets
+                        transform: Translate { y: 18 * (1 - root.introPresets) }
+                        onPresetSelected: name => EqualizerState.applyPreset(name)
                     }
                 }
-                LabelText { text: root.balance.toFixed(2); Layout.preferredWidth: 45 }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Mono"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.mono; onToggled: root.mono = checked }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Swap"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.swap; onToggled: root.swap = checked }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Dynamics"; Layout.fillWidth: true }
-                LiquidComboBox {
-                    model: ["off", "balanced", "night"]
-                    currentIndex: Math.max(0, model.indexOf(root.dynamics))
-                    onActivated: root.dynamics = currentText
+
+                // Dynamic EQ veil: input-blocked, with the upstream message.
+                Item {
+                    anchors.fill: parent
+                    z: 10
+                    opacity: root.dynamicDim
+                    visible: opacity > 0.01
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.AllButtons
+                        onWheel: wheel => wheel.accepted = true
+                    }
+                    LabelText {
+                        anchors.centerIn: parent
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        text: qsTr("Adapting to your sound")
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
                 }
             }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Bypass"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.bypass; onToggled: root.bypass = checked }
-            }
-            RowLayout {
-                Layout.fillWidth: true
-                LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
-                ExpressiveSwitch { checked: root.dyneq; onToggled: root.dyneq = checked }
+
+            Item {
+                id: audioView
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: pager.width
+                height: audioColumn.implicitHeight
+                x: root.pageIndex === 1 ? 0 : pager.width + 24
+                opacity: root.pageIndex === 1 ? 1.0 : 0.0
+                visible: opacity > 0.0
+                Behavior on x { NumberAnimation { duration: 400; easing.type: Easing.OutQuart } }
+                Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+
+                ColumnLayout {
+                    id: audioColumn
+                    width: audioView.width
+                    spacing: 8
+
+                    EqualizerAudioControls {
+                        Layout.fillWidth: true
+                        eqData: root.eqData
+                        introBalance: root.introBalance
+                        introFlags: root.introFlags
+                        introDynamics: root.introDynamics
+                    }
+                }
             }
         }
     }

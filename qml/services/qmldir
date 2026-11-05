@@ -5,6 +5,7 @@ singleton ClipboardState 1.0 ClipboardState.qml
 singleton ActivityState 1.0 ActivityState.qml
 singleton PrivacyState 1.0 PrivacyState.qml
 singleton ImeState 1.0 ImeState.qml
+singleton EqualizerState 1.0 EqualizerState.qml
 singleton OSDManager 1.0 OSDManager.qml
 singleton VisualizerState 1.0 VisualizerState.qml
 singleton NotesState 1.0 NotesState.qml

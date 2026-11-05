@@ -4,119 +4,37 @@ import "../components"
 import "../services"
 import "../theme"
 
+// Settings surface for the Serpantinum equalizer port: enable the optional
+// daemon, stage band edits with presets, and tune the audio view.
 ColumnLayout {
+    id: root
     spacing: 20
-    property var gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    property real balance: 0
-    property bool mono: false
-    property bool swap: false
-    property string dynamics: "off"
-    property bool bypass: false
-    property bool dyneq: false
-    property bool adjusting: false
-    property string loadStatus: ""
-    property int gainCount: 10
-    readonly property var presetMap: ({
-        "Flat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        "Bass": [5, 7, 5, 2, 1, 0, 0, 0, 1, 2],
-        "Treble": [-2, -1, 0, 1, 2, 3, 4, 5, 6, 6],
-        "Vocal": [-2, -1, 1, 3, 5, 5, 4, 2, 1, 0],
-        "Pop": [2, 4, 2, 0, 1, 2, 4, 2, 1, 2],
-        "Rock": [5, 4, 2, -1, -2, -1, 2, 4, 5, 6],
-        "Jazz": [3, 3, 1, 1, 1, 1, 2, 1, 2, 3],
-        "Classic": [0, 1, 2, 2, 2, 2, 1, 2, 3, 4]
-    })
 
-    function applyPreset(name) {
-        const values = presetMap[name];
-        if (!Array.isArray(values) || values.length !== root.gainCount)
-            return;
-        if (!ShellState.backendReady)
-            return;
-        gains = values.slice();
-        balance = 0;
-        mono = false;
-        swap = false;
-        dynamics = "off";
-        bypass = false;
-        dyneq = false;
-        if (ShellState.preferences.equalizerEnabled !== true) {
-            ShellState.run("setting", {key: "equalizerEnabled", value: true});
-            ShellState.run("eqStart");
-        }
-        ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq});
-    }
-
-    function parseEqualizerLine(message) {
-        const tokens = String(message || "").trim().split(/\s+/);
-        if (tokens.length !== 17 || tokens[0] !== "set")
-            return null;
-        const gains = tokens.slice(1, 11).map(value => Number(value));
-        if (gains.some(value => !Number.isFinite(value)))
-            return null;
-        if (gains.some(value => value < -12 || value > 12))
-            return null;
-        const balance = Number(tokens[11]);
-        if (!Number.isFinite(balance) || balance < -1 || balance > 1)
-            return null;
-        if (!["1", "0", "true", "false"].includes(tokens[12]) || !["1", "0", "true", "false"].includes(tokens[13]))
-            return null;
-        if (tokens[14] !== "off" && tokens[14] !== "balanced" && tokens[14] !== "night")
-            return null;
-        if (!["1", "0", "true", "false"].includes(tokens[15]) || !["1", "0", "true", "false"].includes(tokens[16]))
-            return null;
-        return {
-            gains: gains,
-            balance: balance,
-            mono: tokens[12] === "1" || tokens[12] === "true",
-            swap: tokens[13] === "1" || tokens[13] === "true",
-            dynamics: tokens[14],
-            bypass: tokens[15] === "1" || tokens[15] === "true",
-            dyneq: tokens[16] === "1" || tokens[16] === "true"
-        };
-    }
-
-    Connections {
-        target: ShellState
-        function onLastResultChanged() {
-            if (!ShellState.lastResult || ShellState.lastResult.action !== "eqGet")
-                return;
-            if (!ShellState.lastResult.ok) {
-                root.loadStatus = String(ShellState.lastResult.message || "Equalizer is unavailable");
-                return;
-            }
-            const payload = root.parseEqualizerLine(ShellState.lastResult.message);
-            if (!payload || root.adjusting)
-                return;
-            root.gains = payload.gains.slice();
-            root.balance = payload.balance;
-            root.mono = payload.mono;
-            root.swap = payload.swap;
-            root.dynamics = payload.dynamics;
-            root.bypass = payload.bypass;
-            root.dyneq = payload.dyneq;
-            root.loadStatus = "";
-        }
-        function onBackendReadyChanged() {
-            if (ShellState.backendReady)
-                ShellState.run("eqGet");
-        }
-    }
-
-    Component.onCompleted: {
-        if (ShellState.backendReady)
-            ShellState.run("eqGet");
-    }
+    Component.onCompleted: EqualizerState.refresh()
 
     SettingsCard {
-        title: "Serpantinum equalizer"
-        description: "Optional external PipeWire daemon. Installing and starting serpantinum-audio is required; disabling stops the daemon and routes audio directly again."
+        title: qsTr("Serpantinum equalizer")
+        description: qsTr("Optional external PipeWire daemon. Installing and starting serpantinum-audio is required; disabling stops the daemon and routes audio directly again.")
+
         RowLayout {
-            Layout.fillWidth: true; spacing: 20
+            Layout.fillWidth: true
+            spacing: 20
             ColumnLayout {
-                Layout.fillWidth: true; spacing: 5
-                LabelText { text: "Enable equalizer"; font.weight: Font.Medium; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                LabelText { text: "Start or stop the optional daemon"; color: Theme.muted; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                Layout.fillWidth: true
+                spacing: 5
+                LabelText {
+                    text: qsTr("Enable equalizer")
+                    font.weight: Font.Medium
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
+                LabelText {
+                    text: qsTr("Start or stop the optional daemon")
+                    color: Theme.muted
+                    font.pixelSize: 13
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
             }
             ExpressiveSwitch {
                 checked: ShellState.preferences.equalizerEnabled !== false
@@ -129,96 +47,81 @@ ColumnLayout {
                 }
             }
         }
-        LabelText { text: "Availability: " + (ShellState.backendReady ? "checked by backend actions" : "waiting"); color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
+        LabelText {
+            Layout.fillWidth: true
+            visible: EqualizerState.loadStatus.length > 0
+            text: EqualizerState.loadStatus
+            color: Theme.muted
+            wrapMode: Text.Wrap
+        }
         RowLayout {
             Layout.fillWidth: true
-            LiquidButton { text: "Apply"; enabled: ShellState.backendReady; onClicked: {
-                if (ShellState.preferences.equalizerEnabled !== true) {
-                    ShellState.run("setting", {key: "equalizerEnabled", value: true});
-                    ShellState.run("eqStart");
-                }
-                ShellState.run("eqApply", {gains: gains, balance: balance, mono: mono, swap: swap, dynamics: dynamics, bypass: bypass, dyneq: dyneq});
-            } }
-            LiquidButton { text: "Status"; enabled: ShellState.backendReady; onClicked: ShellState.run("eqStatus") }
-        }
-        ColumnLayout {
-            Layout.fillWidth: true; spacing: 8
-            LabelText { text: "Presets"; font.weight: Font.Medium; Layout.fillWidth: true }
-            RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Flat", "Bass", "Treble", "Vocal"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
-            RowLayout { Layout.fillWidth: true; spacing: 8; Repeater { model: ["Pop", "Rock", "Jazz", "Classic"]; delegate: LiquidButton { required property var modelData; text: modelData; onClicked: root.applyPreset(modelData) } } }
-        }
-        LabelText { visible: !!root.loadStatus; text: root.loadStatus; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
-    }
-
-    SettingsCard {
-        title: "Band gains"
-        description: "Ten peaking bands from 32 Hz to 16 kHz, -12 to +12 dB."
-        Repeater {
-            model: gains.length
-            delegate: RowLayout {
-                required property int index
-                Layout.fillWidth: true
-                LabelText { text: "Band " + (index + 1); Layout.preferredWidth: 70 }
-                LiquidSlider {
-                    Layout.fillWidth: true; from: -12; to: 12; stepSize: 0.5
-                    value: gains[index] || 0
-                    onMoved: if (!pressed) { const next = gains.slice(); next[index] = value; gains = next; }
-                    onPressedChanged: {
-                        if (pressed) { root.adjusting = true; return; }
-                        const next = gains.slice();
-                        next[index] = value;
-                        gains = next;
-                        Qt.callLater(() => { root.adjusting = false; });
-                    }
-                }
-                LabelText { text: (gains[index] || 0).toFixed(1) + " dB"; Layout.preferredWidth: 60 }
+            LiquidButton {
+                text: EqualizerState.eqData && EqualizerState.eqData.pending ? qsTr("Apply") : qsTr("Saved")
+                enabled: ShellState.backendReady && EqualizerState.eqData && EqualizerState.eqData.pending === true
+                selected: EqualizerState.eqData && EqualizerState.eqData.pending === true
+                selectionColor: Theme.accent
+                onClicked: EqualizerState.commit()
+            }
+            LiquidButton {
+                text: qsTr("Status")
+                enabled: ShellState.backendReady
+                onClicked: ShellState.run("eqStatus")
+            }
+            Item { Layout.fillWidth: true }
+            LabelText {
+                text: EqualizerState.eqData && EqualizerState.eqData.preset ? EqualizerState.eqData.preset : "Flat"
+                color: Theme.muted
+                font.pixelSize: 13
+                font.bold: true
             }
         }
     }
 
     SettingsCard {
-        title: "Output and dynamics"
-        description: "Balance, mono, channel swap, dynamics and bypass."
+        title: qsTr("Band gains")
+        description: qsTr("Ten peaking bands from 31 Hz to 16 kHz, -12 to +12 dB. Drag a band to stage it, then Apply; presets apply immediately.")
+
+        EqualizerBands {
+            Layout.fillWidth: true
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            eqData: EqualizerState.eqData
+            onBandMoved: (band, value) => EqualizerState.setBand(band, value)
+        }
+
+        EqualizerPresets {
+            Layout.fillWidth: true
+            eqData: EqualizerState.eqData
+            onPresetSelected: name => EqualizerState.applyPreset(name)
+        }
+    }
+
+    SettingsCard {
+        title: qsTr("Output and dynamics")
+        description: qsTr("Balance, mono, channel swap and dynamic range; changes apply immediately. Test plays a channel tone through the equalizer sink.")
+
+        EqualizerAudioControls {
+            Layout.fillWidth: true
+            eqData: EqualizerState.eqData
+        }
+
         RowLayout {
-            LabelText { text: "Balance"; Layout.fillWidth: true }
-            LiquidSlider { Layout.fillWidth: true; from: -1; to: 1; stepSize: 0.05; value: balance
-                onMoved: if (!pressed) balance = value
-                onPressedChanged: {
-                    if (pressed) { root.adjusting = true; return; }
-                    balance = value;
-                    Qt.callLater(() => { root.adjusting = false; });
-                }
+            Layout.fillWidth: true
+            LiquidButton {
+                text: EqualizerState.audioTestRunning ? qsTr("Stop test") : qsTr("Test channels")
+                selected: EqualizerState.audioTestRunning
+                selectionColor: Theme.accent
+                onClicked: EqualizerState.toggleTest()
             }
-            LabelText { text: balance.toFixed(2); Layout.preferredWidth: 50 }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Mono"; Layout.fillWidth: true }
-            ExpressiveSwitch { checked: mono; onToggled: mono = checked }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Channel swap"; Layout.fillWidth: true }
-            ExpressiveSwitch { checked: swap; onToggled: swap = checked }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Dynamics"; Layout.fillWidth: true }
-            LiquidComboBox {
-                model: ["off", "balanced", "night"]
-                currentIndex: Math.max(0, model.indexOf(dynamics))
-                onActivated: dynamics = currentText
+            LiquidButton {
+                text: qsTr("Reset")
+                enabled: EqualizerState.eqData && (Math.abs(EqualizerState.eqData.balance || 0) >= 0.005
+                    || EqualizerState.eqData.mono === true || EqualizerState.eqData.swap === true
+                    || String(EqualizerState.eqData.dynamics || "off") !== "off")
+                onClicked: EqualizerState.resetAudio()
             }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Bypass"; Layout.fillWidth: true }
-            ExpressiveSwitch { checked: bypass; onToggled: bypass = checked }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            LabelText { text: "Dynamic EQ"; Layout.fillWidth: true }
-            ExpressiveSwitch { checked: dyneq; onToggled: dyneq = checked }
+            Item { Layout.fillWidth: true }
         }
     }
 }

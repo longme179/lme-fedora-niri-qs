@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Re-implement the Serpantinum equalizer as a faithful port of Serpantinum
+  Shell's equalizer (AGPL-attributed; see `third_party/Serpantinum-NOTICE`).
+  The panel now shows ten vertical band sliders (31 Hz-16 kHz) with an animated
+  lightning sweep on apply, per-band pulses, preset chips with active-state
+  highlight, a dimming Dynamic EQ overlay whose toggle lives outside the dimmed
+  area, and an Audio view with a notched balance scale, center-origin fill,
+  L/R readouts, mono/swap toggles, a three-mode dynamic range selector and a
+  channel test tone through the equalizer sink. Band edits are staged and
+  committed with Apply; presets and audio settings apply immediately, and
+  switching views reverts uncommitted band edits. Equalizer state moved
+  backend-side into a persisted `eq_state` document (seeded from the daemon on
+  first use), giving every surface one apply contract; `eqGet` no longer probes
+  the daemon and cannot fail on default installs. New granular actions:
+  `eqSetBand`, `eqRevert`, `eqPreset`, `eqBalance`, `eqMono`, `eqSwap`,
+  `eqDyneq`, `eqDynamics`, `eqReset`, `eqTest`, `eqTestStop`; pushes auto-start
+  the stopped daemon and retry once. `pw-play` joins the managed tool allowlist.
+
 - Add the optional Serpantinum equalizer: a centered equalizer panel from the
   top-bar module, Control Center tile and Audio mixer, plus a Settings page.
   Ten band gains, balance, mono, channel swap, dynamics modes, bypass and

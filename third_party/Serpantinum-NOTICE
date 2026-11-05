@@ -43,3 +43,36 @@ These adapted files remain AGPL-3.0-or-later. LME's GPLv3-covered portions retai
 their licenses; combining the renderers follows GPLv3/AGPLv3 section 13, including
 the AGPL remote-network source requirements when applicable to the combination.
 This notice does not relicense third-party GPL, MIT or other covered files.
+
+Serpantinum equalizer UI and state machine
+Copyright (C) 2026 Illia Miroshnichenko
+License: AGPL-3.0-or-later; full text: Serpantinum-LICENSE.md
+Source: https://github.com/ilyamiro/serpantinum
+Revision: 2aa00c378b492113181d26427399a30aff1805e5
+
+Adapted files:
+- src/quickshell/media/MusicEqView.qml -> qml/components/EqualizerBands.qml
+- src/quickshell/media/MusicAudioView.qml -> qml/components/EqualizerBalance.qml
+  and qml/components/EqualizerAudioControls.qml
+- src/quickshell/media/MusicPresetButton.qml -> qml/components/EqualizerPresets.qml
+  (as an inline chip in the preset rows)
+- src/quickshell/media/MusicEqualizerState.qml -> qml/services/EqualizerState.qml
+  and the staging/revert logic of scripts/equalizer_actions.py
+- src/quickshell/media/equalizer.sh -> scripts/equalizer_actions.py
+  (eq_state document, preset table, daemon auto-start retry, channel test tone)
+- src/assets/shaders/vfx/eq_lightning.frag -> qml/components/shaders/eq-lightning.frag
+  (including its compiled .qsb artifact)
+- Panel/page composition and animations adapt MusicEqView.qml, MusicAudioView.qml,
+  MusicBottomHeader.qml and the intro sequences of MusicPopup.qml into
+  qml/panels/EqualizerPanel.qml and qml/settings/EqualizerPage.qml.
+
+LME changes: backend-owned state document persisted under XDG_STATE_HOME with the
+LME action registry replacing upstream's bash script and FileView watcher; the
+lightning/pulse visuals drop MultiEffect for plain QML rectangles; LME theme
+tokens, spring motion and component set (GlassPanel, LiquidButton, ExpressiveSwitch)
+replace ThemeBackend/GlassFill; the segmented control is a fresh LME component
+following the upstream Switch pill design. The two-second local-write suppression
+window, optimistic applies, revert-on-view-switch, dimming Dynamic EQ overlay with
+the toggle outside the dimmed area, per-band pulses and the eq_lightning strand
+remain upstream behavior. These adapted files remain AGPL-3.0-or-later; the
+GPLv3/AGPLv3 section 13 combination terms above apply unchanged.

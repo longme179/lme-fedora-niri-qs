@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Fix a shell-wide startup failure introduced with the equalizer port: the
+  ported `EqualizerState` singleton used the Quickshell `Singleton` root type
+  without importing `Quickshell`, so the file failed to compile with
+  "Singleton is not a type" and took the whole `qml/services` singleton import
+  chain down with it. It now imports `Quickshell` like every other service
+  singleton, restoring startup.
+
 - Re-implement the Serpantinum equalizer as a faithful port of Serpantinum
   Shell's equalizer (AGPL-attributed; see `third_party/Serpantinum-NOTICE`).
   The panel now shows ten vertical band sliders (31 Hz-16 kHz) with an animated

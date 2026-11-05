@@ -8,6 +8,7 @@ Do not read archive/ unless answering a specific historical question.
   Ten catalog pages; 79 descriptor keys/68 legacy; Clipboard bar converted; tab/bootstrap adapters implemented (19 catalog records, nine with empty startup UI metadata).
 - D1 startup optimization CLOSED; further async conversions need authorization; M8 deferred.
 - Roadmap accepted 100% (10/10) by owner on 2026-11-01: normal-use functionality tested, aggregate shell/process RAM reported at or below 400 MB in btop. This replaces the pending laptop/PSS acceptance gate; no new quantitative PSS/GPU measurement or RAM-saving fix is claimed. PR #42 is merged. W1 Audio/headset (PR #44) adds four on-demand workers and observed ports/profiles/routes; native revisions approved/applied, physical headset checks remain. PR #44 is merged (bcbb359). Launcher Gio lifetime fix PR #45 is merged (4e5fbf1); restart the shell after updating. W2 review branch feature/network-connections adds on-demand saved connections and confirmed secure hotspot activation; physical NM/keyring/AP/wired checks remain. W3+ is unauthorized. See AUDIO_HEADSET.md and NETWORK_CONNECTIONS.md.
+- M1 (P-01…P-06) merged via PR #48; the G0/G1 follow-up merged via PR #49. M2 P-07/P-09 is in progress on its own branch.
 - A6 remains out of scope: no polling, cache or power-policy changes.
 - Development skills: Ponytail full + .agents/skills/modularity/SKILL.md; use proportionately, without extra ceremony.
 - Total-shell memory target: <=400 MB steady / <=500 MB ordinary active use, including workers and open Settings.
@@ -15,8 +16,8 @@ Do not read archive/ unless answering a specific historical question.
 
 ## In progress
 
-- M1 (P-01…P-06) implemented on fix/audit-gate-settings-backend: persisted-field save projection, feature availability plus catalog retry, 10 s preview screenshot deadline, live log rotation/redirect, Settings launcher kill guard, and ShellState status fixes. `./scripts/check.sh` green (1018 passed / 0 failed / 184 skipped) plus six focused cases.
-- M1 gates on the verified branch: G0 completed with 834 passed / 0 failed / 184 skipped and qmllint 153 files with 0 errors/warnings; G1 passed 9 / 0 failed / 0 skipped. The start-log case clears `LME_SHELL_DEMO`/`LME_SHELL_PREVIEW`, and `migration_checks.py` now counts indented `subTest` skips. Preview deadline, log rotation and launcher replies still need a real-session check.
+- M2 (P-07, P-09) on fix/m2-durability-installer: shared JSON writes and `Preferences` use a bounded 2 s lock and fsync the parent directory after replace; `install.sh --replace` refuses regular files and non-empty directories while accepting links and empty directories; the ZIP→Git bootstrap moves its source before linking. P-08 skipped as a non-issue.
+- M2 verification: focused storage/install/updater units green; G0 completed with 840 passed / 0 failed / 184 skipped and qmllint 153 files with 0 errors/warnings. No QML changes, so no G1/G2. Installer fixtures use temporary targets; no real `~/.config` target was touched.
 
 ## Compatibility adapters and retirement
 

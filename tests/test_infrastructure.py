@@ -28,7 +28,7 @@ class SharedContractsCase(unittest.TestCase):
         fsync, replace = os.fsync, os.replace
         def sync(fd):
             events.append('fsync')
-            self.assertEqual(stat.S_IMODE(os.fstat(fd).st_mode), 0o600)
+            self.assertIn(stat.S_IMODE(os.fstat(fd).st_mode), (0o600, 0o700))
             fsync(fd)
         def commit(source, destination):
             self.assertEqual(events, ['fsync'])
@@ -38,7 +38,7 @@ class SharedContractsCase(unittest.TestCase):
             replace(source, destination)
         with patch.object(os, 'fsync', sync), patch.object(os, 'replace', commit):
             display_control.write_json(path, {'text': 'Tiếng Việt', 'items': [1, False]})
-        self.assertEqual(events, ['fsync', 'replace'])
+        self.assertEqual(events, ['fsync', 'replace', 'fsync'])
         self.assertEqual(stat.S_IMODE(path.parent.stat().st_mode), 0o700)
         self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
         self.assertEqual(path.read_bytes(), '{"text": "Tiếng Việt", "items": [1, false]}'.encode())

@@ -12,7 +12,6 @@ import argparse
 import configparser
 from concurrent.futures import ThreadPoolExecutor
 import copy
-import fcntl
 import json
 import math
 import os
@@ -44,7 +43,7 @@ from desktop_features import (APPEARANCE_KEYS, DRACULA_PROFILE, DEFAULT_CONTROL_
                               appearance_profile, control_layout, control_grid, wallpaper_library, calculate, theme_overrides, theme_token, bar_corners, bar_island_styles, PALETTE_CATALOG, PALETTE_IDS, PALETTE_SCHEMES)
 from display_control import DisplayControl, validate_layout, apply_layout, current_layout
 from display_actions import PreviewCapabilities, PlatformCapabilities, provide as provide_display, provide_platform
-from storage import finite_number, read_json, write_json
+from storage import acquire_exclusive, finite_number, fsync_directory, read_json, write_json
 from system_monitor import SystemMonitor
 from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
 from niri_keybinds import read_keybinds
@@ -467,7 +466,8 @@ class Preferences:
             self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             lock_fd = os.open(self.path.with_suffix(".lock"), os.O_CREAT | os.O_RDWR, 0o600)
             with os.fdopen(lock_fd, "w") as lock:
-                fcntl.flock(lock, fcntl.LOCK_EX)
+                try: acquire_exclusive(lock, self.path.with_suffix(".lock"))
+                except TimeoutError as exc: raise CommandError(f"{self.path.name} is locked by another process") from exc
                 self.reload(force=True)
                 if self._corrupt: raise CommandError("settings.json could not be read; it was left unchanged. Repair it before changing settings.")
                 if token is not None:
@@ -493,7 +493,7 @@ class Preferences:
                 handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(temporary, self.path)
+            os.replace(temporary, self.path); fsync_directory(self.path.parent)
             self.values = updated
             stat = self.path.stat(); self._stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
         finally:

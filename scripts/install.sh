@@ -64,6 +64,10 @@ if [[ -e "$target" || -L "$target" ]]; then
         printf 'Error: %s already exists. Use --replace to preserve it in a backup.\n' "$target" >&2
         exit 1
     fi
+    if [[ ! -L "$target" ]] && { [[ ! -d "$target" ]] || [[ ! -r "$target" ]] || [[ -n "$(ls -A -- "$target")" ]]; }; then
+        printf 'Error: refusing to replace %s; choose an absent, empty or linked target.\n' "$target" >&2
+        exit 1
+    fi
 fi
 
 backup=""

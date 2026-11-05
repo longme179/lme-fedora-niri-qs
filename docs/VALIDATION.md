@@ -487,8 +487,8 @@ The updater now identifies ZIP/source directories and Git folders without a
 valid HEAD commit, including an unborn `master` with no remote. It persists the
 new source status so FileView cannot restore an earlier raw HEAD error.
 The explicit Enable Git updates action clones official `main` into a sibling
-directory and reuses `install.sh --replace` to keep a timestamped source backup
-and preserve the original startup path through a link. Existing histories,
+directory, moves the old source to a timestamped backup, and uses `install.sh`
+to preserve the original startup path through a link. Existing histories,
 tracked edits, untracked files and divergent branches retain their guards.
 
 Eleven updater checks cover real local Git remotes, detached bootstrap after

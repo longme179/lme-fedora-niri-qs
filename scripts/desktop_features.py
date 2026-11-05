@@ -29,7 +29,7 @@ CONTROL_SPANS = {tile['id']: tile['cols'] for tile in CONTROL_TILES}
 DEFAULT_CONTROL_GRID = {'columns': 4, 'rows': max(8, 1 + max(tile['row'] for tile in CONTROL_TILES)), 'tiles': [{key: tile[key] for key in ('id', 'col', 'row')} for tile in CONTROL_TILES]}
 LEGACY_CONTROL_MODULES = {'weather', 'charging', 'wifi', 'bluetooth', 'microphone', 'dnd', 'stayAwake', 'motion', 'nightLight',
                           'sliders', 'powerProfile', 'media', 'resources', 'capture', 'overview'}
-LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power', 'batterySaver'}
+LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power', 'batterySaver', 'equalizer'}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
@@ -111,6 +111,11 @@ def control_layout(value):
         result = [*migrated, {'id': 'settings', 'enabled': actions_enabled, 'size': 'half'}, {'id': 'power', 'enabled': actions_enabled, 'size': 'half'}]
     if {item['id'] for item in result} == set(CONTROL_MODULES) - {'batterySaver'}:
         result.append({'id': 'batterySaver', 'enabled': True, 'size': 'half'})
+    if {item['id'] for item in result} == set(CONTROL_MODULES) - {'equalizer'}:
+        result.append({'id': 'equalizer', 'enabled': True, 'size': 'half'})
+    if {item['id'] for item in result} == set(CONTROL_MODULES) - {'batterySaver', 'equalizer'}:
+        result.append({'id': 'batterySaver', 'enabled': True, 'size': 'half'})
+        result.append({'id': 'equalizer', 'enabled': True, 'size': 'half'})
     if {item['id'] for item in result} != set(CONTROL_MODULES):
         raise ValueError('The layout must include every control module exactly once')
     return result

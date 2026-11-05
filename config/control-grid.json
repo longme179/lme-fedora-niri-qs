@@ -175,8 +175,8 @@
       "id": "equalizer",
       "title": "Equalizer",
       "icon": "audio",
-      "cols": 2,
-      "col": 2,
+      "cols": 1,
+      "col": 1,
       "row": 8
     }
   ],

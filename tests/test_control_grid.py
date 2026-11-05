@@ -32,6 +32,7 @@ class ControlGridCase(Fixture, unittest.TestCase):
         layout = copy.deepcopy(DEFAULT_CONTROL_GRID)
         layout.update(columns=8, rows=8); layout['tiles'][0].update(col=6, row=7)
         next(tile for tile in layout['tiles'] if tile['id'] == 'batterySaver').update(col=4, row=7)
+        next(tile for tile in layout['tiles'] if tile['id'] == 'equalizer').update(col=5, row=7)
         self.preferences.set('controlGrid', layout)
         cards = copy.deepcopy(self.preferences.values['controlLayout']); cards[0]['enabled'] = False
         self.preferences.set('controlLayout', cards)

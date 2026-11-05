@@ -909,3 +909,10 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Backed by tray identity + consumer-gated `fcitx5-remote -n`; added `fcitx5-remote` to TOOLS.
 - Config/feature registration; frozen fixture/assertion updates approved.
 - DMS attribution added to `THIRD_PARTY.md`. G0 1035/0/184; qmllint clean.
+
+## Equalizer · optional Serpantinum daemon (2026-11-05)
+- Branch `feat/equalizer`, default-disabled external `serpantinum-audio` integration.
+- Added `eqStart`, `eqStop`, `eqStatus`, `eqApply` actions and Equalizer settings page.
+- Uses only the published `ctl` command protocol; no DSP/daemon code is vendored.
+- AGPL notice documented in THIRD_PARTY.md and third_party/Serpantinum-NOTICE.
+- G0 unit slices pass; native GUI still needs a Wayland G1/G2 check.

@@ -11,13 +11,13 @@ Singleton {
         if (selected === "all") return screens.length ? "all" : fallback;
         return screens.some(screen => screen.name === selected) ? selected : fallback;
     }
-    function show(label,value) {
+    function show(label,value,text) {
         if (ShellState.preferences.osdEnabled === false || ShellState.settingsApp) return;
         const selected=ShellState.preferences.osdOutput || "focused";
         const focused=(ShellState.niri.workspaces || []).find(w => w.is_focused);
         const name=outputName(selected, Quickshell.screens, focused, ShellState.panelScreen);
         const next=Object.assign({},entries);
-        for (const screen of Quickshell.screens) if (name === "all" || screen.name===name) next[screen.name]={label,value,sequence:++sequence};
+        for (const screen of Quickshell.screens) if (name === "all" || screen.name===name) next[screen.name]={label,value,text: (text === undefined ? "" : text),sequence:++sequence};
         entries=next;
     }
     Connections {

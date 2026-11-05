@@ -16,7 +16,7 @@ from command_output import DEFAULT_LIMIT, LIMITS, capture, text
 TOOLS = (
     "wl-mirror", "niri", "nmcli", "bluetoothctl", "wpctl", "brightnessctl",
     "busctl", "powerprofilesctl", "gio", "swaylock", "systemctl",
-    "gowall", "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "pw-metadata", "matugen", "wf-recorder", "ffprobe", "ffmpeg", "pactl", "slurp", "satty", "swappy",
+    "gowall", "awww", "awww-daemon", "pkexec", "nm-connection-editor", "blueman-manager", "pavucontrol", "rfkill", "wl-copy", "swayidle", "quickshell", "wlsunset", "tesseract", "pw-dump", "pw-metadata", "matugen", "wf-recorder", "ffprobe", "ffmpeg", "pactl", "slurp", "satty", "swappy", "fcitx5-remote",
 )
 
 

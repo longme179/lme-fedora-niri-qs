@@ -17,9 +17,7 @@ Loader {
     readonly property var catalogEntry: BarRegistry.info(moduleId)
     readonly property var battery: ShellState.system.battery || {}
     readonly property var player: ShellState.demo ? null : Mpris.players.values.find(p => p.isPlaying) || Mpris.players.values[0] || null
-    readonly property bool available: moduleId === "launchpad" ? ShellState.preferences.launchpadEnabled !== false : moduleId === "privacy" ? ShellState.preferences.privacyIndicators !== false && PrivacyState.indicators.length > 0 : moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0
-                                   : moduleId === "battery" ? battery.available === true
-                                   : moduleId === "media" ? player !== null : true
+    readonly property bool available: moduleId === "launchpad" ? ShellState.preferences.launchpadEnabled !== false : moduleId === "privacy" ? ShellState.preferences.privacyIndicators !== false && PrivacyState.indicators.length > 0 : moduleId === "activity" ? ShellState.preferences.activityEnabled !== false : moduleId === "tray" ? !ShellState.demo && SystemTray.items.values.length > 0 : moduleId === "ime" ? ImeState.available : moduleId === "battery" ? battery.available === true : moduleId === "media" ? player !== null : true
     active: available && catalogEntry.enabled !== false
     visible: active
     width: available && item ? (item as Item).implicitWidth : 0

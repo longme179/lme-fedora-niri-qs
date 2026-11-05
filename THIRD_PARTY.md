@@ -171,6 +171,8 @@ controls. Noctalia's C++ Control Center at `b6d1c44d44ebaafcc218b9b2e69d8c626278
 (MIT) was inspected but no C++ code was ported. These references were cloned
 outside LME's checkout; they add no new runtime dependency.
 
+The optional input-method indicator (`qml/services/ImeState.qml`, `qml/bar/ImeModule.qml`, the `inputMethod` backend action) follows the tray-identity, consumer-gated `fcitx5-remote -n` and change-detection OSD approach of DankMaterialShell `quickshell/Services/Fcitx5Service.qml` and `quickshell/Modules/OSD/InputMethodOSD.qml` at `f1507fa4fa3f25842dc73a8b25f747f98bcf55fc` (MIT, Copyright © 2025 Avenge Media LLC). LME resolves the method through its stdlib backend and reuses its own tray, OSD and theme controls; no upstream file is copied and the MIT notice remains in `third_party/DankMaterialShell-LICENSE`.
+
 The independent slider/control cleanup inspected fresh shallow checkouts of
 DankMaterialShell at `c3e93ee39a3a4b79c59076176a44cde389458380` (MIT), particularly
 `quickshell/Modules/ControlCenter/Widgets/CcSliderRow.qml` and `AudioSliderRow.qml`.

@@ -17,5 +17,6 @@
 {"id":"fileSearch","descriptor":"config/fileSearch.json","enabled":true,"startup":{}},
 {"id":"bluetooth","descriptor":"config/bluetooth.json","enabled":true,"startup":{}},
 {"id":"audio","descriptor":"config/audio.json","enabled":true,"startup":{}},
-{"id":"wifi","descriptor":"config/wifi.json","enabled":true,"startup":{}}
+{"id":"wifi","descriptor":"config/wifi.json","enabled":true,"startup":{}},
+{"id":"ime","descriptor":"config/ime.json","enabled":true,"startup":{"bar":{"id":"ime","title":"Input method","detail":"Active keyboard input method","icon":"applications","entry":"qml/bar/ImeModule.qml","after":"privacy"}}}
 ]}

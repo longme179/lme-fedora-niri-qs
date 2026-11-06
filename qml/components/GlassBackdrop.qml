@@ -2,6 +2,7 @@
 import QtQuick
 import Quickshell
 import "../services"
+import "GlassSampling.js" as GlassSampling
 
 Image {
     id: root
@@ -12,7 +13,12 @@ Image {
     readonly property var output: disposed ? null : proxyWindow ? proxyWindow.screen : null
     readonly property real outputWidth: Math.max(1, output ? output.width : hostWindow ? hostWindow.width : 1)
     readonly property real outputHeight: Math.max(1, output ? output.height : hostWindow ? hostWindow.height : 1)
-    readonly property real resolution: Math.min(.5, 1280 / outputWidth, 720 / outputHeight)
+    // LG2.0 A2: scaled outputs sample at up to a 1440p equivalent (never beyond
+    // their physical resolution) so frosted interiors stay smooth at 2x; 1x
+    // outputs keep the <=720p/0.5x cap. Glass is off entirely under battery
+    // saver (Theme.liquidGlass), so the tier needs no gate of its own.
+    readonly property real outputScale: output && output.scale ? output.scale : 1
+    readonly property real resolution: GlassSampling.resolution(outputWidth, outputHeight, outputScale)
     // Shader samplers see the original image, not Image's PreserveAspectCrop geometry.
     readonly property rect cropRect: {
         const imageAspect = Math.max(1, implicitWidth) / Math.max(1, implicitHeight);
@@ -44,10 +50,19 @@ Image {
     visible: false
     width: outputWidth; height: outputHeight
     readonly property string wallpaperPath: (ShellState.preferences.wallpaperOutputs || {})[output ? output.name : ""] || ShellState.preferences.wallpaper || ""
+    // Color wallpapers have no image path; a flat fill tile (awww's default fill
+    // is black) keeps the lens refracting a flat field, so sourceAvailable stays
+    // 1 and rim/grain render instead of the dead flat rim. Part 2 of LG2.0 A2
+    // (snapshot cache from awww's live state) will replace this with the exact
+    // per-output color snapshot.
+    readonly property string flatTile: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
     source: wallpaperPath ? "file://" + wallpaperPath.split("/").map(part => encodeURIComponent(part)).join("/")
-        : ShellState.demo ? Qt.resolvedUrl("../../assets/wallpapers/liquid-dracula.png") : ""
+        : ShellState.demo ? Qt.resolvedUrl("../../assets/wallpapers/liquid-dracula.png") : flatTile
     sourceSize: Qt.size(Math.max(1, Math.round(outputWidth * resolution)), Math.max(1, Math.round(outputHeight * resolution)))
     fillMode: Image.PreserveAspectCrop
-    asynchronous: true; cache: false; mipmap: true
+    // cache: true shares one decode per output (identical URL + sourceSize is
+    // one pixmap cache key) across every window's backdrop, instead of
+    // re-decoding the wallpaper for each popup window that opens.
+    asynchronous: true; cache: true; mipmap: true
     Component.onDestruction: GlassState.backdrops = GlassState.backdrops.filter(item => item !== root)
 }

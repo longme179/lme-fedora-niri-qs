@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Harden the glass backdrop sampling surface (Liquid Glass 2.0, A2 part 1): a
+  flat fill tile now stands in when no image is set for an output (color
+  wallpapers have no image path), keeping `sourceAvailable` at 1 so rim and
+  grain render over a flat field instead of the dead flat rim; `cache: true`
+  plus the per-output source size makes every window on an output share one
+  decode instead of re-decoding the wallpaper for each popup window; and
+  outputs with a scale above 1 sample at up to a 1440p equivalent (capped by
+  their physical resolution) so frosted interiors stay smooth at 2x, while 1x
+  outputs keep the previous <=720p/0.5x cap. The awww snapshot cache and live
+  color-state invalidation remain for A2 part 2.
+
 - Wire glass-on-glass nesting into the glass material (Liquid Glass 2.0, G1):
   every stacked glass layer used to render a full-strength rim and bevel,
   compounding into the "chrome sandwich" look. The material now walks its

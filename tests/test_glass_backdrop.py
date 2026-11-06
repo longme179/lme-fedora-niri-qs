@@ -1,7 +1,10 @@
-"""Backdrop sampling: flat-tile fallback, shared decode key, HiDPI tier."""
+"""Backdrop sampling: snapshot cache, flat-tile fallback, shared decode, HiDPI tier."""
 import shutil
+import tempfile
 import unittest
+from pathlib import Path
 import test_local_qml as qml_tests
+from glass_snapshot import GlassSnapshots
 
 
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")
@@ -64,3 +67,90 @@ class GlassBackdropCase(unittest.TestCase):
 ''')
         self.assertEqual(result, dict(base=True, bigFlat=True, scaled=True, physicalCap=True,
             fractional=True, missingScale=True))
+
+    def test_snapshot_url_shares_one_decode_and_invalidates_within_one_cycle(self):
+        # Every window on the output binds the same snapshot URL plus ?rev=,
+        # so they share one pixmap cache key; a revision bump switches every
+        # backdrop source on the next animation tick.
+        with tempfile.TemporaryDirectory() as cache:
+            glass_dir = Path(cache) / 'lme-shell/glass'
+            glass_dir.mkdir(parents=True)
+            snap = GlassSnapshots(directory=glass_dir)
+            snap.refresh({'probe'}, {'probe': ('color', '112233')}, True)
+            result = self.run_qml('import "qml/components"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property var checks: ({})
+    FloatingWindow {
+        id: win
+        implicitWidth: 640; implicitHeight: 480
+        GlassBackdrop { id: first; hostWindow: win }
+        GlassBackdrop { id: second; hostWindow: win }
+    }
+    function publish(rev) {
+        const cache = Quickshell.env("XDG_CACHE_HOME");
+        const name = win.screen ? win.screen.name : "";
+        const url = "file://" + cache + "/lme-shell/glass/probe.png";
+        ShellState.accept(JSON.stringify(Object.assign({}, ShellState.snapshot, {glass: {outputs: Object.assign({}, ShellState.snapshot.glass ? ShellState.snapshot.glass.outputs : {}, {[name]: {rev: rev, kind: "color", url: url}})}})));
+    }
+    Timer {
+        interval: 60; running: true; repeat: true
+        onTriggered: {
+            if (++fixture.ticks > 160) { fixture.finish({timeout: fixture.phase, checks: fixture.checks}); return; }
+            if (!ShellState.backendReady || ShellState.pendingActions.setting) return;
+            if (fixture.phase === 0) { fixture.publish(1); fixture.phase = 1; }
+            else if (fixture.phase === 1 && String(first.source).includes("rev=1") && first.status === Image.Ready && second.status === Image.Ready) {
+                fixture.checks.bound = String(first.source).includes("rev=1") && String(second.source).includes("rev=1");
+                fixture.checks.sharedKey = first.source === second.source
+                    && first.sourceSize.width === second.sourceSize.width
+                    && first.sourceSize.height === second.sourceSize.height;
+                // Wallpaper change: bump the revision; all backdrops must
+                // switch within one animation cycle (next Timer tick).
+                fixture.publish(2); fixture.phase = 2;
+            } else if (fixture.phase === 2 && String(first.source).includes("rev=2") && String(second.source).includes("rev=2") && first.status === Image.Ready) {
+                fixture.checks.invalidated = true;
+                fixture.finish(fixture.checks);
+            }
+        }
+    }
+''', {'LME_SHELL_DEMO': '0', 'LME_SHELL_BACKEND_DEMO': '1', 'XDG_CACHE_HOME': cache})
+            self.assertEqual(result, dict(bound=True, sharedKey=True, invalidated=True))
+
+    def test_color_snapshot_carries_the_exact_awww_fill_color(self):
+        # The backend snapshots awww's live color fill (never the generic
+        # black stand-in); the backdrop loads it Ready so rim/grain render.
+        with tempfile.TemporaryDirectory() as cache:
+            glass_dir = Path(cache) / 'lme-shell/glass'
+            glass_dir.mkdir(parents=True)
+            snap = GlassSnapshots(directory=glass_dir)
+            state = snap.refresh({'probe'}, {'probe': ('color', '335577')}, True)
+            self.assertEqual(state['outputs']['probe']['kind'], 'color')
+            result = self.run_qml('import "qml/components"\nimport "qml/services"', '''
+    property int phase: 0
+    property int ticks: 0
+    property var checks: ({})
+    FloatingWindow {
+        id: win
+        implicitWidth: 640; implicitHeight: 480
+        GlassBackdrop { id: bd; hostWindow: win }
+    }
+    Timer {
+        interval: 60; running: true; repeat: true
+        onTriggered: {
+            if (++fixture.ticks > 120) { fixture.finish({timeout: fixture.phase, checks: fixture.checks}); return; }
+            if (!ShellState.backendReady || ShellState.pendingActions.setting) return;
+            if (fixture.phase === 0) {
+                const cache = Quickshell.env("XDG_CACHE_HOME");
+                const name = win.screen ? win.screen.name : "";
+                const url = "file://" + cache + "/lme-shell/glass/probe.png";
+                ShellState.accept(JSON.stringify(Object.assign({}, ShellState.snapshot, {glass: {outputs: {[name]: {rev: 1, kind: "color", url: url}}}})));
+                fixture.phase = 1;
+            } else if (fixture.phase === 1 && String(bd.source).includes("rev=1") && bd.status === Image.Ready) {
+                fixture.checks.ready = true;
+                fixture.checks.snapshot = String(bd.source).includes("probe.png");
+                fixture.finish(fixture.checks);
+            }
+        }
+    }
+''', {'LME_SHELL_DEMO': '0', 'LME_SHELL_BACKEND_DEMO': '1', 'XDG_CACHE_HOME': cache})
+            self.assertEqual(result, dict(ready=True, snapshot=True))

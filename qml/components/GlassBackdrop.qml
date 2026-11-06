@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import "../services"
 import "GlassSampling.js" as GlassSampling
+import "GlassGeometry.js" as GlassGeometry
 
 Image {
     id: root
@@ -30,33 +31,32 @@ Image {
     readonly property point windowOrigin: {
         if (disposed || !hostWindow) return Qt.point(0, 0);
         const w = proxyWindow;
-        const a = w ? w.anchors : null;
-        const m = w ? w.margins : null;
-        const width = hostWindow ? hostWindow.width : 0, height = hostWindow ? hostWindow.height : 0;
-        if (!a && hostWindow.title) {
-            const matches = (ShellState.niri.windows || []).filter(item => item.title === hostWindow.title);
-            const window = matches.length === 1 ? matches[0] : null;
-            const workspace = window ? (ShellState.niri.workspaces || []).find(item => item.id === window.workspace_id) : null;
-            const layout = window ? window.layout || {} : {};
-            const pos = layout.tile_pos_in_workspace_view, offset = layout.window_offset_in_tile;
-            if (workspace && output && workspace.output === output.name && pos && offset && pos.length === 2 && offset.length === 2 && [...pos, ...offset].every(Number.isFinite))
-                return Qt.point(pos[0] + offset[0], pos[1] + offset[1]);
-        }
-        // shortcut: unknown or ambiguous toplevels remain centered until niri identifies them.
-        return Qt.point(a ? a.left ? m.left : a.right ? outputWidth - w.width - m.right : (outputWidth - w.width) / 2 : (outputWidth - width) / 2,
-            a ? a.top ? m.top : a.bottom ? outputHeight - w.height - m.bottom : (outputHeight - w.height) / 2 : (outputHeight - height) / 2);
+        const p = GlassGeometry.resolve(w ? w.anchors : null, w ? w.margins : null,
+            w ? {width: w.width, height: w.height} : {width: 0, height: 0},
+            {width: hostWindow.width, height: hostWindow.height},
+            {width: outputWidth, height: outputHeight},
+            ShellState.niri.windows, ShellState.niri.workspaces, output ? output.name : "",
+            [hostWindow.niriWindowId, hostWindow.windowId, hostWindow.niriId, w ? w.niriWindowId : null, w ? w.windowId : null], hostWindow.title);
+        return Qt.point(p.x, p.y);
     }
     objectName: "glassBackdrop"
     visible: false
     width: outputWidth; height: outputHeight
     readonly property string wallpaperPath: (ShellState.preferences.wallpaperOutputs || {})[output ? output.name : ""] || ShellState.preferences.wallpaper || ""
+    // LG2.0 A2 part 2: the backend snapshots awww's live per-output state to
+    // $XDG_CACHE_HOME/lme-shell/glass/<output>.png with a revision counter.
+    // Every window on the output binds the same URL plus ?rev=, so one decode
+    // is shared and a revision bump reloads all backdrops within a frame.
+    // Missing snapshots (awww surface changed, daemon down, glass off) fall
+    // back to the direct-file path below.
+    readonly property var glassEntry: ((ShellState.snapshot.glass || {}).outputs || {})[output ? output.name : ""] || null
+    readonly property string snapshotSource: glassEntry && glassEntry.rev && glassEntry.url ? String(glassEntry.url) + (String(glassEntry.url).includes("?") ? "&rev=" : "?rev=") + glassEntry.rev : ""
     // Color wallpapers have no image path; a flat fill tile (awww's default fill
     // is black) keeps the lens refracting a flat field, so sourceAvailable stays
-    // 1 and rim/grain render instead of the dead flat rim. Part 2 of LG2.0 A2
-    // (snapshot cache from awww's live state) will replace this with the exact
-    // per-output color snapshot.
+    // 1 and rim/grain render instead of the dead flat rim. Snapshots carry the
+    // exact per-output awww color when available.
     readonly property string flatTile: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
-    source: wallpaperPath ? "file://" + wallpaperPath.split("/").map(part => encodeURIComponent(part)).join("/")
+    source: snapshotSource ? snapshotSource : wallpaperPath ? "file://" + wallpaperPath.split("/").map(part => encodeURIComponent(part)).join("/")
         : ShellState.demo ? Qt.resolvedUrl("../../assets/wallpapers/liquid-dracula.png") : flatTile
     sourceSize: Qt.size(Math.max(1, Math.round(outputWidth * resolution)), Math.max(1, Math.round(outputHeight * resolution)))
     fillMode: Image.PreserveAspectCrop

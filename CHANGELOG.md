@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Add the glass backdrop snapshot cache (Liquid Glass 2.0, A2 part 2): the
+  backend snapshots awww's live per-output state to
+  $XDG_CACHE_HOME/lme-shell/glass/<output>.png with a revision counter —
+  image wallpapers are copied atomically, color wallpapers become a 1x1 tile
+  in the exact per-output awww color — and every window on the output binds
+  the same URL plus `?rev=`, so one decode is shared and a revision bump
+  reloads all backdrops within a frame. Writes run in the existing feature
+  workers (wallpaper actions, restores and a transition-completion refresh on
+  the next poll cycle), skip entirely when glass is off, fall back to the
+  direct-file path when the awww surface differs, bound the cache directory
+  (64 MiB / 32 files, oldest first) and prune disconnected outputs.
+  `windowOrigin` now resolves anchors-first, then the niri IPC window id
+  where Quickshell exposes it, then the shell-owned unique QsWindow title as
+  a single-match last resort, so duplicate titles never sample the wrong
+  region. The snapshot behavior follows Serpantinum's WallpaperBlur cache
+  pattern as an original implementation; no upstream source is vendored.
+
 - Harden the glass backdrop sampling surface (Liquid Glass 2.0, A2 part 1): a
   flat fill tile now stands in when no image is set for an output (color
   wallpapers have no image path), keeping `sourceAvailable` at 1 so rim and

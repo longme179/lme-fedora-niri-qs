@@ -138,7 +138,7 @@ class LaunchpadDispatchCase(Fixture, unittest.TestCase):
         self.assertEqual(live.snapshot()['lastResult'], self.result('wallpaperScan', True, 'Wallpaper library refreshed', 3))
         self.assertEqual(list(live.feature_snapshot()), ['batterySaver', 'imageUtilities', 'launchpadJobs',
             'preferences', 'lastResult', 'launcherUsage', 'launcherHistoryError', 'mirror', 'recorder', 'fileSearch',
-            'palettePreview', 'wallpaperLibrary', 'wallpaperTransitions', 'wallpaperDaemon', 'displays', 'idle',
+            'palettePreview', 'wallpaperLibrary', 'wallpaperTransitions', 'wallpaperDaemon', 'displays', 'glass', 'idle',
             'keybinds', 'platform', 'nightLight', 'capture'])
 
     def test_job_limit_remains_per_controller_and_duplicate_job_message_is_unchanged(self):

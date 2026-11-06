@@ -9,6 +9,10 @@ Rectangle {
     readonly property bool isGlassFill: true
     property bool allowed: true
     property real shadow: 0
+    // Hosts that own a bar surface override this with the bar flag (see
+    // BarSurface); panels/popups keep the popup flag. GlassMaterial yields
+    // its wallpaper lens only while this is true (see Theme.compositor*Blur).
+    property bool compositorBlur: Theme.compositorPopupBlur
     radius: Theme.radius
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
     // Compositor-blur hairline: while a blur preset is applied, a 1px outline
@@ -22,6 +26,7 @@ Rectangle {
         anchors.fill: parent
         radius: root.radius
         shadow: root.shadow
+        compositorBlur: root.compositorBlur
         topLeftRadius: root.topLeftRadius; topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius; bottomRightRadius: root.bottomRightRadius
     }

@@ -39,6 +39,7 @@ ShaderEffect {
     property rect boxRect: Qt.rect(0, 0, 0, 0)
     property rect validRect: Qt.rect(0, 0, 1, 1)
     property real unpremul: 0
+    property real compositorBlur: 0
 
     property vector2d itemSize: Qt.vector2d(width, height)
     property vector4d radii: Qt.vector4d(topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius)

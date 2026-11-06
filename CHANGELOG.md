@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add the Serpantinum soft drop shadow for bar pills (follows #84 edge
+  optics): GlassMaterial gains `shadow` + `Theme.glassShadowPad (12px)`
+  inflated optics frame, `glassPad`/`shadowAmt` wired into GlassOptics,
+  backdrop `sampleRect` expanded by pad, software fallback kept pill-sized;
+  GlassPanel forwards `shadow`; BarSurface uses
+  `Theme.glassPillShadow (3.0)`; shell.qml extends the bar window by the
+  shadow strip (`exclusiveZone` unchanged) with `mask: Region { item: bar }`
+  for a click-through halo; TopBarPage preview gains breathing room.
+  Shader untouched. Desktop check: ~28% max darkening at the pill edge,
+  monotonic 12px falloff.
+
 - Restore Serpantinum edge optics (follow-up to #79-#83): liquid-glass.frag
   returns to upstream formulas exactly (finite-difference edge gradient,
   Fresnel env reflection, inner shadow, broad spec, meniscus, fringe,

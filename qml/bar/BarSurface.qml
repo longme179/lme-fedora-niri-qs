@@ -18,6 +18,7 @@ GlassPanel {
     objectName: "barSurface"
     role: "barFill"
     shadow: Theme.glassPillShadow
+    compositorBlur: Theme.compositorBarBlur
     radius: Math.max(0, height / 2)
     topLeftRadius: Theme.barCornerRadius("topLeft", height, zone)
     topRightRadius: Theme.barCornerRadius("topRight", height, zone)

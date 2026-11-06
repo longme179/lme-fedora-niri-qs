@@ -18,6 +18,12 @@ Item {
     readonly property real pad: shadow > 0 ? Theme.glassShadowPad : 0
     property bool hovered: false
     property bool pressed: false
+    // True when the compositor already frosts the app pixels behind this
+    // surface (true-backdrop preset applied, niri >= 26.04, and this
+    // surface's blur region active). The bar overrides this with the bar
+    // flag; every other host keeps the popup flag. False keeps the
+    // wallpaper-lens behavior (frosted preset / older niri / no blur).
+    property bool compositorBlur: Theme.compositorPopupBlur
     readonly property bool software: GraphicsInfo.api === GraphicsInfo.Software
     readonly property var hostWindow: Window.window
     readonly property bool active: Theme.liquidGlass && visible && width > 0 && height > 0 && !!hostWindow && hostWindow.visible
@@ -168,6 +174,7 @@ Item {
             anchors.fill: parent
             src: root.backdrop
             sourceAvailable: root.backdrop && root.backdrop.status === Image.Ready ? 1 : 0
+            compositorBlur: root.compositorBlur ? 1 : 0
             sourceRect: root.sampleRect
             topLeftRadius: root.topLeftRadius < 0 ? root.radius : root.topLeftRadius
             topRightRadius: root.topRightRadius < 0 ? root.radius : root.topRightRadius

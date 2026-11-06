@@ -37,6 +37,7 @@ layout(std140, binding = 0) uniform buf {
     vec4 sampleBounds;
     float unpremul;
     float sourceAvailable;
+    float compositorBlur;
 };
 
 layout(binding = 1) uniform sampler2D src;
@@ -191,10 +192,9 @@ void main() {
     bool interior = t >= bz && near < 0.02;
     int taps = interior ? 6 : (frost <= 1.2 ? 6 : TAPS);
     float lod = blurLod(rad, taps);
-    // LME infra: the backdrop is a wallpaper snapshot Image, not a live blur
-    // texture. Without a ready snapshot use a neutral base instead of sampling.
-    vec3 col = sourceAvailable < 0.5 ? vec3(0.32, 0.34, 0.38) : blurredAt(ps + dG, rad, lod, taps);
-    if (sourceAvailable >= 0.5 && !interior && dot(dG, dG) > 0.25) {
+    // Wallpaper snapshot backdrop, not a live blur texture; cb=1: transparent base, rim/tint/grain keep glass.
+    vec3 col = compositorBlur >= 0.5 ? vec3(0.0) : (sourceAvailable < 0.5 ? vec3(0.32, 0.34, 0.38) : blurredAt(ps + dG, rad, lod, taps));
+    if (compositorBlur < 0.5 && sourceAvailable >= 0.5 && !interior && dot(dG, dG) > 0.25) {
         vec4 cR = fetchLod4(ps + dR, lod + 0.5);
         vec4 cB = fetchLod4(ps + dB, lod + 0.5);
         if (cR.a > 0.05) col.r = cR.r / cR.a;
@@ -213,7 +213,7 @@ void main() {
     float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
 
     float fres = pow(1.0 - normal.z, 1.5) * (1.0 - 0.6 * nest);
-    if (fres > 0.001 && sourceAvailable >= 0.5) {
+    if (fres > 0.001 && compositorBlur < 0.5 && sourceAvailable >= 0.5) {
         vec4 e = fetchLod4(p + g * (t + bz * 1.4), min(lod + 2.0, 6.0));
         vec3 env = e.a > 1e-3 ? e.rgb / e.a : col;
         env = env * 1.12 + 0.03;
@@ -243,10 +243,9 @@ void main() {
     vec3 opaqueRgb = col * mix(vec3(1.0), tcol, tA);
     vec3 clearRgb = col * lensA * (1.0 - tA) + tcol * tA;
     float clearA = lensA * (1.0 - tA) + tA;
-
-    vec3 premul = mix(opaqueRgb, clearRgb, clear);
-    premul += light;
-    float alpha = mix(1.0, clearA, clear);
+    // cb=1: transparent base (light tint <=0.15 + rim light) lets compositor frost show through.
+    vec3 premul = compositorBlur >= 0.5 ? tcol * clamp(tA * 0.85, 0.0, 0.15) + light : mix(opaqueRgb, clearRgb, clear) + light;
+    float alpha = compositorBlur >= 0.5 ? clamp(clamp(tA * 0.85, 0.0, 0.15) + dot(light, vec3(0.3333)), 0.0, 0.85) : mix(1.0, clearA, clear);
 
     float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
     premul += vec3(gn * GRAIN * (1.0 - 0.7 * nest)) * alpha;

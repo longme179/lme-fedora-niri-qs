@@ -10,6 +10,11 @@ Rectangle {
     id: root
     property LiquidButton targetItem
     property bool vertical: false
+    // Lens-local opt-out to the legacy symmetric springs. Default is the new
+    // OutExpo timing (Lens 2.0); the global Theme.springMotion pref is shared
+    // by sliders/switches/popups and must keep its true default, so it cannot
+    // gate the lens without hiding the new motion from most users.
+    property bool legacyMotion: false
     property bool initialized: false
     property bool placed: false
     property bool settling: false
@@ -28,14 +33,14 @@ Rectangle {
         }
         return {x,y,width:targetItem.width,height:targetItem.height};
     }
-    MotionValue { id: leftMotion; enabled: root.initialized && Theme.springMotion; target: root.geometry.x; response: root.vertical ? 1 : root.forward ? .82 : 1.12 }
-    MotionValue { id: rightMotion; enabled: root.initialized && Theme.springMotion; target: root.geometry.x + root.geometry.width; response: root.vertical ? 1 : root.forward ? 1.12 : .82 }
-    MotionValue { id: topMotion; enabled: root.initialized && Theme.springMotion; target: root.geometry.y; response: !root.vertical ? 1 : root.forward ? .82 : 1.12 }
-    MotionValue { id: bottomMotion; enabled: root.initialized && Theme.springMotion; target: root.geometry.y + root.geometry.height; response: !root.vertical ? 1 : root.forward ? 1.12 : .82 }
-    property real leftEdge: Theme.springMotion ? leftMotion.value : geometry.x
-    property real rightEdge: Theme.springMotion ? rightMotion.value : geometry.x + geometry.width
-    property real topEdge: Theme.springMotion ? topMotion.value : geometry.y
-    property real bottomEdge: Theme.springMotion ? bottomMotion.value : geometry.y + geometry.height
+    MotionValue { id: leftMotion; enabled: root.initialized && root.legacyMotion; target: root.geometry.x; response: root.vertical ? 1 : root.forward ? .82 : 1.12 }
+    MotionValue { id: rightMotion; enabled: root.initialized && root.legacyMotion; target: root.geometry.x + root.geometry.width; response: root.vertical ? 1 : root.forward ? 1.12 : .82 }
+    MotionValue { id: topMotion; enabled: root.initialized && root.legacyMotion; target: root.geometry.y; response: !root.vertical ? 1 : root.forward ? .82 : 1.12 }
+    MotionValue { id: bottomMotion; enabled: root.initialized && root.legacyMotion; target: root.geometry.y + root.geometry.height; response: !root.vertical ? 1 : root.forward ? 1.12 : .82 }
+    property real leftEdge: root.legacyMotion ? leftMotion.value : geometry.x
+    property real rightEdge: root.legacyMotion ? rightMotion.value : geometry.x + geometry.width
+    property real topEdge: root.legacyMotion ? topMotion.value : geometry.y
+    property real bottomEdge: root.legacyMotion ? bottomMotion.value : geometry.y + geometry.height
     onGeometryChanged: { forward = vertical ? geometry.y >= y : geometry.x >= x; Qt.callLater(() => initialized=true); Qt.callLater(() => placed = !!targetItem || placed); }
     visible: !!targetItem && Theme.animatedTabs && placed
     opacity: placed && targetItem ? 1 : 0
@@ -44,7 +49,7 @@ Rectangle {
     width: Math.max(0, Math.min(rightEdge - leftEdge, parent ? parent.width - x : rightEdge - leftEdge))
     height: Math.max(0, Math.min(bottomEdge - topEdge, parent ? parent.height - y : bottomEdge - topEdge))
     // Lift while moving: bounded magnify <= 0.16 plus the hover-channel glint in GlassMaterial.
-    property real liftMagnify: root.moving && !Theme.springMotion ? 1.16 : 1
+    property real liftMagnify: root.moving && !root.legacyMotion ? 1.16 : 1
     scale: (targetItem ? targetItem.scale : 1) * liftMagnify
     Behavior on liftMagnify { enabled: Theme.animations; NumberAnimation { duration: 200; easing.type: Easing.OutExpo } }
     transformOrigin: targetItem ? targetItem.transformOrigin : Item.Center
@@ -58,8 +63,8 @@ Rectangle {
         // Lift the optics during travel without adding a second geometric animation.
         pressAmount: active && Theme.animations ? Math.max(pressed ? 1 : 0, root.moving ? .25 : 0) : 0
     }
-    Behavior on leftEdge { enabled: root.initialized && Theme.animations && !Theme.springMotion; NumberAnimation { duration: root.vertical ? 200 : root.forward ? 350 : 200; easing.type: Easing.OutExpo } }
-    Behavior on rightEdge { enabled: root.initialized && Theme.animations && !Theme.springMotion; NumberAnimation { duration: root.vertical ? 200 : root.forward ? 200 : 350; easing.type: Easing.OutExpo } }
-    Behavior on topEdge { enabled: root.initialized && Theme.animations && !Theme.springMotion; NumberAnimation { duration: !root.vertical ? 200 : root.forward ? 350 : 200; easing.type: Easing.OutExpo } }
-    Behavior on bottomEdge { enabled: root.initialized && Theme.animations && !Theme.springMotion; NumberAnimation { duration: !root.vertical ? 200 : root.forward ? 200 : 350; easing.type: Easing.OutExpo } }
+    Behavior on leftEdge { enabled: root.initialized && Theme.animations && !root.legacyMotion; NumberAnimation { duration: root.vertical ? 200 : root.forward ? 350 : 200; easing.type: Easing.OutExpo } }
+    Behavior on rightEdge { enabled: root.initialized && Theme.animations && !root.legacyMotion; NumberAnimation { duration: root.vertical ? 200 : root.forward ? 200 : 350; easing.type: Easing.OutExpo } }
+    Behavior on topEdge { enabled: root.initialized && Theme.animations && !root.legacyMotion; NumberAnimation { duration: !root.vertical ? 200 : root.forward ? 350 : 200; easing.type: Easing.OutExpo } }
+    Behavior on bottomEdge { enabled: root.initialized && Theme.animations && !root.legacyMotion; NumberAnimation { duration: !root.vertical ? 200 : root.forward ? 200 : 350; easing.type: Easing.OutExpo } }
 }

@@ -21,9 +21,11 @@ class LensPreferencesCase(Fixture, unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI')=='1','private OpenGL selection checks')
 class Lens2SourceCase(unittest.TestCase):
-    def test_placed_latch_settling_ghost_and_outexpo_lift(self):
+    def test_new_timing_is_the_default_and_legacy_is_opt_out(self):
         from pathlib import Path
         text = (Path(__file__).resolve().parents[1] / 'qml/components/StretchIndicator.qml').read_text()
+        self.assertIn('property bool legacyMotion: false', text)
+        self.assertIn('!root.legacyMotion', text)
         self.assertIn('property bool placed', text)
         self.assertIn('property bool settling', text)
         self.assertIn('interval: 300', text)

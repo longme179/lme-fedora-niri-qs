@@ -11,13 +11,14 @@ Item {
     property bool compact: false
     property string zone: "left"
     property bool island: true
+    property bool compositorBlur: Theme.compositorBarBlur // bar flag: pill yield matches the bar blur region exactly
     property alias blurRegion: surface.blurRegion
     implicitWidth: Math.min(budget, row.implicitWidth > 0 ? row.implicitWidth + 20 : 0)
     implicitHeight: Theme.barHeight
     visible: implicitWidth > 0
     onXChanged: blurRegion.changed()
     onYChanged: blurRegion.changed()
-    BarSurface { id: surface; zone: root.zone; anchors.fill: parent; visible: root.island }
+    BarSurface { id: surface; zone: root.zone; anchors.fill: parent; visible: root.island; compositorBlur: root.compositorBlur }
     Flickable {
         id: scroller
         objectName: "barModuleViewport"
@@ -33,7 +34,7 @@ Item {
                 delegate: BarModule {
                     id: barModule
                     required property string modelData
-                    moduleId: modelData; screenInfo: root.screenInfo; windowInfo: root.windowInfo
+                    moduleId: modelData; screenInfo: root.screenInfo; windowInfo: root.windowInfo; compositorBlur: root.compositorBlur
                     compact: root.compact; titleBudget: Math.max(0, root.budget - 20)
                     Connections {
                         target: barModule.item

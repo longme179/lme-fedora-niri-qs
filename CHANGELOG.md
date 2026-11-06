@@ -13,7 +13,9 @@
   follow upstream's nested-input formulas while the renderer's `nest` uniform
   already softens bevel, veil, bulge and grain. The level recomputes only on
   tree events (parent/backdrop changes and `childrenChanged` on watched
-  ancestors, coalesced with `Qt.callLater`) and never per animation frame.
+  ancestors, coalesced through a 0 ms child timer — a `Qt.callLater` closure
+  would outlive destroyed materials and fire in an invalid context) and never
+  per animation frame.
   `GlassMaterial` and `GlassPanel` carry the upstream `isGlassFill` marker so
   `background:`/sibling hosts count as a glass stratum. `glassNesting.js` is
   an AGPL-attributed port; see `third_party/Serpantinum-NOTICE`.

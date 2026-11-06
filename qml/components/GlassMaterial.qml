@@ -82,7 +82,13 @@ Item {
         for (let i = 0; same && i < domain.length; i++) same = domain[i] === nestWatched[i];
         if (!same) nestWatched = domain;
     }
-    function scheduleNestUpdate() { Qt.callLater(updateNest); }
+    // A 0 ms child timer rather than Qt.callLater: a callLater closure outlives a
+    // destroyed material and fires in an invalid context ("Property 'nestingStop'
+    // ... is not a function" TypeErrors, caught by test_navigation's log scan),
+    // while the timer dies with its parent and restart() still coalesces a burst
+    // of tree events into exactly one walk per event-loop batch.
+    function scheduleNestUpdate() { nestTimer.restart() }
+    Timer { id: nestTimer; interval: 0; onTriggered: root.updateNest() }
     onActiveChanged: updateBackdrop()
     onSoftwareChanged: updateBackdrop()
     onBackdropChanged: scheduleNestUpdate()

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fix the equalizer band intro stagger crashing the delegate: the Repeater
+  delegate read `index` inside its nested Translate transform without
+  declaring `required property int index`, producing "ReferenceError: index
+  is not defined" in the live shell log. The delegate now declares the
+  property and the transform reads it explicitly as `bandDelegate.index`.
+
 - Harden the glass backdrop sampling surface (Liquid Glass 2.0, A2 part 1): a
   flat fill tile now stands in when no image is set for an output (color
   wallpapers have no image path), keeping `sourceAvailable` at 1 so rim and

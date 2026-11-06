@@ -33,12 +33,12 @@ Item {
 
             delegate: Item {
                 id: bandDelegate
-                required property var modelData
+                required property var modelData; required property int index
                 width: bandRow.width / 10
                 height: bandRow.height
                 opacity: root.intro
                 transform: Translate {
-                    y: 25 * (1 - root.intro) + (index * 7 * (1 - root.intro))
+                    y: 25 * (1 - root.intro) + (bandDelegate.index * 7 * (1 - root.intro))
                 }
 
                 property real dist: EqualizerState.eqLightningProgress - (modelData.idx - 1)

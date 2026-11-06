@@ -30,8 +30,8 @@ Item {
     readonly property real nest: Math.min(1, nestLevel * 0.5)
     property var nestWatched: []
     property int nestWalks: 0
-    readonly property real baseRim: .38 * (Theme.glass.rim ?? 1)
-    readonly property real baseFrost: .9 * (Theme.glass.blur ?? 1)
+    readonly property real baseRim: .45 * (Theme.glass.rim ?? 1)
+    readonly property real baseFrost: 2.2 * (Theme.glass.blur ?? 1)
     property bool hasPointer: false
     readonly property point pointerScenePosition: pointer.point.scenePosition
     readonly property point lightPosition: hasPointer ? Qt.point(lightX.value, lightY.value) : Qt.point(width / 2, height / 2)
@@ -139,7 +139,9 @@ Item {
         id: fallback
         Rectangle {
             radius: root.radius
-            color: Qt.rgba(0, 0, 0, 1 - (Theme.glass.brightness ?? 1)); border.width: 1; border.color: "#60ffffff"
+            // Software fallback: the panel fill underneath already paints the
+            // body; this only keeps the hairline visible (no brightness knob).
+            color: Qt.rgba(0, 0, 0, 0); border.width: 1; border.color: "#60ffffff"
             topLeftRadius: root.topLeftRadius < 0 ? root.radius : root.topLeftRadius
             topRightRadius: root.topRightRadius < 0 ? root.radius : root.topRightRadius
             bottomLeftRadius: root.bottomLeftRadius < 0 ? root.radius : root.bottomLeftRadius
@@ -158,13 +160,12 @@ Item {
             bottomRightRadius: root.bottomRightRadius < 0 ? root.radius : root.bottomRightRadius
             cursorPos: root.lightPosition
             hover: root.hoverAmount; energy: root.pressAmount
-            tintAmount: 0; clear: 1
+            tintColor: Theme.panel; tintAmount: 0.35 * 0.5 * (1 - 0.5 * root.nest)
+            clear: root.nestLevel >= 1 ? 1 : 0
             frost: root.nestLevel >= 1 ? Math.min(root.baseFrost, 1) : root.baseFrost
-            dispersion: .025; rim: root.baseRim * (1 - .35 * root.nest); nest: root.nest
-            brightness: Theme.glass.brightness ?? 1
-            feather: Theme.glass.feather ?? 1
-            smearing: Theme.glass.smearing ?? 1
-            bezel: Math.max(2, Math.min(8, Math.min(width, height) * .14)) * (Theme.glass.edgeWidth ?? 1)
+            dispersion: .02; saturation: 1.0; rim: root.baseRim * (1 - .35 * root.nest); nest: root.nest
+            bezel: Math.max(3, Math.min(14, Math.min(width, height) * .28)) * (Theme.glass.edgeWidth ?? 1)
+            thickness: bezel * 0.8
         }
     }
 }

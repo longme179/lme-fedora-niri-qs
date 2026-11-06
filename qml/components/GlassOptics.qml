@@ -8,9 +8,6 @@ ShaderEffect {
     id: root
 
     property real sourceAvailable: 0
-    property real brightness: 1
-    property real feather: 1
-    property real smearing: 1
     property variant src
     property real topLeftRadius: 0
     property real topRightRadius: 0
@@ -21,10 +18,10 @@ ShaderEffect {
     property real bezel: Math.max(5, Math.min(26, Math.min(width, height) * 0.36))
     property real thickness: bezel * 1.15
     property real ior: 1.5
-    property real dispersion: 0.06
+    property real dispersion: 0.02
     property real frost: 1.5
     property real rim: 0.45
-    property real saturation: 1.25
+    property real saturation: 1.0
     property rect sourceRect: Qt.rect(0, 0, 1, 1)
     property point cursorPos: Qt.point(0, 0)
     property real hover: 0

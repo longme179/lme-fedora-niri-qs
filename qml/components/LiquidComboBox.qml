@@ -120,7 +120,7 @@ ComboBox {
         background: Rectangle {
             color: Theme.panel
             radius: Theme.smallRadius
-            border.width: 1
+            border.width: Theme.liquidGlass ? 0 : 1
             border.color: Theme.border
             GlassMaterial { anchors.fill: parent; radius: parent.radius }
         }

@@ -117,7 +117,7 @@ ColumnLayout {
         onOpened: { if (!root.awaitingConnection) password.forceActiveFocus(); }
         onClosed: { password.text = ""; reveal.checked = false; root.selectedNetwork = null; root.awaitingConnection = false; root.connectionError = ""; }
         background: Rectangle {
-            radius: 24; color: Theme.panel; border.width: 1; border.color: Theme.border
+            radius: 24; color: Theme.panel; border.width: Theme.liquidGlass ? 0 : 1; border.color: Theme.border
             GlassMaterial { anchors.fill: parent; radius: parent.radius }
         }
         contentItem: ColumnLayout {

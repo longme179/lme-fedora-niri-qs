@@ -17,10 +17,10 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         self.preferences.set('accent', '#12ab34')
         other = backend.Preferences(self.preferences.path)
         self.preferences.set('liquidGlass', '#ccAABBCC', token='tint')
-        other.set('liquidGlass', 1.8, token='smearing')
+        other.set('liquidGlass', 1.8, token='edgeWidth')
         saved = backend.Preferences(self.preferences.path).values
         self.assertEqual(saved['liquidGlass']['tint'], '#ccaabbcc')
-        self.assertEqual(saved['liquidGlass']['smearing'], 1.8)
+        self.assertEqual(saved['liquidGlass']['edgeWidth'], 1.8)
         for kind in ('preset', 'backup'):
             result = validate_document(document(saved, kind), backend.validate_preference, backend.DEFAULT_PREFERENCES)
             self.assertEqual(result['liquidGlass'], saved['liquidGlass'])
@@ -29,7 +29,7 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         self.assertEqual(other.values['accent'], '#12ab34')
 
     def test_invalid_inputs_do_not_change_disk_or_known_good_preferences(self):
-        self.preferences.set('liquidGlass', {'feather':2})
+        self.preferences.set('liquidGlass', {'rim':1.8})
         original = self.preferences.path.read_bytes()
         for key, control in CONTROLS.items():
             bad = ('red', '#abcdefg', '#aabbccdde', None, True, {}) if key == 'tint' else (True, None, '1', math.nan, math.inf, 10**400, control['min']-.1, control['max']+.1)
@@ -64,9 +64,9 @@ class GlassControlsCase(Fixture, unittest.TestCase):
 
     def test_demo_tokens_follow_the_same_validation_without_persisting(self):
         live = self.make_backend(demo=True)
-        self.assertTrue(live.handle(dict(action='setting', key='liquidGlass', token='feather', value=2))['ok'])
-        self.assertEqual(live.preferences.values['liquidGlass']['feather'], 2)
-        self.assertFalse(live.handle(dict(action='setting', key='liquidGlass', token='feather', value=20))['ok'])
+        self.assertTrue(live.handle(dict(action='setting', key='liquidGlass', token='rim', value=1.8))['ok'])
+        self.assertEqual(live.preferences.values['liquidGlass']['rim'], 1.8)
+        self.assertFalse(live.handle(dict(action='setting', key='liquidGlass', token='rim', value=20))['ok'])
         self.assertFalse(self.preferences.path.exists())
 
 
@@ -91,18 +91,18 @@ class GlassControlsQmlCase(unittest.TestCase):
         const hex=mouse.findChild(page,"glassTint"), apply=mouse.findChild(page,"glassTintApply");
         if(fixture.phase===0) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
         else if(fixture.phase===1 && Theme.liquidGlass) {
-            fixture.checks.defaults=Theme.glass.brightness===1 && Theme.glass.feather===1 && Theme.panelOpacity===.65;
+            fixture.checks.defaults=Theme.glass.rim===1 && Theme.glass.edgeWidth===1 && Theme.panelOpacity===.65;
             hex.text="not a color";mouse.mouseClick(apply,apply.width/2,apply.height/2);
             fixture.checks.invalid=!!mouse.findChild(page,"glassTintError").text && Theme.glass.tint==="#f0081420";
             hex.text="#bb223344";mouse.mouseClick(apply,apply.width/2,apply.height/2);fixture.phase++;
         } else if(fixture.phase===2 && Theme.glass.tint==="#bb223344") {
             fixture.checks.color=Theme.glassBase.toString()==="#bb223344" && Theme.text.toString()==="#ffffff";
-            const slider=mouse.findChild(page,"glass-feather");
+            const slider=mouse.findChild(page,"glass-rim");
             view.contentY=Math.max(0,slider.mapToItem(page,0,0).y-200);fixture.phase++;
         } else if(fixture.phase===3) {
-            const slider=mouse.findChild(page,"glass-feather");
+            const slider=mouse.findChild(page,"glass-rim");
             mouse.mouseClick(slider,slider.width*.8,slider.height/2);fixture.phase++;
-        } else if(fixture.phase===4 && Theme.glass.feather>1.5) {
+        } else if(fixture.phase===4 && Theme.glass.rim>1.5) {
             fixture.checks.slider=true;view.contentY=0;fixture.phase++;
         } else if(fixture.phase===5) {
             const choose=mouse.findChild(page,"glassTintPicker");mouse.mouseClick(choose,choose.width/2,choose.height/2);fixture.phase++;
@@ -116,7 +116,7 @@ class GlassControlsQmlCase(unittest.TestCase):
         } else if(fixture.phase===8) {
             if(mouse.findChild(page,"glassColorPicker").visible) return;
             const reset=mouse.findChild(page,"glassReset");mouse.mouseClick(reset,reset.width/2,reset.height/2);fixture.phase++;
-        } else if(fixture.phase===9 && Theme.glass.tint==="#f0081420" && Theme.glass.feather===1) {
+        } else if(fixture.phase===9 && Theme.glass.tint==="#f0081420" && Theme.glass.rim===1) {
             fixture.checks.reset=Theme.panelOpacity===.65;
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
         } else if(fixture.phase===10 && !Theme.liquidGlass) {
@@ -141,7 +141,7 @@ class GlassControlsQmlCase(unittest.TestCase):
             result=self.run_qml('import Quickshell.Io\nimport "qml/components"', '''
     property int phase:0
     property int age:0
-    readonly property var variants:[{}, {brightness:.4}, {feather:3}, {smearing:0}, {smearing:3}, {frost:0}, {frost:3.6}, {bezel:20}, {rim:0}, {brightness:.4,opacity:.5}]
+    readonly property var variants:[{}, {rim:0}, {frost:0}, {frost:4}, {bezel:20}, {rim:2}, {frost:1}, {bezel:3}, {saturation:0.2}, {opacity:.5}]
     readonly property var variant:variants[Math.min(phase,variants.length-1)]
     FloatingWindow { fullscreen:true;color:"#dddddd"
         Image { id:source;source:DIR+"/source.png";visible:false;mipmap:true }
@@ -149,8 +149,7 @@ class GlassControlsQmlCase(unittest.TestCase):
             opacity:fixture.variant.opacity ?? 1
             src:source;sourceAvailable:1;clear:1;tintAmount:0
             topLeftRadius:36;topRightRadius:36;bottomLeftRadius:36;bottomRightRadius:36
-            brightness:fixture.variant.brightness ?? 1;feather:fixture.variant.feather ?? 1;smearing:fixture.variant.smearing ?? 1
-            frost:fixture.variant.frost ?? .9;bezel:fixture.variant.bezel ?? 8;dispersion:.025;rim:fixture.variant.rim ?? .38
+            frost:fixture.variant.frost ?? 2.2;bezel:fixture.variant.bezel ?? 8;dispersion:.02;rim:fixture.variant.rim ?? .45;saturation:fixture.variant.saturation ?? 1
         }
         Text { anchors.centerIn:parent;text:"WHITE";font.pixelSize:28;font.bold:true;color:"white" }
     }
@@ -172,9 +171,7 @@ class GlassControlsQmlCase(unittest.TestCase):
                 self.assertGreater(sum(ImageStat.Stat(diff).sum),1000,f'control {index} had no visible effect')
                 bright=sum(min(current.getpixel((a,b)))>250 for b in range(y+90,y+150) for a in range(x+80,x+240))
                 self.assertGreater(bright,300,'foreground text must remain white')
-            dim=Image.open(folder/'1.png').convert('RGB')
-            self.assertLess(sum(dim.getpixel((x+160,y+50))),sum(base.getpixel((x+160,y+50)))*.6)
             half=Image.open(folder/'9.png').convert('RGB')
-            expected=Image.blend(dim,Image.new('RGB',dim.size,'#dddddd'),.5)
+            expected=Image.blend(base,Image.new('RGB',base.size,'#dddddd'),.5)
             diff=ImageChops.difference(half,expected).crop((x,y,x+320,y+60))
-            self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'brightness must respect group opacity during fades')
+            self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'group opacity must respect the background during fades')

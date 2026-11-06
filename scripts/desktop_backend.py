@@ -1149,7 +1149,7 @@ class DesktopBackend:
         return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), **self.action_state(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
-                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays, "glass": self.wallpapers.glass_snapshot(),
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
                 "nightLight": self.night_state, "capture": dict(self.capture.state)}
 
@@ -1240,7 +1240,7 @@ class DesktopBackend:
             self._demo_state['wallpaperTransitions'] = WALLPAPER_TRANSITIONS
             self._demo_state['imageUtilities']=dict(self.image_utilities.state)
             self._demo_state['wallpaperDaemon']=self.wallpaper_daemon
-            self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
+            self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[], glass=self.wallpapers.glass_snapshot(),
                 monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],

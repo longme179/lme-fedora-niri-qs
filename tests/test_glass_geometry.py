@@ -1,5 +1,6 @@
 """Floating glass samples niri window geometry without waking unrelated probes."""
 import os
+import shutil
 import unittest
 import test_local_qml as qml_tests
 from test_backend import Fixture, FakeRunner
@@ -26,6 +27,49 @@ class GeometryBackendCase(Fixture, unittest.TestCase):
         self.preferences.set('surfaceStyle', 'liquid')
         demo.snapshot()
         self.assertEqual(demo.runner.calls, [])
+
+
+@unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")
+class GeometryHelperCase(unittest.TestCase):
+    run_qml = qml_tests.LocalQmlCase.run_qml
+
+    def test_anchors_first_then_id_then_title(self):
+        # Offscreen helper tests guard the anchored cases without a
+        # layer-shell backend: anchors always win, a niri IPC id disambiguates
+        # duplicate titles, and the shell-owned title is single-match only.
+        result = self.run_qml('import "qml/components/GlassGeometry.js" as GlassGeometry', '''
+    property var checks: ({})
+    Timer {
+        interval: 80; running: true
+        onTriggered: {
+            const out = {width: 1920, height: 1080};
+            const host = {width: 800, height: 600};
+            const win = {width: 800, height: 600};
+            const spaces = [{id: 1, output: "eDP-1"}];
+            const a = {id: 7, title: "Same", workspace_id: 1, layout: {tile_pos_in_workspace_view: [10, 20], window_offset_in_tile: [1, 2]}};
+            const b = {id: 8, title: "Same", workspace_id: 1, layout: {tile_pos_in_workspace_view: [300, 400], window_offset_in_tile: [5, 5]}};
+            const windows = [a, b];
+            const anchored = GlassGeometry.resolve({left: true, top: false, right: false, bottom: false}, {left: 14, top: 22, right: 0, bottom: 0}, win, host, out, windows, spaces, "eDP-1", [7], "Same");
+            fixture.checks.anchored = anchored.x === 14 && anchored.y === (1080 - 600) / 2;
+            const byId = GlassGeometry.resolve(null, null, win, host, out, windows, spaces, "eDP-1", [8], "Same");
+            fixture.checks.byId = byId.x === 305 && byId.y === 405;
+            const byTitle = GlassGeometry.resolve(null, null, win, host, out, [a], spaces, "eDP-1", [], "Same");
+            fixture.checks.byTitle = byTitle.x === 11 && byTitle.y === 22;
+            const dupTitle = GlassGeometry.resolve(null, null, win, host, out, windows, spaces, "eDP-1", [], "Same");
+            fixture.checks.dupCentered = dupTitle.x === (1920 - 800) / 2 && dupTitle.y === (1080 - 600) / 2;
+            const emptyLayout = {id: 9, title: "Same", workspace_id: 1, layout: {tile_pos_in_workspace_view: [], window_offset_in_tile: []}};
+            const safe = GlassGeometry.resolve(null, null, win, host, out, [emptyLayout], spaces, "eDP-1", [9], "Same");
+            fixture.checks.safe = Number.isFinite(safe.x) && Number.isFinite(safe.y);
+            const wrongOut = GlassGeometry.resolve(null, null, win, host, out, [a], spaces, "DP-9", [7], "Same");
+            fixture.checks.wrongOutCentered = wrongOut.x === (1920 - 800) / 2;
+            const anchoredRight = GlassGeometry.resolve({left: false, top: false, right: true, bottom: true}, {left: 0, top: 0, right: 30, bottom: 40}, win, host, out, windows, spaces, "eDP-1", [7], "Same");
+            fixture.checks.anchoredRight = anchoredRight.x === 1920 - 800 - 30 && anchoredRight.y === 1080 - 600 - 40;
+            fixture.finish(fixture.checks);
+        }
+    }
+''')
+        self.assertEqual(result, dict(anchored=True, byId=True, byTitle=True, dupCentered=True,
+            safe=True, wrongOutCentered=True, anchoredRight=True))
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'private Wayland geometry checks')

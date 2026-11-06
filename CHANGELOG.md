@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add idle-frame elimination, env-gated glass telemetry, reduced
+  transparency and a text contrast floor (Liquid Glass 2.0 C1): the
+  per-frame glass JS is now dirty-gated (zero calls when unhovered and
+  static); FrameLogger (LME_GLASS_TELEMETRY=1) logs p50/p99; the
+  Accessibility reduced-transparency switch swaps to opaque Smoked
+  surfaces live (same path as battery saver, blur off) and the contrast
+  floor raises tint to keep white text above 3:1 on bright backdrops.
+
 - Fix the islands bar blur following the full strip (follow-up to the
   compositor-yield fix): the islands blur region is now the pill shapes
   only (no full-strip band), matching islands vs continuous behavior;

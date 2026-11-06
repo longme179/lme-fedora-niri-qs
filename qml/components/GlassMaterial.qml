@@ -111,10 +111,20 @@ Item {
         if (!backdrop) sampleRect = Qt.rect(0, 0, 1, 1);
         else if (renderWindow) renderWindow.update();
     }
-    onSampleInputsChanged: invalidateSample()
-    onRenderWindowChanged: invalidateSample()
+    onSampleInputsChanged: { dirty = true; invalidateSample() }
+    onRenderWindowChanged: { dirty = true; invalidateSample() }
+    property bool dirty: true
+    property int sampleCalls: 0
+    onHoveredChanged: dirty = true
+    onHoverAmountChanged: dirty = true
+    onWidthChanged: dirty = true
+    onHeightChanged: dirty = true
+    onXChanged: dirty = true
+    onYChanged: dirty = true
+    onBackdropChanged: dirty = true
     function updateSample() {
         if (!active || !backdrop) return;
+        sampleCalls++;
         const a = root.mapToItem(null, -root.pad, -root.pad);
         const b = root.mapToItem(null, width + root.pad, height + root.pad);
         const origin = backdrop.windowOrigin;
@@ -125,7 +135,7 @@ Item {
     Connections {
         target: root.active ? root.renderWindow : null
         // Map glass and pointer coordinates once per rendered frame, without ancestor bindings.
-        function onAfterAnimating() { root.updateLight(); root.updateSample(); }
+        function onAfterAnimating() { FrameLogger.sample(Date.now()); if (!root.dirty) return; root.dirty = false; if (pointer.hovered || root.hoverAmount > 0) root.updateLight(); root.updateSample(); }
     }
     HoverHandler { id: pointer; enabled: root.lightEnabled }
     // Watched ancestors re-walk on tree events only; animation frames never

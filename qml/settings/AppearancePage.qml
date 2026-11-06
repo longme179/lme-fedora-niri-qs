@@ -36,6 +36,20 @@ ColumnLayout {
             text: "Glass blurs only the area beneath each panel or popup on niri 26.04+. Full-screen popup blur and palette controls are paused. Fonts, layout, corners and motion still apply."
         }
     }
+    SettingsCard {
+        title: "Accessibility"
+        description: "Reduced transparency swaps glass for opaque Smoked surfaces immediately, without a reload."
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Reduced transparency"; Layout.fillWidth: true; font.weight: Font.Medium }
+            ExpressiveSwitch {
+                objectName: "reducedTransparency"; Accessible.name: "Reduced transparency"
+                checked: ShellState.preferences.reducedTransparency === true
+                enabled: ShellState.backendReady && !ShellState.pendingActions.setting
+                onToggled: ShellState.run("setting", {key: "reducedTransparency", value: checked})
+            }
+        }
+    }
     LiquidGlassSettings {}
     SettingsCard {
         title: "Shell name"

@@ -12,7 +12,7 @@ SettingsCard {
     objectName: "liquidGlassSettings"
     visible: Theme.liquidGlass
     title: "Liquid glass material"
-    description: "These controls apply to glass backgrounds across the shell. Text stays white. Your Smoked palette and element overrides stay separate. Changes save automatically; Reset restores the original glass."
+    description: "These controls apply to glass backgrounds across the shell. Text contrast is kept above 3:1 on bright backdrops by the contrast floor. Your Smoked palette and element overrides stay separate. Changes save automatically; Reset restores the original glass."
     PreferenceSwitch { title: "Refractive selection"; detail: "A glass lens follows the selected tab or Settings page"; preference: "glassSelection" }
     property string error: ""
     // Version gate: compositor blur needs niri 26.04+; the backend reports the

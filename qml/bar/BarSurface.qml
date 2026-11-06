@@ -17,6 +17,7 @@ GlassPanel {
     readonly property var style: zone ? Theme.islandStyle(zone) : ({})
     objectName: "barSurface"
     role: "barFill"
+    shadow: Theme.glassPillShadow
     radius: Math.max(0, height / 2)
     topLeftRadius: Theme.barCornerRadius("topLeft", height, zone)
     topRightRadius: Theme.barCornerRadius("topRight", height, zone)

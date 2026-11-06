@@ -8,6 +8,7 @@ Rectangle {
     // (background:/sibling placement) count it as the glass stratum below.
     readonly property bool isGlassFill: true
     property bool allowed: true
+    property real shadow: 0
     radius: Theme.radius
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
     // The shader hairline is the border in glass mode; the QML 1px outline
@@ -17,6 +18,7 @@ Rectangle {
     GlassMaterial {
         anchors.fill: parent
         radius: root.radius
+        shadow: root.shadow
         topLeftRadius: root.topLeftRadius; topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius; bottomRightRadius: root.bottomRightRadius
     }

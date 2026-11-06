@@ -113,8 +113,8 @@ ColumnLayout {
             Component.onCompleted: currentIndex = root.islands ? 1 : 0
         }
         Item {
-            Layout.fillWidth: true; Layout.preferredHeight: Theme.barHeight + 16
-            BarSurface { zone: root.styleZone; anchors.fill: parent; anchors.margins: 8 }
+            Layout.fillWidth: true; Layout.preferredHeight: Theme.barHeight + 24
+            BarSurface { zone: root.styleZone; anchors.fill: parent; anchors.margins: 12 }
             LabelText { anchors.centerIn: parent; text: "Live bar preview"; font.family: Theme.barFamily; font.pixelSize: Theme.barFontSize; color: Theme.barText }
         }
         LiquidComboBox {

@@ -164,6 +164,8 @@ QtObject {
     readonly property int radius: 28
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42
+    readonly property real glassShadowPad: 12  // matches Serpantinum GlassFill pad / GlassMaterial.pad
+    readonly property real glassPillShadow: 3.0  // bar pill drop shadow strength (shadowAmt scale; Serpantinum default 1)
     readonly property int barBorderWidth: ShellState.preferences.barBorderWidth === undefined ? 1 : ShellState.preferences.barBorderWidth
     readonly property var barCorners: ShellState.preferences.barCorners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1})
     function islandStyle(zone) { return (ShellState.preferences.barIslandStyles || {})[zone] || {}; }

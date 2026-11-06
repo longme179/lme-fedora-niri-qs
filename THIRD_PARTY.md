@@ -274,6 +274,21 @@ remain independent. GPLv3 section 13 allows the GPL/AGPL combination; the copied
 files retain AGPL and the combined work follows AGPLv3's interaction requirements.
 No new runtime library or external service is required.
 
+Glass-on-glass nesting (Liquid Glass 2.0 G1) adapts Serpantinum's
+[`glassNesting.js`](https://github.com/ilyamiro/serpantinum/blob/2aa00c378b492113181d26427399a30aff1805e5/src/quickshell/reusables/display/glassNesting.js)
+ancestor walk as `qml/components/GlassNesting.js` (AGPL-3.0-or-later), and wires
+it into LME's own `GlassMaterial` host: the level counts marked ancestor strata
+(`GlassMaterial` and `GlassPanel` carry upstream's `isGlassFill` marker; the walk
+skips the carrier — the child of a stratum that contains the walker — so a
+marked glass container counts through its own embedded layer, never as itself)
+and recomputes only on tree events (parent/backdrop changes and
+`childrenChanged` on watched ancestors, coalesced with `Qt.callLater`, bounded
+to 48 levels; without a backdrop the domain stops at the host window's content
+item). Nested optics follow upstream `GlassFill.qml`'s rim and frost attenuation
+before `nest` is passed into the renderer. `docs/NEXT_OPTIMIZATION_PLAN.md`'s
+warning about unbounded per-control walks is honored: one shared bounded walk,
+never per frame.
+
 The selection-lens treatment also references Serpantinum's
 [`GlassLens.qml`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/reusables/display/GlassLens.qml).
 LME retains its existing DMS-derived spring edges, reuses its shared glass

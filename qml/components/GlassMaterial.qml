@@ -2,8 +2,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import QtQml
 import "../theme"
 import "../services"
+import "GlassNesting.js" as GlassNesting
 
 Item {
     id: root
@@ -19,6 +21,17 @@ Item {
     readonly property bool active: Theme.liquidGlass && visible && width > 0 && height > 0 && !!hostWindow && hostWindow.visible
     readonly property bool lightEnabled: active && enabled && !software && Theme.animations
     property var backdrop: null
+    // Glass-on-glass nesting (Liquid Glass 2.0, gap G1): every ancestor stratum
+    // carrying a glass surface below this one attenuates its rim, bevel, veil
+    // and grain instead of compounding them. Upstream mapping: nest = min(1, level * 0.5).
+    readonly property bool isGlassFill: true
+    property bool allowed: true
+    property int nestLevel: 0
+    readonly property real nest: Math.min(1, nestLevel * 0.5)
+    property var nestWatched: []
+    property int nestWalks: 0
+    readonly property real baseRim: .38 * (Theme.glass.rim ?? 1)
+    readonly property real baseFrost: .9 * (Theme.glass.blur ?? 1)
     property bool hasPointer: false
     readonly property point pointerScenePosition: pointer.point.scenePosition
     readonly property point lightPosition: hasPointer ? Qt.point(lightX.value, lightY.value) : Qt.point(width / 2, height / 2)
@@ -53,11 +66,29 @@ Item {
         if (backdrop && (!active || software || backdrop.hostWindow !== hostWindow)) { GlassState.release(backdrop); backdrop = null; }
         if (active && !software && !backdrop) backdrop = GlassState.acquire(hostWindow);
     }
+    // The walk stops below the stratum that hosts the shared backdrop; without
+    // one (software rendering) the window content root bounds the domain instead.
+    function nestingStop() {
+        return backdrop && backdrop.parent ? backdrop.parent : (hostWindow ? hostWindow.contentItem : null);
+    }
+    function updateNest() {
+        nestWalks++;
+        const stop = nestingStop();
+        nestLevel = GlassNesting.nestLevel(root, stop, false);
+        const domain = [];
+        let a = root.parent, depth = 0;
+        while (a && a !== stop && depth < 48) { domain.push(a); a = a.parent; depth++; }
+        let same = domain.length === nestWatched.length;
+        for (let i = 0; same && i < domain.length; i++) same = domain[i] === nestWatched[i];
+        if (!same) nestWatched = domain;
+    }
+    function scheduleNestUpdate() { Qt.callLater(updateNest); }
     onActiveChanged: updateBackdrop()
     onSoftwareChanged: updateBackdrop()
-    onParentChanged: Qt.callLater(updateBackdrop)
-    onHostWindowChanged: { hasPointer = false; updateBackdrop(); }
-    Component.onCompleted: updateBackdrop()
+    onBackdropChanged: scheduleNestUpdate()
+    onParentChanged: { Qt.callLater(updateBackdrop); scheduleNestUpdate(); }
+    onHostWindowChanged: { hasPointer = false; updateBackdrop(); scheduleNestUpdate(); }
+    Component.onCompleted: { updateBackdrop(); updateNest(); }
     Component.onDestruction: if (backdrop) GlassState.release(backdrop)
     readonly property var sampleInputs: backdrop ? [backdrop.windowOrigin, backdrop.cropRect, backdrop.outputWidth, backdrop.outputHeight] : null
     property rect sampleRect: Qt.rect(0, 0, 1, 1)
@@ -83,6 +114,16 @@ Item {
         function onAfterAnimating() { root.updateLight(); root.updateSample(); }
     }
     HoverHandler { id: pointer; enabled: root.lightEnabled }
+    // Watched ancestors re-walk on tree events only; animation frames never
+    // touch the level (docs/NEXT_OPTIMIZATION_PLAN.md upstream-walk warning).
+    Instantiator {
+        model: root.nestWatched
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onChildrenChanged() { root.scheduleNestUpdate() }
+        }
+    }
     Loader {
         anchors.fill: parent
         active: root.active
@@ -111,7 +152,9 @@ Item {
             bottomRightRadius: root.bottomRightRadius < 0 ? root.radius : root.bottomRightRadius
             cursorPos: root.lightPosition
             hover: root.hoverAmount; energy: root.pressAmount
-            tintAmount: 0; clear: 1; frost: .9 * (Theme.glass.blur ?? 1); dispersion: .025; rim: .38 * (Theme.glass.rim ?? 1)
+            tintAmount: 0; clear: 1
+            frost: root.nestLevel >= 1 ? Math.min(root.baseFrost, 1) : root.baseFrost
+            dispersion: .025; rim: root.baseRim * (1 - .35 * root.nest); nest: root.nest
             brightness: Theme.glass.brightness ?? 1
             feather: Theme.glass.feather ?? 1
             smearing: Theme.glass.smearing ?? 1

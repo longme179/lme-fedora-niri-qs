@@ -4,6 +4,10 @@ import "../theme"
 Rectangle {
     id: root
     property string role: "panelFill"
+    // Glass-on-glass marker: hosts that layer content above this panel
+    // (background:/sibling placement) count it as the glass stratum below.
+    readonly property bool isGlassFill: true
+    property bool allowed: true
     radius: Theme.radius
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
     border.width: 1

@@ -77,13 +77,13 @@ SettingsCard {
             }
             LabelText {
                 Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold
-                text: row.control.title + " · " + (row.modelData === "passes" ? Math.round(slider.value) : slider.value.toFixed(2))
+                text: row.control.title + " · " + (row.modelData === "passes" ? Math.round(slider.value) : slider.value.toFixed(row.modelData === "grain" ? 3 : 2))
             }
             LiquidSlider {
                 id:slider; objectName:"glass-" + row.modelData
                 Layout.fillWidth:true; from:row.control.min; to:row.control.max; stepSize:row.control.step
                 enabled:ShellState.backendReady; Accessible.name:row.control.title
-                function save() { root.save(row.modelData, Math.round(value * 100) / 100); }
+                function save() { const scale = row.modelData === "grain" ? 1000 : 100; root.save(row.modelData, Math.round(value * scale) / scale); }
                 onMoved:if (!pressed) save()
                 onPressedChanged:if (!pressed) save()
             }

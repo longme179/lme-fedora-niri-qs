@@ -95,6 +95,15 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         self.assertFalse(live.handle(dict(action='setting', key='liquidGlass', token='rim', value=20))['ok'])
         self.assertFalse(self.preferences.path.exists())
 
+    def test_grain_round_trips_through_settings_save(self):
+        self.assertEqual(DEFAULTS['grain'], 0.004)
+        self.preferences.set('liquidGlass', 0.02, token='grain')
+        saved = backend.Preferences(self.preferences.path).values
+        self.assertEqual(saved['liquidGlass']['grain'], 0.02)
+        for bad in (-0.1, 0.09, 'grain'):
+            with self.subTest(value=bad), self.assertRaises(ValueError):
+                self.preferences.set('liquidGlass', bad, token='grain')
+
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1' and shutil.which('quickshell'), 'private glass settings controls')
 class GlassControlsQmlCase(unittest.TestCase):

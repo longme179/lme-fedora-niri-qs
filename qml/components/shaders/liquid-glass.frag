@@ -38,6 +38,7 @@ layout(std140, binding = 0) uniform buf {
     float unpremul;
     float sourceAvailable;
     float compositorBlur;
+    float grain;
 };
 
 layout(binding = 1) uniform sampler2D src;
@@ -50,7 +51,6 @@ const float LENS_NONE = 420.0;
 const float FRESNEL = 0.55;
 const float INNER_SHADOW = 0.16;
 const float BROAD_SPEC = 0.2;
-const float GRAIN = 0.004;
 const vec2 lightDir = vec2(-0.55, -0.83);
 
 float sdRoundBox(vec2 p, vec2 b, vec4 r) {
@@ -248,7 +248,7 @@ void main() {
     float alpha = compositorBlur >= 0.5 ? clamp(clamp(tA * 0.85, 0.0, 0.15) + dot(light, vec3(0.3333)), 0.0, 0.85) : mix(1.0, clearA, clear);
 
     float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
-    premul += vec3(gn * GRAIN * (1.0 - 0.7 * nest)) * alpha;
+    premul += vec3(gn * grain * (1.0 - 0.7 * nest)) * alpha;
 
     float a = coverage * qt_Opacity;
     float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);

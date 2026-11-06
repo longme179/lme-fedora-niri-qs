@@ -388,6 +388,23 @@ saves use niri's normal include reload. This changes compositor-wide blur in
 both surface styles. Existing unmarked files and symlinks are not replaced.
 Preferences restore the original passes/spread when reset, but the snippet
 needs to be saved again to apply them. No niri configuration is edited silently.
+
+Two compositor blur presets are offered in Liquid glass settings (niri 26.04+;
+the controls are hidden on older niri, which the backend probes before the
+snippet is written). **Frosted** (default) uses xray blur: niri pre-blurs the
+wallpaper once and reuses it, so it is cheap and stable and pairs with the
+wallpaper-lens refraction; it is the budget default for the iGPU. **True
+backdrop** uses xray false — the historical behavior — and also blurs app
+windows, but it is experimental: niri may drop it during window open/close
+animations or while dragging tiled windows, and it costs more GPU time.
+Choosing a preset only saves the preference; nothing is applied (or blurred)
+until **Save niri blur snippet** is clicked, which writes the matching snippet
+and records the applied preset. While a preset is applied, glass panels and
+bar pills draw a 1px hairline in the glass border token that masks
+rounded-corner aliasing of the blur region; with no preset applied the hairline
+is absent and everything still looks right through the lens, tint and snapshot
+backdrop alone. A previously applied snippet is replaced only through the
+same save action.
 Editable fields retain native Qt input rendering, selection and IME behavior,
 with a dark translucent fill behind white input text.
 

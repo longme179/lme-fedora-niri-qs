@@ -552,7 +552,7 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
-            (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
+            (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'],lambda preset:self.preferences.set('liquidGlass', preset, token='appliedBlur'))),
             (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
                 available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),

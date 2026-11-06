@@ -11,10 +11,13 @@ Rectangle {
     property real shadow: 0
     radius: Theme.radius
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
-    // The shader hairline is the border in glass mode; the QML 1px outline
-    // would double-draw over it. Non-glass mode stays pixel-identical.
-    border.width: Theme.liquidGlass ? 0 : 1
-    border.color: Theme.outlineVariant
+    // Compositor-blur hairline: while a blur preset is applied, a 1px outline
+    // in the glass border token masks rounded-corner aliasing of the blur
+    // region. The shader rim stays the highlight just inside it; with no
+    // preset applied there is no outline, and Smoked mode is untouched.
+    readonly property bool blurHairline: Theme.liquidGlass && !!Theme.glass.appliedBlur
+    border.width: Theme.liquidGlass ? (blurHairline ? 1 : 0) : 1
+    border.color: blurHairline ? Theme.border : Theme.outlineVariant
     GlassMaterial {
         anchors.fill: parent
         radius: root.radius

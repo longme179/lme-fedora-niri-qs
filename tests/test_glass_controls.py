@@ -6,13 +6,39 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 from test_backend import Fixture, backend
+import liquid_glass
 from liquid_glass import DEFAULTS, CONTROLS, MARKER
 from settings_transfer import document, validate_document
 import test_local_qml as qml_tests
 
 
+def frosted_snippet(passes=3, offset='3.0'):
+    return (MARKER + '// Include AFTER generic background-effect rules; later rules win.\n'
+            '// With xray on, only the wallpaper is blurred; with xray off, app windows are blurred too.\n'
+            'layer-rule {\n'
+            '    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"\n'
+            '    background-effect {\n'
+            '        xray true\n'
+            '    }\n'
+            '}\n'
+            'window-rule {\n'
+            '    match app-id="^lme-shell-settings$"\n'
+            '    // Keep niri\'s focus-ring backing from filling the transparent window.\n'
+            '    draw-border-with-background false\n'
+            '    background-effect {\n'
+            '        xray true\n'
+            '    }\n'
+            '}\n'
+            f'blur {{\n    passes {passes}\n    offset {offset}\n}}\n')
+
+
 class GlassControlsCase(Fixture, unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = patch('liquid_glass.probe_niri_version', return_value=(26, 4))
+        patcher.start(); self.addCleanup(patcher.stop)
     def test_partial_edits_reload_merge_export_and_reset_without_touching_material(self):
         self.preferences.set('accent', '#12ab34')
         other = backend.Preferences(self.preferences.path)
@@ -48,7 +74,7 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         self.assertFalse(path.exists())
         result = live.handle(dict(action='glassBlurApply'))
         self.assertTrue(result['ok'], result)
-        self.assertEqual(path.read_text(), MARKER+'blur {\n    passes 3\n    offset 3.0\n}\n')
+        self.assertEqual(path.read_text(), frosted_snippet(3))
         self.assertIn('compositor-wide', result['message'])
         path.write_text('my own configuration')
         self.assertFalse(live.handle(dict(action='glassBlurApply'))['ok'])

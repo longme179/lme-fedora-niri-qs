@@ -52,8 +52,8 @@ class ButtonMaterialCase(unittest.TestCase):
             fixture.checks.selection=selected.contentItem.color.toString()==="#ffffff" && flat.contentItem.color.toString()==="#ffffff"
                 && tabs.length===4 && tabs.every(b=>b.contentItem.color.toString()==="#ffffff")
                 && label.color.toString()==="#ffffff" && fixture.glass(day)[0].active && plain.color.toString()==="#ffffff";
-            ShellState.run("setting",{key:"liquidGlass",token:"brightness",value:.2});fixture.phase++;
-        } else if(fixture.phase===3 && Theme.glass.brightness===.2) {
+            ShellState.run("setting",{key:"liquidGlass",token:"rim",value:0});fixture.phase++;
+        } else if(fixture.phase===3 && Theme.glass.rim===0) {
             fixture.checks.dimmed=selected.contentItem.color.toString()==="#ffffff" && flat.contentItem.color.toString()==="#ffffff";
             ShellState.run("setting",{key:"liquidGlass",token:"tint",value:"#ffffff"});fixture.phase++;
         } else if(fixture.phase===4 && Theme.glass.tint==="#ffffff") {

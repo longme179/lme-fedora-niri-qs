@@ -37,16 +37,19 @@ layout(std140, binding = 0) uniform buf {
     vec4 sampleBounds;
     float unpremul;
     float sourceAvailable;
-    float brightness;
-    float feather;
-    float smearing;
 };
 
 layout(binding = 1) uniform sampler2D src;
 
 const int TAPS = 10;
 const float GOLDEN = 2.39996323;
-const float DARKEN = 0.15;
+const float LENS_ZOOM = 0.045;
+const float LENS_FULL = 180.0;
+const float LENS_NONE = 420.0;
+const float FRESNEL = 0.55;
+const float INNER_SHADOW = 0.16;
+const float BROAD_SPEC = 0.2;
+const float GRAIN = 0.004;
 const vec2 lightDir = vec2(-0.55, -0.83);
 
 float sdRoundBox(vec2 p, vec2 b, vec4 r) {
@@ -58,18 +61,6 @@ float sdRoundBox(vec2 p, vec2 b, vec4 r) {
 
 vec2 boxHalf() {
     return box.z > 0.0 ? box.zw : itemSize * 0.5;
-}
-
-// The ordinary rounded box has an exact normal; fillets keep the general SDF below.
-vec2 cardNormal(vec2 p) {
-    p -= box.xy;
-    vec2 halfSize = boxHalf() - glassPad;
-    float r = p.x > 0.0 ? (p.y > 0.0 ? radii.z : radii.y) : (p.y > 0.0 ? radii.w : radii.x);
-    vec2 q = abs(p) - halfSize + min(r, min(halfSize.x, halfSize.y));
-    vec2 outward = max(q, vec2(0.0));
-    vec2 side = vec2(p.x < 0.0 ? -1.0 : 1.0, p.y < 0.0 ? -1.0 : 1.0);
-    return dot(outward, outward) > 1e-8 ? normalize(outward) * side
-        : (q.x > q.y ? vec2(side.x, 0.0) : vec2(0.0, side.y));
 }
 
 float sdfCard(vec2 p) {
@@ -111,17 +102,13 @@ float hash12(vec2 p) {
 }
 
 float blurLod(float rad, int taps) {
-    float R = max(rad, 0.5) * 1.5;
+    float R = max(rad, 0.5) * 0.9;
     float gap = R * sqrt(3.14159265 / float(taps));
-    return clamp(log2(max(gap, 1.0)) + 0.35, 0.0, 6.0);
+    return clamp(log2(max(gap, 1.0)) - 0.15, 0.0, 6.0);
 }
 
 vec3 blurredAt(vec2 p, float rad, float lod, int taps) {
-    if (rad <= 0.0) {
-        vec4 pixel = fetchLod4(p, 0.0);
-        return pixel.a > 0.0001 ? pixel.rgb / pixel.a : vec3(0.0);
-    }
-    float R = max(rad, 0.5) * 1.5;
+    float R = max(rad, 0.5) * 0.9;
     float rot = ign(gl_FragCoord.xy) * 6.2831853;
     vec4 acc = vec4(0.0);
     float wsum = 0.0;
@@ -146,30 +133,6 @@ vec2 displacement(vec3 normal, float index, float travel) {
     return r.xy / max(-r.z, 0.2) * travel;
 }
 
-// A shallow inner bevel separates clear glass from bright apps in the same pass.
-vec4 shadeGlass(vec4 color, float coverage, float bevelShade) {
-    float transmission = brightness * (1.0 - bevelShade);
-    return vec4(color.rgb * transmission,
-        color.a + (1.0 - transmission) * max(0.0, coverage * qt_Opacity - color.a));
-}
-
-// Local rim glint and a softer opposite reflection share the existing lighting bands.
-vec4 reflectPointer(vec4 color, vec2 p, float hair, float wide, float coverage) {
-    if (hover <= 0.0 || rim <= 0.0) return color;
-    float reach = clamp(min(itemSize.x, itemSize.y) * 0.55, 28.0, 150.0);
-    vec2 axes = vec2(reach * 1.2, reach);
-    vec2 center = cursor - itemSize * 0.5;
-    vec2 delta = (p - center) / axes;
-    vec2 opposite = (p + center * 0.75) / axes;
-    float spot = 1.0 / (1.0 + 2.0 * dot(delta, delta));
-    float echo = 1.0 / (1.0 + 2.0 * dot(opposite, opposite));
-    spot *= spot; echo *= echo;
-    float edge = (0.38 * spot + 0.06 * echo) * hair + 0.065 * spot * wide;
-    float shine = clamp(hover * rim * (edge + 0.012 * spot), 0.0, 0.9);
-    float cap = coverage * qt_Opacity;
-    return vec4(color.rgb * (1.0 - shine) + vec3(shine * cap), color.a + shine * max(0.0, cap - color.a));
-}
-
 void main() {
     vec2 p = qt_TexCoord0 * itemSize - itemSize * 0.5;
     float dist = sdf(p);
@@ -186,50 +149,21 @@ void main() {
 
     float t = max(-dist, 0.0);
     float bz = max(bezel, 1.0) * 1.45;
-    vec2 g = cardNormal(p);
-    if (fillet.z > 0.0 && t < bz + 2.0) {
+    vec2 g = vec2(0.0, -1.0);
+    if (t < bz + 2.0) {
         const vec2 e = vec2(0.75, 0.0);
         vec2 grad = vec2(sdf(p + e.xy) - sdf(p - e.xy), sdf(p + e.yx) - sdf(p - e.yx));
         if (length(grad) > 0.0001) g = normalize(grad);
     }
-    vec2 toCursor = cursor - itemSize * 0.5 - p;
-    float cd = length(toCursor);
-    float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
-    float near = hover * exp(-cd * cd / (2.0 * reach * reach));
-    vec2 cursorDir = cd > 0.001 ? toCursor / cd : normalize(lightDir);
-    vec2 L = normalize(mix(normalize(lightDir), cursorDir, hover * 0.4));
-    float facing = dot(g, L);
-    float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
-    float hair = exp(-t / (1.1 * feather));
-    float wide = exp(-t / (5.0 * feather));
-    float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
-    float mx = (t - bz * 0.45) / (bz * 0.12 * feather + 0.8);
-    float men = exp(-mx * mx) * 0.09 * (0.35 + spec) * rim;
-    float bevelShade = 0.0;
-    vec3 fringe = vec3(0.0);
-    if (t < bz * 2.5) {
-        float shoulder = (t - bz * 0.85) / (bz * 0.18 * feather + 0.75);
-        bevelShade = clamp(exp(-shoulder * shoulder) * 0.30 * rim
-            * (0.45 + 0.55 * max(-facing, 0.0)) * (1.0 - 0.7 * nest), 0.0, 0.35);
-        float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
-        float phase = dot(g, vec2(0.7, 0.45)) * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
-        fringe = (spectrum(phase) - 0.5) * exp(-fb * fb) * (0.018 + 0.036 * spec) * rim * (1.0 + 3.0 * motion);
-    }
-    vec3 light = vec3(edgeHi + men + near * 0.015 * rim + energy * 0.03) + fringe;
-    // Clear interiors do not sample the lens. Preserve lighting, skip refraction.
-    if (clear >= 1.0 && tintAmount == 0.0 && t > max(bz + 2.0, bz * 1.5)) {
-        float alpha = min(0.65, max(light.r, max(light.g, light.b)));
-        vec3 rgb = min(light, vec3(alpha));
-        float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
-        rgb += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
-        vec4 base = vec4(clamp(rgb, vec3(0.0), vec3(alpha)), alpha) * qt_Opacity;
-        fragColor = shadeGlass(reflectPointer(base, p, hair, wide, coverage), coverage, bevelShade);
-        return;
-    }
+
     float u = clamp(t / bz, 0.0, 1.0);
     float om = 1.0 - u;
     float om4 = om * om * om * om;
     float slope = min((om * om * om) / pow(max(1.0 - om4, 1e-3), 0.75), 7.0);
+    vec2 toCursor = cursor - itemSize * 0.5 - p;
+    float cd = length(toCursor);
+    float reach = max(40.0, min(itemSize.x, itemSize.y) * 0.6) * (1.0 + 0.4 * morph);
+    float near = hover * exp(-cd * cd / (2.0 * reach * reach));
     float sigma = reach * 0.5;
     float bulgeH = hover * exp(-cd * cd / (2.0 * sigma * sigma)) * 0.35 * (1.0 + 1.4 * morph + 1.2 * motion) * thickness * (1.0 - 0.5 * nest);
     vec2 bulge = bulgeH * toCursor / (sigma * sigma);
@@ -240,7 +174,7 @@ void main() {
     float wobble = sin(dot(p, vec2(0.11, 0.09)) + t * 0.35) * 0.5 + 0.5;
     float warpK = 1.0 + 0.644 * motion + 0.368 * energy;
     vec2 warp = (-g * edgeFall * bz * (0.294 + 0.11 * wobble) + vec2(-g.y, g.x) * edgeFall * bz * 0.092 * (wobble - 0.5)) * warpK;
-    vec2 dG = (displacement(normal, ior, th) + warp) * smearing;
+    vec2 dG = displacement(normal, ior, th) + warp;
     float spread = dispersion * (0.35 + 1.2 * edgeFall) * (1.0 + 2.2 * motion + 0.55 * energy);
     vec2 dR = dG * (1.0 + spread);
     vec2 dB = dG * (1.0 - spread);
@@ -249,16 +183,18 @@ void main() {
     vec2 glassSize = itemSize - 2.0 * glassPad;
     vec2 zq = p / max(glassSize * 0.5, vec2(1.0));
     float zr = clamp(length(zq), 0.0, 1.0);
-    float zoomAmt = 0.129 * clamp(energy, 0.0, 1.0) + 0.064 * motion;
-    vec2 ps = vec2(p.x, p.y * (1.0 - 0.08 * 1.5)) * (1.0 - zoomAmt * (1.0 - zr * zr));
+    float zoomAmt = LENS_ZOOM * (1.0 - 0.5 * nest) + 0.129 * clamp(energy, 0.0, 1.0) + 0.064 * motion;
+    float lensK = 1.0 - smoothstep(LENS_FULL, LENS_NONE, max(glassSize.x, glassSize.y) * 0.5);
+    vec2 ps = p + (vec2(p.x, p.y * (1.0 - 0.08 * 1.5)) * (1.0 - zoomAmt * (1.0 - zr * zr)) - p) * lensK;
     vec2 follow = clamp((cursor - itemSize * 0.5) / max(itemSize * 0.5, vec2(1.0)), vec2(-1.0), vec2(1.0));
     ps -= follow * 6.0 * near * morph * (1.0 - zr * zr * 0.5);
     bool interior = t >= bz && near < 0.02;
     int taps = interior ? 6 : (frost <= 1.2 ? 6 : TAPS);
     float lod = blurLod(rad, taps);
-    float edgeSource = (1.0 - smoothstep(bz * 0.65, bz * 1.5, t)) * sourceAvailable;
-    vec3 col = edgeSource > 0.0 ? blurredAt(ps + dG, rad, lod, taps) : vec3(0.3);
-    if (edgeSource > 0.0 && !interior && dot(dG, dG) > 0.25) {
+    // LME infra: the backdrop is a wallpaper snapshot Image, not a live blur
+    // texture. Without a ready snapshot use a neutral base instead of sampling.
+    vec3 col = sourceAvailable < 0.5 ? vec3(0.32, 0.34, 0.38) : blurredAt(ps + dG, rad, lod, taps);
+    if (sourceAvailable >= 0.5 && !interior && dot(dG, dG) > 0.25) {
         vec4 cR = fetchLod4(ps + dR, lod + 0.5);
         vec4 cB = fetchLod4(ps + dB, lod + 0.5);
         if (cR.a > 0.05) col.r = cR.r / cR.a;
@@ -268,42 +204,54 @@ void main() {
     float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
     col = mix(vec3(l), col, saturation);
 
-    float ty = clamp((p.y + glassSize.y * 0.5) / glassSize.y, 0.0, 1.0);
     col *= 1.0 - (1.0 - nest) * 0.06 * exp(-t / 6.0) * clamp(g.y, 0.0, 1.0);
     col *= 1.0 - (1.0 - nest) * 0.025 * exp(-t / (bz * 0.45));
 
-    float chroma = max(tintColor.r, max(tintColor.g, tintColor.b)) - min(tintColor.r, min(tintColor.g, tintColor.b));
-    float neutralK = 1.0 - smoothstep(0.10, 0.18, chroma);
-    vec3 tcol = mix(tintColor.rgb, vec3(0.5), neutralK);
-    float tAmt = tintAmount * mix(1.0, 0.6, neutralK);
-    float dark = 1.0 - clamp(dot(tcol, vec3(0.2126, 0.7152, 0.0722)) * 2.0, 0.0, 1.0);
-    float lift = mix(mix(0.07, 0.04, dark), 0.0, clear) * (1.0 - 0.85 * nest);
-    float sheen = (1.0 - ty) * 0.03 * (1.0 - clear) * (1.0 - 0.8 * nest);
-    light += vec3(sheen);
-    light += vec3(lift) * mix(1.0, smoothstep(0.0, 1.0, length(dG) * 0.5), clear);
+    vec2 cursorDir = cd > 0.001 ? toCursor / cd : normalize(lightDir);
+    vec2 L = normalize(mix(normalize(lightDir), cursorDir, hover * 0.4));
+    float facing = dot(g, L);
+    float spec = pow(max(facing, 0.0), 1.6) + 0.55 * pow(max(-facing, 0.0), 2.2);
 
-    float tA = clamp(tAmt * (0.7 + 0.6 * l), 0.0, 1.0);
-    // Keep the real compositor backdrop visible; wallpaper refraction is confined to the rim.
-    float lensA = 0.16 * edgeSource * smoothstep(0.0, 1.0, length(dG) * 0.5);
-    vec3 opaqueRgb = mix(col, tcol, tA);
+    float fres = pow(1.0 - normal.z, 1.5) * (1.0 - 0.6 * nest);
+    if (fres > 0.001 && sourceAvailable >= 0.5) {
+        vec4 e = fetchLod4(p + g * (t + bz * 1.4), min(lod + 2.0, 6.0));
+        vec3 env = e.a > 1e-3 ? e.rgb / e.a : col;
+        env = env * 1.12 + 0.03;
+        col = mix(col, env, clamp(fres * FRESNEL * (0.4 + 0.6 * max(facing, 0.0)), 0.0, 0.6));
+    }
+    float counter = exp(-t / (bz * 0.55)) * max(-facing, 0.0);
+    col *= 1.0 - INNER_SHADOW * counter * (1.0 - 0.7 * nest);
+    float hair = exp(-t / 1.1);
+    float wide = exp(-t / 5.0);
+    float edgeHi = (hair * (0.18 + 0.78 * spec) + wide * 0.10 * (0.30 + spec)) * rim * (1.0 + 0.5 * near + 0.9 * energy);
+    float broad = exp(-t / (bz * 0.45)) * pow(max(facing, 0.0), 2.0) * BROAD_SPEC * rim * (1.0 + 0.5 * near);
+    float mx = (t - bz * 0.5) / (bz * 0.2 + 1.0);
+    float men = exp(-mx * mx) * 0.07 * (0.35 + spec) * rim;
+    vec3 fringe = vec3(0.0);
+    if (t < bz * 2.5) {
+        float fb = (t - bz * 0.42) / (bz * 0.22 + 1.0);
+        float fringeBand = exp(-fb * fb);
+        float fringePhase = dot(g, vec2(0.7, 0.45)) * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
+        fringe = (spectrum(fringePhase) - 0.5) * fringeBand * (0.04 + 0.08 * spec) * rim * (1.0 + 3.0 * motion);
+    }
+    vec3 tcol = tintColor.rgb;
+    float tA = clamp(tintAmount * (0.7 + 0.6 * l), 0.0, 1.0);
+    float lensA = smoothstep(0.0, 1.0, length(dG) * 0.5);
+    vec3 light = vec3(edgeHi + men + broad + energy * 0.03) + fringe;
+    light += vec3(0.02 * clear * lensA);
+
+    vec3 opaqueRgb = col * mix(vec3(1.0), tcol, tA);
     vec3 clearRgb = col * lensA * (1.0 - tA) + tcol * tA;
     float clearA = lensA * (1.0 - tA) + tA;
 
     vec3 premul = mix(opaqueRgb, clearRgb, clear);
-    float veil = DARKEN * smoothstep(0.35, 0.9, l) * (1.0 - clear) * (1.0 - nest);
-    premul *= 1.0 - veil;
     premul += light;
     float alpha = mix(1.0, clearA, clear);
-    // Highlights need coverage even where the clear body has zero alpha.
-    alpha = max(alpha, min(0.65, max(light.r, max(light.g, light.b))));
-    premul = min(premul, vec3(alpha));
-    alpha += veil * (1.0 - alpha);
 
     float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
-    premul += vec3(gn * 0.03 * (1.0 - 0.7 * nest)) * alpha;
+    premul += vec3(gn * GRAIN * (1.0 - 0.7 * nest)) * alpha;
 
     float a = coverage * qt_Opacity;
     float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
-    vec4 base = vec4(clamp(premul, vec3(0.0), vec3(alpha)) * a, outA * qt_Opacity);
-    fragColor = shadeGlass(reflectPointer(base, p, hair, wide, coverage), coverage, bevelShade);
+    fragColor = vec4(clamp(premul, 0.0, 1.0) * a, outA * qt_Opacity);
 }

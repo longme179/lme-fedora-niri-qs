@@ -79,6 +79,6 @@ SettingsCard {
     }
     LabelText {
         Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
-        text:"Feather softens the reflective rim; smearing stretches its refraction. These change the existing shader, without adding render layers. Brightness darkens the glass itself. Reset does not rewrite an already applied niri snippet; save it again to restore the default blur."
+        text:"Edge highlight and lens blur shape the hairline; edge width sets the bezel. Reset does not rewrite an already applied niri snippet; save it again to restore the default blur."
     }
 }

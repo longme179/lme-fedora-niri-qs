@@ -10,7 +10,9 @@ Rectangle {
     property bool allowed: true
     radius: Theme.radius
     color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
-    border.width: 1
+    // The shader hairline is the border in glass mode; the QML 1px outline
+    // would double-draw over it. Non-glass mode stays pixel-identical.
+    border.width: Theme.liquidGlass ? 0 : 1
     border.color: Theme.outlineVariant
     GlassMaterial {
         anchors.fill: parent

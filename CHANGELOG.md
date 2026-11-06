@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Restore Serpantinum edge optics (follow-up to #79-#83): liquid-glass.frag
+  returns to upstream formulas exactly (finite-difference edge gradient,
+  Fresnel env reflection, inner shadow, broad spec, meniscus, fringe,
+  lens zoom with lensK, blur falloff 0.9, GRAIN 0.004), GlassMaterial
+  adopts upstream production wiring (frost 2.2, rim 0.45, bezel
+  3..14 x 0.28, thickness bezel x 0.8, tint 0.35 x 0.5, clear only when
+  nested) and the QML 1px border is gated off in glass mode so the shader
+  hairline is the border. The brightness/feather/smearing knobs and their
+  shader deviations go away; the only kept infra is the snapshot-image
+  neutral base when no backdrop is ready.
 - Fix the equalizer band intro stagger crashing the delegate: the Repeater
   delegate read `index` inside its nested Translate transform without
   declaring `required property int index`, producing "ReferenceError: index

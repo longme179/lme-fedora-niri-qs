@@ -51,7 +51,7 @@ MotionPopup {
     }
     background: Rectangle {
         radius: Theme.radius; color: Theme.panel
-        border.width: 1; border.color: Theme.border
+        border.width: Theme.liquidGlass ? 0 : 1; border.color: Theme.border
         GlassMaterial { anchors.fill: parent; radius: parent.radius }
     }
     contentItem: ColumnLayout {
@@ -116,7 +116,7 @@ MotionPopup {
         padding: 24; modal: true; focus: true; closePolicy: Popup.CloseOnEscape
         onClosed: { root.plannedUuid = ""; root.plannedDevice = ""; }
         background: Rectangle {
-            radius: 24; color: Theme.panel; border.width: 1; border.color: Theme.border
+            radius: 24; color: Theme.panel; border.width: Theme.liquidGlass ? 0 : 1; border.color: Theme.border
             GlassMaterial { anchors.fill: parent; radius: parent.radius }
         }
         contentItem: ColumnLayout {

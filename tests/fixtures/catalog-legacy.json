@@ -161,7 +161,7 @@
       "title": "Appearance",
       "icon": "settings",
       "description": "Color palettes, glass and motion",
-      "keywords": "island maximum size width height name identity branding smoked glass liquid surface refraction tint brightness feather smearing rim lens accent opacity animations motion theme font roboto profiles density popup blur overlay compositor palette material rose pine gruvbox nord catppuccin media wave timeline playback progress seek shuffle repeat stable metadata shapes"
+      "keywords": "island maximum size width height name identity branding smoked glass liquid surface refraction tint rim lens accent opacity animations motion theme font roboto profiles density popup blur overlay compositor palette material rose pine gruvbox nord catppuccin media wave timeline playback progress seek shuffle repeat stable metadata shapes"
     },
     {
       "key": "topbar",

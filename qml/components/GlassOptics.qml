@@ -40,6 +40,7 @@ ShaderEffect {
     property rect validRect: Qt.rect(0, 0, 1, 1)
     property real unpremul: 0
     property real compositorBlur: 0
+    property real adaptiveContrast: 0
     property real grain: 0.004
 
     property vector2d itemSize: Qt.vector2d(width, height)

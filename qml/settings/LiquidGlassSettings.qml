@@ -51,6 +51,7 @@ SettingsCard {
     ColumnLayout {
         Layout.fillWidth:true; spacing:8
         LabelText { Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold; text:"Material (lens)" }
+        PreferenceSwitch { title: "Adaptive contrast"; detail: "Darken glass on bright backdrops, clear it on dark ones"; preference: "adaptiveContrast" }
         LiquidComboBox {
             objectName:"glassMaterialPreset"; Layout.fillWidth:true; Accessible.name:"Material preset"
             model:["Clear","Frosted","Vivid"]

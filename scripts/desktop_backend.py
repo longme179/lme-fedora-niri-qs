@@ -274,7 +274,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
-    if key == "glassSelection" and type(value) is bool: return value
+    if key in ("glassSelection", "adaptiveContrast") and type(value) is bool: return value
     if key == 'launchpadEntries': return launchpad_entries(value)
     if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value

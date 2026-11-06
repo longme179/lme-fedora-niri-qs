@@ -56,7 +56,7 @@
     ["qml/services/ShellState.qml", "qml/services/OSDManager.qml", "Existing singleton/service feedback; replace this exact dependency with a shared interface only in an authorized refactor."]
   ],
   "largeFiles": {
-    "qml/components/shaders/liquid-glass.frag": 226,
+    "qml/components/shaders/liquid-glass.frag": 221,
     "qml/components/shapes/shapes/cubic.js": 338,
     "qml/components/shapes/shapes/rounded-polygon.js": 313,
     "qml/components/EqualizerBands.qml": 262,

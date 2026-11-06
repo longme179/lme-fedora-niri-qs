@@ -10,12 +10,12 @@ QtObject {
     property string themeDiagnosticsText: ""
     function themeProblem(message, error) { const text = message + (error === undefined ? "" : ": " + String(error));
         if (themeDiagnosticsText.includes(text)) return; themeDiagnosticsText = themeDiagnosticsText ? themeDiagnosticsText + " · " + text : text; console.warn(text); }
-    readonly property bool batterySaver: ShellState.batterySaverActive
-    readonly property bool liquidGlass: !batterySaver && ShellState.preferences.surfaceStyle === "liquid"
+    readonly property bool batterySaver: ShellState.batterySaverActive; readonly property bool liquidGlass: !batterySaver && ShellState.preferences.surfaceStyle === "liquid"
     readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false
+    readonly property bool adaptiveContrast: liquidGlass && ShellState.preferences.adaptiveContrast === true
+    function glassAdaptiveTint(tA, l) { const c = Math.max(0, Math.min(1, l)); return Math.max(0, Math.min(1, Math.max(0.7*tA, Math.min(tA*(0.75+0.75*c), Math.min(1.6*tA, 0.9))))); }
     readonly property bool compositorTrueBlur: glass.appliedBlur === "true" && (ShellState.snapshot.platform || {}).popupBlurSupported === true // true-backdrop (xray=false) yields the lens; else wallpaper lens
-    readonly property bool compositorBarBlur: compositorTrueBlur && ShellState.barBlurEnabled
-    readonly property bool compositorPopupBlur: compositorTrueBlur && ShellState.liquidBlurEnabled
+    readonly property bool compositorBarBlur: compositorTrueBlur && ShellState.barBlurEnabled; readonly property bool compositorPopupBlur: compositorTrueBlur && ShellState.liquidBlurEnabled
     property var glassControls: ({})
     readonly property var glass: Object.assign(Object.keys(glassControls).reduce((values, key) => {
         values[key] = glassControls[key].default; return values;

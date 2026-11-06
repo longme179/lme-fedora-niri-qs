@@ -175,6 +175,7 @@ Item {
             src: root.backdrop
             sourceAvailable: root.backdrop && root.backdrop.status === Image.Ready ? 1 : 0
             compositorBlur: root.compositorBlur ? 1 : 0
+            adaptiveContrast: Theme.adaptiveContrast ? 1 : 0
             grain: Theme.glass.grain ?? 0.004
             sourceRect: root.sampleRect
             topLeftRadius: root.topLeftRadius < 0 ? root.radius : root.topLeftRadius

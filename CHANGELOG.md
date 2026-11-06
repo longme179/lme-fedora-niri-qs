@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Wire glass-on-glass nesting into the glass material (Liquid Glass 2.0, G1):
+  every stacked glass layer used to render a full-strength rim and bevel,
+  compounding into the "chrome sandwich" look. The material now walks its
+  ancestors (bounded to 48 levels, stopping below the stratum that hosts the
+  shared backdrop, or the window content root without one) to count the glass
+  surfaces it is stacked on — a marked glass container counts through its own
+  embedded layer, never as itself, so nested content is not double-counted —
+  and attenuates the nested optics: rim and frost
+  follow upstream's nested-input formulas while the renderer's `nest` uniform
+  already softens bevel, veil, bulge and grain. The level recomputes only on
+  tree events (parent/backdrop changes and `childrenChanged` on watched
+  ancestors, coalesced through a 0 ms child timer — a `Qt.callLater` closure
+  would outlive destroyed materials and fire in an invalid context) and never
+  per animation frame.
+  `GlassMaterial` and `GlassPanel` carry the upstream `isGlassFill` marker so
+  `background:`/sibling hosts count as a glass stratum. `glassNesting.js` is
+  an AGPL-attributed port; see `third_party/Serpantinum-NOTICE`.
+
 - Fix a shell-wide startup failure introduced with the equalizer port: the
   ported `EqualizerState` singleton used the Quickshell `Singleton` root type
   without importing `Quickshell`, so the file failed to compile with

@@ -10,12 +10,7 @@ Item {
     property var windowInfo: null
     readonly property var layout: ShellState.preferences.barLayout || BarRegistry.defaults
     readonly property bool islands: ShellState.preferences.barStyle === "islands"
-    // The islands surface is invisible, so a pill-only region union leaves the
-    // gaps between pills unblurred (sharp app chrome pierces through). Keep a
-    // full-strip region over the whole bar so app pixels in the gaps are
-    // frosted even when only the pills are visible.
-    readonly property Region fullStrip: Region { item: root.visible && root.width > 0 ? root : null }
-    readonly property Region blurRegion: Region { regions: [root.fullStrip, surface.blurRegion, leftGroup.blurRegion, centerGroup.blurRegion, rightGroup.blurRegion] }
+    readonly property Region blurRegion: Region { regions: [surface.blurRegion, leftGroup.blurRegion, centerGroup.blurRegion, rightGroup.blurRegion] }
     implicitHeight: Theme.barHeight
     BarSurface { id: surface; anchors.fill: parent; visible: !root.islands }
     BarGroup {

@@ -5,6 +5,7 @@ import "../theme"
 Button {
     id: root
     property bool selected: checked
+    property bool compositorBlur: Theme.compositorPopupBlur
     property bool selectionFill: true
     property color selectionColor: Theme.buttonSelected
     property bool glassBackground: !flat && (selected || !plate || plate.color.a > 0)
@@ -48,6 +49,7 @@ Button {
         parent: root.background
         anchors.fill: parent
         radius: root.plate ? root.plate.radius : root.cornerRadius
+        compositorBlur: root.compositorBlur
         hovered: root.hovered; pressed: root.down
         visible: !!root.background && root.glassBackground && (!root.selected || root.selectionFill || !Theme.glassSelection)
     }

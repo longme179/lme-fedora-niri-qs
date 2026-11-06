@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fix the islands bar blur following the full strip (follow-up to the
+  compositor-yield fix): the islands blur region is now the pill shapes
+  only (no full-strip band), matching islands vs continuous behavior;
+  bar pills and their module controls yield with the bar flag, popups
+  keep the popup flag.
+
 - Fix glass panels showing the stale wallpaper snapshot over app windows:
   when a true-backdrop (xray false) preset is applied on niri 26.04+ the
   lens now yields to the compositor frost (transparent base, tint capped at

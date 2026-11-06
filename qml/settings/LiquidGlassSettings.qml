@@ -18,7 +18,14 @@ SettingsCard {
     // Version gate: compositor blur needs niri 26.04+; the backend reports the
     // probed version via ShellState.snapshot.platform (see compositor_features).
     readonly property bool blurSupported: (ShellState.snapshot.platform || {}).popupBlurSupported === true
+    property string materialPreset: "Clear"
+    readonly property var materialPresetValues: {
+        "Clear": {tint:"#f0081420", opacity:0.65, blur:1, rim:1, edgeWidth:1, grain:0.004, passes:2, offset:3},
+        "Frosted": {tint:"#f0182436", opacity:0.9, blur:3, rim:0.8, edgeWidth:0.5, grain:0.01, passes:1, offset:2},
+        "Vivid": {tint:"#f00a1a28", opacity:0.55, blur:1.5, rim:1.6, edgeWidth:1.5, grain:0.002, passes:3, offset:4.5}
+    }
     function save(key, value) { ShellState.run("setting", {key:"liquidGlass", token:key, value:value}); }
+    function applyMaterialPreset(name) { materialPreset = name; const values = materialPresetValues[name]; for (const key in values) root.save(key, values[key]); }
     RowLayout {
         Layout.fillWidth: true; spacing: 10
         IconButton {
@@ -42,11 +49,25 @@ SettingsCard {
     Connections { target:ShellState; function onPreferencesChanged() { if (!hex.activeFocus) hex.text=Theme.glass.tint || "#f0081420"; } }
     ColorPicker { id:picker; objectName:"glassColorPicker"; parent:Overlay.overlay; anchors.centerIn:parent; onChosen:color => { hex.text=color.toString(); root.error=""; root.save("tint", hex.text); } }
     ColumnLayout {
+        Layout.fillWidth:true; spacing:8
+        LabelText { Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold; text:"Material (lens)" }
+        LiquidComboBox {
+            objectName:"glassMaterialPreset"; Layout.fillWidth:true; Accessible.name:"Material preset"
+            model:["Clear","Frosted","Vivid"]
+            currentIndex: ["Clear","Frosted","Vivid"].indexOf(root.materialPreset)
+            onActivated: root.applyMaterialPreset(model[currentIndex])
+        }
+        LabelText {
+            Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
+            text:"Clear is the default lens. Material Frosted is the budget look (higher lens blur + tint, thin edge, fewer compositor passes). Vivid pushes rim, edge width and passes. The preset only sets these values; sliders stay for fine-tuning."
+        }
+    }
+    ColumnLayout {
         visible: root.blurSupported
         Layout.fillWidth:true; spacing:8
-        LabelText { Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold; text:"Compositor blur preset" }
+        LabelText { Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold; text:"Backdrop blur (compositor)" }
         LiquidComboBox {
-            objectName:"glassBlurPreset"; Layout.fillWidth:true; Accessible.name:"Compositor blur preset"
+            objectName:"glassBlurPreset"; Layout.fillWidth:true; Accessible.name:"Backdrop blur preset"
             model:["Frosted (wallpaper only, default)","True backdrop (experimental)"]
             currentIndex: Theme.glass.blurPreset === "true" ? 1 : 0
             onActivated: root.save("blurPreset", currentIndex === 1 ? "true" : "frosted")

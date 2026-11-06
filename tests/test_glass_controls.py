@@ -104,6 +104,20 @@ class GlassControlsCase(Fixture, unittest.TestCase):
             with self.subTest(value=bad), self.assertRaises(ValueError):
                 self.preferences.set('liquidGlass', bad, token='grain')
 
+    def test_material_presets_write_only_existing_keys(self):
+        presets = {
+            'Clear': {'tint': '#f0081420', 'opacity': 0.65, 'blur': 1, 'rim': 1, 'edgeWidth': 1, 'grain': 0.004, 'passes': 2, 'offset': 3},
+            'Frosted': {'tint': '#f0182436', 'opacity': 0.9, 'blur': 3, 'rim': 0.8, 'edgeWidth': 0.5, 'grain': 0.01, 'passes': 1, 'offset': 2},
+            'Vivid': {'tint': '#f00a1a28', 'opacity': 0.55, 'blur': 1.5, 'rim': 1.6, 'edgeWidth': 1.5, 'grain': 0.002, 'passes': 3, 'offset': 4.5},
+        }
+        for name, values in presets.items():
+            with self.subTest(preset=name):
+                self.preferences.set('liquidGlass', dict(values))
+                saved = backend.Preferences(self.preferences.path).values['liquidGlass']
+                for key, expected in values.items():
+                    self.assertEqual(saved[key], expected if key != 'tint' else expected.lower())
+                self.assertNotIn('materialPreset', saved)
+
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1' and shutil.which('quickshell'), 'private glass settings controls')
 class GlassControlsQmlCase(unittest.TestCase):

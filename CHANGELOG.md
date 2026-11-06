@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fix the equalizer band intro stagger crashing the delegate: the Repeater
+  delegate read `index` inside its nested Translate transform without
+  declaring `required property int index`, producing "ReferenceError: index
+  is not defined" in the live shell log. The delegate now declares the
+  property and the transform reads it explicitly as `bandDelegate.index`.
 - Add the glass backdrop snapshot cache (Liquid Glass 2.0, A2 part 2): the
   backend snapshots awww's live per-output state to
   $XDG_CACHE_HOME/lme-shell/glass/<output>.png with a revision counter —

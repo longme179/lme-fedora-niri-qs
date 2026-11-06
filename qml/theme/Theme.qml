@@ -13,7 +13,7 @@ QtObject {
     readonly property bool batterySaver: ShellState.batterySaverActive; readonly property bool reducedTransparency: ShellState.preferences.reducedTransparency === true; readonly property bool liquidGlass: !batterySaver && !reducedTransparency && ShellState.preferences.surfaceStyle === "liquid"
     readonly property bool glassSelection: liquidGlass && ShellState.preferences.glassSelection !== false; readonly property bool adaptiveContrast: liquidGlass && ShellState.preferences.adaptiveContrast === true
     function glassAdaptiveTint(tA, l) { const c = Math.max(0, Math.min(1, l)); return Math.max(0, Math.min(1, Math.max(0.7*tA, Math.min(tA*(0.75+0.75*c), Math.min(1.6*tA, 0.9))))); }
-    function glassContrastFloor(alpha, l, tintLum) { const floor = l <= 0.30 || tintLum >= l ? 0 : (l - 0.30) / (l - tintLum); return Math.max(alpha, Math.min(floor, 0.75)); }
+    function glassContrastFloor(alpha, l, tintLum, yieldMode) { const floor = l <= 0.30 || tintLum >= l ? 0 : (l - 0.30) / (l - tintLum); return Math.max(alpha, Math.min(floor, yieldMode ? 0.30 : 0.75)); }
     readonly property bool compositorTrueBlur: glass.appliedBlur === "true" && (ShellState.snapshot.platform || {}).popupBlurSupported === true // true-backdrop (xray=false) yields the lens; else wallpaper lens
     readonly property bool compositorBarBlur: compositorTrueBlur && ShellState.barBlurEnabled; readonly property bool compositorPopupBlur: compositorTrueBlur && ShellState.liquidBlurEnabled
     property var glassControls: ({})

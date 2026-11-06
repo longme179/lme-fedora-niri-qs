@@ -65,14 +65,23 @@ ShellRoot {
                 id: barWindow
                 screen: screenScope.modelData
                 anchors { top: !Theme.barBottom; bottom: Theme.barBottom; left: true; right: true }
-                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? Theme.barTopMargin : 0 }
-                implicitHeight: Theme.barHeight
-                exclusiveZone: implicitHeight
+                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? 0 : 0 }
+                implicitHeight: Theme.barBottom ? (Theme.barHeight + Theme.barTopMargin) : (Theme.barHeight + Theme.glassShadowPad)
+                exclusiveZone: Theme.barHeight
                 color: "transparent"
                 WlrLayershell.namespace: "lme-bar"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 BackgroundEffect.blurRegion: visible && ShellState.barBlurEnabled ? bar.blurRegion : null
-                Bar { id: bar; anchors.fill: parent; screenInfo: screenScope.modelData; windowInfo: barWindow }
+                mask: Region { item: bar }
+                Bar {
+                    id: bar
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: Theme.barHeight
+                    screenInfo: screenScope.modelData
+                    windowInfo: barWindow
+                }
                 IdleInhibitor { window: barWindow; enabled: ShellState.stayAwake && !ShellState.demo }
             }
         }

@@ -14,6 +14,8 @@ Item {
     property real topRightRadius: radius
     property real bottomLeftRadius: radius
     property real bottomRightRadius: radius
+    property real shadow: 0
+    readonly property real pad: shadow > 0 ? Theme.glassShadowPad : 0
     property bool hovered: false
     property bool pressed: false
     readonly property bool software: GraphicsInfo.api === GraphicsInfo.Software
@@ -107,8 +109,8 @@ Item {
     onRenderWindowChanged: invalidateSample()
     function updateSample() {
         if (!active || !backdrop) return;
-        const a = root.mapToItem(null, 0, 0);
-        const b = root.mapToItem(null, width, height);
+        const a = root.mapToItem(null, -root.pad, -root.pad);
+        const b = root.mapToItem(null, width + root.pad, height + root.pad);
         const origin = backdrop.windowOrigin;
         const crop = backdrop.cropRect;
         sampleRect = Qt.rect(crop.x + (origin.x + a.x) / backdrop.outputWidth * crop.width, crop.y + (origin.y + a.y) / backdrop.outputHeight * crop.height,
@@ -130,14 +132,26 @@ Item {
             function onChildrenChanged() { root.scheduleNestUpdate() }
         }
     }
-    Loader {
-        anchors.fill: parent
-        active: root.active
-        sourceComponent: root.software ? fallback : optical
+    Item {
+        id: glassFrame
+        anchors.centerIn: parent
+        width: root.width + root.pad * 2
+        height: root.height + root.pad * 2
+        visible: root.active
+        Loader {
+            anchors.fill: parent
+            active: root.active
+            sourceComponent: root.software ? fallback : optical
+        }
     }
     Component {
         id: fallback
         Rectangle {
+            // Software fallback has no shadow; keep the pill at panel size
+            // inside the inflated frame.
+            anchors.centerIn: parent
+            width: root.width
+            height: root.height
             radius: root.radius
             // Software fallback: the panel fill underneath already paints the
             // body; this only keeps the hairline visible (no brightness knob).
@@ -151,6 +165,7 @@ Item {
     Component {
         id: optical
         GlassOptics {
+            anchors.fill: parent
             src: root.backdrop
             sourceAvailable: root.backdrop && root.backdrop.status === Image.Ready ? 1 : 0
             sourceRect: root.sampleRect
@@ -158,13 +173,15 @@ Item {
             topRightRadius: root.topRightRadius < 0 ? root.radius : root.topRightRadius
             bottomLeftRadius: root.bottomLeftRadius < 0 ? root.radius : root.bottomLeftRadius
             bottomRightRadius: root.bottomRightRadius < 0 ? root.radius : root.bottomRightRadius
-            cursorPos: root.lightPosition
+            glassPad: root.pad
+            shadowAmt: root.shadow * (1 - 0.6 * root.nest)
+            cursorPos: root.pad > 0 ? Qt.point(root.lightPosition.x + root.pad, root.lightPosition.y + root.pad) : root.lightPosition
             hover: root.hoverAmount; energy: root.pressAmount
             tintColor: Theme.panel; tintAmount: 0.35 * 0.5 * (1 - 0.5 * root.nest)
             clear: root.nestLevel >= 1 ? 1 : 0
             frost: root.nestLevel >= 1 ? Math.min(root.baseFrost, 1) : root.baseFrost
             dispersion: .02; saturation: 1.0; rim: root.baseRim * (1 - .35 * root.nest); nest: root.nest
-            bezel: Math.max(3, Math.min(14, Math.min(width, height) * .28)) * (Theme.glass.edgeWidth ?? 1)
+            bezel: Math.max(3, Math.min(14, Math.min(root.width, root.height) * .28)) * (Theme.glass.edgeWidth ?? 1)
             thickness: bezel * 0.8
         }
     }

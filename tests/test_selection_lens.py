@@ -20,6 +20,24 @@ class LensPreferencesCase(Fixture, unittest.TestCase):
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI')=='1','private OpenGL selection checks')
+class Lens2SourceCase(unittest.TestCase):
+    def test_new_timing_is_the_default_and_legacy_is_opt_out(self):
+        from pathlib import Path
+        text = (Path(__file__).resolve().parents[1] / 'qml/components/StretchIndicator.qml').read_text()
+        self.assertIn('property bool legacyMotion: false', text)
+        self.assertIn('!root.legacyMotion', text)
+        self.assertIn('property bool placed', text)
+        self.assertIn('property bool settling', text)
+        self.assertIn('interval: 300', text)
+        self.assertIn('Easing.OutExpo', text)
+        self.assertIn('duration: root.forward ? 200', text)
+        self.assertIn('duration: root.forward ? 350', text)
+        self.assertIn('liftMagnify', text)
+        self.assertIn('1.16', text)
+        self.assertIn('Qt.callLater(() => placed', text)
+        self.assertIn('Serpantinum GlassLens.qml', text)
+        self.assertIn('MIT', text)
+
 class LensQmlCase(unittest.TestCase):
     run_qml=qml_tests.LocalQmlCase.run_qml
 

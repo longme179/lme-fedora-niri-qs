@@ -38,6 +38,8 @@ layout(std140, binding = 0) uniform buf {
     float unpremul;
     float sourceAvailable;
     float compositorBlur;
+    float grain;
+    float adaptiveContrast;
 };
 
 layout(binding = 1) uniform sampler2D src;
@@ -50,7 +52,6 @@ const float LENS_NONE = 420.0;
 const float FRESNEL = 0.55;
 const float INNER_SHADOW = 0.16;
 const float BROAD_SPEC = 0.2;
-const float GRAIN = 0.004;
 const vec2 lightDir = vec2(-0.55, -0.83);
 
 float sdRoundBox(vec2 p, vec2 b, vec4 r) {
@@ -201,7 +202,7 @@ void main() {
         if (cB.a > 0.05) col.b = cB.b / cB.a;
     }
 
-    float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+    float l = dot(col, vec3(0.2126, 0.7152, 0.0722)); float lRaw = (adaptiveContrast>0.5 && sourceAvailable>=0.5) ? dot(blurredAt(ps + dG, rad, lod, taps), vec3(0.2126, 0.7152, 0.0722)) : 0.0; vec3 tcol = tintColor.rgb; float tAraw = clamp(tintAmount*(0.7+0.6*l), 0.0, 1.0); float tA = adaptiveContrast>0.5 ? clamp(tAraw*(0.75+0.75*clamp((compositorBlur>=0.5 ? lRaw : l),0.0,1.0)), 0.7*tAraw, min(1.6*tAraw,0.9)) : tAraw;
     col = mix(vec3(l), col, saturation);
 
     col *= 1.0 - (1.0 - nest) * 0.06 * exp(-t / 6.0) * clamp(g.y, 0.0, 1.0);
@@ -234,23 +235,17 @@ void main() {
         float fringePhase = dot(g, vec2(0.7, 0.45)) * 0.9 + t / (bz * 1.6) + 0.15 * dot(p, vec2(0.004, 0.003));
         fringe = (spectrum(fringePhase) - 0.5) * fringeBand * (0.04 + 0.08 * spec) * rim * (1.0 + 3.0 * motion);
     }
-    vec3 tcol = tintColor.rgb;
-    float tA = clamp(tintAmount * (0.7 + 0.6 * l), 0.0, 1.0);
-    float lensA = smoothstep(0.0, 1.0, length(dG) * 0.5);
-    vec3 light = vec3(edgeHi + men + broad + energy * 0.03) + fringe;
-    light += vec3(0.02 * clear * lensA);
+    float lensA = smoothstep(0.0, 1.0, length(dG) * 0.5); vec3 light = vec3(edgeHi + men + broad + energy * 0.03) + fringe; light += vec3(0.02 * clear * lensA);
 
     vec3 opaqueRgb = col * mix(vec3(1.0), tcol, tA);
     vec3 clearRgb = col * lensA * (1.0 - tA) + tcol * tA;
     float clearA = lensA * (1.0 - tA) + tA;
     // cb=1: transparent base (light tint <=0.15 + rim light) lets compositor frost show through.
-    vec3 premul = compositorBlur >= 0.5 ? tcol * clamp(tA * 0.85, 0.0, 0.15) + light : mix(opaqueRgb, clearRgb, clear) + light;
-    float alpha = compositorBlur >= 0.5 ? clamp(clamp(tA * 0.85, 0.0, 0.15) + dot(light, vec3(0.3333)), 0.0, 0.85) : mix(1.0, clearA, clear);
+    vec3 premul = compositorBlur >= 0.5 ? tcol * clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + light : mix(opaqueRgb, clearRgb, clear) + light;
+    float alpha = compositorBlur >= 0.5 ? clamp(clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + dot(light, vec3(0.3333)), 0.0, 0.85) : mix(1.0, clearA, clear);
 
-    float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0;
-    premul += vec3(gn * GRAIN * (1.0 - 0.7 * nest)) * alpha;
+    float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0; premul += vec3(gn * grain * (1.0 - 0.7 * nest)) * alpha;
 
-    float a = coverage * qt_Opacity;
-    float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
+    float a = coverage * qt_Opacity; float outA = clamp(alpha, 0.0, 1.0) * coverage + shadow * (1.0 - coverage);
     fragColor = vec4(clamp(premul, 0.0, 1.0) * a, outA * qt_Opacity);
 }

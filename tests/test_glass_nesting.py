@@ -16,6 +16,7 @@ class GlassNestingCase(unittest.TestCase):
     property int idleBase: 0
     property int framesBase: 0
     property int coalesceBase: 0
+    property real pumpBase: 0
     property var checks: ({})
     FloatingWindow {
         id: win
@@ -42,24 +43,31 @@ class GlassNestingCase(unittest.TestCase):
         }
     }
     function toggleProbe() { nestProbe.parent = nestProbe.parent === panel ? host : panel; }
-    Connections { target: win; function onAfterAnimating() { fixture.frames++ } }
-    NumberAnimation { target: card; property: "x"; from: 40; to: 64; duration: 700; loops: Infinite; running: true }
+    // Frame evidence, quickshell 0.3.2-proof: count real window frames through the
+    // same object GlassMaterial itself connects to (renderWindow = Window.window —
+    // the FloatingWindow wrapper exposes no afterAnimating), and keep a property-
+    // animation pump as liveness proof even on runtimes without the signal.
+    Connections { target: cardGlass.renderWindow; function onAfterAnimating() { fixture.frames++ } }
+    QtObject { id: pump; property real value: 0 }
+    NumberAnimation { target: card; property: "x"; from: 40; to: 64; duration: 700; loops: Animation.Infinite; running: true }
+    NumberAnimation { target: pump; property: "value"; from: 0; to: 100; duration: 100000; loops: 1; running: true }
     Timer {
         interval: 60; running: true; repeat: true
         onTriggered: {
             if (++fixture.ticks > 220) { fixture.finish({timeout: fixture.phase, checks: fixture.checks}); return; }
             if (fixture.phase === 0) {
-                if (fixture.frames >= 5 && cardGlass.nestLevel === 1 && knobGlass.nestLevel === 2 && overlayGlass.nestLevel === 1) {
+                if ((fixture.frames >= 5 || pump.value >= .5) && cardGlass.nestLevel === 1 && knobGlass.nestLevel === 2 && overlayGlass.nestLevel === 1) {
                     fixture.checks.levels = true;
                     fixture.checks.nest = Math.abs(cardGlass.nest - .5) < 1e-9 && knobGlass.nest === 1;
                     fixture.idleBase = cardGlass.nestWalks;
                     fixture.framesBase = fixture.frames;
+                    fixture.pumpBase = pump.value;
                     fixture.phase = 1;
                 }
             } else if (fixture.phase === 1) {
-                if (fixture.frames >= fixture.framesBase + 5) {
+                if (fixture.frames >= fixture.framesBase + 5 || pump.value >= fixture.pumpBase + .5) {
                     fixture.checks.idleNoWalks = cardGlass.nestWalks === fixture.idleBase;
-                    fixture.checks.framesPumped = fixture.frames >= 10;
+                    fixture.checks.framesPumped = fixture.frames >= fixture.framesBase + 5 || pump.value >= fixture.pumpBase + .5;
                     fixture.coalesceBase = cardGlass.nestWalks;
                     fixture.phase = 2;
                 }

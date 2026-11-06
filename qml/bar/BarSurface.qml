@@ -24,8 +24,8 @@ GlassPanel {
     bottomLeftRadius: Theme.barCornerRadius("bottomLeft", height, zone)
     bottomRightRadius: Theme.barCornerRadius("bottomRight", height, zone)
     color: Theme.alpha(fill, Theme.panelOpacity)
-    // Glass mode: the shader hairline is the border (GlassPanel gates its own
-    // border identically); keep the styled border for non-glass zones.
-    border.width: Theme.liquidGlass ? 0 : zone ? (style.borderWidth === undefined ? 1 : style.borderWidth) : Theme.barBorderWidth
-    border.color: Theme.liquidGlass ? Theme.barBorder : style.borderColor || Theme.barBorder
+    // Hairline while a blur preset is applied (see GlassPanel); otherwise the
+    // shader rim is the glass edge. Non-glass zones keep the styled border.
+    border.width: Theme.liquidGlass ? (blurHairline ? 1 : 0) : zone ? (style.borderWidth === undefined ? 1 : style.borderWidth) : Theme.barBorderWidth
+    border.color: blurHairline ? Theme.border : Theme.liquidGlass ? Theme.barBorder : style.borderColor || Theme.barBorder
 }

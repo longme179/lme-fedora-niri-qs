@@ -15,6 +15,9 @@ SettingsCard {
     description: "These controls apply to glass backgrounds across the shell. Text stays white. Your Smoked palette and element overrides stay separate. Changes save automatically; Reset restores the original glass."
     PreferenceSwitch { title: "Refractive selection"; detail: "A glass lens follows the selected tab or Settings page"; preference: "glassSelection" }
     property string error: ""
+    // Version gate: compositor blur needs niri 26.04+; the backend reports the
+    // probed version via ShellState.snapshot.platform (see compositor_features).
+    readonly property bool blurSupported: (ShellState.snapshot.platform || {}).popupBlurSupported === true
     function save(key, value) { ShellState.run("setting", {key:"liquidGlass", token:key, value:value}); }
     RowLayout {
         Layout.fillWidth: true; spacing: 10
@@ -38,8 +41,27 @@ SettingsCard {
     LabelText { objectName:"glassTintError"; visible:!!root.error; text:root.error; color:Theme.red; Layout.fillWidth:true; wrapMode:Text.Wrap }
     Connections { target:ShellState; function onPreferencesChanged() { if (!hex.activeFocus) hex.text=Theme.glass.tint || "#f0081420"; } }
     ColorPicker { id:picker; objectName:"glassColorPicker"; parent:Overlay.overlay; anchors.centerIn:parent; onChosen:color => { hex.text=color.toString(); root.error=""; root.save("tint", hex.text); } }
+    ColumnLayout {
+        visible: root.blurSupported
+        Layout.fillWidth:true; spacing:8
+        LabelText { Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold; text:"Compositor blur preset" }
+        LiquidComboBox {
+            objectName:"glassBlurPreset"; Layout.fillWidth:true; Accessible.name:"Compositor blur preset"
+            model:["Frosted (wallpaper only, default)","True backdrop (experimental)"]
+            currentIndex: Theme.glass.blurPreset === "true" ? 1 : 0
+            onActivated: root.save("blurPreset", currentIndex === 1 ? "true" : "frosted")
+        }
+        LabelText {
+            Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
+            text:"Frosted blurs only the wallpaper behind panels and is cheapest on the iGPU (default). True backdrop also blurs app windows — experimental and can dip during window animations. Neither applies until you save the snippet below."
+        }
+    }
+    LabelText {
+        visible: !root.blurSupported; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
+        text:"Compositor blur needs niri 26.04+ (running: " + ((ShellState.snapshot.platform || {}).niriVersion || "checking…") + "). Lens blur, tint and the snapshot backdrop keep working without it."
+    }
     Repeater {
-        model: Object.keys(Theme.glassControls).filter(key => key !== "tint")
+        model: Object.keys(Theme.glassControls).filter(key => key !== "tint" && !(Theme.glassControls[key] && Theme.glassControls[key].compositor && !root.blurSupported))
         delegate: ColumnLayout {
             id: row
             required property string modelData
@@ -51,7 +73,7 @@ SettingsCard {
             }
             LabelText {
                 visible: row.modelData === "passes"; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
-                text:"Lens blur softens only refracted edges. True blur behind applications uses niri 26.04+. The two controls below apply only when you save the niri snippet; they affect every surface requesting blur, including Smoked mode. Higher values cost GPU time."
+                text:"Lens blur softens only refracted edges. The preset above chooses how niri samples behind panels. The two controls below apply only when you save the niri snippet; they affect every surface requesting blur, including Smoked mode. Higher values cost GPU time."
             }
             LabelText {
                 Layout.fillWidth:true; wrapMode:Text.Wrap; font.weight:Font.Bold
@@ -74,11 +96,11 @@ SettingsCard {
     }
     RowLayout {
         Layout.fillWidth:true
-        LiquidButton { objectName:"glassBlurApply"; text:"Save niri blur snippet"; enabled:ShellState.backendReady; onClicked:ShellState.run("glassBlurApply") }
+        LiquidButton { objectName:"glassBlurApply"; visible:root.blurSupported; text:"Save niri blur snippet"; enabled:ShellState.backendReady; onClicked:ShellState.run("glassBlurApply", {preset:Theme.glass.blurPreset || "frosted"}) }
         LiquidButton { objectName:"glassReset"; text:"Reset glass"; enabled:ShellState.backendReady; onClicked: { root.error=""; hex.focus=false; ShellState.run("setting", {key:"liquidGlass", value:{}}); } }
     }
     LabelText {
         Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted
-        text:"Edge highlight and lens blur shape the hairline; edge width sets the bezel. Reset does not rewrite an already applied niri snippet; save it again to restore the default blur."
+        text:"Edge highlight and lens blur shape the hairline; edge width sets the bezel. While a preset is applied, panels gain a 1px glass-border hairline that masks rounded-corner aliasing; it clears when no preset is applied. Reset does not rewrite an already applied niri snippet; save it again to restore the default blur."
     }
 }

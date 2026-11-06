@@ -40,6 +40,14 @@ else
     optional_missing=$((optional_missing + 1))
 fi
 required niri niri
+if command -v niri >/dev/null 2>&1; then
+    if niri --version | python3 -c 'import re, sys; match = re.search(r"(\d+)\.(\d+)", sys.stdin.read()); sys.exit(0 if match and tuple(map(int, match.groups())) >= (26, 4) else 1)'; then
+        printf 'OK       niri version is at least 26.04\n'
+    else
+        printf 'MISSING  niri 26.04 or newer for compositor blur presets\n'
+        required_failures=$((required_failures + 1))
+    fi
+fi
 required nmcli NetworkManager
 required wpctl wireplumber
 required brightnessctl brightnessctl

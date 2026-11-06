@@ -21,6 +21,8 @@ class SelectionActionCase(Fixture, unittest.TestCase):
         env = patch.dict(os.environ, XDG_CONFIG_HOME=str(self.root/'config'),
             XDG_STATE_HOME=str(self.root/'state'), XDG_RUNTIME_DIR=str(self.root/'runtime'))
         env.start(); self.addCleanup(env.stop)
+        probe = patch('liquid_glass.probe_niri_version', return_value=(26, 4))
+        probe.start(); self.addCleanup(probe.stop)
         self.instances = 0
 
     def configured(self, demo=False, settings=False):
@@ -52,7 +54,9 @@ class SelectionActionCase(Fixture, unittest.TestCase):
                     if demo: setup.assert_not_called()
                     else: setup.assert_called_once_with('literal;$(input).png', before['terminal'])
                 expected = dict(before, weatherLocation=NORMAL, weatherAutoLocation=False)
-                if not demo: expected.update(wallpaperPalette=dict(accent='#abcdef', text='#fedcba'), paletteSource='wallpaper', accent='#abcdef')
+                if not demo:
+                    expected.update(wallpaperPalette=dict(accent='#abcdef', text='#fedcba'), paletteSource='wallpaper', accent='#abcdef')
+                    expected['liquidGlass'] = dict(expected['liquidGlass'], appliedBlur='frosted')
                 self.assertEqual(live.preferences.values, expected)
                 self.assertEqual(live.preferences.path.exists(), not demo)
                 if not demo:
@@ -93,9 +97,10 @@ class SelectionActionCase(Fixture, unittest.TestCase):
     def test_blur_owned_content_permissions_user_file_and_symlink_guards(self):
         live = self.configured(); path = live.preferences.path.parent/'liquid-blur.kdl'
         live.preferences.set('liquidGlass', {'passes':3, 'offset':2.5})
-        settings = live.preferences.path.read_bytes()
         self.assertTrue(live.handle(dict(action='glassBlurApply'))['ok'])
-        self.assertEqual(path.read_text(), liquid_glass.MARKER+'blur {\n    passes 3\n    offset 2.5\n}\n')
+        self.assertEqual(live.preferences.values['liquidGlass']['appliedBlur'], 'frosted')
+        settings = live.preferences.path.read_bytes()
+        self.assertEqual(path.read_text(), liquid_glass.MARKER+'// Include AFTER generic background-effect rules; later rules win.\n// With xray on, only the wallpaper is blurred; with xray off, app windows are blurred too.\nlayer-rule {\n    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"\n    background-effect {\n        xray true\n    }\n}\nwindow-rule {\n    match app-id="^lme-shell-settings$"\n    // Keep niri\'s focus-ring backing from filling the transparent window.\n    draw-border-with-background false\n    background-effect {\n        xray true\n    }\n}\nblur {\n    passes 3\n    offset 2.5\n}\n')
         self.assertEqual(path.stat().st_mode & 0o777, 0o600)
         target = self.put('protected.kdl', 'user-owned')
         for symlink in (False, True):

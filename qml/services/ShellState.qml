@@ -51,6 +51,9 @@ QtObject {
     property var pendingState: Pending.initial()
     property real trayAnchorX: -1
     readonly property bool panelOpen: catalogPanelOpen || launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || activityOpen || wifiOpen
+    // Bumped whenever an open panel is replaced by a different one; the shell
+    // retires the outgoing surface immediately (atomic swap).
+    property int panelSwap: 0
     property var panelScreen: null
     property string statusMessage: ""
     property bool statusError: false
@@ -88,7 +91,9 @@ QtObject {
         }
         if (FeatureCatalog.panel(name)) {
             const wasOpen = isPanelOpen(name);
+            const replacing = panelOpen && !wasOpen;
             closePanels();
+            if (replacing) panelSwap++;
             if (screen) panelScreen = screen;
             panelKind = name; catalogPanelOpen = !wasOpen;
             if (name === "notifications") { notificationsOpen = !wasOpen; if (notificationsOpen) Notifications.markRead(); }
@@ -97,7 +102,9 @@ QtObject {
         const key = name + "Open";
         if (!legacyPanels.includes(name)) return;
         const wasOpen = root[key];
+        const replacing = panelOpen && !wasOpen;
         closePanels();
+        if (replacing) panelSwap++;
         if (screen) panelScreen = screen;
         if (name !== "activity") panelKind = name;
         root[key] = !wasOpen;

@@ -32,6 +32,9 @@ Loader {
     active: mounted
     // Incubate content across frames so mounting a heavy panel never blocks the UI.
     asynchronous: true
+    // NOTE: dormant trees stay "visible" and are hidden purely by the off-screen
+    // park offset — toggling Item.visible on a large retained tree costs ~800ms
+    // of main-thread time on reopen (visibility propagation through every node).
     enabled: shown
     sourceComponent: retainedContent
     Behavior on width { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
@@ -59,9 +62,14 @@ Loader {
         if (keepAlive) {
             dormant = true;
             motion.stop(); exitMotionX.stop(); exitMotionY.stop();
-            spring.snapTo(0); exitSpringX.snapTo(0); exitSpringY.snapTo(0);
+            // Park where the exit flight ended — outside the viewport — instead
+            // of resetting the offset to zero. A sibling surface can keep the
+            // host window mapped (activity island beside a retained panel), and
+            // a panel parked at its open position pops back into view.
+            const park = exitToEdge ? edgeOffset() : {x: 0, y: 0};
+            spring.snapTo(0); exitSpringX.snapTo(park.x); exitSpringY.snapTo(park.y);
             if (!Theme.springMotion) progress = 0;
-            exitX = 0; exitY = 0;
+            exitX = park.x; exitY = park.y;
             travelEdge = -1;
             return;
         }
@@ -71,6 +79,20 @@ Loader {
         if (!Theme.springMotion) progress = 0;
         exitX = 0; exitY = 0;
         travelEdge = -1;
+    }
+    // Instantly retire a closing or closed surface — a replacement panel is
+    // taking the stage, so the outgoing one must not finish its exit flight
+    // visibly next to the newcomer.
+    function snapOut() {
+        if (shown || !mounted) return;
+        motion.stop(); exitMotionX.stop(); exitMotionY.stop();
+        const park = exitToEdge ? edgeOffset() : {x: 0, y: 0};
+        spring.snapTo(0); exitSpringX.snapTo(park.x); exitSpringY.snapTo(park.y);
+        if (!Theme.springMotion) progress = 0;
+        exitX = park.x; exitY = park.y;
+        travelEdge = -1;
+        if (keepAlive) dormant = true;
+        else mounted = false;
     }
     function edgeOffset() {
         let dx = 0, dy = 0;
@@ -126,16 +148,31 @@ Loader {
             dormant = false;
             retainedContent = content;
             if (status === Loader.Ready) move(1);
-            else if (!mounted) {
-                // Park the mount off-screen until asynchronous incubation delivers the item.
-                mounted = true;
+            else {
+                // Park at the flight origin until asynchronous incubation
+                // delivers the item — fresh mounts and retained reopenings alike.
+                if (!mounted) mounted = true;
+                travelEdge = -1;
                 const offset = Theme.animations ? edgeOffset() : {x: 0, y: 0};
                 exitSpringX.snapTo(offset.x); exitSpringY.snapTo(offset.y);
                 exitX = offset.x; exitY = offset.y;
             }
         } else if (mounted) move(0);
     }
-    onContentChanged: if (initialized && shown) { retainedContent = content; if (!mounted) move(1); }
+    onContentChanged: if (initialized && shown) {
+        retainedContent = content;
+        if (!mounted) move(1);
+        else if (status !== Loader.Ready) {
+            // A different panel took over while this surface stayed shown; the
+            // swap resets the flight so the newcomer slides in instead of
+            // popping in at full progress.
+            travelEdge = -1;
+            const park = Theme.animations ? edgeOffset() : {x: 0, y: 0};
+            spring.snapTo(0); exitSpringX.snapTo(park.x); exitSpringY.snapTo(park.y);
+            if (!Theme.springMotion) progress = 0;
+            exitX = park.x; exitY = park.y;
+        }
+    }
     Component.onCompleted: { initialized = true; if (shown) { retainedContent = content; move(1); } }
     onLoaded: {
         const panel = item as Item;

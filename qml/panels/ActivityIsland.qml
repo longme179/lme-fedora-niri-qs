@@ -16,19 +16,23 @@ SlideLoader {
     readonly property Item panel: item as Item
     readonly property real expandedHeight: Math.max(1, Math.min(panel ? panel.implicitHeight : 680, Theme.activityPopupMaxHeight || Infinity, parent ? parent.height - edgeInset - 14 : 680))
     shown: expanded
+    // Retain the built island across closes for instant animated reopens.
+    keepAlive: true
     exitToEdge: true
     exitEdge: Theme.barBottom ? "bottom" : "top"
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
-    visible: mounted
+    visible: mounted && !dormant
     width: Math.max(1, Math.min(expandedWidth, Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion))
     height: Math.max(1, Math.min(expandedHeight, Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion))
     x: Math.max(sideInset, Math.min((parent ? parent.width : width) - width - sideInset, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
     y: Theme.barBottom && parent ? parent.height - edgeInset - height : edgeInset
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }
-    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted }
+    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && !root.dormant ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }
+    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && !root.dormant ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted }
+    // Rewind to the compact size when dormant so the next open re-expands.
+    onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30) }
     content: GlassPanel { role: "islandFill";
         implicitHeight: card.implicitHeight + 76
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true

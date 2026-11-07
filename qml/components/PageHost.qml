@@ -20,15 +20,24 @@ Item {
         const previous = current;
         current = loader;
         incoming = loader === loaderA ? loaderB : loaderA;
+        // Deletion of the retired page is queued; hide it now so the two pages
+        // can never render on top of each other.
+        previous.visible = false;
         previous.active = false;
         previous.sourceComponent = null;
+        loader.visible = true;
         if (Theme.animations) { enter = 0; enterMotion.restart(); }
         else enter = 1;
     }
 
     function dispatch() {
         if (!content) return;
-        if (current.sourceComponent === content && current.status === Loader.Ready) return;
+        if (current.sourceComponent === content && current.status === Loader.Ready) {
+            // The visible page already matches; cancel any incubation still in
+            // flight so a late onLoaded cannot swap the wrong page in.
+            if (incoming.active) { incoming.active = false; incoming.sourceComponent = null; }
+            return;
+        }
         if (incoming.sourceComponent === content && incoming.status === Loader.Ready) { activate(incoming); return; }
         if (incoming.sourceComponent !== content) incoming.sourceComponent = content;
         incoming.active = true;
@@ -42,14 +51,16 @@ Item {
         anchors.fill: parent
         asynchronous: true
         active: false
-        onLoaded: if (root.incoming === loaderA) root.activate(loaderA)
+        visible: false
+        onLoaded: if (root.incoming === loaderA && root.content === loaderA.sourceComponent) root.activate(loaderA)
     }
     Loader {
         id: loaderB
         anchors.fill: parent
         asynchronous: true
         active: false
-        onLoaded: if (root.incoming === loaderB) root.activate(loaderB)
+        visible: false
+        onLoaded: if (root.incoming === loaderB && root.content === loaderB.sourceComponent) root.activate(loaderB)
     }
 
     transform: Translate { y: (1 - root.enter) * 28 }

@@ -120,11 +120,10 @@ GlassPanel {
             }
         }
         }
-        Loader {
+        PageHost {
             id: dashboard
-            asynchronous: true
             Layout.fillWidth: true; Layout.fillHeight: true
-            sourceComponent: root.tabComponents[root.selectedTab.entry] || catalogTab
+            content: root.tabComponents[root.selectedTab.entry] || catalogTab
         }
     }
     Component { id: catalogTab; Loader { asynchronous: true; source: FeatureCatalog.url(root.selectedTab.entry); onLoaded: if (item && "embedded" in item) item.embedded = true } }

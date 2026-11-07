@@ -124,7 +124,7 @@ Item {
                 contentWidth: width; contentHeight: pageLoader.item ? (pageLoader.item as Item).implicitHeight + 12 : 0
                 clip: true; boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: ScrollBar {}
-                SettingsPageHost {
+                PageHost {
                     id: pageLoader
                     x: 6; y: 6
                     width: pageScroll.width - 12

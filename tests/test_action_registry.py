@@ -200,5 +200,5 @@ class RegistryContractCase(unittest.TestCase):
         self.assertIsNone(registry.get('launchpadRunExtra'))
 
 # Keep the dispatch test entry stable without exceeding the source-size ratchet.
-from action_registry_async import WallpaperScanDispatchCase
+from action_registry_async import WallpaperScanDispatchCase, UnexpectedCompletionCase, CaptureSnapshotIsolationCase
 from action_registry_workers import WorkerRegistryCase

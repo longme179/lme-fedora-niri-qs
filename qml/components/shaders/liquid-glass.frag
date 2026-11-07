@@ -40,6 +40,7 @@ layout(std140, binding = 0) uniform buf {
     float compositorBlur;
     float grain;
     float adaptiveContrast;
+    float yieldOpacity;
 };
 
 layout(binding = 1) uniform sampler2D src;
@@ -193,7 +194,7 @@ void main() {
     bool interior = t >= bz && near < 0.02;
     int taps = interior ? 6 : (frost <= 1.2 ? 6 : TAPS);
     float lod = blurLod(rad, taps);
-    // Wallpaper snapshot backdrop, not a live blur texture; cb=1: transparent base, rim/tint/grain keep glass.
+    // Wallpaper snapshot backdrop, not a live blur texture; cb=1: tint base (Panel tint opacity via yieldOpacity) + rim/grain.
     vec3 col = compositorBlur >= 0.5 ? vec3(0.0) : (sourceAvailable < 0.5 ? vec3(0.32, 0.34, 0.38) : blurredAt(ps + dG, rad, lod, taps));
     if (compositorBlur < 0.5 && sourceAvailable >= 0.5 && !interior && dot(dG, dG) > 0.25) {
         vec4 cR = fetchLod4(ps + dR, lod + 0.5);
@@ -240,9 +241,8 @@ void main() {
     vec3 opaqueRgb = col * mix(vec3(1.0), tcol, tA);
     vec3 clearRgb = col * lensA * (1.0 - tA) + tcol * tA;
     float clearA = lensA * (1.0 - tA) + tA;
-    // cb=1: transparent base (light tint <=0.15 + rim light) lets compositor frost show through.
-    vec3 premul = compositorBlur >= 0.5 ? tcol * clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + light : mix(opaqueRgb, clearRgb, clear) + light;
-    float alpha = compositorBlur >= 0.5 ? clamp(clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + dot(light, vec3(0.3333)), 0.0, 0.85) : mix(1.0, clearA, clear);
+    vec3 premul = compositorBlur >= 0.5 ? tcol * clamp(clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + yieldOpacity * 0.75, 0.0, 0.92) + light : mix(opaqueRgb, clearRgb, clear) + light;
+    float alpha = compositorBlur >= 0.5 ? clamp(clamp(clamp(tA * 0.85, 0.0, (adaptiveContrast>0.5 && (compositorBlur>=0.5 ? lRaw : l) > 0.55) ? 0.22 : 0.15) + yieldOpacity * 0.75, 0.0, 0.92) + dot(light, vec3(0.3333)), 0.0, 0.92) : mix(1.0, clearA, clear);
 
     float gn = hash12(gl_FragCoord.xy) + hash12(gl_FragCoord.xy * 1.7 + 17.0) - 1.0; premul += vec3(gn * grain * (1.0 - 0.7 * nest)) * alpha;
 

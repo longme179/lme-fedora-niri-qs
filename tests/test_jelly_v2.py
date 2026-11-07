@@ -88,11 +88,6 @@ class JellyQmlCase(unittest.TestCase):
         coalesced=coalesced && publishes<=1;
         if(publishes>1) extraPublishes.push({frame:moves,count:publishes});
         publishes=0;
-        const material=plate.children.find(item=>item.objectName==="frameGlass"), backdrop=material.backdrop;
-        const a=material.mapToItem(null,0,0),b=material.mapToItem(null,material.width,material.height),crop=backdrop.cropRect,origin=backdrop.windowOrigin;
-        const rect=Qt.rect(crop.x+(origin.x+a.x)/backdrop.outputWidth*crop.width,crop.y+(origin.y+a.y)/backdrop.outputHeight*crop.height,
-            (b.x-a.x)/backdrop.outputWidth*crop.width,(b.y-a.y)/backdrop.outputHeight*crop.height);
-        mapped=mapped && ["x","y","width","height"].every(key=>Math.abs(material.sampleRect[key]-rect[key])<.0000001);
         if(moves===20) phase=4;
     }
     FrameAnimation {running:fixture.phase===3;onTriggered:{

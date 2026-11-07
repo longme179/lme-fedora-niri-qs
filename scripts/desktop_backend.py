@@ -68,7 +68,7 @@ from wallpaper_palette import preview as palette_preview, validate_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
 from settings_transfer import export_document, read_document, document, RETIRED_PERSISTENCE
-from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, apply_blur, provide_blur
+from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, provide_blur
 from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
@@ -274,7 +274,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key in WALLPAPER_DEFAULTS: return validate_wallpaper(key,value)
     if key == 'liquidGlass': return validate_glass(value)
     if key == "surfaceStyle" and value in ("smoked", "liquid"): return value
-    if key in ("glassSelection", "adaptiveContrast", "reducedTransparency") and type(value) is bool: return value
+    if key in ("glassSelection", "reducedTransparency") and type(value) is bool: return value
     if key == 'launchpadEntries': return launchpad_entries(value)
     if key == 'launchpadEnabled' and type(value) is bool: return value
     if key == 'launcherRanking' and type(value) is bool: return value
@@ -552,7 +552,7 @@ class DesktopBackend:
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
         self.action_state = self.actions.provide([
-            (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'],lambda preset:self.preferences.set('liquidGlass', preset, token='appliedBlur'))),
+            (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
             (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
                 available=lambda:self.runner.available('wl-mirror'),run=lambda *args:self.runner.run(*args),
@@ -1149,7 +1149,7 @@ class DesktopBackend:
         return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), **self.action_state(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
                 "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
-                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays, "glass": self.wallpapers.glass_snapshot(),
+                "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
                 "nightLight": self.night_state, "capture": dict(self.capture.state)}
 
@@ -1240,7 +1240,7 @@ class DesktopBackend:
             self._demo_state['wallpaperTransitions'] = WALLPAPER_TRANSITIONS
             self._demo_state['imageUtilities']=dict(self.image_utilities.state)
             self._demo_state['wallpaperDaemon']=self.wallpaper_daemon
-            self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[], glass=self.wallpapers.glass_snapshot(),
+            self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
                 monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],

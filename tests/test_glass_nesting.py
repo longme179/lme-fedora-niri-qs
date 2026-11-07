@@ -105,7 +105,6 @@ class GlassNestingCase(unittest.TestCase):
                 fixture.phase = 9;
             } else if (fixture.phase === 9) {
                 fixture.checks.gatePanelRestore = overlayGlass.nestLevel === 1;
-                fixture.checks.noBackdrop = GlassState.backdrops.length === 0;
                 fixture.finish(fixture.checks);
             }
         }
@@ -113,4 +112,4 @@ class GlassNestingCase(unittest.TestCase):
 ''')
         self.assertEqual(result, dict(levels=True, nest=True, framesPumped=True, idleNoWalks=True,
             coalesced=True, reparentOut=True, reparentIn=True, gateChrome=True, gateRestore=True,
-            gatePanel=True, gatePanelRestore=True, noBackdrop=True))
+            gatePanel=True, gatePanelRestore=True))

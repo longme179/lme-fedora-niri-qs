@@ -56,7 +56,6 @@ class SelectionActionCase(Fixture, unittest.TestCase):
                 expected = dict(before, weatherLocation=NORMAL, weatherAutoLocation=False)
                 if not demo:
                     expected.update(wallpaperPalette=dict(accent='#abcdef', text='#fedcba'), paletteSource='wallpaper', accent='#abcdef')
-                    expected['liquidGlass'] = dict(expected['liquidGlass'], appliedBlur='frosted')
                 self.assertEqual(live.preferences.values, expected)
                 self.assertEqual(live.preferences.path.exists(), not demo)
                 if not demo:
@@ -98,9 +97,10 @@ class SelectionActionCase(Fixture, unittest.TestCase):
         live = self.configured(); path = live.preferences.path.parent/'liquid-blur.kdl'
         live.preferences.set('liquidGlass', {'passes':3, 'offset':2.5})
         self.assertTrue(live.handle(dict(action='glassBlurApply'))['ok'])
-        self.assertEqual(live.preferences.values['liquidGlass']['appliedBlur'], 'frosted')
+        self.assertNotIn('appliedBlur', live.preferences.values['liquidGlass'])
         settings = live.preferences.path.read_bytes()
-        self.assertEqual(path.read_text(), liquid_glass.MARKER+'// Include AFTER generic background-effect rules; later rules win.\n// With xray on, only the wallpaper is blurred; with xray off, app windows are blurred too.\nlayer-rule {\n    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"\n    background-effect {\n        xray true\n    }\n}\nwindow-rule {\n    match app-id="^lme-shell-settings$"\n    // Keep niri\'s focus-ring backing from filling the transparent window.\n    draw-border-with-background false\n    background-effect {\n        xray true\n    }\n}\nblur {\n    passes 3\n    offset 2.5\n}\n')
+        self.assertEqual(path.read_text(), liquid_glass.snippet({'passes': 3, 'offset': 2.5}))
+        self.assertIn('xray false', path.read_text())
         self.assertEqual(path.stat().st_mode & 0o777, 0o600)
         target = self.put('protected.kdl', 'user-owned')
         for symlink in (False, True):

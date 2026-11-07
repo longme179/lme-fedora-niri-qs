@@ -69,7 +69,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **IME indicator** | Default-off top-bar module showing the active fcitx5 input method with a change OSD. Uses `fcitx5-remote`; no polling while disabled. |
 | **Network connections** | Wi-Fi/Devices → VPN, Ethernet & hotspot: saved VPN/WireGuard and Ethernet profiles, exact-adapter activation/disconnection, system IP/DNS editor and confirmed secure hotspot activation. [Network guide](docs/NETWORK_CONNECTIONS.md). |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
-| **Liquid glass** | Hybrid wallpaper-lens + opt-in niri compositor blur (≥ 26.04): Clear/Frosted/Vivid material presets, Lens/Compositor tuning, adaptive contrast and a contrast floor. Frosted blurs wallpaper; True backdrop is experimental. See [GLASS.md](docs/GLASS.md). |
+| **Liquid glass** | Simple transparent glass (tint + grain + edge highlight) with blur provided only by the niri compositor (≥ 26.04, opt-in snippet). Clear/Frosted/Vivid material presets and compositor blur passes/spread. See [GLASS.md](docs/GLASS.md). |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
 | **Themes and fonts** | Smoked glass by default, optional Liquid glass, per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes. |
 
@@ -224,24 +224,17 @@ with the shell, even when the shell is stopped.
 
 Choose **Appearance → Shell name** to give your desktop a name of your own.
 
-**Appearance → Surface style → Liquid glass** combines a frosted backdrop,
-refractive edges and white text. On niri 26.04+, blur follows the rounded panel
-or popup; the surrounding desktop stays sharp. Include the blur configuration
-above. Turn Liquid off to return to your saved colors, opacity and full-screen
-blur preference. Fonts, layout, corner shapes and motion keep their settings;
-bar blur remains independently configurable. The
-[rendering details and limits](docs/CONFIGURATION.md#surface-style) explain the
-wallpaper-based edge effect and software fallback.
+**Appearance → Surface style → Liquid glass** draws a simple translucent tint
+with procedural grain and an edge highlight. Blur comes only from the niri
+compositor (≥ 26.04): save the blur snippet in **Appearance → Liquid glass
+material** and include `~/.config/lme-shell/liquid-blur.kdl` after
+`popup-blur.kdl` in your niri config. Turn Liquid off to return to your saved
+colors and opacity.
 
-In **Appearance → Liquid glass material**, choose a tint with the color picker
-or a hex code, then adjust brightness, tint opacity, lens blur, feather, smearing
-and rim width/highlights. These settings stay separate from your Smoked theme.
-**Reset glass** restores the original material.
-Highlights follow the pointer with a short spring response and fade from its
-last position. Rim strength, feather and brightness also shape these reflections.
-
-To change the real backdrop blur, adjust its passes/spread and click **Save niri
-blur snippet**. Include the generated file once, after `popup-blur.kdl`:
+In **Appearance → Liquid glass material**, choose a tint, adjust panel tint
+opacity, edge highlight/width, and grain. Compositor blur passes/spread apply
+when the niri blur snippet is saved. **Reset glass** restores the original
+material.
 
 ```kdl
 include "~/.config/lme-shell/liquid-blur.kdl"

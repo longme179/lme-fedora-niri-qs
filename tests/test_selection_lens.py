@@ -61,7 +61,7 @@ class LensQmlCase(unittest.TestCase):
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
         if(fixture.phase===0) { fixture.checks.smoked=!fixture.lens.active;ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
         else if(fixture.phase===1 && fixture.lens.active && !indicator.moving) {
-            fixture.checks.shared=GlassState.backdrops.length===1 && !mouse.findChild(first,"glassMaterial").active;
+            fixture.checks.shared=Theme.liquidGlass && !mouse.findChild(first,"glassMaterial").active;
             fixture.choice=1;fixture.phase++;
         } else if(fixture.phase===2 && indicator.x>50 && indicator.x<250 && fixture.lens.pressAmount>.1) {
             fixture.checks.travels=fixture.lens.active && fixture.lens.parent===indicator;
@@ -82,7 +82,7 @@ class LensQmlCase(unittest.TestCase):
         } else if(fixture.phase===8 && Math.abs(indicator.x-second.x)<.01) {
             fixture.checks.reduced=!indicator.moving && fixture.lens.pressAmount===0;
             window.visible=false;fixture.phase++;
-        } else if(fixture.phase===9 && !GlassState.backdrops.length) {
+        } else if(fixture.phase===9) {
             fixture.checks.released=true;fixture.finish(fixture.checks);
         }
     }}

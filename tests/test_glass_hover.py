@@ -1,4 +1,4 @@
-"""Passive glass lighting follows real pointer events and releases its motion drivers."""
+"""Glass material hover light and simple rendering stay responsive without a backdrop."""
 import os
 import json
 from pathlib import Path
@@ -87,16 +87,16 @@ class GlassHoverCase(unittest.TestCase):
         } else if(fixture.phase===15 && fixture.glass.hoverAmount>.5) {
             group.visible=false;fixture.phase++;
         } else if(fixture.phase===16 && !fixture.glass.active) {
-            fixture.checks.hidden=!fixture.lightX.driver.running && !fixture.lightY.driver.running && GlassState.backdrops.length===0;
+            fixture.checks.hidden=!fixture.lightX.driver.running && !fixture.lightY.driver.running;
             fixture.finish(fixture.checks);
         }
     }}
 ''', {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
         self.assertEqual(result,dict(entry=True,inertia=True,retarget=True,mapping=True,idle=True,input=True,noCenterJump=True,exit=True,direct=True,reduced=True,disabled=True,hidden=True))
 
-    def test_rendered_glint_moves_across_the_rim_without_washing_out_the_body(self):
+    def test_simple_glass_renders_without_backdrop(self):
         try:
-            from PIL import Image, ImageChops, ImageStat
+            from PIL import Image, ImageStat
         except ImportError:
             self.skipTest('Pillow is required for rendered pixels')
         if not shutil.which('grim'): self.skipTest('grim is required for rendered pixels')
@@ -105,83 +105,22 @@ class GlassHoverCase(unittest.TestCase):
     property int phase:0
     property int age:0
     FloatingWindow { fullscreen:true;color:"#21303c"
-        Image { id:source;source:"assets/wallpapers/liquid-dracula.png";visible:false }
         GlassOptics { anchors.centerIn:parent;width:320;height:200
-            src:source;sourceAvailable:0;clear:1;tintAmount:0;bezel:8;frost:.9;rim:.38
+            tintColor:"#f0081420"; tintAmount:0.175; panelOpacity:0.8; grain:0.008; rim:1; bezel:8
             topLeftRadius:32;topRightRadius:32;bottomLeftRadius:32;bottomRightRadius:32
-            hover:fixture.phase===0 ? 0 : 1
-            cursorPos:Qt.point(fixture.phase===2 ? width-8 : 8,height/2)
-            opacity:fixture.phase===3 ? .5 : 1
         }
         Text { anchors.centerIn:parent;text:"Readable";color:"white";font.pixelSize:28;font.bold:true }
     }
-    Process { id:shot;onExited:code=> {
-        if(code!==0) { fixture.finish({error:code});return; }
-        fixture.age=0;if(++fixture.phase===4) fixture.finish({captured:4});
-    }}
+    Process { id:shot;onExited:code=> fixture.finish({captured:code===0}) }
     Timer { interval:60;repeat:true;running:true;onTriggered: {
-        if(!shot.running && ++fixture.age>=4) { shot.command=["grim",DIR+"/"+fixture.phase+".png"];shot.running=true; }
+        if(!shot.running && ++fixture.age>=4) { shot.command=["grim",DIR+"/g.png"];shot.running=true; }
     }}
 '''.replace('DIR',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
-            self.assertEqual(result,dict(captured=4))
-            images=[Image.open(Path(directory)/f'{i}.png').convert('RGB') for i in range(4)]
-            x,y=(images[0].width-320)//2,(images[0].height-200)//2
-            left=(x,y+70,x+6,y+130);right=(x+314,y+70,x+320,y+130)
-            def level(image,box): return sum(ImageStat.Stat(image.crop(box)).mean)
-            self.assertGreater(level(images[1],left),level(images[2],left)+15)
-            self.assertGreater(level(images[2],right),level(images[1],right)+15)
-            for image in images:
-                self.assertEqual(image.getpixel((x,y)),(33,48,60),'rounded corners must remain clear')
-                body=image.getpixel((x+160,y+45))
-                self.assertLess(max(abs(a-b) for a,b in zip(body,(33,48,60))),12,'no opaque hover wash')
-                white=sum(min(image.getpixel((a,b)))>245 for b in range(y+80,y+120) for a in range(x+70,x+250))
-                self.assertGreater(white,300,'foreground text must remain white')
-            expected=Image.blend(images[1],Image.new('RGB',images[1].size,'#21303c'),.5)
-            diff=ImageChops.difference(images[3],expected).crop((x,y,x+320,y+60))
-            self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'reflection must follow group opacity')
-
-    def test_bevel_has_depth_on_bright_apps_and_preserves_clear_body_and_group_opacity(self):
-        try:
-            from PIL import Image, ImageChops, ImageStat
-        except ImportError:
-            self.skipTest('Pillow is required for rendered pixels')
-        if not shutil.which('grim'): self.skipTest('grim is required for rendered pixels')
-        with tempfile.TemporaryDirectory() as directory:
-            result=self.run_qml('import Quickshell.Io\nimport "qml/components"', '''
-    property int phase:0
-    property int age:0
-    FloatingWindow { fullscreen:true;color:"#21303c"
-        Repeater { model:["#f4f4f4","#18232f"]
-            Rectangle { required property int index;required property string modelData
-                x:200+index*800;y:120;width:650;height:480;color:modelData
-                GlassOptics { x:100;y:80;width:420;height:320
-                    sourceAvailable:0;clear:1;tintAmount:0;bezel:8;frost:.9
-                    rim:fixture.phase===0 ? 0 : .38
-                    brightness:fixture.phase===2 ? 0 : 1
-                    opacity:fixture.phase===3 ? .5 : 1
-                    topLeftRadius:56;topRightRadius:8;bottomLeftRadius:56;bottomRightRadius:8
-                }
-            }
-        }
-    }
-    Process { id:shot;onExited:code=> {
-        if(code!==0) { fixture.finish({captureError:code});return; }
-        fixture.age=0;if(++fixture.phase===4) fixture.finish({captured:4});
-    }}
-    Timer { interval:60;repeat:true;running:true;onTriggered: {
-        if(!shot.running && ++fixture.age>=4) { shot.command=["grim",DIR+"/"+fixture.phase+".png"];shot.running=true; }
-    }}
-'''.replace('DIR',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
-            self.assertEqual(result,dict(captured=4))
-            images=[Image.open(Path(directory)/f'{i}.png').convert('RGB') for i in range(4)]
-            for x,background in ((300,(244,244,244)),(1100,(24,35,47))):
-                self.assertEqual(images[1].getpixel((x+210,300)),background,'the glass body must stay transparent')
-                self.assertEqual(images[1].getpixel((x+2,202)),background,'large rounded corners must stay clear')
-                self.assertEqual(images[2].getpixel((x+210,300)),(0,0,0),'zero brightness must remain opaque black')
-                expected=Image.blend(images[1],images[0],.5)
-                diff=ImageChops.difference(images[3],expected).crop((x,200,x+420,520))
-                self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'the bevel must follow group opacity')
-            bright_inner=[sum(images[1].getpixel((310+i,360))) for i in range(-2,3)]
-            self.assertLess(min(bright_inner),3*244-20,'bright backdrops need a shallow dark inner bevel')
-            dark_edge=[sum(images[1].getpixel((1310,200+i))) for i in range(5)]
-            self.assertGreater(max(dark_edge),sum((24,35,47))+35,'dark backdrops need a visible refractive rim')
+            self.assertTrue(result.get('captured'), result)
+            image=Image.open(Path(directory)/'g.png').convert('RGB')
+            x,y=(image.width-320)//2,(image.height-200)//2
+            self.assertEqual(image.getpixel((x,y)),(33,48,60),'rounded corners must remain clear')
+            body=image.getpixel((x+160,y+100))
+            self.assertNotEqual(body,(33,48,60),'tint should affect the body')
+            white=sum(min(image.getpixel((a,b)))>240 for b in range(y+80,y+120) for a in range(x+90,x+230))
+            self.assertGreater(white,250,'foreground text must remain readable')

@@ -347,8 +347,8 @@ shortcuts and behavior when upgrading an existing layout.
 Settings → Appearance → Surface style selects `surfaceStyle`: `"smoked"`
 (default) or `"liquid"`. The switch is saved in settings and portable presets
 and backups. It is independent of Material appearance profiles. See
-[GLASS.md](GLASS.md) for the hybrid lens/compositor model, presets, niri
-requirements and troubleshooting.
+[GLASS.md](GLASS.md) for the simple glass model, compositor blur setup, and
+troubleshooting.
 
 Liquid uses a neutral glass palette for all color roles, including custom bar
 island fills/borders and notifications. Dracula, Matugen, palette.json, accent,
@@ -358,55 +358,31 @@ reads those same saved values again. There is no backup/restore cycle and no
 bulk preference rewrite. Fonts, sizes, bar placement, module layouts, per-island
 corner geometry, density, features and motion preferences continue to apply.
 
-Liquid surfaces use translucent cool tints rather than opaque gray Material plates.
+Liquid surfaces use translucent cool tints rather than opaque Material plates.
 Active tiles keep a faint status tint and selected tabs retain a translucent
-highlight. The optical layer has a clear center and a narrow refractive rim.
-Display labels, headings, bar text, button captions and menu text turn white
-without an outline in Liquid mode; Smoked restores their original colors.
-A neutral dark outer tint keeps white text readable over bright applications;
-inner cards remain translucent. This tint applies only in Liquid and does not
-change the saved Smoked palette or opacity.
+highlight. The glass shader draws only a translucent tint layer, procedural
+grain, and a geometry-based edge highlight/rim; it does not sample the desktop
+background or wallpaper. Display labels, headings, bar text, button captions and
+menu text turn white in Liquid mode; Smoked restores their original colors.
+
 The independent `liquidGlass` preference stores tint (`#RRGGBB` or alpha-first
-`#AARRGGBB`), tint opacity, brightness, lens blur, feather, smearing, rim strength
-and width. Their defaults/ranges are in `config/liquid-glass.json`; presets and
-backups include them. Field edits merge under the shared preferences lock.
-Resetting glass preserves all Material preferences and does not change a saved
-niri snippet. Brightness dims backgrounds in the existing shader pass; feather
-controls rim softness, while smearing scales its refraction. No new texture,
-render layer or animation loop is added for these controls.
-Interactive lighting uses localized rim highlights and a faint opposite
-reflection. The existing spring engine follows the pointer, keeps its velocity
-when direction changes and retains the last point while fading out. The two
-coordinate springs stop when settled or hidden; pointer mapping shares the
-material's existing per-frame callback. Disabling Animations removes interactive
-lighting; disabling Spring motion keeps immediate pointer tracking. Software
-rendering keeps the existing static fallback. No settings migration is needed.
+`#AARRGGBB`), panel tint opacity, edge highlight (`rim`), edge width, grain, and
+compositor blur `passes`/`offset`. Their defaults/ranges are in
+`config/liquid-glass.json`; presets and backups include them. Field edits merge
+under the shared preferences lock. Resetting glass preserves other Material
+preferences and does not rewrite an already applied niri snippet. Retired lens
+keys (`blur`, `blurPreset`, `appliedBlur`) are dropped when loading older
+settings so surviving values are preserved. No settings migration is needed.
 
-True background blur belongs to niri. Its protocol exposes a region rather than
-per-window blur strength. The separate passes/spread controls write
-`$XDG_CONFIG_HOME/lme-shell/liquid-blur.kdl` only when **Save niri blur snippet**
-is clicked. Include it after `popup-blur.kdl`, then run `niri validate`; subsequent
-saves use niri's normal include reload. This changes compositor-wide blur in
-both surface styles. Existing unmarked files and symlinks are not replaced.
-Preferences restore the original passes/spread when reset, but the snippet
-needs to be saved again to apply them. No niri configuration is edited silently.
-
-Two compositor blur presets are offered in Liquid glass settings (niri 26.04+;
-the controls are hidden on older niri, which the backend probes before the
-snippet is written). **Frosted** (default) uses xray blur: niri pre-blurs the
-wallpaper once and reuses it, so it is cheap and stable and pairs with the
-wallpaper-lens refraction; it is the budget default for the iGPU. **True
-backdrop** uses xray false — the historical behavior — and also blurs app
-windows, but it is experimental: niri may drop it during window open/close
-animations or while dragging tiled windows, and it costs more GPU time.
-Choosing a preset only saves the preference; nothing is applied (or blurred)
-until **Save niri blur snippet** is clicked, which writes the matching snippet
-and records the applied preset. While a preset is applied, glass panels and
-bar pills draw a 1px hairline in the glass border token that masks
-rounded-corner aliasing of the blur region; with no preset applied the hairline
-is absent and everything still looks right through the lens, tint and snapshot
-backdrop alone. A previously applied snippet is replaced only through the
-same save action.
+Blur comes only from the niri compositor. Its protocol exposes a region rather
+than per-window blur strength. The passes/spread controls write
+`$XDG_CONFIG_HOME/lme-shell/liquid-blur.kdl` (with `xray false`) only when
+**Save niri blur snippet** is clicked. Include it after `popup-blur.kdl`, then
+run `niri validate`; subsequent saves use niri's normal include reload. This
+changes compositor-wide blur. Existing unmarked files and symlinks are not
+replaced. Reset restores the original passes/spread in preferences, but the
+snippet must be saved again to apply them. No niri configuration is edited
+silently.
 Editable fields retain native Qt input rendering, selection and IME behavior,
 with a dark translucent fill behind white input text.
 

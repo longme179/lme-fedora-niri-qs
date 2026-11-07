@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 from content_types import EXTENSIONS, image_path
-from glass_snapshot import GlassSnapshots, query_displays
 from contextlib import contextmanager
 import fcntl
 import math
@@ -90,30 +89,6 @@ class Wallpapers:
         self.cursor=None
         self.closed=False
         self.power_saving=False
-        self.glass=GlassSnapshots()
-        self._glass_dirty=False
-        self._glass_seen=None
-    def glass_snapshot(self):
-        return self.glass.snapshot()
-    def _glass_enabled(self):
-        return self.preferences.values['surfaceStyle']=='liquid' and not self.power_saving
-    def _glass_refresh(self):
-        # Best-effort refresh from live awww state; never fails the caller.
-        # Runs in the caller's worker thread (async vs the snapshot loop).
-        try:
-            if self.closed or not self._glass_enabled(): return
-            try: text=self.runner.run('awww','query',timeout=1)
-            except Exception: return
-            displays=query_displays(text)
-            if not displays: return
-            live=query_outputs(text) or set(displays)
-            self._glass_seen=set(live)
-            self.glass.refresh(live,displays,True)
-        except Exception: return
-    def _glass_job(self,outputs):
-        self._glass_refresh()
-        self._glass_dirty=False
-        return ''
 
     @contextmanager
     def operation(self):
@@ -166,7 +141,6 @@ class Wallpapers:
         if save:
             if output: self.preferences.set('wallpaperOutputs',str(path),token=output)
             else: self.preferences.set('wallpaper',str(path))
-        self._glass_refresh(); self._glass_dirty=True
         return 'Wallpaper updated' if targets or not output else 'Wallpaper saved for the disconnected display'
 
     def reset_output(self,output):
@@ -242,8 +216,6 @@ class Wallpapers:
             self.deadline=now+p['wallpaperPlaylistInterval']
             if p['wallpaperPlaylistOutput'] and p['wallpaperPlaylistOutput'] not in outputs: return None
             return lambda output=p['wallpaperPlaylistOutput']: self.advance(output,automatic=True)
-        if self._glass_enabled() and (self._glass_dirty or self._glass_seen is None or set(self._glass_seen)!=outputs):
-            return lambda: self._glass_job(outputs)
         return None
 
     def restore(self,outputs):
@@ -254,7 +226,6 @@ class Wallpapers:
                 path=self.current(name)
                 if path and displayed.get(name)==str(Path(path).resolve()): self.applied[name]=path
                 elif path: self._apply(path,name,save=False,animate=False)
-            self._glass_refresh(); self._glass_dirty=True
         return ''
 
     def close(self):

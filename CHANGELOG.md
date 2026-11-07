@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Replace the wallpaper-sampling liquid-glass lens with simple transparent
+  glass: panels now render only a translucent tint layer (governed by Panel tint
+  opacity), procedural grain, and a geometry-based edge highlight/rim. The shell
+  no longer reads, samples, caches, or paints the desktop background/wallpaper;
+  blur comes only from the niri compositor (`~/.config/lme-shell/liquid-blur.kdl`,
+  `xray false`). Lens blur, adaptive contrast, frosted/true backdrop presets,
+  `appliedBlur`, and the glass snapshot cache were removed. Compositor blur
+  passes/offset remain configurable.
 - Fix True-backdrop glass revealing the desktop wallpaper (“xray”): with the
   True backdrop preset the lens yields to compositor blur, but the yield
   branch hard-capped its tint at alpha 0.15/0.22 so panels stayed ~85%

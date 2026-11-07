@@ -1,29 +1,15 @@
 # Troubleshooting
 
-## Liquid glass shows wallpaper through an application
+## Liquid glass blur is missing
 
-Niri's default blur uses xray: it samples the wallpaper even when an application
-is behind the glass. On niri 26.04+, include the current
-`config/niri/popup-blur.kdl` **after other background-effect rules**, then run
-`niri validate`. Replace `lme-shell` with your installed config name if different:
-See [GLASS.md](GLASS.md) for the full hybrid model, presets and gates.
+The shell draws a simple translucent tint, grain, and edge highlight; it does
+not sample the wallpaper. Blur comes only from the niri compositor. On niri
+26.04+, save the blur snippet in **Appearance → Liquid glass material** and
+include `~/.config/lme-shell/liquid-blur.kdl` after `popup-blur.kdl` in your
+niri config, then run `niri validate`. See [GLASS.md](GLASS.md).
 
-```kdl
-include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
-```
-
-If you merged an earlier snippet manually, keep `xray false` in both its layer
-rule (including `lme-notifications`) and window rule (`lme-shell-settings`).
-Changing the shell's display name does not change these identifiers. Later
-matching rules can override this setting. The shell requests a blur region;
-only niri decides whether that region samples applications or wallpaper.
-No wallpaper fallback is drawn across panel bodies.
-
-Test with Settings over a window whose colors differ from your wallpaper, then
-close/reopen it and trigger a notification. The glass should soften the window
-beneath it; the area outside the glass should remain sharp. Non-xray blur is
-experimental in niri 26.04 and can temporarily disappear during compositor-owned
-window opening/closing animations.
+If the background is too visible through glass, raise **Panel tint opacity**, or
+increase compositor **Blur passes** / **Blur spread** after saving the snippet.
 
 Start with `./scripts/doctor.sh` inside the target niri session, then run
 `quickshell -c lme-shell` from a terminal to read startup errors.
@@ -239,13 +225,11 @@ from newer niri documentation may be unsupported by older installed versions.
 
 ## The glass appearance is subtle
 
-The baseline effect is translucent layered surfaces with highlights. It can
-look different with different wallpapers and panel opacity settings. True
-background blur is compositor-dependent. Increase panel opacity for legibility
-and disable animations in Settings if you prefer reduced motion or lower GPU
-work. See [GLASS.md](GLASS.md) for controls, presets and the Frosted vs
-True-backdrop tradeoff.
-work. Avoid selecting the RTX GPU just to intensify visual effects.
+The glass is a translucent tint with grain and an edge highlight. Blur comes
+from the niri compositor (≥ 26.04, snippet applied). Increase **Panel tint
+opacity** for legibility, adjust **Blur passes/spread** for stronger compositor
+blur, and disable animations if you prefer reduced motion or lower GPU work.
+See [GLASS.md](GLASS.md).
 
 ## Settings app or typography
 

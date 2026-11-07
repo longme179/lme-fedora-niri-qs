@@ -20,7 +20,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Surface style"
-        description: "Liquid glass combines a frosted backdrop, refractive edges and white text. Your saved palette, accent, opacity and element colors stay unchanged; switch back to restore them."
+        description: "Liquid glass combines a frosted backdrop, refractive edges and white text. Your accent keeps flowing into selected controls; the rest of your saved palette, opacity and element colors stay unchanged and return when you switch back."
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Liquid glass"; Layout.fillWidth: true; font.weight: Font.Medium }
@@ -120,8 +120,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Accent color"
-        enabled: !Theme.liquidGlass
-        description: "Your accent flows into selected controls and surface colors. A licensed palette can be loaded from palette.json."
+        description: "Your accent flows into selected controls, selection highlights and switch/slider fills in both surface styles. A licensed palette can be loaded from palette.json."
         RowLayout {
             spacing: 12
             Repeater {

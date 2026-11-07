@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Fix selected controls being unreadable on light glass. In Liquid glass the
+  selected button, tab and chip fill was a fixed light scheme color (the same
+  value as the switch track and slider fill) while labels stayed white, so on
+  a light-tuned shell selected pills had a background close to the text color.
+  The saved accent now flows into Liquid glass selection highlights (selected
+  buttons and tabs, switch tracks, slider fills, notification accents) and
+  every selected fill pairs with a luminance-derived label color, so selected
+  controls stay readable with any accent on light or dark glass. The Accent
+  color card in Appearance settings is enabled while Liquid glass is on.
 - Fix bar pill drop shadows being clipped by the bar layer surface: the bar
   window ended exactly at the pills, so the top/left/right shadow halos were
   cut by the surface bounds and only a bottom sliver rendered. The window now

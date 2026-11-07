@@ -55,7 +55,7 @@ Button {
     contentItem: ShellText {
         text: root.text
         textFormat: Text.PlainText
-        color: root.palette.buttonText
+        color: root.selected && root.selectionFill && Theme.liquidGlass ? Theme.readableOn(root.selectionColor) : root.palette.buttonText
         font: root.font
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

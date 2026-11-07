@@ -351,9 +351,12 @@ and backups. It is independent of Material appearance profiles. See
 troubleshooting.
 
 Liquid uses a neutral glass palette for all color roles, including custom bar
-island fills/borders and notifications. Dracula, Matugen, palette.json, accent,
+island fills/borders and notifications. Dracula, Matugen, palette.json,
 element overrides, panel/notification opacity and outline thickness remain
-saved but are temporarily bypassed; their editors are paused. Switching back
+saved but are temporarily bypassed; their editors are paused. The saved
+accent is the exception: it keeps flowing into selection highlights
+(selected buttons/tabs, switch tracks, slider fills) and the Accent color
+editor stays enabled while Liquid glass is on. Switching back
 reads those same saved values again. There is no backup/restore cycle and no
 bulk preference rewrite. Fonts, sizes, bar placement, module layouts, per-island
 corner geometry, density, features and motion preferences continue to apply.

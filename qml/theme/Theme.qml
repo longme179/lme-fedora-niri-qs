@@ -34,14 +34,14 @@ QtObject {
         background:"#151b23", panel:glassBase, surface:"#0cffffff", text:"#ffffff", muted:"#e5ebf5", border:"#66ffffff",
         purple:"#c9d6e7", pink:"#dbd3df", cyan:"#c9e1e7", green:"#8ed7ae", yellow:"#eed295", red:"#f4a0a0",
         primaryContainer:"#20ffffff", secondaryContainer:"#08ffffff", tertiaryContainer:"#08ffffff",
-        surfaceContainer:"#0cffffff", surfaceContainerHigh:"#0cffffff", onPrimary:"#151b23",
-        buttonFill:"#10ffffff", buttonHover:"#20ffffff", buttonPressed:"#30ffffff", buttonSelected:"#38ffffff",
+        surfaceContainer:"#0cffffff", surfaceContainerHigh:"#0cffffff", onPrimary:readableOn(glassAccent),
+        buttonFill:"#10ffffff", buttonHover:"#20ffffff", buttonPressed:"#30ffffff", buttonSelected:glassAccent,
         buttonText:"#ffffff", iconColor:"#ffffff", iconHover:"#33ffffff",
-        fieldFill:"#52101c28", fieldText:"#ffffff", switchTrack:"#d7e7f5", switchThumb:"#273442",
-        sliderTrack:"#18ffffff", sliderFill:"#d7e7f5", barFill:glassBase, barBorder:"#55ffffff",
+        fieldFill:"#52101c28", fieldText:"#ffffff", switchTrack:glassAccent, switchThumb:readableOn(glassAccent, "#273442", "#eef4fb"),
+        sliderTrack:"#18ffffff", sliderFill:glassAccent, barFill:glassBase, barBorder:"#55ffffff",
         barText:"#ffffff", barMuted:"#e5ebf5", barHover:"#18ffffff", workspaceActive:"#28ffffff", workspaceText:"#ffffff",
         panelFill:glassBase, cardFill:"#0cffffff", controlFill:glassBase, launcherFill:glassBase, islandFill:glassBase, settingsFill:glassBase,
-        notificationFill:glassBase, notificationTitle:"#ffffff", notificationBody:"#e5ebf5", notificationAccent:"#d7e7f5", notificationBorder:"#55ffffff"
+        notificationFill:glassBase, notificationTitle:"#ffffff", notificationBody:"#e5ebf5", notificationAccent:glassAccent, notificationBorder:"#55ffffff"
     })
     property var custom: ({})
     readonly property var overrides: ShellState.preferences.themeOverrides || ({})
@@ -106,7 +106,8 @@ QtObject {
     readonly property color yellow: colorFor("yellow", custom.yellow || "#ffff80")
     readonly property color red: colorFor("red", custom.red || "#ff9580")
     readonly property color border: colorFor("border", custom.border || "#605975")
-    readonly property color accent: liquidGlass ? "#d7e7f5" : ShellState.preferences.accent || purple
+    readonly property color glassAccent: ShellState.preferences.accent || "#d7e7f5"
+    readonly property color accent: liquidGlass ? glassAccent : ShellState.preferences.accent || purple
     // Material color roles retain the user's Dracula palette and glass opacity.
     readonly property color primaryContainer: colorFor("primaryContainer", mix(panel, accent, 0.30))
     readonly property color secondaryContainer: colorFor("secondaryContainer", mix(panel, pink, 0.22))
@@ -165,9 +166,7 @@ QtObject {
     readonly property int barHeight: ShellState.preferences.barHeight || 42
     readonly property real glassShadowPad: 12  // matches Serpantinum GlassFill pad / GlassMaterial.pad
     readonly property real glassPillShadow: ShellState.preferences.barPillShadow === false ? 0 : 3.0  // bar pill drop shadow strength (shadowAmt scale; Serpantinum default 1)
-    // Shadow flight envelope: the bar layer surface reserves this padding
-    // inside the surface around the pills so the surface bounds cannot clip
-    // the drop shadow. Collapses to 0 when pill shadows are disabled.
+    // Shadow flight envelope: surface padding so bounds cannot clip pill shadows; 0 when off.
     readonly property int barShadowPad: glassPillShadow > 0 ? glassShadowPad : 0
     readonly property int barWindowSideMargin: Math.max(0, barSideMargin - barShadowPad)
     readonly property int barWindowTopMargin: barBottom ? 0 : Math.max(0, barTopMargin - barShadowPad)
@@ -227,6 +226,7 @@ QtObject {
     }
     function alpha(color, opacity) { return Qt.rgba(color.r, color.g, color.b, opacity * color.a); }
     function mix(a, b, amount) { return Qt.rgba(a.r * (1 - amount) + b.r * amount, a.g * (1 - amount) + b.g * amount, a.b * (1 - amount) + b.b * amount, 1); }
+    function readableOn(bg, dark, light) { const l = 0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b; return l > 0.45 ? (dark || "#151b23") : (light || "#f2f7fc"); }
     function loadPalette() {
         try {
             const value = JSON.parse(palette.text());

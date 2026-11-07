@@ -64,7 +64,11 @@ glass values; sliders remain editable.
 **Other:** `glassSelection` (Glass selection highlight, default on), **Pill
 shadows** (Top Bar settings, `barPillShadow`, default on: soft drop shadow
 around bar islands; the bar surface reserves padding for it — off removes
-the shadow and the padding),
+the shadow and the padding), **Selection accent** (Appearance → Accent
+color, `accent`: the saved accent flows into Liquid glass selected
+buttons/tabs, switch tracks, slider fills and notification accents; selected
+fills pair with a luminance-derived label color so they stay readable on
+light and dark glass),
 **Reduced transparency** (Accessibility, swaps to opaque surfaces), **Reset
 glass** (restores glass values; does not rewrite an already applied niri
 snippet).

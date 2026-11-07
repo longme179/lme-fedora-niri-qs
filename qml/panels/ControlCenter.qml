@@ -114,7 +114,7 @@ GlassPanel {
                     selectionColor: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent
                     Accessible.role: Accessible.PageTab; Accessible.selected: current
                     palette.button: current && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
-                    palette.buttonText: current && !Theme.liquidGlass ? Theme.background : Theme.text
+                    palette.buttonText: current ? (Theme.liquidGlass ? Theme.onPrimary : Theme.background) : Theme.text
                     onClicked: root.selectTab(modelData.id)
                 }
             }

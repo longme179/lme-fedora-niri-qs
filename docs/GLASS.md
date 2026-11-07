@@ -47,8 +47,9 @@ or no active blur region) the wallpaper-lens behavior is used.
 - **Opt-in.** Choosing a backdrop preset only saves the preference; nothing is
   applied until **Save niri blur snippet** writes `liquid-blur.kdl` (it refuses
   to overwrite a user-owned/non-marker file or to write below 26.04). Include it
-  after `popup-blur.kdl` in your niri config, then `niri validate`. Applied
-  includes reload when applied.
+  after `popup-blur.kdl` in your niri config, then run `niri validate`.
+  Saving the snippet rewrites `liquid-blur.kdl`; per `scripts/liquid_glass.py`
+  (`apply_blur`), included files reload when applied.
 - **Frosted** (`xray true`, default preset) blurs only the wallpaper behind
   panels — cheapest on the iGPU. **True backdrop** (`xray false`) also blurs
   app windows behind panels — **experimental** and can dip during window

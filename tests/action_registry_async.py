@@ -183,3 +183,30 @@ class UnexpectedCompletionCase(Fixture, unittest.TestCase):
                 state = live.snapshot()
                 self.assertEqual(state['lastResult'], live.last_result)
                 self.assertFalse(live.feature_jobs)
+
+
+class CaptureSnapshotIsolationCase(Fixture, unittest.TestCase):
+    """A capture worker mutating capture.state cannot abort or retro-edit snapshots (#66 item 2)."""
+
+    def test_snapshot_embeds_a_copy_of_capture_state(self):
+        env = patch.dict(os.environ, XDG_CONFIG_HOME=str(self.root/'config'),
+                         XDG_STATE_HOME=str(self.root/'state'), XDG_RUNTIME_DIR=str(self.root/'runtime'))
+        env.start(); self.addCleanup(env.stop)
+        live = self.make_backend()
+        self.addCleanup(live.charge_executor.shutdown)
+        self.addCleanup(live.feature_executor.shutdown)
+        self.addCleanup(live.weather.close)
+        self.addCleanup(live.capture.close)
+        first = live.snapshot()
+        # Late worker-thread style write: captureExport/captureAnnotate add savedPath
+        # to the live state dict from their executor thread (screen_capture.py).
+        live.capture.state['savedPath'] = '/tmp/late-export.png'
+        second = live.snapshot()
+        # The snapshot embeds a defensive copy, not the live dict by reference.
+        self.assertIsNot(first['capture'], live.capture.state)
+        self.assertIsNot(second['capture'], live.capture.state)
+        # The late write never retro-edits an already emitted snapshot...
+        self.assertNotIn('savedPath', first['capture'])
+        # ...while later snapshots reflect it, and serialization stays safe.
+        self.assertIn('savedPath', second['capture'])
+        json.dumps(first['capture']); json.dumps(second['capture'])

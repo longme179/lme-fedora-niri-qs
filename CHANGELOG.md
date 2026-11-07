@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Fix the activity island reopening as an invisible sliver instead of
+  popping open. `SpringMotion.snapTo()` imperatively assigned `target`,
+  and QML severs a declarative binding on imperative assignment, so the
+  first dormant park of the retained island broke its size springs'
+  `target:` bindings: every later reopen kept them at the compact size
+  and the island surfaced as a ~180x30 nub with no animation. The
+  island springs also gated `enabled` on `mounted`, so on a fresh mount
+  the target binding could re-evaluate while `enabled` was still false
+  and `retarget()` took the disabled snap path — the very first open
+  teleported to full size too. `snapTo()` now writes only
+  value/velocity (targets move through `retarget()`), which also
+  protects `MotionPopup`'s `target: root.requested` binding from the
+  same severance in combo boxes and pickers, and the island size
+  springs inherit MotionValue's constant `enabled: Theme.springMotion`.
+  Reopens animate compact -> expanded in lockstep with the exit slide
+  and jelly progress again; the island size motion test now waits for
+  the dormant retained state instead of an unmount.
 - Fix micro-freezes when opening panels and switching Settings pages. Panel
   trees mounted fully synchronously on the UI thread (the control center built
   ~55 glass materials and ~2000 objects in one ~900 ms block, again on every

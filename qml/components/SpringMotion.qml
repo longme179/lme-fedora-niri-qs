@@ -37,7 +37,9 @@ QtObject {
     }
 
     function snapTo(v) {
-        if (target !== v) target = v;
+        // Never assign `target` here: an imperative write would sever a
+        // declarative `target:` binding (snapTo runs on every park/close and
+        // MotionValue users bind target). Callers move the target via retarget().
         value = v;
         velocity = 0;
         _running = false;

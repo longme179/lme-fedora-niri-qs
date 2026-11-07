@@ -59,7 +59,7 @@ class IslandSizeQmlCase(unittest.TestCase):
         } else if(fixture.phase===4 && ShellState.preferences.animations===false) {
             fixture.checks.reduced=island.width===island.expandedWidth && island.height===island.expandedHeight;
             ShellState.closePanels(); fixture.phase++;
-        } else if(fixture.phase===5 && !island.mounted) {
+        } else if(fixture.phase===5 && (island.dormant || !island.mounted)) {
             fixture.checks.bounded=fixture.bounded; fixture.finish(fixture.checks);
         }
     } }

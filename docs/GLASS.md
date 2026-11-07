@@ -33,10 +33,13 @@ Glass is a hybrid of two layers that can work together:
 (`appliedBlur = "true"`, `xray false`), niri ≥ 26.04 is present, and a
 surface's blur region is active (`Theme.compositorTrueBlur`/bar/popup gates in
 `qml/theme/Theme.qml`), the lens yields to the compositor frost: it renders a
-transparent base (bounded tint/alpha, compositor-yield cap), keeping
-rim/tint/grain so the app behind the panel appears frosted instead of the
-wallpaper snapshot. Otherwise (Frosted preset, no snippet applied, older niri,
-or no active blur region) the wallpaper-lens behavior is used.
+tinted base (bounded, scaled by the Panel tint opacity slider via
+`Theme.panelOpacity` → `yieldOpacity` in `liquid-glass.frag`; 0 = fully
+transparent yield, 1 ≈ 0.9 frosted tint, default 0.65 = a properly frosted
+panel, alpha capped at 0.92), keeping rim/tint/grain so the app behind the panel
+appears frosted instead of the wallpaper snapshot. Otherwise (Frosted preset, no
+snippet applied, older niri, or no active blur region) the wallpaper-lens
+behavior is used.
 
 ## Requirements & status
 
@@ -78,7 +81,9 @@ persisted "active mode".
 **Lens** (panel tint + `PreferenceSwitch adaptiveContrast`): `blur` (Lens blur,
 default 1, 0–4, 0.1), `rim` (Edge highlight, 1, 0–2, 0.05), `edgeWidth` (Edge
 width, 1, 0.25–3, 0.05), `grain` (Grain, 0.004, 0–0.08, 0.001), `opacity`
-(Panel tint opacity, 0.65, 0–1, 0.01). `tint` (Panel tint, `#RRGGBB`/`#AARRGGBB`,
+(Panel tint opacity, 0.65, 0–1, 0.01) — in True backdrop yield mode this also
+scales the compositor-yield tint (`yieldOpacity`; 0 = old transparent yield,
+1 ≈ 0.9 frosted). `tint` (Panel tint, `#RRGGBB`/`#AARRGGBB`,
 default `#f0081420`) is set via the tint picker/field. `adaptiveContrast`
 darkens glass on bright backdrops and clears it on dark ones (bounded; contrast
 floor keeps white text above 3:1 on bright backdrops).
@@ -108,7 +113,7 @@ already applied niri snippet).
 |---|---|---|
 | What blurs | Wallpaper only | Wallpaper and app windows behind panels |
 | Cost/status | Cheapest on iGPU, default | Experimental; can dip during window animations |
-| Lens behavior | Wallpaper-lens (snapshot) | Yields to compositor frost when applied + niri ≥ 26.04 + blur region active (bounded tint/alpha); else lens fallback |
+| Lens behavior | Wallpaper-lens (snapshot) | Yields to compositor frost when applied + niri ≥ 26.04 + blur region active (tint scaled by Panel tint opacity → `yieldOpacity`, alpha ≤ 0.92); else lens fallback |
 | How to use | Select preset, **Save niri blur snippet**, include `liquid-blur.kdl` | Same; gated by version/support |
 
 ## Performance (measured facts, PR #91 / issue #77)
@@ -151,7 +156,10 @@ numbers.
 - **Panels show wallpaper / stale look over apps.** True-backdrop frosting
   applies only when the True backdrop preset is applied, niri ≥ 26.04, and the
   surface’s blur region is active (gated per bar/popup); otherwise the
-  wallpaper-lens is shown. Frosted preset blurs wallpaper only by design.
+  wallpaper-lens is shown. Frosted preset blurs wallpaper only by design. If
+  True backdrop panels still look too transparent (wallpaper recognizable
+  through the frosted glass, especially over the bare desktop), raise **Panel
+  tint opacity** (Appearance → Liquid glass material → Lens).
 - **Glass looks dead/flat on a color wallpaper.** Refraction samples the
   wallpaper snapshot/backdrop; a uniform or unavailable image gives little to
   refract. Ensure a wallpaper image is set/available; the lens uses a

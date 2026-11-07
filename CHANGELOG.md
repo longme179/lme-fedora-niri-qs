@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Fix True-backdrop glass revealing the desktop wallpaper (“xray”): with the
+  True backdrop preset the lens yields to compositor blur, but the yield
+  branch hard-capped its tint at alpha 0.15/0.22 so panels stayed ~85%
+  transparent and the blurred desktop wallpaper showed through (bar ~0.91
+  correlation with the wallpaper; Settings over the bare desktop ~0.55). The
+  Panel tint opacity preference was ignored in that path. Feed
+  `Theme.panelOpacity` into `liquid-glass.frag` as `yieldOpacity` and add it
+  to the capped yield tint (alpha up to 0.92), so the Panel tint opacity
+  slider now controls how much of the frosted backdrop shows through in True
+  backdrop mode (0 = fully transparent yield, 1 ≈ 0.9 frosted; default 0.65
+  gives a properly frosted panel). Shader kept at 221 nonblank lines.
+
 - Add Liquid glass settings presets with one-line descriptions at the top
   of the material card, regroup sliders under Lens (blur, rim, edge width,
   grain, tint opacity) and Compositor (passes, spread), and show a derived

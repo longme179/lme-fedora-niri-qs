@@ -41,8 +41,16 @@ Item {
             Repeater { id: shapes; model: root.shapeCount; delegate: DriftingShape {} }
             FrameAnimation {
                 running: root.animating
+                // Ambient drift moves at tens of pixels per second: a ~45 Hz update
+                // budget is visually identical while halving the always-on desktop
+                // surface's idle render cost (#92). Skipped ticks dirty nothing, so
+                // the scenegraph parks between processed frames.
+                property real carry: 0
                 onTriggered: {
-                    const dt = Math.min(frameTime, .05) * root.motionSpeed;
+                    carry += frameTime
+                    if (carry < 0.022) return
+                    const dt = Math.min(carry, .05) * root.motionSpeed
+                    carry = 0
                     for (let i = 0; i < shapes.count; i++) {
                         const shape = shapes.itemAt(i) as DriftingShape;
                         if (!shape) continue;

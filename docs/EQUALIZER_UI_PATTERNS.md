@@ -3,6 +3,8 @@
 This note records the Serpantinum-parity architecture of the equalizer feature
 (re-implemented 2026-11-06; plan in issue #69).
 
+![Equalizer panel over the desktop](previews/equalizer.png)
+
 ## Attribution
 
 The UI and state machine are adapted ports of Serpantinum Shell

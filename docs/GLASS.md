@@ -34,6 +34,8 @@ snippet**. The snippet uses `xray false` for the shell's blur regions and sets
 
 ## Settings (Liquid glass material)
 
+![Appearance settings with the Liquid glass material section](previews/liquid-glass.png)
+
 Settings → Appearance → **Liquid glass material** (visible in Liquid glass
 mode). Presets are starting points, not modes: applying one writes the listed
 glass values; sliders remain editable.

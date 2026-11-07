@@ -11,41 +11,23 @@ Adapted files:
 - src/quickshell/reusables/display/glassNesting.js -> qml/components/GlassNesting.js
   (walk adapted at upstream revision 2aa00c378b492113181d26427399a30aff1805e5)
 
-LME changes: local/theme paths, optional source texture, Theme knobs scaling
-rim/blur/edge width over the upstream production wiring (frost 2.2,
-rim 0.45, bezel 3..14 x 0.28, thickness bezel x 0.8). Edge/border optics
-are restored to upstream liquid_glass.frag exactly: finite-difference edge
-gradient, Fresnel env reflection, inner shadow, broad spec, meniscus,
-fringe, lens zoom with lensK, blurLod/blurredAt 0.9 falloff, GRAIN 0.004.
-Single infra exception: the backdrop is the wallpaper snapshot Image via
-GlassState rather than upstream's live WallpaperBlur texture. When no
-snapshot is ready the colour base is vec3(0.32,0.34,0.38) and the
-dispersion/Fresnel fetches are skipped; with a ready snapshot the upstream
-pipeline runs unchanged. Pointer coordinates follow LME's existing spring
-engine; no extra render layers are added. The real application backdrop
-remains compositor-owned; no live desktop capture is performed. The
-surrounding lifecycle/neutral-theme integration is LME code.
+LME changes (current): GlassOptics and liquid-glass.frag are simplified to a
+single translucent tint layer (tint color, tint amount, panel opacity), procedural
+grain, and geometry-based edge highlight/rim (SDF rounded box, edge gradient,
+hairline/wide/broad/meniscus lighting). The shader does not sample desktop
+background or wallpaper textures; blur comes only from the niri compositor.
+Earlier LME modifications that added wallpaper snapshot backdrops, compositor-
+yield blending, adaptive contrast, and related lens sampling have been removed.
 
 Glass-on-glass nesting (Liquid Glass 2.0 G1): LME wires the walk into its own
 GlassMaterial host. The level counts marked ancestor strata (GlassMaterial and
 GlassPanel carry upstream's isGlassFill marker); the walk skips the carrier
 (the child of a stratum that contains the walker), so a marked glass container
 counts through its own embedded layer, never as itself. The level recomputes
-only on tree events: parent/backdrop changes and childrenChanged on watched
-ancestors, coalesced with Qt.callLater and bounded to 48 levels. Without a
-backdrop the domain stops at the host window's content item. Nested optics
-follow upstream GlassFill.qml: rim and frost attenuation at the material
-level, with nest passed into the renderer whose uniform already softens bevel,
-veil, bulge and grain. Upstream does not re-walk on allowed changes; LME
-matches that.
-
-Liquid-glass renderer refinements (#87-#91, LME, modifying the adapted files
-above): the lens shader (liquid-glass.frag, rebuilt .qsb) gained a
-compositor-blur yield path (transparent base with bounded tint/alpha when true
-backdrop is applied, niri >= 26.04 and a blur region is active), adaptive
-contrast (luminance-compensated bounded tint) with a tunable grain uniform, and
-a contrast-floor alpha clamp (yield/normal caps) — all LME changes layered on
-the restored upstream optics; backdrop sampling and lifecycle remain LME-owned.
+only on tree events: parent changes and childrenChanged on watched ancestors,
+coalesced with Qt.callLater and bounded to 48 levels. The domain stops at the
+host window's content item. Nested optics attenuate rim and grain before values
+are passed into the renderer.
 
 Selection-lens design reference (no upstream animation/backdrop engine copied):
 src/quickshell/reusables/display/GlassLens.qml at

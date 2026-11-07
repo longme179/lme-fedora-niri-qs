@@ -38,7 +38,7 @@ class ButtonMaterialCase(unittest.TestCase):
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
         if(fixture.phase===0) { ShellState.run("setting",{key:"animations",value:false});fixture.phase++; }
         else if(fixture.phase===1) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
-        else if(fixture.phase===2 && Theme.liquidGlass && GlassState.backdrops.length===1) {
+        else if(fixture.phase===2 && Theme.liquidGlass) {
             const buttons=fixture.items(power,i=>i.actionName!==undefined);
             fixture.checks.power=buttons.length===5 && buttons.every(b=>fixture.glass(b).length===1 && fixture.glass(b)[0].active
                 && fixture.glass(b)[0].parent===b.background && b.background.color.a<.1);
@@ -65,11 +65,11 @@ class ButtonMaterialCase(unittest.TestCase):
             fixture.checks.whiteHover=glyph.color.toString()==="#ffffff" && closeButton.contentItem.color.toString()==="#ffffff"
                 && buttons.length>10 && buttons.every(b=>b.contentItem.color.toString()==="#ffffff");
             window.visible=false;fixture.phase++;
-        } else if(fixture.phase===6 && !GlassState.backdrops.length) {
+        } else if(fixture.phase===6) {
             fixture.checks.released=true;window.visible=true;fixture.phase++;
-        } else if(fixture.phase===7 && GlassState.backdrops.length===1) {
+        } else if(fixture.phase===7) {
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
-        } else if(fixture.phase===8 && !Theme.liquidGlass && !GlassState.backdrops.length) {
+        } else if(fixture.phase===8 && !Theme.liquidGlass) {
             fixture.checks.restored=plain.color.toString()==="#ff0000" && !fixture.glass(custom)[0].active
                 && Math.abs(fixture.items(power,i=>i.actionName!==undefined)[0].background.color.a-.55)<.01;
             fixture.finish(fixture.checks);

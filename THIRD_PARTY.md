@@ -267,12 +267,15 @@ license and modification details are retained in
 [`third_party/Serpantinum-LICENSE.md`](third_party/Serpantinum-LICENSE.md) and
 [`third_party/Serpantinum-NOTICE`](third_party/Serpantinum-NOTICE).
 
-LME uses shared, bounded wallpaper textures for rim refraction and leaves the
-body transparent for native niri blur. It does not copy the upstream parent
-discovery/timer/capture system. Text/input and the existing popup layer effect
-remain independent. GPLv3 section 13 allows the GPL/AGPL combination; the copied
-files retain AGPL and the combined work follows AGPLv3's interaction requirements.
-No new runtime library or external service is required.
+LME's current glass is a simple translucent tint with procedural grain and a
+geometry-based edge highlight/rim. It does not sample the desktop background or
+wallpaper; blur comes only from the niri compositor. Earlier LME modifications
+that added wallpaper snapshot backdrops, compositor-yield blending, and adaptive
+contrast have been removed; remaining derived portions keep AGPL attribution.
+The surrounding lifecycle/integration is LME code. GPLv3 section 13 allows the
+GPL/AGPL combination; the copied files retain AGPL and the combined work follows
+AGPLv3's interaction requirements. No new runtime library or external service is
+required.
 
 Glass-on-glass nesting (Liquid Glass 2.0 G1) adapts Serpantinum's
 [`glassNesting.js`](https://github.com/ilyamiro/serpantinum/blob/2aa00c378b492113181d26427399a30aff1805e5/src/quickshell/reusables/display/glassNesting.js)
@@ -281,13 +284,10 @@ it into LME's own `GlassMaterial` host: the level counts marked ancestor strata
 (`GlassMaterial` and `GlassPanel` carry upstream's `isGlassFill` marker; the walk
 skips the carrier — the child of a stratum that contains the walker — so a
 marked glass container counts through its own embedded layer, never as itself)
-and recomputes only on tree events (parent/backdrop changes and
-`childrenChanged` on watched ancestors, coalesced with `Qt.callLater`, bounded
-to 48 levels; without a backdrop the domain stops at the host window's content
-item). Nested optics follow upstream `GlassFill.qml`'s rim and frost attenuation
-before `nest` is passed into the renderer. `docs/NEXT_OPTIMIZATION_PLAN.md`'s
-warning about unbounded per-control walks is honored: one shared bounded walk,
-never per frame.
+and recomputes only on tree events (parent changes and `childrenChanged` on
+watched ancestors, coalesced with `Qt.callLater`, bounded to 48 levels; the
+domain stops at the host window's content item). Nested optics attenuate rim and
+grain before values are passed into the renderer.
 
 The selection-lens treatment also references Serpantinum's
 [`GlassLens.qml`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/reusables/display/GlassLens.qml).
@@ -296,9 +296,7 @@ The selection-lens treatment also references Serpantinum's
 #90, 4c170cc/ddef193) from that reference without copying the restartable easing
 or backdrop discovery engine; it retains its existing DMS-derived spring edges
 and the shared LME glass material/press lift and carries an AGPL derivation
-comment pointing to `third_party/Serpantinum-NOTICE`. LME's #87–#91 refinements
-to the adapted liquid-glass renderer (compositor-yield, adaptive contrast/grain,
-contrast floor) are recorded in that notice.
+comment pointing to `third_party/Serpantinum-NOTICE`.
 
 ## Wallpaper playlist references
 

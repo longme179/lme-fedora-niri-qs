@@ -1,4 +1,4 @@
-"""Glass preference boundaries, concurrent writers and opt-in compositor settings."""
+"""Simple glass preferences, compositor snippet apply, and rendered material controls."""
 import json
 import math
 import os
@@ -14,31 +14,12 @@ from settings_transfer import document, validate_document
 import test_local_qml as qml_tests
 
 
-def frosted_snippet(passes=3, offset='3.0'):
-    return (MARKER + '// Include AFTER generic background-effect rules; later rules win.\n'
-            '// With xray on, only the wallpaper is blurred; with xray off, app windows are blurred too.\n'
-            'layer-rule {\n'
-            '    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"\n'
-            '    background-effect {\n'
-            '        xray true\n'
-            '    }\n'
-            '}\n'
-            'window-rule {\n'
-            '    match app-id="^lme-shell-settings$"\n'
-            '    // Keep niri\'s focus-ring backing from filling the transparent window.\n'
-            '    draw-border-with-background false\n'
-            '    background-effect {\n'
-            '        xray true\n'
-            '    }\n'
-            '}\n'
-            f'blur {{\n    passes {passes}\n    offset {offset}\n}}\n')
-
-
 class GlassControlsCase(Fixture, unittest.TestCase):
     def setUp(self):
         super().setUp()
         patcher = patch('liquid_glass.probe_niri_version', return_value=(26, 4))
         patcher.start(); self.addCleanup(patcher.stop)
+
     def test_partial_edits_reload_merge_export_and_reset_without_touching_material(self):
         self.preferences.set('accent', '#12ab34')
         other = backend.Preferences(self.preferences.path)
@@ -47,6 +28,7 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         saved = backend.Preferences(self.preferences.path).values
         self.assertEqual(saved['liquidGlass']['tint'], '#ccaabbcc')
         self.assertEqual(saved['liquidGlass']['edgeWidth'], 1.8)
+        self.assertNotIn('blur', saved['liquidGlass'])
         for kind in ('preset', 'backup'):
             result = validate_document(document(saved, kind), backend.validate_preference, backend.DEFAULT_PREFERENCES)
             self.assertEqual(result['liquidGlass'], saved['liquidGlass'])
@@ -66,6 +48,12 @@ class GlassControlsCase(Fixture, unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError): self.preferences.set('liquidGlass', value)
         self.assertEqual(self.preferences.path.read_bytes(), original)
 
+    def test_retired_inner_keys_are_dropped(self):
+        saved = liquid_glass.validate({'tint':'#112233','opacity':0.7,'blur':3,'blurPreset':'true','appliedBlur':'frosted'})
+        self.assertEqual(saved['tint'], '#112233')
+        self.assertEqual(saved['opacity'], 0.7)
+        self.assertFalse({'blur','blurPreset','appliedBlur'} & saved.keys())
+
     def test_only_explicit_apply_writes_owned_snippet_and_demo_never_writes(self):
         live = self.make_backend(); live.settings_only = True
         result = live.handle(dict(action='setting', key='liquidGlass', token='passes', value=3))
@@ -74,7 +62,8 @@ class GlassControlsCase(Fixture, unittest.TestCase):
         self.assertFalse(path.exists())
         result = live.handle(dict(action='glassBlurApply'))
         self.assertTrue(result['ok'], result)
-        self.assertEqual(path.read_text(), frosted_snippet(3))
+        self.assertEqual(path.read_text(), liquid_glass.snippet(live.preferences.values['liquidGlass']))
+        self.assertIn('xray false', path.read_text())
         self.assertIn('compositor-wide', result['message'])
         path.write_text('my own configuration')
         self.assertFalse(live.handle(dict(action='glassBlurApply'))['ok'])
@@ -104,11 +93,11 @@ class GlassControlsCase(Fixture, unittest.TestCase):
             with self.subTest(value=bad), self.assertRaises(ValueError):
                 self.preferences.set('liquidGlass', bad, token='grain')
 
-    def test_material_presets_write_only_existing_keys(self):
+    def test_material_presets_write_only_surviving_keys(self):
         presets = {
-            'Clear': {'tint': '#f0081420', 'opacity': 0.65, 'blur': 1, 'rim': 1, 'edgeWidth': 1, 'grain': 0.004, 'passes': 2, 'offset': 3},
-            'Frosted': {'tint': '#f0182436', 'opacity': 0.9, 'blur': 3, 'rim': 0.8, 'edgeWidth': 0.5, 'grain': 0.01, 'passes': 1, 'offset': 2},
-            'Vivid': {'tint': '#f00a1a28', 'opacity': 0.55, 'blur': 1.5, 'rim': 1.6, 'edgeWidth': 1.5, 'grain': 0.002, 'passes': 3, 'offset': 4.5},
+            'Clear': {'tint': '#f0081420', 'opacity': 0.65, 'rim': 1, 'edgeWidth': 1, 'grain': 0.004},
+            'Frosted': {'tint': '#f0182436', 'opacity': 0.9, 'rim': 0.8, 'edgeWidth': 0.5, 'grain': 0.01},
+            'Vivid': {'tint': '#f00a1a28', 'opacity': 0.55, 'rim': 1.6, 'edgeWidth': 1.5, 'grain': 0.002},
         }
         for name, values in presets.items():
             with self.subTest(preset=name):
@@ -116,6 +105,7 @@ class GlassControlsCase(Fixture, unittest.TestCase):
                 saved = backend.Preferences(self.preferences.path).values['liquidGlass']
                 for key, expected in values.items():
                     self.assertEqual(saved[key], expected if key != 'tint' else expected.lower())
+                self.assertNotIn('blur', saved)
                 self.assertNotIn('materialPreset', saved)
 
 
@@ -176,7 +166,7 @@ class GlassControlsQmlCase(unittest.TestCase):
 ''', {'QT_QPA_PLATFORM':'wayland'})
         self.assertEqual(result, dict(defaults=True, invalid=True, color=True, slider=True, picker=True, reset=True, smoked=True))
 
-    def test_shader_controls_change_pixels_without_dimming_foreground_text(self):
+    def test_simple_glass_controls_change_pixels(self):
         try:
             from PIL import Image, ImageChops, ImageStat
         except ImportError:
@@ -184,21 +174,23 @@ class GlassControlsQmlCase(unittest.TestCase):
         if not shutil.which('grim'): self.skipTest('grim is required for rendered pixels')
         with tempfile.TemporaryDirectory() as directory:
             folder=Path(directory)
-            image=Image.new('RGB',(320,240))
-            image.putdata([((x*13)%256,(y*19)%256,((x+y)*7)%256) for y in range(240) for x in range(320)])
-            image.save(folder/'source.png')
             result=self.run_qml('import Quickshell.Io\nimport "qml/components"', '''
     property int phase:0
     property int age:0
-    readonly property var variants:[{}, {rim:0}, {frost:0}, {frost:4}, {bezel:20}, {rim:2}, {frost:1}, {bezel:3}, {saturation:0.2}, {opacity:.5}]
+    readonly property var variants:[
+        {panelOpacity:0.65, grain:0.004, rim:1, bezel:8},
+        {panelOpacity:0.0, grain:0.004, rim:1, bezel:8},
+        {panelOpacity:1.0, grain:0.004, rim:1, bezel:8},
+        {panelOpacity:0.65, grain:0.06, rim:1, bezel:8},
+        {panelOpacity:0.65, grain:0.004, rim:0, bezel:8},
+        {panelOpacity:0.65, grain:0.004, rim:2, bezel:20}
+    ]
     readonly property var variant:variants[Math.min(phase,variants.length-1)]
     FloatingWindow { fullscreen:true;color:"#dddddd"
-        Image { id:source;source:DIR+"/source.png";visible:false;mipmap:true }
         GlassOptics { anchors.centerIn:parent;width:320;height:240
-            opacity:fixture.variant.opacity ?? 1
-            src:source;sourceAvailable:1;clear:1;tintAmount:0
+            tintColor:"#f0081420"; tintAmount:0.175
+            panelOpacity:fixture.variant.panelOpacity; grain:fixture.variant.grain; rim:fixture.variant.rim; bezel:fixture.variant.bezel
             topLeftRadius:36;topRightRadius:36;bottomLeftRadius:36;bottomRightRadius:36
-            frost:fixture.variant.frost ?? 2.2;bezel:fixture.variant.bezel ?? 8;dispersion:.02;rim:fixture.variant.rim ?? .45;saturation:fixture.variant.saturation ?? 1
         }
         Text { anchors.centerIn:parent;text:"WHITE";font.pixelSize:28;font.bold:true;color:"white" }
     }
@@ -211,20 +203,22 @@ class GlassControlsQmlCase(unittest.TestCase):
         if(!shot.running && ++fixture.age>=4) { shot.command=["grim",DIR+"/"+fixture.phase+".png"];shot.running=true; }
     }}
 '''.replace('DIR',json.dumps(directory)), {'QT_QPA_PLATFORM':'wayland','QT_QUICK_BACKEND':'rhi','QSG_RHI_BACKEND':'opengl'})
-            self.assertEqual(result,dict(captured=10))
-            base=Image.open(folder/'0.png').convert('RGB')
-            x,y=(base.width-320)//2,(base.height-240)//2
-            for index in range(1,9):
-                current=Image.open(folder/f'{index}.png').convert('RGB')
-                diff=ImageChops.difference(base,current).crop((x,y,x+320,y+240))
-                self.assertGreater(sum(ImageStat.Stat(diff).sum),1000,f'control {index} had no visible effect')
-                bright=sum(min(current.getpixel((a,b)))>250 for b in range(y+90,y+150) for a in range(x+80,x+240))
-                self.assertGreater(bright,300,'foreground text must remain white')
-            half=Image.open(folder/'9.png').convert('RGB')
-            expected=Image.blend(base,Image.new('RGB',base.size,'#dddddd'),.5)
-            diff=ImageChops.difference(half,expected).crop((x,y,x+320,y+60))
-            self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'group opacity must respect the background during fades')
-
+            self.assertEqual(result,dict(captured=6))
+            imgs=[Image.open(folder/f'{i}.png').convert('RGB') for i in range(6)]
+            x,y=(imgs[0].width-320)//2,(imgs[0].height-240)//2
+            body=lambda im: im.crop((x+120,y+90,x+200,y+150))
+            bg=(221,221,221)
+            clear_diff=sum(abs(a-b) for a,b in zip(ImageStat.Stat(body(imgs[1])).mean, bg))
+            frosted_diff=sum(abs(a-b) for a,b in zip(ImageStat.Stat(body(imgs[2])).mean, bg))
+            self.assertLess(clear_diff, 40, 'opacity 0 should be nearly clear')
+            self.assertGreater(frosted_diff, clear_diff + 15, 'opacity 1 should be more frosted than clear')
+            grain_diff=sum(ImageStat.Stat(ImageChops.difference(body(imgs[0]), body(imgs[3]))).sum)
+            self.assertGreater(grain_diff, 500, 'grain should change pixels')
+            rim_diff=sum(ImageStat.Stat(ImageChops.difference(imgs[4].crop((x,y,x+320,y+240)), imgs[5].crop((x,y,x+320,y+240)))).sum)
+            self.assertGreater(rim_diff, 500, 'rim/edge should change pixels')
+            for im in imgs:
+                bright=sum(min(im.getpixel((a,b)))>245 for b in range(y+95,y+145) for a in range(x+90,x+230))
+                self.assertGreater(bright,250,'foreground text must remain readable')
 
     def test_preset_descriptions_headers_and_blur_status(self):
         result = self.run_qml('import QtTest\nimport "qml/settings"\nimport "qml/services"\nimport "qml/theme"', r"""
@@ -238,42 +232,31 @@ class GlassControlsQmlCase(unittest.TestCase):
     property int ticks:0
     property var checks:({})
     Timer { interval:80;running:true;repeat:true;onTriggered: {
-        if(++fixture.ticks>160) { fixture.finish({timeout:fixture.phase,checks:fixture.checks});return; }
+        if(++fixture.ticks>140) { fixture.finish({timeout:fixture.phase,checks:fixture.checks});return; }
         if(!ShellState.backendReady || ShellState.pendingActions.setting || !Object.keys(Theme.glassControls).length) return;
         const preset=mouse.findChild(page,"glassMaterialPreset"), desc=mouse.findChild(page,"glassMaterialPresetDesc");
-        const lens=mouse.findChild(page,"glassLensHeader"), comp=mouse.findChild(page,"glassCompositorHeader");
+        const material=mouse.findChild(page,"glassMaterialHeader"), comp=mouse.findChild(page,"glassCompositorHeader");
         const status=mouse.findChild(page,"glassBlurStatus");
         if(fixture.phase===0) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
-        else if(fixture.phase===1 && Theme.liquidGlass && preset && desc && lens && comp && status) {
+        else if(fixture.phase===1 && Theme.liquidGlass && preset && desc && material && comp && status) {
             fixture.checks.model=preset.model.length===3 && preset.model[0]==="Clear" && preset.model[1]==="Frosted" && preset.model[2]==="Vivid";
-            fixture.checks.headers=lens.text==="Lens" && comp.text==="Compositor";
-            fixture.checks.descHas=desc.text.indexOf("tint")>=0 && desc.text.indexOf("blur")>=0;
+            fixture.checks.headers=material.text==="Material" && comp.text==="Compositor blur";
+            fixture.checks.descHas=desc.text.indexOf("opacity")>=0 && desc.text.indexOf("grain")>=0;
             fixture.checks.rim=!!mouse.findChild(page,"glass-rim");
             fixture.checks.opacity=!!mouse.findChild(page,"glass-opacity");
+            fixture.checks.noBlur=!mouse.findChild(page,"glass-blur");
             const st=status.text||""; fixture.checks.statusPrefix=st.indexOf("Compositor blur:")===0;
             fixture.checks.statusState=st.indexOf("unsupported")>=0 || st.indexOf("applied")>=0 || st.indexOf("pending (save snippet)")>=0;
-            ShellState.run("setting",{key:"liquidGlass",token:"blurPreset",value:"true"});fixture.phase++;
-        } else if(fixture.phase===2 && Theme.glass.blurPreset==="true") {
-            const st=(mouse.findChild(page,"glassBlurStatus").text||"");
-            fixture.checks.pendingOrUnsupported=st.indexOf("pending (save snippet)")>=0 || st.indexOf("unsupported")>=0;
-            if(((ShellState.snapshot.platform||{}).popupBlurSupported)===true) {
-                ShellState.run("setting",{key:"liquidGlass",token:"appliedBlur",value:"true"});fixture.phase=3;
-            } else fixture.phase=5;
-        } else if(fixture.phase===3 && Theme.glass.appliedBlur==="true") {
-            const st=(mouse.findChild(page,"glassBlurStatus").text||"");
-            fixture.checks.applied=st.indexOf("applied (true)")>=0;fixture.phase=5;
-        } else if(fixture.phase===5) {
             ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});
             ShellState.run("setting",{key:"liquidGlass",value:{}});fixture.phase++;
-        } else if(fixture.phase===6 && !Theme.liquidGlass) { fixture.finish(fixture.checks); }
+        } else if(fixture.phase===2 && !Theme.liquidGlass) { fixture.finish(fixture.checks); }
     }}
 """, {'QT_QPA_PLATFORM':'wayland'})
-        self.assertTrue(result.get('model'), result)
-        self.assertTrue(result.get('headers'), result)
-        self.assertTrue(result.get('descHas'), result)
-        self.assertTrue(result.get('rim'), result)
-        self.assertTrue(result.get('opacity'), result)
-        self.assertTrue(result.get('statusPrefix'), result)
-        self.assertTrue(result.get('statusState'), result)
-        self.assertTrue(result.get('pendingOrUnsupported'), result)
-        if ((result or {}).get('applied') is not None): self.assertTrue(result.get('applied'), result)
+        self.assertEqual(result.get('model'), True, result)
+        self.assertEqual(result.get('headers'), True, result)
+        self.assertEqual(result.get('descHas'), True, result)
+        self.assertEqual(result.get('rim'), True, result)
+        self.assertEqual(result.get('opacity'), True, result)
+        self.assertEqual(result.get('noBlur'), True, result)
+        self.assertEqual(result.get('statusPrefix'), True, result)
+        self.assertEqual(result.get('statusState'), True, result)

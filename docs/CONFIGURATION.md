@@ -346,7 +346,9 @@ shortcuts and behavior when upgrading an existing layout.
 
 Settings → Appearance → Surface style selects `surfaceStyle`: `"smoked"`
 (default) or `"liquid"`. The switch is saved in settings and portable presets
-and backups. It is independent of Material appearance profiles.
+and backups. It is independent of Material appearance profiles. See
+[GLASS.md](GLASS.md) for the hybrid lens/compositor model, presets, niri
+requirements and troubleshooting.
 
 Liquid uses a neutral glass palette for all color roles, including custom bar
 island fills/borders and notifications. Dracula, Matugen, palette.json, accent,

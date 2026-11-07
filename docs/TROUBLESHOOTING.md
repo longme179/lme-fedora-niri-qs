@@ -6,6 +6,7 @@ Niri's default blur uses xray: it samples the wallpaper even when an application
 is behind the glass. On niri 26.04+, include the current
 `config/niri/popup-blur.kdl` **after other background-effect rules**, then run
 `niri validate`. Replace `lme-shell` with your installed config name if different:
+See [GLASS.md](GLASS.md) for the full hybrid model, presets and gates.
 
 ```kdl
 include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
@@ -242,6 +243,8 @@ The baseline effect is translucent layered surfaces with highlights. It can
 look different with different wallpapers and panel opacity settings. True
 background blur is compositor-dependent. Increase panel opacity for legibility
 and disable animations in Settings if you prefer reduced motion or lower GPU
+work. See [GLASS.md](GLASS.md) for controls, presets and the Frosted vs
+True-backdrop tradeoff.
 work. Avoid selecting the RTX GPU just to intensify visual effects.
 
 ## Settings app or typography

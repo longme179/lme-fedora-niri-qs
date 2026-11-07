@@ -65,7 +65,7 @@ Item {
     }
     function updateNest() {
         nestWalks++;
-        const stop = nestingStop();
+        const stop = root.hostWindow ? root.hostWindow.contentItem : null;
         nestLevel = GlassNesting.nestLevel(root, stop);
         const domain = [];
         let a = root.parent, depth = 0;

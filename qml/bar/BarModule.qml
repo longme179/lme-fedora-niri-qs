@@ -12,7 +12,6 @@ Loader {
     required property string moduleId
     property var screenInfo: null
     property var windowInfo: null
-    property bool compositorBlur: Theme.compositorPopupBlur
     property bool compact: false
     property real titleBudget: 360
     readonly property var catalogEntry: BarRegistry.info(moduleId)
@@ -32,7 +31,7 @@ Loader {
         Loader {
             source: FeatureCatalog.url(root.catalogEntry.entry)
             onLoaded: {
-                for (const key of ["screenInfo", "windowInfo", "compact", "titleBudget", "compositorBlur"])
+                for (const key of ["screenInfo", "windowInfo", "compact", "titleBudget"])
                     if (key in item) item[key] = Qt.binding(() => root[key]);
             }
         }
@@ -40,7 +39,7 @@ Loader {
     Component { id: privacyComponent; PrivacyIndicator { function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } } }
     Component {
         id: activityComponent
-        ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget; compositorBlur: root.compositorBlur; function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } }
+        ActivityButton { screenInfo: root.screenInfo; windowInfo: root.windowInfo; budget: root.titleBudget; function primaryAction() { return BarGestures.perform(root.moduleId, "left", root.screenInfo); } }
     }
     Component {
         id: actionComponent
@@ -62,7 +61,6 @@ Loader {
                     delegate: LiquidButton {
                         id: workspace
                         required property var modelData
-                        compositorBlur: root.compositorBlur
                         width: modelData.is_focused ? 42 : 34; height: 30; implicitHeight: 30
                         // This nested viewport has no vertical overdraw; retain width/radius motion.
                         scale: 1
@@ -112,7 +110,6 @@ Loader {
         id: statusComponent
         LiquidButton {
             id: statusButton
-            compositorBlur: root.compositorBlur
             readonly property date now: clock.date
             readonly property var audio: ShellState.system.audio || {}
             readonly property var network: ShellState.system.network || {}

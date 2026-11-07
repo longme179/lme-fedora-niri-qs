@@ -48,9 +48,9 @@ Item {
     objectName: "glassMaterial"
     Behavior on hoverAmount { enabled: root.active && Theme.animations; NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
     Behavior on pressAmount { enabled: root.active && Theme.animations; NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic } }
-    onHoverAmountChanged: if (hoverAmount === 0) hasPointer = false
+    onHoverAmountChanged: { if (hoverAmount === 0) hasPointer = false; dirty = true }
     onLightEnabledChanged: if (!lightEnabled && hoverAmount === 0) hasPointer = false
-    onPointerScenePositionChanged: if (lightEnabled && pointer.hovered && renderWindow) renderWindow.update()
+    onPointerScenePositionChanged: { if (lightEnabled && pointer.hovered) { dirty = true; if (renderWindow) renderWindow.update(); } }
     SpringMotion {
         id: lightX; objectName: "glassLightX"
         enabled: root.lightEnabled && Theme.springMotion && root.hoverAmount > 0
@@ -97,11 +97,11 @@ Item {
     // of tree events into exactly one walk per event-loop batch.
     function scheduleNestUpdate() { nestTimer.restart() }
     Timer { id: nestTimer; interval: 0; onTriggered: root.updateNest() }
-    onActiveChanged: updateBackdrop()
+    onActiveChanged: { dirty = true; updateBackdrop() }
     onSoftwareChanged: updateBackdrop()
-    onBackdropChanged: scheduleNestUpdate()
-    onParentChanged: { Qt.callLater(updateBackdrop); scheduleNestUpdate(); }
-    onHostWindowChanged: { hasPointer = false; updateBackdrop(); scheduleNestUpdate(); }
+    onBackdropChanged: { dirty = true; scheduleNestUpdate() }
+    onParentChanged: { dirty = true; invalidateSample(); Qt.callLater(updateBackdrop); scheduleNestUpdate(); }
+    onHostWindowChanged: { hasPointer = false; dirty = true; invalidateSample(); updateBackdrop(); scheduleNestUpdate(); }
     Component.onCompleted: { updateBackdrop(); updateNest(); }
     Component.onDestruction: if (backdrop) GlassState.release(backdrop)
     readonly property var sampleInputs: backdrop ? [backdrop.windowOrigin, backdrop.cropRect, backdrop.outputWidth, backdrop.outputHeight] : null
@@ -111,10 +111,20 @@ Item {
         if (!backdrop) sampleRect = Qt.rect(0, 0, 1, 1);
         else if (renderWindow) renderWindow.update();
     }
-    onSampleInputsChanged: invalidateSample()
-    onRenderWindowChanged: invalidateSample()
+    onSampleInputsChanged: { dirty = true; invalidateSample() }
+    onRenderWindowChanged: { dirty = true; invalidateSample() }
+    property bool dirty: true
+    property int sampleCalls: 0
+    onHoveredChanged: dirty = true
+    onWidthChanged: dirty = true
+    onHeightChanged: dirty = true
+    onXChanged: dirty = true
+    onYChanged: dirty = true
+    onShadowChanged: dirty = true
+    onVisibleChanged: dirty = true
     function updateSample() {
         if (!active || !backdrop) return;
+        sampleCalls++;
         const a = root.mapToItem(null, -root.pad, -root.pad);
         const b = root.mapToItem(null, width + root.pad, height + root.pad);
         const origin = backdrop.windowOrigin;
@@ -125,7 +135,7 @@ Item {
     Connections {
         target: root.active ? root.renderWindow : null
         // Map glass and pointer coordinates once per rendered frame, without ancestor bindings.
-        function onAfterAnimating() { root.updateLight(); root.updateSample(); }
+        function onAfterAnimating() { if (FrameLogger.enabled) FrameLogger.sample(Date.now(), root.compositorBlur ? "true" : "lens"); if (!root.dirty) return; root.dirty = false; if (pointer.hovered || root.hoverAmount > 0) root.updateLight(); root.updateSample(); }
     }
     HoverHandler { id: pointer; enabled: root.lightEnabled }
     // Watched ancestors re-walk on tree events only; animation frames never
@@ -136,6 +146,8 @@ Item {
             required property var modelData
             target: modelData
             function onChildrenChanged() { root.scheduleNestUpdate() }
+            function onXChanged() { root.dirty = true }
+            function onYChanged() { root.dirty = true }
         }
     }
     Item {

@@ -16,4 +16,5 @@ singleton BluetoothState 1.0 BluetoothState.qml
 singleton PeripheralBatteries 1.0 PeripheralBatteries.qml
 singleton DesktopState 1.0 DesktopState.qml
 singleton GlassState 1.0 GlassState.qml
+singleton FrameLogger 1.0 FrameLogger.qml
 singleton UpdateState 1.0 UpdateState.qml

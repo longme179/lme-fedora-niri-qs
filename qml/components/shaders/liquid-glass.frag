@@ -202,7 +202,7 @@ void main() {
         if (cB.a > 0.05) col.b = cB.b / cB.a;
     }
 
-    float l = dot(col, vec3(0.2126, 0.7152, 0.0722)); float lRaw = (adaptiveContrast>0.5 && sourceAvailable>=0.5) ? dot(blurredAt(ps + dG, rad, lod, taps), vec3(0.2126, 0.7152, 0.0722)) : 0.0; vec3 tcol = tintColor.rgb; float tAraw = clamp(tintAmount*(0.7+0.6*l), 0.0, 1.0); float tA = adaptiveContrast>0.5 ? clamp(tAraw*(0.75+0.75*clamp((compositorBlur>=0.5 ? lRaw : l),0.0,1.0)), 0.7*tAraw, min(1.6*tAraw,0.9)) : tAraw;
+    float l = dot(col, vec3(0.2126, 0.7152, 0.0722)); float lRaw = (adaptiveContrast>0.5 && sourceAvailable>=0.5) ? dot(blurredAt(ps + dG, rad, lod, taps), vec3(0.2126, 0.7152, 0.0722)) : 0.0; vec3 tcol = tintColor.rgb; float tAraw = clamp(tintAmount*(0.7+0.6*l), 0.0, 1.0); float tA = adaptiveContrast>0.5 ? clamp(tAraw*(0.75+0.75*clamp((compositorBlur>=0.5 ? lRaw : l),0.0,1.0)), 0.7*tAraw, min(1.6*tAraw,0.9)) : tAraw; float tLum = dot(tcol, vec3(0.2126, 0.7152, 0.0722)); float fLum = compositorBlur>=0.5 ? lRaw : l; float tFloor = fLum <= 0.30 || tLum >= fLum ? 0.0 : (fLum - 0.30)/(fLum - tLum); tA = max(tA, min(tFloor, compositorBlur>=0.5 ? 0.30 : 0.75));
     col = mix(vec3(l), col, saturation);
 
     col *= 1.0 - (1.0 - nest) * 0.06 * exp(-t / 6.0) * clamp(g.y, 0.0, 1.0);

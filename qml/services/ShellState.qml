@@ -19,11 +19,11 @@ QtObject {
     readonly property var system: snapshot.system || {}
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
-    readonly property bool batterySaverActive: (snapshot.batterySaver || {}).active === true
+    readonly property bool batterySaverActive: (snapshot.batterySaver || {}).active === true; readonly property bool reducedTransparency: preferences.reducedTransparency === true
     readonly property string shellName: preferences.shellName || "LME Shell"
-    readonly property bool popupBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
-    readonly property bool liquidBlurEnabled: !demo && !batterySaverActive && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
-    readonly property bool barBlurEnabled: !demo && !batterySaverActive && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property bool popupBlurEnabled: !demo && !batterySaverActive && !reducedTransparency && preferences.surfaceStyle !== "liquid" && preferences.popupBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property bool liquidBlurEnabled: !demo && !batterySaverActive && !reducedTransparency && preferences.surfaceStyle === "liquid" && (snapshot.platform || {}).popupBlurSupported === true
+    readonly property bool barBlurEnabled: !demo && !batterySaverActive && !reducedTransparency && preferences.barBlur !== false && (snapshot.platform || {}).popupBlurSupported === true
     readonly property var legacyPanels: ["launchpad", "launcher", "control", "power", "settings", "tray", "overview", "activity", "wifi"]
     property string panelKind: "control"
     property bool launchpadOpen: false

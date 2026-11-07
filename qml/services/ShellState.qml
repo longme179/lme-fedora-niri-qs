@@ -183,6 +183,10 @@ QtObject {
             if (Identity.keep(next, snapshot, "apps", apps)) next.apps = apps;
             if (Identity.keep(next, snapshot, "launcherUsage", launcherUsage)) next.launcherUsage = launcherUsage;
             if (Identity.keep(next, snapshot, "preferences", preferences)) next.preferences = preferences;
+            // Stable references for the hot polled sections keep bar and panel
+            // bindings from re-evaluating on every backend snapshot.
+            if (Identity.keep(next, snapshot, "system", system)) next.system = system;
+            if (Identity.keep(next, snapshot, "displays", snapshot.displays)) next.displays = snapshot.displays;
             snapshot = next;
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;

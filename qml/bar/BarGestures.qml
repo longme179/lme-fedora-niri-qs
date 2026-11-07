@@ -51,8 +51,10 @@ QtObject {
             const next = current + (name === "workspaceNext" ? 1 : -1);
             if (current >= 0 && next >= 0 && next < workspaces.length) ShellState.run("workspace", {id: workspaces[next].id});
         } else if (["audio", "devices", "agenda", "system"].includes(name)) {
+            // Focus the requested tab; opening the panel only when it is closed,
+            // so the gesture never swaps a tab just to close the panel on it.
             ShellState.selectControlTab(name);
-            ShellState.togglePanel("control", screen);
+            if (!ShellState.controlOpen) ShellState.togglePanel("control", screen);
         } else ShellState.togglePanel(name === "workspaceBoard" ? "overview" : name, screen);
         return true;
     }

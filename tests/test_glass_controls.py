@@ -224,3 +224,56 @@ class GlassControlsQmlCase(unittest.TestCase):
             expected=Image.blend(base,Image.new('RGB',base.size,'#dddddd'),.5)
             diff=ImageChops.difference(half,expected).crop((x,y,x+320,y+60))
             self.assertLess(max(ImageStat.Stat(diff).mean),1.5,'group opacity must respect the background during fades')
+
+
+    def test_preset_descriptions_headers_and_blur_status(self):
+        result = self.run_qml('import QtTest\nimport "qml/settings"\nimport "qml/services"\nimport "qml/theme"', r"""
+    FloatingWindow { implicitWidth:800;implicitHeight:1200
+        Flickable { id:view;anchors.fill:parent;contentHeight:page.implicitHeight;clip:true
+            LiquidGlassSettings { id:page;width:parent.width }
+        }
+        TestCase { id:mouse;when:false }
+    }
+    property int phase:0
+    property int ticks:0
+    property var checks:({})
+    Timer { interval:80;running:true;repeat:true;onTriggered: {
+        if(++fixture.ticks>160) { fixture.finish({timeout:fixture.phase,checks:fixture.checks});return; }
+        if(!ShellState.backendReady || ShellState.pendingActions.setting || !Object.keys(Theme.glassControls).length) return;
+        const preset=mouse.findChild(page,"glassMaterialPreset"), desc=mouse.findChild(page,"glassMaterialPresetDesc");
+        const lens=mouse.findChild(page,"glassLensHeader"), comp=mouse.findChild(page,"glassCompositorHeader");
+        const status=mouse.findChild(page,"glassBlurStatus");
+        if(fixture.phase===0) { ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
+        else if(fixture.phase===1 && Theme.liquidGlass && preset && desc && lens && comp && status) {
+            fixture.checks.model=preset.model.length===3 && preset.model[0]==="Clear" && preset.model[1]==="Frosted" && preset.model[2]==="Vivid";
+            fixture.checks.headers=lens.text==="Lens" && comp.text==="Compositor";
+            fixture.checks.descHas=desc.text.indexOf("tint")>=0 && desc.text.indexOf("blur")>=0;
+            fixture.checks.rim=!!mouse.findChild(page,"glass-rim");
+            fixture.checks.opacity=!!mouse.findChild(page,"glass-opacity");
+            const st=status.text||""; fixture.checks.statusPrefix=st.indexOf("Compositor blur:")===0;
+            fixture.checks.statusState=st.indexOf("unsupported")>=0 || st.indexOf("applied")>=0 || st.indexOf("pending (save snippet)")>=0;
+            ShellState.run("setting",{key:"liquidGlass",token:"blurPreset",value:"true"});fixture.phase++;
+        } else if(fixture.phase===2 && Theme.glass.blurPreset==="true") {
+            const st=(mouse.findChild(page,"glassBlurStatus").text||"");
+            fixture.checks.pendingOrUnsupported=st.indexOf("pending (save snippet)")>=0 || st.indexOf("unsupported")>=0;
+            if(((ShellState.snapshot.platform||{}).popupBlurSupported)===true) {
+                ShellState.run("setting",{key:"liquidGlass",token:"appliedBlur",value:"true"});fixture.phase=3;
+            } else fixture.phase=5;
+        } else if(fixture.phase===3 && Theme.glass.appliedBlur==="true") {
+            const st=(mouse.findChild(page,"glassBlurStatus").text||"");
+            fixture.checks.applied=st.indexOf("applied (true)")>=0;fixture.phase=5;
+        } else if(fixture.phase===5) {
+            ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});
+            ShellState.run("setting",{key:"liquidGlass",value:{}});fixture.phase++;
+        } else if(fixture.phase===6 && !Theme.liquidGlass) { fixture.finish(fixture.checks); }
+    }}
+""", {'QT_QPA_PLATFORM':'wayland'})
+        self.assertTrue(result.get('model'), result)
+        self.assertTrue(result.get('headers'), result)
+        self.assertTrue(result.get('descHas'), result)
+        self.assertTrue(result.get('rim'), result)
+        self.assertTrue(result.get('opacity'), result)
+        self.assertTrue(result.get('statusPrefix'), result)
+        self.assertTrue(result.get('statusState'), result)
+        self.assertTrue(result.get('pendingOrUnsupported'), result)
+        if ((result or {}).get('applied') is not None): self.assertTrue(result.get('applied'), result)

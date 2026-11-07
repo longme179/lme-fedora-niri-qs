@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Fix micro-freezes when opening panels and switching Settings pages. Panel
+  trees mounted fully synchronously on the UI thread (the control center built
+  ~55 glass materials and ~2000 objects in one ~900 ms block, again on every
+  open because closing destroyed the tree), Settings pages swapped the same
+  way, and every 2 s backend snapshot re-evaluated bar and panel bindings.
+  SlideLoader now incubates content asynchronously (`Loader.asynchronous`) so
+  heavy panels build across frames without blocking input or animation, keeps
+  the last panel mounted after close (`keepAlive`, hidden by the host window)
+  for instant reopens, and remembers the loaded size so the overlay reserves
+  the right area while incubating. Settings pages use a new SettingsPageHost
+  that double-buffers two asynchronous loaders, so the current page stays
+  visible while the next one incubates: pages never blank and never block.
+  The control center tab loader, the catalog page loader, and the Settings
+  application view loader incubate asynchronously too. Backend snapshots now
+  keep stable references for the `system` and `displays` sections (the same
+  Identity.keep mechanism as apps/niri/preferences), so unchanged polls no
+  longer re-evaluate every bar and panel binding. Also fix a TypeError on the
+  Liquid glass settings page: Quickshell's FileView exposes text as a method,
+  and the blur snippet check called `.indexOf` on the function instead of its
+  result.
 - Fix selected controls being unreadable on light glass. In Liquid glass the
   selected button, tab and chip fill was a fixed light scheme color (the same
   value as the switch track and slider fill) while labels stayed white, so on

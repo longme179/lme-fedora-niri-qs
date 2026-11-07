@@ -124,10 +124,9 @@ Item {
                 contentWidth: width; contentHeight: pageLoader.item ? (pageLoader.item as Item).implicitHeight + 12 : 0
                 clip: true; boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: ScrollBar {}
-                SlideLoader {
+                SettingsPageHost {
                     id: pageLoader
                     x: 6; y: 6
-                    direction: "up"
                     width: pageScroll.width - 12
                     content: root.currentPage.entry ? catalogPage : root.page === "topbar" ? barPage
                                    : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
@@ -140,6 +139,7 @@ Item {
         id: catalogPage
         Loader {
             id: catalogLoader
+            asynchronous: true
             source: FeatureCatalog.url(root.currentPage.entry)
             PageNavigation { target: catalogLoader.item; onRequested: pageId => root.navigate(pageId) }
         }

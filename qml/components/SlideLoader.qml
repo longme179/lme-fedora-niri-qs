@@ -10,6 +10,11 @@ Loader {
     property bool exitToEdge: false
     property bool animateResize: true
     property string exitEdge: "nearest"
+    // Retain the built tree after close for instant reopens (host window hides it).
+    property bool keepAlive: false
+    property bool dormant: false
+    property real rememberedWidth: 0
+    property real rememberedHeight: 0
     property int travelEdge: -1
     property real exitX: 0
     property real exitY: 0
@@ -25,6 +30,8 @@ Loader {
     readonly property real overdraw: Math.max(width, height) * Math.abs(elasticity.strain) + Math.max(width, height, Math.abs(offsetX), Math.abs(offsetY)) * Math.abs(Theme.deformation * (1 - progress)) + 2
     readonly property bool outsideViewport: parent && (x + offsetX + width + overdraw < 0 || x + offsetX - overdraw > parent.width || y + offsetY + height + overdraw < 0 || y + offsetY - overdraw > parent.height)
     active: mounted
+    // Incubate content across frames so mounting a heavy panel never blocks the UI.
+    asynchronous: true
     enabled: shown
     sourceComponent: retainedContent
     Behavior on width { enabled: root.animateResize && root.shown && root.mounted && root.progress >= .99 && Theme.animations; MotionAnimation { large: true; easing.bezierCurve: Theme.effectsCurve } }
@@ -49,6 +56,15 @@ Loader {
         if (shown || !mounted) return;
         // Off-screen content need not wait for the spring's sub-pixel settling tail.
         if (exitToEdge ? !outsideViewport && transitioning : transitioning) return;
+        if (keepAlive) {
+            dormant = true;
+            motion.stop(); exitMotionX.stop(); exitMotionY.stop();
+            spring.snapTo(0); exitSpringX.snapTo(0); exitSpringY.snapTo(0);
+            if (!Theme.springMotion) progress = 0;
+            exitX = 0; exitY = 0;
+            travelEdge = -1;
+            return;
+        }
         mounted = false;
         motion.stop(); exitMotionX.stop(); exitMotionY.stop();
         spring.snapTo(0); exitSpringX.snapTo(0); exitSpringY.snapTo(0);
@@ -80,6 +96,7 @@ Loader {
     }
     function move(to) {
         if (to === 0 && !mounted) return;
+        if (to === 1) dormant = false;
         if (to === 1 && !mounted) {
             travelEdge = -1;
             mounted = true;
@@ -104,12 +121,32 @@ Loader {
         }
         move(shown ? 1 : 0);
     }
-    onShownChanged: if (initialized) { if (shown) retainedContent = content; if (shown || mounted) move(shown ? 1 : 0); }
+    onShownChanged: if (initialized) {
+        if (shown) {
+            dormant = false;
+            retainedContent = content;
+            if (status === Loader.Ready) move(1);
+            else if (!mounted) {
+                // Park the mount off-screen until asynchronous incubation delivers the item.
+                mounted = true;
+                const offset = Theme.animations ? edgeOffset() : {x: 0, y: 0};
+                exitSpringX.snapTo(offset.x); exitSpringY.snapTo(offset.y);
+                exitX = offset.x; exitY = offset.y;
+            }
+        } else if (mounted) move(0);
+    }
     onContentChanged: if (initialized && shown) { retainedContent = content; if (!mounted) move(1); }
     Component.onCompleted: { initialized = true; if (shown) { retainedContent = content; move(1); } }
     onLoaded: {
         const panel = item as Item;
-        if (panel && shown) panel.forceActiveFocus();
+        if (panel) {
+            if (panel.implicitWidth > 0) rememberedWidth = panel.implicitWidth;
+            if (panel.implicitHeight > 0) rememberedHeight = panel.implicitHeight;
+        }
+        if (shown) {
+            move(1);
+            if (panel) panel.forceActiveFocus();
+        } else finishClose();
     }
     SpringMotion {
         id: spring; enabled: Theme.springMotion

@@ -110,7 +110,7 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible || panelLoader.active) && !ShellState.authenticationActive
+        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible || (panelLoader.active && !panelLoader.dormant)) && !ShellState.authenticationActive
         // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.
         readonly property rect viewport: {
             const w = screen ? screen.width : 1920, h = screen ? screen.height : 1080;
@@ -165,13 +165,14 @@ ShellRoot {
             SlideLoader {
                 id: panelLoader
                 exitToEdge: true
+                keepAlive: true
                 readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview"].includes(ShellState.panelKind)
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
                 shown: ShellState.panelOpen && !ShellState.activityOpen
                 content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
                                : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
-                width: item ? Math.min(item.implicitWidth, parent.width - 32) : 400
-                height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : 500
+                width: item ? Math.min(item.implicitWidth, parent.width - 32) : rememberedWidth || 400
+                height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : rememberedHeight || 500
                 x: centered ? (parent.width - width) / 2
                    : ShellState.panelKind === "tray" && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(parent.width - width - 14, ShellState.trayAnchorX - width))
                    : parent.width - width - 14

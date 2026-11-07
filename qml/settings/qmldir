@@ -13,3 +13,4 @@ SettingsApplication 1.0 SettingsApplication.qml
 ElementsPage 1.0 ElementsPage.qml
 GowallSettings 1.0 GowallSettings.qml
 AwwwSettings 1.0 AwwwSettings.qml
+SettingsPageHost 1.0 SettingsPageHost.qml

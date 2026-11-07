@@ -52,6 +52,7 @@ ShellRoot {
             id: view
             anchors.fill: parent
             active: root.initialized
+            asynchronous: true
             sourceComponent: SettingsView { page: root.requestedPage; onCloseRequested: Qt.quit() }
         }
         Timer {

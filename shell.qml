@@ -65,8 +65,12 @@ ShellRoot {
                 id: barWindow
                 screen: screenScope.modelData
                 anchors { top: !Theme.barBottom; bottom: Theme.barBottom; left: true; right: true }
-                margins { left: Theme.barSideMargin; right: Theme.barSideMargin; top: Theme.barBottom ? 0 : Theme.barTopMargin; bottom: Theme.barBottom ? 0 : 0 }
-                implicitHeight: Theme.barBottom ? (Theme.barHeight + Theme.barTopMargin) : (Theme.barHeight + Theme.glassShadowPad)
+                // Shadow flight envelope: reserve the pill shadow padding
+                // inside the layer surface on every side so the surface
+                // bounds cannot clip the drop shadow. Pill screen positions
+                // stay unchanged; the envelope collapses when shadows are off.
+                margins { left: Theme.barWindowSideMargin; right: Theme.barWindowSideMargin; top: Theme.barWindowTopMargin; bottom: 0 }
+                implicitHeight: Theme.barWindowHeight
                 exclusiveZone: Theme.barHeight
                 color: "transparent"
                 WlrLayershell.namespace: "lme-bar"
@@ -78,6 +82,10 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    // Offset the window growth so pills keep their screen position.
+                    anchors.topMargin: Theme.barBottom ? Theme.barShadowPad : Theme.barTopMargin - Theme.barWindowTopMargin
+                    anchors.leftMargin: Theme.barSideMargin - Theme.barWindowSideMargin
+                    anchors.rightMargin: Theme.barSideMargin - Theme.barWindowSideMargin
                     height: Theme.barHeight
                     screenInfo: screenScope.modelData
                     windowInfo: barWindow

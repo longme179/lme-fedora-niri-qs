@@ -59,7 +59,10 @@ glass values; sliders remain editable.
 - `offset` (Blur spread, 3, 0.5–8, 0.5, compositor-wide): applies when the niri
   blur snippet is saved.
 
-**Other:** `glassSelection` (Glass selection highlight, default on),
+**Other:** `glassSelection` (Glass selection highlight, default on), **Pill
+shadows** (Top Bar settings, `barPillShadow`, default on: soft drop shadow
+around bar islands; the bar surface reserves padding for it — off removes
+the shadow and the padding),
 **Reduced transparency** (Accessibility, swaps to opaque surfaces), **Reset
 glass** (restores glass values; does not rewrite an already applied niri
 snippet).

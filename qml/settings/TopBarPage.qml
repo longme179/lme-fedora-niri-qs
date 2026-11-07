@@ -106,6 +106,12 @@ ColumnLayout {
     SettingsCard {
         title: "Edges and outline"
         description: "Choose the connected bar or one island. Each island has independent corners, fill and outline; changing the connected bar does not reshape islands. Automatic corners follow the bar height; 0 px is square."
+        PreferenceSwitch {
+            objectName: "barPillShadowSwitch"
+            title: "Pill shadows"
+            detail: "Soft drop shadow around bar islands. Turn off for a flat silhouette without the reserved shadow padding."
+            preference: "barPillShadow"
+        }
         LiquidComboBox {
             id: styleTarget; objectName: "barStyleTarget"; Layout.fillWidth: true
             model: ["Connected bar", "Left island", "Center island", "Right island"]

@@ -325,7 +325,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly", "jelly-v2"): return value
     if key == "motionSpeed" and finite_number(value) and .5 <= value <= 2: return float(value)
     if key == "motionBounce" and finite_number(value) and 0 <= value <= 1: return float(value)
-    if key in {"popupBlur", "barBlur"} and type(value) is bool: return value
+    if key in {"popupBlur", "barBlur", "barPillShadow"} and type(value) is bool: return value
     if key == "idleProfiles": return validate_profiles(value)
     if key == "niriConfigPath" and isinstance(value, str) and len(value) <= 4096 and not any(ord(c) < 32 for c in value):
         return str(Path(value).expanduser().resolve()) if value else ""

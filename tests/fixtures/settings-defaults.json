@@ -100,6 +100,7 @@
   "niriConfigPath": ["str","\"\""],
   "popupBlur": ["bool","true"],
   "barBlur": ["bool","true"],
+  "barPillShadow": ["bool","true"],
   "springMotion": ["bool","true"],
   "shapeMorph": ["bool","true"],
   "animatedTabs": ["bool","true"],

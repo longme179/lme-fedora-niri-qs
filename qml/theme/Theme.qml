@@ -164,7 +164,14 @@ QtObject {
     readonly property int smallRadius: 16
     readonly property int barHeight: ShellState.preferences.barHeight || 42
     readonly property real glassShadowPad: 12  // matches Serpantinum GlassFill pad / GlassMaterial.pad
-    readonly property real glassPillShadow: 3.0  // bar pill drop shadow strength (shadowAmt scale; Serpantinum default 1)
+    readonly property real glassPillShadow: ShellState.preferences.barPillShadow === false ? 0 : 3.0  // bar pill drop shadow strength (shadowAmt scale; Serpantinum default 1)
+    // Shadow flight envelope: the bar layer surface reserves this padding
+    // inside the surface around the pills so the surface bounds cannot clip
+    // the drop shadow. Collapses to 0 when pill shadows are disabled.
+    readonly property int barShadowPad: glassPillShadow > 0 ? glassShadowPad : 0
+    readonly property int barWindowSideMargin: Math.max(0, barSideMargin - barShadowPad)
+    readonly property int barWindowTopMargin: barBottom ? 0 : Math.max(0, barTopMargin - barShadowPad)
+    readonly property int barWindowHeight: barBottom ? (barShadowPad + barHeight + barTopMargin) : (barTopMargin - barWindowTopMargin + barHeight + barShadowPad)
     readonly property int barBorderWidth: ShellState.preferences.barBorderWidth === undefined ? 1 : ShellState.preferences.barBorderWidth
     readonly property var barCorners: ShellState.preferences.barCorners || ({topLeft: -1, topRight: -1, bottomLeft: -1, bottomRight: -1})
     function islandStyle(zone) { return (ShellState.preferences.barIslandStyles || {})[zone] || {}; }

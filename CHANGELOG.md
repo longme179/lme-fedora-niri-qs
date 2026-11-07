@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add Liquid glass settings presets with one-line descriptions at the top
+  of the material card, regroup sliders under Lens (blur, rim, edge width,
+  grain, tint opacity) and Compositor (passes, spread), and show a derived
+  compositor blur status line (applied/pending save snippet/unsupported).
+  Add `docs/GLASS.md` (hybrid model, presets, niri requirements, measured
+  perf facts, troubleshooting) linked from configuration, troubleshooting and
+  the README, and update Serpantinum attribution/notices for #87–#91
+  renderer refinements and the Lens 2.0 timing derivation (issue #78).
+
 - Add idle-frame elimination, env-gated glass telemetry, reduced
   transparency and a text contrast floor (Liquid Glass 2.0 C1): the
   per-frame glass JS is now dirty-gated (zero calls when unhovered and

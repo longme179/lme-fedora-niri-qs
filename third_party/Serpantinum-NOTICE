@@ -39,10 +39,23 @@ level, with nest passed into the renderer whose uniform already softens bevel,
 veil, bulge and grain. Upstream does not re-walk on allowed changes; LME
 matches that.
 
+Liquid-glass renderer refinements (#87-#91, LME, modifying the adapted files
+above): the lens shader (liquid-glass.frag, rebuilt .qsb) gained a
+compositor-blur yield path (transparent base with bounded tint/alpha when true
+backdrop is applied, niri >= 26.04 and a blur region is active), adaptive
+contrast (luminance-compensated bounded tint) with a tunable grain uniform, and
+a contrast-floor alpha clamp (yield/normal caps) — all LME changes layered on
+the restored upstream optics; backdrop sampling and lifecycle remain LME-owned.
+
 Selection-lens design reference (no upstream animation/backdrop engine copied):
 src/quickshell/reusables/display/GlassLens.qml at
-87d3b92730d40da432b125865c67059695b6e1c6. StretchIndicator keeps its existing
-DMS-derived spring edges and adds the shared LME glass material/press lift.
+87d3b92730d40da432b125865c67059695b6e1c6. StretchIndicator
+(qml/components/StretchIndicator.qml, SPDX MIT, DMS-derived base) derives Lens
+2.0 timing/behavior (leading-fast/trailing-slow OutExpo, lift/magnify, latch,
+settle) from GlassLens.qml (PR #90, 4c170cc/ddef193) without copying the
+upstream animation/backdrop discovery engine; it keeps its existing DMS-derived
+spring edges and the shared LME glass material/press lift. The file retains an
+AGPL derivation comment and this notice reference.
 
 Launch-score decay:
 src/quickshell/launcher/app_rank.py at

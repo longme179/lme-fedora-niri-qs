@@ -291,8 +291,14 @@ never per frame.
 
 The selection-lens treatment also references Serpantinum's
 [`GlassLens.qml`](https://github.com/ilyamiro/serpantinum/blob/87d3b92730d40da432b125865c67059695b6e1c6/src/quickshell/reusables/display/GlassLens.qml).
-LME retains its existing DMS-derived spring edges, reuses its shared glass
-material and does not copy the restartable easing or backdrop discovery engine.
+`qml/components/StretchIndicator.qml` (SPDX MIT, DMS-derived base) derives Lens
+2.0 timing/behavior (OutExpo leading/trailing, lift/magnify, latch, settle; PR
+#90, 4c170cc/ddef193) from that reference without copying the restartable easing
+or backdrop discovery engine; it retains its existing DMS-derived spring edges
+and the shared LME glass material/press lift and carries an AGPL derivation
+comment pointing to `third_party/Serpantinum-NOTICE`. LME's #87–#91 refinements
+to the adapted liquid-glass renderer (compositor-yield, adaptive contrast/grain,
+contrast floor) are recorded in that notice.
 
 ## Wallpaper playlist references
 

@@ -97,7 +97,7 @@ ShellRoot {
     PanelWindow {
         id: liquidScrim
         screen: overlay.screen
-        visible: overlay.visible && ShellState.liquidBlurEnabled
+        visible: overlay.surfaceLive && ShellState.liquidBlurEnabled
         anchors { top: true; bottom: true; left: true; right: true }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -110,7 +110,13 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        visible: !root.preview && (ShellState.panelOpen || activityIsland.visible || (panelLoader.active && !panelLoader.dormant)) && !ShellState.authenticationActive
+        // Keep the layer surface mapped for the whole session. Re-mapping while
+        // a retained panel tree is in the scene re-attaches every item to the
+        // fresh surface (~700ms of synchronous binding churn + canvas context
+        // rebuild), which read as a dead hitch before each reopen. While idle
+        // the surface shrinks to a 1x1 transparent, input-transparent sliver.
+        visible: !root.preview && !ShellState.authenticationActive
+        readonly property bool surfaceLive: ShellState.panelOpen || activityIsland.visible || (panelLoader.active && !panelLoader.dormant)
         // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.
         readonly property rect viewport: {
             const w = screen ? screen.width : 1920, h = screen ? screen.height : 1080;
@@ -122,15 +128,15 @@ ShellRoot {
                 frames.push({left: edge === 0 ? 0 : x - px, right: edge === 1 ? w : x + width + px,
                     top: edge === 2 ? 0 : y - py, bottom: edge === 3 ? h : y + height + py});
             }
-            if (activityIsland.mounted) {
+            if (activityIsland.mounted && !activityIsland.dormant) {
                 const width = activityIsland.expandedWidth, height = activityIsland.expandedHeight;
                 const anchor = ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : w / 2;
                 const x = Math.max(activityIsland.sideInset, Math.min(w - width - activityIsland.sideInset, anchor - width / 2));
                 reserve(x, Theme.barBottom ? h - activityIsland.edgeInset - height : activityIsland.edgeInset,
                     width, height, Theme.barBottom ? 3 : 2);
             }
-            if (panelLoader.mounted) reserve(panelLoader.x, panelLoader.y, panelLoader.width, panelLoader.height, panelLoader.travelEdge);
-            if (!frames.length) return Qt.rect(0, 0, w, h);
+            if (panelLoader.mounted && !panelLoader.dormant) reserve(panelLoader.x, panelLoader.y, panelLoader.width, panelLoader.height, panelLoader.travelEdge);
+            if (!frames.length) return Qt.rect(0, 0, 1, 1);
             const left = Math.max(0, Math.floor(Math.min(...frames.map(r => r.left))));
             const top = Math.max(0, Math.floor(Math.min(...frames.map(r => r.top))));
             return Qt.rect(left, top, Math.max(1, Math.min(w, Math.ceil(Math.max(...frames.map(r => r.right)))) - left),
@@ -144,7 +150,7 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
-        BackgroundEffect.blurRegion: !visible ? null : ShellState.liquidBlurEnabled ? glassPopupBlur : ShellState.popupBlurEnabled ? popupBlurRegion : null
+        BackgroundEffect.blurRegion: !visible || !surfaceLive ? null : ShellState.liquidBlurEnabled ? glassPopupBlur : ShellState.popupBlurEnabled ? popupBlurRegion : null
         Region { id: popupBlurRegion; item: overlay.contentItem }
         Region { id: glassPopupBlur; regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }
         SurfaceBlurRegion { id: islandBlur; surface: activityIsland.panel }
@@ -178,6 +184,15 @@ ShellRoot {
                    : parent.width - width - 14
                 y: centered ? (parent.height - height) / 2 : Theme.barBottom ? parent.height - height - Theme.panelTopMargin : Theme.panelTopMargin
                 MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
+                Connections {
+                    target: ShellState
+                    function onPanelSwapChanged() {
+                        // One popover replaced another: retire the outgoing
+                        // surfaces at once so two panels never share the stage.
+                        activityIsland.snapOut();
+                        panelLoader.snapOut();
+                    }
+                }
             }
         }
     }

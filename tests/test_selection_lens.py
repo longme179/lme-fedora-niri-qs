@@ -19,7 +19,6 @@ class LensPreferencesCase(Fixture, unittest.TestCase):
         self.assertEqual(self.preferences.path.read_bytes(),before)
 
 
-@unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI')=='1','private OpenGL selection checks')
 class Lens2SourceCase(unittest.TestCase):
     def test_new_timing_is_the_default_and_legacy_is_opt_out(self):
         from pathlib import Path
@@ -30,8 +29,10 @@ class Lens2SourceCase(unittest.TestCase):
         self.assertIn('property bool settling', text)
         self.assertIn('interval: 300', text)
         self.assertIn('Easing.OutExpo', text)
-        self.assertIn('duration: root.forward ? 200', text)
-        self.assertIn('duration: root.forward ? 350', text)
+        # Structural timing assertions (issue #94 item 2): leftEdge runs 350 forward
+        # while rightEdge runs 200 forward, both gated on !legacyMotion in the source.
+        self.assertIn('root.vertical ? 200 : root.forward ? 350 : 200', text)
+        self.assertIn('root.vertical ? 200 : root.forward ? 200 : 350', text)
         self.assertIn('liftMagnify', text)
         self.assertIn('1.16', text)
         self.assertIn('Qt.callLater(() => placed', text)

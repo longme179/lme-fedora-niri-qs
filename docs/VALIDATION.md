@@ -1,5 +1,13 @@
 # Validation and platform limits
 
+
+## qmllint exit-code quirk — 2026-11-07
+
+`qmllint qml/settings/LiquidGlassSettings.qml` exits 255 with empty output
+(zero `Error:`/`Warning:` lines) on this machine for `main` and any variant of
+that file, while other files exit 0. The `scripts/check.sh` G0 gate counts
+output lines instead of exit codes, so it is unaffected; treat the bare 255 as
+a toolchain quirk, not a failure signal (issue #94 item 5).
 ## Settings first-visible-frame appearance — 2026-10-20
 
 The startup regression delays the backend snapshot by 500 ms and records visible

@@ -69,6 +69,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **IME indicator** | Default-off top-bar module showing the active fcitx5 input method with a change OSD. Uses `fcitx5-remote`; no polling while disabled. |
 | **Network connections** | Wi-Fi/Devices → VPN, Ethernet & hotspot: saved VPN/WireGuard and Ethernet profiles, exact-adapter activation/disconnection, system IP/DNS editor and confirmed secure hotspot activation. [Network guide](docs/NETWORK_CONNECTIONS.md). |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
+| **Liquid glass** | Hybrid wallpaper-lens + opt-in niri compositor blur (≥ 26.04): Clear/Frosted/Vivid material presets, Lens/Compositor tuning, adaptive contrast and a contrast floor. Frosted blurs wallpaper; True backdrop is experimental. See [GLASS.md](docs/GLASS.md). |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
 | **Themes and fonts** | Smoked glass by default, optional Liquid glass, per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes. |
 
@@ -479,6 +480,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Selected feature ports](docs/FEATURE_PORTS.md) | Detailed controls, dependencies, tests and hardware limits |
 | [Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md) | Screenshot drawing/redaction/OCR, external annotation, schedules and animations |
 | [Laptop features](docs/LAPTOP_FEATURES.md) | System monitor, idle profiles, keybindings and native blur |
+| [Liquid glass](docs/GLASS.md) | Hybrid lens/compositor model, presets, niri requirements and troubleshooting |
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |

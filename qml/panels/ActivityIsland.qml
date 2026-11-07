@@ -29,8 +29,8 @@ SlideLoader {
     y: Theme.barBottom && parent ? parent.height - edgeInset - height : edgeInset
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && !root.dormant ? root.expandedWidth : root.compactWidth; enabled: Theme.springMotion && root.mounted }
-    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && !root.dormant ? root.expandedHeight : 30; enabled: Theme.springMotion && root.mounted }
+    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && !root.dormant ? root.expandedWidth : root.compactWidth }
+    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && !root.dormant ? root.expandedHeight : 30 }
     // Rewind to the compact size when dormant so the next open re-expands.
     onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30) }
     content: GlassPanel { role: "islandFill";

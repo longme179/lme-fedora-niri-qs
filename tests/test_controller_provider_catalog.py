@@ -124,8 +124,8 @@ class ControllerDescriptorCase(ControllerFixture, unittest.TestCase):
         self.assertNotIn('batterySaver', policy['legacyFeatures'])
         for source in ('scripts/mirror_actions.py', 'scripts/display_mirror.py'):
             self.assertNotIn(source, policy['legacyFeatures']['display'])
-        self.assertEqual(len(backend.PREFERENCE_SCHEMA.definitions), 149)
-        self.assertEqual(len(backend.PREFERENCE_SCHEMA.legacy_keys), 68)
+        self.assertEqual(len(backend.PREFERENCE_SCHEMA.definitions), 151)
+        self.assertEqual(len(backend.PREFERENCE_SCHEMA.legacy_keys), 70)
 
     def test_each_copied_descriptor_selects_its_own_factory_without_host_edits(self):
         for name, module in FAMILY.items():

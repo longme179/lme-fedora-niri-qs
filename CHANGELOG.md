@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Fix bar pill drop shadows being clipped by the bar layer surface: the bar
+  window ended exactly at the pills, so the top/left/right shadow halos were
+  cut by the surface bounds and only a bottom sliver rendered. The window now
+  reserves a shadow flight envelope (`Theme.barShadowPad`) inside the surface
+  on every side while pills keep their screen position; the envelope collapses
+  to zero when shadows are disabled. Add a **Pill shadows** toggle
+  (`barPillShadow`, default on) in Top Bar settings to turn the effect off.
 - Replace the wallpaper-sampling liquid-glass lens with simple transparent
   glass: panels now render only a translucent tint layer (governed by Panel tint
   opacity), procedural grain, and a geometry-based edge highlight/rim. The shell

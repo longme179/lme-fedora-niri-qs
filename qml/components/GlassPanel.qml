@@ -5,28 +5,18 @@ Rectangle {
     id: root
     property string role: "panelFill"
     // Glass-on-glass marker: hosts that layer content above this panel
-    // (background:/sibling placement) count it as the glass stratum below.
+    // count it as the glass stratum below.
     readonly property bool isGlassFill: true
     property bool allowed: true
     property real shadow: 0
-    // Hosts that own a bar surface override this with the bar flag (see
-    // BarSurface); panels/popups keep the popup flag. GlassMaterial yields
-    // its wallpaper lens only while this is true (see Theme.compositor*Blur).
-    property bool compositorBlur: Theme.compositorPopupBlur
     radius: Theme.radius
-    color: Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
-    // Compositor-blur hairline: while a blur preset is applied, a 1px outline
-    // in the glass border token masks rounded-corner aliasing of the blur
-    // region. The shader rim stays the highlight just inside it; with no
-    // preset applied there is no outline, and Smoked mode is untouched.
-    readonly property bool blurHairline: Theme.liquidGlass && !!Theme.glass.appliedBlur
-    border.width: Theme.liquidGlass ? (blurHairline ? 1 : 0) : 1
-    border.color: blurHairline ? Theme.border : Theme.outlineVariant
+    color: Theme.liquidGlass ? "transparent" : Theme.alpha(Theme.tokenColor(role), Theme.panelOpacity)
+    border.width: Theme.liquidGlass ? 0 : 1
+    border.color: Theme.outlineVariant
     GlassMaterial {
         anchors.fill: parent
         radius: root.radius
         shadow: root.shadow
-        compositorBlur: root.compositorBlur
         topLeftRadius: root.topLeftRadius; topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius; bottomRightRadius: root.bottomRightRadius
     }

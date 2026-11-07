@@ -6,7 +6,6 @@
   "surfaceStyle": ["str","\"smoked\""],
   "liquidGlass": ["dict","{\"blur\": 1, \"edgeWidth\": 1, \"grain\": 0.004, \"offset\": 3, \"opacity\": 0.65, \"passes\": 2, \"rim\": 1, \"tint\": \"#f0081420\"}"],
   "glassSelection": ["bool","true"],
-  "adaptiveContrast": ["bool","false"],
   "reducedTransparency": ["bool","false"],
   "fontPicker": ["bool","true"],
   "colorPicker": ["bool","true"],

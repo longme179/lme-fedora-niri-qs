@@ -3,7 +3,7 @@
 // Adapted for LME hybrid glass; source and changes: third_party/Serpantinum-NOTICE.
 .pragma library
 
-function nestLevel(item, stopAt, countBackdrops) {
+function nestLevel(item, stopAt) {
     let count = 0;
     // LME: the carrier is the child of this stratum that contains the walker.
     // A marked glass container counts through its own embedded layer, never as
@@ -16,7 +16,7 @@ function nestLevel(item, stopAt, countBackdrops) {
         if (kids) {
             for (let i = 0; i < kids.length; i++) {
                 const k = kids[i];
-                if (k && k !== carrier && ((countBackdrops && k.isGlassBackdrop === true && k.standalone !== true) || (k.isGlassFill === true && k.allowed === true))) {
+                if (k && k !== carrier && k.isGlassFill === true && k.allowed === true) {
                     count++;
                     break;
                 }

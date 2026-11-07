@@ -21,12 +21,10 @@ class RenderWorld(ReleaseWorld):
         text = service.read_text().replace('    id: root', '''    id: root
     property int lifetimeMaterial: 0
     property int lifetimeOptics: 0
-    property int lifetimeBackdrop: 0
     property int lifetimeJelly: 0''', 1)
         service.write_text(text)
         for name, key, completed, destroyed in (
-            ('GlassMaterial', 'Material', 'updateBackdrop()', 'if (backdrop) GlassState.release(backdrop)'),
-            ('GlassBackdrop', 'Backdrop', None, 'GlassState.backdrops = GlassState.backdrops.filter(item => item !== root)'),
+            ('GlassMaterial', 'Material', 'updateNest()', None),
             ('GlassOptics', 'Optics', None, None),
             ('PopupElasticity', 'Jelly', 'attach()', None),
         ):
@@ -37,15 +35,19 @@ class RenderWorld(ReleaseWorld):
                 body = f'{{ GlassState.lifetime{key}{amount}; {old+";" if old else ""} }}'
                 if old:
                     original = f'Component.on{signal}: {old}'
-                    assert text.count(original) == 1, (name, original)
-                    text = text.replace(original, f'Component.on{signal}: {body}')
+                    if original in text:
+                        text = text.replace(original, f'Component.on{signal}: {body}')
+                    else:
+                        text = text.replace('\n    id: root', f'\n    Component.on{signal}: {body}\n    id: root', 1)
                 else:
-                    text = text.replace('\n    id: root', f'\n    Component.on{signal}: {body}\n    id: root', 1)
+                    existing = f'Component.on{signal}:'
+                    if existing not in text:
+                        text = text.replace('\n    id: root', f'\n    Component.on{signal}: {{ GlassState.lifetime{key}{amount}; }}\n    id: root', 1)
             path.write_text(text)
         path = self.root/'shell.qml'; text = path.read_text()
         text = text.replace('function state(): string {', '''function lifetime(): string {
             return JSON.stringify({material:GlassState.lifetimeMaterial, optics:GlassState.lifetimeOptics,
-                backdrop:GlassState.lifetimeBackdrop, jelly:GlassState.lifetimeJelly,
+                jelly:GlassState.lifetimeJelly,
                 panelLayer:panelLoader.layer.enabled, islandLayer:activityIsland.layer.enabled});
         }
         function state(): string {''', 1)

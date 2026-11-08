@@ -55,13 +55,25 @@ Item {
                     ScrollBar.vertical: ScrollBar {}
                     StretchIndicator {
                         parent: navigationScroll.contentItem; vertical: true
-                        targetItem: navRepeater.count ? navRepeater.itemAt(SettingsRegistry.search(search.text).findIndex(p => p.key===root.page)) : null
+                        // itemAt() is not notifiable: async incubation can leave the
+                        // count stable before delegates exist, latching the indicator
+                        // to null. Re-evaluate on every population change.
+                        targetItem: {
+                            navRepeater.population;
+                            const idx = SettingsRegistry.search(search.text).findIndex(p => p.key === root.page);
+                            return idx >= 0 ? navRepeater.itemAt(idx) : null;
+                        }
                     }
                     ColumnLayout {
                         id: navigationColumn; z: 1; x: 4; y: 4
                         width: navigationScroll.width - 16; spacing: 6
                         Repeater {
                             id: navRepeater; model: SettingsRegistry.search(search.text)
+                            // Notifiable revision: itemAt() bindings latch null when count
+                            // settles before async delegates are instantiated.
+                            property int population: 0
+                            onItemAdded: population++
+                            onItemRemoved: population--
                             delegate: LiquidButton {
                                 id: nav
                                 required property var modelData

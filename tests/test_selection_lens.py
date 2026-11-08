@@ -39,6 +39,30 @@ class Lens2SourceCase(unittest.TestCase):
         self.assertIn('Serpantinum GlassLens.qml', text)
         self.assertIn('MIT', text)
 
+    def test_repeater_itemat_target_uses_population_revision(self):
+        """itemAt() is not notifiable: bindings that resolve it on a Repeater
+        latch null when count settles before async delegates exist. Both
+        StretchIndicator targets that resolve Repeater items must depend on an
+        explicit population revision bumped by onItemAdded/onItemRemoved."""
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[1]
+        cc = (root / 'qml/panels/ControlCenter.qml').read_text()
+        sv = (root / 'qml/settings/SettingsView.qml').read_text()
+        # ControlCenter tab indicator
+        self.assertRegex(cc, r'id:\s*tabRepeater[\s\S]*?property\s+int\s+population\s*:\s*0')
+        self.assertIn('onItemAdded: population++', cc)
+        self.assertIn('onItemRemoved: population--', cc)
+        self.assertRegex(cc, r'objectName:\s*"controlTabIndicator"[\s\S]*?tabRepeater\.population')
+        # SettingsView nav indicator
+        self.assertRegex(sv, r'id:\s*navRepeater[\s\S]*?property\s+int\s+population\s*:\s*0')
+        self.assertIn('onItemAdded: population++', sv)
+        self.assertIn('onItemRemoved: population--', sv)
+        self.assertRegex(sv, r'navRepeater\.population[\s\S]*?itemAt\(idx\)')
+        # No regression to the racy `count ? ... itemAt(` target form in either file.
+        for name, text in (('ControlCenter.qml', cc), ('SettingsView.qml', sv)):
+            self.assertNotRegex(text, r'\bcount\s*\?\s*[\w.]*itemAt\(', msg=name)
+
+
 class LensQmlCase(unittest.TestCase):
     run_qml=qml_tests.LocalQmlCase.run_qml
 

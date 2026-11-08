@@ -97,12 +97,28 @@ GlassPanel {
         }
         Item {
             Layout.fillWidth: true; Layout.preferredHeight: tabGrid.implicitHeight
-            StretchIndicator { objectName: "controlTabIndicator"; targetItem: tabRepeater.count ? tabRepeater.itemAt(root.tabIndex) as LiquidButton : null; fill: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent }
+            StretchIndicator {
+                objectName: "controlTabIndicator"
+                // The `population` statement creates the re-evaluation dependency.
+                targetItem: {
+                    tabRepeater.population;
+                    return root.tabIndex >= 0 && tabRepeater.itemAt(root.tabIndex)
+                        ? tabRepeater.itemAt(root.tabIndex) as LiquidButton : null;
+                }
+                fill: Theme.liquidGlass ? Theme.buttonSelected : Theme.accent
+            }
         GridLayout {
             id: tabGrid; anchors.fill: parent; columnSpacing: 5; rowSpacing: 5
             columns: 3
             Repeater {
                 id: tabRepeater; model: root.tabEntries
+                // itemAt() is not notifiable: count reaches its final value during async
+                // incubation before the delegates exist, so bindings resolving itemAt()
+                // latch null and never re-run. Expose a revision that changes whenever
+                // the delegate population changes.
+                property int population: 0
+                onItemAdded: population++
+                onItemRemoved: population--
                 delegate: LiquidButton {
                     required property var modelData
                     required property int index

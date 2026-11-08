@@ -194,6 +194,22 @@ ShellRoot {
                     }
                 }
             }
+            // Prewarm the heaviest retained panel shortly after startup: the
+            // first Control Center open otherwise pays the asynchronous
+            // incubation (~300-450 ms of scrim-dim dead time after every
+            // login); prewarmed, it opens on the retained path (~70 ms).
+            Timer {
+                interval: 4000
+                repeat: false
+                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive
+                onTriggered: if (!panelLoader.mounted && !panelLoader.item && !ShellState.panelOpen && !ShellState.activityOpen) {
+                    // dormant keeps surfaceLive false: no scrim, no blur region,
+                    // no viewport reserve while the tree incubates off-stage.
+                    panelLoader.dormant = true;
+                    panelLoader.retainedContent = controlComponent;
+                    panelLoader.mounted = true;
+                }
+            }
         }
     }
     Component { id: launchpadComponent; LaunchpadPanel {} }

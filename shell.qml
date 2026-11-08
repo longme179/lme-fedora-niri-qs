@@ -116,7 +116,7 @@ ShellRoot {
         // rebuild), which read as a dead hitch before each reopen. While idle
         // the surface shrinks to a 1x1 transparent, input-transparent sliver.
         visible: !root.preview && !ShellState.authenticationActive
-        readonly property bool surfaceLive: ShellState.panelOpen || activityIsland.visible || (panelLoader.active && !panelLoader.dormant)
+        readonly property bool surfaceLive: ShellState.panelOpen || (activityIsland.visible && !activityIsland.warmupActive) || (panelLoader.active && !panelLoader.dormant)
         // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.
         readonly property rect viewport: {
             const w = screen ? screen.width : 1920, h = screen ? screen.height : 1080;
@@ -128,7 +128,7 @@ ShellRoot {
                 frames.push({left: edge === 0 ? 0 : x - px, right: edge === 1 ? w : x + width + px,
                     top: edge === 2 ? 0 : y - py, bottom: edge === 3 ? h : y + height + py});
             }
-            if (activityIsland.mounted && !activityIsland.dormant) {
+            if (activityIsland.mounted && !activityIsland.dormant || activityIsland.warmupActive) {
                 const width = activityIsland.expandedWidth, height = activityIsland.expandedHeight;
                 const anchor = ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : w / 2;
                 const x = Math.max(activityIsland.sideInset, Math.min(w - width - activityIsland.sideInset, anchor - width / 2));
@@ -171,7 +171,16 @@ ShellRoot {
             height: overlay.screen ? overlay.screen.height : overlay.height
             focus: true
             Keys.onEscapePressed: ShellState.closePanels()
-            ActivityIsland { id: activityIsland; z: 2 }
+            ActivityIsland {
+                id: activityIsland; z: 2
+                // Mirror the control-center warm-up wiring: the parked tree renders
+                // invisibly once after incubation so the first real open is warm.
+                Connections {
+                    target: activityIsland
+                    function onLoaded() { Qt.callLater(() => activityIsland.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); }
+                    function onDormantChanged() { if (activityIsland.dormant) Qt.callLater(() => activityIsland.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); }
+                }
+            }
             SlideLoader {
                 id: panelLoader
                 exitToEdge: true
@@ -191,7 +200,17 @@ ShellRoot {
                 Connections {
                     target: ShellState
                     function onPanelSwapChanged() { activityIsland.snapOut(); panelLoader.snapOut(); }
-                    function onPanelOpenChanged() { if (ShellState.panelOpen && panelLoader.warmupActive) panelLoader.finishControlWarmup(); }
+                    function onPanelOpenChanged() {
+                        if (ShellState.panelOpen) {
+                            if (panelLoader.warmupActive) panelLoader.finishControlWarmup();
+                            if (activityIsland.warmupActive) activityIsland.finishControlWarmup();
+                        } else {
+                            // The stage went quiet: any warm-up deferred by an open
+                            // panel may run now (loaders mid-exit retry at their park).
+                            panelLoader.startControlWarmup(false, false);
+                            activityIsland.startControlWarmup(false, false);
+                        }
+                    }
                 }
                 Connections { target: panelLoader; function onLoaded() { Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } function onDormantChanged() { if (panelLoader.dormant) Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } }
             }
@@ -202,10 +221,23 @@ ShellRoot {
             Timer {
                 interval: 4000
                 repeat: false
-                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !panelLoader.controlWarmupDone
+                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !panelLoader.controlWarmupDone
                 onTriggered: if (!panelLoader.mounted && !panelLoader.item && !ShellState.panelOpen && !ShellState.activityOpen) {
                     panelLoader.controlWarmupPending = true;
                     panelLoader.dormant = true; panelLoader.retainedContent = controlComponent; panelLoader.mounted = true;
+                }
+            }
+            // Prewarm the retained activity island after the control center settles:
+            // its first open otherwise pays the async incubation dead window plus a
+            // cold first render mid-flight (the same costs #107/#109 removed for
+            // the control center). Staggered so the two startup bursts never overlap.
+            Timer {
+                interval: 6500
+                repeat: false
+                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !activityIsland.controlWarmupDone
+                onTriggered: if (!activityIsland.mounted && !activityIsland.item && !ShellState.panelOpen && !ShellState.activityOpen) {
+                    activityIsland.controlWarmupPending = true;
+                    activityIsland.dormant = true; activityIsland.retainedContent = activityIsland.content; activityIsland.mounted = true;
                 }
             }
         }

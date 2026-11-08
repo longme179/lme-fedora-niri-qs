@@ -47,6 +47,9 @@ class ReleaseWorld(World):
         shutil.copy2(ROOT/'scripts/clipboard.py', self.root/'scripts/clipboard.py')
         (self.root/'scripts/clipboard_slice_actual.py').unlink()
         self.env['LME_SHELL_BACKEND_DEMO'] = '1'
+        # These suites measure render lifetimes and steady-state memory; the
+        # startup prewarm/warm-up passes would pollute both.
+        self.env['LME_SHELL_NO_PREWARM'] = '1'
         preferences = json.loads(self.settings.read_text())
         preferences.update(surfaceStyle=style, animations=True, springMotion=True,
             motionPreset='jelly-v2', desktopShapes=False, bluetoothPairing=False, lyricsOnline=False)
@@ -55,7 +58,10 @@ class ReleaseWorld(World):
         old = 'lastResult: ShellState.lastResult'
         assert text.count(old) == 1
         text = text.replace(old, old+''', release: {
-            mounted: panelLoader.mounted, activityMounted: activityIsland.mounted,
+            // Retained (keepAlive) surfaces park dormant instead of unmounting;
+            // report liveness so the close waits mean "parked", not "unmounted".
+            mounted: panelLoader.mounted && !panelLoader.dormant,
+            activityMounted: activityIsland.mounted && !activityIsland.dormant,
             activityProgress: activityIsland.progress, pending: Object.keys(ShellState.pendingActions),
             backdrops: GlassState.backdrops.length, regions: GlassState.popupRegions.length,
             consumers: GlassState.backdrops.reduce((count, item) => count + item.consumers, 0),

@@ -84,7 +84,10 @@ class BarPopupEntryCase(unittest.TestCase):
             source = source.replace('id: bar; anchors.fill:', 'id: bar; Component.onCompleted: root.fixtureBar = bar; anchors.fill:', 1)
             source = source.replace('target: "shell"', '''target: "shell"
         function fixtureStatus(): string { return JSON.stringify({ready:ShellState.backendReady && !!root.fixtureBar,
-            control:ShellState.controlOpen, activity:ShellState.activityOpen, mounted:panelLoader.mounted || activityIsland.mounted,
+            control:ShellState.controlOpen, activity:ShellState.activityOpen,
+            // Retained (keepAlive) surfaces park dormant instead of unmounting;
+            // the stage is clear when neither surface is live.
+            mounted:(panelLoader.mounted && !panelLoader.dormant) || (activityIsland.mounted && !activityIsland.dormant),
             progress:ShellState.activityOpen ? activityIsland.progress : panelLoader.progress,
             height:activityIsland.height, targetHeight:activityIsland.expandedHeight, resizedInFlight:root.fixtureIntermediate, entry:root.fixtureEntry}); }
         function fixtureGrow(): void {

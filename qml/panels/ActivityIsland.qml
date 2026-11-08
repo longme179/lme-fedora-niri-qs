@@ -22,17 +22,27 @@ SlideLoader {
     exitEdge: Theme.barBottom ? "bottom" : "top"
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
-    visible: mounted && !dormant
+    visible: mounted && (!dormant || warmupActive)
     width: Math.max(1, Math.min(expandedWidth, Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion))
     height: Math.max(1, Math.min(expandedHeight, Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion))
     x: Math.max(sideInset, Math.min((parent ? parent.width : width) - width - sideInset, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
     y: Theme.barBottom && parent ? parent.height - edgeInset - height : edgeInset
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && !root.dormant ? root.expandedWidth : root.compactWidth }
-    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && !root.dormant ? root.expandedHeight : 30 }
+    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedWidth : root.compactWidth }
+    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedHeight : 30 }
     // Rewind to the compact size when dormant so the next open re-expands.
     onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30) }
+    // The size morph must follow the flight, not just the mount state: a close
+    // mid-expansion (open + ESC in quick succession) reverses the morph with
+    // the exit instead of the island visibly still growing while it leaves.
+    // The warm pass renders at full open geometry instantly (springs would
+    // still be mid-expansion during the few forced frames) and rewinds to the
+    // compact park size so every real open expands from the pill.
+    onWarmupActiveChanged: {
+        if (warmupActive) { widthSpring.snapTo(root.expandedWidth); heightSpring.snapTo(root.expandedHeight); }
+        else { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30); }
+    }
     content: GlassPanel { role: "islandFill";
         implicitHeight: card.implicitHeight + 76
         anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true

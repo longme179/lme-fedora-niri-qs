@@ -23,7 +23,7 @@ class PopupMotionCase(unittest.TestCase):
             if 'Component.onCompleted: ClipboardState.start()' not in (repo / 'shell.qml').read_text():
                 source = source.replace('id: root\n', 'id: root\n    Component.onCompleted: root.idleGhost = overlay.visible || activityIsland.mounted || panelLoader.mounted\n', 1)
             source = source.replace('target: "shell"', '''target: "shell"
-        function fixtureState(): string { return JSON.stringify({ready: ShellState.backendReady, ghost: root.idleGhost, visible: overlay.visible, active: panelLoader.active, progress: panelLoader.progress}); }
+        function fixtureState(): string { return JSON.stringify({ready: ShellState.backendReady, ghost: root.idleGhost, visible: overlay.surfaceLive, active: panelLoader.active, dormant: panelLoader.dormant, progress: panelLoader.progress}); }
         function fixtureOpen(): string {
             ShellState.togglePanel("control");
             return JSON.stringify({width: overlay.screen.width, height: overlay.screen.height,
@@ -57,7 +57,8 @@ class PopupMotionCase(unittest.TestCase):
                         opened = json.loads(ipc('fixtureOpen'))
                         self.assertGreater(opened['bounds']['left'], opened['width'], 'A fresh layer surface must start beyond the real output, not the unconfigured 100 px window')
                         wait(lambda s: s['progress'] == 1)
-                        ipc('close'); wait(lambda s: not s['active'] and not s['visible'])
+                        # Retained (keepAlive) surfaces park dormant instead of unmounting.
+                        ipc('close'); wait(lambda s: s['dormant'] and not s['visible'])
                     log.seek(0); output = log.read()
                     for problem in ('TypeError', 'ReferenceError', 'Unable to assign', 'Binding loop', 'Failed to load configuration'):
                         self.assertNotIn(problem, output)
@@ -164,7 +165,7 @@ ShellRoot {
                 statusVisible: status.visible, statusText: status.message, statusMaskEmpty: !status.mask.item,
                 spring: Theme.springMotion, animations: Theme.animations,
                 osdVisible: osd.visible,
-                islandVisible: island.visible, islandMounted: island.mounted, islandProgress: island.progress,
+                islandVisible: island.visible, islandMounted: island.mounted, islandDormant: island.dormant, islandProgress: island.progress,
                 islandDy: island.offsetY, bottom: Theme.barBottom});
         }
         function setOpen(open: bool): void {
@@ -301,7 +302,8 @@ ShellRoot {
                         ipc("activity", "false")
                         moving = wait(lambda s: abs(s["islandCloseDy"]) > 1)
                         self.assertGreater(moving["islandCloseDy"] if bottom else -moving["islandCloseDy"], 0)
-                        wait(lambda s: not s["islandVisible"] and not s["islandMounted"], timeout=.7)
+                        # Retained (keepAlive) surfaces park dormant instead of unmounting.
+                        wait(lambda s: not s["islandVisible"] and s["islandDormant"], timeout=.7)
                     setting("osdOutput", "all")  # Demo eDP-1 differs from the private compositor's output name.
                     for position in ("top-left", "top-center", "bottom-right", "bottom-center"):
                         setting("osdPosition", position); ipc("setOsd", "true")

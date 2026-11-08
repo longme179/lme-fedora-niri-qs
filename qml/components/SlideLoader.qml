@@ -53,7 +53,7 @@ Loader {
     ]
     PopupElasticity {
         id: elasticity; objectName: "popupElasticity"
-        surface: root; mounted: root.mounted
+        surface: root; mounted: root.mounted; warmup: root.warmupActive
         horizontal: root.exitToEdge ? root.travelEdge < 2 : root.direction === "right"
         velocity: root.exitToEdge ? (horizontal ? exitSpringX.velocity : exitSpringY.velocity) : (horizontal ? -92 : root.direction === "down" ? 32 : -64) * spring.velocity
         bounded: root.fillsTravelAxis
@@ -102,7 +102,9 @@ Loader {
     function startControlWarmup(panelOpen, activityOpen) {
         if (controlWarmupDone || warmupActive || !controlWarmupPending) return;
         if (!Theme.animations) { controlWarmupPending = false; controlWarmupDone = true; return; }
-        if (panelOpen || activityOpen) { controlWarmupPending = false; return; }
+        // A busy stage only defers the pass; pending survives so the next
+        // quiet park (or the all-closed signal) retries instead of dropping it.
+        if (panelOpen || activityOpen) return;
         if (!mounted || !dormant || !item) return;
         warmupActive = true; layer.enabled = true; opacity = 0; warmupShow();
     }
@@ -132,7 +134,14 @@ Loader {
     }
     function move(to) {
         if (to === 0 && !mounted) return;
-        if (to === 1) dormant = false;
+        if (to === 1) {
+            dormant = false;
+            // A real open interrupts the warm pass: park first so the entrance
+            // plays the full flight from the edge instead of continuing the
+            // invisible open-position render, and retire the warm-up (the tree
+            // is about to render live, a later invisible pass would be redundant).
+            if (warmupActive) { warmupPark(); opacity = 1; layer.enabled = false; warmupActive = false; controlWarmupPending = false; controlWarmupDone = true; }
+        }
         if (to === 1 && !mounted) {
             travelEdge = -1;
             mounted = true;
@@ -161,7 +170,7 @@ Loader {
         if (shown) {
             dormant = false;
             retainedContent = content;
-            if (status === Loader.Ready) move(1);
+            if (status === Loader.Ready) { move(1); controlWarmupPending = false; controlWarmupDone = true; }
             else {
                 // Park at the flight origin until asynchronous incubation
                 // delivers the item — fresh mounts and retained reopenings alike.
@@ -196,6 +205,8 @@ Loader {
         }
         if (shown) {
             move(1);
+            // The tree renders live now; the invisible warm pass is moot.
+            controlWarmupPending = false; controlWarmupDone = true;
             if (panel) panel.forceActiveFocus();
         } else finishClose();
     }

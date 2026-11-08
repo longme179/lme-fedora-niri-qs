@@ -7,13 +7,14 @@ Item {
     id: root
     property Item surface: null
     property bool mounted: false
+    property bool warmup: false
     property bool horizontal: false
     property real velocity: 0
     property bool bounded: false
     readonly property bool engaged: Theme.motionPreset === "jelly-v2" && Theme.springMotion && Theme.animations && mounted && !!surface
     readonly property bool software: GraphicsInfo.api === GraphicsInfo.Software
     readonly property real strain: engaged ? Math.max(-.42, Math.min(.42, shape.value)) : 0
-    readonly property bool rendering: engaged && (shape.running || Math.abs(strain) > .00002)
+    readonly property bool rendering: engaged && (warmup || shape.running || Math.abs(strain) > .00002)
     readonly property real stretch: 1 + .7 * Math.abs(strain)
     readonly property real fitScale: bounded ? 1 / (1 + .94 * Math.abs(strain)) : 1
     visible: false

@@ -136,6 +136,10 @@ ShellRoot {
                     width, height, Theme.barBottom ? 3 : 2);
             }
             if (panelLoader.mounted && !panelLoader.dormant) reserve(panelLoader.x, panelLoader.y, panelLoader.width, panelLoader.height, panelLoader.travelEdge);
+            if (panelLoader.warmupActive && panelLoader.mounted && panelLoader.item) {
+                const cw = Math.min(panelLoader.item.implicitWidth || panelLoader.rememberedWidth || 400, w - 32), ch = Math.min(panelLoader.item.implicitHeight || panelLoader.rememberedHeight || 500, h - Theme.panelTopMargin - 16);
+                reserve(w - cw - 14, Theme.barBottom ? h - ch - Theme.panelTopMargin : Theme.panelTopMargin, cw, ch, 1);
+            }
             if (!frames.length) return Qt.rect(0, 0, 1, 1);
             const left = Math.max(0, Math.floor(Math.min(...frames.map(r => r.left))));
             const top = Math.max(0, Math.floor(Math.min(...frames.map(r => r.top))));
@@ -186,13 +190,10 @@ ShellRoot {
                 MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
                 Connections {
                     target: ShellState
-                    function onPanelSwapChanged() {
-                        // One popover replaced another: retire the outgoing
-                        // surfaces at once so two panels never share the stage.
-                        activityIsland.snapOut();
-                        panelLoader.snapOut();
-                    }
+                    function onPanelSwapChanged() { activityIsland.snapOut(); panelLoader.snapOut(); }
+                    function onPanelOpenChanged() { if (ShellState.panelOpen && panelLoader.warmupActive) panelLoader.finishControlWarmup(); }
                 }
+                Connections { target: panelLoader; function onLoaded() { Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } function onDormantChanged() { if (panelLoader.dormant) Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } }
             }
             // Prewarm the heaviest retained panel shortly after startup: the
             // first Control Center open otherwise pays the asynchronous
@@ -201,13 +202,10 @@ ShellRoot {
             Timer {
                 interval: 4000
                 repeat: false
-                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive
+                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !panelLoader.controlWarmupDone
                 onTriggered: if (!panelLoader.mounted && !panelLoader.item && !ShellState.panelOpen && !ShellState.activityOpen) {
-                    // dormant keeps surfaceLive false: no scrim, no blur region,
-                    // no viewport reserve while the tree incubates off-stage.
-                    panelLoader.dormant = true;
-                    panelLoader.retainedContent = controlComponent;
-                    panelLoader.mounted = true;
+                    panelLoader.controlWarmupPending = true;
+                    panelLoader.dormant = true; panelLoader.retainedContent = controlComponent; panelLoader.mounted = true;
                 }
             }
         }

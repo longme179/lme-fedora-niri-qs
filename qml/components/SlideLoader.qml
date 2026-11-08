@@ -13,6 +13,9 @@ Loader {
     // Retain the built tree after close for instant reopens (host window hides it).
     property bool keepAlive: false
     property bool dormant: false
+    property bool controlWarmupPending: false
+    property bool warmupActive: false
+    property bool controlWarmupDone: false
     property real rememberedWidth: 0
     property real rememberedHeight: 0
     property int travelEdge: -1
@@ -56,7 +59,7 @@ Loader {
         bounded: root.fillsTravelAxis
     }
     function finishClose() {
-        if (shown || !mounted) return;
+        if (warmupActive || shown || !mounted) return;
         // Off-screen content need not wait for the spring's sub-pixel settling tail.
         if (exitToEdge ? !outsideViewport && transitioning : transitioning) return;
         if (keepAlive) {
@@ -94,6 +97,17 @@ Loader {
         if (keepAlive) dormant = true;
         else mounted = false;
     }
+    function warmupShow() { motion.stop(); exitMotionX.stop(); exitMotionY.stop(); spring.snapTo(1); exitSpringX.snapTo(0); exitSpringY.snapTo(0); if (!Theme.springMotion) progress = 1; exitX = 0; exitY = 0; }
+    function warmupPark() { motion.stop(); exitMotionX.stop(); exitMotionY.stop(); const park = exitToEdge ? edgeOffset() : {x:0,y:0}; spring.snapTo(0); exitSpringX.snapTo(park.x); exitSpringY.snapTo(park.y); if (!Theme.springMotion) progress = 0; exitX = park.x; exitY = park.y; travelEdge = -1; }
+    function startControlWarmup(panelOpen, activityOpen) {
+        if (controlWarmupDone || warmupActive || !controlWarmupPending) return;
+        if (!Theme.animations) { controlWarmupPending = false; controlWarmupDone = true; return; }
+        if (panelOpen || activityOpen) { controlWarmupPending = false; return; }
+        if (!mounted || !dormant || !item) return;
+        warmupActive = true; layer.enabled = true; opacity = 0; warmupShow();
+    }
+    function finishControlWarmup() { if (!warmupActive) return; warmupFrames.frames = 0; warmupPark(); opacity = 1; layer.enabled = false; warmupActive = false; controlWarmupPending = false; controlWarmupDone = true; }
+    FrameAnimation { id: warmupFrames; running: root.warmupActive; property int frames: 0; onTriggered: { frames++; if (frames >= 3) root.finishControlWarmup(); } }
     function edgeOffset() {
         let dx = 0, dy = 0;
         if (exitToEdge && parent) {

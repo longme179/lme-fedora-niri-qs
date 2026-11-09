@@ -37,7 +37,7 @@ Item {
     function activate(index) {
         const item = results[index];
         if (!item) return;
-        if (item.kind === "app") ShellState.run("launch", {id: item.id});
+        if (item.kind === "app") LauncherState.launch(item.id); // Q2: native launch (fixture modes round-trip to the backend inside)
         else if (item.kind === "launchpad") ShellState.run("launchpadRun",{id:item.commandId}); // REL: scripts/launchpad_actions.py::provide
         else if (item.kind === "window") ShellState.run("focusWindow", {id: item.windowId});
         else if (item.kind === "file") ShellState.run("fileOpen", {path: item.path});

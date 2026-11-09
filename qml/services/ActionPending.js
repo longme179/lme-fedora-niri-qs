@@ -35,3 +35,12 @@ function received(state, metadata, result) {
     return {state: Object.assign({}, state, {local, pending, acknowledged: metadata.acknowledged,
         active: metadata.active, negotiated: true}), invalid: false};
 }
+
+// Q3 native router: settle a locally-served action. The backend never sees the request, so
+// its acknowledged/active metadata must not be waited for — the mirror of the pre-negotiation
+// branch above (tests/test_native_wifi.py).
+function settled(state, action) {
+    const local = Object.assign({}, state.local), pending = Object.assign({}, state.pending);
+    delete local[action]; delete pending[action];
+    return Object.assign({}, state, {local, pending});
+}

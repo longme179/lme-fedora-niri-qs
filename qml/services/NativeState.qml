@@ -48,23 +48,21 @@ QtObject {
 
     function passthrough(backend, base) { return {}; }
 
-    // Backend-fed transitional keys: rfkill block flags (no native API) and the Wi-Fi scan
-    // lists (bssid-keyed connect; Q3 moves them), plus the Q2 file gaps — temperature and brightness
-    // need hwmon/backlight directory globs and the process table needs /proc/<pid> iteration, none of
-    // which quickshell 0.3.2 can do (no directory listing API); they stay backend-sourced until the
-    // Process machinery lands (DEPRECATED(Q2->Q6)). Pure function of (backend, base).
+    // Backend-fed transitional keys: rfkill block flags (no native API) and the Q2 file gaps —
+    // temperature and brightness need hwmon/backlight directory globs and the process table needs
+    // /proc/<pid> iteration, none of which quickshell 0.3.2 can do (no directory listing API); they
+    // stay backend-sourced until the Process machinery lands (DEPRECATED(Q2->Q6)). The Wi-Fi scan
+    // lists moved to NetworkState in Q3 (networks/saved ride in the native section). Pure
+    // function of (backend, base).
     function compose(backend, base) {
         const bluetoothBackend = backend["bluetooth"] || {};
-        const networkBackend = backend["network"] || {};
         return Object.assign({}, base, {
             tempC: backend.tempC !== undefined ? backend.tempC : null,
             brightness: backend.brightness !== undefined ? backend.brightness : {available: false, percent: null},
             charging: backend.charging,
             bluetooth: Object.assign({}, base.bluetooth, {
                 softBlocked: bluetoothBackend.softBlocked === true,
-                hardBlocked: bluetoothBackend.hardBlocked === true}),
-            network: Object.assign({}, base.network, {
-                networks: networkBackend.networks || [], saved: networkBackend.saved || []})
+                hardBlocked: bluetoothBackend.hardBlocked === true})
         });
     }
 
@@ -157,6 +155,22 @@ QtObject {
                 abLastWarn.apps = now;
                 console.warn("[Q2 A/B] apps drift: backend " + backendApps.length + " vs native " + nativeApps.length
                     + " (quickshell cannot filter OnlyShowIn/NotShowIn/TryExec)");
+            }
+        }
+        // Q3 wifi lists. Counts only: scan timing jitters the network list between the backend's
+        // last nmcli read and the live model, and saved profiles in hotspot (ap) mode are a known
+        // quickshell 0.3.2 gap — count drift is the day-long signal for the owner.
+        const backendNetwork = (backend || {}).network || {}, nativeNetwork = (native || {}).network || {};
+        for (const key of ["networks", "saved"]) {
+            const left = backendNetwork[key], right = nativeNetwork[key];
+            if (!Array.isArray(left) || !Array.isArray(right) || left.length === right.length) continue;
+            mismatches[key] = 1;
+            abMismatches[key] = (abMismatches[key] || 0) + 1;
+            const now = Date.now();
+            if (!abLastWarn[key] || now - abLastWarn[key] > 30000) {
+                abLastWarn[key] = now;
+                console.warn("[Q3 A/B] " + key + " drift: backend " + left.length + " vs native " + right.length
+                    + " (scan timing; hotspot-mode saved profiles are a known native edge)");
             }
         }
         return mismatches;

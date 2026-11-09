@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- The Wi-Fi panel now reads its scan list and saved profiles natively and its
+  actions run through Quickshell's NetworkManager bindings instead of the
+  backend JSON-lines path (the migration's first write phase). The scan list
+  keeps the exact backend shape (SSID-deduped, connected first, 60-entry cap)
+  with the 0-1 signal rescaled to percent; saved profiles enumerate every
+  wifi connection the adapter exposes. The scanner runs only while the panel
+  is open, and the explicit scan re-arms it (rate-limited ~10 s). Connecting
+  matches by SSID (quickshell exposes no BSSID), updates the saved profile's
+  password when one is given and activates stored credentials otherwise;
+  completion is event-driven with the same 45-second ceiling, password
+  validation and user-facing messages as the backend. Toggle/disconnect/
+  forget route natively too; fixture modes keep the backend round-trip and
+  sessions without the native NetworkManager backend fall back to the
+  registry. The backend keeps emitting its lists during the validation window
+  (count drift warns on scan timing and hotspot-mode saved profiles, which
+  quickshell 0.3.2 does not enumerate).
 - The launcher app list, launch history and the cpu/memory system fields now
   come from native reads (Quickshell DesktopEntries + FileView on
   /proc/stat, /proc/meminfo, /proc/net/dev) instead of the backend JSON-lines

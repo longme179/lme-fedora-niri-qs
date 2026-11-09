@@ -827,7 +827,7 @@ class DesktopBackend:
         for line in (connections or "").splitlines():
             fields = split_nmcli(line)
             if len(fields) == 3 and fields[1] in {"wifi", "802-11-wireless"}:
-                result["saved"].append({"uuid": fields[0], "name": fields[2]})
+                result["saved"].append({"uuid": fields[0], "name": fields[2]})  # DEPRECATED(Q3->Q6): saved list is native (NetworkState.qml); kept for the A/B window
         if not result["enabled"] or not result["device"]: return result
         wireless = self.try_run("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL,SECURITY,BSSID,DEVICE", "device", "wifi", "list", "--rescan", "no")
         seen = set()
@@ -843,7 +843,7 @@ class DesktopBackend:
                 result["networks"].append({"ssid": fields[1], "strength": strength,
                                           "connected": fields[0] == "yes" and result["wifiConnected"] and fields[1] == result["ssid"],
                                           "security": fields[3], "secured": fields[3] not in {"", "--"},
-                                          "enterprise": "802.1X" in fields[3] or "EAP" in fields[3], "bssid": fields[4]})
+                                          "enterprise": "802.1X" in fields[3] or "EAP" in fields[3], "bssid": fields[4]})  # DEPRECATED(Q3->Q6): scan list is native (NetworkState.qml); kept for the A/B window
         result["networks"] = sorted(result["networks"], key=lambda item: (not item["connected"], -item["strength"]))[:60]
         return result
 

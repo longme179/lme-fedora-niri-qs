@@ -63,7 +63,9 @@ QtObject {
         const wasWatching = wifiConsumers.length > 0;
         if (enabled && !wifiConsumers.includes(consumer)) wifiConsumers = [...wifiConsumers, consumer];
         else if (!enabled) wifiConsumers = wifiConsumers.filter(item => item !== consumer);
-        if (backendReady && wasWatching !== (wifiConsumers.length > 0)) run("wifiWatch", {enabled: wifiConsumers.length > 0});
+        const watching = wifiConsumers.length > 0;
+        if (!backendDemo && !settingsApp) NetworkState.watching = watching; // Q3: native scanner + list gating (A6)
+        if (backendReady && wasWatching !== watching) run("wifiWatch", {enabled: watching}); // backend keeps its A/B copy
     }
     onBackendReadyChanged: if (backendReady && wifiConsumers.length) run("wifiWatch", {enabled: true})
     property int restartDelay: 2000
@@ -155,7 +157,40 @@ QtObject {
         interval: 250
         onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
     }
-    function run(action, payload) { // REL: scripts/desktop_backend.py::handle – sends {action,...} over stdin.
+    // Q3 native router — the Wi-Fi leg (plan §5 Q3). Real sessions route the wifi action names
+    // to NetworkState's native calls (Pending sequencing unchanged so busy/status UX is identical);
+    // fixture modes always keep the backend round-trip (the demo registry owns its state), and
+    // real sessions without quickshell's NetworkManager backend or adapter fall back to the
+    // backend registry for its canonical errors while the A/B window is open.
+    readonly property var nativeMutationActions: ["wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle", "networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"]
+    function run(action, payload) {
+        if (!backendDemo && !settingsApp && NetworkState.handles(action)) {
+            if (NetworkState.canRoute()) {
+                if (nativeMutationActions.some(name => pendingActions[name])) {
+                    statusMessage = "This operation is already running"; statusError = true; statusTimer.restart(); return;
+                }
+                let sent;
+                try { sent = Pending.sent(pendingState, action); }
+                catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
+                pendingState = sent;
+                pendingActions = sent.pending;
+                NetworkState.perform(action, payload || {}, (ok, message) => nativeDone(action, ok, message));
+                return;
+            }
+        }
+        send(action, payload);
+    }
+    // Settle a natively-served action: the backend never sees the request, so its metadata must
+    // not be waited for (ActionPending.settled) and the result surfaces like a backend result.
+    function nativeDone(action, ok, message) {
+        pendingState = Pending.settled(pendingState, action);
+        pendingActions = pendingState.pending;
+        const result = {action: action, ok: ok, message: message, pending: false};
+        lastResult = result;
+        if (String(action).startsWith("wifi") && action !== "wifiWatch") wifiResult = result;
+        if (message) { statusMessage = message; statusError = !ok; statusTimer.restart(); }
+    }
+    function send(action, payload) { // REL: scripts/desktop_backend.py::handle – sends {action,...} over stdin.
         if (!backend.running || !backendReady) {
             statusMessage = "Desktop backend is unavailable. Check the shell log.";
             statusError = true; statusTimer.restart(); return;

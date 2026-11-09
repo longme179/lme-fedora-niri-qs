@@ -15,7 +15,7 @@ from network_profiles import NetworkProfiles
 from network_inventory import BASE, demo_inventory
 from network_plans import ACTIONS as CONNECTION_ACTIONS, MUTATIONS as CONNECTION_MUTATIONS, active_for, hotspot_plan, select, validate
 
-ACTIONS = ('wifiScan', 'wifiConnect', 'wifiSaved', 'wifiDisconnect', 'wifiForget')
+ACTIONS = ('wifiScan', 'wifiConnect', 'wifiSaved', 'wifiDisconnect', 'wifiForget')  # DEPRECATED(Q3->Q6): wifi actions route natively in real sessions (qml/services/NetworkState.qml); this registry stays as the fallback and demo provider through the A/B window
 MUTATIONS = frozenset((*ACTIONS[1:], 'wifiToggle')) | CONNECTION_MUTATIONS
 
 

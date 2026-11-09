@@ -214,7 +214,7 @@ Item {
             accent: ShellState.system.powerProfile === "power-saver" ? Theme.green : Theme.pink
             detail: ({"power-saver": "Power saver", balanced: "Balanced", performance: "Performance"})[ShellState.system.powerProfile] || "Unavailable"
             enabled: !ShellState.batterySaverActive && profile >= 0 && profiles.length > 1 && !ShellState.pendingActions.powerProfile
-            onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]}) // REL: scripts/audio_actions.py::provide – "powerProfile"
+            onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]}) // REL: scripts/desktop_backend.py::handle – "powerProfile"
         }
     }
     Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.isPanelOpen("equalizer"); onClicked: ShellState.togglePanel("equalizer") } }

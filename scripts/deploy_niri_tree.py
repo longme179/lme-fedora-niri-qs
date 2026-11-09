@@ -2,7 +2,7 @@
 
 Callers: scripts/deploy_niri.py/deploy.py. Parses/validates niri config include graph in staged context.
 INVARIANT: bounded traversal and staged validation preserve logical include bases; supports backup/rollback safety chain.
-REL: scripts/deploy_niri.py::planning; scripts/deploy_state.py – staged artifacts before publication.
+REL: scripts/deploy_niri.py::plan; scripts/deploy_state.py – staged artifacts before publication.
 """
 import os
 from pathlib import Path

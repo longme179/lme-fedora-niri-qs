@@ -1,5 +1,5 @@
 // Role: ControlRegistry.qml (shared layer) — control/card/tab metadata projected to panels/settings.
-// REL: config/control-grid.json – layout/tile/tab IDs and defaults; scripts/feature_catalog.py::read_control_grid – parsing.
+// REL: config/control-grid.json – layout/tile/tab IDs and defaults; scripts/feature_catalog.py::legacy_ids/load_catalog – parsing.
 // INVARIANT: control IDs/tab legacyIndex routing must stay aligned with panels and settings (implicit coupling #5).
 pragma Singleton
 import QtQuick

@@ -1,6 +1,6 @@
 <h1 align="center">LME Shell</h1>
 
-<p align="center"><strong>Material 3 Expressive meets smoked glass.<br>A personal desktop shell for Fedora and niri.</strong></p>
+<p align="center"><strong>Material 3 Expressive meets smoked and liquid glass.<br>A personal desktop shell for Fedora and niri.</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Fedora-44-51a2da?style=flat-square" alt="Fedora 44">
@@ -14,8 +14,9 @@
 
 LME is a desktop shell built with **Quickshell and QML/Qt Quick**. It includes a
 modular bar, an expandable Activity island and a standalone Settings app, with
-translucent panels, spring animations, Dracula-inspired colors and Roboto fonts.
-The interface and documentation are in English.
+smoked-glass or Liquid glass surfaces, spring animations, Dracula-inspired
+colors and Roboto fonts. Panels build asynchronously and stay warm, so heavy
+surfaces open without stalls. The interface and documentation are in English.
 
 First run uses one connected top bar, a centered Activity island and a Control
 Center on the right. Choose your own modules, colors, fonts, spacing and motion
@@ -23,27 +24,31 @@ without editing QML. **Settings → Shell utilities** contains Launchpad and the
 
 ## Preview
 
-![Control Center in edit mode, with draggable tiles and sliders over a blurred desktop](https://github.com/user-attachments/assets/429d8285-dc0d-4803-bb44-198c4b884b35)
-
-https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
+![Control Center with quick toggles, glass tiles and tinted sliders over the demo desktop](docs/previews/control.png)
 
 <details>
 <summary><strong>More screenshots</strong></summary>
 
-**Activity island**
-
-![Compact Activity island showing media playback](https://github.com/user-attachments/assets/5b235203-1ff5-4a7f-9dd3-46c53d1b21ca)
-
 <table>
   <tr>
-    <th width="55%">Control Center</th>
-    <th width="45%">Wi-Fi</th>
+    <th width="50%">Default desktop</th>
+    <th width="50%">Workspace board</th>
   </tr>
   <tr>
-    <td valign="top"><img src="https://github.com/user-attachments/assets/0266766e-0ec2-44f1-a6ab-4e21be98d63f" alt="Control Center with weather, charging, media, system statistics and recording controls" width="480"></td>
-    <td valign="top"><img src="https://github.com/user-attachments/assets/49043d58-ed26-49ce-b79a-d4ae3bd276fe" alt="Wi-Fi panel showing the connected network and saved networks" width="380"></td>
+    <td valign="top"><img src="docs/previews/desktop.png" alt="Default desktop with a connected top bar, centered Activity island and status pills" width="470"></td>
+    <td valign="top"><img src="docs/previews/overview.png" alt="Workspace board with window previews" width="470"></td>
+  </tr>
+  <tr>
+    <th width="50%">Equalizer</th>
+    <th width="50%">Notifications</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/previews/equalizer.png" alt="Equalizer panel with ten band sliders, balance scale and preset chips" width="470"></td>
+    <td valign="top"><img src="docs/previews/notifications.png" alt="Grouped notifications over the desktop" width="470"></td>
   </tr>
 </table>
+
+Previews are rendered from this repository's QML with sample data — see [docs/previews](docs/previews/README.md).
 
 </details>
 
@@ -54,6 +59,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Modular bar** | Enable, reorder and move modules; choose a connected bar or separate islands, top/bottom placement and distance from the screen edge. Assign left/right/middle click and scroll actions per module. Includes workspace switching and a tray dropdown. |
 | **Activity island** | Seek, play/pause, shuffle/repeat where supported, focus/break timer, stopwatch and recording controls. Set maximum pill/popup dimensions in Appearance. Audio visualization uses Cava; media cards share the same controls. |
 | **Control Center** | Drag toggles, actions and sliders on a scrolling canvas. Power/Settings use 1×1 cells; power profiles cycle in 2×1; volume, microphone and brightness each use 4×1. Hide buttons independently and arrange detailed cards. |
+| **Smooth panels** | Panels and Settings pages incubate asynchronously — the UI never stalls while they build — and stay mounted after closing for instant reopens. The Control Center prewarms shortly after startup. |
 | **Launcher** | Fuzzy app search with optional local usage ranking, calculator, emoji, open windows and file/folder search. Exact matches keep priority; usage history can be disabled or cleared. |
 | **Launchpad** | Save and rename binaries or Bash scripts, run in the background or your terminal, and find commands in the launcher. Add its optional top bar module or use Shell utilities. |
 | **Shell utilities** | Gowall theme search, palette conversion, color extraction, 2×–4× upscale and batch previews; save processed PNGs or use them as wallpaper. Awww controls include transition FPS/Bezier/direction, scaling and filters. |
@@ -70,7 +76,7 @@ https://github.com/user-attachments/assets/3efede13-30c6-45e3-b623-f73e7e535920
 | **Network connections** | Wi-Fi/Devices → VPN, Ethernet & hotspot: saved VPN/WireGuard and Ethernet profiles, exact-adapter activation/disconnection, system IP/DNS editor and confirmed secure hotspot activation. [Network guide](docs/NETWORK_CONNECTIONS.md). |
 | **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
 | **Liquid glass** | Simple transparent glass (tint + grain + edge highlight) with blur provided only by the niri compositor (≥ 26.04, opt-in snippet). Clear/Frosted/Vivid material presets and compositor blur passes/spread. See [GLASS.md](docs/GLASS.md). |
-| **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency, with live updates from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
+| **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency — with optional soft drop shadows under bar pills — live from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
 | **Themes and fonts** | Smoked glass by default, optional Liquid glass, per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes. |
 
 ## Installation
@@ -245,7 +251,7 @@ Use your `XDG_CONFIG_HOME` path if different. Niri controls blur strength global
 so this also affects other windows requesting blur and Smoked mode. Lens blur
 only softens the refractive rim; higher backdrop blur values cost more GPU time.
 
-![LME Settings showing popup blur, spring motion, shape morphing and animation presets](https://github.com/user-attachments/assets/5a87fa0e-b7d2-47a4-968b-f78510552d0a)
+![Appearance settings showing the Liquid glass material section with preset chips](docs/previews/liquid-glass.png)
 
 | Page | Customize |
 | --- | --- |
@@ -478,6 +484,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Charging](docs/CHARGING.md) / [Authentication](docs/AUTHENTICATION.md) | Firmware support, helper setup and password prompts |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) / [Validation](docs/VALIDATION.md) | Diagnosis, development checks and what has been tested |
 | [Architecture](docs/ARCHITECTURE.md) / [Roadmap](docs/ROADMAP.md) / [Agent state](docs/STATE.md) | Module contracts, current coverage, remaining work and development rules |
+| [Workspace map](docs/WORKSPACE_MAP.md) | Annotated codebase map — layout, layering rules, runtime flows, invariants and findings |
 | [Defect audits](docs/AUDIT.md) / [Architecture audit (superseded)](docs/ARCHITECTURE_AUDIT.md) | Current defect status and the historical architecture review |
 | [Resource limits](docs/RESOURCE_LIMITS.md) / [Release checks](docs/RELEASE_CHECKLIST.md) | Bounded command output/logs, relay ownership and laptop sign-off |
 

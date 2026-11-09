@@ -18,7 +18,7 @@ QtObject {
     readonly property bool settingsApp: Quickshell.env("LME_SHELL_SETTINGS") === "1"
     readonly property bool backendDemo: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
         || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
-    readonly property bool native: !settingsApp && !backendDemo
+    readonly property bool nativeMode: !settingsApp && !backendDemo  // 'native' is a reserved QML keyword
 
     // The System monitor panel is open: gates /proc/net/dev sampling and the history window,
     // mirroring the backend's monitor_enabled action.
@@ -39,24 +39,24 @@ QtObject {
     // The system poll: 2 s, matching the backend's --interval default (plan §5 Q2, no A6 change).
     // procfs has no inotify — watchChanges stays false and the timer drives reload()s.
     property Timer poll: Timer {
-        interval: 2000; running: root.native; repeat: true
+        interval: 2000; running: root.nativeMode; repeat: true
         onTriggered: root.tick()
     }
     property ElapsedTimer netClock: ElapsedTimer {}  // the net window: restarted only on monitor ticks
     property real netInterval: 0                      // the interval the in-flight net read should use
 
     property FileView statView: FileView {
-        path: root.native ? "/proc/stat" : ""
+        path: root.nativeMode ? "/proc/stat" : ""
         watchChanges: false; printErrors: false
         onLoaded: root.ingestStat(text())
     }
     property FileView memView: FileView {
-        path: root.native ? "/proc/meminfo" : ""
+        path: root.nativeMode ? "/proc/meminfo" : ""
         watchChanges: false; printErrors: false
         onLoaded: root.ingestMem(text())
     }
     property FileView netView: FileView {
-        path: root.native && root.enabled ? "/proc/net/dev" : ""
+        path: root.nativeMode && root.enabled ? "/proc/net/dev" : ""
         watchChanges: false; printErrors: false
         onLoaded: root.ingestNet(text())
     }
@@ -64,7 +64,7 @@ QtObject {
     // Re-enabling keeps the net window running since the previous monitor session (like the Python
     // monitor's persisted previous_time): the path-change auto-load gets no window (null rates), the
     // first tick's window spans the gap, so re-opened counters resume without a spike.
-    onEnabledChanged: if (native && enabled) netInterval = 0
+    onEnabledChanged: if (nativeMode && enabled) netInterval = 0
 
     function tick() {
         if (enabled) {

@@ -18,7 +18,7 @@ QtObject {
     readonly property bool settingsApp: Quickshell.env("LME_SHELL_SETTINGS") === "1"
     readonly property bool backendDemo: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
         || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
-    readonly property bool native: !settingsApp && !backendDemo
+    readonly property bool nativeMode: !settingsApp && !backendDemo  // 'native' is a reserved QML keyword
 
     // scripts/launcher_history.py constants (launch-score decay adapted from Serpantinum; THIRD_PARTY.md).
     readonly property real halfLifeDays: 7
@@ -35,7 +35,7 @@ QtObject {
     // The native app list; null in every fixture mode so DesktopEntries is never even
     // referenced there (no desktop scan in demo/tests/Settings).
     readonly property var apps: {
-        if (!native) return null;
+        if (!nativeMode) return null;
         return mapApplications(DesktopEntries.applications.values);
     }
 
@@ -55,7 +55,7 @@ QtObject {
 
     // Port of launcher_history.py::snapshot — decayed scores over the validated store.
     function usage(rankingEnabled) {
-        if (!native || rankingEnabled === false) return {};
+        if (!nativeMode || rankingEnabled === false) return {};
         const now = Date.now() / 1000;
         const today = utcDay(now);
         const scores = {};
@@ -74,13 +74,13 @@ QtObject {
     // Port of launcher_history.py::record — bounded, validated, atomic store update.
     // The write waits for a fresh read (the Python side held an flock around read+write).
     function record(app) {
-        if (!native || !validAppId(app)) return;
+        if (!nativeMode || !validAppId(app)) return;
         recordQueue.push(app);
         storeView.reload();
     }
 
     function clear() {
-        if (!native) return;
+        if (!nativeMode) return;
         recordQueue = [];
         store = {};
         storeView.setText('{"schema":1,"apps":{}}');
@@ -89,7 +89,7 @@ QtObject {
     // Native launch: fixture modes keep the backend round-trip (demo preview, pending UX);
     // real sessions resolve the entry by id and detach it from the shell process.
     function launch(id) {
-        if (!native) { ShellState.run("launch", {id: id}); return; }
+        if (!nativeMode) { ShellState.run("launch", {id: id}); return; }
         const entry = DesktopEntries.byId(String(id || "").replace(/\.desktop$/, ""));
         if (!entry || !entry.name) {
             ShellState.statusMessage = "Application is no longer available; refresh the launcher";
@@ -109,7 +109,7 @@ QtObject {
     property Process terminalProcess: Process { command: [] }
 
     property FileView storeView: FileView {
-        path: root.native ? root.storePath : ""
+        path: root.nativeMode ? root.storePath : ""
         atomicWrites: true; blockWrites: true; watchChanges: true; printErrors: false
         onFileChanged: reload()
         onLoaded: {
@@ -122,7 +122,7 @@ QtObject {
             if (error === FileViewError.FileNotFound) { // first launch on a machine
                 root.store = {};
                 if (root.recordQueue.length) root.applyRecords({}, root.recordQueue);
-            } else if (root.native) root.error = "Usage history could not be read: " + FileViewError.toString(error);
+            } else if (root.nativeMode) root.error = "Usage history could not be read: " + FileViewError.toString(error);
         }
         onSaveFailed: error => { root.error = "Usage history could not be saved: " + FileViewError.toString(error); }
     }

@@ -1121,7 +1121,7 @@ class DesktopBackend:
             system = self.cpu_memory()
             system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(details=self.wifi_watching),
                           audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
-                          charging=self.charging(), recording=self.recording())
+                          charging=self.charging(), recording=self.recording())  # DEPRECATED(Q1->Q6): audio/microphone/battery/network sections are now native QML (qml/services/NativeState.qml); kept for the A/B window
             self.system_cache = system
             self.last_system_sample = time.monotonic()
         if "audio" not in self.system_cache: self.system_cache["audio"] = self.audio()
@@ -1130,12 +1130,12 @@ class DesktopBackend:
         self.system_cache["privacy"] = self.privacy()
         adapter = self.preferences.values["bluetoothAdapter"]
         if self.bluetooth_cache is None or adapter != self.sampled_bluetooth_adapter or time.monotonic() - self.last_bluetooth_sample >= 5:
-            self.bluetooth_cache = self.bluetooth()
-            self.peripheral_cache = merge_batteries(self.bluetooth_cache['batteries'], kernel_batteries(self.sysfs, self.read))
+            self.bluetooth_cache = self.bluetooth()  # DEPRECATED(Q1->Q6): bluetooth section is now native QML (BluetoothState.sectionFor); A/B window
+            self.peripheral_cache = merge_batteries(self.bluetooth_cache['batteries'], kernel_batteries(self.sysfs, self.read))  # DEPRECATED(Q1->Q6): native merge in NativeState.mergePeripherals
             self.sampled_bluetooth_adapter = adapter
             self.last_bluetooth_sample = time.monotonic()
         if self.power_cache is None or time.monotonic() - self.last_power_sample >= 5:
-            self.power_cache = {"powerProfile": self.power_profile(), "powerProfiles": self.power_profiles()}
+            self.power_cache = {"powerProfile": self.power_profile(), "powerProfiles": self.power_profiles()}  # DEPRECATED(Q1->Q6): power profiles are now native QML (PowerState.profile/.profiles)
             self.last_power_sample = time.monotonic()
         self.system_cache.update(bluetooth=self.bluetooth_cache, peripheralBatteries=self.peripheral_cache, **self.power_cache)
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])

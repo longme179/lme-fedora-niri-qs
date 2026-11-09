@@ -2,6 +2,35 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q1 — native read-only state — 2026-11-09
+- Owner approved Q1 + the A6 wake-model change. Branch `qml/q1-native-read-state`
+  (tests -> implementation -> docs; carries the Q0 re-land, see STATE).
+- Native singletons (AudioState/PowerState/BluetoothState.sectionFor/NetworkState)
+  expose the exact backend section shapes; `NativeState.merge` composes
+  `ShellState.system` with reference-stable caching; consumers unchanged.
+  Transitional backend-fed keys: bluetooth rfkill flags, wifi networks/saved.
+- Backend keeps emitting the sections (DEPRECATED(Q1->Q6)); A/B compare
+  (compareSections) warns on drift, rate-limited; demo fixtures test-frozen.
+- batterySaver re-homed to the write phases (state machine + toggle move together).
+- G0 green (1082 tests; 3 known quickshell-absent errors). Real-session checks:
+  day of A/B warnings, value parity, wake-rate delta — pending owner validation.
+
+## Q0 — QML-first migration baseline — 2026-11-09
+- Owner accepted the phased QML-first plan (docs/QML_FIRST_MIGRATION_PLAN.md;
+  PR #113) and authorized Q0. Branch `qml/q0-metric-baseline` (tests, then
+  implementation, then docs commits).
+- `config/architecture.json` gains `toolingFiles` (12 dev-tooling modules:
+  deploy chain, architecture/catalog/schema/memory/keybind tooling);
+  `check_architecture.language_mix()` prints runtime QML/JS vs runtime Python
+  vs tooling vs tests (wc -l parity) in every G0 summary — informational
+  only, exit codes and gates unchanged. `tests/test_architecture.py`
+  characterizes the classification and slice arithmetic.
+- Baseline frozen at `8ebc597`: runtime 16,228 QML+JS (63.6%) vs 9,277 Python
+  (36.4%); tooling 1,637; tests 26,161; whole-repo 69.5% Python. Post-Q0
+  actual: tooling 1,672, tests 26,198 (Q0's own lines), whole-repo 69.6%.
+- STATE/WORKSPACE_MAP/plan refreshed. Q1 (five read-only native-state
+  families) needs A6 approval before starting.
+
 ## Full-codebase audit fixes — 2026-11-06
 - Audit issues #64–#67 (equalizer popup defects, apply-contract drift, backend
   robustness, docs/tooling drift); branch `fix/audit-2026-11-06`.

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Audio, microphone, battery, power-profile, Bluetooth and Wi-Fi summary state
+  now comes from Quickshell's native PipeWire, UPower, BlueZ and NetworkManager
+  services (event-driven) instead of the 1.5-5 s backend polling, with identical
+  values in the bar, control center and widgets. The volume/mute on-screen
+  display reacts immediately instead of on the next poll. The Python backend
+  still computes its copies during a validation window; section shapes and all
+  public facades are unchanged.
+- Add an informational language-mix summary to the architecture check: every
+  `./scripts/check.sh` run now prints runtime QML/JS vs runtime Python, plus
+  dev-tooling and test line counts (total lines, `wc -l` parity), tracking
+  the phased QML-first migration (docs/QML_FIRST_MIGRATION_PLAN.md). The
+  classification lives in `config/architecture.json` (`toolingFiles`); no
+  gates or thresholds were added and exit codes are unchanged.
+
 - Fix the activity island reopening as an invisible sliver instead of
   popping open. `SpringMotion.snapTo()` imperatively assigned `target`,
   and QML severs a declarative binding on imperative assignment, so the

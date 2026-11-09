@@ -16,7 +16,7 @@ QtObject {
     readonly property var apps: snapshot.apps || []
     readonly property var launcherUsage: snapshot.launcherUsage || ({})
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
-    readonly property var system: snapshot.system || {}
+    readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
     readonly property bool batterySaverActive: (snapshot.batterySaver || {}).active === true; readonly property bool reducedTransparency: preferences.reducedTransparency === true
@@ -183,18 +183,16 @@ QtObject {
             if (ownership.invalid) console.warn("Invalid desktop backend message: actionPending ownership");
             pendingState = ownership.state;
             pendingActions = ownership.state.pending;
-            const oldAudio = system.audio;
             const oldBrightness = system.brightness;
             // Keep delegate identities stable between polls, especially during a drag.
             if (Identity.keep(next, snapshot, "niri", niri, draggingWindow)) next.niri = niri;
             if (Identity.keep(next, snapshot, "apps", apps)) next.apps = apps;
             if (Identity.keep(next, snapshot, "launcherUsage", launcherUsage)) next.launcherUsage = launcherUsage;
             if (Identity.keep(next, snapshot, "preferences", preferences)) next.preferences = preferences;
-            // Stable references for the hot polled sections keep bar and panel
-            // bindings from re-evaluating on every backend snapshot.
-            if (Identity.keep(next, snapshot, "system", system)) next.system = system;
+            // Stable references keep bindings from re-evaluating every poll; the merged system caches in SystemMerge.js.
             if (Identity.keep(next, snapshot, "displays", snapshot.displays)) next.displays = snapshot.displays;
             snapshot = next;
+            if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next.system, system); // Q1 A/B window
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
             backendReady = true; restartDelay = 2000;
@@ -205,12 +203,7 @@ QtObject {
                 if (low.length) Notifications.local("Device battery low", low.map(device => device.name + " · " + Math.round(device.percentage) + "%").join("\n"));
             }
             if (!wasReady && stayAwake && !settingsApp) run("idleInhibit", {value: true});
-            if (oldAudio && next.system.audio && oldAudio.available && next.system.audio.available
-                    && (oldAudio.volume !== next.system.audio.volume || oldAudio.muted !== next.system.audio.muted)) {
-                osdLabel = next.system.audio.muted ? "Muted" : "Volume";
-                osdValue = next.system.audio.muted ? 0 : next.system.audio.volume;
-                osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel,osdValue);
-            } else if (oldBrightness && next.system.brightness && oldBrightness.available
+            if (oldBrightness && next.system.brightness && oldBrightness.available && next.system.brightness.available
                     && oldBrightness.percent !== next.system.brightness.percent) {
                 osdLabel = "Brightness"; osdValue = next.system.brightness.percent;
                 osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel,osdValue);
@@ -226,6 +219,13 @@ QtObject {
                 }
             }
         } catch (error) { console.warn("Invalid desktop backend message:", error); }
+    }
+    property Connections audioOsd: Connections { // Q1: volume/mute OSD follows native audio; brightness still tracks the backend poll.
+        target: AudioState
+        function onOsd(volume, muted) {
+            osdLabel = muted ? "Muted" : "Volume"; osdValue = muted ? 0 : volume;
+            osdOpen = true; osdTimer.restart(); OSDManager.show(osdLabel, osdValue);
+        }
     }
     property Process backend: Process { // REL: scripts/desktop_backend.py – long-lived Python backend (see Phase 3 map).
         command: ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]

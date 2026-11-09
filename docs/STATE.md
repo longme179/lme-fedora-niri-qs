@@ -64,3 +64,20 @@ Do not read archive/ unless answering a specific historical question.
   Commit only final gate summaries; no raw evidence directories.
 - Preserve stdlib/unprivileged backend, English text, Preferences lock/merge/atomic
   writes, preview/standalone Settings and non-destructive installers.
+
+## QML-first migration (Q0)
+
+- Owner accepted the phased QML-first plan (docs/QML_FIRST_MIGRATION_PLAN.md, PR #113) and authorized Q0 on 2026-11-09. Targets: T1 = runtime >= 85% QML-side with `desktop_backend.py` retired (Q1-Q6); T2 = whole-repo QML majority (Q7, optional, explicit owner decision).
+- Q0 on `qml/q0-metric-baseline`: `config/architecture.json` gains `toolingFiles` (the 12 dev-tooling modules); `check_architecture.py` prints an informational language mix in every G0 summary (wc -l parity; exit code and gates unchanged); `tests/test_architecture.py` characterizes the classification and slice arithmetic.
+- Baseline frozen at `8ebc597` (pre-Q0): runtime QML+JS 16,228 (63.6%) vs Python 9,277 (36.4%); tooling Python 1,637; tests Python 26,161; whole-repo 69.5% Python. Post-Q0 actual: tooling 1,672 and tests 26,198 (Q0's own added lines), whole-repo 69.6%.
+- Next: Q1 (audio, battery/AC, power profiles, bluetooth, network read-only native state) needs A6 approval before its branch exists; each event-driven phase reports measured before/after wake rates.
+
+## QML-first migration (Q1, A6 approved)
+
+- Owner approved starting Q1 and the wake-model change (polling -> event-driven) on 2026-11-09. Branch `qml/q1-native-read-state` (tests, implementation, docs commits; stacked on the Q0 plan branch because #114 merged into `docs/qml-first-migration-plan` after #113 squash-merged to main — this PR carries the Q0 re-land).
+- Read-only state for five families now flows natively: `AudioState` (Pipewire default sink/source + PwObjectTracker; volume/mute OSD is event-driven now), `PowerState` (UPower displayDevice + aggregate + PowerProfiles + peripheral supplies), `BluetoothState.sectionFor` (Quickshell.Bluetooth; pairing agent untouched), `NetworkState` (Networking summary), composed by `NativeState.merge` into `ShellState.system` with reference-stable caching (`SystemMerge.js`). Consumers unchanged — sections keep the exact backend shapes, frozen by `tests/test_native_state.py`.
+- Transitional backend-fed keys (documented in NativeState.compose): bluetooth rfkill soft/hard-block flags (no native API) and wifi `networks`/`saved` lists (bssid-keyed connect; Q3 moves them). `batterySaver` stays backend-sourced until its state machine and toggle move together (re-homed from Q1's module list to the write phases).
+- A/B window: the backend still emits the migrated sections (marked `DEPRECATED(Q1->Q6)`); `NativeState.compareSections` counts and rate-limited-warns drift between backend and native values; demo fixtures in NativeState deep-equal the backend demo snapshot (test-frozen).
+- Recorded 4 cycle edges with reasons (NativeState composition; BluetoothState preference reads now cyclic) — runtime-safe, different properties.
+- G0: architecture green; 1082 tests on this branch (Q0 re-land + 9 new), 3 known quickshell-absent errors; gated demo-merge QML case needs a Quickshell machine.
+- Needs real-session check (owner, before merge): a day of `[Q1 A/B]` warnings in the log (expected transient drift while the backend poll lags events); bar/CC values identical to before; volume-key OSD; bluetooth/network toggles; measured idle wake-rate delta vs main.

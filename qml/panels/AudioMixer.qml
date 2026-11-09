@@ -18,7 +18,7 @@ Flickable {
     readonly property var inputs: nodes.filter(node => !node.isStream && !node.isSink)
     readonly property var streams: nodes.filter(node => node.isStream)
     readonly property bool deviceTools: FeatureCatalog.ready && !FeatureCatalog.error && FeatureCatalog.records.some(record => record.id === "audio" && record.enabled)
-    readonly property var devices: deviceTools ? ShellState.snapshot.audioDevices || {} : {}
+    readonly property var devices: deviceTools ? ShellState.audioDevices || {} : {}
     readonly property bool audioBusy: ["audioDevicesRefresh", "audioPort", "audioProfile", "audioRoute", "bluetoothDevice"].some(action => ShellState.pendingActions[action])
     readonly property var extraStreams: (devices.streams || []).filter(entry => !streams.some(node => node.ready && String(node.properties["object.serial"]) === entry.serial))
     property bool initialized: false

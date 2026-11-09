@@ -87,6 +87,20 @@ QtObject {
             processes: backend.processes || [], processCount: backend.processCount || 0});
     }
 
+    // Q3 inventory families: the on-demand sections ride natively after their first dispatch;
+    // fixture modes pass the backend through (the demo registry owns its state). No A/B count
+    // compare — these sections only populate on dispatch, so the backend copy stays empty
+    // while native serves (documented deviation; the owner's panel checklist is the signal).
+    function audioDevices(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return AudioDeviceState.section || backendSection || {};
+    }
+
+    function networkConnections(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return NetworkInventoryState.projection;
+    }
+
     // Port of scripts/peripheral_battery.py::merge_batteries over the native inputs.
     function mergePeripherals(bluetooth) {
         const result = {};

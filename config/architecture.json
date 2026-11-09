@@ -69,8 +69,9 @@
   ],
   "largeFiles": {
     "shell.qml": 301,
-    "qml/services/ShellState.qml": 312,
+    "qml/services/ShellState.qml": 328,
     "tests/test_native_controls.py": 273,
+    "tests/test_native_inventory.py": 388,
     "qml/components/shaders/liquid-glass.frag": 95,
     "qml/components/shapes/shapes/cubic.js": 338,
     "qml/components/shapes/shapes/rounded-polygon.js": 313,

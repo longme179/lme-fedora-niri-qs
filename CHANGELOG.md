@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- The audio devices panel (ports, profiles, application outputs) and the
+  saved network connections popup (VPN/WireGuard/ethernet/hotspot, activation
+  and cancel) now run natively instead of over the backend JSON-lines path.
+  The same pactl/nmcli/busctl commands run with the same validation, bounds,
+  confirmation and cancellation behavior and the exact user-facing messages;
+  ids are server-scoped exactly like the backend (the same SHA-256
+  identities, so panels served by either world during the transition
+  interoperate). Results install the observed state on success and failure
+  alike, and the hotspot warning/confirmation flow keeps its plan-token
+  check. Missing tools keep their install hints; a missing
+  nm-connection-editor is now silent where the backend toasted a generic
+  failure. Fixture modes keep the backend round-trip.
 - Volume, mute, microphone, brightness, Bluetooth radio/device and charge-mode
   controls now run through native Quickshell calls (PipeWire node writes,
   BlueZ adapter/device writes) or the same external tools the backend used

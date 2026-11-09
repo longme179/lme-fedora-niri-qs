@@ -12,7 +12,7 @@ from audio_devices import AudioDevices
 from audio_inventory import demo_inventory, selection, validate_request
 from backend_actions import ActionSpec, PreparedWork
 
-ACTIONS=('audioDevicesRefresh','audioPort','audioProfile','audioRoute')
+ACTIONS=('audioDevicesRefresh','audioPort','audioProfile','audioRoute')  # DEPRECATED(Q3->Q6): audio device actions route natively in real sessions (qml/services/AudioDeviceState.qml); this registry stays as the fallback and demo provider through the A/B window
 
 
 @dataclass(frozen=True)

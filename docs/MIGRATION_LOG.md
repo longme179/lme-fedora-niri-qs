@@ -24,8 +24,20 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - Known fidelity edges for the A/B window: native apps can be a superset
   (no OnlyShowIn/NotShowIn/TryExec properties in quickshell); Exec field codes
   are stripped rather than expanded.
-- G0 green (1103 tests; 3 known quickshell-absent errors). Real-session checks
-  pending owner validation (launcher parity checklist per plan §5 Q2).
+- G0 green (1105 tests; 3 known quickshell-absent errors). Real-machine
+  verification on the owner's desktop (temp worktree, live checkout and
+  running shell untouched) took four rounds: two engine blockers the sandbox
+  cannot see — `native` is a reserved QML identifier (parse error broke the
+  singleton chain; gate renamed to `nativeMode`, all 164 QML files swept) and
+  `Object.fromEntries` is missing from quickshell 0.3.2's V4 engine (ES2019;
+  replaced with a `fromPairs` loop, contract test now bans both patterns in
+  qml/services) — plus verification-harness races fixed along the way
+  (DesktopEntries/FileView readiness-polls; finish() from a Timer, the eb5f2db
+  lesson). Final round: test_native_files 18/18 (5/5 QML cases running on the
+  real machine), Q1 suites 26 OK, apps parity native 51 / backend 57 / overlap
+  46 with the predicted OnlyShowIn/NotShowIn/TryExec superset, launcher.json
+  md5 unchanged. Post-merge owner checks: GUI + terminal launch, monitor panel
+  values, a day of apps-count/memoryTotalGiB drift logs.
 
 ## Q1 — native read-only state — 2026-11-09
 - Owner approved Q1 + the A6 wake-model change. Branch `qml/q1-native-read-state`

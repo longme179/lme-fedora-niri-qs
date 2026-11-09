@@ -114,7 +114,9 @@ QtObject {
     }
 
     // scripts/network_profiles.py::inspect — refresh, the hotspot warning plan, and the
-    // detached system editor.
+    // detached system editor. Non-mutations (refresh/hotspotPlan) carry no activation record,
+    // so their dispatch settles through done() directly — settleDone(record) alone would
+    // drop it and leave pendingActions stuck (the busy gate then deadlocks the family).
     function inspect(action, request, model, done) {
         if (action === "networkHotspotPlan") {
             try { model.hotspotPlan = NetworkPlans.hotspotPlan(model, request); }
@@ -127,7 +129,8 @@ QtObject {
         }
         const record = activation;
         install(model, "", NetworkPlans.MUTATIONS.indexOf(action) >= 0 ? hintFor(action, request) : null);
-        settleDone(record, true, action === "networkEdit" ? "Network editor opened" : "Network connections refreshed");
+        const message = action === "networkEdit" ? "Network editor opened" : "Network connections refreshed";
+        if (record) settleDone(record, true, message); else done(true, message);
     }
 
     // scripts/network_profiles.py::change — select, mutate, confirm on a fresh read.
@@ -246,7 +249,7 @@ QtObject {
     function surface(error, model, done) {
         const message = String(error).slice(0, 400);
         install(model, message, null);
-        settleDone(activation, false, message);
+        if (activation) settleDone(activation, false, message); else done(false, message);
     }
 
     // scripts/wifi_actions.py::provide_connections::install — the observed model (or the

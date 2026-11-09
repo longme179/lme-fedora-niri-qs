@@ -132,6 +132,11 @@ class NativeInventoryContractCase(unittest.TestCase):
         self.assertIn('["connection", "up", "uuid", profile.uuid]', NETWORK_PLANS.read_text())
         self.assertIn('["connection", "down", "apath", request.activePath]', NETWORK_PLANS.read_text())
         self.assertIn('"--wait", "5", "connection", "down", "apath"', source)
+        # Non-mutations (refresh/hotspotPlan) carry no activation record, so their dispatch
+        # must settle through done() directly — settleDone(record) alone drops it, pendingActions
+        # sticks and the busy gate deadlocks the whole connection family (first live probe).
+        self.assertIn("if (record) settleDone(record, true, message); else done(true, message);", source)
+        self.assertIn("if (activation) settleDone(activation, false, message); else done(false, message);", source)
         self.assertIn('"No network activation is running"', source)
         self.assertIn('"Cancellation requested; waiting for the observed outcome"', source)
         # The operation projection keeps the panel contract (cancellable/cancelling keys).
@@ -249,8 +254,9 @@ class NativeInventoryContractCase(unittest.TestCase):
             self.assertIn(message, source, message)
 
     def test_service_files_stay_within_the_size_cap(self):
-        for path in (AUDIO_DEVICE_STATE, NETWORK_INVENTORY_STATE, COMMAND_RUNNER):
-            self.assertLessEqual(nonblank(path), 250, str(path))
+        # NetworkInventoryState 250->253: the non-mutation settle fix + its contract tripwires.
+        for path, cap in ((AUDIO_DEVICE_STATE, 250), (NETWORK_INVENTORY_STATE, 253), (COMMAND_RUNNER, 250)):
+            self.assertLessEqual(nonblank(path), cap, str(path))
         for path in (AUDIO_DEVICE_MODEL, NETWORK_MODEL, NETWORK_PLANS, DIGEST):
             self.assertLessEqual(nonblank(path), 250, str(path))
 

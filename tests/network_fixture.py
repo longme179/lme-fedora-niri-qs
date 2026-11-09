@@ -32,9 +32,11 @@ def data():
             'GENERAL.STATE': '100 (connected)' if active else '30 (disconnected)',
             'GENERAL.CON-UUID': active, 'GENERAL.CONNECTION': 'Home' if kind == 'wifi' else 'Office',
             'GENERAL.CON-PATH': PREFIX+'ActiveConnection/'+('1' if kind == 'wifi' else '2') if active else '',
+            'GENERAL.HWADDR': 'AA:BB:CC:DD:EE:F' + ('1' if kind == 'wifi' else '2'),
             'WIFI-PROPERTIES.AP': 'yes' if kind == 'wifi' else '', 'WIRED-PROPERTIES.CARRIER': 'yes',
             'CONNECTIONS.AVAILABLE-CONNECTIONS[1]': (UUIDS[4] if kind == 'wifi' else active or UUIDS[2])+' | Saved profile',
-            'IP4.ADDRESS[1]': '192.0.2.2/24', 'IP4.GATEWAY': '192.0.2.1', 'IP4.DNS[1]': '192.0.2.1'})
+            'IP4.ADDRESS[1]': '192.0.2.2/24', 'IP4.GATEWAY': '192.0.2.1', 'IP4.DNS[1]': '192.0.2.1',
+            'IP6.ADDRESS[1]': '2001:db8::10/64', 'IP6.GATEWAY': 'fe80::1', 'IP6.DNS[1]': '2001:db8::53'})
     return dict(bus='a'*32, owner=':1.25', radio=['enabled', 'enabled'], profiles=profiles, devices=devices,
         active=[dict(uuid=UUIDS[5], device=DEV[0], path=PREFIX+'ActiveConnection/1', state='activated'),
                 dict(uuid=UUIDS[1], device=DEV[1], path=PREFIX+'ActiveConnection/2', state='activated')])
@@ -45,11 +47,14 @@ def escape(value):
 
 
 def device_text(state):
-    return '\n\n'.join('\n'.join(key+':'+escape(value) for key, value in d.items()) for d in state['devices'])
+    # nmcli >= 1.5x prints multiline values RAW (verified on 1.56.1: HWADDR/IPv6 colons are
+    # not escaped), so the fixture mirrors that; key_value accepts this and the legacy
+    # escaped spelling (test_native_inventory pins their equivalence).
+    return '\n\n'.join('\n'.join(key+':'+str(value) for key, value in d.items()) for d in state['devices'])
 
 
 def profile_text(state):
-    return '\n\n'.join('\n'.join(key+':'+escape(value) for key, value in p.items()) for p in state['profiles'])
+    return '\n\n'.join('\n'.join(key+':'+str(value) for key, value in p.items()) for p in state['profiles'])
 
 
 def connection_text(state):

@@ -3,6 +3,7 @@ Contract: test_native_inventory.py covers native_inventory behavior/contracts; c
 """
 import importlib  # Contract: test_native_inventory.py (Q3 inventory families; headroom 0, trailing note)
 import json
+import re
 import shutil
 import unittest
 from pathlib import Path
@@ -131,6 +132,11 @@ class NativeInventoryContractCase(unittest.TestCase):
         self.assertIn('["connection", "up", "uuid", profile.uuid]', NETWORK_PLANS.read_text())
         self.assertIn('["connection", "down", "apath", request.activePath]', NETWORK_PLANS.read_text())
         self.assertIn('"--wait", "5", "connection", "down", "apath"', source)
+        # Non-mutations (refresh/hotspotPlan) carry no activation record, so their dispatch
+        # must settle through done() directly — settleDone(record) alone drops it, pendingActions
+        # sticks and the busy gate deadlocks the whole connection family (first live probe).
+        self.assertIn("if (record) settleDone(record, true, message); else done(true, message);", source)
+        self.assertIn("if (activation) settleDone(activation, false, message); else done(false, message);", source)
         self.assertIn('"No network activation is running"', source)
         self.assertIn('"Cancellation requested; waiting for the observed outcome"', source)
         # The operation projection keeps the panel contract (cancellable/cancelling keys).
@@ -181,6 +187,57 @@ class NativeInventoryContractCase(unittest.TestCase):
         qmldir = QMkdir.read_text()
         self.assertIn("singleton AudioDeviceState 1.0 AudioDeviceState.qml", qmldir)
         self.assertIn("singleton NetworkInventoryState 1.0 NetworkInventoryState.qml", qmldir)
+        # CommandRunner is instantiated inline by both services (property CommandRunner tools:
+        # CommandRunner { id: runner }); without this declaration the qmldir hides it from the
+        # implicit same-directory import and the shell cannot load at all.
+        self.assertIn("CommandRunner 1.0 CommandRunner.qml", qmldir)
+
+    def test_qml_documents_only_use_declared_types_from_qmldir_directories(self):
+        # A directory with a qmldir exports only the declared types — including to its own
+        # documents' implicit same-directory import — so an undeclared sibling referenced as a
+        # type breaks name resolution and the whole configuration fails to load (the
+        # af2c5a2 startup miss: "CommandRunner is not a type"). Files loaded by path from
+        # config/features.json never resolve as type names, so they stay exempt.
+        documents = list((ROOT / "qml").rglob("*.qml")) + [ROOT / "shell.qml"]
+        for directory in ("qml/bar", "qml/services", "qml/settings", "qml/theme"):
+            base = ROOT / directory
+            declared = {line.split()[-1] for line in (base / "qmldir").read_text().splitlines()
+                        if line.strip() and not line.lstrip().startswith("#")}
+            for path in sorted(base.glob("*.qml")):
+                if path.name in declared:
+                    continue
+                usage = re.compile(r"(?:\bproperty\s+%s\b|\b%s\s*\{)" % (path.stem, path.stem))
+                for sibling in documents:
+                    if sibling == path:
+                        continue
+                    source = "".join(line for line in sibling.read_text().splitlines(True)
+                                     if not line.lstrip().startswith("//"))
+                    self.assertNotRegex(
+                        source, usage,
+                        "%s references %s as a type, but it is not declared in %s/qmldir — "
+                        "the shell would fail to load" % (sibling, path.stem, directory))
+
+    def test_multiline_values_accept_raw_and_escaped_colons(self):
+        # nmcli >= 1.5x prints multiline values RAW (1.56.1 verified: HWADDR `AA:BB:...`,
+        # IPv6 `fe80::1`), <=1.4x escaped them (`fe80\:\:1`). Both spellings must converge to
+        # the same value — the first real-machine probe caught the all-colon split rejecting
+        # the raw form in both worlds (backend and native alike).
+        module = importlib.import_module("network_inventory")
+        from network_fixture import data, device_text
+        rows = [
+            "GENERAL.DEVICE:wlan0", "GENERAL.HWADDR:AA:BB:CC:DD:EE:FF",
+            "IP6.ADDRESS[1]:2001:db8::10/64", "IP6.GATEWAY:fe80::1", "IP6.DNS[1]:2001:db8::53",
+        ]
+        raw = "\n".join(rows)
+        escaped = "\n".join(
+            line.split(":", 1)[0] + ":" + line.split(":", 1)[1].replace(":", "\\:") for line in rows)
+        self.assertEqual(module.blocks(raw, "GENERAL.DEVICE"), module.blocks(escaped, "GENERAL.DEVICE"))
+        parsed = module.blocks(raw, "GENERAL.DEVICE")[0]
+        self.assertEqual(parsed["GENERAL.HWADDR"], "AA:BB:CC:DD:EE:FF")
+        self.assertEqual(parsed["IP6.ADDRESS[1]"], "2001:db8::10/64")
+        # The full frozen fixture (now rendered raw like a modern nmcli) parses end to end.
+        state = data()
+        self.assertEqual(len(module.blocks(device_text(state), "GENERAL.DEVICE")), len(state["devices"]))
 
     def test_backend_families_stay_registered_as_the_fallback(self):
         for path, marker in ((AUDIO_DEVICE_ACTIONS, "ACTIONS="), (WIFI_ACTIONS, "provide_connections")):
@@ -197,8 +254,9 @@ class NativeInventoryContractCase(unittest.TestCase):
             self.assertIn(message, source, message)
 
     def test_service_files_stay_within_the_size_cap(self):
-        for path in (AUDIO_DEVICE_STATE, NETWORK_INVENTORY_STATE, COMMAND_RUNNER):
-            self.assertLessEqual(nonblank(path), 250, str(path))
+        # NetworkInventoryState 250->253: the non-mutation settle fix + its contract tripwires.
+        for path, cap in ((AUDIO_DEVICE_STATE, 250), (NETWORK_INVENTORY_STATE, 253), (COMMAND_RUNNER, 250)):
+            self.assertLessEqual(nonblank(path), cap, str(path))
         for path in (AUDIO_DEVICE_MODEL, NETWORK_MODEL, NETWORK_PLANS, DIGEST):
             self.assertLessEqual(nonblank(path), 250, str(path))
 
@@ -241,8 +299,10 @@ class NativeInventoryQmlCase(unittest.TestCase):
 
     def test_sha256_and_pyjson_match_python_digests(self):
         # Pure helpers: hashlib.sha256 + json.dumps parity (the server ids and hotspot plan
-        # tokens must byte-match the backend during the A/B window).
-        result = self.run_qml('import "qml/services"', '''
+        # tokens must byte-match the backend during the A/B window). The JS libraries are
+        # imported by file path: a qmldir'd directory export never exposes undeclared .js
+        # namespaces to `import "qml/services"` consumers.
+        result = self.run_qml('import "qml/services/Digest.js" as Digest', '''
     Timer {
         interval: 100; running: true; repeat: false
         onTriggered: {
@@ -276,7 +336,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({model: model});
         }
     }''' % serializer.dumps(audio_documents())
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/AudioDeviceModel.js" as AudioDeviceModel', body)
         self.assertEqual(result["model"], audio_python_model())
 
     def test_audio_selection_validation_matches_the_backend_rules(self):
@@ -322,7 +382,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({cases: cases});
         }
     }''' % (serializer.dumps(data), serializer.dumps(attempts))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/AudioDeviceModel.js" as AudioDeviceModel', body)
         for index, (actual, wanted) in enumerate(zip(result["cases"], expected)):
             with self.subTest(case=index):
                 self.assertEqual(actual, wanted)
@@ -341,7 +401,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({model: model});
         }
     }''' % (serializer.dumps(listing), "f" * 64, serializer.dumps(devices), serializer.dumps(details), serializer.dumps(":".join(state["radio"])))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/NetworkModel.js" as NetworkModel', body)
         self.assertEqual(result["model"], network_python_model())
 
     def test_network_plans_token_matches_the_backend_hotspot_plan(self):
@@ -365,7 +425,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({plan: plan});
         }
     }''' % (serializer.dumps(model), serializer.dumps(request))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/NetworkPlans.js" as NetworkPlans', body)
         self.assertEqual(result["plan"], expected)
 
     def test_demo_inventory_dispatches_round_trip_through_the_backend(self):

@@ -87,11 +87,33 @@ function path(value, kind) {
     return value;
 }
 
+function keyValue(line) {
+    // Multiline rows are KEY:VALUE with colon-free keys, but nmcli's escaping of colons in
+    // multiline values changed across versions: <=1.4x printed `key:v\:al`, >=1.5x prints the
+    // raw `key:v:al` (verified on 1.56.1). Split at the first unescaped colon; in the value
+    // only the legacy `\:` escape is folded to `:` — raw backslashes stay literal, so both
+    // spellings converge without eating modern names' backslashes (network_inventory.key_value).
+    let cut = -1;
+    for (let index = 0; index < line.length; index++) {
+        if (line[index] !== ":") continue;
+        let backslashes = 0, probe = index - 1;
+        while (probe >= 0 && line[probe] === "\\") { backslashes++; probe--; }
+        if (backslashes % 2 === 0) { cut = index; break; }
+    }
+    if (cut < 0) return [line];
+    let value = "";
+    for (let index = cut + 1; index < line.length; index++) {
+        if (line[index] === "\\" && index + 1 < line.length && line[index + 1] === ":") { value += ":"; index++; }
+        else value += line[index];
+    }
+    return [line.slice(0, cut), value];
+}
+
 function blocks(raw, first) {
     const result = [];
     for (const line of lines(raw)) {
         if (!line.trim()) continue;
-        const fields = splitNmcli(line);
+        const fields = keyValue(line);
         if (fields.length !== 2) throw "Invalid NetworkManager property row";
         const key = fields[0], value = text(fields[1]);
         if (key === first) result.push({});

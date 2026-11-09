@@ -70,6 +70,9 @@ def provide(capabilities):
             if not device or type(request.get('connected')) is not bool: raise ValueError('Unknown Bluetooth device or state')
             device['connected'] = request['connected']
 
+    # DEPRECATED(Q3->Q6): the control actions route natively in real sessions (qml/services/AudioState.qml
+    # + qml/services/BluetoothState.qml); this registry stays as the fallback and demo provider
+    # through the A/B window (plan §5 Q3).
     handlers = {'volume': volume, 'mute': mute, 'micVolume': mic_volume, 'micMute': mic_mute,
                 'brightness': brightness, 'bluetoothToggle': lambda request: capabilities.set_bluetooth(not capabilities.bluetooth()['enabled']),
                 'bluetoothDevice': bluetooth_device}

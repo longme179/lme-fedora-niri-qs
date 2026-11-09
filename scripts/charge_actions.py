@@ -33,4 +33,4 @@ def provide(cap):
     def demo(request):
         limit=value(request)
         cap.demo_state().update(mode='conservation' if limit==85 else 'max',limitPercent=limit)
-    return ((ActionSpec('chargeMode',{'shell'},live,demo),),lambda:{})
+    return ((ActionSpec('chargeMode',{'shell'},live,demo),),lambda:{})  # DEPRECATED(Q3->Q6): chargeMode routes natively in real sessions (qml/services/PowerState.qml); this registry stays as the fallback and demo provider through the A/B window

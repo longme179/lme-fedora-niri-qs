@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Volume, mute, microphone, brightness, Bluetooth radio/device and charge-mode
+  controls now run through native Quickshell calls (PipeWire node writes,
+  BlueZ adapter/device writes) or the same external tools the backend used
+  (brightnessctl, the administrator charge helper via pkexec) instead of the
+  backend JSON-lines path. Messages, bounds, confirmation behavior and the
+  polkit prompt flow are unchanged; results for these routine controls stay
+  toast-silent exactly like before. Turning Bluetooth on through an rfkill
+  block still uses the backend's unblock-and-retry path, and sessions without
+  the native backends fall back to the registry. The charge-mode admission
+  (helper availability, busy state) reads the backend-sampled sysfs state
+  while its discovery needs an API quickshell 0.3.2 does not have.
 - The Wi-Fi panel now reads its scan list and saved profiles natively and its
   actions run through Quickshell's NetworkManager bindings instead of the
   backend JSON-lines path (the migration's first write phase). The scan list

@@ -84,13 +84,14 @@ class NativeWifiContractCase(unittest.TestCase):
 
     def test_shellstate_routes_wifi_actions_natively_in_real_sessions(self):
         source = SHELL_STATE.read_text()
-        # The router gate: fixture modes always keep the backend round-trip.
-        self.assertIn("!backendDemo && !settingsApp && NetworkState.handles(action)", source)
+        # The router gate: fixture modes always keep the backend round-trip; the fan-out
+        # owns the wifi leg (generalized across the Q3 write families in the same phase).
+        self.assertIn("if (NetworkState.handles(action)) return NetworkState;", source)
         # Native dispatch reserves the same pending slot and resolves it locally.
         self.assertIn("Pending.settled(pendingState, action)", source)
-        self.assertIn("NetworkState.perform(action, payload || {}, (ok, message) => nativeDone(action, ok, message))", source)
+        self.assertIn("owner.perform(action, payload || {}, (ok, message) => nativeDone(action, ok, message), context)", source)
         # Fallback when quickshell's NetworkManager backend or adapter is absent.
-        self.assertIn("NetworkState.canRoute()", source)
+        self.assertIn("owner.canRoute(action, payload || {}, context)", source)
         # watchWifi drives the native scanner alongside the backend's A/B copy.
         self.assertIn("NetworkState.watching = watching", source)
 

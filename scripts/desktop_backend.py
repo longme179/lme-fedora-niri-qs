@@ -901,7 +901,7 @@ class DesktopBackend:
         value = properties.get(key, default)
         return value.get("data", default) if isinstance(value, dict) else value
 
-    def set_bluetooth(self, enabled: bool) -> str:
+    def set_bluetooth(self, enabled: bool) -> str:  # DEPRECATED(Q3->Q6): the radio write routes natively (qml/services/BluetoothState.qml); this stays the A/B fallback for rfkill-blocked enables
         state = self.bluetooth()
         if not state["available"]:
             raise CommandError("No Bluetooth adapter is available. Check bluetooth.service and the adapter firmware.")
@@ -1299,7 +1299,7 @@ class DesktopBackend:
             state["reason"] = "Install the administrator charge helper. See docs/CHARGING.md."
         return state
 
-    def set_charge(self, limit: int) -> str:
+    def set_charge(self, limit: int) -> str:  # DEPRECATED(Q3->Q6): chargeMode routes natively (qml/services/PowerState.qml); this stays the A/B fallback
         if self.charger.state()["writable"]:
             self.charger.set_mode(limit)
         else:

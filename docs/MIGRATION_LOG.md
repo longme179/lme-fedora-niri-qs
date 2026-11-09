@@ -2,6 +2,33 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q3 — remaining native-API write families — 2026-11-09
+- Owner approved the rest of Q3 ("duyệt phần còn lại của Q3"). Delivered the
+  native-API write families on `qml/q3-write-families` (tests -> impl -> docs);
+  the inventory-based families (audio device actions, network plans/profiles)
+  remain as the last Q3 leg.
+- AudioState gains volume/mute/micVolume/micMute (PwNodeAudioIface writes, the
+  wpctl scale/clamp/bounds/messages ported) and brightness (brightnessctl
+  Process, backend argv/timeout/failure shapes, queued one-shot).
+- BluetoothState gains bluetoothToggle (adapter.enabled + set_bluetooth's
+  confirm cadence/message; rfkill-blocked enables fall back to the registry's
+  unblock dance) and bluetoothDevice (device.connected writes, 15 s ceiling,
+  backend validation/messages).
+- PowerState gains chargeMode: the same pkexec helper argv (helper stays Python,
+  plan §6) with set_charge's JSON verification; admission reads the backend-fed
+  charging section via the router context (no new ShellState backreferences).
+- ShellState.run generalizes into the family router (nativeOwner fan-out +
+  canRoute/perform with a context carrying the merged system and an interim
+  status emitter); accept()'s routine toast list extracted so native results
+  suppress the same names; the polkit closePanels guard covers both paths.
+- G0 green (sandbox contract suites; 3 known quickshell-absent errors identical
+  to clean main); 65.5% QML-side runtime. Real-machine verification (temp
+  worktrees, live checkout/shell untouched): full discover 1134 OK; probe —
+  validation strings exact, volume 75->80->75 vs wpctl 0.75, mute round-trip,
+  brightnessctl writes settled, audio A/B drift 0 through native writes; two
+  post-audit fix commits (charge outcome arguments, ties-to-even rounding +
+  watchdog/available hardening) confirmed in round 2 (40 tests OK).
+
 ## Q3 — Wi-Fi lists + first write actions — 2026-11-09
 - Owner approved Q3 scoped to the wifi networks/saved lists (the network leg of
   plan §5 Q3; audio/power/bluetooth writes and network plans/profiles await

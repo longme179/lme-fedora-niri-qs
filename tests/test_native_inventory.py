@@ -271,8 +271,10 @@ class NativeInventoryQmlCase(unittest.TestCase):
 
     def test_sha256_and_pyjson_match_python_digests(self):
         # Pure helpers: hashlib.sha256 + json.dumps parity (the server ids and hotspot plan
-        # tokens must byte-match the backend during the A/B window).
-        result = self.run_qml('import "qml/services"', '''
+        # tokens must byte-match the backend during the A/B window). The JS libraries are
+        # imported by file path: a qmldir'd directory export never exposes undeclared .js
+        # namespaces to `import "qml/services"` consumers.
+        result = self.run_qml('import "qml/services/Digest.js" as Digest', '''
     Timer {
         interval: 100; running: true; repeat: false
         onTriggered: {
@@ -306,7 +308,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({model: model});
         }
     }''' % serializer.dumps(audio_documents())
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/AudioDeviceModel.js" as AudioDeviceModel', body)
         self.assertEqual(result["model"], audio_python_model())
 
     def test_audio_selection_validation_matches_the_backend_rules(self):
@@ -352,7 +354,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({cases: cases});
         }
     }''' % (serializer.dumps(data), serializer.dumps(attempts))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/AudioDeviceModel.js" as AudioDeviceModel', body)
         for index, (actual, wanted) in enumerate(zip(result["cases"], expected)):
             with self.subTest(case=index):
                 self.assertEqual(actual, wanted)
@@ -371,7 +373,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({model: model});
         }
     }''' % (serializer.dumps(listing), "f" * 64, serializer.dumps(devices), serializer.dumps(details), serializer.dumps(":".join(state["radio"])))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/NetworkModel.js" as NetworkModel', body)
         self.assertEqual(result["model"], network_python_model())
 
     def test_network_plans_token_matches_the_backend_hotspot_plan(self):
@@ -395,7 +397,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
             fixture.finish({plan: plan});
         }
     }''' % (serializer.dumps(model), serializer.dumps(request))
-        result = self.run_qml('import "qml/services"', body)
+        result = self.run_qml('import "qml/services/NetworkPlans.js" as NetworkPlans', body)
         self.assertEqual(result["plan"], expected)
 
     def test_demo_inventory_dispatches_round_trip_through_the_backend(self):

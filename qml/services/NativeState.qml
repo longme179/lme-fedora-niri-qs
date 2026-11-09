@@ -1,7 +1,9 @@
 // Role: NativeState.qml (shared layer, fan-in 1) — Q1 native-section composition for the merged system.
 // REL: AudioState/PowerState/BluetoothState/NetworkState – native sections; SystemMerge.js – reference-stable merge.
-// INVARIANT: the demo fixtures between the NATIVE_DEMO_SECTIONS markers are JSON and deep-equal the
-// backend demo snapshot sections (tests/test_native_state.py parses and freezes both sides).
+// INVARIANT: fixture modes (demo/preview, LME_SHELL_BACKEND_DEMO, standalone Settings) pass the backend
+// system through unchanged — the demo backend is STATEFUL (audio/power/network actions mutate its
+// snapshot) and development tests inject hardware state through it; native sections engage only in the
+// real session (tests/test_native_state.py freezes the section shapes both sides must keep).
 // Q1 A/B window: the backend keeps emitting the migrated sections; compareSections() warns on drift
 // (rate-limited) so the owner can validate native values against backend values for a day (plan §5 Q1).
 pragma Singleton
@@ -15,18 +17,18 @@ QtObject {
 
     // Env-derived context, mirroring ShellState's flags (env is the per-process source of truth;
     // reading it here avoids a ShellState -> NativeState -> ShellState singleton creation cycle).
-    readonly property bool demo: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
+    // backendDemo includes demo/preview; settingsApp is the standalone Settings entry.
     readonly property bool settingsApp: Quickshell.env("LME_SHELL_SETTINGS") === "1"
-    readonly property bool backendDemo: demo || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
+    readonly property bool backendDemo: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
+        || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
 
     // A/B drift bookkeeping for the Q1 window (removed with the backend sections at Q6).
     property var abMismatches: ({})
     property var abLastWarn: ({})
 
-    // The backend-independent section set. In demo mode the static fixtures serve every
-    // section; the native singletons are not even referenced (no service connections).
-    readonly property var baseSections: {
-        if (demo) return demoSections;
+    // The backend-independent section set; null in every fixture mode so the native services
+    // are never even referenced there (no service connections in demo/tests/Settings).
+    readonly property var baseSections: backendDemo || settingsApp ? null : {
         const bluetooth = BluetoothState.sectionFor(ShellState.preferences.bluetoothAdapter);
         return {audio: AudioState.state, microphone: AudioState.microphone,
                 battery: PowerState.battery, powerProfile: PowerState.profile, powerProfiles: PowerState.profiles,
@@ -35,14 +37,15 @@ QtObject {
     }
 
     function merge(backend) {
-        if (settingsApp && !demo) return backend; // standalone Settings keeps the backend's empty system
+        if (backendDemo || settingsApp) return SystemMerge.merge(backend, null, passthrough);
         return SystemMerge.merge(backend, baseSections, compose);
     }
+
+    function passthrough(backend, base) { return {}; }
 
     // Backend-fed transitional keys: rfkill block flags (no native API) and the Wi-Fi scan
     // lists (bssid-keyed connect; Q3 moves them). Pure function of (backend, base).
     function compose(backend, base) {
-        if (demo) return base;
         const bluetoothBackend = backend["bluetooth"] || {};
         const networkBackend = backend["network"] || {};
         return Object.assign({}, base, {
@@ -76,6 +79,7 @@ QtObject {
     // Q1 A/B window: compare the backend's still-emitted sections against the merged (native)
     // view; count and warn on drift, rate-limited per section. Transitions are expected while
     // the backend poll lags the event-driven values — the counters are the day-long signal.
+    // ShellState gates this to real sessions (not demo/backendDemo/settings).
     function compareSections(backend, native) {
         const mismatches = {};
         const pairs = [["audio", ["available", "volume", "muted"]],
@@ -106,27 +110,4 @@ QtObject {
         }
         return mismatches;
     }
-
-    // BEGIN NATIVE_DEMO_SECTIONS (JSON; tests/test_native_state.py parses this block)
-    readonly property var demoSections: {
-        "audio": {"available": true, "volume": 42, "muted": false},
-        "microphone": {"available": true, "volume": 60, "muted": false},
-        "battery": {"available": true, "percent": 82, "charging": false, "acOnline": false},
-        "powerProfile": "balanced",
-        "powerProfiles": ["power-saver", "balanced", "performance"],
-        "bluetooth": {"available": true, "enabled": true, "softBlocked": false, "hardBlocked": false,
-                      "adapter": "/org/bluez/hci0",
-                      "adapters": [{"path": "/org/bluez/hci0", "name": "Laptop Bluetooth", "enabled": true}],
-                      "devices": [{"path": "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "id": "bluetooth:AA:BB:CC:DD:EE:FF",
-                                   "name": "Headphones", "kind": "headphones", "connected": true, "percentage": 58, "charging": null}]},
-        "peripheralBatteries": [{"id": "bluetooth:AA:BB:CC:DD:EE:FF", "name": "Headphones", "kind": "headphones",
-                                 "connected": true, "percentage": 58, "charging": null},
-                                {"id": "power_supply:demo-keyboard", "name": "Wireless keyboard", "kind": "keyboard",
-                                 "connected": true, "percentage": 18, "charging": false}],
-        "network": {"available": true, "enabled": true, "connected": true, "ssid": "Home Wi-Fi", "strength": 88,
-                    "device": "wlp1s0", "saved": [{"uuid": "demo-home", "name": "Home Wi-Fi"}],
-                    "networks": [{"ssid": "Home Wi-Fi", "strength": 88, "connected": true, "secured": true, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:01"},
-                                 {"ssid": "Guest", "strength": 62, "connected": false, "secured": true, "security": "WPA2", "bssid": "AA:BB:CC:DD:EE:02"}]}
-    }
-    // END NATIVE_DEMO_SECTIONS
 }

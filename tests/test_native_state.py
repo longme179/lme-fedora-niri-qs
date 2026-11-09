@@ -3,7 +3,6 @@ Contract: test_native_state.py covers native_state behavior/contracts; check imp
 """
 import json  # Contract: test_native_state.py (Q1 native sections; headroom 0, trailing note)
 import os
-import re
 import shutil
 import subprocess
 import unittest
@@ -59,15 +58,13 @@ class NativeSectionContractCase(unittest.TestCase):
             with self.subTest(section=section):
                 self.assertEqual(system.get(section), expected)
 
-    def test_qml_demo_fixtures_match_the_backend_demo_sections(self):
+    def test_fixture_modes_pass_the_backend_system_through(self):
+        # The demo backend is stateful (audio/power/network actions mutate its snapshot) and
+        # development tests inject hardware state through it — native sections must not override.
         source = (ROOT/"qml/services/NativeState.qml").read_text()
-        block = re.search(r"BEGIN NATIVE_DEMO_SECTIONS(.*)END NATIVE_DEMO_SECTIONS", source, re.S)
-        self.assertIsNotNone(block, "NativeState.qml must carry the marked JSON fixture block")
-        fixtures = json.loads(re.search(r"\{.*\}", block.group(1), re.S).group(0))
-        self.assertEqual(set(fixtures), set(FROZEN))
-        for section, expected in FROZEN.items():
-            with self.subTest(section=section):
-                self.assertEqual(fixtures[section], expected)
+        self.assertIn("backendDemo || settingsApp ? null :", source)
+        self.assertIn("if (backendDemo || settingsApp) return SystemMerge.merge(backend, null, passthrough)", source)
+        self.assertNotIn("NATIVE_DEMO_SECTIONS", source)
 
     def test_new_service_files_exist_within_the_size_cap(self):
         for path in SERVICES:

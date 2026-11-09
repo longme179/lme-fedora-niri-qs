@@ -14,6 +14,7 @@ function merge(backend, base, compose) {
 }
 
 function sameSections(a, b) {
+    if (a === b) return true; // both null in fixture modes: the pass-through still caches
     if (!a || !b || Object.keys(a).length !== Object.keys(b).length) return false;
     for (const key in a) if (a[key] !== b[key]) return false;
     return true;

@@ -2,6 +2,26 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q3 final leg hotfix — undeclared CommandRunner broke startup — 2026-11-10
+- Owner-reported: `quickshell -c lme-shell` refused to load — the chain
+  FeatureBootstrap → ActivityState → LyricsSession → AudioDeviceState ended in
+  "CommandRunner is not a type" (AudioDeviceState.qml:21; NetworkInventoryState.qml:26
+  carries the same inline instantiation). Root cause: af2c5a2 shipped
+  `qml/services/CommandRunner.qml` but never declared it in `qml/services/qmldir`;
+  a qmldir'd directory exports only its declared types — including to its own
+  documents' implicit same-directory import — so the type could not resolve and the
+  whole configuration failed. The G0 contract tests freeze text, not engine name
+  resolution, so they stayed green while the shell could not start (the real-machine
+  bridge was down when the branch landed; STATE's verification was PENDING).
+- Fix: the qmldir declares `CommandRunner 1.0 CommandRunner.qml`. The other undeclared
+  .qml files in qmldir'd directories (settings pages, bar buttons) load by path from
+  config/features.json and are never referenced as type names, so they are unaffected.
+- Regression guard: `test_native_inventory.py` asserts the declaration and freezes the
+  invariant — any .qml file in a qmldir'd directory that another QML document references
+  as a type must be declared in that qmldir. Verified red on the unfixed qmldir, green
+  after; the sandbox G0 slice reruns green. The owner's shell restart after pull is the
+  live startup check.
+
 ## Q3 final leg — inventory families (audio devices, network plans/profiles) — 2026-11-10
 - The last Q3 leg per plan §5 delivered on `qml/q3-inventory-families` (tests
   -> impl -> docs): the inventory-based families ported to QML. Q3 is now

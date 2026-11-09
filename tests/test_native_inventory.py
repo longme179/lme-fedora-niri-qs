@@ -3,6 +3,7 @@ Contract: test_native_inventory.py covers native_inventory behavior/contracts; c
 """
 import importlib  # Contract: test_native_inventory.py (Q3 inventory families; headroom 0, trailing note)
 import json
+import re
 import shutil
 import unittest
 from pathlib import Path
@@ -181,6 +182,35 @@ class NativeInventoryContractCase(unittest.TestCase):
         qmldir = QMkdir.read_text()
         self.assertIn("singleton AudioDeviceState 1.0 AudioDeviceState.qml", qmldir)
         self.assertIn("singleton NetworkInventoryState 1.0 NetworkInventoryState.qml", qmldir)
+        # CommandRunner is instantiated inline by both services (property CommandRunner tools:
+        # CommandRunner { id: runner }); without this declaration the qmldir hides it from the
+        # implicit same-directory import and the shell cannot load at all.
+        self.assertIn("CommandRunner 1.0 CommandRunner.qml", qmldir)
+
+    def test_qml_documents_only_use_declared_types_from_qmldir_directories(self):
+        # A directory with a qmldir exports only the declared types — including to its own
+        # documents' implicit same-directory import — so an undeclared sibling referenced as a
+        # type breaks name resolution and the whole configuration fails to load (the
+        # af2c5a2 startup miss: "CommandRunner is not a type"). Files loaded by path from
+        # config/features.json never resolve as type names, so they stay exempt.
+        documents = list((ROOT / "qml").rglob("*.qml")) + [ROOT / "shell.qml"]
+        for directory in ("qml/bar", "qml/services", "qml/settings", "qml/theme"):
+            base = ROOT / directory
+            declared = {line.split()[-1] for line in (base / "qmldir").read_text().splitlines()
+                        if line.strip() and not line.lstrip().startswith("#")}
+            for path in sorted(base.glob("*.qml")):
+                if path.name in declared:
+                    continue
+                usage = re.compile(r"(?:\bproperty\s+%s\b|\b%s\s*\{)" % (path.stem, path.stem))
+                for sibling in documents:
+                    if sibling == path:
+                        continue
+                    source = "".join(line for line in sibling.read_text().splitlines(True)
+                                     if not line.lstrip().startswith("//"))
+                    self.assertNotRegex(
+                        source, usage,
+                        "%s references %s as a type, but it is not declared in %s/qmldir — "
+                        "the shell would fail to load" % (sibling, path.stem, directory))
 
     def test_backend_families_stay_registered_as_the_fallback(self):
         for path, marker in ((AUDIO_DEVICE_ACTIONS, "ACTIONS="), (WIFI_ACTIONS, "provide_connections")):

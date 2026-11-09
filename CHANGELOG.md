@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed a startup regression from the native audio devices and network
+  connections port: the shared command-running component was missing its
+  declaration in the services qmldir, so Quickshell could not load the
+  configuration at all ("CommandRunner is not a type"). Declaring it restores
+  startup; no behavior change.
 - The audio devices panel (ports, profiles, application outputs) and the
   saved network connections popup (VPN/WireGuard/ethernet/hotspot, activation
   and cancel) now run natively instead of over the backend JSON-lines path.

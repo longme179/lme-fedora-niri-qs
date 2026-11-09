@@ -28,3 +28,4 @@ singleton LauncherState 1.0 LauncherState.qml
 singleton MonitorState 1.0 MonitorState.qml
 singleton AudioDeviceState 1.0 AudioDeviceState.qml
 singleton NetworkInventoryState 1.0 NetworkInventoryState.qml
+CommandRunner 1.0 CommandRunner.qml

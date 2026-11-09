@@ -2,6 +2,19 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q1 — native read-only state — 2026-11-09
+- Owner approved Q1 + the A6 wake-model change. Branch `qml/q1-native-read-state`
+  (tests -> implementation -> docs; carries the Q0 re-land, see STATE).
+- Native singletons (AudioState/PowerState/BluetoothState.sectionFor/NetworkState)
+  expose the exact backend section shapes; `NativeState.merge` composes
+  `ShellState.system` with reference-stable caching; consumers unchanged.
+  Transitional backend-fed keys: bluetooth rfkill flags, wifi networks/saved.
+- Backend keeps emitting the sections (DEPRECATED(Q1->Q6)); A/B compare
+  (compareSections) warns on drift, rate-limited; demo fixtures test-frozen.
+- batterySaver re-homed to the write phases (state machine + toggle move together).
+- G0 green (1082 tests; 3 known quickshell-absent errors). Real-session checks:
+  day of A/B warnings, value parity, wake-rate delta — pending owner validation.
+
 ## Q0 — QML-first migration baseline — 2026-11-09
 - Owner accepted the phased QML-first plan (docs/QML_FIRST_MIGRATION_PLAN.md;
   PR #113) and authorized Q0. Branch `qml/q0-metric-baseline` (tests, then

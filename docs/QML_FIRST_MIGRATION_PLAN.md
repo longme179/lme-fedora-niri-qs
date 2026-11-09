@@ -1,6 +1,6 @@
 # QML-first migration plan — retiring the Python backend gradually
 
-**Date:** 2026-11-09 · **Baseline:** `8ebc597` (`main`, after #112) · **Status:** plan accepted by the owner 2026-11-09 (PR #113). Q0 authorized and delivered on `qml/q0-metric-baseline`: the §1 numbers are now reproduced automatically by the `check_architecture.py` language mix printed in every G0 summary. Q1-Q7 still need per-phase owner authorization before their branches exist; Q1 additionally needs A6 approval.
+**Date:** 2026-11-09 · **Baseline:** `8ebc597` (`main`, after #112) · **Status:** plan accepted by the owner 2026-11-09 (PR #113). Q0 authorized and delivered on `qml/q0-metric-baseline`: the §1 numbers are now reproduced automatically by the `check_architecture.py` language mix printed in every G0 summary. Q1 authorized with A6 (event-driven wake model) and delivered on `qml/q1-native-read-state`: audio/microphone/battery/power-profiles/bluetooth/network-summary state is native, the backend sections are deprecated for the A/B window, and `batterySaver` re-homes to the write phases (its state machine and toggle move together). Q2-Q7 still need per-phase owner authorization.
 
 ## 1. Goal and metric
 

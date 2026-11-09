@@ -12,7 +12,7 @@
 | Scanned baseline commit | `6c1dc3ce4ed34662a1cd68d70633ea7e3dbf81ee` (`main`) | `[verified]` Phase 0 survey |
 | Annotation branch | `docs/annotate-and-map` (comments-only commits; no behavior change) | `[verified]` git history |
 | Map date | 2026-11-09 | `[verified]` |
-| Static graph tooling | `scripts/check_architecture.py` (stdlib, literals-only imports/URLs, nonblank size ratchet) rerunnable via `python3 scripts/check_architecture.py`; Phase 1 graph built in a disposable temp dir (not committed) | `[verified]` `scripts/check_architecture.py:1-170`, `:158` |
+| Static graph tooling | `scripts/check_architecture.py` (stdlib, literals-only imports/URLs, nonblank size ratchet, informational language-mix counter since Q0) rerunnable via `python3 scripts/check_architecture.py`; Phase 1 graph built in a disposable temp dir (not committed) | `[verified]` `scripts/check_architecture.py:1-205`, `:158`, `:166-194` |
 | Greppable tags | `REL:`, `INVARIANT:`, `GOTCHA:` — `grep -rn 'REL:\|INVARIANT:\|GOTCHA:' qml scripts tests *.qml` | `[verified]` Phase 2 tags |
 
 ## 2. Overview
@@ -113,7 +113,7 @@ flowchart LR
 | `scripts/` runtime infra | Command execution, managed processes, output/storage | `command_runner.py`, `managed_command.py`, `command_output.py`, `storage.py` | stdlib, env, filesystem | backend and domain modules | PATH, `LME_QS_BINARY`, XDG, tool whitelist | `[verified]` `command_runner.py`, `storage.py` INVARIANTs |
 | `scripts/` catalog/schema | Feature catalog + settings schema/metadata | `feature_catalog.py`, `settings_schema.py`, `catalog_metadata.py` | `config/features.json`, descriptors, legacy prefs | backend, QML catalog, checks/tests | feature IDs, prefs keys, control-grid refs | `[verified]` `scripts/feature_catalog.py:121`; `settings_schema.py` |
 | `scripts/` deploy chain | Plan/apply/rollback, runtime/files/niri stages | `deploy.py`, `deploy_*.py` | filesystem, niri config, runtime probes | `deploy.sh`, operator | XDG, `NIRI_*`, `WAYLAND_DISPLAY` | `[verified]` `deploy.py:3-6`; `deploy_state.py:4`; `deploy_niri.py:4` |
-| `scripts/` checks/gates | Architecture checks, fast checks, isolated gates | `check_architecture.py`, `check.sh`, `run-gates.sh` | config/architecture, tests | CI-local workflow, developers/agents | gate env isolation vars | `[verified]` `check_architecture.py:158`; `run-gates.sh:36-50,83` |
+| `scripts/` checks/gates | Architecture checks (ownership/cycles/sizes + informational language mix), fast checks, isolated gates | `check_architecture.py`, `check.sh`, `run-gates.sh` | config/architecture (incl. `toolingFiles` classification), tests | CI-local workflow, developers/agents | gate env isolation vars | `[verified]` `check_architecture.py:158,166-194`; `run-gates.sh:36-50,83` |
 | `scripts/` domain families | Audio, network/wifi, display/mirroring, power/battery, capture/recording, clipboard, launcher, wallpaper/personalization, etc. | `*_actions.py` + domain libs | command_runner/storage/backend_actions, external CLIs/D-Bus | backend, QML panels/services | domain config/env/XDG paths, service CLIs | `[verified]` `scripts/*_actions.py` providers; Phase 1 external services |
 | `tests/` | Unit/contract suites, helpers/fixtures, migration checks | `test_*.py`, fixtures, `migration_checks.py` | scripts modules, QML/native harness where gated | `check.sh`, `run-gates.sh`, developers | disposable session env for native/gates | `[verified]` test headers/REL tags; `run-gates.sh:83` |
 | `config/` | Static config, descriptors, policy, tokens | `features.json`, `architecture.json`, `control-grid.json`, `*.json` | referenced by catalog/schema/QML/scripts | runtime/UI/schema/checks | feature IDs, prefs, layout, theme | `[verified]` JSON-descriptor edges; readers in catalog/schema/QML |
@@ -151,7 +151,7 @@ flowchart LR
 3. `scripts/settings_schema.py` — merges descriptor preference metadata with legacy fragment for defaults/validation metadata `[verified]` module header
 4. `qml/services/FeatureCatalog.qml:154` — QML singleton loads catalog path and publishes projections (bar/settings/control/tab/bootstrap metadata) `[verified]`
 5. `qml/services/ControlRegistry.qml:26` — loads `config/control-grid.json`; maintains tab/card IDs and `legacyIndex` compatibility `[verified]` `:21-26`
-6. `scripts/check_architecture.py` owners/graph checks — enforce declared ownership/shared/host roles and size/exception policy `[verified]` `scripts/check_architecture.py:92-162`
+6. `scripts/check_architecture.py` owners/graph checks — enforce declared ownership/shared/host roles and size/exception policy, and print the informational language-mix trend (Q0, docs/QML_FIRST_MIGRATION_PLAN.md §1) `[verified]` `scripts/check_architecture.py:92-162,185-205`
 
 ### (d) Settings open + page navigation
 1. `settings.qml` / `qml/settings/SettingsApplication.qml` — standalone Settings entry/host composition `[verified]` files exist; `SettingsApplication.qml` header REL
@@ -189,7 +189,7 @@ flowchart LR
 | Name | Defined in | Used by | Default / fallback | Purpose | Evidence |
 |---|---|---|---|---|---|
 | `config/features.json` | repo config | `feature_catalog.py`, `FeatureCatalog.qml`, `check_architecture.py`, schema/catalog flows | bundled file | Canonical feature index/descriptors/registrations | `[verified]` |
-| `config/architecture.json` | repo config | `check_architecture.py`, policy tooling | bundled file | Ownership/shared/hosts, dependency/cycle exceptions, `largeFiles` ceilings | `[verified]` |
+| `config/architecture.json` | repo config | `check_architecture.py`, policy tooling | bundled file | Ownership/shared/hosts, dependency/cycle exceptions, `largeFiles` ceilings, `toolingFiles` line classification (Q0 language mix) | `[verified]` |
 | `config/control-grid.json` | repo config | `ControlRegistry.qml`, `feature_catalog.py` | bundled file | Control cards/tabs/layout metadata, legacyIndex-compatible projections | `[verified]` |
 | `config/preferences-legacy.json` + descriptor `"preferences"` | repo config | `settings_schema.py`, backend validation/defaults | bundled fragments | Legacy/default preference metadata bridge (Python-bound validators/resolvers) | `[verified]` |
 | `config/{theme-tokens,palettes,liquid-glass,wallpaper,...}.json` | repo config | theme/services/actions/domain modules | bundled files | Visual tokens, palettes, glass, feature/domain settings metadata | `[inferred]` exact per-file consumer map varies; static json edges exist |

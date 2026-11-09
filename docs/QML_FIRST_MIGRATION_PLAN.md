@@ -1,12 +1,12 @@
 # QML-first migration plan — retiring the Python backend gradually
 
-**Date:** 2026-11-09 · **Baseline:** `8ebc597` (`main`, after #112) · **Status:** proposal, not started. Every phase below needs owner authorization before its branch exists; nothing here has been implemented.
+**Date:** 2026-11-09 · **Baseline:** `8ebc597` (`main`, after #112) · **Status:** plan accepted by the owner 2026-11-09 (PR #113). Q0 authorized and delivered on `qml/q0-metric-baseline`: the §1 numbers are now reproduced automatically by the `check_architecture.py` language mix printed in every G0 summary. Q1-Q7 still need per-phase owner authorization before their branches exist; Q1 additionally needs A6 approval.
 
 ## 1. Goal and metric
 
 The owner's direction: move the codebase gradually to QML as the majority, instead of mostly Python as it is today. This plan turns that direction into phased, gate-checked work items that retire the Python JSON-lines backend family by family, replacing it with Quickshell-native services and QML-side logic, while keeping the repo's compatibility facades, memory targets and test discipline intact.
 
-**Metric definitions** (counted with `wc -l`, verified at the baseline commit):
+**Metric definitions** (counted with `wc -l`, verified at the baseline commit; since Q0 the same slices are printed by `scripts/check_architecture.py` as the `Architecture: language mix` line in every G0 summary):
 
 - **Runtime shell code** — code that runs inside the live shell or the standalone Settings entry: `qml/` (QML + JS), root `*.qml`, and the `scripts/` modules those two spawn.
 - **Dev tooling** — everything else in `scripts/`: the deploy chain (`deploy*.py`, 693), `check_architecture.py` (170), catalog/schema generation (`feature_catalog.py`, `settings_schema.py`, `catalog_metadata.py`, 460), `memory_report.py` (178), `niri_keybinds.py` (136) = **1,637 lines**. Plus `tests/`.

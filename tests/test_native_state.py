@@ -152,11 +152,16 @@ class NativeStateQmlCase(unittest.TestCase):
     def test_percent100_maps_the_quickshell_fraction_to_the_backend_scale(self):
         # Behavioral twin of the source contract above: percent100() is the
         # boundary between Quickshell's 0-1 UPower fraction and the backend's
-        # frozen 0-100 percent contract.
+        # frozen 0-100 percent contract. Finish from a Timer (not
+        # Component.onCompleted): Qt.quit() during completion has no receiver
+        # yet and the fixture times out (caught on the owner's machine).
         result = self.run_qml('import "qml/services"', '''
-    Component.onCompleted: {
-        fixture.finish({eighty: PowerState.percent100(0.8), full: PowerState.percent100(1),
-                        empty: PowerState.percent100(0), bad: PowerState.percent100(NaN),
-                        absent: PowerState.percent100(undefined)});
+    Timer {
+        interval: 100; running: true; repeat: false
+        onTriggered: {
+            fixture.finish({eighty: PowerState.percent100(0.8), full: PowerState.percent100(1),
+                            empty: PowerState.percent100(0), bad: PowerState.percent100(NaN),
+                            absent: PowerState.percent100(undefined)});
+        }
     }''')
         self.assertEqual(result, {"eighty": 80, "full": 100, "empty": 0, "bad": None, "absent": None})

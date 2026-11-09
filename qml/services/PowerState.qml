@@ -153,7 +153,7 @@ QtObject {
             let state = null;
             try { state = JSON.parse(String(stdout.text)); } catch (error) { state = null; }
             const desired = limit === 85 ? "conservation" : "max";
-            if (!state || state.mode !== desired
+            if (!state || state.available !== true || state.mode !== desired
                     || (state.supports85 === true && state.limitPercent !== limit))
                 return [false, "The kernel did not confirm the requested charge mode."];
             return [true, "Charge mode updated" + (state.supports85 === true ? " · " + limit + "%" : " · firmware limit")];
@@ -167,6 +167,7 @@ QtObject {
         function finish(ok, message) {
             const done = current ? current[1] : null;
             current = null; timedOut = false;
+            watchdog.stop();
             root.chargeBusy = false;
             if (done) done(ok, message);
         }

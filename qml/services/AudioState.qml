@@ -50,10 +50,19 @@ QtObject {
     function handles(action) { return handledActions.includes(action); }
 
     // Port of scripts/desktop_backend.py::percentage(): bounds + round, or the exact error.
+    // round() is Python's ties-to-even (50.5 -> 50), not Math.round's half-up.
     function percent(value, minimum) {
         if (typeof value !== "number" || !isFinite(value) || value < minimum || value > 100)
             return "Value must be between " + minimum + " and 100";
-        return Math.round(value);
+        return round(value);
+    }
+
+    function round(value) {
+        const floor = Math.floor(value);
+        const diff = value - floor;
+        if (diff > 0.5) return floor + 1;
+        if (diff < 0.5) return floor;
+        return floor % 2 === 0 ? floor : floor + 1;
     }
 
     // Route natively when the target node is bound (the harness/private-bus case falls back
@@ -132,6 +141,7 @@ QtObject {
         }
         function finish(ok, message) {
             const request = current; current = null; timedOut = false;
+            watchdog.stop();  // a queued next restarts it in start()
             if (request) request[2](ok, message);
             if (queue.length) { const next = queue.shift(); start(next[0], next[1], next[2]); }
         }

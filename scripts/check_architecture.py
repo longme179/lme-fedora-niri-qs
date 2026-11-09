@@ -4,7 +4,8 @@
 Callers: scripts/check.sh, scripts/check-architecture.sh, run-gates/G0 workflows (evidence: orchestration scripts).
 Reads: config/architecture.json, config/features.json, source files under qml/scripts/tests/config/root entries.
 INVARIANT: nonblank-line size count includes comments (source-size ratchet constrains this doc pass); literals-only import/URL scan.
-REL: config/architecture.json::largeFiles,legacyEdges,cycleEdges – policy source of truth.
+INVARIANT: language_mix counts total lines with wc -l parity and never affects the exit code (informational Q0 metric).
+REL: config/architecture.json::largeFiles,legacyEdges,cycleEdges,toolingFiles – policy source of truth.
 """
 import ast
 import json
@@ -162,9 +163,43 @@ def check(root):
     return errors
 
 
+def language_mix(root):
+    """Informational line mix for the QML-first migration plan (§1); not a gate.
+    Counts total lines with wc -l parity (an unterminated tail is not a line),
+    unlike the nonblank size ratchet. Runtime = qml/ QML+JS, root *.qml, and
+    scripts/*.py outside toolingFiles; tooling and tests follow their slices."""
+    root = Path(root)
+    tooling = set(json.loads((root/'config/architecture.json').read_text()).get('toolingFiles', ()))
+    mix = dict(runtime_qml=0, runtime_py=0, tooling_py=0, tests_py=0)
+    def tally(path, key):
+        mix[key] += path.read_text(encoding='utf-8').count('\n')
+    for path in (root/'qml').rglob('*'):
+        if path.suffix in ('.qml', '.js'): tally(path, 'runtime_qml')
+    for path in root.glob('*.qml'): tally(path, 'runtime_qml')
+    for path in (root/'scripts').rglob('*.py'):
+        tally(path, 'tooling_py' if path.relative_to(root).as_posix() in tooling else 'runtime_py')
+    for path in (root/'tests').rglob('*.py'): tally(path, 'tests_py')
+    return mix
+
+
+def mix_line(mix):
+    runtime = mix['runtime_qml'] + mix['runtime_py']
+    qml_side = 100*mix['runtime_qml']/runtime if runtime else 0.0
+    python = mix['runtime_py'] + mix['tooling_py'] + mix['tests_py']
+    whole = python + mix['runtime_qml']
+    py_side = 100*python/whole if whole else 0.0
+    return (f"Architecture: language mix (wc -l): runtime QML/JS {mix['runtime_qml']:,}"
+            f" · Python {mix['runtime_py']:,} ({qml_side:.1f}% QML-side)"
+            f" · tooling Python {mix['tooling_py']:,} · tests Python {mix['tests_py']:,}"
+            f" · whole-repo Python {py_side:.1f}%")
+
+
 if __name__ == '__main__':
-    try: problems = check(Path(__file__).resolve().parents[1])
+    root = Path(__file__).resolve().parents[1]
+    try: problems = check(root)
     except (OSError, ValueError, SyntaxError) as error: problems = [str(error)]
     for problem in problems: print('Architecture: '+problem, file=sys.stderr)
     if not problems: print('Architecture: dependency, cycle and source-size checks passed')
+    try: print(mix_line(language_mix(root)))
+    except (OSError, ValueError) as error: print('Architecture: language mix unavailable: '+str(error))
     sys.exit(bool(problems))

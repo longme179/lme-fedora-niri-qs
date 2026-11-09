@@ -38,6 +38,20 @@ class ArchitectureCharacterizationCase(unittest.TestCase):
         for source, target in [('scripts/battery_saver.py', 'display_layout')]:
             with self.subTest(source=source): self.assertIn(target, self.imports(source))
 
+    def test_tooling_classification_records_the_qml_first_plan_baseline(self):
+        # docs/QML_FIRST_MIGRATION_PLAN.md §1: dev tooling = deploy chain +
+        # architecture/catalog/schema/memory/keybind tooling; everything else
+        # under scripts/ counts as runtime. Informational only, not a gate.
+        policy = json.loads((ROOT/'config/architecture.json').read_text())
+        self.assertEqual(set(policy['toolingFiles']), {
+            'scripts/deploy.py', 'scripts/deploy_files.py', 'scripts/deploy_niri.py',
+            'scripts/deploy_niri_tree.py', 'scripts/deploy_runtime.py', 'scripts/deploy_state.py',
+            'scripts/check_architecture.py', 'scripts/feature_catalog.py',
+            'scripts/settings_schema.py', 'scripts/catalog_metadata.py',
+            'scripts/memory_report.py', 'scripts/niri_keybinds.py'})
+        for path in policy['toolingFiles']:
+            self.assertTrue((ROOT/path).is_file(), path)
+
 
 @unittest.skipUnless(CHECKER.is_file(), 'architecture guard not implemented yet (test-first contract)')
 class ArchitectureGuardCase(unittest.TestCase):
@@ -164,3 +178,26 @@ class ArchitectureGuardCase(unittest.TestCase):
         self.put('qml/features/a/logic.js', 'import { value } from "../b/logic.js";\n')
         self.put('qml/features/b/logic.js', 'export const value = 1;\n')
         self.assertIn('a/logic.js -> qml/features/b/logic.js', self.errors())
+
+    def test_language_mix_counts_wc_l_lines_across_slices(self):
+        before = self.guard.language_mix(self.root)
+        self.assertEqual(before['tests_py'], 0)  # the copied checkout ships no tests/
+        self.put('tests/test_fake.py', 'value = 1\n'*4)
+        self.put('tests/test_unterminated.py', 'value = 1')  # no newline: not a wc -l line
+        self.append('scripts/deploy.py', '# tooling line\n'*3)      # listed toolingFiles
+        self.append('scripts/clipboard.py', '# runtime line\n'*5)   # unlisted scripts/ defaults to runtime
+        self.put('scripts/unregistered_probe.py', 'value = 1\n'*2)  # counting needs no ownership
+        self.put('qml/components/MixProbe.qml', '// probe line\n'*7)
+        after = self.guard.language_mix(self.root)
+        self.assertEqual(after['tests_py'] - before['tests_py'], 4)
+        self.assertEqual(after['tooling_py'] - before['tooling_py'], 3)
+        self.assertEqual(after['runtime_py'] - before['runtime_py'], 7)
+        self.assertEqual(after['runtime_qml'] - before['runtime_qml'], 7)
+
+    def test_cli_prints_the_language_mix_summary_line(self):
+        result = subprocess.run(['bash', str(self.root/'scripts/check-architecture.sh')],
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Architecture: language mix', result.stdout)
+        for token in ('runtime QML/JS', 'tooling Python', 'tests Python', 'whole-repo Python'):
+            self.assertIn(token, result.stdout)

@@ -47,6 +47,7 @@ the new tabs. No image represents physical laptop hardware testing.
 | Modular topbar editor with sample state | [topbar-editor.png](topbar-editor.png) |
 | Power menu | [power.png](power.png) |
 | Authentication popup with a simulated conversation | [authentication.png](authentication.png) |
+| Demo video: Control Center, Equalizer, Launcher | [demo.mp4](demo.mp4) |
 | Native notification toast with test content | [notification-toast.png](notification-toast.png) |
 | Native media/tray controls with mock applications | [native-control-center.png](native-control-center.png) |
 | Power profile dropdown with sample hardware state | [power-profile-dropdown.png](power-profile-dropdown.png) |

@@ -24,9 +24,13 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   networks/saved count drift; DEPRECATED(Q3->Q6) at the backend emit sites
   and the wifi registry; ShellState ratchet 261->296 (router behind run()).
 - G0 green (1121 tests; 3 known quickshell-absent errors; 65.1% QML-side
-  runtime). Real-machine verification pending (worktree rounds); owner
-  post-merge checklist: list/saved parity vs nmcli, wrong+right password
-  connect, saved connect, disconnect, forget, radio toggle, a day of drift.
+  runtime). Real-machine verified over two read-only worktree rounds: 16/16
+  test_native_wifi (4/4 QML running), regressions OK, and full probe parity —
+  native 7 vs nmcli 7 SSID-deduped, identical SSID sets, 0 strength deltas,
+  identical saved UUIDs; the router's validation connect and wifiScan produced
+  the exact pinned messages with the pending slot settled synchronously.
+  Owner post-merge checklist: wrong+right password connect, saved connect,
+  disconnect, forget, radio toggle, a day of [Q3 A/B] drift lines.
 
 ## Q2 — native read-only files — 2026-11-09
 - Owner approved Q2 ("GREAT RESULTS, Q2 can start now", after validating the #116

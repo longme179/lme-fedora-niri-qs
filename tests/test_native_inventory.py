@@ -212,6 +212,28 @@ class NativeInventoryContractCase(unittest.TestCase):
                         "%s references %s as a type, but it is not declared in %s/qmldir — "
                         "the shell would fail to load" % (sibling, path.stem, directory))
 
+    def test_multiline_values_accept_raw_and_escaped_colons(self):
+        # nmcli >= 1.5x prints multiline values RAW (1.56.1 verified: HWADDR `AA:BB:...`,
+        # IPv6 `fe80::1`), <=1.4x escaped them (`fe80\:\:1`). Both spellings must converge to
+        # the same value — the first real-machine probe caught the all-colon split rejecting
+        # the raw form in both worlds (backend and native alike).
+        module = importlib.import_module("network_inventory")
+        from network_fixture import data, device_text
+        rows = [
+            "GENERAL.DEVICE:wlan0", "GENERAL.HWADDR:AA:BB:CC:DD:EE:FF",
+            "IP6.ADDRESS[1]:2001:db8::10/64", "IP6.GATEWAY:fe80::1", "IP6.DNS[1]:2001:db8::53",
+        ]
+        raw = "\n".join(rows)
+        escaped = "\n".join(
+            line.split(":", 1)[0] + ":" + line.split(":", 1)[1].replace(":", "\\:") for line in rows)
+        self.assertEqual(module.blocks(raw, "GENERAL.DEVICE"), module.blocks(escaped, "GENERAL.DEVICE"))
+        parsed = module.blocks(raw, "GENERAL.DEVICE")[0]
+        self.assertEqual(parsed["GENERAL.HWADDR"], "AA:BB:CC:DD:EE:FF")
+        self.assertEqual(parsed["IP6.ADDRESS[1]"], "2001:db8::10/64")
+        # The full frozen fixture (now rendered raw like a modern nmcli) parses end to end.
+        state = data()
+        self.assertEqual(len(module.blocks(device_text(state), "GENERAL.DEVICE")), len(state["devices"]))
+
     def test_backend_families_stay_registered_as_the_fallback(self):
         for path, marker in ((AUDIO_DEVICE_ACTIONS, "ACTIONS="), (WIFI_ACTIONS, "provide_connections")):
             source = path.read_text()

@@ -43,11 +43,34 @@ def path(value, kind):
     return value
 
 
-def blocks(raw, first, split):
+def key_value(line):
+    # Multiline rows are KEY:VALUE with colon-free keys, but nmcli's escaping of colons in
+    # multiline values changed across versions: <=1.4x printed `key:v\\:al`, >=1.5x prints the
+    # raw `key:v:al` (verified on 1.56.1). Split at the first unescaped colon; in the value
+    # only the legacy `\\:` escape is folded to `:` — raw backslashes stay literal, so both
+    # spellings converge without eating modern names' backslashes.
+    cut = -1
+    for index, character in enumerate(line):
+        if character == ':':
+            backslashes = 0; probe = index - 1
+            while probe >= 0 and line[probe] == '\\': backslashes += 1; probe -= 1
+            if backslashes % 2 == 0: cut = index; break
+    if cut < 0: return [line]
+    value = []
+    index = cut + 1
+    while index < len(line):
+        if line[index] == '\\' and index + 1 < len(line) and line[index + 1] == ':':
+            value.append(':'); index += 2
+        else:
+            value.append(line[index]); index += 1
+    return [line[:cut], ''.join(value)]
+
+
+def blocks(raw, first):
     result = []
     for line in raw.splitlines():
         if not line.strip(): continue
-        fields = split(line)
+        fields = key_value(line)
         if len(fields) != 2: raise ValueError('Invalid NetworkManager property row')
         key, value = fields; value = text(value)
         if key == first: result.append({})
@@ -74,7 +97,7 @@ def candidates(rows):
 
 
 def devices(raw, radio, split):
-    values = blocks(raw, 'GENERAL.DEVICE', split)
+    values = blocks(raw, 'GENERAL.DEVICE')
     if len(values) > 64: raise ValueError('Network device inventory exceeds 64 objects')
     enabled = split(radio.strip())
     if len(enabled) != 2 or any(v not in ('enabled', 'disabled') for v in enabled):
@@ -106,7 +129,7 @@ def devices(raw, radio, split):
 
 
 def inventory(server, device_raw, rows, detail_raw, radio_raw, split):
-    devs = devices(device_raw, radio_raw, split); details = blocks(detail_raw, 'connection.uuid', split)
+    devs = devices(device_raw, radio_raw, split); details = blocks(detail_raw, 'connection.uuid')
     wanted = set(candidates(rows)); found = {}; profiles = []
     for p in details:
         ident = uuid(p.get('connection.uuid'))

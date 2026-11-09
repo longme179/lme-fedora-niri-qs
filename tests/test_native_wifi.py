@@ -122,9 +122,10 @@ class NativeWifiContractCase(unittest.TestCase):
             self.assertIn(message, source, message)
 
     def test_service_files_stay_within_the_size_cap(self):
-        for path in (NETWORK_STATE, SHELL_STATE):
-            with self.subTest(path=path.name):
-                self.assertLessEqual(nonblank(path), 250)
+        # NetworkState rides the default 250 cap; ShellState carries the router behind the
+        # run() facade per plan §5 Q3 and its ratchet ceiling is bumped consciously in
+        # config/architecture.json (checked by scripts/check_architecture.py).
+        self.assertLessEqual(nonblank(NETWORK_STATE), 250)
 
 
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")

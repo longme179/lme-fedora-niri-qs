@@ -139,7 +139,10 @@ QtObject {
             else if (code !== 0) {
                 const detail = String(stderr.text || stdout.text || "").trim().slice(0, 350);
                 finish(false, "pkexec failed (" + code + ")" + (detail ? ": " + detail : ""));
-            } else finish(evaluate());
+            } else {
+                const outcome = evaluate();
+                finish(outcome[0], outcome[1]);
+            }
         }
         onRunningChanged: if (!running && !settled && current) {  // FailedToStart
             tool.settled = true; tool.watchdog.stop();

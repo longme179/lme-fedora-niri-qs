@@ -22,8 +22,12 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   status emitter); accept()'s routine toast list extracted so native results
   suppress the same names; the polkit closePanels guard covers both paths.
 - G0 green (sandbox contract suites; 3 known quickshell-absent errors identical
-  to clean main); 65.5% QML-side runtime. Real-machine verification rounds
-  recorded in the follow-up commit.
+  to clean main); 65.5% QML-side runtime. Real-machine verification (temp
+  worktrees, live checkout/shell untouched): full discover 1134 OK; probe —
+  validation strings exact, volume 75->80->75 vs wpctl 0.75, mute round-trip,
+  brightnessctl writes settled, audio A/B drift 0 through native writes; two
+  post-audit fix commits (charge outcome arguments, ties-to-even rounding +
+  watchdog/available hardening) confirmed in round 2 (40 tests OK).
 
 ## Q3 — Wi-Fi lists + first write actions — 2026-11-09
 - Owner approved Q3 scoped to the wifi networks/saved lists (the network leg of

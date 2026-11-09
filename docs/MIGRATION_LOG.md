@@ -2,6 +2,44 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q3 final leg — inventory families (audio devices, network plans/profiles) — 2026-11-10
+- The last Q3 leg per plan §5 delivered on `qml/q3-inventory-families` (tests
+  -> impl -> docs): the inventory-based families ported to QML. Q3 is now
+  complete; Q4-Q7 still need per-phase owner authorization.
+- Audio device actions (audioDevicesRefresh/audioPort/audioProfile/audioRoute)
+  route natively through `AudioDeviceState.qml` over `AudioDeviceModel.js`
+  (audio_inventory.py's normalization/validation/selection ported with the
+  same argv plans and messages; the pw-dump/pw-metadata route proves the
+  PipeWire core and falls back to the pactl argv when the tools are missing,
+  mirroring audio_devices.py's availability gate; the observed read-back retry
+  and fresh-read confirmation keep their cadence).
+- Network connections (networkRefresh/Connect/Disconnect/HotspotPlan/
+  HotspotStart/Edit + networkCancel) route natively through
+  `NetworkInventoryState.qml` over `NetworkModel.js`/`NetworkPlans.js`
+  (nmcli/busctl parsers, the safe_error mapping, the change/cancel flows, the
+  operation projection and the lastRequest hint — the panel contract is
+  unchanged).
+- `CommandRunner.qml` is the plan §4 Q4 Process machinery scoped to these
+  families: queued one-shot argv-only dispatch, per-call watchdog with the
+  backend's TERM->KILL ladder, output caps and command_runner.py's exact
+  error strings. `Digest.js` reproduces hashlib.sha256 + json.dumps
+  byte-exactly so server ids and the hotspot plan token intercompare across
+  both worlds during the A/B window (parity tests pin them against the Python
+  modules over the frozen fixtures).
+- Router: nativeOwner fans out to the two new services; inventoryBusy mirrors
+  the backend prepare gates (audio family includes bluetoothDevice; the
+  connection actions block each other including refresh/plan); the on-demand
+  sections surface as ShellState.audioDevices/networkConnections (NativeState
+  gates fixture modes through). No compareSections entries — these sections
+  only populate on dispatch, so the backend copy stays empty while native
+  serves; the owner's panel checklist is the parity signal instead.
+- Known native edge: networkEdit spawns nm-connection-editor detached — a
+  missing editor is silent where the backend toasted the generic failure.
+- G0 green (sandbox contract suites; 3 known quickshell-absent errors
+  identical to clean main); full discover 1149 tests 0 failures; 67.1%
+  QML-side runtime (Q3 writes: 65.5%). Real-machine verification pending (the
+  bridge was down; the brief is prepared).
+
 ## Q3 — remaining native-API write families — 2026-11-09
 - Owner approved the rest of Q3 ("duyệt phần còn lại của Q3"). Delivered the
   native-API write families on `qml/q3-write-families` (tests -> impl -> docs);

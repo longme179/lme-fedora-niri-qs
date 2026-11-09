@@ -1,4 +1,6 @@
-"""W1 characterization: retain existing control/context/persistence contracts."""
+"""W1 characterization: retain existing control/context/persistence contracts.
+Contract: test_audio_headset.py covers audio_headset behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import unittest
 

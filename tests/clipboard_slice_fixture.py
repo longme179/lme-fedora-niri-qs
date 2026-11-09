@@ -1,4 +1,7 @@
-"""Real shell/Settings in a copied checkout; only the copy gains observability."""
+"""Real shell/Settings in a copied checkout; only the copy gains observability.
+
+Contract/helper: test infrastructure for clipboard_slice_fixture.py. REL: scripts/clipboard.py.
+"""
 from contextlib import contextmanager
 import json
 import os

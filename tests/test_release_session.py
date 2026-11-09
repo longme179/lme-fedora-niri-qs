@@ -1,4 +1,6 @@
-"""Bounded private Smoked/Liquid lifecycle verification; no laptop/GPU certification."""
+"""Bounded private Smoked/Liquid lifecycle verification; no laptop/GPU certification.
+Contract: test_release_session.py covers release_session behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

@@ -1,4 +1,6 @@
-"""Native lifecycle checks, without reducing visual effects or imposing VM budgets."""
+"""Native lifecycle checks, without reducing visual effects or imposing VM budgets.
+Contract: test_render_lifetime.py covers render_lifetime behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

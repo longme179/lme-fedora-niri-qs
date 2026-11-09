@@ -1,4 +1,9 @@
-"""User-authored commands; explicit execution only, with per-entry local job logs."""
+"""User-authored commands; explicit execution only, with per-entry local job logs.
+
+Callers: scripts/desktop_backend.py/launchpad_actions.py; QML Launchpad panels via ShellState.run("launchpadRun").
+Touches: detached_log.py for job logs, XDG state launchpad dir, user command/bash entries.
+INVARIANT: execution is explicit (no shell for argv commands; bash only when kind=bash); literal argv/cwd validated.
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 from pathlib import Path

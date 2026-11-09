@@ -1,4 +1,7 @@
-"""Request-time palette options, followed by the existing preview state install."""
+"""Request-time palette options, followed by the existing preview state install.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
+"""
+# REL: qml/settings/AppearancePage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec, PreparedWork

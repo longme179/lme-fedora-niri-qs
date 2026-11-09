@@ -1,4 +1,6 @@
-"""Audio UI characterization and later controls run only in private sessions."""
+"""Audio UI characterization and later controls run only in private sessions.
+Contract: test_audio_headset_ui.py covers audio_headset_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

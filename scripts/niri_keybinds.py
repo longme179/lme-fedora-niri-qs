@@ -1,4 +1,6 @@
-"""Read-only niri bind viewer: KDL strings, comments, disabled nodes and includes."""
+"""Read-only niri bind viewer: KDL strings, comments, disabled nodes and includes.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: keybinds; Phase 3 graph).
+"""
 import json
 import os
 from pathlib import Path

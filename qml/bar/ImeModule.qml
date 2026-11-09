@@ -1,3 +1,5 @@
+// Role: ImeModule.qml (ime layer, fan-in 2).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 import QtQuick
 import QtQuick.Layouts
 import "../components"

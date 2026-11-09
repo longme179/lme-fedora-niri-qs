@@ -1,3 +1,5 @@
+// Role: SnapshotIdentity.js (shared layer, fan-in 1).
+// Shared component/helper; keep API stable for wide QML reuse.
 .pragma library
 
 // Reuse the previous section when the backend reports the same revision. The

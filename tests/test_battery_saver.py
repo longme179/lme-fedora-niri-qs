@@ -1,5 +1,5 @@
 """Battery-saver round trips with fake niri, backlight and profile providers."""
-import copy
+import copy  # Contract: test_battery_saver.py (headroom 0, trailing note)
 import fcntl
 import json
 from pathlib import Path

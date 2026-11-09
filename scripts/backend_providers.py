@@ -1,4 +1,10 @@
-"""Resolve bundled provider references; explicit bindings retain narrow capabilities."""
+"""Resolve bundled provider references; explicit bindings retain narrow capabilities.
+
+Callers: scripts/desktop_backend.py::actions.provide composition; reads catalog backend refs.
+Touches: config/features.json descriptors (via catalog), imports provider modules; no command execution at registration.
+INVARIANT: factory resolution/registration errors must not fall back to unsafe execution; preserve narrow capability bindings.
+REL: scripts/backend_actions.py::ActionRegistry.provide; scripts/feature_catalog.py::CatalogError/resource.
+"""
 import hashlib
 import importlib.util
 from pathlib import Path

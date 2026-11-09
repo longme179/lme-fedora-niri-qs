@@ -1,4 +1,10 @@
-"""Shared unprivileged command execution and its public error type."""
+"""Shared unprivileged command execution and its public error type.
+
+Callers: desktop_backend.py and domain helpers/action modules (see edges.txt fan-in).
+Touches: whitelisted external CLIs (TOOLS), env PATH/LME_QS_BINARY/LC_ALL=C; no shell evaluation.
+INVARIANT: command whitelist/argv execution boundaries prevent shell injection; timeouts/errors surface as CommandError.
+REL: scripts/managed_command.py – supervised process patterns; scripts/command_output.py – output limits/redaction.
+"""
 from __future__ import annotations
 
 import os

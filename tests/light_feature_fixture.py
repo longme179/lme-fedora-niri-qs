@@ -1,4 +1,7 @@
-"""Observe the actual shell/Settings only in a disposable copied checkout."""
+"""Observe the actual shell/Settings only in a disposable copied checkout.
+
+Contract/helper: test infrastructure for light_feature_fixture.py. Related (see docs/WORKSPACE_MAP.md/config/architecture.json)) under test inferred from imports.
+"""
 from contextlib import contextmanager
 import json
 from pathlib import Path

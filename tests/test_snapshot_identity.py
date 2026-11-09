@@ -1,4 +1,6 @@
-"""Snapshot identity reuse by backend revisions and the stringify fallback."""
+"""Snapshot identity reuse by backend revisions and the stringify fallback.
+Contract: test_snapshot_identity.py covers snapshot_identity behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

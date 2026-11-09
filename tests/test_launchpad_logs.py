@@ -1,4 +1,6 @@
-"""Detached log limits and relay lifetime, using finite private jobs only."""
+"""Detached log limits and relay lifetime, using finite private jobs only.
+Contract: test_launchpad_logs.py covers launchpad_logs behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib.util
 import json
 import os

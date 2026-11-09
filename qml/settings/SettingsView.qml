@@ -1,3 +1,6 @@
+// Role: SettingsView.qml (host layer) — Settings page host/navigation; handles page IDs and routing.
+// REL: qml/settings/SettingsRegistry.qml – page resolution; qml/components/PageNavigation.qml – local routing.
+// INVARIANT: page IDs/legacyIndex routes remain compatible with CLI/catalog (implicit coupling #3/#5).
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls

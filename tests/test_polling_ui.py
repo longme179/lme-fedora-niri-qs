@@ -1,4 +1,6 @@
-"""Real QML/backend protocol with simulated command boundaries on private Wayland."""
+"""Real QML/backend protocol with simulated command boundaries on private Wayland.
+Contract: test_polling_ui.py covers polling_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

@@ -1,3 +1,5 @@
+// Role: AuthenticationWindow.qml (authentication layer, fan-in 3).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell

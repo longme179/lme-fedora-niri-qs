@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Run migration checks only inside a disposable compositor/session.
+# REL: tests/migration_checks.py – gate flags/cases; uses isolated XDG/Sway/D-Bus (AGENTS.md).
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 if [[ "${1:-}" != --inside ]]; then

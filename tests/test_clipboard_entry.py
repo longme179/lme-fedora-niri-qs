@@ -1,4 +1,6 @@
-"""Clipboard integration executes the real hosts and worker on private Wayland."""
+"""Clipboard integration executes the real hosts and worker on private Wayland.
+Contract: test_clipboard_entry.py covers clipboard_entry behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

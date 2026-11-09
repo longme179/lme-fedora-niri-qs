@@ -1,4 +1,6 @@
-"""Recorder discovery, hybrid fallback and real container finalization."""
+"""Recorder discovery, hybrid fallback and real container finalization.
+Contract: test_recording.py covers recording behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import shutil

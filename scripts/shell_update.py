@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""User-triggered Git updates, detached from Quickshell's hot-reload lifetime."""
+"""User-triggered Git updates, detached from Quickshell's hot-reload lifetime.
+
+Consumed by backend/action providers and/or QML surfaces; keep contracts stable. (update layer, fan-in 3)
+REL: docs/WORKSPACE_MAP.md – update owner/callers (Phase 3 graph; see config/architecture.json).
+"""
 import argparse
 import fcntl
 import hashlib

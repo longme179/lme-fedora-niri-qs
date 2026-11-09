@@ -1,4 +1,6 @@
-"""Usage is local, bounded and subordinate to launcher name matching."""
+"""Usage is local, bounded and subordinate to launcher name matching.
+Contract: test_launcher_history.py covers launcher_history behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 from datetime import datetime,timezone
 import os

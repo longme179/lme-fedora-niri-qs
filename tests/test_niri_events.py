@@ -1,4 +1,6 @@
-"""Niri event-stream cache contracts."""
+"""Niri event-stream cache contracts.
+Contract: test_niri_events.py covers niri_events behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import unittest
 

@@ -1,4 +1,7 @@
-"""Pre-registered round-4 session; invoke inside run-gates' disposable compositor."""
+"""Pre-registered round-4 session; invoke inside run-gates' disposable compositor.
+
+Contract/helper: test infrastructure for catalog_round4.py. REL: scripts/feature_catalog.py.
+"""
 import argparse
 import csv
 import json

@@ -1,4 +1,6 @@
-"""One-shot apply/failure tests; fake privilege and compositor commands only."""
+"""One-shot apply/failure tests; fake privilege and compositor commands only.
+Contract: test_deployment_apply.py covers deployment_apply behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import argparse
 import contextlib
 import io

@@ -1,4 +1,6 @@
-"""Direct routing is safe only after proving the Pulse and native core identities."""
+"""Direct routing is safe only after proving the Pulse and native core identities.
+Contract: test_audio_pipewire.py covers audio_pipewire behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib
 from pathlib import Path
 import unittest

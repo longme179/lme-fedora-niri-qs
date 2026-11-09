@@ -1,4 +1,6 @@
-"""Freeze Launchpad's dispatch boundary before moving its single synchronous action."""
+"""Freeze Launchpad's dispatch boundary before moving its single synchronous action.
+Contract: test_action_registry.py covers action_registry behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from concurrent.futures import Future
 import importlib.util
 import os

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 .pragma library
 
-// Keep in sync with popup-jelly.vert (including its 16 x 16 triangle mesh).
+// Generates jelly/popup mesh vertex data consumed by popup-jelly shaders and QML popup motion.
+// REL: qml/components/shaders/popup-jelly.vert – mesh layout (16x16) and vertex semantics must match.
+// GOTCHA: Changing vertex order/fields breaks shader deformation; update both sides together.
 function vertex(x, y, strain, horizontal, bounded) {
     const along = horizontal ? x : y, across = horizontal ? y : x;
     const stretch = 1 + .7 * Math.abs(strain);

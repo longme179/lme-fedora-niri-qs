@@ -1,4 +1,6 @@
-"""Playlists use one awww owner and retain known-good per-display preferences."""
+"""Playlists use one awww owner and retain known-good per-display preferences.
+Contract: test_wallpaper_playback.py covers wallpaper_playback behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import unittest
 from unittest.mock import patch

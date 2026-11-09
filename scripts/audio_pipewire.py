@@ -1,4 +1,9 @@
-"""Ephemeral per-stream route: prove the Pulse/native core before metadata writes."""
+"""Ephemeral per-stream route: prove the Pulse/native core before metadata writes.
+
+Callers: scripts/audio_devices.py route/apply paths (on-demand audio routing).
+Touches: PipeWire inventory (`pw-dump` data) and `pw-metadata` writes; validates core cookie/serial identity.
+GOTCHA: refuses ambiguous/mismatched core/node identity to avoid routing the wrong stream/sink.
+"""
 import re
 
 from audio_inventory import integer

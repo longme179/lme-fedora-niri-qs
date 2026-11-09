@@ -1,4 +1,6 @@
-"""Position and inert metadata contracts precede the Clipboard conversion."""
+"""Position and inert metadata contracts precede the Clipboard conversion.
+Contract: test_catalog_positions.py covers catalog_positions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 from pathlib import Path
 import tempfile

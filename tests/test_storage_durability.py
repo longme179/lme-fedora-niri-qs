@@ -1,4 +1,6 @@
-"""Bounded lock waits and crash-safe directory sync for shared storage."""
+"""Bounded lock waits and crash-safe directory sync for shared storage.
+Contract: test_storage_durability.py covers storage_durability behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import errno
 import fcntl
 import json

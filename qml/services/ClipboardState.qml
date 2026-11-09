@@ -1,3 +1,6 @@
+// Role: ClipboardState.qml (clipboard layer) — owns clipboard history UI state and worker protocol.
+// INVARIANT: worker lifecycle stays main-shell scoped; Settings/demo must not start capture worker.
+// REL: scripts/clipboard.py – JSON-lines worker commands; qml/panels/ClipboardPanel.qml – consumer UI.
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick

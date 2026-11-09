@@ -47,7 +47,7 @@ QtObject {
     onStayAwakeChanged: if (backendReady && !settingsApp) run("idleInhibit", {value: stayAwake})
     property bool draggingWindow: false
     property bool authenticationActive: false
-    property var pendingActions: ({})
+    property var pendingActions: ({}) // INVARIANT: action ownership/pending state tracks JSON-lines requests/results.
     property var pendingState: Pending.initial()
     property real trayAnchorX: -1
     readonly property bool panelOpen: catalogPanelOpen || launchpadOpen || launcherOpen || controlOpen || notificationsOpen || powerOpen || settingsOpen || trayOpen || overviewOpen || activityOpen || wifiOpen
@@ -155,7 +155,7 @@ QtObject {
         interval: 250
         onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
     }
-    function run(action, payload) {
+    function run(action, payload) { // REL: scripts/desktop_backend.py::handle – sends {action,...} over stdin.
         if (!backend.running || !backendReady) {
             statusMessage = "Desktop backend is unavailable. Check the shell log.";
             statusError = true; statusTimer.restart(); return;
@@ -168,7 +168,7 @@ QtObject {
         catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
         const request = Object.assign({}, payload || {}, {action: action, clientSerial: sent.serial});
         pendingState = sent;
-        backend.write(JSON.stringify(request) + "\n");
+        backend.write(JSON.stringify(request) + "\n"); // Protocol: JSON-lines request; result carries ok/action/message/sequence/pending.
         // Write before notifying consumers, which can synchronously submit again.
         pendingActions = sent.pending;
     }
@@ -227,7 +227,7 @@ QtObject {
             }
         } catch (error) { console.warn("Invalid desktop backend message:", error); }
     }
-    property Process backend: Process {
+    property Process backend: Process { // REL: scripts/desktop_backend.py – long-lived Python backend (see Phase 3 map).
         command: ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]
             .concat(root.backendDemo ? ["--demo"] : []).concat(root.settingsApp ? ["--settings"] : [])
         stdinEnabled: true

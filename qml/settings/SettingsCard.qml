@@ -1,3 +1,5 @@
+// Role: SettingsCard.qml (shared layer, fan-in 22).
+// Shared component/helper; keep API stable for wide QML reuse.
 import QtQuick
 import QtQuick.Layouts
 import "../components"

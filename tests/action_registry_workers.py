@@ -1,4 +1,7 @@
-"""Worker registration contracts are N/A before the single M7b pilot exists."""
+"""Worker registration contracts are N/A before the single M7b pilot exists.
+
+Contract/helper: test infrastructure for action_registry_workers.py. REL: scripts/backend_actions.py (worker contracts).
+"""
 import importlib.util
 from unittest.mock import Mock, patch
 import unittest

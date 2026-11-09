@@ -1,3 +1,5 @@
+// Role: ActionBarButton.qml (shared layer, fan-in 3).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 import QtQuick
 import "../components"
 import "../services"

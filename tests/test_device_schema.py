@@ -1,4 +1,6 @@
-"""Device scalar schema contracts, before and after descriptor ownership."""
+"""Device scalar schema contracts, before and after descriptor ownership.
+Contract: test_device_schema.py covers device_schema behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

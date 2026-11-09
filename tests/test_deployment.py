@@ -1,4 +1,6 @@
-"""Deployment contracts; all writes use disposable directories, never a session."""
+"""Deployment contracts; all writes use disposable directories, never a session.
+Contract: test_deployment.py covers deployment behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

@@ -1,5 +1,5 @@
 """Controlled hardware polling: no live devices or network mutations."""
-import json
+import json  # Contract: test_polling.py (headroom 0, trailing note)
 import unittest
 from unittest.mock import patch
 

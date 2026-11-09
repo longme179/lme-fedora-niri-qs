@@ -1,4 +1,6 @@
-"""Glass stays cheap when static; reduced transparency survives persistence."""
+"""Glass stays cheap when static; reduced transparency survives persistence.
+Contract: test_glass_idle.py covers glass_idle behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 from pathlib import Path

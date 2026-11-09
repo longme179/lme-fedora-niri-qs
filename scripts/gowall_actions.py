@@ -1,4 +1,7 @@
-"""Gowall prefix admission is coordinator work; image utilities own the operations."""
+"""Gowall prefix admission is coordinator work; image utilities own the operations.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: imageUtilities; Phase 3 graph).
+"""
+# REL: qml/settings/GowallSettings.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec, PreparedWork

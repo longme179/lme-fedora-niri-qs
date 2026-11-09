@@ -1,4 +1,7 @@
-"""Synthetic pactl JSON matches the private PipeWire-Pulse capability probe."""
+"""Synthetic pactl JSON matches the private PipeWire-Pulse capability probe.
+
+Contract/helper: test infrastructure for audio_device_fixture.py. Related (see docs/WORKSPACE_MAP.md/config/architecture.json)) under test inferred from imports.
+"""
 import copy
 import json
 from test_backend import FakeRunner

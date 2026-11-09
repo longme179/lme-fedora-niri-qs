@@ -1,4 +1,7 @@
-"""Synchronous display entry contracts; the controller/watchdog retain ownership."""
+"""Synchronous display entry contracts; the controller/watchdog retain ownership.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: display; Phase 3 graph).
+"""
+# REL: qml/settings/DisplayPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 import time
 from typing import Callable

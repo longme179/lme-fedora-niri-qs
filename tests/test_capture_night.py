@@ -1,5 +1,5 @@
 """Night Light scheduling, private screenshot sessions and native editor checks."""
-import copy
+import copy  # Contract: test_capture_night.py (headroom 0, trailing note)
 from datetime import datetime, timezone
 import json
 import os

@@ -1,4 +1,6 @@
-"""Guard measurement arithmetic; production-independent characterization."""
+"""Guard measurement arithmetic; production-independent characterization.
+Contract: test_catalog_statistics.py covers catalog_statistics behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import unittest
 from catalog_statistics import compare, describe, mann_whitney
 

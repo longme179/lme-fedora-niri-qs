@@ -1,4 +1,6 @@
-"""Shared niri layout validation and runner-injected application; no lifecycle state."""
+"""Shared niri layout validation and runner-injected application; no lifecycle state.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 import math
 
 

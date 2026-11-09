@@ -1,4 +1,7 @@
-"""One randomized, interleaved session for all commits; run in run-gates' private session."""
+"""One randomized, interleaved session for all commits; run in run-gates' private session.
+
+Contract/helper: test infrastructure for catalog_round3.py. REL: scripts/feature_catalog.py.
+"""
 import argparse
 import csv
 import json

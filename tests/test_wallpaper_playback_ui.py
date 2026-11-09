@@ -1,4 +1,6 @@
-"""Settings edits the real playlist model without launching wallpaper commands in preview."""
+"""Settings edits the real playlist model without launching wallpaper commands in preview.
+Contract: test_wallpaper_playback_ui.py covers wallpaper_playback_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 import test_local_qml as qml_tests

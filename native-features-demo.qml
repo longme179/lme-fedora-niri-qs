@@ -1,3 +1,5 @@
+// Role: native-features-demo.qml (host layer, fan-in 1).
+// Shared component/helper; keep API stable for wide QML reuse.
 //@ pragma UseQApplication
 //@ pragma Env LME_SHELL_BACKEND_DEMO=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic

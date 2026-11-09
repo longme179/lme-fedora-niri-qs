@@ -1,4 +1,7 @@
-"""Launcher and compositor actions; current state and history remain host services."""
+"""Launcher and compositor actions; current state and history remain host services.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
+"""
+# REL: qml/panels/Launcher.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from pathlib import Path
 import shutil

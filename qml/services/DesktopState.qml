@@ -1,3 +1,5 @@
+// Role: DesktopState.qml (desktop layer, fan-in 7).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 import Quickshell

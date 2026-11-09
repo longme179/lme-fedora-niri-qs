@@ -1,4 +1,6 @@
-"""Native MPRIS capability guards and pointer/keyboard media controls."""
+"""Native MPRIS capability guards and pointer/keyboard media controls.
+Contract: test_media_controls.py covers media_controls behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 import shutil

@@ -1,3 +1,5 @@
+// Role: HistoryChart.qml (shared layer, fan-in 1).
+// Shared component/helper; keep API stable for wide QML reuse.
 import QtQuick
 import QtQuick.Layouts
 import "../theme"

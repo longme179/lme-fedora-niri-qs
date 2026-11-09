@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Bounded lyric lookup: embedded text, local LRC, disk cache, optional LRCLIB."""
+"""Bounded lyric lookup: embedded text, local LRC, disk cache, optional LRCLIB.
+
+Callers: qml/components/LyricsSession.qml::command spawns this worker; MPRIS/player metadata drives requests.
+Touches: XDG cache `lme-shell/lyrics`, local LRC files, optional LRCLIB HTTP (bounded); storage.write_json.
+GOTCHA: network/cache/parsing are bounded; failures return no-lyrics results rather than crashing the UI worker.
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import hashlib
 import json

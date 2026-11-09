@@ -1,3 +1,5 @@
+// Role: ExpressiveSwitch.qml (shared layer, fan-in 14).
+// Shared component/helper; keep API stable for wide QML reuse.
 import QtQuick
 import QtQuick.Controls
 import "../theme"

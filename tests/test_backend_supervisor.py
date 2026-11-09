@@ -1,4 +1,6 @@
-"""A malformed or failing command costs one result, never the backend loop."""
+"""A malformed or failing command costs one result, never the backend loop.
+Contract: test_backend_supervisor.py covers backend_supervisor behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import redirect_stderr
 import io
 from pathlib import Path

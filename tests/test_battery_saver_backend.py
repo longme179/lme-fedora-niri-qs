@@ -1,5 +1,5 @@
 """Exercise the public saver action using fake hardware and real restore journals."""
-import json
+import json  # Contract: test_battery_saver_backend.py (headroom 0, trailing note)
 import fcntl
 import threading
 import time

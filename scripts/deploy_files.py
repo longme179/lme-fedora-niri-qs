@@ -1,4 +1,9 @@
-"""Deterministic user launchers and deployment target admission."""
+"""Deterministic user launchers and deployment target admission.
+
+Callers: scripts/deploy.py. Produces/validates user-facing launcher/file targets.
+INVARIANT: target admission is conservative; preserve existing user data/launchers per deploy safety rules.
+REL: scripts/deploy_state.py – publication and rollback of file changes.
+"""
 from pathlib import Path
 import shlex
 

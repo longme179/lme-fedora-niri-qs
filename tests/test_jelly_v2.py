@@ -1,5 +1,5 @@
 """Velocity deformation, interrupted motion and transient GPU-layer lifecycle."""
-import os
+import os  # Contract: test_jelly_v2.py (headroom 0, trailing note)
 import json
 from pathlib import Path
 import shutil

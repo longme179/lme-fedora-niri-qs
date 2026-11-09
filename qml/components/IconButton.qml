@@ -1,3 +1,5 @@
+// Clickable icon control used across bar/panels/settings; composes ShellIcon with shared feedback.
+// Depends on Theme and shared motion/feedback patterns; keep interaction states consistent with LiquidButton.
 import QtQuick
 import QtQuick.Controls
 import "../theme"

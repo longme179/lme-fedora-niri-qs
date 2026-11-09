@@ -1,4 +1,6 @@
-"""Coordinator ownership and wire compatibility; no real device/session I/O."""
+"""Coordinator ownership and wire compatibility; no real device/session I/O.
+Contract: test_action_pending.py covers action_pending behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from concurrent.futures import Future
 from contextlib import redirect_stdout
 import importlib.util

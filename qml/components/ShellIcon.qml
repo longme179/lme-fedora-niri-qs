@@ -1,3 +1,5 @@
+// Shared vector/icon glyph surface for shell UI; maps symbolic name + color to Canvas/Icon drawing.
+// Consumed widely by buttons, bars, panels and settings (shared component layer).
 import QtQuick
 
 Item {

@@ -1,4 +1,6 @@
-"""Pure transport reduction through Qt's actual JavaScript engine."""
+"""Pure transport reduction through Qt's actual JavaScript engine.
+Contract: test_pending_reducer.py covers pending_reducer behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from pathlib import Path
 import unittest
 

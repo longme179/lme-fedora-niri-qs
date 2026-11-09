@@ -1,4 +1,6 @@
-"""One interactive nmcli attempt; no persistent monitor or password on disk/argv."""
+"""One interactive nmcli attempt; no persistent monitor or password on disk/argv.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wifi; Phase 3 graph).
+"""
 import re
 import time
 

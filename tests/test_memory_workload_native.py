@@ -1,4 +1,6 @@
-"""CLI wiring in copied hosts/private Wayland; shortened timings are not GPU evidence."""
+"""CLI wiring in copied hosts/private Wayland; shortened timings are not GPU evidence.
+Contract: test_memory_workload_native.py covers memory_workload_native behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import json
 import os

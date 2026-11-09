@@ -1,4 +1,6 @@
-"""Baseline contracts for capture start/close/language admission and lifecycle."""
+"""Baseline contracts for capture start/close/language admission and lifecycle.
+Contract: test_capture_actions.py covers capture_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import os
 from pathlib import Path

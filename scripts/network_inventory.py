@@ -1,4 +1,7 @@
-"""Bounded, secret-free nmcli normalization; identifiers are never display labels."""
+"""Bounded, secret-free nmcli normalization; identifiers are never display labels.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wifi; Phase 3 graph).
+"""
+# GOTCHA: nmcli output/terse formatting varies; parse defensively and never expose secrets in labels.
 import json
 import hashlib
 import re

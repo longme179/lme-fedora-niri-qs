@@ -1,4 +1,6 @@
-"""Launchpad persistence and real subprocess dispatch without a desktop session."""
+"""Launchpad persistence and real subprocess dispatch without a desktop session.
+Contract: test_launchpad.py covers launchpad behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import sys
 import time

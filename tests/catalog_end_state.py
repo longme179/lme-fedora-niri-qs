@@ -1,4 +1,7 @@
-"""Measurement-only full replacement in a copied checkout; no product conversion."""
+"""Measurement-only full replacement in a copied checkout; no product conversion.
+
+Contract/helper: test infrastructure for catalog_end_state.py. REL: scripts/feature_catalog.py.
+"""
 import json
 import re
 

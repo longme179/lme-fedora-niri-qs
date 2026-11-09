@@ -1,3 +1,5 @@
+// Role: ActivityState.qml (activity layer, fan-in 12).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 import Quickshell.Services.Mpris

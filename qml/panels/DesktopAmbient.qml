@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Role: DesktopAmbient.qml (desktop layer, fan-in 2).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell

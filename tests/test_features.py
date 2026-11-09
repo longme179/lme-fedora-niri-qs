@@ -1,5 +1,5 @@
 """Wallpaper lifecycle, real kernel charge contracts and asynchronous weather."""
-from concurrent.futures import Future
+from concurrent.futures import Future  # Contract: test_features.py (headroom 0, trailing note)
 import copy
 import json
 from pathlib import Path

@@ -1,4 +1,6 @@
-"""Catalog validation belongs to the owning backend, not an import or Settings CLI."""
+"""Catalog validation belongs to the owning backend, not an import or Settings CLI.
+Contract: test_catalog_backend_startup.py covers catalog_backend_startup behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import subprocess

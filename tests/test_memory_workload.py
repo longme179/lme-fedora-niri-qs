@@ -1,4 +1,6 @@
-"""New diagnostic contracts: mock IPC/proc only, no live desktop mutations."""
+"""New diagnostic contracts: mock IPC/proc only, no live desktop mutations.
+Contract: test_memory_workload.py covers memory_workload behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import contextlib
 import io
 import json

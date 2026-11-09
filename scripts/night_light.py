@@ -1,4 +1,6 @@
-"""Scheduled gamma control through one session-owned wlsunset process."""
+"""Scheduled gamma control through one session-owned wlsunset process.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: nightLight; Phase 3 graph).
+"""
 from datetime import datetime, timedelta, timezone
 import math
 import os

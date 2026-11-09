@@ -1,4 +1,6 @@
-"""Runtime provisioning commands and launcher selection, without installing anything."""
+"""Runtime provisioning commands and launcher selection, without installing anything.
+Contract: test_deployment_runtime.py covers deployment_runtime behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import subprocess

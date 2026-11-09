@@ -1,4 +1,6 @@
-"""Freeze shared value behavior through the existing public imports before extraction."""
+"""Freeze shared value behavior through the existing public imports before extraction.
+Contract: test_shared_values.py covers shared_values behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib.util
 import json

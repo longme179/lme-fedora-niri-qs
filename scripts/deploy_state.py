@@ -1,4 +1,9 @@
-"""Private deployment journal and conservative, atomic rollback (desktop user only)."""
+"""Private deployment journal and conservative, atomic rollback (desktop user only).
+
+Callers: scripts/deploy.py apply/rollback flows.
+INVARIANT: journal/rollback preserve user files and enable recovery after failed publication (niri patch safety chain).
+REL: scripts/deploy_files.py, deploy_niri.py – staged artifacts and publication state.
+"""
 import difflib
 import hashlib
 import json

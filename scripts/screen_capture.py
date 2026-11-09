@@ -1,4 +1,9 @@
-"""Private screenshot sessions, flattened PNG export and local Tesseract OCR."""
+"""Private screenshot sessions, flattened PNG export and local Tesseract OCR.
+
+Callers: scripts/desktop_backend.py capture actions; scripts/capture_actions.py.
+Touches: screenshot/annotation editor CLIs (satty/swappy), Tesseract OCR, XDG pictures/runtime capture dirs.
+GOTCHA: image paths/sizes are bounded; annotation uses argv paths (not shell interpolation).
+"""
 import os
 from pathlib import Path
 import re

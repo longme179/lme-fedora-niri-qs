@@ -1,4 +1,6 @@
-"""Inline startup presentation is identical; heavy metadata is fetched on demand."""
+"""Inline startup presentation is identical; heavy metadata is fetched on demand.
+Contract: test_catalog_compact.py covers catalog_compact behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

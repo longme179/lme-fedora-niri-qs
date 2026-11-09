@@ -1,4 +1,10 @@
-"""Read the bundled, data-only feature catalog; stdlib, no registration side effects."""
+"""Read the bundled, data-only feature catalog; stdlib, no registration side effects.
+
+Callers: desktop_backend.py, settings_schema.py, backend_providers.py, QML FeatureCatalog/control-grid consumers, check.sh --check gate.
+Reads: config/features.json, descriptor JSON, config/control-grid.json (see resource/read paths).
+INVARIANT: index/descriptor consistency and validation errors must fail closed without shadowing legacy registrations.
+REL: qml/services/FeatureCatalog.qml, qml/services/ControlRegistry.qml; scripts/check_architecture.py::owners – ownership model.
+"""
 from functools import lru_cache
 import json
 from pathlib import Path

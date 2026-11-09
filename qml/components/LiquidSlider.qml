@@ -1,3 +1,5 @@
+// Shared slider control for settings/panels; styling and interaction follow Theme/LiquidGlass.
+// REL: qml/theme/Theme.qml – slider metrics/colors; consumers expect standard Slider API.
 import QtQuick
 import QtQuick.Controls
 import "../theme"

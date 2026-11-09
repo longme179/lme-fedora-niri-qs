@@ -1,5 +1,5 @@
 """Simple glass preferences, compositor snippet apply, and rendered material controls."""
-import json
+import json  # Contract: test_glass_controls.py (headroom 0, trailing note)
 import math
 import os
 from pathlib import Path

@@ -1,4 +1,6 @@
-"""Bounded wallpaper playlists and per-output awww images; no rendering daemon."""
+"""Bounded wallpaper playlists and per-output awww images; no rendering daemon.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 from pathlib import Path
 from content_types import EXTENSIONS, image_path

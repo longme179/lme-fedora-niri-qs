@@ -1,4 +1,6 @@
-"""Desktop geometry validation, independent edits and native layer/input checks."""
+"""Desktop geometry validation, independent edits and native layer/input checks.
+Contract: test_desktop_widgets.py covers desktop_widgets behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import os
 import unittest

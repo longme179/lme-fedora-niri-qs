@@ -1,4 +1,7 @@
-"""Migration smoke checks and process/cache-cold startup measurements; stdlib only."""
+"""Migration smoke checks and process/cache-cold startup measurements; stdlib only.
+
+Contract/helper: test infrastructure for migration_startup.py. REL: scripts/start.sh startup path.
+"""
 import json
 import os
 from pathlib import Path

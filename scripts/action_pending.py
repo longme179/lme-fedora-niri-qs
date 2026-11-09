@@ -1,4 +1,9 @@
-"""JSON-line acknowledgement and projection of existing coordinator ownership."""
+"""JSON-line acknowledgement and projection of existing coordinator ownership.
+
+Callers: scripts/desktop_backend.py::handle/emit (protocol publication); QML ShellState consumes actionPending/lastResult.
+INVARIANT: clientSerial/acknowledged/active owner projection must stay consistent with coordinator jobs (F3 contract).
+REL: qml/services/ShellState.qml::run,::backend – pending/sequence protocol; scripts/desktop_backend.py::handle,::finish_features.
+"""
 import json
 import sys
 

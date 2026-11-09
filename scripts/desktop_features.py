@@ -1,4 +1,6 @@
-"""Bounded, unprivileged helpers for desktop preferences and local content."""
+"""Bounded, unprivileged helpers for desktop preferences and local content.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 from __future__ import annotations
 
 import ast

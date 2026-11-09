@@ -1,4 +1,6 @@
-"""Screenshot notification routing through real private D-Bus and QML clicks."""
+"""Screenshot notification routing through real private D-Bus and QML clicks.
+Contract: test_image_annotation_ui.py covers image_annotation_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

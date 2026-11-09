@@ -1,4 +1,7 @@
-"""Cold CLI fixtures and tracing live only inside a disposable checkout."""
+"""Cold CLI fixtures and tracing live only inside a disposable checkout.
+
+Contract/helper: test infrastructure for catalog_admission_fixture.py. REL: scripts/feature_catalog.py.
+"""
 import json
 import os
 import re

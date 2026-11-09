@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Glass material/shader binding for shell surfaces; selects blur/optics paths from settings/capabilities.
+// REL: qml/components/GlassOptics.qml, qml/components/shaders/liquid-glass.frag(.qsb) – uniforms/effects.
+// GOTCHA: Shader/material changes affect many surfaces; keep fallbacks for unsupported/backdrop cases.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window

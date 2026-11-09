@@ -1,4 +1,6 @@
-"""Private Wayland dialog checks; copied checkout and a fake backend, no radio."""
+"""Private Wayland dialog checks; copied checkout and a fake backend, no radio.
+Contract: test_wifi_ui.py covers wifi_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

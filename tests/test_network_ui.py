@@ -1,4 +1,6 @@
-"""Network workflow UI; mocks establish integration, never hardware NM support."""
+"""Network workflow UI; mocks establish integration, never hardware NM support.
+Contract: test_network_ui.py covers network_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

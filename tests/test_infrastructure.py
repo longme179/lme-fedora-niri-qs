@@ -1,4 +1,6 @@
-"""Public infrastructure contracts, characterized before the M1 extraction."""
+"""Public infrastructure contracts, characterized before the M1 extraction.
+Contract: test_infrastructure.py covers infrastructure behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import errno
 import json
 import os

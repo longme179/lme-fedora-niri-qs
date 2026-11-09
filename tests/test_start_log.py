@@ -1,4 +1,6 @@
-"""Live starts write to a bounded private log; demo startup keeps its terminal output."""
+"""Live starts write to a bounded private log; demo startup keeps its terminal output.
+Contract: test_start_log.py covers start_log behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import subprocess

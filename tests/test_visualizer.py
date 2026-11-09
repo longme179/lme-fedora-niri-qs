@@ -1,4 +1,6 @@
-"""Real bridge framing/lifecycle and immediate QML spectrum response."""
+"""Real bridge framing/lifecycle and immediate QML spectrum response.
+Contract: test_visualizer.py covers visualizer behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

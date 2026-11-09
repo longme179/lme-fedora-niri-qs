@@ -1,4 +1,6 @@
-"""Freeze lyric/search/radio preferences without changing worker or UI policy."""
+"""Freeze lyric/search/radio preferences without changing worker or UI policy.
+Contract: test_content_schema.py covers content_schema behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

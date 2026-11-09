@@ -1,4 +1,6 @@
-"""Bluetooth connection results do not duplicate native device notifications."""
+"""Bluetooth connection results do not duplicate native device notifications.
+Contract: test_bluetooth_status_qml.py covers bluetooth_status_qml behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 

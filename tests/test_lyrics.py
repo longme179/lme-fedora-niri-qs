@@ -1,4 +1,6 @@
-"""Lyric parsing, offline lookup, bounded cache and optional MPRIS UI checks."""
+"""Lyric parsing, offline lookup, bounded cache and optional MPRIS UI checks.
+Contract: test_lyrics.py covers lyrics behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

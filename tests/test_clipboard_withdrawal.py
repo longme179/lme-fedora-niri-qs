@@ -1,4 +1,6 @@
-"""Withdrawal preserves user data; a second entry does not change host switches."""
+"""Withdrawal preserves user data; a second entry does not change host switches.
+Contract: test_clipboard_withdrawal.py covers clipboard_withdrawal behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

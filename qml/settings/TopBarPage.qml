@@ -26,7 +26,7 @@ ColumnLayout {
         onChosen: color => root.patchStyle(root.pickerField, color.toString())
     }
     function patchStyle(field, value) {
-        if (styleZone) ShellState.run("setting", {key: "barIslandStyles", token: styleZone, value: Object.assign({}, selectedStyle, {[field]: value})});
+        if (styleZone) ShellState.run("setting", {key: "barIslandStyles", token: styleZone, value: Object.assign({}, selectedStyle, {[field]: value})}); // REL: config/control-grid.json, qml/bar/BarRegistry.qml::defaults
         else if (field === "corners" || field === "borderWidth") ShellState.run("setting", {key: field === "corners" ? "barCorners" : "barBorderWidth", value: value});
         else ShellState.run("setting", {key: "themeOverrides", token: field === "borderColor" ? "barBorder" : "barFill", value: value});
     }

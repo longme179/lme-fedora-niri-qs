@@ -1,4 +1,6 @@
-"""Gowall supervision survives abrupt backend destruction by Quickshell."""
+"""Gowall supervision survives abrupt backend destruction by Quickshell.
+Contract: test_managed_supervision.py covers managed_supervision behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

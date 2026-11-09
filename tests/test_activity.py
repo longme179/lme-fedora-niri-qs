@@ -1,4 +1,6 @@
-"""Recording detection and optional real MPRIS/QML controls in private Wayland."""
+"""Recording detection and optional real MPRIS/QML controls in private Wayland.
+Contract: test_activity.py covers activity behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

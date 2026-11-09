@@ -1,4 +1,6 @@
-"""Characterize preview admission, rollback seams and persistence ordering."""
+"""Characterize preview admission, rollback seams and persistence ordering.
+Contract: test_display_actions.py covers display_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import copy
 from concurrent.futures import Future

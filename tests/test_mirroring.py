@@ -1,4 +1,6 @@
-"""Display validation, owned child lifetime and Settings-to-shell IPC."""
+"""Display validation, owned child lifetime and Settings-to-shell IPC.
+Contract: test_mirroring.py covers mirroring behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

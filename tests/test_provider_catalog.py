@@ -1,4 +1,6 @@
-"""Existing light-provider behavior first; descriptor resolution is a separate contract."""
+"""Existing light-provider behavior first; descriptor resolution is a separate contract.
+Contract: test_provider_catalog.py covers provider_catalog behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

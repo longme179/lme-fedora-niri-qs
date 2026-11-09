@@ -1,3 +1,5 @@
+// Role: LauncherSearch.js (launcher layer, fan-in 4).
+// Shared component/helper; keep API stable for wide QML reuse.
 .pragma library
 // Rank exact names, prefixes and keywords before subsequences and small typos.
 function distance(a, b) {

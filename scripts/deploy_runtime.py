@@ -1,4 +1,9 @@
-"""Verify the actual Quickshell APIs; optionally build a pinned, private runtime."""
+"""Verify the actual Quickshell APIs; optionally build a pinned, private runtime.
+
+Callers: scripts/deploy.py. Probes/runtime verification run with isolated env where appropriate.
+INVARIANT: runtime capability verification must reflect actual API behavior before publication/apply decisions.
+REL: scripts/deploy_state.py – apply/rollback depends on verified runtime outcomes.
+"""
 import json
 import os
 from pathlib import Path

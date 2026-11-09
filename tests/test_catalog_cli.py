@@ -1,4 +1,6 @@
-"""Page admission and explicit validation use disposable copies, never user settings."""
+"""Page admission and explicit validation use disposable copies, never user settings.
+Contract: test_catalog_cli.py covers catalog_cli behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

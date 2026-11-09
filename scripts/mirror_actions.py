@@ -1,4 +1,7 @@
-"""Mirror routing; the main shell retains the child and Settings uses its IPC."""
+"""Mirror routing; the main shell retains the child and Settings uses its IPC.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: mirroring; Phase 3 graph).
+"""
+# REL: qml/components/MirrorControls.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 import copy
 from dataclasses import dataclass
 import json

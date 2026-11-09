@@ -1,4 +1,6 @@
-"""Static catalog vocabulary and navigation compatibility validation."""
+"""Static catalog vocabulary and navigation compatibility validation.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 import ast
 
 KINDS = {'bar': 'id', 'settingsPage': 'key', 'controlTab': 'id', 'agendaTab': 'id', 'panel': 'id', 'bootstrap': 'id', 'gesture': 'id'}

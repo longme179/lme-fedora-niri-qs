@@ -1,4 +1,6 @@
-"""Exercise actual Settings backend selector ownership across theme changes."""
+"""Exercise actual Settings backend selector ownership across theme changes.
+Contract: test_event_stream.py covers event_stream behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

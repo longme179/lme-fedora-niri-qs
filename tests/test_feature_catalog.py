@@ -1,4 +1,6 @@
-"""Legacy parity first; new data-only reader and copied-checkout contracts."""
+"""Legacy parity first; new data-only reader and copied-checkout contracts.
+Contract: test_feature_catalog.py covers feature_catalog behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib.util
 import json
 import os

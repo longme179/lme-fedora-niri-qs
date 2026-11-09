@@ -1,3 +1,5 @@
+// Role: Launcher.qml (launcher layer, fan-in 4).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -36,7 +38,7 @@ Item {
         const item = results[index];
         if (!item) return;
         if (item.kind === "app") ShellState.run("launch", {id: item.id});
-        else if (item.kind === "launchpad") ShellState.run("launchpadRun",{id:item.commandId});
+        else if (item.kind === "launchpad") ShellState.run("launchpadRun",{id:item.commandId}); // REL: scripts/launchpad_actions.py::provide
         else if (item.kind === "window") ShellState.run("focusWindow", {id: item.windowId});
         else if (item.kind === "file") ShellState.run("fileOpen", {path: item.path});
         else ShellState.run("copyText", {text: item.value});

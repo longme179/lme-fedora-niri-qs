@@ -1,4 +1,6 @@
-"""Persistence failure/retry regressions; disposable files and injected I/O faults."""
+"""Persistence failure/retry regressions; disposable files and injected I/O faults.
+Contract: test_persistence_failures.py covers persistence_failures behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import copy
 import errno

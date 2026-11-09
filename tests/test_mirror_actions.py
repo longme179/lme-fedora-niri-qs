@@ -1,4 +1,6 @@
-"""Freeze main-shell ownership and Settings IPC before mirroring extraction."""
+"""Freeze main-shell ownership and Settings IPC before mirroring extraction.
+Contract: test_mirror_actions.py covers mirror_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib.util
 import json

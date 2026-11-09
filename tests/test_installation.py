@@ -1,4 +1,6 @@
-"""Installation orchestration and DNF selection without changing the host system."""
+"""Installation orchestration and DNF selection without changing the host system.
+Contract: test_installation.py covers installation behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

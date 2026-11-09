@@ -1,5 +1,5 @@
 """Native popup lifecycle, backdrop and morph stroke regressions."""
-import json
+import json  # Contract: test_popup_motion.py (headroom 0, trailing note)
 import os
 from pathlib import Path
 import subprocess

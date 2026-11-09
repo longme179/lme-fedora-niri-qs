@@ -1,4 +1,7 @@
-"""Wallpaper scan characterization, also run through test_action_registry."""
+"""Wallpaper scan characterization, also run through test_action_registry.
+
+Contract/helper: test infrastructure for action_registry_async.py. REL: scripts/backend_actions.py (async/worker contracts).
+"""
 from concurrent.futures import CancelledError, Future
 import copy
 import io

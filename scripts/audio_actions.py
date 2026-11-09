@@ -1,4 +1,7 @@
-"""Audio/backlight controls and worker-owned Bluetooth connects with host read-back."""
+"""Audio/backlight controls and worker-owned Bluetooth connects with host read-back.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
+"""
+# REL: qml/panels/ControlDashboard.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 import re
 from typing import Callable

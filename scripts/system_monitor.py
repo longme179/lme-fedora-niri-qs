@@ -1,4 +1,6 @@
-"""On-demand /proc monitoring. Never opens GPU devices or runs GPU tools."""
+"""On-demand /proc monitoring. Never opens GPU devices or runs GPU tools.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: systemMonitor; Phase 3 graph).
+"""
 from collections import deque
 import os
 from itertools import islice

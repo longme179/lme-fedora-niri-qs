@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Role: install-settings.sh (unclassified) — orchestration/helper script; see phase1-graph.md.
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 target="${XDG_DATA_HOME:-$HOME/.local/share}/applications/lme-shell-settings.desktop"

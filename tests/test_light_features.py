@@ -1,4 +1,6 @@
-"""Frozen page/order contracts before four light features leave the legacy hosts."""
+"""Frozen page/order contracts before four light features leave the legacy hosts.
+Contract: test_light_features.py covers light_features behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

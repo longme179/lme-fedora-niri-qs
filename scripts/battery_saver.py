@@ -10,8 +10,8 @@ import os
 from pathlib import Path
 import time
 
-from display_layout import apply_layout, current_layout, validate_layout
-from storage import locked, write_json
+from display_layout import apply_layout, current_layout, validate_layout  # REL: scripts/display_layout.py
+from storage import locked, write_json  # REL: scripts/storage.py::locked,write_json – saver state journal
 
 # Allow nominal 60 Hz EDID timings below 60.5 Hz; send the exact timing to niri.
 MAX_REFRESH_MILLIHZ = 60_500

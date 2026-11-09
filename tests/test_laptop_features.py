@@ -1,4 +1,4 @@
-import copy
+import copy  # Contract: test_laptop_features.py (headroom 0, trailing note)
 import json
 import io
 import os

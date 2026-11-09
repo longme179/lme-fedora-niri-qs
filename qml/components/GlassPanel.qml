@@ -1,3 +1,5 @@
+// Glass-styled panel surface with Theme role mapping; base for cards/popups/settings surfaces.
+// REL: qml/theme/Theme.qml, qml/components/GlassMaterial.qml – role/color/blur semantics.
 import QtQuick
 import "../theme"
 

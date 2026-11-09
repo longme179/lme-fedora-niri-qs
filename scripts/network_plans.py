@@ -1,4 +1,6 @@
-"""Fresh profile/device selection and explicit hotspot confirmation; no I/O."""
+"""Fresh profile/device selection and explicit hotspot confirmation; no I/O.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wifi; Phase 3 graph).
+"""
 import hashlib
 import json
 import re

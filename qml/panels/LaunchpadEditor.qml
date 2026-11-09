@@ -1,3 +1,5 @@
+// Role: LaunchpadEditor.qml (launchpad layer, fan-in 3).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls

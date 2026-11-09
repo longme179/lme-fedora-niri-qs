@@ -1,4 +1,6 @@
-"""Refractive selection reuses the shared material and existing moving plate."""
+"""Refractive selection reuses the shared material and existing moving plate.
+Contract: test_selection_lens.py covers selection_lens behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 import test_local_qml as qml_tests

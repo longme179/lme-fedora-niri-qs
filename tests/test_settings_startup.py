@@ -1,4 +1,6 @@
-"""The first visible Settings frame uses one complete saved appearance snapshot."""
+"""The first visible Settings frame uses one complete saved appearance snapshot.
+Contract: test_settings_startup.py covers settings_startup behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

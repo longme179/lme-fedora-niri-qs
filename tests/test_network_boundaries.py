@@ -1,4 +1,6 @@
-"""Network identity, bounded metadata and side-effect recovery at the NM boundary."""
+"""Network identity, bounded metadata and side-effect recovery at the NM boundary.
+Contract: test_network_boundaries.py covers network_boundaries behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib
 import json

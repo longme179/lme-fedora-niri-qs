@@ -1,4 +1,6 @@
-"""Local notification IDs remain independent when the clock does not advance."""
+"""Local notification IDs remain independent when the clock does not advance.
+Contract: test_notification_ids.py covers notification_ids behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 

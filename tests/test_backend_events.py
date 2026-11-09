@@ -1,4 +1,6 @@
-"""Real backend loop/child lifecycle; the niri command boundary is simulated."""
+"""Real backend loop/child lifecycle; the niri command boundary is simulated.
+Contract: test_backend_events.py covers backend_events behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

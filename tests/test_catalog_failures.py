@@ -1,4 +1,6 @@
-"""Broken catalogs fall back to usable legacy UI without a stuck startup barrier."""
+"""Broken catalogs fall back to usable legacy UI without a stuck startup barrier.
+Contract: test_catalog_failures.py covers catalog_failures behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 import unittest

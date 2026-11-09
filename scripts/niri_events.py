@@ -1,4 +1,9 @@
-"""Niri workspace/window snapshots and the already-running event stream."""
+"""Niri workspace/window snapshots and the already-running event stream.
+
+Callers: scripts/desktop_backend.py::NiriStateCache usage and niri refresh paths.
+Touches: `niri msg --json workspaces/windows` and `niri msg --json event-stream` (see desktop_backend.py).
+INVARIANT: unknown/malformed/out-of-order events invalidate cache; callers reseed/fallback to CLI polling path.
+"""
 import json
 
 IGNORED = {"KeyboardLayoutsChanged", "KeyboardLayoutSwitched", "OverviewOpenedOrClosed", "ConfigLoaded",
@@ -50,6 +55,7 @@ class NiriStateCache:
         return {"available": True, "workspaces": self.workspaces, "windows": self.windows}
 
     def feed(self, data):
+        # GOTCHA: bounded buffer; oversized/malformed stream invalidates instead of unbounded growth.
         self.buffer += data
         if len(self.buffer) > 8 * 1024 * 1024: self.invalidate(); return
         while b"\n" in self.buffer:

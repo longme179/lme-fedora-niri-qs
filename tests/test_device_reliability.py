@@ -1,4 +1,6 @@
-"""Bluetooth worker and Wi-Fi admission contracts with fake devices only."""
+"""Bluetooth worker and Wi-Fi admission contracts with fake devices only.
+Contract: test_device_reliability.py covers device_reliability behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import os
 from threading import Event

@@ -1,4 +1,7 @@
-"""Wi-Fi operations; the host retains network sampling and worker publication."""
+"""Wi-Fi operations; the host retains network sampling and worker publication.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wifi; Phase 3 graph).
+"""
+# REL: qml/panels/WifiWidget.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 import copy
 from threading import Event

@@ -1,4 +1,6 @@
-"""Backend section revisions for QML identity reuse."""
+"""Backend section revisions for QML identity reuse.
+Contract: test_backend_revisions.py covers backend_revisions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import unittest
 
 from test_backend import Fixture, FakeRunner

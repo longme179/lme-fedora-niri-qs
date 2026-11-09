@@ -1,4 +1,9 @@
-"""Action ownership; the host retains scheduling, protocol and completion publication."""
+"""Action ownership; the host retains scheduling, protocol and completion publication.
+
+Callers: scripts/desktop_backend.py::ActionRegistry/handle/start_feature/finish_features; action providers via provide().
+INVARIANT: action names/contexts are unique per registry; worker completion/state installation remains host-coordinated.
+REL: qml/services/ShellState.qml::run – UI dispatch contract; scripts/backend_providers.py – catalog provider resolution.
+"""
 from dataclasses import dataclass
 from typing import Callable
 

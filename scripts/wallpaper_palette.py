@@ -1,4 +1,6 @@
-"""Isolated Matugen preview: never executes the user's theme templates."""
+"""Isolated Matugen preview: never executes the user's theme templates.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
 from pathlib import Path

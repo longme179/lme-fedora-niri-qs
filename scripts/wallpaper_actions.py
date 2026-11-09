@@ -1,4 +1,7 @@
-"""Wallpaper actions own domain state, never scheduling or result publication."""
+"""Wallpaper actions own domain state, never scheduling or result publication.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
+"""
+# REL: qml/settings/WallpaperPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable

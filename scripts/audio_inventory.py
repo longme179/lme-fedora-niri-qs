@@ -1,4 +1,6 @@
-"""Bounded pactl JSON and fresh, server-scoped audio identities; no system I/O."""
+"""Bounded pactl JSON and fresh, server-scoped audio identities; no system I/O.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
+"""
 import hashlib
 import json
 import re

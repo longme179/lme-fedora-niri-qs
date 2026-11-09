@@ -1,4 +1,6 @@
-"""On-demand NetworkManager I/O; no secrets, monitor, executor or saved shell state."""
+"""On-demand NetworkManager I/O; no secrets, monitor, executor or saved shell state.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wifi; Phase 3 graph).
+"""
 import hashlib
 import json
 import re

@@ -1,5 +1,7 @@
 #version 440
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Role: popup-jelly.vert (shared layer).
+// REL: qml/components/JellyGeometry.js::vertex – 16x16 mesh/vertex layout; keep shaders+geometry in sync.
 layout(location = 0) in vec4 qt_Vertex;
 layout(location = 1) in vec2 qt_MultiTexCoord0;
 layout(location = 0) out vec2 qt_TexCoord0;

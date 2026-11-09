@@ -2,6 +2,32 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q3 — Wi-Fi lists + first write actions — 2026-11-09
+- Owner approved Q3 scoped to the wifi networks/saved lists (the network leg of
+  plan §5 Q3; audio/power/bluetooth writes and network plans/profiles await
+  their own authorization). Branch `qml/q3-wifi-lists` (tests -> impl -> docs).
+- Read side: `NetworkState.state` gains networks (SSID-deduped model, 0-100
+  rescaled strength, connected-first, 60 cap, bssid "" — no native BSSID) and
+  saved ({uuid, name} from the device's profiles; hotspot ap-mode is a 0.3.2
+  gap), populated only while watching (scannerEnabled driven by watchWifi —
+  A6; the scan action re-arms it, rate-limited ~10 s).
+- Write side (first of the migration): ShellState.run routes the six wifi
+  action names to NetworkState.perform in real sessions; Pending sequencing
+  unchanged (Pending.sent + new ActionPending.settled — local completion
+  without backend metadata); busy() cross-block ported; fixture modes keep
+  the backend round-trip; no-NM/no-adapter falls back to the registry.
+  Connect is event-driven (state/connectionFailed, 45 s ceiling,
+  wifi_auth.py message mapping; connectWithPsk updates the saved PSK then
+  activates); password validation ports exactly (UTF-8 bytes via
+  encodeURIComponent — V4 has no TextEncoder).
+- Wiring: compose drops the network overlay; compareSections gains [Q3 A/B]
+  networks/saved count drift; DEPRECATED(Q3->Q6) at the backend emit sites
+  and the wifi registry; ShellState ratchet 261->296 (router behind run()).
+- G0 green (1121 tests; 3 known quickshell-absent errors; 65.1% QML-side
+  runtime). Real-machine verification pending (worktree rounds); owner
+  post-merge checklist: list/saved parity vs nmcli, wrong+right password
+  connect, saved connect, disconnect, forget, radio toggle, a day of drift.
+
 ## Q2 — native read-only files — 2026-11-09
 - Owner approved Q2 ("GREAT RESULTS, Q2 can start now", after validating the #116
   battery hotfix). Branch `qml/q2-native-files` (tests -> implementation -> docs).

@@ -64,3 +64,10 @@ Do not read archive/ unless answering a specific historical question.
   Commit only final gate summaries; no raw evidence directories.
 - Preserve stdlib/unprivileged backend, English text, Preferences lock/merge/atomic
   writes, preview/standalone Settings and non-destructive installers.
+
+## QML-first migration (Q0)
+
+- Owner accepted the phased QML-first plan (docs/QML_FIRST_MIGRATION_PLAN.md, PR #113) and authorized Q0 on 2026-11-09. Targets: T1 = runtime >= 85% QML-side with `desktop_backend.py` retired (Q1-Q6); T2 = whole-repo QML majority (Q7, optional, explicit owner decision).
+- Q0 on `qml/q0-metric-baseline`: `config/architecture.json` gains `toolingFiles` (the 12 dev-tooling modules); `check_architecture.py` prints an informational language mix in every G0 summary (wc -l parity; exit code and gates unchanged); `tests/test_architecture.py` characterizes the classification and slice arithmetic.
+- Baseline frozen at `8ebc597` (pre-Q0): runtime QML+JS 16,228 (63.6%) vs Python 9,277 (36.4%); tooling Python 1,637; tests Python 26,161; whole-repo 69.5% Python. Post-Q0 actual: tooling 1,672 and tests 26,198 (Q0's own added lines), whole-repo 69.6%.
+- Next: Q1 (audio, battery/AC, power profiles, bluetooth, network read-only native state) needs A6 approval before its branch exists; each event-driven phase reports measured before/after wake rates.

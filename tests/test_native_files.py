@@ -137,13 +137,16 @@ class NativeFilesQmlCase(unittest.TestCase):
     run_qml = qml_tests.LocalQmlCase.run_qml
 
     def test_demo_apps_flow_through_unchanged(self):
+        # Readiness-poll like the Q1 demo test: the backend snapshot and the shell's
+        # spin-up take longer than any fixed wait on the real machine (round 3 raced at 1.2 s).
         result = self.run_qml('import "qml/services"', '''
-    property int phase: 0
+    property int ticks: 0
     Timer {
-        interval: 100; running: true; repeat: true
+        interval: 200; running: true; repeat: true
         onTriggered: {
-            fixture.phase++;
-            if (fixture.phase > 12) fixture.finish({apps: ShellState.apps, usage: ShellState.launcherUsage});
+            fixture.ticks++;
+            const ready = ShellState.backendReady && ShellState.apps && ShellState.apps.length > 0;
+            if (ready || fixture.ticks >= 40) fixture.finish({apps: ShellState.apps || [], usage: ShellState.launcherUsage});
         }
     }''')
         self.assertEqual(result["apps"], DEMO_APPS)
@@ -175,14 +178,16 @@ class NativeFilesQmlCase(unittest.TestCase):
 
     def test_history_store_reads_scores_and_decay_like_the_python_module(self):
         # 3 launches today score 3*90; a single launch 8 days ago decayed one half-life window.
+        # Poll until the FileView store lands — the fixture file load raced the fixed
+        # 1.2 s wait on the real machine (round 3: usage still empty).
         result = self.run_qml('import "qml/services"', '''
-    property int phase: 0
+    property int ticks: 0
     Timer {
-        interval: 150; running: true; repeat: true
+        interval: 200; running: true; repeat: true
         onTriggered: {
-            fixture.phase++;
-            if (fixture.phase > 8) {
-                const usage = LauncherState.usage(true);
+            fixture.ticks++;
+            const usage = LauncherState.usage(true);
+            if (Object.keys(usage).length > 0 || fixture.ticks >= 40) {
                 const a = usage["app-a.desktop"], b = usage["app-b.desktop"];
                 fixture.finish({keys: Object.keys(usage).sort(),
                                 aScore: a ? Math.round(a.score) : null,

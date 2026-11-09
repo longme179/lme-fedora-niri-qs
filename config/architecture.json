@@ -60,6 +60,7 @@
     ["qml/services/ShellState.qml", "qml/services/Notifications.qml", "Existing singleton/service feedback; replace this exact dependency with a shared interface only in an authorized refactor."],
     ["qml/services/ShellState.qml", "qml/services/OSDManager.qml", "Existing singleton/service feedback; replace this exact dependency with a shared interface only in an authorized refactor."],
     ["qml/services/BluetoothState.qml", "qml/services/ShellState.qml", "Existing pairing-agent preference reads (bluetoothAdapter/demo/settingsApp); cyclic since the Q1 NativeState composition; runtime-safe (different properties, no binding loop); retire with the Q6 backend sections."],
+    ["qml/services/ShellState.qml", "qml/services/BluetoothState.qml", "Q3 write router fan-out dispatches bluetoothToggle/bluetoothDevice to the native service; runtime-safe (function calls only, never during binding evaluation); retire with the Q6 backend actions."],
     ["qml/services/NativeState.qml", "qml/services/BluetoothState.qml", "Q1 native bluetooth section and peripheral batteries; single direction into the native services."],
     ["qml/services/NativeState.qml", "qml/services/ShellState.qml", "Q1 native-section composition reads the bluetoothAdapter preference; runtime-safe (preferences, not the merged system); replace with a preference provider at Q6."],
     ["qml/services/ShellState.qml", "qml/services/NativeState.qml", "Q1 merged system sections; the merge is pure over (backend, base sections) and caches in SystemMerge.js."],
@@ -68,7 +69,8 @@
   ],
   "largeFiles": {
     "shell.qml": 301,
-    "qml/services/ShellState.qml": 296,
+    "qml/services/ShellState.qml": 312,
+    "tests/test_native_controls.py": 270,
     "qml/components/shaders/liquid-glass.frag": 95,
     "qml/components/shapes/shapes/cubic.js": 338,
     "qml/components/shapes/shapes/rounded-polygon.js": 313,

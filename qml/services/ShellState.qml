@@ -157,47 +157,63 @@ QtObject {
         interval: 250
         onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
     }
-    // Q3 native router — the Wi-Fi leg (plan §5 Q3). Real sessions route the wifi action names
-    // to NetworkState's native calls (Pending sequencing unchanged so busy/status UX is identical);
-    // fixture modes always keep the backend round-trip (the demo registry owns its state), and
-    // real sessions without quickshell's NetworkManager backend or adapter fall back to the
-    // backend registry for its canonical errors while the A/B window is open.
+    // Q3 native router — the write families (plan §5 Q3). Real sessions route a family's
+    // action names to the owning service's native calls (Pending sequencing unchanged so
+    // busy/status UX is identical); fixture modes always keep the backend round-trip (the
+    // demo registry owns its state), and real sessions a service cannot serve natively fall
+    // back to the backend registry for its canonical errors while the A/B window is open.
     readonly property var nativeMutationActions: ["wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle", "networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"]
+    function nativeOwner(action) {
+        if (NetworkState.handles(action)) return NetworkState;
+        if (AudioState.handles(action)) return AudioState;
+        if (BluetoothState.handles(action)) return BluetoothState;
+        if (PowerState.handles(action)) return PowerState;
+        return null;
+    }
     function run(action, payload) {
-        if (!backendDemo && !settingsApp && NetworkState.handles(action)) {
-            if (NetworkState.canRoute()) {
-                if (nativeMutationActions.some(name => pendingActions[name])) {
-                    statusMessage = "This operation is already running"; statusError = true; statusTimer.restart(); return;
+        // Release the layer-shell keyboard grab before any external agent opens.
+        // The built-in Polkit agent also closes panels for requests from apps.
+        if ((action === "imageAnnotate" || action === "chargeMode") && !demo || ["networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].includes(action)) closePanels();
+        if (!backendDemo && !settingsApp) {
+            const owner = nativeOwner(action);
+            if (owner) {
+                // The context carries the merged system (backend-fed transitional keys like
+                // the charging section and rfkill flags) and an interim-status emitter, so
+                // the services stay free of ShellState references (composition stays acyclic).
+                const context = {system: system, status: message => { statusMessage = message; statusError = false; statusTimer.restart(); }};
+                if (owner.canRoute(action, payload || {}, context)) {
+                    if (nativeMutationActions.some(name => pendingActions[name])) {
+                        statusMessage = "This operation is already running"; statusError = true; statusTimer.restart(); return;
+                    }
+                    let sent;
+                    try { sent = Pending.sent(pendingState, action); }
+                    catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
+                    pendingState = sent;
+                    pendingActions = sent.pending;
+                    owner.perform(action, payload || {}, (ok, message) => nativeDone(action, ok, message), context);
+                    return;
                 }
-                let sent;
-                try { sent = Pending.sent(pendingState, action); }
-                catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
-                pendingState = sent;
-                pendingActions = sent.pending;
-                NetworkState.perform(action, payload || {}, (ok, message) => nativeDone(action, ok, message));
-                return;
             }
         }
         send(action, payload);
     }
-    // Settle a natively-served action: the backend never sees the request, so its metadata must
-    // not be waited for (ActionPending.settled) and the result surfaces like a backend result.
+    // Settle a natively-served action: the backend never sees the request, so its metadata
+    // must not be waited for (ActionPending.settled) and the result surfaces like a backend
+    // result — routine actions stay toast-silent exactly like accept()'s result path.
+    readonly property var routineActions: ["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose", "ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart", "inputMethod", "eqGet"]
     function nativeDone(action, ok, message) {
         pendingState = Pending.settled(pendingState, action);
         pendingActions = pendingState.pending;
         const result = {action: action, ok: ok, message: message, pending: false};
         lastResult = result;
         if (String(action).startsWith("wifi") && action !== "wifiWatch") wifiResult = result;
-        if (message) { statusMessage = message; statusError = !ok; statusTimer.restart(); }
+        if (message && (!ok || !routineActions.includes(action))) { statusMessage = message; statusError = !ok; statusTimer.restart(); }
     }
     function send(action, payload) { // REL: scripts/desktop_backend.py::handle – sends {action,...} over stdin.
         if (!backend.running || !backendReady) {
             statusMessage = "Desktop backend is unavailable. Check the shell log.";
             statusError = true; statusTimer.restart(); return;
         }
-        // Release the layer-shell keyboard grab before any external agent opens.
-        // The built-in Polkit agent also closes panels for requests from apps.
-        if ((action === "imageAnnotate" || action === "chargeMode") && !demo || ["networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"].includes(action)) closePanels();
         let sent;
         try { sent = Pending.sent(pendingState, action); }
         catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }
@@ -247,7 +263,7 @@ QtObject {
                 lastResult = next.lastResult;
                 if (String(next.lastResult.action).startsWith("wifi") && next.lastResult.action !== "wifiWatch") wifiResult = next.lastResult;
                 if (next.lastResult.action === "nativeOverview" && !next.lastResult.ok) togglePanel("overview");
-                const routine = ["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose"].includes(next.lastResult.action) || ["ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart", "inputMethod", "eqGet"].includes(next.lastResult.action);
+                const routine = routineActions.includes(next.lastResult.action);
                 if (next.lastResult.message && (!next.lastResult.ok || !routine && (!settingsApp || next.lastResult.action !== "setting"))) {
                     statusMessage = next.lastResult.message;
                     statusError = !next.lastResult.ok; statusTimer.restart();

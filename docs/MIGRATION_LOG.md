@@ -2,6 +2,31 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q2 — native read-only files — 2026-11-09
+- Owner approved Q2 ("GREAT RESULTS, Q2 can start now", after validating the #116
+  battery hotfix). Branch `qml/q2-native-files` (tests -> implementation -> docs).
+- `LauncherState.qml`: app list from Quickshell DesktopEntries mapped to the
+  backend apps shape (ids keep the .desktop suffix; casefold+id ordering);
+  native launch via byId + execute()/terminal wrap, detached from the shell;
+  usage store = FileView JSON on the same launcher.json with launcher_history.py's
+  exact decay/validation/atomic-write semantics, event-driven file watch.
+- `MonitorState.qml`: /proc/stat + /proc/meminfo always at 2 s (the backend
+  --interval default, no A6 change), /proc/net/dev + history only while the
+  System monitor panel is open; ElapsedTimer windows match the Python
+  monitor across panel reopenings.
+- `NativeState` gains apps()/usage()/monitor() gates + cpu/memory system fields
+  in the merge; A/B compares memoryTotalGiB and the apps count.
+- Transitional backend-fed keys (no directory-listing API in quickshell 0.3.2):
+  tempC + brightness (hwmon/backlight globs) and the monitor process table
+  (/proc/<pid> iteration); DEPRECATED(Q2->Q6) markers at five emit sites.
+- Two cycle edges recorded with reasons (LauncherState->ShellState launch
+  fallback/status; NativeState->LauncherState gating).
+- Known fidelity edges for the A/B window: native apps can be a superset
+  (no OnlyShowIn/NotShowIn/TryExec properties in quickshell); Exec field codes
+  are stripped rather than expanded.
+- G0 green (1103 tests; 3 known quickshell-absent errors). Real-session checks
+  pending owner validation (launcher parity checklist per plan §5 Q2).
+
 ## Q1 — native read-only state — 2026-11-09
 - Owner approved Q1 + the A6 wake-model change. Branch `qml/q1-native-read-state`
   (tests -> implementation -> docs; carries the Q0 re-land, see STATE).

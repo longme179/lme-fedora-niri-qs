@@ -2,25 +2,43 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
-## Q3 final leg hotfix — undeclared CommandRunner broke startup — 2026-11-10
-- Owner-reported: `quickshell -c lme-shell` refused to load — the chain
-  FeatureBootstrap → ActivityState → LyricsSession → AudioDeviceState ended in
-  "CommandRunner is not a type" (AudioDeviceState.qml:21; NetworkInventoryState.qml:26
-  carries the same inline instantiation). Root cause: af2c5a2 shipped
-  `qml/services/CommandRunner.qml` but never declared it in `qml/services/qmldir`;
-  a qmldir'd directory exports only its declared types — including to its own
-  documents' implicit same-directory import — so the type could not resolve and the
-  whole configuration failed. The G0 contract tests freeze text, not engine name
-  resolution, so they stayed green while the shell could not start (the real-machine
-  bridge was down when the branch landed; STATE's verification was PENDING).
-- Fix: the qmldir declares `CommandRunner 1.0 CommandRunner.qml`. The other undeclared
-  .qml files in qmldir'd directories (settings pages, bar buttons) load by path from
-  config/features.json and are never referenced as type names, so they are unaffected.
-- Regression guard: `test_native_inventory.py` asserts the declaration and freezes the
-  invariant — any .qml file in a qmldir'd directory that another QML document references
-  as a type must be declared in that qmldir. Verified red on the unfixed qmldir, green
-  after; the sandbox G0 slice reruns green. The owner's shell restart after pull is the
-  live startup check.
+## Q3 final leg hotfix series — startup + two live-only engine bugs — 2026-11-10
+- Owner-reported `quickshell -c lme-shell` refusing to load; the remote agent bridge
+  (OpenCode gateway) was back up, so the whole series was driven on the real machine.
+- Startup fix 1 (43806ea): af2c5a2 shipped `CommandRunner.qml` without a qmldir entry —
+  a qmldir'd directory exports only its declared types (including to its own documents'
+  implicit same-directory import), so `CommandRunner` could not resolve. The qmldir now
+  declares it; `test_native_inventory` freezes the invariant (any type-referenced .qml in
+  a qmldir'd directory must be declared). Verified red without the line.
+- Startup fix 2 (04f8184): with the name resolving, the engine surfaced
+  `NetworkInventoryState.qml:29:81 Unexpected token }` — `{operation: ({}}` with an
+  unclosed paren. The text-freeze tests cannot parse QML and the 6 engine cases skip
+  without quickshell, so it rode through; a brace/paren balance check in the agent
+  workspace reproduces the engine's 29:81 report on the pre-fix text.
+- Test fix (b922436): first real run of the engine cases — 5 probes referenced
+  AudioDeviceModel/NetworkModel/NetworkPlans/Digest after `import "qml/services"`,
+  but a qmldir'd directory never exposes undeclared .js namespaces; they now import
+  each library by file path (the launcher-history convention).
+- Live bug 3 (4c7a492, both worlds): the probe's network read failed with "Invalid
+  NetworkManager property row" — nmcli >= 1.5x (1.56.1 verified) prints multiline
+  values RAW (HWADDR `AA:BB:...`, IPv6 `fe80::1`), so the all-colon split broke; the
+  Python backend failed identically (the family was never exercised end to end before).
+  `blocks()` now splits at the first unescaped colon and folds only the legacy `\:`,
+  with HWADDR/IPv6 fixtures rendered raw like a modern nmcli.
+- Live bug 4 (8090333): the instrumented probe showed `pendingActions.networkRefresh`
+  never clearing — `inspect()`/`surface()` settle through `settleDone(record)`, which
+  drops `done()` when no activation record exists, but networkRefresh/hotspotPlan are
+  non-mutations; the busy gate then deadlocked the whole connection family. Non-mutation
+  paths now settle through `done()` directly (contract tripwires pin both arms).
+- Verified on the machine: shell loads (Configuration Loaded, only the known WARNs);
+  17/17 test_native_inventory with quickshell; full discover 1150 tests / 1 pre-existing
+  failure (`test_settings_startup` reconnect — fails identically on the e59d09f
+  baseline, machine drift, not this branch); probe parity — audio serverId equal,
+  counts 3/1/2/1 equal, network serverId equal, devices 4=4, profiles 1=1 (wifi-infra
+  and loopback excluded by design), `audioPort` → "Audio port confirmed",
+  `networkConnect` (stale id) → "NetworkManager changed; refresh connections", IPv6
+  addresses and gateway parsed from live nmcli. Owner checklist (port/profile/route
+  switches, hotspot flow, saved-profile connect) still applies on the live shell.
 
 ## Q3 final leg — inventory families (audio devices, network plans/profiles) — 2026-11-10
 - The last Q3 leg per plan §5 delivered on `qml/q3-inventory-families` (tests

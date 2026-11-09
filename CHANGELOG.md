@@ -2,11 +2,21 @@
 
 ## Unreleased
 
-- Fixed a startup regression from the native audio devices and network
-  connections port: the shared command-running component was missing its
-  declaration in the services qmldir, so Quickshell could not load the
-  configuration at all ("CommandRunner is not a type"). Declaring it restores
-  startup; no behavior change.
+- Fixed five defects found when the native audio devices and network
+  connections port first ran on a real machine. Two broke startup: the
+  shared command-running component was missing its services qmldir
+  declaration ("CommandRunner is not a type"), and an unbalanced object
+  literal in the network inventory service was a syntax error the engine
+  rejected. Two broke the saved-connections family at runtime in both the
+  native port and the Python backend alike: nmcli 1.5x+ prints multiline
+  values (hardware addresses, IPv6) with raw colons, which the inventory
+  parser rejected ("Invalid NetworkManager property row"), and a
+  connection refresh never finished dispatching, leaving the family busy
+  forever. The fifth fixed the new engine test cases, which referenced
+  JavaScript helpers through a directory import that cannot expose them.
+  Startup, refresh, device/profile listing (including IPv6 addresses) and
+  the busy gating now behave on the live machine; probe parity against
+  pactl/busctl/nmcli was recorded (server ids equal, counts equal).
 - The audio devices panel (ports, profiles, application outputs) and the
   saved network connections popup (VPN/WireGuard/ethernet/hotspot, activation
   and cancel) now run natively instead of over the backend JSON-lines path.

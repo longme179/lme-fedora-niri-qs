@@ -18,3 +18,8 @@ singleton DesktopState 1.0 DesktopState.qml
 singleton GlassState 1.0 GlassState.qml
 singleton FrameLogger 1.0 FrameLogger.qml
 singleton UpdateState 1.0 UpdateState.qml
+
+singleton AudioState 1.0 AudioState.qml
+singleton PowerState 1.0 PowerState.qml
+singleton NetworkState 1.0 NetworkState.qml
+singleton NativeState 1.0 NativeState.qml

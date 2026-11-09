@@ -21,7 +21,7 @@ QtObject {
         const devices = laptopBatteries().map(batteryDetails);
         const health = devices.map(item => item.health).filter(value => value !== null);
         const power = devices.filter(item => item.powerW !== null);
-        return {available: true, percent: Math.round(device.percentage),
+        return {available: true, percent: percent100(device.percentage),
                 charging: device.state === UPowerDeviceState.Charging, acOnline: !UPower.onBattery,
                 devices: devices,
                 health: health.length ? round1(health.reduce((sum, value) => sum + value, 0) / health.length) : null,
@@ -42,7 +42,7 @@ QtObject {
         name: device.model || String(device.nativePath || "").split("/").filter(Boolean).pop() || "Peripheral",
         kind: device.type === UPowerDeviceType.Mouse || device.type === UPowerDeviceType.Keyboard
               ? (device.type === UPowerDeviceType.Mouse ? "mouse" : "keyboard") : Peripheral.kind(device.model || device.nativePath),
-        percentage: Peripheral.percentage(device.percentage),
+        percentage: Peripheral.percentage(percent100(device.percentage)),
         connected: true,
         charging: device.state === UPowerDeviceState.Charging ? true
             : device.state === UPowerDeviceState.Discharging || device.state === UPowerDeviceState.FullyCharged ? false : null
@@ -50,6 +50,15 @@ QtObject {
 
     function laptopBatteries() {
         return UPower.devices.values.filter(device => device.isLaptopBattery && device.isPresent);
+    }
+
+    // Quickshell normalizes the UPower D-Bus Percentage (0-100) into a 0-1 fraction
+    // (DBusDataTransform<PowerPercentage> applies *0.01 — quickshell 0.3.2 src/services/
+    // upower/device.cpp), the same convention as Pipewire volume, wifi signalStrength and
+    // Bluetooth battery. The backend contract and every panel expect 0-100, so both UPower
+    // read sites rescale here; missing it renders an 80% battery as Math.round(0.8) = 1%.
+    function percent100(value) {
+        return typeof value === "number" && isFinite(value) ? Math.round(value * 100) : null;
     }
 
     // Port of scripts/battery_info.py::battery_details over UPower properties.

@@ -101,6 +101,18 @@ class NativeSectionContractCase(unittest.TestCase):
         self.assertIn("JSON.stringify(backend)", source)
         self.assertIn("sameSections", source)
 
+    def test_powerstate_rescales_quickshells_01_upower_percentage(self):
+        # Quickshell 0.3.2 normalizes the UPower D-Bus Percentage (0-100) into
+        # a 0-1 fraction (DBusDataTransform<PowerPercentage> applies *0.01) —
+        # the same fraction convention as Pipewire volume, wifi signalStrength
+        # and Bluetooth battery, which Q1 already rescaled by 100. Both UPower
+        # read sites must go through percent100() or the bar renders an 80%
+        # battery as Math.round(0.8) = 1%.
+        source = (ROOT/"qml/services/PowerState.qml").read_text()
+        self.assertIn("function percent100(", source)
+        self.assertIn("percent: percent100(device.percentage)", source)
+        self.assertIn("percentage: Peripheral.percentage(percent100(device.percentage))", source)
+
 
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")
 class NativeStateQmlCase(unittest.TestCase):
@@ -136,3 +148,20 @@ class NativeStateQmlCase(unittest.TestCase):
         self.assertTrue(result["stable"])
         # A doctored backend section must be counted as a mismatch.
         self.assertEqual(result["mismatches"], {"audio": 1})
+
+    def test_percent100_maps_the_quickshell_fraction_to_the_backend_scale(self):
+        # Behavioral twin of the source contract above: percent100() is the
+        # boundary between Quickshell's 0-1 UPower fraction and the backend's
+        # frozen 0-100 percent contract. Finish from a Timer (not
+        # Component.onCompleted): Qt.quit() during completion has no receiver
+        # yet and the fixture times out (caught on the owner's machine).
+        result = self.run_qml('import "qml/services"', '''
+    Timer {
+        interval: 100; running: true; repeat: false
+        onTriggered: {
+            fixture.finish({eighty: PowerState.percent100(0.8), full: PowerState.percent100(1),
+                            empty: PowerState.percent100(0), bad: PowerState.percent100(NaN),
+                            absent: PowerState.percent100(undefined)});
+        }
+    }''')
+        self.assertEqual(result, {"eighty": 80, "full": 100, "empty": 0, "bad": None, "absent": None})

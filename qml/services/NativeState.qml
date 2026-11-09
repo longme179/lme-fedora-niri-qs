@@ -28,7 +28,8 @@ QtObject {
 
     // The backend-independent section set; null in every fixture mode so the native services
     // are never even referenced there (no service connections in demo/tests/Settings).
-    readonly property var baseSections: backendDemo || settingsApp ? null : {
+    readonly property var baseSections: {
+        if (backendDemo || settingsApp) return null;
         const bluetooth = BluetoothState.sectionFor(ShellState.preferences.bluetoothAdapter);
         return {audio: AudioState.state, microphone: AudioState.microphone,
                 battery: PowerState.battery, powerProfile: PowerState.profile, powerProfiles: PowerState.profiles,

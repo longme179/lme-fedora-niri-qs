@@ -62,7 +62,7 @@ class NativeSectionContractCase(unittest.TestCase):
         # The demo backend is stateful (audio/power/network actions mutate its snapshot) and
         # development tests inject hardware state through it — native sections must not override.
         source = (ROOT/"qml/services/NativeState.qml").read_text()
-        self.assertIn("backendDemo || settingsApp ? null :", source)
+        self.assertIn("if (backendDemo || settingsApp) return null;", source)
         self.assertIn("if (backendDemo || settingsApp) return SystemMerge.merge(backend, null, passthrough)", source)
         self.assertNotIn("NATIVE_DEMO_SECTIONS", source)
 

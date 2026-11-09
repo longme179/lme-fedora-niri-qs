@@ -127,6 +127,13 @@ QtObject {
         onSaveFailed: error => { root.error = "Usage history could not be saved: " + FileViewError.toString(error); }
     }
 
+    // Object.fromEntries is ES2019 — quickshell 0.3.2's V4 engine lacks it (real-machine Q2 verify, round 2).
+    function fromPairs(pairs) {
+        const out = {};
+        for (let i = 0; i < pairs.length; i++) out[pairs[i][0]] = pairs[i][1];
+        return out;
+    }
+
     // Port of launcher_history.py::read — every bound and cap the Python side enforces.
     function parseStore(text) {
         let raw;
@@ -150,10 +157,10 @@ QtObject {
                 if (age < retentionDays) valid[day] = dayCount; // python keeps future-stamped days too (age < 60); NaN fails the test
             }
             const keys = Object.keys(valid).sort().reverse().slice(0, retentionDays);
-            if (keys.length) result[app] = {last: last, days: Object.fromEntries(keys.map(key => [key, valid[key]]))};
+            if (keys.length) result[app] = {last: last, days: fromPairs(keys.map(key => [key, valid[key]]))};
         }
         const ordered = Object.keys(result).sort((a, b) => result[b].last - result[a].last).slice(0, maxApps);
-        return Object.fromEntries(ordered.map(app => [app, result[app]]));
+        return fromPairs(ordered.map(app => [app, result[app]]));
     }
 
     // Port of launcher_history.py::record's mutation — read-fresh, stamp every queued launch, re-cap, write.
@@ -169,7 +176,7 @@ QtObject {
         }
         recordQueue = [];
         const ordered = Object.keys(apps).sort((a, b) => apps[b].last - apps[a].last).slice(0, maxApps);
-        const capped = Object.fromEntries(ordered.map(app => [app, apps[app]]));
+        const capped = fromPairs(ordered.map(app => [app, apps[app]]));
         store = capped;
         storeView.setText(JSON.stringify({schema: 1, apps: capped}));
     }

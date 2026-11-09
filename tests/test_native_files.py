@@ -3,6 +3,7 @@ Contract: test_native_files.py covers native_files behavior/contracts; check imp
 """
 import json  # Contract: test_native_files.py (Q2 native file families; headroom 0, trailing note)
 import os
+import re
 import shutil
 import subprocess
 import unittest
@@ -50,6 +51,23 @@ class NativeFilesContractCase(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue((ROOT / path).is_file(), path)
                 self.assertLessEqual(nonblank(path), 250)
+
+    def test_services_avoid_apis_missing_from_quickshells_v4_engine(self):
+        # Real-machine Q2 verification: quickshell 0.3.2's engine has no Object.fromEntries
+        # (TypeError at load) and rejects ES3 future-reserved words like 'native' as property
+        # names (parse error). Node-based sandbox checks cannot catch either.
+        for path in sorted((ROOT / "qml/services").glob("*.qml")):
+            source = path.read_text()
+            code = "\n".join(line for line in source.splitlines() if not line.strip().startswith("//"))
+            with self.subTest(path=path.name):
+                self.assertNotIn("Object.fromEntries", code)
+                for match in re.finditer(r"^\s*(?:readonly\s+)?property\s+\w+\s+(native)\s*:", source, re.M):
+                    self.fail(f"{path.name}: reserved keyword {match.group(1)!r} used as a property name")
+
+    def test_launcher_state_pairs_helper_replaces_fromentries(self):
+        source = (ROOT / "qml/services/LauncherState.qml").read_text()
+        self.assertIn("function fromPairs(pairs)", source)
+        self.assertGreaterEqual(source.count("fromPairs("), 4)  # definition + three call sites
 
     def test_qmldir_registers_the_new_singletons(self):
         qmldir = (ROOT / "qml/services/qmldir").read_text()
@@ -132,13 +150,17 @@ class NativeFilesQmlCase(unittest.TestCase):
         self.assertEqual(result["usage"], {})
 
     def test_native_apps_have_the_backend_shape_and_ordering(self):
+        # DesktopEntries scans asynchronously — poll until the list lands (deadline 8 s,
+        # comfortably inside run_qml's 15 s subprocess timeout) instead of a fixed 1.2 s
+        # wait that raced the scan on the real machine (round 2: count 0 at 1.2 s).
         result = self.run_qml('import "qml/services"', '''
-    property int phase: 0
+    property int ticks: 0
     Timer {
-        interval: 150; running: true; repeat: true
+        interval: 200; running: true; repeat: true
         onTriggered: {
-            fixture.phase++;
-            if (fixture.phase > 8) fixture.finish({apps: LauncherState.apps});
+            fixture.ticks++;
+            const apps = LauncherState.apps;
+            if ((apps && apps.length > 0) || fixture.ticks >= 40) fixture.finish({apps: apps || []});
         }
     }''', environment={"LME_SHELL_DEMO": "0"})
         apps = result["apps"]
@@ -198,19 +220,25 @@ class NativeFilesQmlCase(unittest.TestCase):
         self.assertIn("app-a.desktop", raw["apps"])
 
     def test_monitor_parsers_port_the_python_math(self):
+        # finish() fires from a one-shot Timer, never from Component.onCompleted — Qt.quit()
+        # without a receiver hangs until the 15 s timeout on the real machine (the Q1
+        # hotfix lesson, commit eb5f2db).
         result = self.run_qml('import "qml/services"', '''
-    Component.onCompleted: {
-        const stat1 = "cpu  100 0 100 100 0 0 0 0 0 0\\ncpu0 60 0 20 20 0 0 0 0 0 0\\ncpu1 30 0 10 0 0 0 0 0 0 0\\n";
-        const stat2 = "cpu  200 0 100 100 0 0 0 0 0 0\\ncpu0 120 0 40 20 0 0 0 0 0 0\\ncpu1 30 0 10 0 0 0 0 0 0 0\\n";
-        const first = MonitorState.parseStat(stat1, null);
-        const second = MonitorState.parseStat(stat2, first.totals);
-        const mem = MonitorState.parseMeminfo("MemTotal:       16384000 kB\\nMemAvailable:    8192000 kB\\n");
-        const net = MonitorState.parseNetDev("  wlo1: 1000 0 0 0 0 0 0 0 500 0 0 0 0 0 0 0\\n  lo: 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0\\n", {wlo1: [0, 0]}, 2);
-        fixture.finish({cpu: second.cpu, core0: second.cores[0].percent, coreName: second.cores[0].name,
-                        core1: second.cores[1].percent, cores: second.cores.length,
-                        memPercent: mem.memoryPercent, memUsed: mem.memoryUsedGiB, memTotal: mem.memoryTotalGiB,
-                        iface: net.interfaces[0].name, ifaceCount: net.interfaces.length,
-                        download: net.interfaces[0].download, upload: net.interfaces[0].upload});
+    Timer {
+        interval: 100; running: true; repeat: false
+        onTriggered: {
+            const stat1 = "cpu  100 0 100 100 0 0 0 0 0 0\\ncpu0 60 0 20 20 0 0 0 0 0 0\\ncpu1 30 0 10 0 0 0 0 0 0 0\\n";
+            const stat2 = "cpu  200 0 100 100 0 0 0 0 0 0\\ncpu0 120 0 40 20 0 0 0 0 0 0\\ncpu1 30 0 10 0 0 0 0 0 0 0\\n";
+            const first = MonitorState.parseStat(stat1, null);
+            const second = MonitorState.parseStat(stat2, first.totals);
+            const mem = MonitorState.parseMeminfo("MemTotal:       16384000 kB\\nMemAvailable:    8192000 kB\\n");
+            const net = MonitorState.parseNetDev("  wlo1: 1000 0 0 0 0 0 0 0 500 0 0 0 0 0 0 0\\n  lo: 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0\\n", {wlo1: [0, 0]}, 2);
+            fixture.finish({cpu: second.cpu, core0: second.cores[0].percent, coreName: second.cores[0].name,
+                            core1: second.cores[1].percent, cores: second.cores.length,
+                            memPercent: mem.memoryPercent, memUsed: mem.memoryUsedGiB, memTotal: mem.memoryTotalGiB,
+                            iface: net.interfaces[0].name, ifaceCount: net.interfaces.length,
+                            download: net.interfaces[0].download, upload: net.interfaces[0].upload});
+        }
     }''')
         # Totals delta: aggregate +100 total/+0 idle and cpu0 +80/+0 -> 100% busy; cpu1 unchanged -> null.
         self.assertEqual(result["cpu"], 100.0)

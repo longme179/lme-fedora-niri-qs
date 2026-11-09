@@ -26,6 +26,8 @@ without editing QML. **Settings → Shell utilities** contains Launchpad and the
 
 ![Control Center with quick toggles, glass tiles and tinted sliders over the demo desktop](docs/previews/control.png)
 
+![Demo: Control Center, Equalizer and Launcher opening with spring motion](docs/previews/demo.mp4)
+
 <details>
 <summary><strong>More screenshots</strong></summary>
 

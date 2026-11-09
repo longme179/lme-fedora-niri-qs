@@ -220,7 +220,7 @@ QtObject {
             }
         } catch (error) { console.warn("Invalid desktop backend message:", error); }
     }
-    Connections { // Q1: volume/mute OSD follows native audio; brightness still tracks the backend poll.
+    property Connections audioOsd: Connections { // Q1: volume/mute OSD follows native audio; brightness still tracks the backend poll.
         target: AudioState
         function onOsd(volume, muted) {
             osdLabel = muted ? "Muted" : "Volume"; osdValue = muted ? 0 : volume;

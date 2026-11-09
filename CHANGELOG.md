@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Fix the battery module reading 1% at roughly 80% charge (Q1 regression).
+  Quickshell 0.3.2 normalizes the UPower `Percentage` D-Bus property (0-100)
+  into a 0-1 fraction — the same convention as PipeWire volume, Wi-Fi signal
+  strength and Bluetooth battery, which Q1 already rescaled — but
+  `PowerState` rounded it as if it were 0-100, so 79% became
+  `Math.round(0.79)` = 1. Both UPower read sites (the battery percent and
+  the UPower peripheral supplies) now go through `percent100()`. The
+  real-machine A/B audit showed backend 79 vs native 1 on all 27 battery
+  drift lines and no other drift beyond Wi-Fi strength sampling jitter.
 - Audio, microphone, battery, power-profile, Bluetooth and Wi-Fi summary state
   now comes from Quickshell's native PipeWire, UPower, BlueZ and NetworkManager
   services (event-driven) instead of the 1.5-5 s backend polling, with identical

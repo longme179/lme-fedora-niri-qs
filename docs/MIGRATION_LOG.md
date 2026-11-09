@@ -14,6 +14,14 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 - batterySaver re-homed to the write phases (state machine + toggle move together).
 - G0 green (1082 tests; 3 known quickshell-absent errors). Real-session checks:
   day of A/B warnings, value parity, wake-rate delta — pending owner validation.
+- Same-day hotfix (owner-reported battery 1% at ~80%): Quickshell 0.3.2's
+  `UPowerDevice.percentage` is a 0-1 fraction (D-Bus Percentage * 0.01), which
+  Q1 read as 0-100 — `PowerState` now rescales both read sites via
+  `percent100()` (the *100 Q1 already applied to Pipewire volume / wifi
+  signalStrength / Bluetooth battery was missing only here). Real-machine A/B
+  audit (crouton-alpha agent, deployed f607734): 27/27 battery drift lines
+  backend 79 vs native 1; network ±2 strength sampling jitter only;
+  audio/mic/bluetooth/powerProfile/peripheralBatteries zero drift.
 
 ## Q0 — QML-first migration baseline — 2026-11-09
 - Owner accepted the phased QML-first plan (docs/QML_FIRST_MIGRATION_PLAN.md;

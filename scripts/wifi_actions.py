@@ -102,6 +102,7 @@ class ConnectionsCapabilities:
     executable: Callable
 
 
+# DEPRECATED(Q3->Q6): the connection families (networkRefresh/Connect/Disconnect/HotspotPlan/HotspotStart/Edit + networkCancel) route natively in real sessions (qml/services/NetworkInventoryState.qml); this registry stays as the fallback and demo provider through the A/B window
 def provide_connections(cap):
     old, project = provide(cap.wifi)
     domain = NetworkProfiles(cap); state = {}; current = None

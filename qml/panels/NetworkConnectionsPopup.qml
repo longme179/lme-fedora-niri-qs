@@ -16,7 +16,7 @@ MotionPopup {
     height: Math.min(780, parent ? parent.height - 32 : 780)
     padding: 20; modal: true; focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    readonly property var inventory: ShellState.snapshot.networkConnections || {}
+    readonly property var inventory: ShellState.networkConnections || {}
     readonly property var profiles: inventory.profiles || []
     readonly property var operation: inventory.operation || {}
     readonly property bool busy: ["networkRefresh", "networkConnect", "networkDisconnect", "networkHotspotPlan", "networkHotspotStart", "networkEdit", "wifiScan", "wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle"].some(a => ShellState.pendingActions[a])

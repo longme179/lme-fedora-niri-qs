@@ -80,7 +80,7 @@ PINNED_MESSAGES = [
     "NetworkManager changed during cancellation; check actual connections",
     "Cancellation could not confirm disconnection; use Advanced network settings",
     "Activation cancelled.",
-    "Activation cancelled. Previous Wi-Fi may need reconnecting.",
+    " Previous Wi-Fi may need reconnecting.",
     "No network activation is running",
     "Activation already finished; check observed connections",
     "Cancellation requested; waiting for the observed outcome",
@@ -123,11 +123,13 @@ class NativeInventoryContractCase(unittest.TestCase):
         # show, connection listing and the per-profile detail batch.
         self.assertIn('"busctl", "--system", "--json=short", "call", "org.freedesktop.DBus"', source)
         self.assertIn('"nmcli", "-t", "-f", "WIFI-HW,WIFI", "general"', source)
-        self.assertIn('"nmcli", "-t", "-m", "multiline", "-f", "DEVICE_FIELDS", "device", "show"', source)
-        self.assertIn('"nmcli", "-t", "-f", "LIST_FIELDS", "connection", "show"', source)
+        self.assertIn('"nmcli", "-t", "-m", "multiline", "-f", NetworkModel.DEVICE_FIELDS, "device", "show"', source)
+        self.assertIn('"nmcli", "-t", "-f", NetworkModel.LIST_FIELDS, "connection", "show"', source)
         # Mutations keep the backend argv (--wait 15 up / --wait 5 down) and the cancel path
         # mirrors the Event-driven cancellation with its own stop-and-confirm reads.
-        self.assertIn('"--wait", "15", "connection", "up", "uuid"', source)
+        self.assertIn('["nmcli", "--wait", "15"].concat(plan.args)', source)
+        self.assertIn('["connection", "up", "uuid", profile.uuid]', NETWORK_PLANS.read_text())
+        self.assertIn('["connection", "down", "apath", request.activePath]', NETWORK_PLANS.read_text())
         self.assertIn('"--wait", "5", "connection", "down", "apath"', source)
         self.assertIn('"No network activation is running"', source)
         self.assertIn('"Cancellation requested; waiting for the observed outcome"', source)
@@ -145,7 +147,7 @@ class NativeInventoryContractCase(unittest.TestCase):
         self.assertIn('"Required command is unavailable: " + request.name', source)
         self.assertIn('request.name + " timed out"', source)
         self.assertIn('request.name + " failed (" + code + ")"', source)
-        self.assertIn('"output exceeds " + request.cap + " bytes"', source)
+        self.assertIn('request.name + " output exceeds " + request.cap + " bytes"', source)
         self.assertIn("environment: ({LC_ALL: \"C\"})", source)
 
     def test_shellstate_router_fans_out_to_the_inventory_services(self):
@@ -410,7 +412,7 @@ class NativeInventoryQmlCase(unittest.TestCase):
         self.assertEqual(seen["phase0"]["message"], "Demo preview: no system command executed")
         self.assertEqual(seen["phase0"]["cards"], 1)
         self.assertEqual(seen["phase1"]["ok"], False)
-        self.assertEqual(seen["phase1"]["message"], "Invalid audio device request; refresh devices")
+        self.assertEqual(seen["phase1"]["message"], "Audio server changed; refresh devices before retrying")
         self.assertEqual(seen["phase2"]["ok"], True)
         self.assertEqual(seen["phase2"]["message"], "Demo preview: no system command executed")
         self.assertEqual(seen["phase2"]["profiles"], 4)

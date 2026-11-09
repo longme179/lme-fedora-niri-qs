@@ -15,6 +15,8 @@ QtObject {
     property var snapshot: ({apps: [], niri: {available: false, windows: [], workspaces: []}, system: {}, preferences: {language: "en", animations: true, opacity: 0.90, accent: "#9580ff"}})
     readonly property var apps: NativeState.apps(snapshot.apps) // Q2: native app list in real sessions (qml/services/LauncherState.qml)
     readonly property var launcherUsage: NativeState.usage(snapshot.launcherUsage, preferences.launcherRanking !== false) // Q2: native history store
+    readonly property var audioDevices: NativeState.audioDevices(snapshot.audioDevices) // Q3: native audio device inventory (AudioDeviceState.qml)
+    readonly property var networkConnections: NativeState.networkConnections(snapshot.networkConnections) // Q3: native saved connections (NetworkInventoryState.qml)
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: snapshot.weather || {}
@@ -168,7 +170,22 @@ QtObject {
         if (AudioState.handles(action)) return AudioState;
         if (BluetoothState.handles(action)) return BluetoothState;
         if (PowerState.handles(action)) return PowerState;
+        if (NetworkInventoryState.handles(action)) return NetworkInventoryState;
+        if (AudioDeviceState.handles(action)) return AudioDeviceState;
         return null;
+    }
+    // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
+    // scripts/wifi_actions.py::provide_connections::prepare): one audio operation at a time
+    // (bluetoothDevice included — a route may target its card), and the connection actions
+    // block each other including refresh/plan (mutations also block wifi work below).
+    function inventoryBusy(action) {
+        const audioFamily = ["audioDevicesRefresh", "audioPort", "audioProfile", "audioRoute", "bluetoothDevice"];
+        const connections = ["networkRefresh", "networkConnect", "networkDisconnect", "networkHotspotPlan", "networkHotspotStart", "networkEdit"];
+        if (audioFamily.indexOf(action) >= 0 && audioFamily.some(name => pendingActions[name]))
+            return "An audio device operation is already running";
+        if (connections.indexOf(action) >= 0 && connections.some(name => pendingActions[name]))
+            return "This operation is already running";
+        return "";
     }
     function run(action, payload) {
         // Release the layer-shell keyboard grab before any external agent opens.
@@ -182,9 +199,8 @@ QtObject {
                 // the services stay free of ShellState references (composition stays acyclic).
                 const context = {system: system, status: message => { statusMessage = message; statusError = false; statusTimer.restart(); }};
                 if (owner.canRoute(action, payload || {}, context)) {
-                    if (nativeMutationActions.some(name => pendingActions[name])) {
-                        statusMessage = "This operation is already running"; statusError = true; statusTimer.restart(); return;
-                    }
+                    const busy = inventoryBusy(action) || (nativeMutationActions.some(name => pendingActions[name]) ? "This operation is already running" : "");
+                    if (busy) { statusMessage = busy; statusError = true; statusTimer.restart(); return; }
                     let sent;
                     try { sent = Pending.sent(pendingState, action); }
                     catch (error) { statusMessage = String(error); statusError = true; statusTimer.restart(); return; }

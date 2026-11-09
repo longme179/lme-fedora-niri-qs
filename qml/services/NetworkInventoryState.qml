@@ -26,7 +26,7 @@ QtObject {
     property CommandRunner tools: CommandRunner { id: runner }
 
     readonly property var projection: {
-        if (!activation) return Object.assign({}, section || {}, {operation: ({}});
+        if (!activation) return Object.assign({}, section || {}, {operation: {}});
         return Object.assign({}, section || {}, {operation: {action: activation.action, uuid: activation.uuid,
             deviceId: activation.deviceId,
             cancellable: activation.action === "networkConnect" || activation.action === "networkHotspotStart",

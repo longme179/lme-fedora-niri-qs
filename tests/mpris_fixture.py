@@ -1,4 +1,7 @@
-"""A private-bus MPRIS player for optional native integration checks."""
+"""A private-bus MPRIS player for optional native integration checks.
+
+Contract/helper: test infrastructure for mpris_fixture.py. REL: qml/services/ActivityState.qml (MPRIS consumers).
+"""
 import json
 import os
 import signal

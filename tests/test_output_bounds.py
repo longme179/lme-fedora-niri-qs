@@ -1,4 +1,6 @@
-"""Bounded command pipes; finite fake producers, never real tools or disk exhaustion."""
+"""Bounded command pipes; finite fake producers, never real tools or disk exhaustion.
+Contract: test_output_bounds.py covers output_bounds behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import inspect
 from pathlib import Path
 import sys

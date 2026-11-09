@@ -1,4 +1,6 @@
-"""Owned tool invocations stop on shutdown without canceling detached user jobs."""
+"""Owned tool invocations stop on shutdown without canceling detached user jobs.
+Contract: test_managed_commands.py covers managed_commands behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

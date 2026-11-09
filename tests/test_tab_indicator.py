@@ -1,4 +1,6 @@
-"""Selection fill must share the button's layout, hover and press geometry."""
+"""Selection fill must share the button's layout, hover and press geometry.
+Contract: test_tab_indicator.py covers tab_indicator behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

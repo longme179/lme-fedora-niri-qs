@@ -1,4 +1,6 @@
-"""Palette data, isolated Matugen options, profiles and native live theming."""
+"""Palette data, isolated Matugen options, profiles and native live theming.
+Contract: test_palettes.py covers palettes behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

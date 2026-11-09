@@ -1,4 +1,6 @@
-"""Shared text/image formats and normalized image paths."""
+"""Shared text/image formats and normalized image paths.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 from __future__ import annotations
 from pathlib import Path
 

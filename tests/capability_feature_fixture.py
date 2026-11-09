@@ -1,4 +1,7 @@
-"""Observe existing services and private D-Bus in copied feature checkouts."""
+"""Observe existing services and private D-Bus in copied feature checkouts.
+
+Contract/helper: test infrastructure for capability_feature_fixture.py. Related (see docs/WORKSPACE_MAP.md/config/architecture.json)) under test inferred from imports.
+"""
 from contextlib import contextmanager
 import json
 import subprocess

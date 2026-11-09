@@ -1,4 +1,6 @@
-"""Current navigation contracts; production remains unchanged for the before run."""
+"""Current navigation contracts; production remains unchanged for the before run.
+Contract: test_navigation.py covers navigation behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

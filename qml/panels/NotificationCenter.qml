@@ -1,3 +1,5 @@
+// Role: NotificationCenter.qml (notifications layer, fan-in 4).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 
 import QtQuick

@@ -1,4 +1,6 @@
-"""pactl v17 uses availability strings for ports and available booleans for profiles."""
+"""pactl v17 uses availability strings for ports and available booleans for profiles.
+Contract: test_audio_port_availability.py covers audio_port_availability behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import unittest
 
 from audio_device_fixture import documents, PulseRunner

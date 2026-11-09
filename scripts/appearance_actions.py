@@ -1,4 +1,7 @@
-"""Synchronous palette/profile and transfer actions; existing transactions stay authoritative."""
+"""Synchronous palette/profile and transfer actions; existing transactions stay authoritative.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: appearance; Phase 3 graph).
+"""
+# REL: qml/settings/AppearancePage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 

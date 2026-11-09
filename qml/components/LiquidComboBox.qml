@@ -1,3 +1,5 @@
+// Role: LiquidComboBox.qml (shared layer, fan-in 32).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma ComponentBehavior: Bound
 
 import QtQuick

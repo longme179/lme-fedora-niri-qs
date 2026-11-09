@@ -1,5 +1,5 @@
 """Element theming, concurrent edits, binary aliases and native liquid controls."""
-import json
+import json  # Contract: test_personalization.py (headroom 0, trailing note)
 import os
 from pathlib import Path
 import shutil

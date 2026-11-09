@@ -1,4 +1,6 @@
-"""Copied-checkout UI with actual backend/workers and a fake NetworkManager CLI."""
+"""Copied-checkout UI with actual backend/workers and a fake NetworkManager CLI.
+Contract: network_ui_fixture.py covers network_ui_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import json
 from pathlib import Path

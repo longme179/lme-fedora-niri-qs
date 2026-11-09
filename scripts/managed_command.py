@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Stop an owned tool's process group even if Quickshell kills its backend."""
+"""Stop an owned tool's process group even if Quickshell kills its backend.
+
+Callers: desktop_backend.py and feature workers needing supervised child/process-group lifetime.
+INVARIANT: owned process groups are terminated on parent/supervision events; avoids orphaned helper processes.
+REL: scripts/idle_control.py::PR_SET_PDEATHSIG; scripts/command_runner.py – external command execution boundaries.
+"""
 import argparse
 import ctypes
 import os

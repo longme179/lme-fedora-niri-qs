@@ -1,4 +1,6 @@
-"""The retained direct demo facade has no result payload for profile actions."""
+"""The retained direct demo facade has no result payload for profile actions.
+Contract: test_sync_facade.py covers sync_facade behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import unittest
 from test_backend import Fixture
 

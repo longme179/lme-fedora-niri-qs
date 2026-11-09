@@ -1,4 +1,7 @@
-"""Battery-saver admission delegates to its existing journal/restore controller."""
+"""Battery-saver admission delegates to its existing journal/restore controller.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: batterySaver; Phase 3 graph).
+"""
+# REL: qml/settings/BehaviorPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec, PreparedWork

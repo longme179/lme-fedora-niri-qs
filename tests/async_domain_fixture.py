@@ -1,4 +1,7 @@
-"""Characterize coordinator/domain seams with manual jobs and no real hardware."""
+"""Characterize coordinator/domain seams with manual jobs and no real hardware.
+
+Contract/helper: test infrastructure for async_domain_fixture.py. Helper/fixture (Phase 2); modules under test inferred from imports.
+"""
 from contextlib import nullcontext
 import copy
 import json

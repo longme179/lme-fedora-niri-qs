@@ -1,4 +1,6 @@
-"""Peripheral battery normalization, disconnects and existing polling cadence."""
+"""Peripheral battery normalization, disconnects and existing polling cadence.
+Contract: test_peripheral_battery.py covers peripheral_battery behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import unittest

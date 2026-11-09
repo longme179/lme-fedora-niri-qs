@@ -1,4 +1,6 @@
-"""Owned recording; GPU encoding is probed only when a user starts capture."""
+"""Owned recording; GPU encoding is probed only when a user starts capture.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: recording; Phase 3 graph).
+"""
 # NVIDIA-first / VAAPI / software fallback adapted from iNiR record.sh (48cdcecb).
 # Copyright (C) 2025-2026 snowarch; modified for LME ownership and validated settings.
 # See third_party/iNiR-NOTICE and THIRD_PARTY.md.

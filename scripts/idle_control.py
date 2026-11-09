@@ -1,4 +1,6 @@
-"""Own one swayidle child and use swaylock's ready-fd before sleeping."""
+"""Own one swayidle child and use swaylock's ready-fd before sleeping.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: idle; Phase 3 graph).
+"""
 import argparse
 import ctypes
 import fcntl

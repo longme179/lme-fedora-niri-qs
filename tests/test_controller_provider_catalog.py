@@ -1,4 +1,6 @@
-"""Controller selection moves; controller execution, state and ownership do not."""
+"""Controller selection moves; controller execution, state and ownership do not.
+Contract: test_controller_provider_catalog.py covers controller_provider_catalog behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from dataclasses import fields
 import json
 import os

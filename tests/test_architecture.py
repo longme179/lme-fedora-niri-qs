@@ -1,4 +1,6 @@
-"""Characterize existing boundaries, then exercise the guard in copied checkouts."""
+"""Characterize existing boundaries, then exercise the guard in copied checkouts.
+Contract: test_architecture.py covers architecture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import ast
 import importlib.util
 import json

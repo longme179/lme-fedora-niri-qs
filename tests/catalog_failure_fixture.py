@@ -1,4 +1,7 @@
-"""Faults and observation live only in fully copied private checkouts."""
+"""Faults and observation live only in fully copied private checkouts.
+
+Contract/helper: test infrastructure for catalog_failure_fixture.py. REL: scripts/feature_catalog.py.
+"""
 from contextlib import contextmanager
 import json
 import os

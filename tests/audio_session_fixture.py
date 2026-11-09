@@ -1,4 +1,7 @@
-"""Private virtual PipeWire/Pulse: no hardware monitors, real-session sockets or agents."""
+"""Private virtual PipeWire/Pulse: no hardware monitors, real-session sockets or agents.
+
+Contract/helper: test infrastructure for audio_session_fixture.py. Related (see docs/WORKSPACE_MAP.md/config/architecture.json)) under test inferred from imports.
+"""
 import json
 import os
 from pathlib import Path

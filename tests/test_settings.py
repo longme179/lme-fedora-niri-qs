@@ -1,4 +1,6 @@
-"""Shared preference and standalone settings contracts."""
+"""Shared preference and standalone settings contracts.
+Contract: test_settings.py covers settings behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import subprocess

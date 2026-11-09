@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Role: LyricsSession.qml (shared layer, fan-in 2).
+// Shared component/helper; keep API stable for wide QML reuse.
 // Cue-boundary scheduling adapted from pctrade/end4-pC LyricsService (8fbb6716).
 pragma ComponentBehavior: Bound
 import QtQuick

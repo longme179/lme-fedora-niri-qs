@@ -1,4 +1,6 @@
 #version 440
+// Role: eq-lightning.frag (shared layer).
+// Shader source consumed by QML ShaderEffect/material; .qsb is generated output (do not edit).
 
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;

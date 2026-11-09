@@ -1,3 +1,5 @@
+// Role: NotesState.qml (notes layer, fan-in 2).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 import Quickshell

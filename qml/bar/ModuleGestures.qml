@@ -1,3 +1,5 @@
+// Role: ModuleGestures.qml (shared layer, fan-in 2).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 import QtQuick
 
 Item {

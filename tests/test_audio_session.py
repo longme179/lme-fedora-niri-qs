@@ -1,4 +1,6 @@
-"""Actual private virtual audio capability, isolated from all user sockets/hardware."""
+"""Actual private virtual audio capability, isolated from all user sockets/hardware.
+Contract: test_audio_session.py covers audio_session behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

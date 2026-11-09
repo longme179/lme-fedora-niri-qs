@@ -1,4 +1,6 @@
-"""Registry-only contracts; N/A until the M6 infrastructure exists."""
+"""Registry-only contracts; N/A until the M6 infrastructure exists.
+Contract: test_action_routing.py covers action_routing behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib.util
 import unittest
 from unittest.mock import Mock, patch

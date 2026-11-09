@@ -1,4 +1,6 @@
-"""Projection publication is batched; repeated module lookups reuse the registry cache."""
+"""Projection publication is batched; repeated module lookups reuse the registry cache.
+Contract: test_catalog_projection.py covers catalog_projection behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 from unittest.mock import patch

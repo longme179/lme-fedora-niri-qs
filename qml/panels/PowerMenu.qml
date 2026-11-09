@@ -1,3 +1,5 @@
+// Role: PowerMenu.qml (power layer, fan-in 3).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -36,7 +38,7 @@ Item {
         Accessible.name: label
         onClicked: {
             if (actionName === "lock") {
-                ShellState.run("lock");
+                ShellState.run("lock"); // REL: scripts/lock_actions.py::provide
                 ShellState.closePanels();
             } else root.requestAction(actionName, label);
         }

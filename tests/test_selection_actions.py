@@ -1,4 +1,6 @@
-"""Freeze selection/application transactions and demo isolation before extraction."""
+"""Freeze selection/application transactions and demo isolation before extraction.
+Contract: test_selection_actions.py covers selection_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import os
 import shlex

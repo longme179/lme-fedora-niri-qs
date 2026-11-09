@@ -1,5 +1,5 @@
 """Reversible glass theming, shared backdrop lifetime and real shader rendering."""
-import json
+import json  # Contract: test_liquid_style.py (headroom 0, trailing note)
 import os
 from pathlib import Path
 import shutil

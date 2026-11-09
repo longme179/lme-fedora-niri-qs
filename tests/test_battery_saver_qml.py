@@ -1,4 +1,6 @@
-"""Battery saver applies a temporary visual policy without changing customization."""
+"""Battery saver applies a temporary visual policy without changing customization.
+Contract: test_battery_saver_qml.py covers battery_saver_qml behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import shutil

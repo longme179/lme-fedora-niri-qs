@@ -1,4 +1,6 @@
-"""Settings survive corruption, unknown keys and oversized numbers."""
+"""Settings survive corruption, unknown keys and oversized numbers.
+Contract: test_preferences_durability.py covers preferences_durability behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 from pathlib import Path
 import sys

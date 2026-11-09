@@ -1,4 +1,6 @@
-"""White Liquid labels and glass on custom button backgrounds."""
+"""White Liquid labels and glass on custom button backgrounds.
+Contract: test_button_materials.py covers button_materials behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 import test_local_qml as qml_tests

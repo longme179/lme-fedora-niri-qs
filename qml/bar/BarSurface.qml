@@ -1,3 +1,5 @@
+// Role: BarSurface.qml (shared layer, fan-in 4).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 import QtQuick
 import Quickshell
 import "../components"

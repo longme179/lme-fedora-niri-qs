@@ -1,4 +1,9 @@
-"""Explicit owner-invoked deployment: verified runtime, journalled niri integration."""
+"""Explicit owner-invoked deployment: verified runtime, journalled niri integration.
+
+Callers: deploy.sh (repo root). Coordinates deploy_runtime/state/files/niri stages.
+INVARIANT: owner-invoked apply may patch niri only with backup, staged validation, diff, and rollback path (AGENTS.md).
+REL: scripts/deploy_runtime.py, deploy_state.py, deploy_files.py, deploy_niri.py, deploy_niri_tree.py.
+"""
 import argparse
 from datetime import datetime, timezone
 import os

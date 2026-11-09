@@ -25,7 +25,7 @@ ColumnLayout {
                 onToggled: {
                     const requested = checked;
                     checked = Qt.binding(() => ShellState.batterySaverActive);
-                    ShellState.run("batterySaver", {enabled: requested});
+                    ShellState.run("batterySaver", {enabled: requested}); // REL: scripts/saver_actions.py::provide
                 }
             }
         }

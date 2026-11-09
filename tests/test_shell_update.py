@@ -1,5 +1,5 @@
 """Real local Git remotes; no network, checkout resets or installed-shell changes."""
-import json
+import json  # Contract: test_shell_update.py (headroom 0, trailing note)
 import os
 from pathlib import Path
 import shutil

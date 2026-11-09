@@ -1,4 +1,7 @@
-"""Execute documented migration gates and retain explicit skip evidence."""
+"""Execute documented migration gates and retain explicit skip evidence.
+
+Contract/helper: test infrastructure for migration_checks.py. REL: tests/ (gate cases); scripts/run-gates.sh.
+"""
 import json
 import os
 from pathlib import Path

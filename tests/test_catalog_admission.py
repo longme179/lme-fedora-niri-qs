@@ -1,4 +1,6 @@
-"""Admission parity and a zero-Python hit path, without any real user session."""
+"""Admission parity and a zero-Python hit path, without any real user session.
+Contract: test_catalog_admission.py covers catalog_admission behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 from pathlib import Path
 import tempfile

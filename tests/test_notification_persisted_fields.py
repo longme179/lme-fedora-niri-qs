@@ -1,4 +1,6 @@
-"""Only fields written by notificationSave may advance the save revision."""
+"""Only fields written by notificationSave may advance the save revision.
+Contract: test_notification_persisted_fields.py covers notification_persisted_fields behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 

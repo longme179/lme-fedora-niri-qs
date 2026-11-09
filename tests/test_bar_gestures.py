@@ -1,4 +1,6 @@
-"""Validated, portable module gestures and their QML dispatch."""
+"""Validated, portable module gestures and their QML dispatch.
+Contract: test_bar_gestures.py covers bar_gestures behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 from test_backend import backend, Fixture, FakeRunner

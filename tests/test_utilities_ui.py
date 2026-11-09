@@ -1,4 +1,6 @@
-"""Exercise image utility widgets against a real JSON backend and a local CLI fixture."""
+"""Exercise image utility widgets against a real JSON backend and a local CLI fixture.
+Contract: test_utilities_ui.py covers utilities_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import shutil

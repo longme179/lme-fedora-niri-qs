@@ -1,4 +1,6 @@
-"""Desktop apps must not inherit a bounded control command's lifetime."""
+"""Desktop apps must not inherit a bounded control command's lifetime.
+Contract: test_launcher_lifetime.py covers launcher_lifetime behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

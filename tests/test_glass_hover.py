@@ -1,4 +1,6 @@
-"""Glass material hover light and simple rendering stay responsive without a backdrop."""
+"""Glass material hover light and simple rendering stay responsive without a backdrop.
+Contract: test_glass_hover.py covers glass_hover behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import json
 from pathlib import Path

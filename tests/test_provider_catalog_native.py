@@ -1,4 +1,6 @@
-"""Copied-checkout provider faults must settle shell and standalone Settings."""
+"""Copied-checkout provider faults must settle shell and standalone Settings.
+Contract: test_provider_catalog_native.py covers provider_catalog_native behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

@@ -1,4 +1,6 @@
-"""Private QML navigation probe shared by characterization and Wayland checks."""
+"""Private QML navigation probe shared by characterization and Wayland checks.
+Contract: navigation_fixture.py covers navigation_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import json
 import os

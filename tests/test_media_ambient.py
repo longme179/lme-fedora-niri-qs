@@ -1,4 +1,6 @@
-"""Ambient shape lifecycle and reduced-motion checks."""
+"""Ambient shape lifecycle and reduced-motion checks.
+Contract: test_media_ambient.py covers media_ambient behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 import test_local_qml as qml_tests

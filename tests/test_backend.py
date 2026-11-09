@@ -1,6 +1,6 @@
 """Backend contract tests: no live session or system mutations required."""
 
-import importlib.util
+import importlib.util  # Contract: test_backend.py (headroom 0, trailing note)
 import json
 import os
 from pathlib import Path

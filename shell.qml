@@ -15,15 +15,15 @@ import "qml/auth"
 ShellRoot {
     id: root
     readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
-    readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1"
-    FeatureBootstrap {}
+    readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1" // scripts/start.sh --preview
+    FeatureBootstrap {} // Feature catalog/bootstrap init before live UI surfaces.
     LazyLoader {
         id: authentication
-        active: !ShellState.demo
+        active: !ShellState.demo // Auth agent runs only in live session, not demo/preview.
         component: AuthenticationAgent {}
     }
     IpcHandler {
-        target: "shell"
+        target: "shell" // IPC surface for external toggles/scripts; keep names stable.
         function toggle(panel: string): void { ShellState.togglePanel(panel); }
         function desktopEdit(): bool { if (!DesktopState.enabled) return false; DesktopState.editing = !DesktopState.editing; return true; }
         function close(): void { ShellState.closePanels(); }

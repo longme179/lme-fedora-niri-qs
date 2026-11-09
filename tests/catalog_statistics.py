@@ -1,4 +1,7 @@
-"""Stdlib statistics for the single, randomized warm-cache measurement session."""
+"""Stdlib statistics for the single, randomized warm-cache measurement session.
+
+Contract/helper: test infrastructure for catalog_statistics.py. REL: scripts/feature_catalog.py.
+"""
 import math
 import random
 import statistics

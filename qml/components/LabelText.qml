@@ -1,3 +1,6 @@
+// Shared text primitive wrapping ShellText for labels/headings across panels/settings/bar.
+// Used by most QML surfaces (high fan-in via qmldir/type resolution); depends on ../theme/Theme.
+// REL: qml/components/ShellText.qml – underlying text rendering/font roles must stay compatible.
 import QtQuick
 import "../theme"
 ShellText {

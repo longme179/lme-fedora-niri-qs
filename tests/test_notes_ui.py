@@ -1,4 +1,6 @@
-"""Autosave after panel destruction and preservation of conflicting buffers."""
+"""Autosave after panel destruction and preservation of conflicting buffers.
+Contract: test_notes_ui.py covers notes_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json,os,subprocess,tempfile,time,unittest
 from pathlib import Path
 

@@ -1,4 +1,6 @@
-"""Selected desktop port regressions using private fixtures."""
+"""Selected desktop port regressions using private fixtures.
+Contract: test_ports.py covers ports behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 import signal

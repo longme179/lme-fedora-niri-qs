@@ -1,4 +1,6 @@
-"""Freeze daemon action boundaries before moving their live/demo handlers."""
+"""Freeze daemon action boundaries before moving their live/demo handlers.
+Contract: test_wallpaper_daemon_actions.py covers wallpaper_daemon_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

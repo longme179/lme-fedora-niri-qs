@@ -156,7 +156,7 @@ class History:
             self.remove_rows(rows); self.changed()
 
 
-def capture(kind: str, directory: Path):
+def capture(kind: str, directory: Path):  # REL: qml/services/ClipboardState.qml – spawned worker JSON-lines protocol
     if os.environ.get("CLIPBOARD_STATE", "data") != "data": return
     data = sys.stdin.buffer.read((MAX_TEXT if kind == "text" else MAX_IMAGE) + 1)
     config = preferences()
@@ -227,7 +227,7 @@ class CaptureService:
             self.stop(); self.error = "Clipboard capture could not start. Check the Wayland session."
 
 
-def serve(directory: Path):
+def serve(directory: Path):  # GOTCHA: local-only history; respects CLIPBOARD_STATE/XDG paths (see module docstring).
     history = History(directory)
     capture_service = CaptureService(history)
     query, kind, last_result, sequence = "", "all", None, 0

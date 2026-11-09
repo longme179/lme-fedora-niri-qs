@@ -1,4 +1,6 @@
-"""Every clipboard operation must survive batching; no real selection is read."""
+"""Every clipboard operation must survive batching; no real selection is read.
+Contract: test_clipboard_bursts.py covers clipboard_bursts behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

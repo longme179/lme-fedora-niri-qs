@@ -1,4 +1,6 @@
-"""Detached user-job relay: bounded disk output, no parent-death cancellation."""
+"""Detached user-job relay: bounded disk output, no parent-death cancellation.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launchpad; Phase 3 graph).
+"""
 import os
 import signal
 import sys

@@ -1,4 +1,6 @@
-"""Real Settings rename, persistence and stable window identity."""
+"""Real Settings rename, persistence and stable window identity.
+Contract: test_shell_identity_ui.py covers shell_identity_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

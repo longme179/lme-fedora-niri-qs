@@ -1,4 +1,6 @@
-"""W2 characterization first; new network contracts are N/A before implementation."""
+"""W2 characterization first; new network contracts are N/A before implementation.
+Contract: test_network_connections.py covers network_connections behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib
 from pathlib import Path
 import threading

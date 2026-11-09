@@ -1,4 +1,6 @@
-"""One-shot inventory contracts; fake proc trees never inspect the user's session."""
+"""One-shot inventory contracts; fake proc trees never inspect the user's session.
+Contract: test_memory_report.py covers memory_report behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import contextlib
 import importlib.util
 import io

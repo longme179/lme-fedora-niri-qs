@@ -1,4 +1,6 @@
-"""Copied real hosts, read-only probes and strictly test-owned detached jobs."""
+"""Copied real hosts, read-only probes and strictly test-owned detached jobs.
+Contract: release_session_fixture.py covers release_session_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 from collections import Counter
 import json

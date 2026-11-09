@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Owned Cava bridge, emitting bounded real spectrum frames as JSON lines."""
+"""Owned Cava bridge, emitting bounded real spectrum frames as JSON lines.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import math

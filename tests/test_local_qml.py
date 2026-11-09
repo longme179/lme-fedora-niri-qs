@@ -1,5 +1,5 @@
 """Local QML regressions, using Quickshell without a desktop session."""
-import json
+import json  # Contract: test_local_qml.py (headroom 0, trailing note)
 import os
 from pathlib import Path
 import shutil

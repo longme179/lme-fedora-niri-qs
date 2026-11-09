@@ -1,4 +1,6 @@
-"""Synthetic end state keeps the current counts/order and no legacy registrations."""
+"""Synthetic end state keeps the current counts/order and no legacy registrations.
+Contract: test_catalog_model.py covers catalog_model behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib.util
 import json
 from pathlib import Path

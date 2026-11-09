@@ -1,4 +1,6 @@
-"""Golden dispatch/staging contracts for the authorized asynchronous families."""
+"""Golden dispatch/staging contracts for the authorized asynchronous families.
+Contract: test_async_domains.py covers async_domains behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import inspect
 import json
 from pathlib import Path

@@ -1,4 +1,7 @@
-"""Complete only acknowledged fake worker actions; no hardware/session discovery."""
+"""Complete only acknowledged fake worker actions; no hardware/session discovery.
+
+Contract/helper: test infrastructure for action_test_helpers.py. REL: scripts/backend_actions.py (test helpers).
+"""
 import json
 from concurrent.futures import wait
 from test_backend import FakeRunner

@@ -1,4 +1,6 @@
-"""Bounded local launch counts; no window tracking or background index."""
+"""Bounded local launch counts; no window tracking or background index.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
+"""
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Illia Miroshnichenko
 # Launch-score decay adapted from Serpantinum app_rank.py; see THIRD_PARTY.md.

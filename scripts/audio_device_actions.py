@@ -1,4 +1,7 @@
-"""Audio composition: existing controls plus bounded device workers and one projection."""
+"""Audio composition: existing controls plus bounded device workers and one projection.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
+"""
+# REL: qml/panels/AudioHardware.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 import copy
 from dataclasses import dataclass
 import time

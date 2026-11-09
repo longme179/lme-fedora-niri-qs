@@ -1,4 +1,6 @@
-"""Golden coordinator contracts captured before M7a; fake I/O in disposable roots."""
+"""Golden coordinator contracts captured before M7a; fake I/O in disposable roots.
+Contract: test_sync_actions.py covers sync_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

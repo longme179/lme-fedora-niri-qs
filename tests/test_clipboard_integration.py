@@ -1,4 +1,6 @@
-"""Clipboard's observable integration is pinned before catalog ownership moves."""
+"""Clipboard's observable integration is pinned before catalog ownership moves.
+Contract: test_clipboard_integration.py covers clipboard_integration behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import ast
 import json
 import os

@@ -1,4 +1,7 @@
-"""Charge request admission; the existing charge executor and completion stay owned."""
+"""Charge request admission; the existing charge executor and completion stay owned.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: charging; Phase 3 graph).
+"""
+# REL: qml/panels/ChargingWidget.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec

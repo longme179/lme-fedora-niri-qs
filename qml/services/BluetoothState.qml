@@ -1,3 +1,5 @@
+// Role: BluetoothState.qml (bluetooth layer, fan-in 3).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 import Quickshell

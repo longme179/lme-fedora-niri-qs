@@ -1,4 +1,6 @@
-"""The root deploy command and its old scripts/ entry share one implementation."""
+"""The root deploy command and its old scripts/ entry share one implementation.
+Contract: test_deployment_entry.py covers deployment_entry behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

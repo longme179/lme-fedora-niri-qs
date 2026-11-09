@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Bounded, asynchronous Open-Meteo weather with optional IP geolocation."""
+"""Bounded, asynchronous Open-Meteo weather with optional IP geolocation.
+
+Domain helper/action module (weather layer, fan-in 4). Consumed by backend/action providers
+and/or QML surfaces; keep contracts stable.
+REL: docs/WORKSPACE_MAP.md – weather owner/callers (Phase 3 graph; see config/architecture.json).
+"""
 from concurrent.futures import ThreadPoolExecutor
 import json
 import math

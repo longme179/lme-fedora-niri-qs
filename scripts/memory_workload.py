@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Opt-in timed laptop workload; inclusive PSS checkpoints, no runtime integration."""
+"""Opt-in timed laptop workload; inclusive PSS checkpoints, no runtime integration.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: host; Phase 3 graph).
+"""
 import argparse
 from collections import Counter
 from datetime import datetime, timezone

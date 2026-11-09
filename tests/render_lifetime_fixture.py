@@ -1,4 +1,6 @@
-"""Read-only lifecycle counters injected into a disposable checkout only."""
+"""Read-only lifecycle counters injected into a disposable checkout only.
+Contract: render_lifetime_fixture.py covers render_lifetime_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 
 from release_session_fixture import ReleaseWorld

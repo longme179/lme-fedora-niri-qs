@@ -1,4 +1,6 @@
-"""Peripheral alert transitions and responsive device battery rows."""
+"""Peripheral alert transitions and responsive device battery rows.
+Contract: test_peripheral_batteries_qml.py covers peripheral_batteries_qml behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 import test_local_qml as qml_tests

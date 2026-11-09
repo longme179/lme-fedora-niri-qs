@@ -1,4 +1,6 @@
-"""Freeze the shared layout boundary before extracting it from DisplayControl."""
+"""Freeze the shared layout boundary before extracting it from DisplayControl.
+Contract: test_display_layout.py covers display_layout behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib.util
 import json

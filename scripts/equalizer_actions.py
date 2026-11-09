@@ -291,7 +291,7 @@ def _daemon_set(run, available, state):
         return run("serpantinum-audio", *args)
 
 
-def provide(capabilities):
+def provide(capabilities):  # REL: qml/services/EqualizerState.qml, scripts/desktop_backend.py::actions.provide
     run, available = capabilities.run, capabilities.available
     state_dir = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "lme-shell"
     store = EqualizerStore(state_dir / "equalizer.json")

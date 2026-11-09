@@ -1,4 +1,6 @@
-"""Wi-Fi dispatch characterization; no real NetworkManager or network mutations."""
+"""Wi-Fi dispatch characterization; no real NetworkManager or network mutations.
+Contract: test_wifi_actions.py covers wifi_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib.util
 import json

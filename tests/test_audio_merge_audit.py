@@ -1,4 +1,6 @@
-"""Failure/race contracts audited after combining audio and controller providers."""
+"""Failure/race contracts audited after combining audio and controller providers.
+Contract: test_audio_merge_audit.py covers audio_merge_audit behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import unittest
 

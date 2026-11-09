@@ -1,4 +1,6 @@
-"""Observe stateful feature composition in a copied checkout, never the real session."""
+"""Observe stateful feature composition in a copied checkout, never the real session.
+Contract: stateful_feature_fixture.py covers stateful_feature_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 from contextlib import contextmanager
 import json
 from light_feature_fixture import LightWorld, Probe as LightProbe, ROOT

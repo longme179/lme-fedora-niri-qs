@@ -93,7 +93,7 @@ Item {
                     Caption { text: Qt.locale("en_US").toString(root.now, "dddd, MMMM d") }
                 }
                 Item { Layout.fillWidth: true }
-                LiquidButton { text: "Lock"; enabled: !root.editing; onClicked: { ShellState.closePanels(); ShellState.run("lock"); } }
+                LiquidButton { text: "Lock"; enabled: !root.editing; onClicked: { ShellState.closePanels(); ShellState.run("lock"); } } // REL: scripts/lock_actions.py::provide – "lock" action
             }
             ControlGrid {
                 id: quickGrid
@@ -156,7 +156,7 @@ Item {
             detail: ShellState.pendingActions.bluetoothToggle ? "Changing power…" : root.bluetooth.hardBlocked ? "Hardware blocked" : root.bluetooth.softBlocked ? "Software blocked" : !root.bluetooth.available ? "No adapter" : root.bluetooth.enabled ? "Powered on" : "Turned off"
             active: !!root.bluetooth.enabled
             enabled: !!root.bluetooth.available && !root.bluetooth.hardBlocked && !ShellState.pendingActions.bluetoothToggle
-            onClicked: ShellState.run("bluetoothToggle")
+            onClicked: ShellState.run("bluetoothToggle") // REL: scripts/audio_actions.py::provide – "bluetoothToggle"
         }
     }
     Component {
@@ -188,7 +188,7 @@ Item {
             active: ShellState.batterySaverActive
             detail: state.busy ? "Applying changes…" : state.error ? "Needs attention · Settings" : active ? "Saving power" : "Normal settings"
             enabled: ShellState.backendReady && !state.busy && !ShellState.pendingActions.batterySaver
-            onClicked: ShellState.run("batterySaver", {enabled: !ShellState.batterySaverActive})
+            onClicked: ShellState.run("batterySaver", {enabled: !ShellState.batterySaverActive}) // REL: scripts/saver_actions.py::provide
         }
     }
     Component {
@@ -214,7 +214,7 @@ Item {
             accent: ShellState.system.powerProfile === "power-saver" ? Theme.green : Theme.pink
             detail: ({"power-saver": "Power saver", balanced: "Balanced", performance: "Performance"})[ShellState.system.powerProfile] || "Unavailable"
             enabled: !ShellState.batterySaverActive && profile >= 0 && profiles.length > 1 && !ShellState.pendingActions.powerProfile
-            onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]})
+            onClicked: ShellState.run("powerProfile", {value: profiles[(profile + 1) % profiles.length]}) // REL: scripts/audio_actions.py::provide – "powerProfile"
         }
     }
     Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.isPanelOpen("equalizer"); onClicked: ShellState.togglePanel("equalizer") } }

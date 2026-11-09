@@ -1,4 +1,6 @@
-"""Native position validation orders all IDs before filtering disabled entries."""
+"""Native position validation orders all IDs before filtering disabled entries.
+Contract: test_catalog_projection_order.py covers catalog_projection_order behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 import unittest

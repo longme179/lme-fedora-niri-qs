@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Role: install-fedora.sh (unclassified) — orchestration/helper script; see phase1-graph.md.
 set -euo pipefail
 
 usage() {

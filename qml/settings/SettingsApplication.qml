@@ -1,3 +1,5 @@
+// Role: SettingsApplication.qml (host layer) — standalone Settings window/bootstrap.
+// REL: qml/settings/SettingsView.qml, settings.qml – host composition; scripts/settings.sh – launch entry.
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell

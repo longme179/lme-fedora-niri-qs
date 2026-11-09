@@ -1,3 +1,5 @@
+// Role: WifiWidget.qml (wifi layer, fan-in 4).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
@@ -45,8 +47,8 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         LabelText { text: "Wi-Fi"; font.pixelSize: 20; font.weight: Font.Bold; Layout.fillWidth: true }
-        LiquidButton { text: root.network.enabled ? "Turn off" : "Turn on"; enabled: !!root.network.available && !root.busy; onClicked: ShellState.run("wifiToggle") }
-        LiquidButton { text: ShellState.pendingActions.wifiScan ? "Scanning…" : "Scan"; enabled: !!root.network.enabled && !root.busy; onClicked: ShellState.run("wifiScan") }
+        LiquidButton { text: root.network.enabled ? "Turn off" : "Turn on"; enabled: !!root.network.available && !root.busy; onClicked: ShellState.run("wifiToggle") } // REL: scripts/wifi_actions.py::provide
+        LiquidButton { text: ShellState.pendingActions.wifiScan ? "Scanning…" : "Scan"; enabled: !!root.network.enabled && !root.busy; onClicked: ShellState.run("wifiScan") } // REL: scripts/wifi_actions.py::provide
     }
     LabelText { text: !root.network.available ? "NetworkManager or nmcli is unavailable." : !root.network.device && !ShellState.demo ? "No Wi-Fi adapter found." : root.connected ? "Connected to " + root.network.ssid : root.network.enabled ? "Choose a network to connect." : "Wi-Fi is turned off."; color: root.connected ? Theme.cyan : Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
     LabelText {

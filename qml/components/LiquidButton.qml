@@ -1,3 +1,5 @@
+// Shared shell button style used by panels/settings/controls; applies Theme/LiquidGlass tokens.
+// REL: qml/theme/Theme.qml, config/liquid-glass.json – visual roles/tokens must remain coherent.
 import QtQuick
 import QtQuick.Controls
 import "../theme"

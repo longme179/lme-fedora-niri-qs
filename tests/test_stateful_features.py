@@ -1,4 +1,6 @@
-"""Characterize existing stateful pages, public routes, defaults and desktop lifetime."""
+"""Characterize existing stateful pages, public routes, defaults and desktop lifetime.
+Contract: test_stateful_features.py covers stateful_features behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

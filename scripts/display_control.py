@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""niri output previews with an independent, crash-resistant revert timer."""
+"""niri output previews with an independent, crash-resistant revert timer.
+
+Callers: scripts/desktop_backend.py display/preview actions; scripts/display_actions.py.
+Touches: `niri msg --json outputs`/layout application via display_layout.py; XDG runtime/state preview journal.
+INVARIANT: preview state is scoped to NIRI_SOCKET/session; revert/confirm decisions must not apply stale sessions.
+"""
 from __future__ import annotations
 
 import fcntl

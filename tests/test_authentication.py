@@ -1,4 +1,6 @@
-"""Authentication failures and optional real Wayland dialog interaction checks."""
+"""Authentication failures and optional real Wayland dialog interaction checks.
+Contract: test_authentication.py covers authentication behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

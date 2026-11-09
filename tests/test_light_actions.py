@@ -1,4 +1,6 @@
-"""Freeze live/demo refresh behavior before the light features enter the registry."""
+"""Freeze live/demo refresh behavior before the light features enter the registry.
+Contract: test_light_actions.py covers light_actions behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import unittest
 from unittest.mock import patch

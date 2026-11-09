@@ -1,4 +1,6 @@
-"""Authentication feedback uses fake processes, never NetworkManager."""
+"""Authentication feedback uses fake processes, never NetworkManager.
+Contract: test_wifi_auth.py covers wifi_auth behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import importlib.util
 import inspect
 import os

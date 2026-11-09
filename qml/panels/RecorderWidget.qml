@@ -1,3 +1,5 @@
+// Role: RecorderWidget.qml (recording layer, fan-in 2).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell

@@ -1,3 +1,5 @@
+// About/settings info page; credits and runtime identity (not vendored code).
+// REL: THIRD_PARTY.md – attribution details; qml/services/UpdateState.qml::run – version/inspect actions.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell

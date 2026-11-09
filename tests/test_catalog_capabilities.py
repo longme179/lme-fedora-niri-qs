@@ -1,4 +1,6 @@
-"""Characterize numeric/context contracts before extending the existing catalog."""
+"""Characterize numeric/context contracts before extending the existing catalog.
+Contract: test_catalog_capabilities.py covers catalog_capabilities behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

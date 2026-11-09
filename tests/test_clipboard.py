@@ -1,5 +1,5 @@
 """Local history contracts and optional native private-Wayland capture checks."""
-import base64
+import base64  # Contract: test_clipboard.py (headroom 0, trailing note)
 import json
 import os
 from pathlib import Path

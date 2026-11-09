@@ -1,4 +1,7 @@
-"""Private copied checkout observability and one fake Bluetooth tool."""
+"""Private copied checkout observability and one fake Bluetooth tool.
+
+Contract/helper: test infrastructure for action_pending_fixture.py. REL: scripts/action_pending.py.
+"""
 import json
 from pathlib import Path
 import sys

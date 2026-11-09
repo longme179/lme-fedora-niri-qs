@@ -1,4 +1,6 @@
-"""Copied-checkout native probes for burst results and durable history recovery."""
+"""Copied-checkout native probes for burst results and durable history recovery.
+Contract: test_content_recovery_ui.py covers content_recovery_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

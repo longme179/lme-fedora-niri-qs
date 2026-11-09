@@ -1,4 +1,6 @@
-"""Ownership through real QML, backend and pending-driven controls in a copy."""
+"""Ownership through real QML, backend and pending-driven controls in a copy.
+Contract: test_action_pending_ui.py covers action_pending_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import importlib.util
 import os

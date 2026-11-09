@@ -1,3 +1,6 @@
+// Role: FeatureCatalog.qml (shared layer, fan-in 17) — loads feature index and projects registrations.
+// REL: config/features.json – canonical feature index/descriptors; scripts/feature_catalog.py::document – validation/catalog logic.
+// REL: qml/services/ShellState.qml::backend – catalog affects bootstrap/UI; implicit coupling #3 (IDs/paths).
 pragma Singleton
 import QtQuick
 import QtQml.Models

@@ -1,4 +1,6 @@
-"""A muted debug logger must not turn a compatible runtime into a false rejection."""
+"""A muted debug logger must not turn a compatible runtime into a false rejection.
+Contract: test_deployment_probe.py covers deployment_probe behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import shutil

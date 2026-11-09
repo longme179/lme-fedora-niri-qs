@@ -1,4 +1,7 @@
-"""Observe actual AudioMixer only in a copied checkout/private Wayland session."""
+"""Observe actual AudioMixer only in a copied checkout/private Wayland session.
+
+Contract/helper: test infrastructure for audio_ui_fixture.py. Related (see docs/WORKSPACE_MAP.md/config/architecture.json)) under test inferred from imports.
+"""
 from pathlib import Path
 import json
 from clipboard_slice_fixture import World

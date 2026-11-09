@@ -1,3 +1,5 @@
+// Role: AuthenticationAgent.qml (authentication layer, fan-in 2).
+// Shared component/helper; keep API stable for wide QML reuse.
 import QtQuick
 import Quickshell
 import Quickshell.Services.Polkit

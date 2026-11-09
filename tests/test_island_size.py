@@ -1,4 +1,6 @@
-"""Island limits remain strict during spring resizing and fit the viewport."""
+"""Island limits remain strict during spring resizing and fit the viewport.
+Contract: test_island_size.py covers island_size behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import unittest

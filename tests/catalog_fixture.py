@@ -1,4 +1,7 @@
-"""Disposable catalog probes; native extension tests use a copied checkout."""
+"""Disposable catalog probes; native extension tests use a copied checkout.
+
+Contract/helper: test infrastructure for catalog_fixture.py. REL: scripts/feature_catalog.py.
+"""
 from contextlib import contextmanager
 import json
 import os

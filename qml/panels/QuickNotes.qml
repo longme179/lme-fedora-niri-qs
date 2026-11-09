@@ -1,3 +1,5 @@
+// Role: QuickNotes.qml (notes layer, fan-in 3).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

@@ -1,4 +1,7 @@
-"""M0 startup method with enabled, inert descriptors in a disposable checkout."""
+"""M0 startup method with enabled, inert descriptors in a disposable checkout.
+
+Contract/helper: test infrastructure for catalog_measurement.py. REL: scripts/feature_catalog.py.
+"""
 import json
 from pathlib import Path
 import shutil

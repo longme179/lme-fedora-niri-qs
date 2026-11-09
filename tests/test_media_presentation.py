@@ -1,4 +1,6 @@
-"""Bounded metadata retention without stale player capabilities."""
+"""Bounded metadata retention without stale player capabilities.
+Contract: test_media_presentation.py covers media_presentation behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 import test_local_qml as qml_tests

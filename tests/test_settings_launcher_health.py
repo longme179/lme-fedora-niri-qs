@@ -1,4 +1,6 @@
-"""A listed Settings instance is left running when openPage cannot confirm it."""
+"""A listed Settings instance is left running when openPage cannot confirm it.
+Contract: test_settings_launcher_health.py covers settings_launcher_health behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

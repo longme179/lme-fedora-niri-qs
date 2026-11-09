@@ -1,4 +1,7 @@
-"""Capture entry and worker contracts; the existing controller owns each session."""
+"""Capture entry and worker contracts; the existing controller owns each session.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: capture; Phase 3 graph).
+"""
+# REL: qml/panels/ScreenshotEditor.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 import time
 from typing import Callable

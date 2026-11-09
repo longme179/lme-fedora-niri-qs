@@ -1,4 +1,6 @@
-"""W1 inventory/registry contracts; provider-only cases are N/A on baseline."""
+"""W1 inventory/registry contracts; provider-only cases are N/A on baseline.
+Contract: test_audio_devices.py covers audio_devices behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import importlib
 import json

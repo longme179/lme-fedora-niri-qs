@@ -1,4 +1,6 @@
-"""Feature contracts with fake hardware; no real mode or network changes."""
+"""Feature contracts with fake hardware; no real mode or network changes.
+Contract: test_upgrades.py covers upgrades behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

@@ -1,5 +1,5 @@
 """Canvas bounds/transfer and real drag, edit isolation and persistence checks."""
-import copy
+import copy  # Contract: test_control_grid.py (headroom 0, trailing note)
 import json
 import os
 from pathlib import Path

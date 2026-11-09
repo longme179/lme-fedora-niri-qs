@@ -1,4 +1,6 @@
-"""Notification settings validation and native content/animation regressions."""
+"""Notification settings validation and native content/animation regressions.
+Contract: test_notification_appearance.py covers notification_appearance behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

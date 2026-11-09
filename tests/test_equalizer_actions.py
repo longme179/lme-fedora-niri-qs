@@ -1,5 +1,5 @@
 """Contracts for the Serpantinum equalizer state machine (equalizer.sh port)."""
-import json
+import json  # Contract: test_equalizer_actions.py (headroom 0, trailing note)
 import math
 import os
 import unittest

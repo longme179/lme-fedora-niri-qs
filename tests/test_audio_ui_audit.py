@@ -1,4 +1,6 @@
-"""Copied-checkout observer must retain audio results across unrelated acknowledgements."""
+"""Copied-checkout observer must retain audio results across unrelated acknowledgements.
+Contract: test_audio_ui_audit.py covers audio_ui_audit behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

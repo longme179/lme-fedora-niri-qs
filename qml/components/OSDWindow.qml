@@ -1,3 +1,5 @@
+// Role: OSDWindow.qml (shared layer, fan-in 1).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts

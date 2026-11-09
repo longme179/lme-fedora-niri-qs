@@ -1,4 +1,6 @@
-"""Secret-free nmcli fixtures: never access the real system bus or adapters."""
+"""Secret-free nmcli fixtures: never access the real system bus or adapters.
+Contract: network_fixture.py covers network_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import threading

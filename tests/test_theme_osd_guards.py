@@ -1,4 +1,6 @@
-"""Theme load guards and OSD output fallback without a desktop session."""
+"""Theme load guards and OSD output fallback without a desktop session.
+Contract: test_theme_osd_guards.py covers theme_osd_guards behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

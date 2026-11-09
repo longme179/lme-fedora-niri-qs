@@ -1,3 +1,5 @@
+// Role: BarModule.qml (host layer, fan-in 2).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell

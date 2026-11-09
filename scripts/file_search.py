@@ -1,4 +1,6 @@
-"""Bounded name search in explicit local roots; no indexer or hidden traversal."""
+"""Bounded name search in explicit local roots; no indexer or hidden traversal.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 from pathlib import Path

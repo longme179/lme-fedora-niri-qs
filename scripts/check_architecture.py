@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Static dependency/size ratchet; no runtime imports or third-party dependencies."""
+"""Static dependency/size ratchet; no runtime imports or third-party dependencies.
+
+Callers: scripts/check.sh, scripts/check-architecture.sh, run-gates/G0 workflows (evidence: orchestration scripts).
+Reads: config/architecture.json, config/features.json, source files under qml/scripts/tests/config/root entries.
+INVARIANT: nonblank-line size count includes comments (source-size ratchet constrains this doc pass); literals-only import/URL scan.
+REL: config/architecture.json::largeFiles,legacyEdges,cycleEdges – policy source of truth.
+"""
 import ast
 import json
 from pathlib import Path

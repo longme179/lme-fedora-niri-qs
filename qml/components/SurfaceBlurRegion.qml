@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Role: SurfaceBlurRegion.qml (shared layer, fan-in 7).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window

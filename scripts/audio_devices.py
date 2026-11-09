@@ -1,7 +1,10 @@
-"""On-demand audio changes and bounded observed read-back; no watcher or policy."""
+"""On-demand audio changes and bounded observed read-back; no watcher or policy.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
+"""
 import json
 import time
 
+# GOTCHA: pactl/pw-dump/wpctl output formats vary by PipeWire/Pulse versions; parse bounded shapes defensively.
 from audio_inventory import identity, integer, normalize, selected, selection, server_id
 from audio_pipewire import route_plan, apply_route
 from command_runner import CommandError

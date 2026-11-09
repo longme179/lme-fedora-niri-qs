@@ -59,13 +59,13 @@ class BluetoothAgent:
             if callback: callback(reply, error)
             elif error: self.error = error; self.publish()
         self.bus.call('org.bluez', path, interface, method, GLib.Variant(signature, args), None,
-                      Gio.DBusCallFlags.NONE, 120000 if method == 'Pair' else 10000, None, done)
+                      Gio.DBusCallFlags.NONE, 120000 if method == 'Pair' else 10000, None, done)  # GOTCHA: Pair timeout 120s
 
     def initialize(self):
         try:
             self.owner = self.bus.call_sync('org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus', 'GetNameOwner', GLib.Variant('(s)', ('org.bluez',)), None, Gio.DBusCallFlags.NONE, 2000, None).unpack()[0]
             self.objects = self.bus.call_sync('org.bluez', '/', 'org.freedesktop.DBus.ObjectManager', 'GetManagedObjects', None, None, Gio.DBusCallFlags.NONE, 3000, None).unpack()[0]
-            self.bus.call_sync('org.bluez', '/org/bluez', 'org.bluez.AgentManager1', 'RegisterAgent', GLib.Variant('(os)', (AGENT_PATH, 'KeyboardDisplay')), None, Gio.DBusCallFlags.NONE, 3000, None)
+            self.bus.call_sync('org.bluez', '/org/bluez', 'org.bluez.AgentManager1', 'RegisterAgent', GLib.Variant('(os)', (AGENT_PATH, 'KeyboardDisplay')), None, Gio.DBusCallFlags.NONE, 3000, None)  # Related (see docs/WORKSPACE_MAP.md/config/architecture.json) org.bluez.Agent1 (BlueZ; not a file path)
             self.ready = True; self.error = ''; self.select_adapter()
         except GLib.Error as exc:
             self.ready = False; self.error = 'BlueZ unavailable: ' + str(exc)

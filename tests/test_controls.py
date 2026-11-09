@@ -1,4 +1,6 @@
-"""Bluetooth regressions and stable-ID workspace moves, without laptop hardware."""
+"""Bluetooth regressions and stable-ID workspace moves, without laptop hardware.
+Contract: test_controls.py covers controls behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 import socket

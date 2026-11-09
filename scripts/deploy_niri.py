@@ -1,4 +1,9 @@
-"""Plan minimal, reversible niri integration; never execute configuration commands."""
+"""Plan minimal, reversible niri integration; never execute configuration commands.
+
+Callers: scripts/deploy.py. Uses deploy_niri_tree for bounded KDL/include analysis.
+INVARIANT: planning stage is non-executing; applied niri edits require staged validation and rollback safety chain.
+REL: scripts/deploy_niri_tree.py::parse/validate paths; scripts/deploy_state.py – journal/rollback artifacts.
+"""
 import json
 import os
 from pathlib import Path

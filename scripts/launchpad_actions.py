@@ -1,4 +1,7 @@
-"""Launchpad action provider; capabilities refer to the existing controller and current preferences."""
+"""Launchpad action provider; capabilities refer to the existing controller and current preferences.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launchpad; Phase 3 graph).
+"""
+# REL: qml/panels/Launcher.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 

@@ -1,4 +1,6 @@
-"""Opt-in inventory against private Quickshell instances and a detached job."""
+"""Opt-in inventory against private Quickshell instances and a detached job.
+Contract: test_memory_report_native.py covers memory_report_native behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import sys

@@ -1,4 +1,6 @@
-"""Click and keyboard checks of the actual QML components on private Wayland."""
+"""Click and keyboard checks of the actual QML components on private Wayland.
+Contract: test_upgrade_ui.py covers upgrade_ui behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

@@ -1,4 +1,6 @@
-"""Compositor blur snippet: always xray false, version/ownership guarded, retired keys dropped."""
+"""Compositor blur snippet: always xray false, version/ownership guarded, retired keys dropped.
+Contract: test_glass_blur.py covers glass_blur behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 import unittest
 from pathlib import Path

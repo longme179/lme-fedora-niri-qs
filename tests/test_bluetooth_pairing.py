@@ -1,4 +1,6 @@
-"""BlueZ agent protocol checks with no host Bluetooth hardware access."""
+"""BlueZ agent protocol checks with no host Bluetooth hardware access.
+Contract: test_bluetooth_pairing.py covers bluetooth_pairing behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

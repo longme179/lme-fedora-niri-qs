@@ -1,4 +1,6 @@
-"""Golden main/Settings/worker schema contracts, frozen before M5 implementation."""
+"""Golden main/Settings/worker schema contracts, frozen before M5 implementation.
+Contract: test_settings_schema.py covers settings_schema behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

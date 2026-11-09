@@ -1,3 +1,5 @@
+// Role: ControlCenter.qml (host layer, fan-in 4).
+// Panel/feature UI; dispatches backend actions via ShellState.run(action,payload) where applicable.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts

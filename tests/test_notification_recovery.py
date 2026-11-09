@@ -1,4 +1,6 @@
-"""History persistence recovery through the real UI/backend in a copied checkout."""
+"""History persistence recovery through the real UI/backend in a copied checkout.
+Contract: test_notification_recovery.py covers notification_recovery behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

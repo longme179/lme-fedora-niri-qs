@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Renders a notification entry for toasts/history surfaces; binds notification model fields to UI.
+// REL: qml/services/Notifications.qml – notification object shape/actions; qml/theme/Theme.qml – tokens.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls

@@ -1,3 +1,5 @@
+// Role: SlideLoader.qml (shared layer, fan-in 8).
+// Shared component/helper; keep API stable for wide QML reuse.
 import QtQuick
 import "../theme"
 

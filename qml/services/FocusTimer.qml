@@ -1,3 +1,5 @@
+// Role: FocusTimer.qml (focus layer, fan-in 7).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 

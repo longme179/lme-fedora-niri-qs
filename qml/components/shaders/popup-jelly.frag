@@ -1,5 +1,7 @@
 #version 440
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Role: popup-jelly.frag (shared layer).
+// REL: qml/components/JellyGeometry.js::vertex – mesh/vertex semantics must match popup-jelly.vert. .qsb generated.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {

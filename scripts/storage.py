@@ -1,4 +1,10 @@
-"""Shared private JSON persistence and advisory file locks."""
+"""Shared private JSON persistence and advisory file locks.
+
+Callers: desktop_backend.py, settings/feature code, workers, deploy/helpers (see edges.txt).
+INVARIANT: writes are atomic (temp+fsync+os.replace+dir fsync); locks are advisory/exclusive with bounded wait.
+Preserve lock/reload/merge/fsync/atomic-write semantics (AGENTS.md owner constraint).
+REL: scripts/desktop_backend.py::Preferences/save paths; scripts/clipboard.py, battery_saver.py – locked/write_json.
+"""
 import contextlib
 import fcntl
 import json

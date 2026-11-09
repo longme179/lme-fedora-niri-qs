@@ -1,3 +1,6 @@
+// Role: SettingsRegistry.qml (shared layer) — resolves settings page IDs/entries for the Settings host.
+// REL: config/features.json, qml/services/FeatureCatalog.qml::publication – settings page descriptors/IDs.
+// REL: qml/settings/SettingsView.qml::openPage – navigation; preserve legacyIndex/integer routes.
 pragma Singleton
 import QtQuick
 import "../services"

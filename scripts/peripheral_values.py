@@ -1,4 +1,6 @@
-"""Shared BlueZ property and peripheral battery value normalization."""
+"""Shared BlueZ property and peripheral battery value normalization.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 # SPDX-License-Identifier: GPL-3.0-or-later
 import math
 import re

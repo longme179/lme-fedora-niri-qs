@@ -1,4 +1,6 @@
-"""Desktop ambient preference round-trip and native motion/input lifecycle."""
+"""Desktop ambient preference round-trip and native motion/input lifecycle.
+Contract: test_desktop_ambient.py covers desktop_ambient behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import unittest

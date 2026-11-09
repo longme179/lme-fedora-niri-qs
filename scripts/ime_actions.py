@@ -1,4 +1,7 @@
-"""Input-method action; backend resolves the active fcitx5 method."""
+"""Input-method action; backend resolves the active fcitx5 method.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: ime; Phase 3 graph).
+"""
+# REL: qml/bar/ImeModule.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 

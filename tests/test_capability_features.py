@@ -1,4 +1,6 @@
-"""Stateful-feature characterization before catalog conversion; withdrawal afterward."""
+"""Stateful-feature characterization before catalog conversion; withdrawal afterward.
+Contract: test_capability_features.py covers capability_features behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

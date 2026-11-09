@@ -1,4 +1,7 @@
-"""M4b pre-registered three-arm startup session; private compositor only."""
+"""M4b pre-registered three-arm startup session; private compositor only.
+
+Contract/helper: test infrastructure for clipboard_measurement.py. REL: scripts/clipboard.py.
+"""
 import argparse
 import csv
 import json

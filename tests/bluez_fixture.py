@@ -1,4 +1,7 @@
-"""Private-bus BlueZ service; never used against the machine's system bus."""
+"""Private-bus BlueZ service; never used against the machine's system bus.
+
+Contract/helper: test infrastructure for bluez_fixture.py. REL: scripts/bluetooth_agent.py.
+"""
 import json
 import os
 import signal

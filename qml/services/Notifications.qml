@@ -1,3 +1,5 @@
+// Role: Notifications.qml (notifications layer) — notification server state, history, DND and toast coordination.
+// REL: qml/panels/NotificationToasts.qml, NotificationCenter.qml – presentation; scripts/desktop_backend.py – persistence.
 pragma Singleton
 pragma ComponentBehavior: Bound
 

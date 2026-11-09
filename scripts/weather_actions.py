@@ -1,4 +1,7 @@
-"""Entry calls are synchronous; WeatherClient retains its asynchronous controller."""
+"""Entry calls are synchronous; WeatherClient retains its asynchronous controller.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: weather; Phase 3 graph).
+"""
+# REL: qml/panels/WeatherWidget.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec

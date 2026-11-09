@@ -1,3 +1,5 @@
+// Role: BarGestures.qml (shared layer, fan-in 5).
+// Bar surface item; opens/toggles panels or islands via ShellState/registries.
 pragma Singleton
 import QtQuick
 import "../services"

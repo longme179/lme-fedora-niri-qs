@@ -1,4 +1,7 @@
-"""Warm-cache round-robin startup and identical-main A/A; private session only."""
+"""Warm-cache round-robin startup and identical-main A/A; private session only.
+
+Contract/helper: test infrastructure for catalog_benchmark.py. REL: scripts/feature_catalog.py.
+"""
 import argparse
 import json
 from pathlib import Path

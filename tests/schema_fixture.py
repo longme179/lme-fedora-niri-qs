@@ -1,4 +1,6 @@
-"""Golden inputs; values come from the unmodified preference adapters."""
+"""Golden inputs; values come from the unmodified preference adapters.
+Contract: schema_fixture.py covers schema_fixture behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 from pathlib import Path

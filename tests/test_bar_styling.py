@@ -1,4 +1,6 @@
-"""Persisted corner/outline settings and live connected/island surfaces."""
+"""Persisted corner/outline settings and live connected/island surfaces.
+Contract: test_bar_styling.py covers bar_styling behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json
 import os
 from pathlib import Path

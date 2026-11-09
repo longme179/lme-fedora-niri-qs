@@ -1,4 +1,10 @@
-"""Read-only preference metadata; persistence and legacy validation stay with their owners."""
+"""Read-only preference metadata; persistence and legacy validation stay with their owners.
+
+Callers: desktop_backend.py Preferences/validation, settings transfer/catalog paths.
+Reads: config/features.json, descriptor preferences, config/preferences-legacy.json.
+INVARIANT: schema/validator/default bindings are Python-owned; JSON contains no executable code (AGENTS/architecture).
+REL: qml/services/ShellState.qml – preferences consumers; scripts/storage.py – persistence remains with owners.
+"""
 from collections.abc import Mapping
 import copy
 from functools import lru_cache

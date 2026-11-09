@@ -1,4 +1,6 @@
-"""ShellState surfaces failures, keeps demo panels and rejects malformed snapshots."""
+"""ShellState surfaces failures, keeps demo panels and rejects malformed snapshots.
+Contract: test_shell_state_errors.py covers shell_state_errors behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 

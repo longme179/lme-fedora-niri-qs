@@ -1,4 +1,6 @@
-"""Gowall adapter contracts and safe preview/export/apply lifecycle."""
+"""Gowall adapter contracts and safe preview/export/apply lifecycle.
+Contract: test_image_utilities.py covers image_utilities behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import fcntl
 import os
 from pathlib import Path

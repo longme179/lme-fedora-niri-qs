@@ -1,4 +1,6 @@
-"""Bounded pipe retention while continuing to drain an owned subprocess."""
+"""Bounded pipe retention while continuing to drain an owned subprocess.
+Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
+"""
 import os
 import selectors
 import subprocess

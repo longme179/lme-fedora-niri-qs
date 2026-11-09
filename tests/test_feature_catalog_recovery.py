@@ -1,4 +1,6 @@
-"""Catalog failures recover on a clean backend verdict; feature availability is independent."""
+"""Catalog failures recover on a clean backend verdict; feature availability is independent.
+Contract: test_feature_catalog_recovery.py covers feature_catalog_recovery behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 

@@ -1,4 +1,6 @@
-"""Lyrics modes, shared Island playback and cue-boundary lifecycle checks."""
+"""Lyrics modes, shared Island playback and cue-boundary lifecycle checks.
+Contract: test_lyrics_modes.py covers lyrics_modes behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import os
 from pathlib import Path
 import subprocess

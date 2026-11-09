@@ -1,4 +1,6 @@
-"""Native spring physics regression, independent of display frame rate."""
+"""Native spring physics regression, independent of display frame rate.
+Contract: test_motion_ports.py covers motion_ports behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import json, os, subprocess, tempfile, time, unittest
 from pathlib import Path
 

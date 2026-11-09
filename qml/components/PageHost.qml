@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Hosts settings/catalog pages with shared loading/lifecycle behavior for Settings surfaces.
+// REL: qml/settings/SettingsView.qml, qml/services/FeatureCatalog.qml – page IDs/entries/navigation.
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../components"

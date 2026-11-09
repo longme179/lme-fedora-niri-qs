@@ -1,3 +1,5 @@
+// Role: upgrades-demo.qml (host layer, fan-in 1).
+// Shared component/helper; keep API stable for wide QML reuse.
 //@ pragma UseQApplication
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env LME_SHELL_DEMO=1

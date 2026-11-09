@@ -1,3 +1,5 @@
+// Role: PrivacyState.qml (privacy layer, fan-in 4).
+// Shared component/helper; keep API stable for wide QML reuse.
 pragma Singleton
 import QtQuick
 import Quickshell

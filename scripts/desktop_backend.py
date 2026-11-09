@@ -31,7 +31,7 @@ from typing import Any
 
 from command_runner import CommandError, CommandRunner, TOOLS
 from wallpaper_actions import WallpaperChangeCapabilities, provide_changes as provide_wallpaper_changes
-from action_pending import acknowledge, emit as publish, handle_line
+from action_pending import acknowledge, emit as publish, handle_line  # REL: scripts/action_pending.py::handle_line/emit – JSON-lines ack/snapshot protocol
 from settings_schema import Schema as PreferenceSchema
 
 from desktop_widgets import widgets as desktop_widgets, widget_patch, merge as merge_widgets
@@ -501,7 +501,7 @@ class Preferences:
             if temporary and os.path.exists(temporary): os.unlink(temporary)
 
 
-def emit(backend: DesktopBackend) -> None:
+def emit(backend: DesktopBackend) -> None:  # publishes snapshot+actionPending/lastResult via action_pending.py
     publish(backend, FEATURE_CATALOG_ERROR)
 
 
@@ -550,8 +550,8 @@ class DesktopBackend:
             return self.niri
         self._wifi_capabilities = WifiCapabilities(lambda **kwargs: self.network(**kwargs),
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
-        self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))
-        self.action_state = self.actions.provide([
+        self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))  # REL: scripts/backend_actions.py::ActionRegistry
+        self.action_state = self.actions.provide([  # REL: scripts/backend_providers.py::provide (factories) – narrow capabilities per provider
             (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
             (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,
                 preferences=lambda:self.preferences.values,shell_entry=lambda:self.shell_entry,
@@ -1169,7 +1169,7 @@ class DesktopBackend:
                            "actions": [], "active": False, "popup": False, "transient": False})
         return result
 
-    def start_feature(self, action, operation, *, metadata=None):
+    def start_feature(self, action, operation, *, metadata=None):  # INVARIANT: host owns worker admission/executor; registry delegates
         if action in self.feature_jobs or wifi_busy(action, self.feature_jobs): raise ValueError("This operation is already running")
         tags = dict(metadata or {})
         self.feature_jobs[action] = self.feature_executor.submit(operation)
@@ -1179,7 +1179,7 @@ class DesktopBackend:
     def finish_features(self):
         for action, job in list(self.feature_jobs.items()):
             if not job.done(): continue
-            self.result_sequence += 1; spec = self.actions.get(action)
+            self.result_sequence += 1; spec = self.actions.get(action)  # INVARIANT: one completion published per cycle (sequence)
             try:
                 if getattr(job, 'capture_token', self.capture.state.get('token')) != self.capture.state.get('token'):
                     self.last_result = {'ok': True, 'action': action, 'message': '', 'sequence': self.result_sequence}
@@ -1191,10 +1191,10 @@ class DesktopBackend:
                     message = value if spec.presentation is None else spec.presentation(value) if callable(spec.presentation) else spec.presentation
                 elif action == 'wallpaperCycle': message = ''
                 else: message = value
-                self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}
+                self.last_result = {"ok": True, "action": action, "message": message, "sequence": self.result_sequence}  # reply envelope
             except (CommandError, ValueError, OSError) as error:
                 if spec is not None and spec.execution == 'worker': spec.complete(error)
-                self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}
+                self.last_result = {"ok": False, "action": action, "message": str(error)[:400], "sequence": self.result_sequence}  # bounded error
             except CancelledError: raise  # locked: cancelled futures still raise (action_registry_async)
             except Exception as error:
                 # An unexpected completion type must not wedge the job registry and later snapshots.
@@ -1206,7 +1206,7 @@ class DesktopBackend:
             if action in {"recordStart", "recordStop"}: self.privacy_cache = None
             if action == 'batterySaver': self.power_cache = None; self.displays = self.display_control.snapshot()
             self.system_cache = None
-            # Deliver each completion separately so every pending QML action clears.
+            # Deliver each completion separately so every pending QML action clears.  # INVARIANT: pending/sequence
             break
 
     def recording(self) -> dict[str, Any]:
@@ -1338,8 +1338,8 @@ class DesktopBackend:
             raise ValueError("A non-negative numeric ID is required")
         return str(value)
 
-    def handle(self, request: Any) -> dict[str, Any]:
-        self.client_serial = acknowledge(self.client_serial, request); self.result_sequence += 1; self.result_unemitted = True
+    def handle(self, request: Any) -> dict[str, Any]:  # JSON-lines request dispatch; reply: action/ok/message/sequence/pending
+        self.client_serial = acknowledge(self.client_serial, request); self.result_sequence += 1; self.result_unemitted = True  # Related (see docs/WORKSPACE_MAP.md/config/architecture.json)
         action = request.get("action", "") if isinstance(request, dict) else ""
         try:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
@@ -1362,7 +1362,7 @@ class DesktopBackend:
             if field and self.system_cache is not None: self.system_cache.pop(field, None)
             message = self.actions.dispatch(action, request, context=context, demo=False) if spec is not None else self.perform(action, request)
             if action == "chargeMode" or action in self.feature_jobs:
-                self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}
+                self.last_result = {"ok": True, "action": action, "message": message, "pending": True, "sequence": self.result_sequence}  # worker pending
                 return dict(self.last_result)
             if action in {"refresh", "wifiToggle", "bluetoothToggle", "bluetoothDevice", "powerProfile"}:
                 self.system_cache = None
@@ -1635,7 +1635,7 @@ def main(argv: list[str] | None = None) -> int:
             selector.close()
             selector = selectors.SelectSelector()
             selector.register(sys.stdin, selectors.EVENT_READ, "input")
-        while True:
+        while True:  # main event loop: stdin JSON-lines + niri events + feature completions -> emit snapshots
             changed = False
             if args.settings and (backend.preferences.values['surfaceStyle'] != 'liquid' or backend.battery_saver_state['active']) and event_process is not None:
                 close_event_stream()
@@ -1676,7 +1676,7 @@ def main(argv: list[str] | None = None) -> int:
                     line, input_buffer = input_buffer.split(b"\n", 1)
                     if not line.strip():
                         continue
-                    error = handle_line(backend.handle, line)
+                    error = handle_line(backend.handle, line)   # REL: scripts/action_pending.py::handle_line – stdin JSON-lines
                     if error is not None: backend.last_result = error
                     # Send each result even if several commands arrived together.
                     emit(backend)

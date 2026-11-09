@@ -1,4 +1,6 @@
-"""Glass-on-glass nesting levels follow tree events only, never frames."""
+"""Glass-on-glass nesting levels follow tree events only, never frames.
+Contract: test_glass_nesting.py covers glass_nesting behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import shutil
 import unittest
 import test_local_qml as qml_tests

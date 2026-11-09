@@ -1,4 +1,6 @@
-"""Edge entry for actual bar clicks and migration of retired popup settings."""
+"""Edge entry for actual bar clicks and migration of retired popup settings.
+Contract: test_popup_entry.py covers popup_entry behavior/contracts; check imports for fixtures/helpers under test.
+"""
 import copy
 import json
 import os

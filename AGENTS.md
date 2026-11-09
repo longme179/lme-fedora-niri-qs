@@ -2,6 +2,10 @@
 
 Read `docs/STATE.md` first. Read `docs/ARCHITECTURE.md` for design questions.
 Do not read `docs/archive/` unless a specific historical question requires it.
+Read `docs/WORKSPACE_MAP.md` for module relationships before changing code.
+Find coupling tags with `grep -rn "REL:"`. When code changes, update the map
+and nearby REL/INVARIANT tags; refresh it with
+`git diff 6c1dc3c..HEAD --stat` to see what drifted since the last scan.
 Use `.agents/skills/ponytail/SKILL.md` at full level together with
 `.agents/skills/modularity/SKILL.md` for shell development, as requested by the owner.
 Keep source, UI text and documentation in English. Prefer existing controls,

@@ -650,7 +650,7 @@ class DesktopBackend:
         self.display_control = DisplayControl(self.runner)
         self.notification_path = self.preferences.path.parent / "notification-history.json"
         self.notification_history = self.valid_notifications(read_json(self.notification_path, [])) if not demo and not settings_only else []
-        self.apps = [] if demo or settings_only else self.applications.scan(); self.apps_revision = 0
+        self.apps = [] if demo or settings_only else self.applications.scan(); self.apps_revision = 0  # DEPRECATED(Q2->Q6): apps list is native (LauncherState.qml); kept for the A/B window
         self.last_app_scan = time.monotonic()
         self.last_cpu: tuple[int, int] | None = None
         self.system_cache: dict[str, Any] | None = None
@@ -1109,7 +1109,7 @@ class DesktopBackend:
             self.niri = self.niri_state() if liquid else {"available": False, "windows": [], "workspaces": []}; self.niri_cache.seed(self.niri)
             return {"apps": [], "niri": self.niri, "system": {}, "weather": weather, **self.feature_snapshot()}
         if time.monotonic() - self.last_app_scan > 60:
-            self.apps = self.applications.scan(); self.apps_revision += 1
+            self.apps = self.applications.scan(); self.apps_revision += 1  # DEPRECATED(Q2->Q6): native DesktopEntries list is live; A/B window
             self.last_app_scan = time.monotonic()
         self.niri = self.niri_cache.snapshot() or self.niri_state()
         if not self.niri_cache.valid: self.niri_cache.seed(self.niri)
@@ -1119,7 +1119,7 @@ class DesktopBackend:
         # Window/focus event bursts must not cause expensive hardware probes.
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
-            system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(details=self.wifi_watching),
+            system.update(tempC=self.temperature(), battery=self.battery(), network=self.network(details=self.wifi_watching),  # DEPRECATED(Q2->Q6): tempC/brightness stay backend-fed (no directory globs in quickshell 0.3.2); cpu/memory are native (MonitorState.qml)
                           audio=self.audio(), microphone=self.audio("@DEFAULT_AUDIO_SOURCE@"), brightness=self.brightness(),
                           charging=self.charging(), recording=self.recording())  # DEPRECATED(Q1->Q6): audio/microphone/battery/network sections are now native QML (qml/services/NativeState.qml); kept for the A/B window
             self.system_cache = system
@@ -1140,14 +1140,14 @@ class DesktopBackend:
         self.system_cache.update(bluetooth=self.bluetooth_cache, peripheralBatteries=self.peripheral_cache, **self.power_cache)
         if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
-            self.monitor.sample(self.system_cache)
+            self.monitor.sample(self.system_cache)  # DEPRECATED(Q2->Q6): cores/interfaces/history are native (MonitorState.qml); the process table stays backend-fed
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
                 **self.feature_snapshot(), "notificationHistory": self.notification_history,
                 "monitor": self.monitor.state if self.monitor_enabled else {}, "revisions": {"apps": self.apps_revision, "niri": self.niri_cache.revision, "preferences": self.preferences.revision, "launcherUsage": self.launcher_history.revision}}
 
     def feature_snapshot(self):
         return {"batterySaver": dict(self.battery_saver_state), "imageUtilities": dict(self.image_utilities.state), **self.action_state(), "preferences": dict(self.preferences.values), "lastResult": dict(self.last_result),
-                "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,
+                "launcherUsage": self.launcher_history.snapshot(enabled=self.preferences.values['launcherRanking']), "launcherHistoryError": self.launcher_history.error,  # DEPRECATED(Q2->Q6): usage store is native (LauncherState.qml FileView)
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,

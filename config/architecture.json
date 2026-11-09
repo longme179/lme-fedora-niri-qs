@@ -62,7 +62,9 @@
     ["qml/services/BluetoothState.qml", "qml/services/ShellState.qml", "Existing pairing-agent preference reads (bluetoothAdapter/demo/settingsApp); cyclic since the Q1 NativeState composition; runtime-safe (different properties, no binding loop); retire with the Q6 backend sections."],
     ["qml/services/NativeState.qml", "qml/services/BluetoothState.qml", "Q1 native bluetooth section and peripheral batteries; single direction into the native services."],
     ["qml/services/NativeState.qml", "qml/services/ShellState.qml", "Q1 native-section composition reads the bluetoothAdapter preference; runtime-safe (preferences, not the merged system); replace with a preference provider at Q6."],
-    ["qml/services/ShellState.qml", "qml/services/NativeState.qml", "Q1 merged system sections; the merge is pure over (backend, base sections) and caches in SystemMerge.js."]
+    ["qml/services/ShellState.qml", "qml/services/NativeState.qml", "Q1 merged system sections; the merge is pure over (backend, base sections) and caches in SystemMerge.js."],
+    ["qml/services/LauncherState.qml", "qml/services/ShellState.qml", "Q2 native launch: fixture modes round-trip run('launch') and launch failures surface through ShellState.statusMessage; runtime-safe (user-activated calls only, never during binding evaluation); retire the fallback with the Q6 backend actions."],
+    ["qml/services/NativeState.qml", "qml/services/LauncherState.qml", "Q2 apps/usage gating composes LauncherState into the snapshot top-level keys; runtime-safe (pure functions over the history store, no ShellState.system reads); folds into ShellState at Q6."]
   ],
   "largeFiles": {
     "shell.qml": 301,

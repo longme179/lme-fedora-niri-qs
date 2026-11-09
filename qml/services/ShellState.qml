@@ -13,8 +13,8 @@ QtObject {
     // on a private bus. The public demo/preview modes isolate both pathways.
     readonly property bool backendDemo: demo || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1"
     property var snapshot: ({apps: [], niri: {available: false, windows: [], workspaces: []}, system: {}, preferences: {language: "en", animations: true, opacity: 0.90, accent: "#9580ff"}})
-    readonly property var apps: snapshot.apps || []
-    readonly property var launcherUsage: snapshot.launcherUsage || ({})
+    readonly property var apps: NativeState.apps(snapshot.apps) // Q2: native app list in real sessions (qml/services/LauncherState.qml)
+    readonly property var launcherUsage: NativeState.usage(snapshot.launcherUsage, preferences.launcherRanking !== false) // Q2: native history store
     readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: snapshot.weather || {}
@@ -192,7 +192,7 @@ QtObject {
             // Stable references keep bindings from re-evaluating every poll; the merged system caches in SystemMerge.js.
             if (Identity.keep(next, snapshot, "displays", snapshot.displays)) next.displays = snapshot.displays;
             snapshot = next;
-            if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next.system, system); // Q1 A/B window
+            if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next, system, apps); // Q1/Q2 A/B window
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
             backendReady = true; restartDelay = 2000;

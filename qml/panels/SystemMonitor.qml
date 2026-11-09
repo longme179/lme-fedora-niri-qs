@@ -10,7 +10,7 @@ import "../theme"
 Item {
     id: root
     objectName: "systemMonitor"
-    readonly property var state: ShellState.snapshot.monitor || {}
+    readonly property var state: NativeState.monitor(ShellState.snapshot.monitor) || {} // Q2: native cores/interfaces/history over the backend process table
     readonly property var samples: state.history || []
     property string query: ""
     property int order: 0
@@ -21,9 +21,9 @@ Item {
     }
     function percent(value) { return value === null || value === undefined ? "—" : Number(value).toFixed(1)+"%"; }
     function bytes(value) { if (value === null || value === undefined) return "—"; return value >= 1048576 ? (value/1048576).toFixed(1)+" MiB" : (value/1024).toFixed(1)+" KiB"; }
-    function subscribe() { if (ShellState.backendReady) ShellState.run("monitor", {enabled: true}); }
+    function subscribe() { MonitorState.enabled = true; if (ShellState.backendReady) ShellState.run("monitor", {enabled: true}); }
     Component.onCompleted: subscribe()
-    Component.onDestruction: if (ShellState.backendReady) ShellState.run("monitor", {enabled: false})
+    Component.onDestruction: { MonitorState.enabled = false; if (ShellState.backendReady) ShellState.run("monitor", {enabled: false}); }
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.subscribe(); } }
     Flickable {
         id: scroll; anchors.fill: parent; clip: true

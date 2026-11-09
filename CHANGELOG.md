@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- The launcher app list, launch history and the cpu/memory system fields now
+  come from native reads (Quickshell DesktopEntries + FileView on
+  /proc/stat, /proc/meminfo, /proc/net/dev) instead of the backend JSON-lines
+  path, at the same 2-second cadence. Launching an app resolves the desktop
+  entry natively and detaches it from the shell process (terminal apps still
+  use the configured terminal); the usage store keeps its exact decay,
+  validation and atomic-write semantics on the same launcher.json, now with an
+  event-driven file watch. The Python backend still computes its copies during
+  a validation window; section shapes and all public facades are unchanged.
+  Temperature, brightness and the process table stay backend-sourced for now
+  (Quickshell 0.3.2 has no directory-listing API for the hwmon/backlight
+  globs or /proc/<pid> iteration).
 - Fix the battery module reading 1% at roughly 80% charge (Q1 regression).
   Quickshell 0.3.2 normalizes the UPower `Percentage` D-Bus property (0-100)
   into a 0-1 fraction — the same convention as PipeWire volume, Wi-Fi signal

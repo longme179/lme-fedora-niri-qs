@@ -23,3 +23,6 @@ singleton AudioState 1.0 AudioState.qml
 singleton PowerState 1.0 PowerState.qml
 singleton NetworkState 1.0 NetworkState.qml
 singleton NativeState 1.0 NativeState.qml
+
+singleton LauncherState 1.0 LauncherState.qml
+singleton MonitorState 1.0 MonitorState.qml

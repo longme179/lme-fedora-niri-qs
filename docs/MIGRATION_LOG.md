@@ -2,6 +2,43 @@
 
 Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
 
+## Q2 — native read-only files — 2026-11-09
+- Owner approved Q2 ("GREAT RESULTS, Q2 can start now", after validating the #116
+  battery hotfix). Branch `qml/q2-native-files` (tests -> implementation -> docs).
+- `LauncherState.qml`: app list from Quickshell DesktopEntries mapped to the
+  backend apps shape (ids keep the .desktop suffix; casefold+id ordering);
+  native launch via byId + execute()/terminal wrap, detached from the shell;
+  usage store = FileView JSON on the same launcher.json with launcher_history.py's
+  exact decay/validation/atomic-write semantics, event-driven file watch.
+- `MonitorState.qml`: /proc/stat + /proc/meminfo always at 2 s (the backend
+  --interval default, no A6 change), /proc/net/dev + history only while the
+  System monitor panel is open; ElapsedTimer windows match the Python
+  monitor across panel reopenings.
+- `NativeState` gains apps()/usage()/monitor() gates + cpu/memory system fields
+  in the merge; A/B compares memoryTotalGiB and the apps count.
+- Transitional backend-fed keys (no directory-listing API in quickshell 0.3.2):
+  tempC + brightness (hwmon/backlight globs) and the monitor process table
+  (/proc/<pid> iteration); DEPRECATED(Q2->Q6) markers at five emit sites.
+- Two cycle edges recorded with reasons (LauncherState->ShellState launch
+  fallback/status; NativeState->LauncherState gating).
+- Known fidelity edges for the A/B window: native apps can be a superset
+  (no OnlyShowIn/NotShowIn/TryExec properties in quickshell); Exec field codes
+  are stripped rather than expanded.
+- G0 green (1105 tests; 3 known quickshell-absent errors). Real-machine
+  verification on the owner's desktop (temp worktree, live checkout and
+  running shell untouched) took four rounds: two engine blockers the sandbox
+  cannot see — `native` is a reserved QML identifier (parse error broke the
+  singleton chain; gate renamed to `nativeMode`, all 164 QML files swept) and
+  `Object.fromEntries` is missing from quickshell 0.3.2's V4 engine (ES2019;
+  replaced with a `fromPairs` loop, contract test now bans both patterns in
+  qml/services) — plus verification-harness races fixed along the way
+  (DesktopEntries/FileView readiness-polls; finish() from a Timer, the eb5f2db
+  lesson). Final round: test_native_files 18/18 (5/5 QML cases running on the
+  real machine), Q1 suites 26 OK, apps parity native 51 / backend 57 / overlap
+  46 with the predicted OnlyShowIn/NotShowIn/TryExec superset, launcher.json
+  md5 unchanged. Post-merge owner checks: GUI + terminal launch, monitor panel
+  values, a day of apps-count/memoryTotalGiB drift logs.
+
 ## Q1 — native read-only state — 2026-11-09
 - Owner approved Q1 + the A6 wake-model change. Branch `qml/q1-native-read-state`
   (tests -> implementation -> docs; carries the Q0 re-land, see STATE).

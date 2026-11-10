@@ -105,7 +105,7 @@ QtObject {
     function stopMirror(done) {
         grace.stop();
         if (mirror.running) { stopping = true; mirror.running = false; }
-        else { mirror.command = []; }
+        mirror.command = [];  // the backend's child = None — synchronous, so a restart is never "busy"
         root.source = ""; root.target = ""; root.error = "";  // display_mirror.py::stop clears the info
         publish(false);
         if (done) done(true, "Mirror stopped");

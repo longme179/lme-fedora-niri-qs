@@ -16,6 +16,8 @@ import unittest
 
 import test_local_qml as qml_tests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+
 REPO = Path(__file__).resolve().parents[1]
 SERVICES = REPO / "qml" / "services"
 DISPLAY_MODEL, DISPLAY_STATE = SERVICES / "DisplayModel.js", SERVICES / "DisplayState.qml"
@@ -498,8 +500,10 @@ class DisplayIdleQmlCase(unittest.TestCase):
             self.assertTrue(result["section"]["outputs"])
 
     def test_mirror_round_trip_with_a_fake_wl_mirror(self):
-        # The wl-mirror child ownership: displayRefresh loads the outputs, mirrorStart spawns
-        # the recorded argv, the section flips active, and mirrorStop reaps the child.
+        # The wl-mirror child ownership: mirrorStart spawns the recorded argv, a concurrent
+        # second start is busy, stop reaps the child, and a restart after the stop is never
+        # busy (the synchronous command clear). The stop step settles first so the fake's
+        # marker lands before the SIGTERM.
         directory, markers = self.write_fake_tools(["wl-mirror"])
         self.fake_niri_script(directory)
         environment = dict(os.environ)
@@ -507,19 +511,26 @@ class DisplayIdleQmlCase(unittest.TestCase):
         environment["LME_SHELL_DEMO"] = "0"
         body = '''
     property var results: []
+    property Timer settle: Timer {
+        interval: 600
+        onTriggered: {
+            if (fixture.results.length === 2) fixture.step("mirrorStop", {});
+            else if (fixture.results.length === 3) fixture.step("mirrorStart", {source: "eDP-1", target: "eDP-1"});
+        }
+    }
     function step(action, request) {
         MirrorState.perform(action, request, (ok, message) => {
             results.push({action: action, ok: ok, message: message, section: JSON.parse(JSON.stringify(MirrorState.section))});
             if (results.length >= 4) fixture.finish({results: results});
             else if (results.length === 1) fixture.step("mirrorStart", {source: "eDP-1", target: "DP-2"});
-            else if (results.length === 2) fixture.step("mirrorStop", {});
-            else fixture.step("mirrorStart", {source: "eDP-1", target: "eDP-1"});
+            else settle.restart();
         }, {preferences: {mirroringEnabled: true}});
     }
     Timer {
         interval: 100; running: true; repeat: false
         onTriggered: fixture.step("mirrorStart", {source: "eDP-1", target: "HDMI-A-1"})
-    }'''
+    }
+    Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({results: results}) }'''
         result = self.run_qml('import "qml/services"', body, environment=environment)
         by_action = {}
         for row in result["results"]:
@@ -545,11 +556,10 @@ class DisplayIdleQmlCase(unittest.TestCase):
         self.assertEqual(rejected["message"], "Choose two different, active niri displays.")
         self.assertTrue(wait_for_exit(pid), "the fake wl-mirror must be reaped by mirrorStop")
 
+    @unittest.skipIf(shutil.which("wl-mirror"), "the missing-tool path needs a machine without wl-mirror (a PATH block cannot hide an installed binary — which/execvp continue past it)")
     def test_mirror_reports_a_missing_wl_mirror(self):
         # The FailedToStart discovery stands in for the backend's runner.available() pre-check:
         # the start settles with the install message and the section marks the tool missing.
-        # A directory named wl-mirror blocks PATH resolution everywhere (which/execvp skip
-        # non-files) so a really-installed binary cannot leak into the missing-tool case.
         directory, _ = self.write_fake_tools([], blocked=("wl-mirror",))
         self.fake_niri_script(directory)
         environment = dict(os.environ)
@@ -583,22 +593,25 @@ class DisplayIdleQmlCase(unittest.TestCase):
         preferences = {"nightLightEnabled": True, "nightLightMode": "manual",
                        "nightLightStart": "20:00", "nightLightEnd": "06:00", "nightLightTemperature": 4000}
         body = '''
+    property int phase: 0
     property var states: []
     Timer {
         interval: 200; running: true; repeat: true
         onTriggered: {
-            if (states.length === 0) {
+            if (phase === 0) {
                 NightLightState.sync(%(preferences)s, null);
-                if (NightLightState.section.running) states.push(JSON.parse(JSON.stringify(NightLightState.section)));
-                return;
+                if (NightLightState.section.running) {
+                    states.push(JSON.parse(JSON.stringify(NightLightState.section)));
+                    phase = 1;  // settle: let the helper exec and the marker land
+                }
+            } else if (phase === 2) {
+                NightLightState.sync(Object.assign({}, %(preferences)s, {nightLightEnabled: false}), null);
+                states.push(JSON.parse(JSON.stringify(NightLightState.section)));
+                fixture.finish({states: states});
             }
-            if (states.length === 1) return;  // settle: let the helper exec and the marker land
-            NightLightState.sync(Object.assign({}, %(preferences)s, {nightLightEnabled: false}), null);
-            states.push(JSON.parse(JSON.stringify(NightLightState.section)));
-            fixture.finish({states: states});
         }
     }
-    Timer { interval: 3000; running: true; repeat: false; onTriggered: { if (fixture.states.length === 1) fixture.states.push(null); } }
+    Timer { interval: 3000; running: true; repeat: false; onTriggered: if (fixture.phase === 1) fixture.phase = 2 }
     Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({states: states}) }''' % {"preferences": json.dumps(preferences)}
         result = self.run_qml('import "qml/services"', body, environment=environment)
         active, disabled = result["states"]
@@ -614,6 +627,7 @@ class DisplayIdleQmlCase(unittest.TestCase):
         self.assertFalse(disabled["active"])
         self.assertTrue(wait_for_exit(pid), "disabling Night Light must stop the wlsunset child")
 
+    @unittest.skipIf(shutil.which("wlsunset"), "the missing-tool path needs a machine without wlsunset (a PATH block cannot hide an installed binary)")
     def test_night_light_reports_a_missing_wlsunset(self):
         directory, _ = self.write_fake_tools([], blocked=("wlsunset",))
         os.symlink(shutil.which("python3"), Path(directory) / "python3")
@@ -649,23 +663,26 @@ class DisplayIdleQmlCase(unittest.TestCase):
                        "idleProfiles": {"ac": {"display": 1, "lock": 2, "suspend": 0},
                                         "battery": {"display": 3, "lock": 5, "suspend": 15}}}
         body = '''
+    property int phase: 0
     property var states: []
     Timer {
         interval: 200; running: true; repeat: true
         onTriggered: {
-            if (states.length === 0) {
+            if (phase === 0) {
                 IdleState.sync(%(preferences)s, true);
-                if (IdleState.section.running) states.push(JSON.parse(JSON.stringify(IdleState.section)));
-                return;
+                if (IdleState.section.running) {
+                    states.push(JSON.parse(JSON.stringify(IdleState.section)));
+                    phase = 1;  // settle: let the helper exec and the marker land
+                }
+            } else if (phase === 2) {
+                IdleState.perform("idleInhibit", {value: true}, (ok, message) => {
+                    states.push({ok: ok, message: message, section: JSON.parse(JSON.stringify(IdleState.section))});
+                    fixture.finish({states: states, helper: Quickshell.shellPath("scripts/idle_control.py")});
+                });
             }
-            if (states.length === 1) return;  // settle: let the helper exec and the marker land
-            IdleState.perform("idleInhibit", {value: true}, (ok, message) => {
-                states.push({ok: ok, message: message, section: JSON.parse(JSON.stringify(IdleState.section))});
-                fixture.finish({states: states, helper: Quickshell.shellPath("scripts/idle_control.py")});
-            });
         }
     }
-    Timer { interval: 3000; running: true; repeat: false; onTriggered: { if (fixture.states.length === 1) fixture.states.push(null); } }
+    Timer { interval: 3000; running: true; repeat: false; onTriggered: if (fixture.phase === 1) fixture.phase = 2 }
     Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({states: states, helper: Quickshell.shellPath("scripts/idle_control.py")}) }''' % {"preferences": json.dumps(preferences)}
         result = self.run_qml('import "qml/services"', body, environment=environment)
         running, paused = result["states"]
@@ -684,6 +701,7 @@ class DisplayIdleQmlCase(unittest.TestCase):
         self.assertFalse(paused["section"]["running"])
         self.assertTrue(wait_for_exit(pid), "inhibiting idle must stop the swayidle child")
 
+    @unittest.skipIf(shutil.which("swayidle"), "the missing-tool path needs a machine without swayidle (a PATH block cannot hide an installed binary)")
     def test_idle_reports_missing_binaries(self):
         directory, _ = self.write_fake_tools([], blocked=("swayidle", "niri", "swaylock"))
         os.symlink(shutil.which("python3"), Path(directory) / "python3")

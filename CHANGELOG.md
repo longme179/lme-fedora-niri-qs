@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Closed the QML-first migration's Q3 phase with a full live-machine
+  verification of the native audio device and network connection families:
+  the panel sections are field-for-field identical to the Python backend's
+  own models read from the same live session; port, profile and
+  application-output writes confirm with the exact backend messages
+  (including the designed stale-object rejection after a profile switch
+  recreates the audio sink); the hotspot warning flow produces a live plan
+  token and cancels without ever taking the Wi-Fi radio; and a saved
+  non-hotspot profile (WireGuard) connects and disconnects through the same
+  select/mutate/confirm cadence, with the active-connection list confirming
+  both transitions. Temporary verification profiles were removed afterwards
+  and the day's A/B comparison log shows only the previously known drift
+  categories.
 - Fixed five defects found when the native audio devices and network
   connections port first ran on a real machine. Two broke startup: the
   shared command-running component was missing its services qmldir

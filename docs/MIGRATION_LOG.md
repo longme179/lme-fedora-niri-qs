@@ -1,6 +1,38 @@
 # Migration summaries
 
-Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
+## Q4 — session families (compositor actions, niri IPC, keybinds, IME) — 2026-11-10
+
+- Owner approved Q4 ("duyệt Q4"). Scope split per plan §5 Q4: this branch delivers the
+  session/compositor leg (ime/keybind/window actions + niri_events, 318 Python lines);
+  display/mirror and night-light/idle follow as their own legs; capture/recording is
+  blocked on quickshell 0.3.2 (no mkdir/stat/chmod/exclusive-create/binary-read for PNG
+  checks, temp files, hard links) — the review stop proposes keeping them backend-fed.
+- WindowState.qml: focus/overview as one-shot `niri msg` argv through CommandRunner;
+  moveWindow/workspace through NiriIpc with the backend's validation order (move refreshes
+  before checking; workspace trusts the merged lists first). launch stays Q2, fileOpen Q5.
+- NiriIpc.qml: desktop_backend.niri_action ported — fresh connection per request, compact
+  {"Action":...} line, 1 MiB reply cap, 3 s timeout ("timed out"), Err surfaced verbatim;
+  queued one deep. Also serves the Workspaces/Windows reseed pair.
+- NiriState.qml + NiriModel.js: the event stream moves to a long-lived Quickshell.Io
+  Socket (bare "EventStream" request, ack skipped; 5 s backoff on drop; 2 s reseed while
+  not serving — seed() alone marks the cache valid, the snapshot()||niri_state() shape).
+  NiriModel ports niri_events.py verbatim; node parity 15/15 over seed/connect/feed/close.
+- KeybindsKdl/Model/State: niri_keybinds.py's tokenizer and include-chain traversal as a
+  FileView-driven state machine (32 files/12 levels/512 KiB/2 MiB bounds); node parity
+  6/6 on tokens/nodes and full section equality over a nested-include corpus. Deviation: a
+  missing include says "File could not be read" where the backend echoes errno text.
+- ImeState.qml: inputMethod routes fcitx5-remote -n through CommandRunner; the message
+  stays the method name, the lastResult consumer unchanged. Router fans out to the three
+  services; the context gains niri + preferences; the busy gate is scoped to the incoming
+  mutation (the backend's busy() contract — rapid workspace switches and volume stay
+  dispatchable during a pending wifi mutation; a Q3 approximation corrected in scope).
+- NativeState gains niri()/keybinds() gating with the drag pin; the A/B compare gains
+  niriWindows/niriWorkspaces count pairs (skip on drag). Three ImeState cycle edges
+  recorded; ratchets ShellState 328→337, test_native_session 480; backend markers
+  DEPRECATED(Q4->Q6) on the four families + five backend sites.
+- G0 sandbox: architecture green, 1167 tests, 0 new failures, 255 skips (4 new engine
+  cases need quickshell — real machine; the 3 quickshell-absent errors match clean main).
+  Language mix 68.1% QML-side (19,842 lines). qmllint/G1+ pending the real machine.
 
 ## Q3 final leg hotfix series — startup + two live-only engine bugs — 2026-11-10
 - Owner-reported `quickshell -c lme-shell` refusing to load; the remote agent bridge

@@ -17,7 +17,8 @@ QtObject {
     readonly property var launcherUsage: NativeState.usage(snapshot.launcherUsage, preferences.launcherRanking !== false) // Q2: native history store
     readonly property var audioDevices: NativeState.audioDevices(snapshot.audioDevices) // Q3: native audio device inventory (AudioDeviceState.qml)
     readonly property var networkConnections: NativeState.networkConnections(snapshot.networkConnections) // Q3: native saved connections (NetworkInventoryState.qml)
-    readonly property var niri: snapshot.niri || {available: false, windows: [], workspaces: []}
+    readonly property var keybinds: NativeState.keybinds(snapshot.keybinds) // Q4: native keybinding viewer (KeybindsState.qml)
+    readonly property var niri: NativeState.niri(snapshot.niri, draggingWindow) // Q4: native niri event-stream section (NiriState.qml)
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
@@ -172,6 +173,9 @@ QtObject {
         if (PowerState.handles(action)) return PowerState;
         if (NetworkInventoryState.handles(action)) return NetworkInventoryState;
         if (AudioDeviceState.handles(action)) return AudioDeviceState;
+        if (WindowState.handles(action)) return WindowState; // Q4: compositor window/workspace actions
+        if (KeybindsState.handles(action)) return KeybindsState; // Q4: keybinding viewer
+        if (ImeState.handles(action)) return ImeState; // Q4: input-method name
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
@@ -195,11 +199,16 @@ QtObject {
             const owner = nativeOwner(action);
             if (owner) {
                 // The context carries the merged system (backend-fed transitional keys like
-                // the charging section and rfkill flags) and an interim-status emitter, so
+                // the charging section and rfkill flags), the merged niri lists and the
+                // preferences (the session family's paths), and an interim-status emitter, so
                 // the services stay free of ShellState references (composition stays acyclic).
-                const context = {system: system, status: message => { statusMessage = message; statusError = false; statusTimer.restart(); }};
+                const context = {system: system, niri: niri, preferences: preferences, status: message => { statusMessage = message; statusError = false; statusTimer.restart(); }};
                 if (owner.canRoute(action, payload || {}, context)) {
-                    const busy = inventoryBusy(action) || (nativeMutationActions.some(name => pendingActions[name]) ? "This operation is already running" : "");
+                    // The backend's busy() contract: only a pending MUTATION blocks another
+                    // mutation — routine reads and the rapid window/workspace actions stay
+                    // dispatchable while one runs (Q4 scoped the Q3 approximation to the
+                    // incoming action).
+                    const busy = inventoryBusy(action) || (nativeMutationActions.includes(action) && nativeMutationActions.some(name => pendingActions[name]) ? "This operation is already running" : "");
                     if (busy) { statusMessage = busy; statusError = true; statusTimer.restart(); return; }
                     let sent;
                     try { sent = Pending.sent(pendingState, action); }
@@ -259,7 +268,7 @@ QtObject {
             // Stable references keep bindings from re-evaluating every poll; the merged system caches in SystemMerge.js.
             if (Identity.keep(next, snapshot, "displays", snapshot.displays)) next.displays = snapshot.displays;
             snapshot = next;
-            if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next, system, apps); // Q1/Q2 A/B window
+            if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next, system, apps, niri, draggingWindow); // Q1/Q2/Q4 A/B window
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
             backendReady = true; restartDelay = 2000;

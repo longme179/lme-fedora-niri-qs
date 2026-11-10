@@ -101,6 +101,27 @@ QtObject {
         return NetworkInventoryState.projection;
     }
 
+    // Q4 keybinds: the on-demand viewer section rides natively after keybindRefresh;
+    // fixture modes pass the backend through (the demo registry reads the bundled config).
+    function keybinds(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {path: "", bindings: [], errors: []};
+        return KeybindsState.section || backendSection || {path: "", bindings: [], errors: []};
+    }
+
+    // Q4 niri: the event-stream section (NiriState.qml) serves once it is available; until
+    // then the backend's poll copy stands in (exactly the snapshot() || niri_state() shape).
+    // The drag pin freezes the last served reference like Identity.keep did, so a drag never
+    // re-renders delegates; reference stability otherwise comes from NiriState.publish.
+    property var lastNiri: null
+    function niri(backendNiri, dragging) {
+        if (backendDemo || settingsApp) return backendNiri || {available: false, windows: [], workspaces: []};
+        const fallback = backendNiri || {available: false, windows: [], workspaces: []};
+        if (dragging) return lastNiri || fallback;
+        const native = NiriState.section;
+        if (native && native.available === true) { lastNiri = native; return native; }
+        return fallback;
+    }
+
     // Port of scripts/peripheral_battery.py::merge_batteries over the native inputs.
     function mergePeripherals(bluetooth) {
         const result = {};
@@ -124,7 +145,7 @@ QtObject {
     // view; count and warn on drift, rate-limited per section. Transitions are expected while
     // the backend poll lags the event-driven values — the counters are the day-long signal.
     // ShellState gates this to real sessions (not demo/backendDemo/settings).
-    function compareSections(backendSnapshot, native, nativeApps) {
+    function compareSections(backendSnapshot, native, nativeApps, nativeNiri, dragging) {
         const backend = backendSnapshot && backendSnapshot.system !== undefined ? backendSnapshot.system : backendSnapshot;
         const mismatches = {};
         const pairs = [["audio", ["available", "volume", "muted"]],
@@ -185,6 +206,27 @@ QtObject {
                 abLastWarn[key] = now;
                 console.warn("[Q3 A/B] " + key + " drift: backend " + left.length + " vs native " + right.length
                     + " (scan timing; hotspot-mode saved profiles are a known native edge)");
+            }
+        }
+        // Q4 niri lists. Counts only, and skipped while dragging (the pin freezes the native
+        // reference): the event-driven native section leads the backend's poll copy, so
+        // transient +/-1 windows during open/close bursts are the expected shape.
+        if (!dragging) {
+            const backendNiri = (backendSnapshot || {}).niri || null;
+            if (backendNiri && nativeNiri && backendNiri.available === true && nativeNiri.available === true) {
+                for (const key of ["windows", "workspaces"]) {
+                    const left = backendNiri[key], right = nativeNiri[key];
+                    if (!Array.isArray(left) || !Array.isArray(right) || left.length === right.length) continue;
+                    const label = key === "windows" ? "niriWindows" : "niriWorkspaces";
+                    mismatches[label] = 1;
+                    abMismatches[label] = (abMismatches[label] || 0) + 1;
+                    const now = Date.now();
+                    if (!abLastWarn[label] || now - abLastWarn[label] > 30000) {
+                        abLastWarn[label] = now;
+                        console.warn("[Q4 A/B] niri " + key + " drift: backend " + left.length + " vs native " + right.length
+                            + " (the native event stream leads the backend's poll copy)");
+                    }
+                }
             }
         }
         return mismatches;

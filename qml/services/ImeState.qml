@@ -15,6 +15,19 @@ Singleton {
     property string lastIMLabel: ""
     property bool imInitialized: false
 
+    // Q4 native routing (scripts/ime_actions.py): the fcitx5-remote -n one-shot whose
+    // result message IS the method name — the existing lastResult consumer below keeps
+    // working because nativeDone sets lastResult exactly like the backend reply did.
+    // Fixture modes keep the backend round-trip (the demo registry owns its reply).
+    property CommandRunner tools: CommandRunner { }
+    readonly property var handledActions: ["inputMethod"]
+    function handles(action) { return handledActions.includes(action); }
+    function canRoute(action, payload, context) { return true; }
+    function perform(action, request, done, context) {
+        tools.dispatch("fcitx5-remote", ["fcitx5-remote", "-n"], 3000, 8388608,
+            (ok, text, error) => done(ok, ok ? String(text).trim() : error));
+    }
+
     readonly property bool active: consumers > 0 || ShellState.preferences.imeIndicator !== false
     readonly property var fcitxItem: findItem(SystemTray.items.values)
     readonly property bool available: fcitxItem !== null

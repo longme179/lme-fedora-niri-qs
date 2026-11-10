@@ -1,4 +1,4 @@
-"""Launcher and compositor actions; current state and history remain host services.
+"""Launcher and compositor actions; current state and history remain host services. DEPRECATED(Q4->Q6): focusWindow/moveWindow/nativeOverview/workspace route natively (WindowState.qml); launch/fileOpen stay per their owning phases; fallback + demo provider through the A/B window.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
 """
 # REL: qml/panels/Launcher.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.

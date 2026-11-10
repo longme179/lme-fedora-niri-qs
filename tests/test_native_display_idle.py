@@ -430,6 +430,16 @@ class DisplayIdleQmlCase(unittest.TestCase):
             (Path(directory) / name).mkdir()
         return directory, markers
 
+    def gate_environment(self, **overrides):
+        """os.environ plus the harness's offscreen defaults — the migration gates export
+        QT_QPA_PLATFORM=wayland, and the display cases override XDG_RUNTIME_DIR (the
+        preview journal), which cuts the fixture off from the gate's private Sway socket."""
+        environment = dict(os.environ)
+        environment["QT_QPA_PLATFORM"] = "offscreen"
+        environment["QT_QUICK_BACKEND"] = "software"
+        environment.update(overrides)
+        return environment
+
     def fake_niri_script(self, directory):
         payload = json.dumps(self.OUTPUTS)
         path = Path(directory) / "niri"
@@ -448,10 +458,8 @@ class DisplayIdleQmlCase(unittest.TestCase):
         module = importlib.import_module("display_control")
         directory, _ = self.write_fake_tools([])
         self.fake_niri_script(directory)
-        environment = dict(os.environ)
-        environment["PATH"] = directory + ":" + environment["PATH"]
-        environment["NIRI_SOCKET"] = "/tmp/q4-fake-session.sock"
-        environment["LME_SHELL_DEMO"] = "0"
+        environment = self.gate_environment(PATH=directory + ":" + os.environ["PATH"],
+                                            NIRI_SOCKET="/tmp/q4-fake-session.sock", LME_SHELL_DEMO="0")
         with tempfile.TemporaryDirectory() as runtime:
             environment["XDG_RUNTIME_DIR"] = runtime
             (Path(runtime) / "lme-shell").mkdir()
@@ -480,10 +488,8 @@ class DisplayIdleQmlCase(unittest.TestCase):
         # empty preview — display_control.py::snapshot's stale-session guard.
         directory, _ = self.write_fake_tools([])
         self.fake_niri_script(directory)
-        environment = dict(os.environ)
-        environment["PATH"] = directory + ":" + environment["PATH"]
-        environment["NIRI_SOCKET"] = "/tmp/q4-fake-session.sock"
-        environment["LME_SHELL_DEMO"] = "0"
+        environment = self.gate_environment(PATH=directory + ":" + os.environ["PATH"],
+                                            NIRI_SOCKET="/tmp/q4-fake-session.sock", LME_SHELL_DEMO="0")
         with tempfile.TemporaryDirectory() as runtime:
             environment["XDG_RUNTIME_DIR"] = runtime
             (Path(runtime) / "lme-shell").mkdir()

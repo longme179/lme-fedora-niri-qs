@@ -28,7 +28,7 @@ ShellRoot {
         function desktopEdit(): bool { if (!DesktopState.enabled) return false; DesktopState.editing = !DesktopState.editing; return true; }
         function close(): void { ShellState.closePanels(); }
         function restartBackend(): bool { ShellState.backend.running = true; return true; }
-        function mirrorStatus(): string { return JSON.stringify(ShellState.snapshot.mirror || {}); }
+        function mirrorStatus(): string { return JSON.stringify(ShellState.mirror || {}); }
         function mirrorStart(source: string, target: string): bool {
             if (!ShellState.backendReady) return false;
             ShellState.run("mirrorStart", {source: source, target: target});
@@ -39,7 +39,7 @@ ShellRoot {
             ShellState.run("mirrorStop");
             return true;
         }
-        function idleStatus(): string { return JSON.stringify(ShellState.snapshot.idle || {}); }
+        function idleStatus(): string { return JSON.stringify(ShellState.idle || {}); }
         function mediaStatus(): string {
             const player = ActivityState.player;
             return JSON.stringify({demo: ShellState.demo, player: player?.dbusName || "", playing: ActivityState.playing,
@@ -47,7 +47,7 @@ ShellRoot {
                 position: player?.position ?? 0, duration: player?.lengthSupported ? player.length : 0,
                 mediaWave: Theme.mediaWave, animations: Theme.animations});
         }
-        function nightLightStatus(): string { return JSON.stringify(ShellState.snapshot.nightLight || {}); }
+        function nightLightStatus(): string { return JSON.stringify(ShellState.nightLight || {}); }
         function retryNightLight(): void { ShellState.run("nightLightRefresh"); }
         function capture(mode: string): void { ShellState.takeScreenshot(mode); }
         function refresh(): void { ShellState.run("refresh"); }

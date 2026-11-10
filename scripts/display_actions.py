@@ -1,4 +1,6 @@
 """Synchronous display entry contracts; the controller/watchdog retain ownership.
+DEPRECATED(Q4->Q6): displayRefresh routes natively (DisplayState.qml); the Settings
+preview actions keep this path until their owning phase — fallback + demo provider.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: display; Phase 3 graph).
 """
 # REL: qml/settings/DisplayPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.

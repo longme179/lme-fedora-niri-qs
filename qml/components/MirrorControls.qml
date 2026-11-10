@@ -9,8 +9,8 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 12
-    readonly property var state: ShellState.snapshot.mirror || ({})
-    readonly property var outputs: ((ShellState.snapshot.displays || {}).outputs || []).filter(o => o.enabled)
+    readonly property var state: ShellState.mirror || ({})
+    readonly property var outputs: (ShellState.displays.outputs || []).filter(o => o.enabled)
     readonly property var targets: outputs.filter(o => o.name !== sourceName)
     readonly property bool busy: !!ShellState.pendingActions.mirrorStart || !!ShellState.pendingActions.mirrorStop
     property string sourceName: ""

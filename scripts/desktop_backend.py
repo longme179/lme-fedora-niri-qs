@@ -526,11 +526,12 @@ class DesktopBackend:
     def __init__(self, runner: CommandRunner | None = None, preferences: Preferences | None = None,
                  apps: Applications | None = None, proc: Path = Path("/proc"), sysfs: Path = Path("/sys"),
                  demo: bool = False, settings_only: bool = False, weather: WeatherClient | None = None,
-                 weather_fetch: bool = True, manage_idle: bool = False) -> None:
+                 weather_fetch: bool = True, manage_idle: bool = False, session_daemons: bool = True) -> None:
         self.demo = demo
         self.settings_only = settings_only
         self.shell_entry = os.environ.get('LME_SHELL_ENTRY') or str(Path(__file__).resolve().parents[1] / 'shell.qml')
         self.manage_idle = manage_idle
+        self.session_daemons = session_daemons
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
         self.applications = apps or Applications()
@@ -1094,9 +1095,9 @@ class DesktopBackend:
             else: self.finish_features()
         self.result_unemitted = False
         weather = self.weather.snapshot(self.preferences.values, allow_fetch=self.weather_fetch and not self.settings_only)
-        if self.manage_idle and not self.settings_only:
+        if self.manage_idle and self.session_daemons and not self.settings_only:
             place = self.weather.auto_location if self.preferences.values['weatherAutoLocation'] else self.preferences.values['weatherLocation']
-            self.night_state = self.night_light.sync(self.preferences.values, place)
+            self.night_state = self.night_light.sync(self.preferences.values, place)  # DEPRECATED(Q4->Q6): native NightLightState owns wlsunset; A/B window
         self.capture.refresh()
         if not self.settings_only:
             self.mirror_state = self.mirror.state(
@@ -1138,7 +1139,7 @@ class DesktopBackend:
             self.power_cache = {"powerProfile": self.power_profile(), "powerProfiles": self.power_profiles()}  # DEPRECATED(Q1->Q6): power profiles are now native QML (PowerState.profile/.profiles)
             self.last_power_sample = time.monotonic()
         self.system_cache.update(bluetooth=self.bluetooth_cache, peripheralBatteries=self.peripheral_cache, **self.power_cache)
-        if self.manage_idle: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])
+        if self.manage_idle and self.session_daemons: self.idle_state = self.idle_control.sync(self.preferences.values, self.system_cache["battery"]["acOnline"])  # DEPRECATED(Q4->Q6): native IdleState owns swayidle; A/B window
         if self.monitor_enabled and (not self.monitor.state or time.monotonic() - self.monitor.state["sampledAt"] >= 1.5):
             self.monitor.sample(self.system_cache)  # DEPRECATED(Q2->Q6): cores/interfaces/history are native (MonitorState.qml); the process table stays backend-fed
         return {"apps": self.apps, "niri": self.niri, "system": self.system_cache, "weather": weather,
@@ -1563,13 +1564,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--restore-wallpaper", metavar="FILE", help="Restore with awww, without changing saved preferences")
     parser.add_argument("--restore-displays", action="store_true", help="Restore confirmed modes on currently attached displays")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
+    parser.add_argument("--no-session-daemons", action="store_true", help="The native QML services own wlsunset/swayidle; this backend stays read-only for them")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
     initialize_catalog()
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons)
     if args.restore_displays:
         if backend.saver_snapshot()['active']:
             print('Displays: Battery saver is active; keeping current modes', file=sys.stderr)

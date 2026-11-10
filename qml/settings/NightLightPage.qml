@@ -10,7 +10,7 @@ ColumnLayout {
     signal navigateRequested(string pageId)
     id: root
     spacing: 20
-    readonly property var state: ShellState.snapshot.nightLight || {}
+    readonly property var state: ShellState.nightLight || {}
     function refresh(retry) { if (ShellState.backendReady) ShellState.run("nightLightRefresh", {retry: !!retry}); }
     Component.onCompleted: refresh()
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.refresh(); } }

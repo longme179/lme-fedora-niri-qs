@@ -10,7 +10,7 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
-    readonly property var displays: ShellState.snapshot.displays || {outputs: [], preview: {}}
+    readonly property var displays: ShellState.displays || {outputs: [], preview: {}}
     readonly property var outputs: displays.outputs || []
     readonly property var preview: displays.preview || {}
     property var drafts: []

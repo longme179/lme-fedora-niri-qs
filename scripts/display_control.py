@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """niri output previews with an independent, crash-resistant revert timer.
+DEPRECATED(Q4->Q6): the shell's displayRefresh routes natively (DisplayState.qml); the
+Settings preview flow keeps this path until its owning phase — fallback through A/B.
 
 Callers: scripts/desktop_backend.py display/preview actions; scripts/display_actions.py.
 Touches: `niri msg --json outputs`/layout application via display_layout.py; XDG runtime/state preview journal.

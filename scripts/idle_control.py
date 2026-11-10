@@ -1,5 +1,11 @@
 """Own one swayidle child and use swaylock's ready-fd before sleeping.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: idle; Phase 3 graph).
+Q4 split: IdleControl (the swayidle ownership/sync) is DEPRECATED(Q4->Q6) — the native
+IdleState.qml serves it — but this file STAYS as the session-infrastructure helper:
+the lock/sleep subcommands (swayidle invokes them; flock + ready-fd + /proc birth checks
+are outside quickshell 0.3.2's API surface, the same infra-helper pattern as the pkexec
+charge helper), the PDEATHSIG client wrapper for both swayidle and wlsunset, and the
+probe subcommand the native services use for availability discovery.
 """
 import argparse
 import ctypes
@@ -50,6 +56,8 @@ def idle_command(profile, lock_before_sleep, runner):
 
 
 class IdleControl:
+    """DEPRECATED(Q4->Q6): native IdleState.qml owns the swayidle child; A/B window."""
+
     def __init__(self, runner):
         self.runner, self.child, self.log = runner, None, None
         self.signature = None
@@ -145,12 +153,16 @@ def secure_lock():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['lock', 'sleep', 'client'])
+    parser.add_argument('action', choices=['lock', 'sleep', 'client', 'probe'])
     parser.add_argument('--parent', type=int)
     parser.add_argument('--lock', action='store_true')
     args, command = parser.parse_known_args()
-    if args.action != 'client' and command: parser.error('Unexpected arguments: ' + ' '.join(command))
+    if args.action not in ('client', 'probe') and command: parser.error('Unexpected arguments: ' + ' '.join(command))
     try:
+        if args.action == 'probe':
+            # Availability discovery for the native services: print the missing names.
+            print(' '.join(name for name in command if not shutil.which(name)))
+            return 0
         if args.action == 'client':
             if not args.parent or not command: raise RuntimeError('Idle client requires its parent and command')
             # Quickshell may kill the backend without cleanup; Linux stops its owned client too.
@@ -158,7 +170,9 @@ def main():
             libc.prctl.argtypes = [ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong]
             if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0): raise OSError(ctypes.get_errno(), 'Cannot supervise session client')
             if os.getppid() != args.parent: return 0
-            os.execv(command[0], command)
+            # execvp (PATH-resolved): the native services pass plain command names where the
+            # backend passed which()-resolved absolute paths — both resolve to the same binary.
+            os.execvp(command[0], command)
         if args.action == 'lock' or args.lock: secure_lock()
         if args.action == 'sleep': subprocess.run(['systemctl', 'suspend'], check=True, timeout=30)
         return 0

@@ -1,4 +1,5 @@
 """Own a wl-mirror window, without rewriting the user's niri output layout.
+DEPRECATED(Q4->Q6): native MirrorState.qml owns the child; fallback + demo provider.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: mirroring; Phase 3 graph).
 """
 # SPDX-License-Identifier: GPL-3.0-or-later

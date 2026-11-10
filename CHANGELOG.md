@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Completed the QML-first migration's Q4 display, mirroring, Night Light and
+  idle families: the display list refreshes through the shell itself, the
+  mirror runs as a shell-owned wl-mirror window, Night Light schedules the
+  wlsunset gamma daemon from the shell (sunset times included), and the idle
+  profiles own their swayidle daemon with the lock-before-sleep flow intact.
+  The Python backend stops owning the session daemons in live sessions (a new
+  --no-session-daemons flag) but keeps serving the Settings display-preview
+  flow and the demo/fallback paths through the A/B window.
 - Started the QML-first migration's Q4 phase (session families): switching
   workspaces, focusing or moving windows and toggling the niri overview now
   talk to the compositor directly over its IPC socket from the shell

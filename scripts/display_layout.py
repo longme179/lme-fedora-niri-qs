@@ -1,4 +1,6 @@
 """Shared niri layout validation and runner-injected application; no lifecycle state.
+DEPRECATED(Q4->Q6): the Settings preview flow (its only remaining consumer) moves with
+that phase; the shell applies no layouts natively.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
 """
 import math

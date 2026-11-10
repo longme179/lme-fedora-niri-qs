@@ -1,5 +1,50 @@
 # Migration summaries
 
+## Q4 legs 2-3 — display/mirror + night-light/idle — 2026-11-11
+
+- Owner approved both legs ("Duyệt Leg 2 (display/mirror) và Leg 3 (night-light/idle)").
+  Branch `qml/q4-display-idle-families` (tests → implementation → docs). 715 Python lines
+  across display_control/display_actions/display_mirror/display_layout and
+  night_light/night_light_actions/idle_actions/idle_control.
+- DisplayState.qml + DisplayModel.js: displayRefresh over `niri msg --json outputs`
+  (CommandRunner, the 16 MiB niri cap) with normalized_outputs ported verbatim (the %g
+  label formatting, current-mode gating, logical defaults, name sort), plus the
+  socket-scoped preview journal read through a watching FileView — the Settings preview
+  flow (apply/confirm/revert + its independent watchdog process) keeps the backend path
+  that owns it; those actions only dispatch from Settings where native never routes.
+- MirrorState.qml: the wl-mirror child ownership — the backend's exact argv, the start
+  validation, the stop/exit/disconnect tails, the mirroringEnabled re-check, and the 2 s
+  re-check driven from ShellState.accept (the backend's poll cadence). FailedToStart
+  discovery stands in for runner.available() (a 150 ms grace; the install message stays
+  exact — a parity deviation documented in the header).
+- NightLightState.qml + NightLightModel.js: wlsunset ownership with the
+  signature-only-on-change restart, the -T/-t 06:00/18:00 argv and the exit/stderr error
+  surfaces; the Almanac solar math and the schedule modes ported verbatim (13-case parity
+  corpus incl. the midnight wrap, sunset places, polar errors, HH:MM validation).
+- IdleState.qml: the swayidle ownership with idle_command's exact argv (shlex-joined
+  command strings — swayidle runs them through sh -c; shlex.quote's safe-set reproduced)
+  and the close-time power-on-monitors restore.
+- First spontaneous-ownership split: the shell's backend spawns with
+  `--no-session-daemons` in real sessions (its night/idle syncs skip; the sections stay
+  {} there) while the native services own the daemons. Both spawns go through
+  idle_control.py's client path so PDEATHSIG tracks the shell; the helper gained a
+  `probe` subcommand (which() discovery — quickshell 0.3.2 has none) and execvp for the
+  plain-name argv. The lock/sleep helpers stay Python (flock/ready-fd//proc — outside
+  quickshell 0.3.2's surface; the infra-helper pattern of the pkexec charge helper).
+- Sections publish through NativeState.displays/mirror/nightLight/idle; Settings
+  forwarding keeps working through shell.qml's IPC (the three status handlers now read
+  the native-served properties). No A/B compare entries (the backend copies stay empty
+  while native serves); ratchets ShellState 337→355, NativeState 218→240,
+  test_native_session 491→496, desktop_backend 1622→1624; new
+  tests/test_native_display_idle.py 681 (contract + engine cases with PATH-injected fake
+  wl-mirror/wlsunset/swayidle and the fake-socket outputs read). Backend markers
+  DEPRECATED(Q4->Q6) on the seven family modules + the two daemon-sync sites.
+- G0 sandbox: architecture green (no new cycle edges), 916 passed / 280 skips / 0
+  failures; language mix 68.9% QML-side (20,647 runtime lines). Real-machine
+  verification (engine cases, live parity, gates) follows before merge; capture/recording
+  remains backend-fed per the review-stop proposal — Q4 then needs only the owner's
+  close-out decision.
+
 ## Q4 — session families (compositor actions, niri IPC, keybinds, IME) — 2026-11-10
 
 - Owner approved Q4 ("duyệt Q4"). Scope split per plan §5 Q4: this branch delivers the

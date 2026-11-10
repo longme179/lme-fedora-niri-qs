@@ -6,6 +6,11 @@
 // off 5 s (the backend's next_event_retry) and Workspaces/Windows reads reseed the cache at
 // the backend's 2 s cadence while the stream is not serving. NiriIpc serves the short-lived
 // request round-trips; the first fill after the ack does not wait for the poll tick.
+// GOTCHA (Q4 real-machine lesson, second engine run): the subscribe line must be written
+// from connectedChanged(true) — setting `connected = true` only opens the socket, and the
+// niri IPC protocol never speaks first, so without the write the stream sits silent and
+// the section degrades to the 2 s polled reads (the bug the event-stream engine case
+// caught; the backend subscribes via its `niri msg --json event-stream` child).
 // INVARIANT: the published section keeps the backend shape {available, workspaces, windows}
 // and only changes identity when the model revision or the serving path moves (reference
 // stability for delegate bindings). seed() alone marks the cache valid — events are deltas,
@@ -38,10 +43,20 @@ QtObject {
     property bool reseeding: false
 
     property Socket stream: Socket {
+        id: streamSocket
         path: root.socketPath
         connected: false
         parser: SplitParser { onRead: line => root.streamLine(line) }
-        onConnectedChanged: if (!connected) root.streamDown()
+        onConnectedChanged: {
+            if (connected && root.streamWanted) {
+                // The subscription request goes out the moment the connection is up —
+                // the bare JSON line, exactly like NiriIpc's request writes.
+                streamSocket.write('"EventStream"\n');
+                streamSocket.flush();
+            } else if (!connected) {
+                root.streamDown();
+            }
+        }
         onError: error => root.streamDown()
     }
 

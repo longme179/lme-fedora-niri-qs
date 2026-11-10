@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Started the QML-first migration's Q4 phase (session families): switching
+  workspaces, focusing or moving windows and toggling the niri overview now
+  talk to the compositor directly over its IPC socket from the shell
+  process; the workspace/window list itself comes from a native niri event
+  stream instead of the backend's polled copy, the keybinding viewer reads
+  the niri config (with includes) natively, and the IME indicator resolves
+  fcitx5 directly. The Python backend keeps serving all of them as a
+  verified fallback during the A/B window.
 - Closed the QML-first migration's Q3 phase with a full live-machine
   verification of the native audio device and network connection families:
   the panel sections are field-for-field identical to the Python backend's

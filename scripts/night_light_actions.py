@@ -1,4 +1,5 @@
 """Synchronous Night Light refresh; the host retains its periodic state/worker facade.
+DEPRECATED(Q4->Q6): native NightLightState serves; fallback + demo provider.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: nightLight; Phase 3 graph).
 """
 # REL: qml/settings/NightLightPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.

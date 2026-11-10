@@ -1,4 +1,6 @@
 """Scheduled gamma control through one session-owned wlsunset process.
+DEPRECATED(Q4->Q6): native NightLightState.qml owns wlsunset (via the idle_control
+helper for PDEATHSIG); fallback through the A/B window.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: nightLight; Phase 3 graph).
 """
 from datetime import datetime, timedelta, timezone

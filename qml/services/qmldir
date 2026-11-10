@@ -33,3 +33,7 @@ singleton WindowState 1.0 WindowState.qml
 singleton KeybindsState 1.0 KeybindsState.qml
 singleton NiriState 1.0 NiriState.qml
 singleton NiriIpc 1.0 NiriIpc.qml
+singleton DisplayState 1.0 DisplayState.qml
+singleton MirrorState 1.0 MirrorState.qml
+singleton NightLightState 1.0 NightLightState.qml
+singleton IdleState 1.0 IdleState.qml

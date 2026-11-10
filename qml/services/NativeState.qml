@@ -122,6 +122,32 @@ QtObject {
         return fallback;
     }
 
+    // Q4 display/mirror + night-light/idle legs: the same gating pattern — fixture modes
+    // pass the backend section through (the Settings preview flow and the demo registry
+    // own their state there); real sessions serve the native section with the backend copy
+    // as the stand-in until the first dispatch/sync populates it. No A/B compare entries
+    // for these sections: like the Q3/Q4 on-demand families, the backend copy stays empty
+    // while native serves — the owner's panel checklist is the parity signal.
+    function displays(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {outputs: [], preview: {}};
+        return DisplayState.section || backendSection || {outputs: [], preview: {}};
+    }
+
+    function mirror(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return MirrorState.section || backendSection || {};
+    }
+
+    function nightLight(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return NightLightState.section || backendSection || {};
+    }
+
+    function idle(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return IdleState.section || backendSection || {};
+    }
+
     // Port of scripts/peripheral_battery.py::merge_batteries over the native inputs.
     function mergePeripherals(bluetooth) {
         const result = {};

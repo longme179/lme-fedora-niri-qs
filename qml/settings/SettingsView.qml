@@ -15,7 +15,7 @@ Item {
     signal closeRequested()
     property var history: []
     readonly property var currentPage: SettingsRegistry.page(page)
-    readonly property var displayPreview: (ShellState.snapshot.displays || {}).preview || {}
+    readonly property var displayPreview: (ShellState.displays || {}).preview || {}
     property real now: Date.now()
     onDisplayPreviewChanged: now = Date.now()
     Timer { interval: 1000; repeat: true; running: ["applying", "pending", "reverting"].includes(root.displayPreview.status); onTriggered: { root.now = Date.now(); if (ShellState.backendReady) ShellState.run("displayRefresh"); } }

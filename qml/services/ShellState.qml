@@ -19,6 +19,10 @@ QtObject {
     readonly property var networkConnections: NativeState.networkConnections(snapshot.networkConnections) // Q3: native saved connections (NetworkInventoryState.qml)
     readonly property var keybinds: NativeState.keybinds(snapshot.keybinds) // Q4: native keybinding viewer (KeybindsState.qml)
     readonly property var niri: NativeState.niri(snapshot.niri, draggingWindow) // Q4: native niri event-stream section (NiriState.qml)
+    readonly property var displays: NativeState.displays(snapshot.displays) // Q4: native display refresh (DisplayState.qml)
+    readonly property var mirror: NativeState.mirror(snapshot.mirror) // Q4: native mirroring (MirrorState.qml)
+    readonly property var nightLight: NativeState.nightLight(snapshot.nightLight) // Q4: native Night Light (NightLightState.qml)
+    readonly property var idle: NativeState.idle(snapshot.idle) // Q4: native idle profiles (IdleState.qml)
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: snapshot.weather || {}
     readonly property var preferences: snapshot.preferences || {}
@@ -176,6 +180,10 @@ QtObject {
         if (WindowState.handles(action)) return WindowState; // Q4: compositor window/workspace actions
         if (KeybindsState.handles(action)) return KeybindsState; // Q4: keybinding viewer
         if (ImeState.handles(action)) return ImeState; // Q4: input-method name
+        if (DisplayState.handles(action)) return DisplayState; // Q4: display refresh
+        if (MirrorState.handles(action)) return MirrorState; // Q4: display mirroring
+        if (NightLightState.handles(action)) return NightLightState; // Q4: Night Light retry
+        if (IdleState.handles(action)) return IdleState; // Q4: idle refresh + inhibit
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
@@ -269,6 +277,15 @@ QtObject {
             if (Identity.keep(next, snapshot, "displays", snapshot.displays)) next.displays = snapshot.displays;
             snapshot = next;
             if (!demo && !settingsApp && !backendDemo) NativeState.compareSections(next, system, apps, niri, draggingWindow); // Q1/Q2/Q4 A/B window
+            // Q4 session-daemon sync at the backend's 2 s poll cadence (desktop_backend.py's
+            // state_snapshot loop owned wlsunset/swayidle and re-checked the mirror there —
+            // the native services now own them, driven from the snapshot hook with the
+            // resolved weather place and the merged AC state).
+            if (!demo && !settingsApp && !backendDemo) {
+                NightLightState.sync(preferences, ((next.weather || {}).location) || null);
+                IdleState.sync(preferences, (system.battery || {}).acOnline === true);
+                MirrorState.recheck(preferences);
+            }
             FeatureCatalog.validate(next.catalogValidation);
             const wasReady = backendReady;
             backendReady = true; restartDelay = 2000;
@@ -306,6 +323,7 @@ QtObject {
     property Process backend: Process { // REL: scripts/desktop_backend.py – long-lived Python backend (see Phase 3 map).
         command: ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]
             .concat(root.backendDemo ? ["--demo"] : []).concat(root.settingsApp ? ["--settings"] : [])
+            .concat(!root.backendDemo && !root.settingsApp ? ["--no-session-daemons"] : []) // Q4: the native services own wlsunset/swayidle
         stdinEnabled: true
         running: true
         stdout: SplitParser { onRead: data => root.accept(data) }

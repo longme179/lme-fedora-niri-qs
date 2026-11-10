@@ -9,7 +9,7 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
-    readonly property var status: ShellState.snapshot.idle || {}
+    readonly property var status: ShellState.idle || {}
     readonly property var durations: [0,1,2,3,5,10,15,20,30,60,120,240]
     function refresh() { if (ShellState.backendReady) ShellState.run("idleRefresh"); }
     Component.onCompleted: refresh()

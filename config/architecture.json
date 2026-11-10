@@ -73,6 +73,6 @@
     "tests/test_popup_motion.py": 357,
     "tests/test_shell_update.py": 268,
     "tests/test_glass_controls.py": 248,
-    "tests/test_native_session.py": 480
+    "tests/test_native_session.py": 491
   }
 }

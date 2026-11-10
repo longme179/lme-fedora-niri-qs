@@ -93,6 +93,12 @@ class NativeSessionContractCase(unittest.TestCase):
         # serialized them through its single-threaded loop).
         code = NIRI_IPC.read_text()
         self.assertIn('JSON.stringify({Action: action}) + "\\n"', code)
+        # The Q4 real-machine lesson: every request builds its own Socket (createObject) —
+        # a reused connection's false→true `connected` toggle loses the queued write while
+        # the previous teardown is still settling, and the abandoned teardown segfaults
+        # quickshell 0.3.2 (first engine run of the round-trip case).
+        self.assertIn("createObject", code)
+        self.assertIn("destroy", code)
         self.assertIn("3000", code)
         self.assertIn("1048576", code)
         self.assertIn("The niri reply was too large", code)
@@ -351,7 +357,7 @@ class NativeSessionQmlCase(unittest.TestCase):
             const files = %s;
             const bad = %s;
             const cases = [];
-            for (const corpus of [files, {bad: bad}]) {
+            for (const corpus of [files, {"bad.kdl": bad}]) {
                 const paths = Object.keys(corpus);
                 let state = KeybindsModel.start(paths[0]);
                 let guard = 0;
@@ -483,8 +489,11 @@ class NativeSessionQmlCase(unittest.TestCase):
             fake.close()
 
     def test_event_stream_updates_the_native_section(self):
-        # The subscription line, the ack and a seeded event stream populate NiriState's
-        # section with the backend shape (available/workspaces/windows).
+        # The subscription line, the ack and the read-pair reseed populate NiriState's
+        # section with the backend shape (available/workspaces/windows). Events that land
+        # before the first seed are superseded by it — the backend's own ordering
+        # (niri_events: feed() never flips valid; seed() overwrites the event-derived rows),
+        # pinned by replaying NiriStateCache against this fake on the real machine.
         fake = FakeNiriSocket().start()
         try:
             body = '''
@@ -503,7 +512,9 @@ class NativeSessionQmlCase(unittest.TestCase):
                                   environment={"NIRI_SOCKET": fake.path, "LME_SHELL_DEMO": "0"})
             self.assertTrue(result["ready"], result)
             self.assertEqual(result["section"]["workspaces"][0]["id"], 3)
-            self.assertEqual(result["section"]["windows"][0]["app_id"], "app")
+            # The read pair's "a", not the event's "app": the fake's events arrive before
+            # the first seed, and the backend's seed() overwrites them (parity above).
+            self.assertEqual(result["section"]["windows"][0]["app_id"], "a")
             with fake.lock:
                 requests = list(fake.requests)
             self.assertIn('"EventStream"', requests)

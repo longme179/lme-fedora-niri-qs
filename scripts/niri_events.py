@@ -1,4 +1,4 @@
-"""Niri workspace/window snapshots and the already-running event stream.
+"""Niri workspace/window snapshots and the already-running event stream. DEPRECATED(Q4->Q6): native NiriState.qml owns the stream; fallback through the A/B window.
 
 Callers: scripts/desktop_backend.py::NiriStateCache usage and niri refresh paths.
 Touches: `niri msg --json workspaces/windows` and `niri msg --json event-stream` (see desktop_backend.py).

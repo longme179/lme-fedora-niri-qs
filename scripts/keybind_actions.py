@@ -1,4 +1,4 @@
-"""Read-only keybinding refresh, with the original bundled demo input.
+"""Read-only keybinding refresh, with the original bundled demo input. DEPRECATED(Q4->Q6): native KeybindsState serves; fallback + demo provider through the A/B window.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: keybinds; Phase 3 graph).
 """
 # REL: qml/settings/KeybindsPage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.

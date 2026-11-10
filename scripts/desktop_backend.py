@@ -609,7 +609,7 @@ class DesktopBackend:
                 lambda **kwargs: self.preferences.reload(**kwargs), lambda *args, **kwargs: self.preferences.update(*args, **kwargs),
                 lambda key, value: validate_preference(key, value), lambda: DEFAULT_PREFERENCES,
                 lambda action, request: self.appearance_action(action, request))),
-            (provide_windows, WindowCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs),
+            (provide_windows, WindowCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs),  # DEPRECATED(Q4->Q6): compositor actions route natively (WindowState.qml); A/B window
                 lambda argv: self.runner.spawn(argv), lambda name: self.runner.executable(name), lambda name: self.runner.available(name),
                 lambda: self.preferences.values, lambda: self.applications.entries, lambda: self.file_search['entries'],
                 lambda ident: self.launcher_history.record(ident), self.identifier, lambda: self.niri, refresh_action_niri,
@@ -625,8 +625,8 @@ class DesktopBackend:
                 self.runner.run, self.try_run, lambda state: setattr(self, 'night_state', state), lambda: setattr(self.night_light, 'signature', None))),
             (BACKEND_FACTORIES['idle'], IdleCapabilities(lambda: self.preferences.values, lambda: self.settings_only, lambda: self.shell_entry, lambda: self.ac_online(),
                 self.runner.available, self.try_run, lambda state: setattr(self, 'idle_state', state), lambda value: setattr(self.idle_control, 'paused', value))),
-            (BACKEND_FACTORIES['keybinds'], KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state))),
-            (BACKEND_FACTORIES['ime'], ImeCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda name: self.runner.available(name)))])
+            (BACKEND_FACTORIES['keybinds'], KeybindCapabilities(lambda: self.preferences.values['niriConfigPath'], lambda state: setattr(self, 'keybinds', state))),  # DEPRECATED(Q4->Q6): native KeybindsState serves; A/B window
+            (BACKEND_FACTORIES['ime'], ImeCapabilities(lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda name: self.runner.available(name)))])  # DEPRECATED(Q4->Q6): native ImeState serves; A/B window
         self.image_utilities = ImageUtilities(self.runner,self.wallpapers,self.launchpad)
         self.wallpaper_daemon = {}
         self.wallpaper_library = {"entries": [], "folder": "", "error": "", "truncated": False}
@@ -1111,7 +1111,7 @@ class DesktopBackend:
         if time.monotonic() - self.last_app_scan > 60:
             self.apps = self.applications.scan(); self.apps_revision += 1  # DEPRECATED(Q2->Q6): native DesktopEntries list is live; A/B window
             self.last_app_scan = time.monotonic()
-        self.niri = self.niri_cache.snapshot() or self.niri_state()
+        self.niri = self.niri_cache.snapshot() or self.niri_state()  # DEPRECATED(Q4->Q6): native NiriState serves; A/B window
         if not self.niri_cache.valid: self.niri_cache.seed(self.niri)
         if self.manage_idle and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
             job=self.wallpapers.due(item.get('output') for item in self.niri['workspaces'] if item.get('output'))
@@ -1641,7 +1641,7 @@ def main(argv: list[str] | None = None) -> int:
                 close_event_stream()
             if not args.demo and event_process is None and backend.niri["available"] and time.monotonic() >= next_event_retry:
                 try:
-                    event_process = subprocess.Popen(
+                    event_process = subprocess.Popen(  # DEPRECATED(Q4->Q6): native NiriState owns the stream; A/B window
                         [backend.runner.executable("niri"), "msg", "--json", "event-stream"],
                         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     )

@@ -10,7 +10,7 @@ import "../theme"
 ColumnLayout {
     id: root; objectName: "keybindPage"; spacing: 16
     property string savedPath: ""
-    readonly property var state: ShellState.snapshot.keybinds || {}
+    readonly property var state: ShellState.keybinds || {}
     property string query: ""
     readonly property var matches: (state.bindings || []).filter(b => query.toLowerCase().trim().split(/\s+/).every(word => (b.key+" "+b.title+" "+b.action).toLowerCase().includes(word)))
     function refresh() { if (ShellState.backendReady) ShellState.run("keybindRefresh"); }

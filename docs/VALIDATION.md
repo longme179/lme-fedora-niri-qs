@@ -15,6 +15,20 @@ output while the engine reported the error precisely; ~88/160 files crash
 empty for unrelated reasons, mostly Quickshell imports). Never treat a
 qmllint pass as evidence a file parses — only a quickshell load is
 authoritative (issue #94 item 5, sharpened).
+
+## PipeWire recreates the ALSA sink on card profile switches — 2026-11-10
+
+Switching the analog card's profile (duplex → output-only → back, via the native
+`audioProfile` action, PipeWire 1.6.11) recreates the ALSA sink and source with
+new pactl indexes and PipeWire object serials — the sink id changed
+`sink/50/50` → `sink/85320/85320` while the stream survived on it. A route
+request built from the pre-switch sink id therefore settles with the designed
+"Audio object changed or disappeared; refresh devices" in BOTH worlds (the
+backend's selection raises the same string). Consequence for the A/B window:
+server ids (the pactl cookie identity) are stable across profile switches, but
+device ids are not — panels must re-read before acting on a device id after any
+profile change, exactly what the refresh-first contract already enforces.
+
 ## Settings first-visible-frame appearance — 2026-10-20
 
 The startup regression delays the backend snapshot by 500 ms and records visible

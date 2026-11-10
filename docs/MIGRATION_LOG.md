@@ -37,9 +37,37 @@ Historical records moved unchanged to `archive/migration/`; start at `STATE.md`.
   counts 3/1/2/1 equal, network serverId equal, devices 4=4, profiles 1=1 (wifi-infra
   and loopback excluded by design), `audioPort` → "Audio port confirmed",
   `networkConnect` (stale id) → "NetworkManager changed; refresh connections", IPv6
-  addresses and gateway parsed from live nmcli. Owner checklist (port/profile/route
-  switches, hotspot flow, saved-profile connect) still applies on the live shell.
+  addresses and gateway parsed from live nmcli. The owner checklist items still
+  pending after this round were completed the same day (see the Q3-closed bullet
+  below).
 
+## Q3 closed — owner checklist verified on the live shell — 2026-11-10
+
+- Q3 closed (2026-11-10, remote agent on the live machine, main 87a93b2, shell PID
+  unchanged throughout): the remaining owner checklist ran to completion through a
+  fixed-plan probe that dispatches the real `AudioDeviceState`/`NetworkInventoryState`
+  singletons offscreen — the same `perform()` the panels call. Deep read parity: the
+  native `audioDevices`/`networkConnections` sections are field-for-field identical to
+  the live Python backend's own models (`AudioDevices.refresh` / `NetworkProfiles.inspect`)
+  read seconds apart (checkedAt dropped only). Audio writes: `audioPort` re-select →
+  "Audio port confirmed"; a real profile switch on the analog card (duplex →
+  output-only → duplex) → "Audio profile confirmed" twice with the card back on duplex;
+  `audioRoute` (re-apply the speech-dispatcher stream's sink) → "Application output
+  confirmed" through the pw-dump/pw-metadata path. A request built from the pre-switch
+  sink id settled with the exact "Audio object changed or disappeared; refresh devices"
+  — WirePlumber recreates the ALSA sink (new index/serial) on profile switches, so the
+  refresh-before-edit contract is load-bearing. Network: the hotspot warning flow
+  (`networkHotspotPlan` over a temporary ap-mode profile) produced the live token and
+  warning (disconnectWifi true, no other uplink) and the cancel settled with "No network
+  activation is running" — no AP was started, the radio was never taken. connect +
+  disconnect of a temporary wireguard profile (the only non-hotspot kind activatable on
+  this wifi-only machine): "Connection active (NetworkManager)" and "Selected connection
+  disconnected", the active list confirming both ways; both temporary profiles were
+  deleted afterwards (the three original connections restored, wifi uninterrupted).
+  Drift lines for the day: the known Q1 strength jitter, the Q2 apps 57v62 superset and
+  one transient powerProfile line (backend poll lag, the documented sampling class); no
+  Q3-family categories exist by design (the on-demand sections have no compare entries).
+  Q3 is closed; Q4 still needs its own owner authorization.
 ## Q3 final leg — inventory families (audio devices, network plans/profiles) — 2026-11-10
 - The last Q3 leg per plan §5 delivered on `qml/q3-inventory-families` (tests
   -> impl -> docs): the inventory-based families ported to QML. Q3 is now

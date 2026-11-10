@@ -116,6 +116,11 @@ class NativeSessionContractCase(unittest.TestCase):
         # cache at the backend's 2 s cadence. The published section keeps the backend shape.
         code = NIRI_STATE.read_text()
         self.assertIn('"EventStream"', code)
+        # The subscription must be a real write from connectedChanged(true), not the
+        # REL comment's prose (the second-engine-run lesson: the line existed only in
+        # the header while the section silently degraded to the 2 s polled reads).
+        self.assertIn("write('\"EventStream\"\\n')", code)
+        self.assertIn("flush()", code)
         self.assertIn("NiriModel", code)
         self.assertIn("5000", code)
         self.assertIn("2000", code)

@@ -74,6 +74,6 @@
     "tests/test_shell_update.py": 268,
     "tests/test_glass_controls.py": 248,
     "tests/test_native_session.py": 496,
-    "tests/test_native_display_idle.py": 681
+    "tests/test_native_display_idle.py": 668
   }
 }

@@ -14,8 +14,7 @@ import textwrap
 import time
 import unittest
 
-from test_local_qml import LocalQmlCase
-from test_native_session import FakeNiriSocket
+import test_local_qml as qml_tests
 
 REPO = Path(__file__).resolve().parents[1]
 SERVICES = REPO / "qml" / "services"
@@ -95,40 +94,6 @@ def wait_for_exit(pid, timeout=5.0):
             return False
         time.sleep(0.05)
     return False
-
-
-class OutputsNiriSocket(FakeNiriSocket):
-    """The fake niri socket plus the Outputs read `niri msg --json outputs` performs."""
-
-    def __init__(self, outputs):
-        super().__init__()
-        self.outputs = outputs
-
-    def _handle(self, connection):
-        import socket as socket_module
-        import threading
-        connection.settimeout(10)
-        try:
-            line = b""
-            while b"\n" not in line:
-                chunk = connection.recv(65536)
-                if not chunk:
-                    return
-                line += chunk
-            request = line.decode().strip()
-            with self.lock:
-                self.requests.append(request)
-            if request == '"Outputs"':
-                connection.sendall(b'{"Ok":' + json.dumps(self.outputs).encode() + b'}\n')
-            else:
-                connection.sendall(b'{"Ok":"Handled"}\n')
-        except OSError:
-            pass
-        finally:
-            try:
-                connection.close()
-            except OSError:
-                pass
 
 
 class DisplayIdleContractsCase(unittest.TestCase):
@@ -231,7 +196,7 @@ class DisplayIdleContractsCase(unittest.TestCase):
             self.assertIn("NativeState." + section + "(snapshot." + section + ")", code)
         self.assertIn("NightLightState.sync(", code)
         self.assertIn("IdleState.sync(", code)
-        self.assertIn("MirrorState.recheck(", code)
+        self.assertIn("MirrorState.recheck(preferences)", code)  # the hook passes preferences — recheck takes (preferences, done)
         self.assertIn('"--no-session-daemons"', code)
 
     def test_sections_gate_through_nativestate(self):
@@ -305,8 +270,10 @@ class DisplayIdleContractsCase(unittest.TestCase):
 
 
 @unittest.skipUnless(shutil.which("quickshell"), "Quickshell is required for native QML checks")
-class DisplayIdleQmlCase(LocalQmlCase):
-    run_qml = LocalQmlCase.run_qml
+class DisplayIdleQmlCase(unittest.TestCase):
+    # Borrow the runner without subclassing LocalQmlCase — its own test methods would be
+    # collected twice through this module (the sibling files' convention).
+    run_qml = qml_tests.LocalQmlCase.run_qml
 
     OUTPUTS = {
         "HDMI-A-1": {"make": "Lenovo", "model": "ThinkVision", "modes": [
@@ -442,8 +409,10 @@ class DisplayIdleQmlCase(LocalQmlCase):
             with self.subTest(profile=want["profile"], lockBeforeSleep=want["lockBeforeSleep"]):
                 self.assertEqual(normalized_idle_argv(actual["argv"], helper), want["argv"])
 
-    def write_fake_tools(self, names):
-        """A PATH dir with fake CLI tools that record their argv and idle."""
+    def write_fake_tools(self, names, blocked=()):
+        """A PATH dir with fake CLI tools that record their argv and idle; names in
+        `blocked` become directories, which PATH resolution (shutil.which, execvp)
+        skips — hiding a really-installed binary for the missing-tool cases."""
         directory = tempfile.mkdtemp(prefix="lme-q4-fakes-")
         markers = {}
         for name in names:
@@ -455,6 +424,8 @@ class DisplayIdleQmlCase(LocalQmlCase):
                 exec sleep 300
                 ''').replace("$MARK", markers[name]))
             os.chmod(Path(directory) / name, 0o755)
+        for name in blocked:
+            (Path(directory) / name).mkdir()
         return directory, markers
 
     def fake_niri_script(self, directory):
@@ -468,18 +439,24 @@ class DisplayIdleQmlCase(LocalQmlCase):
         return int(lines[0]), lines[1:]
 
     def test_display_refresh_reads_outputs_and_the_journal(self):
-        # End to end: displayRefresh reads `niri msg --json outputs` through the fake socket,
-        # normalizes it like display_control.py, and merges the socket-scoped preview journal.
+        # End to end: displayRefresh reads the outputs (through a PATH-injected fake niri
+        # CLI — the real one's Version handshake needs the live compositor), normalizes it
+        # like display_control.py, and merges the socket-scoped preview journal. The live
+        # socket parity is a separate real-machine probe, not an engine case.
         module = importlib.import_module("display_control")
-        fake = OutputsNiriSocket(self.OUTPUTS).start()
+        directory, _ = self.write_fake_tools([])
+        self.fake_niri_script(directory)
+        environment = dict(os.environ)
+        environment["PATH"] = directory + ":" + environment["PATH"]
+        environment["NIRI_SOCKET"] = "/tmp/q4-fake-session.sock"
+        environment["LME_SHELL_DEMO"] = "0"
         with tempfile.TemporaryDirectory() as runtime:
+            environment["XDG_RUNTIME_DIR"] = runtime
             (Path(runtime) / "lme-shell").mkdir()
             (Path(runtime) / "lme-shell" / "display-preview.json").write_text(json.dumps(
                 {"token": "abc123", "status": "pending", "deadline": 1799999999.5, "error": "",
-                 "socket": fake.path, "original": [{"name": "eDP-1"}], "layout": [{"name": "eDP-1"}]}))
-            (Path(runtime) / "other-session.json").write_text("{}")
-            try:
-                body = '''
+                 "socket": environment["NIRI_SOCKET"], "original": [{"name": "eDP-1"}], "layout": [{"name": "eDP-1"}]}))
+            body = '''
     property var answer: null
     Timer {
         interval: 100; running: true; repeat: false
@@ -489,39 +466,36 @@ class DisplayIdleQmlCase(LocalQmlCase):
             });
         }
     }'''
-                result = self.run_qml('import "qml/services"', body,
-                                      environment={"NIRI_SOCKET": fake.path, "LME_SHELL_DEMO": "0",
-                                                   "XDG_RUNTIME_DIR": runtime})
-                self.assertTrue(result["ok"], result)
-                self.assertEqual(result["message"], "Displays refreshed")
-                self.assertEqual(result["section"]["outputs"], module.normalized_outputs(self.OUTPUTS))
-                self.assertEqual(result["section"]["preview"], {"token": "abc123", "status": "pending",
-                                                                "deadline": 1799999999.5, "error": ""})
-            finally:
-                fake.close()
+            result = self.run_qml('import "qml/services"', body, environment=environment)
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["message"], "Displays refreshed")
+            self.assertEqual(result["section"]["outputs"], module.normalized_outputs(self.OUTPUTS))
+            self.assertEqual(result["section"]["preview"], {"token": "abc123", "status": "pending",
+                                                            "deadline": 1799999999.5, "error": ""})
 
     def test_display_refresh_scopes_the_journal_to_the_session(self):
         # A journal written by another compositor session (socket mismatch) must publish an
         # empty preview — display_control.py::snapshot's stale-session guard.
-        fake = OutputsNiriSocket(self.OUTPUTS).start()
+        directory, _ = self.write_fake_tools([])
+        self.fake_niri_script(directory)
+        environment = dict(os.environ)
+        environment["PATH"] = directory + ":" + environment["PATH"]
+        environment["NIRI_SOCKET"] = "/tmp/q4-fake-session.sock"
+        environment["LME_SHELL_DEMO"] = "0"
         with tempfile.TemporaryDirectory() as runtime:
+            environment["XDG_RUNTIME_DIR"] = runtime
             (Path(runtime) / "lme-shell").mkdir()
             (Path(runtime) / "lme-shell" / "display-preview.json").write_text(json.dumps(
                 {"token": "stale", "status": "pending", "deadline": 1799999999.5, "socket": "/elsewhere/niri.sock"}))
-            try:
-                body = '''
+            body = '''
     Timer {
         interval: 100; running: true; repeat: false
         onTriggered: DisplayState.perform("displayRefresh", {}, (ok, message) =>
             fixture.finish({section: DisplayState.section}));
     }'''
-                result = self.run_qml('import "qml/services"', body,
-                                      environment={"NIRI_SOCKET": fake.path, "LME_SHELL_DEMO": "0",
-                                                   "XDG_RUNTIME_DIR": runtime})
-                self.assertEqual(result["section"]["preview"], {})
-                self.assertTrue(result["section"]["outputs"])
-            finally:
-                fake.close()
+            result = self.run_qml('import "qml/services"', body, environment=environment)
+            self.assertEqual(result["section"]["preview"], {})
+            self.assertTrue(result["section"]["outputs"])
 
     def test_mirror_round_trip_with_a_fake_wl_mirror(self):
         # The wl-mirror child ownership: displayRefresh loads the outputs, mirrorStart spawns
@@ -537,16 +511,14 @@ class DisplayIdleQmlCase(LocalQmlCase):
         MirrorState.perform(action, request, (ok, message) => {
             results.push({action: action, ok: ok, message: message, section: JSON.parse(JSON.stringify(MirrorState.section))});
             if (results.length >= 4) fixture.finish({results: results});
+            else if (results.length === 1) fixture.step("mirrorStart", {source: "eDP-1", target: "DP-2"});
+            else if (results.length === 2) fixture.step("mirrorStop", {});
+            else fixture.step("mirrorStart", {source: "eDP-1", target: "eDP-1"});
         }, {preferences: {mirroringEnabled: true}});
     }
     Timer {
         interval: 100; running: true; repeat: false
-        onTriggered: {
-            fixture.step("mirrorStart", {source: "eDP-1", target: "HDMI-A-1"});
-            fixture.step("mirrorStart", {source: "eDP-1", target: "DP-2"});
-            fixture.step("mirrorStop", {});
-            fixture.step("mirrorStart", {source: "eDP-1", target: "eDP-1"});
-        }
+        onTriggered: fixture.step("mirrorStart", {source: "eDP-1", target: "HDMI-A-1"})
     }'''
         result = self.run_qml('import "qml/services"', body, environment=environment)
         by_action = {}
@@ -576,18 +548,24 @@ class DisplayIdleQmlCase(LocalQmlCase):
     def test_mirror_reports_a_missing_wl_mirror(self):
         # The FailedToStart discovery stands in for the backend's runner.available() pre-check:
         # the start settles with the install message and the section marks the tool missing.
-        directory, _ = self.write_fake_tools([])
+        # A directory named wl-mirror blocks PATH resolution everywhere (which/execvp skip
+        # non-files) so a really-installed binary cannot leak into the missing-tool case.
+        directory, _ = self.write_fake_tools([], blocked=("wl-mirror",))
         self.fake_niri_script(directory)
         environment = dict(os.environ)
-        environment["PATH"] = directory  # wl-mirror deliberately absent, niri faked
+        environment["PATH"] = directory + ":" + environment["PATH"]
         environment["LME_SHELL_DEMO"] = "0"
         body = '''
     Timer {
-        interval: 100; running: true; repeat: false
-        onTriggered: MirrorState.perform("mirrorStart", {source: "eDP-1", target: "HDMI-A-1"}, (ok, message) =>
-            fixture.finish({ok: ok, message: message, section: MirrorState.section}),
-            {preferences: {mirroringEnabled: true}});
-    }'''
+        interval: 200; running: true; repeat: true
+        onTriggered: {
+            MirrorState.perform("mirrorStart", {source: "eDP-1", target: "HDMI-A-1"}, (ok, message) => {
+                const section = MirrorState.section;
+                if (!ok && !section.available) fixture.finish({ok: ok, message: message, section: section});
+            }, {preferences: {mirroringEnabled: true}});
+        }
+    }
+    Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({ok: true, message: "", section: MirrorState.section}) }'''
         result = self.run_qml('import "qml/services"', body, environment=environment)
         self.assertFalse(result["ok"])
         self.assertEqual(result["message"], "Install wl-mirror to mirror onto a connected display.")
@@ -609,15 +587,18 @@ class DisplayIdleQmlCase(LocalQmlCase):
     Timer {
         interval: 200; running: true; repeat: true
         onTriggered: {
-            NightLightState.sync(%(preferences)s, null);
-            if (states.length === 0 && NightLightState.section.running) {
-                states.push(JSON.parse(JSON.stringify(NightLightState.section)));
-                NightLightState.sync(Object.assign({}, %(preferences)s, {nightLightEnabled: false}), null);
-                states.push(JSON.parse(JSON.stringify(NightLightState.section)));
-                fixture.finish({states: states});
+            if (states.length === 0) {
+                NightLightState.sync(%(preferences)s, null);
+                if (NightLightState.section.running) states.push(JSON.parse(JSON.stringify(NightLightState.section)));
+                return;
             }
+            if (states.length === 1) return;  // settle: let the helper exec and the marker land
+            NightLightState.sync(Object.assign({}, %(preferences)s, {nightLightEnabled: false}), null);
+            states.push(JSON.parse(JSON.stringify(NightLightState.section)));
+            fixture.finish({states: states});
         }
     }
+    Timer { interval: 3000; running: true; repeat: false; onTriggered: { if (fixture.states.length === 1) fixture.states.push(null); } }
     Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({states: states}) }''' % {"preferences": json.dumps(preferences)}
         result = self.run_qml('import "qml/services"', body, environment=environment)
         active, disabled = result["states"]
@@ -634,10 +615,10 @@ class DisplayIdleQmlCase(LocalQmlCase):
         self.assertTrue(wait_for_exit(pid), "disabling Night Light must stop the wlsunset child")
 
     def test_night_light_reports_a_missing_wlsunset(self):
-        directory = tempfile.mkdtemp(prefix="lme-q4-fakes-")
+        directory, _ = self.write_fake_tools([], blocked=("wlsunset",))
         os.symlink(shutil.which("python3"), Path(directory) / "python3")
         environment = dict(os.environ)
-        environment["PATH"] = directory  # python3 for the probe, wlsunset missing
+        environment["PATH"] = directory + ":" + environment["PATH"]  # python3 for the probe, wlsunset blocked
         environment["LME_SHELL_DEMO"] = "0"
         preferences = {"nightLightEnabled": True, "nightLightMode": "manual",
                        "nightLightStart": "20:00", "nightLightEnd": "06:00", "nightLightTemperature": 4000}
@@ -677,13 +658,15 @@ class DisplayIdleQmlCase(LocalQmlCase):
                 if (IdleState.section.running) states.push(JSON.parse(JSON.stringify(IdleState.section)));
                 return;
             }
+            if (states.length === 1) return;  // settle: let the helper exec and the marker land
             IdleState.perform("idleInhibit", {value: true}, (ok, message) => {
                 states.push({ok: ok, message: message, section: JSON.parse(JSON.stringify(IdleState.section))});
-                fixture.finish({states: states});
+                fixture.finish({states: states, helper: Quickshell.shellPath("scripts/idle_control.py")});
             });
         }
     }
-    Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({states: states}) }''' % {"preferences": json.dumps(preferences)}
+    Timer { interval: 3000; running: true; repeat: false; onTriggered: { if (fixture.states.length === 1) fixture.states.push(null); } }
+    Timer { interval: 12000; running: true; repeat: false; onTriggered: fixture.finish({states: states, helper: Quickshell.shellPath("scripts/idle_control.py")}) }''' % {"preferences": json.dumps(preferences)}
         result = self.run_qml('import "qml/services"', body, environment=environment)
         running, paused = result["states"]
         self.assertTrue(running["running"], running)
@@ -691,10 +674,10 @@ class DisplayIdleQmlCase(LocalQmlCase):
         self.assertEqual(running["profile"], {"display": 1, "lock": 2, "suspend": 0})
         self.assertEqual(running["error"], "")
         pid, argv = self.read_marker(markers["swayidle"])
-        helper = Path(REPO / "scripts" / "idle_control.py")
+        helper = Path(result["helper"])
         module = importlib.import_module("idle_control")
         expected = module.idle_command({"display": 1, "lock": 2, "suspend": 0}, False, StubRunner())
-        self.assertEqual(normalized_idle_argv(["swayidle"] + argv, helper), normalized_idle_argv(expected, helper))
+        self.assertEqual(normalized_idle_argv(["swayidle"] + argv, helper), normalized_idle_argv(expected, IDLE_HELPER))
         self.assertTrue(paused["ok"])
         self.assertEqual(paused["message"], "Idle paused")
         self.assertTrue(paused["section"]["paused"])
@@ -702,10 +685,10 @@ class DisplayIdleQmlCase(LocalQmlCase):
         self.assertTrue(wait_for_exit(pid), "inhibiting idle must stop the swayidle child")
 
     def test_idle_reports_missing_binaries(self):
-        directory = tempfile.mkdtemp(prefix="lme-q4-fakes-")
+        directory, _ = self.write_fake_tools([], blocked=("swayidle", "niri", "swaylock"))
         os.symlink(shutil.which("python3"), Path(directory) / "python3")
         environment = dict(os.environ)
-        environment["PATH"] = directory  # python3 only — swayidle/niri/swaylock missing
+        environment["PATH"] = directory + ":" + environment["PATH"]  # python3 only — swayidle/niri/swaylock blocked
         environment["LME_SHELL_DEMO"] = "0"
         preferences = {"idleEnabled": True, "idleLockBeforeSleep": False,
                        "idleProfiles": {"ac": {"display": 1, "lock": 2, "suspend": 0},

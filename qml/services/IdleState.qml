@@ -190,7 +190,9 @@ QtObject {
 
     function publish(profile) {
         const source = lastAcOnline ? "ac" : "battery";
-        section = {enabled: lastPreferences.idleEnabled === true, running: swayidle.running,
+        // running tracks the spawned command — close() clears it synchronously like the
+        // backend's child = None (the QProcess property only flips on the actual exit).
+        section = {enabled: lastPreferences.idleEnabled === true, running: swayidle.command.length > 0,
                    paused: paused, source: source, profile: profile || {},
                    available: probeSettled ? probeMissing.length === 0 : true,
                    error: error};

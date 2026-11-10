@@ -29,6 +29,7 @@ QtObject {
     property string error: ""
     property bool available: true
     property bool stopping: false
+    property bool starting: false
     property var tail: ""           // the last 2000 characters of the child's stderr
     property var preferences: ({})  // the router context's copy, refreshed per dispatch
 
@@ -54,16 +55,18 @@ QtObject {
         try {
             if (context && context.preferences) preferences = context.preferences;
             if (action === "mirrorStop") return stopMirror(done);
-            if (action === "mirrorRefresh") return recheck(() => done(true, "Mirror refreshed"));
+            if (action === "mirrorRefresh") return recheck(preferences, () => done(true, "Mirror refreshed"));
             return start(request, done);
         } catch (error) { done(false, String(error)); }
     }
 
     function start(request, done) {
-        if (mirror.command.length) return done(false, "Stop the current mirror before starting another.");
+        if (mirror.command.length || starting) return done(false, "Stop the current mirror before starting another.");
         if (!preferences || preferences.mirroringEnabled === false)
             return done(false, "Display mirroring is disabled");
+        starting = true;  // a start in flight counts as busy, like the backend's serialized request loop
         runner.dispatch("niri", ["niri", "msg", "--json", "outputs"], 3000, 16777216, (ok, text, error) => {
+            starting = false;
             if (!ok) return done(false, error);
             let outputs = [];
             try {
@@ -109,9 +112,11 @@ QtObject {
     }
 
     // display_mirror.py::state — the disconnect and disable re-checks over a fresh read.
-    // The hook call has no done callback (the backend's poll stopped the child silently);
-    // the mirrorRefresh action always acknowledges with its own message.
-    function recheck(done) {
+    // The hook call passes the current preferences with no done callback (the backend's
+    // poll stopped the child silently); the mirrorRefresh action acknowledges with its
+    // own message.
+    function recheck(preferencesValue, done) {
+        if (preferencesValue) preferences = preferencesValue;
         if (!mirror.running) { publish(false); if (done) done(true, "Mirror refreshed"); return; }
         if (!preferences || preferences.mirroringEnabled === false) {
             stopMirror(null);

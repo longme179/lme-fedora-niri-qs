@@ -135,8 +135,11 @@ QtObject {
     }
 
     function publish(scheduleError, start, end) {
+        // running tracks the spawned command, not the QProcess state — close() clears it
+        // synchronously like the backend's child = None.
+        const running = wlsunset.command.length > 0;
         section = {enabled: lastPreferences.nightLightEnabled === true,
-                   active: wlsunset.running && !error, running: wlsunset.running,
+                   active: running && !error, running: running,
                    available: probeSettled ? probeAvailable : true,
                    temperature: lastPreferences.nightLightTemperature,
                    mode: lastPreferences.nightLightMode, start: start, end: end,

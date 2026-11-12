@@ -1,5 +1,37 @@
 # Migration summaries
 
+## Q4 close-out — capture/recording backend-fed, the banded strength compare, the live drift day — 2026-11-12
+
+- The owner advanced the project past Q4 ("Tiếp tục hoàn thành cho đến khi trước khi chuyển sang
+  Q5"): capture/recording is resolved **backend-fed transitional keys** — the Q2 `tempC`/
+  `brightness` pattern, exactly the #124 review-stop proposal (quickshell 0.3.2 has no
+  mkdir/stat/chmod/exclusive-create/binary-read for the temp-file and PNG-signature flows).
+  `screen_capture`/`capture_actions`/`screen_recording`/`recording_actions` keep serving real
+  sessions unmarked; the revisit is tracked for Q6's retirement sweep, when quickshell gains
+  the filesystem APIs. Q4's scope per plan §5 is complete.
+- Live drift day on merged main (a1bc941, the shell the owner restarted ~11:28, 12.5 h of real
+  use): **zero drift lines in every Q4 family** (no niriWindows/niriWorkspaces count pairs, no
+  battery, no Q3 lists) and no new crash patterns (tray/mpris D-Bus noise only). Two known
+  annotated signals: the Q2 apps superset (57 vs 62, OnlyShowIn/NotShowIn/TryExec — by design)
+  and 92 `[Q1 A/B] network` lines that are **strength-only jitter** — the backend's nmcli poll
+  and the live Networking model sample at different instants (65 vs 71 observed, every other
+  field equal), the same cross-instant rationale as the Q2 cpu/memoryPercent non-compare.
+- Branch `qml/q4-closeout` (test → impl → docs): `strength` leaves the network strict field
+  list and gets an **8-point band** (`Math.abs(a-b) > 8`; non-numbers keep strict equality) —
+  #116's 0-1 scale class (65 vs 1) and flag/ssid/null transitions still mismatch, so the
+  counter stays a parity signal. Engine case pins all four shapes (jitter silent, scale/flag/
+  null mismatch, null-null silent); ratchets NativeState 240→249 in both Q4 pins.
+- Verification: sandbox G0 matches clean main exactly (1192 collected, 0 failures, 267 skips,
+  the same 3 quickshell-absent errors; architecture green, language mix 20,667 = 68.9%
+  QML-side). Real machine (worktree, `~/glm-work/closeout`): the wifi suite 17 pass including
+  the new case, session/display-idle/state suites 48 pass/3 hardware skips with 63 subtests,
+  qmllint clean on NativeState.
+- Remaining owner checks after this merge + restart (the panels serve native sections; the
+  engine and parity rounds ran pre-merge on this same code): the Displays page and mirror
+  controls, Night Light enable/schedule, idle profiles on AC/battery, stayAwake, the
+  Keybindings page, the IME indicator — and the `[Q1 A/B] network` lines should now be silent
+  through normal strength jitter.
+
 ## Q4 legs 2-3 — display/mirror + night-light/idle — 2026-11-11
 
 - Owner approved both legs ("Duyệt Leg 2 (display/mirror) và Leg 3 (night-light/idle)").

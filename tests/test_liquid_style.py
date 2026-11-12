@@ -161,7 +161,7 @@ class LiquidThemeCase(unittest.TestCase):
             fixture.finish(fixture.checks);
         }
     }}
-''')
+''', {'LME_SHELL_DEMO':'0','LME_SHELL_BACKEND_DEMO':'0','NIRI_SOCKET':'/nonexistent-lme-blur-test'})
         self.assertEqual(result,dict(smoked=True,disabled=True,initial=True,window=True,moved=True,hidden=True,reparented=True,transparent=True,released=True,rearmed=True))
 
 

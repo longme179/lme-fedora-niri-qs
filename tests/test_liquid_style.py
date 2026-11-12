@@ -105,6 +105,11 @@ class LiquidThemeCase(unittest.TestCase):
         self.assertEqual(result, dict(smoked=True, liquid=True, restored=True, local=True, disabled=True, unsupported=True))
 
     def test_local_region_tracks_parent_transforms_corners_reparenting_and_visibility(self):
+        # The region tracks in BOTH glass modes now: liquidGlass OR popupBlurEnabled
+        # (the Materials popup blur uses the same per-surface regions — the retired
+        # full-screen contentItem region was the reopen-murk the owner reported).
+        # The lifecycle turns on popupBlur itself: tracked in smoked with popupBlur
+        # on, released when the preference turns off, rearmed when it returns.
         result=self.run_qml('import "qml/components"\nimport "qml/services"\nimport "qml/theme"', '''
     FloatingWindow { id:window;implicitWidth:700;implicitHeight:500
         Item { id:group;x:20;y:30
@@ -124,32 +129,40 @@ class LiquidThemeCase(unittest.TestCase):
             && region.width===Math.ceil(bounds.x+bounds.width)-region.x && region.height===Math.ceil(bounds.y+bounds.height)-region.y;
     }
     Timer { interval:80;running:true;repeat:true;onTriggered: {
-        if(++fixture.ticks>90) { fixture.finish({timeout:fixture.phase});return; }
+        if(++fixture.ticks>120) { fixture.finish({timeout:fixture.phase});return; }
         if(!ShellState.backendReady || ShellState.pendingActions.setting) return;
-        if(fixture.phase===0) { fixture.checks.smoked=region.width===0;ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++; }
-        else if(fixture.phase===1 && region.active) {
+        if(fixture.phase===0 && region.active) {
+            fixture.checks.smoked=ShellState.popupBlurEnabled && GlassState.popupsFor(window).length===1;
+            ShellState.run("setting",{key:"popupBlur",value:false});fixture.phase++;
+        } else if(fixture.phase===1 && ShellState.preferences.popupBlur===false) {
+            fixture.checks.disabled=region.width===0 && GlassState.popupRegions.length===0;
+            ShellState.run("setting",{key:"surfaceStyle",value:"liquid"});fixture.phase++;
+        } else if(fixture.phase===2 && region.active) {
             fixture.checks.initial=fixture.aligned() && region.topLeftRadius===0 && region.topRightRadius===24 && region.radius===16;
             fixture.checks.window=region.hostWindow===window && GlassState.popupsFor(window).length===1;
             group.x=95;group.y=110;shift.x=40;stretch.xScale=.8;stretch.yScale=1.1;fixture.phase++;
-        } else if(fixture.phase===2) {
+        } else if(fixture.phase===3) {
             fixture.checks.moved=fixture.aligned() && region.radius===16;
             group.visible=false;fixture.phase++;
-        } else if(fixture.phase===3) {
+        } else if(fixture.phase===4) {
             fixture.checks.hidden=!region.active && region.width===0 && GlassState.popupRegions.length===0;
             panel.parent=other;fixture.phase++;
-        } else if(fixture.phase===4) {
+        } else if(fixture.phase===5) {
             fixture.checks.reparented=region.active && fixture.aligned() && GlassState.popupRegions.length===1;
             other.opacity=0;fixture.phase++;
-        } else if(fixture.phase===5) {
+        } else if(fixture.phase===6) {
             fixture.checks.transparent=region.width===0 && GlassState.popupRegions.length===0;
             other.opacity=1;ShellState.run("setting",{key:"surfaceStyle",value:"smoked"});fixture.phase++;
-        } else if(fixture.phase===6 && !Theme.liquidGlass) {
+        } else if(fixture.phase===7 && !Theme.liquidGlass) {
             fixture.checks.released=region.width===0 && GlassState.popupRegions.length===0;
+            ShellState.run("setting",{key:"popupBlur",value:true});fixture.phase++;
+        } else if(fixture.phase===8 && region.active) {
+            fixture.checks.rearmed=ShellState.popupBlurEnabled && fixture.aligned();
             fixture.finish(fixture.checks);
         }
     }}
 ''')
-        self.assertEqual(result,dict(smoked=True,initial=True,window=True,moved=True,hidden=True,reparented=True,transparent=True,released=True))
+        self.assertEqual(result,dict(smoked=True,disabled=True,initial=True,window=True,moved=True,hidden=True,reparented=True,transparent=True,released=True,rearmed=True))
 
 
 @unittest.skipUnless(os.environ.get('LME_TEST_PERSONALIZATION_UI') == '1', 'private Wayland glass checks')
@@ -160,16 +173,30 @@ class LiquidNativeCase(unittest.TestCase):
         repo=Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
-            for name in ('qml','scripts','config','assets'):
+            for name in ('scripts','config','assets'):
                 (root/name).symlink_to(repo/name,target_is_directory=True)
-            source=(repo/'shell.qml').read_text()
+            # qml/ is mirrored entry-by-entry so SurfaceBlurRegion.qml can be patched with
+            # the same capability-bypass rewrite as shell.qml (both gate on popupBlurEnabled).
+            (root/'qml').mkdir()
+            for child in (repo/'qml').iterdir():
+                if child.name == 'components':
+                    (root/'qml'/'components').mkdir()
+                    for entry in child.iterdir():
+                        if entry.name == 'SurfaceBlurRegion.qml':
+                            (root/'qml'/'components'/entry.name).write_text(entry.read_text())
+                        else:
+                            (root/'qml'/'components'/entry.name).symlink_to(entry)
+                else:
+                    (root/'qml'/child.name).symlink_to(child,target_is_directory=child.is_dir())
+            patch=lambda text: text.replace('ShellState.liquidBlurEnabled','Theme.liquidGlass').replace('ShellState.popupBlurEnabled','(!Theme.liquidGlass && ShellState.preferences.popupBlur !== false)')
+            (root/'qml'/'components'/'SurfaceBlurRegion.qml').write_text(patch((root/'qml'/'components'/'SurfaceBlurRegion.qml').read_text()))
+            source=patch((repo/'shell.qml').read_text())
             # Private Sway lacks the protocol; test actual region selection independently of capability guards.
-            source=source.replace('ShellState.liquidBlurEnabled','Theme.liquidGlass').replace('ShellState.popupBlurEnabled','(!Theme.liquidGlass && ShellState.preferences.popupBlur !== false)')
             source=source.replace('target: "shell"','''target: "shell"
         function fixtureState(): string {
             const region=overlay.BackgroundEffect.blurRegion;
             return JSON.stringify({ready:ShellState.backendReady,liquid:Theme.liquidGlass,
-                local:region===glassPopupBlur,full:region===popupBlurRegion,visible:overlay.visible,
+                local:region===glassPopupBlur,visible:overlay.visible,
                 scrim:liquidScrim.visible,bottom:Theme.barBottom,editing:!!(panelLoader.item && panelLoader.item.editing),
                 panel:panelLoader.progress,island:activityIsland.progress,width:overlay.screen.width,height:overlay.screen.height,
                 nativeWidth:overlay.width,nativeHeight:overlay.height,
@@ -214,9 +241,15 @@ class LiquidNativeCase(unittest.TestCase):
                     log.seek(0);self.fail(str(state)+'\n'+log.read())
                 try:
                     wait(lambda s:s.get('ready'));ipc('toggle','control')
-                    wait(lambda s:s.get('full') and s.get('panel')==1)
+                    # Materials popup blur uses the SAME per-surface union as liquid — the
+                    # panel's own area, never the full-screen contentItem region (the murk).
+                    state=wait(lambda s:s.get('local') and not s.get('liquid') and s.get('panel')==1 and s['areas'][1]['width']>300)
+                    smoked=state['areas'][1]
+                    self.assertGreater(smoked['x'],state['width']*.3)
+                    self.assertLess(smoked['width'],state['width']*.7)
+                    self.assertEqual(state['areas'][0]['width'],0)
                     ipc('fixtureStyle','liquid')
-                    state=wait(lambda s:s.get('local') and s['areas'][1]['width']>300)
+                    state=wait(lambda s:s.get('local') and s.get('liquid') and s['areas'][1]['width']>300)
                     panel=state['areas'][1]
                     self.assertLess(state['nativeWidth'],state['width']*.8)
                     self.assertGreater(panel['x'],state['width']*.3)

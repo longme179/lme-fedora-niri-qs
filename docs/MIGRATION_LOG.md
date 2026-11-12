@@ -1,5 +1,38 @@
 # Migration summaries
 
+## Glass bugfix — Materials popup blur scoped to the popup plates — 2026-11-13
+
+- Owner-reported: with Liquid Glass off (Materials) and **Blur behind popups** on, reopening
+  a popup covered the whole screen in a murky blur layer. Branch `fix/materials-popup-blur`
+  (test → impl → docs; owner-authorized bugfix alongside the Q5 authorization).
+- Root cause (traced live on the owner's machine): the Materials branch of the overlay's
+  `BackgroundEffect.blurRegion` used `Region { item: overlay.contentItem }` over the
+  full-screen overlay surface — niri 26.04 blurs exactly the requested region, so the whole
+  output blurred behind the scrim (`passes 2, offset 1.0, noise 0.02, xray false` — the noise
+  layer reads as murk on bright content; on dark wallpapers it is subtle, which is why the
+  first opens looked "normal"). Verified with standalone layer-shell probes: an explicit
+  500x400 region blurs exactly that area; the contentItem region blurs everything. The
+  live-session repro initially showed no blur at all because **Battery saver was active**
+  (it gates every blur flag off) — reproducing required saver-off + smoked + popupBlur.
+- Fix: both material styles now blur through the same per-surface union —
+  `Region { regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }` — and
+  `SurfaceBlurRegion` bounds un-gate on `ShellState.popupBlurEnabled` (battery saver /
+  reduced transparency still gate both paths off). The 0.90-opacity smoked plates show the
+  blur through; the screen outside the popups stays sharp. The authentication modal keeps
+  its full-surface treatment deliberately. Ratchets shell.qml 301→305, test_liquid_style
+  391→424.
+- Verification: sandbox G0 identical to clean main (1192, 0 failures, 267 skips, the same
+  3 quickshell-absent errors; architecture green). Real machine: the engine case
+  (`test_local_region_tracks...`, now driven by popupBlur itself against the real backend
+  probe — the backend-demo snapshot has no platform section) **passes**; a standalone probe
+  running the branch's `SurfaceBlurRegion` against the live niri blurs only behind the
+  plate (outside-area edge-sd unchanged at 27.2, plate area 224→109); qmllint clean.
+  `LiquidNativeCase` (the private-Wayland gate class) has **3 pre-existing environmental
+  failures on this machine, identical on main** (its green history is the cloud Sway
+  validation; the on-machine gates G0–G6 never include it) — the branch's new first-wait
+  expectation passed before the same style-switch stall that fails the old test on main.
+  The end-to-end live visual of the fixed shell lands with the owner's merge + restart.
+
 ## Q4 close-out — capture/recording backend-fed, the banded strength compare, the live drift day — 2026-11-12
 
 - The owner advanced the project past Q4 ("Tiếp tục hoàn thành cho đến khi trước khi chuyển sang

@@ -154,8 +154,12 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "lme-overlay"
-        BackgroundEffect.blurRegion: !visible || !surfaceLive ? null : ShellState.liquidBlurEnabled ? glassPopupBlur : ShellState.popupBlurEnabled ? popupBlurRegion : null
-        Region { id: popupBlurRegion; item: overlay.contentItem }
+        // REL: BOTH surface styles blur through the same per-surface union (the island,
+        // the panel and the nested popups on this window). The old Materials branch used a
+        // full-screen contentItem region — niri blurred the entire output behind the scrim
+        // (the murky reopen the owner reported); the scoped union blurs only behind the
+        // popup plates, which show it through their 0.90 opacity, and the rest stays sharp.
+        BackgroundEffect.blurRegion: !visible || !surfaceLive ? null : (ShellState.liquidBlurEnabled || ShellState.popupBlurEnabled) ? glassPopupBlur : null
         Region { id: glassPopupBlur; regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }
         SurfaceBlurRegion { id: islandBlur; surface: activityIsland.panel }
         SurfaceBlurRegion { id: panelBlur; surface: panelLoader.item as Item }

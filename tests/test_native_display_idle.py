@@ -264,7 +264,7 @@ class DisplayIdleContractsCase(unittest.TestCase):
         self.assertLessEqual(nonblank(NIGHT_MODEL), 250)
         self.assertLessEqual(nonblank(DISPLAY_MODEL), 250)
         self.assertLessEqual(nonblank(SHELL_STATE), 355)
-        self.assertLessEqual(nonblank(NATIVE_STATE), 240)
+        self.assertLessEqual(nonblank(NATIVE_STATE), 249)  # Q4 closeout ratchet (banded strength compare)
 
     def test_es2019plus_apis_stay_banned(self):
         for path in PORT_FILES + [NIGHT_MODEL, DISPLAY_MODEL]:

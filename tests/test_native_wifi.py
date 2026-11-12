@@ -231,3 +231,36 @@ class NativeWifiQmlCase(unittest.TestCase):
         self.assertEqual(result["keys"], ["networks"])
         self.assertEqual(result["networks"], 1)
         self.assertEqual(result["saved"], 0)
+
+    def test_ab_compare_bands_the_network_strength(self):
+        # GOTCHA: the backend samples strength through its nmcli poll, the native side
+        # through the live Networking model — the same network jitters a few points
+        # between those instants (65 vs 71 observed on the owner's machine across a
+        # 12.5 h day: 92 rate-limited drift lines with every other field equal). Like
+        # cpu/memoryPercent (deliberately not compared), strength is a cross-instant
+        # sample: the compare bands it by 8 so the counter stays a parity signal —
+        # #116's 0-1 scale class (65 vs 1) and real flag/ssid changes still mismatch.
+        result = self.run_qml('import "qml/services"', '''
+    Timer {
+        interval: 100; running: true; repeat: false
+        onTriggered: {
+            const base = {available: true, enabled: true, connected: true,
+                          wifiConnected: true, ssid: "KimHoangTuan 5g", device: "wlo1"};
+            const backend = {system: {network: Object.assign({}, base, {strength: 65})}};
+            const jitter = NativeState.compareSections(
+                backend, {network: Object.assign({}, base, {strength: 71})}, []);
+            const scale = NativeState.compareSections(
+                backend, {network: Object.assign({}, base, {strength: 1})}, []);
+            const offline = NativeState.compareSections(
+                backend, {network: Object.assign({}, base, {strength: null, wifiConnected: false, ssid: null})}, []);
+            const bothNull = NativeState.compareSections(
+                {system: {network: Object.assign({}, base, {strength: null})}},
+                {network: Object.assign({}, base, {strength: null})}, []);
+            fixture.finish({jitter: Object.keys(jitter).sort(), scale: Object.keys(scale).sort(),
+                            offline: Object.keys(offline).sort(), bothNull: Object.keys(bothNull).sort()});
+        }
+    }''')
+        self.assertEqual(result["jitter"], [])
+        self.assertEqual(result["scale"], ["network"])
+        self.assertEqual(result["offline"], ["network"])
+        self.assertEqual(result["bothNull"], [])

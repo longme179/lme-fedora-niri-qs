@@ -179,11 +179,20 @@ QtObject {
                        ["battery", ["available", "percent", "charging", "acOnline"]],
                        ["powerProfile", null],
                        ["bluetooth", ["available", "enabled", "adapter"]],
-                       ["network", ["available", "enabled", "connected", "wifiConnected", "ssid", "strength"]]];
+                       ["network", ["available", "enabled", "connected", "wifiConnected", "ssid"]]];
         for (const [section, fields] of pairs) {
             if (!(section in (backend || {})) || !(section in (native || {}))) continue;
             const left = backend[section], right = native[section];
-            const differs = fields ? fields.some(field => left[field] !== right[field]) : left !== right;
+            // REL: strength is a cross-instant sample (the backend's nmcli poll vs the live
+            // Networking model) that jitters a few points on the same network — 65 vs 71
+            // observed live, all other fields equal — so it is banded by 8 like the Q2
+            // cpu/memoryPercent non-compare, keeping the counter a parity signal: the 0-1
+            // scale class of the Q1 hotfix and null-vs-number changes still mismatch.
+            const banded = section === "network"
+                && (typeof left.strength !== "number" || typeof right.strength !== "number"
+                    ? left.strength !== right.strength : Math.abs(left.strength - right.strength) > 8);
+            const differs = fields ? fields.some(field => left[field] !== right[field]) || banded
+                                   : left !== right;
             if (!differs) continue;
             mismatches[section] = 1;
             abMismatches[section] = (abMismatches[section] || 0) + 1;

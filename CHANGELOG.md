@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Completed the QML-first migration's Q5 content families: weather and lyrics
+  fetch, cache and schedule from the shell itself (same endpoints, same
+  sections), the wallpaper playlist scheduler runs as a shell-owned awww
+  daemon with per-output applies and the restore-before-advance machine,
+  file search and file open run through a bounded worker and gio directly,
+  the cava visualizer spawns with the in-repo config, the equalizer owns its
+  staging/apply/revert machine and test tone, and the clipboard runs one-shot
+  subcommands with a lock-guarded wl-paste watcher (flock + parent-death
+  signal) instead of the serve daemon. The Python backend keeps serving each
+  family as the A/B fallback; weather place selection, the wallpaper
+  save/scan/gowall/palette paths and capture/recording stay backend-fed
+  (tracked for the Q6 retirement phase).
+- The repository no longer ships the test suite: tests are a local-only
+  working set (untracked, gitignored) — scripts/check.sh runs the suite
+  where tests/ exists and reports the skip otherwise.
 - Completed the QML-first migration's Q4 display, mirroring, Night Light and
   idle families: the display list refreshes through the shell itself, the
   mirror runs as a shell-owned wl-mirror window, Night Light schedules the

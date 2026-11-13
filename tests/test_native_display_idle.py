@@ -263,8 +263,8 @@ class DisplayIdleContractsCase(unittest.TestCase):
             self.assertLessEqual(nonblank(path), 250, path.name)
         self.assertLessEqual(nonblank(NIGHT_MODEL), 250)
         self.assertLessEqual(nonblank(DISPLAY_MODEL), 250)
-        self.assertLessEqual(nonblank(SHELL_STATE), 368)  # Q5 weather+wallpaper routing ratchet
-        self.assertLessEqual(nonblank(NATIVE_STATE), 253)  # Q4 closeout + Q5 weather composer ratchet
+        self.assertLessEqual(nonblank(SHELL_STATE), 370)  # Q5 weather+wallpaper routing ratchet
+        self.assertLessEqual(nonblank(NATIVE_STATE), 257)  # Q4 closeout + Q5 weather/search composer ratchet
 
     def test_es2019plus_apis_stay_banned(self):
         for path in PORT_FILES + [NIGHT_MODEL, DISPLAY_MODEL]:

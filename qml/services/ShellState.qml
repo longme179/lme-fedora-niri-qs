@@ -25,6 +25,7 @@ QtObject {
     readonly property var idle: NativeState.idle(snapshot.idle) // Q4: native idle profiles (IdleState.qml)
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
     readonly property var weather: NativeState.weather(snapshot.weather) // Q5: native weather (WeatherState.qml); backend section stays the A/B window
+    readonly property var fileSearch: NativeState.fileSearch(snapshot.fileSearch) // Q5 leg 3: native search results (FileSearchState.qml); backend section stays the A/B window
     readonly property var preferences: snapshot.preferences || {}
     readonly property bool batterySaverActive: (snapshot.batterySaver || {}).active === true; readonly property bool reducedTransparency: preferences.reducedTransparency === true
     readonly property string shellName: preferences.shellName || "LME Shell"
@@ -186,6 +187,7 @@ QtObject {
         if (IdleState.handles(action)) return IdleState; // Q4: idle refresh + inhibit
         if (WeatherState.handles(action)) return WeatherState; // Q5: weather search/detect/refresh (select stays backend — it writes preferences)
         if (WallpaperState.handles(action)) return WallpaperState; // Q5 leg 2: daemon status/ensure + the playlist advance (user saves stay backend)
+        if (FileSearchState.handles(action)) return FileSearchState; // Q5 leg 3: the search worker + fileOpen entry validation
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and

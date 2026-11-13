@@ -16,7 +16,10 @@ Each glass surface renders only:
 
 **Blur comes only from the niri compositor.** The shell requests blur regions
 for bar/popup/settings/notification/OSD/auth/desktop surfaces; niri blurs the
-content behind those regions. The shell writes an owned snippet
+content behind those regions. **Popup blur is scoped to the popup plates in
+both material styles** (the island, the panel and their nested popups — never
+the whole screen); the authentication modal keeps its full-surface treatment
+by design. The shell writes an owned snippet
 `~/.config/lme-shell/liquid-blur.kdl` only when you click **Save niri blur
 snippet**. The snippet uses `xray false` for the shell's blur regions and sets
 `blur { passes, offset }`.

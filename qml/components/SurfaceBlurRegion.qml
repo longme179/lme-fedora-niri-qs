@@ -36,7 +36,11 @@ Region {
     }
     onGeometryItemsChanged: trackTransforms()
     readonly property rect bounds: {
-        if (!Theme.liquidGlass || !surface || !hostWindow || !hostWindow.visible) return Qt.rect(0, 0, 0, 0);
+        // REL: bounds feed both glass paths — the liquid surfaces AND the Materials popup
+        // blur (ShellState.popupBlurEnabled), which reuses these per-surface regions; the
+        // retired full-screen contentItem region blurred the whole output behind the scrim
+        // (the reopen-murk). Battery saver/reduced transparency keep both paths off.
+        if ((!Theme.liquidGlass && !ShellState.popupBlurEnabled) || !surface || !hostWindow || !hostWindow.visible) return Qt.rect(0, 0, 0, 0);
         // Region.item does not watch ancestor transforms; follow the existing springs without a timer.
         for (const item of geometryItems) {
             if (!item.visible || item.opacity <= 0) return Qt.rect(0, 0, 0, 0);

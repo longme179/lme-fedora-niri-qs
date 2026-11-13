@@ -1,0 +1,51 @@
+{
+  "id": "lock",
+  "sources": [
+    "qml/features/lock/LockMechanism.qml",
+    "qml/features/lock/LockSurface.qml",
+    "qml/features/lock/LockWallpaper.qml",
+    "qml/features/lock/LockClockView.qml",
+    "qml/features/lock/LockMediaWidget.qml",
+    "qml/features/lock/LockLoginView.qml",
+    "qml/settings/LockPage.qml"
+  ],
+  "settingsPage": {
+    "key": "lock",
+    "title": "Lock screen",
+    "icon": "lock",
+    "description": "The native session lock, its looks and its keyring",
+    "keywords": "lock screen password pam keyring blur wallpaper weather media clock suspend security session ext-session-lock",
+    "entry": "qml/settings/LockPage.qml",
+    "after": "keybinds"
+  },
+  "preferences": {
+    "lockBlur": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": true
+    },
+    "lockWeather": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": true
+    },
+    "lockMediaWidget": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": true
+    },
+    "lockKeyringUnlock": {
+      "type": "boolean",
+      "validator": "boolean",
+      "portable": false,
+      "appearance": false,
+      "default": true
+    }
+  }
+}

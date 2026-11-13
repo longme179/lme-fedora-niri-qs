@@ -30,7 +30,7 @@ ColumnLayout {
         description: "Switch timeouts automatically when the charger is plugged in or removed. Enable after choosing your timeouts."
         PreferenceSwitch { title: "Automatic idle management"; detail: "The desktop shell owns one swayidle process."; preference: "idleEnabled" }
         LabelText { text: "Current source: "+(root.status.source === "ac" ? "AC power" : "Battery")+(root.status.paused ? " · Stay awake" : root.status.running ? " · Running" : ""); color: Theme.accent; font.weight: Font.Bold }
-        LabelText { visible: root.status.available === false; text: "Install swayidle and swaylock, then restart the shell to enable idle management."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.yellow }
+        LabelText { visible: root.status.available === false; text: "Install swayidle, then restart the shell to enable idle management."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.yellow }
         LabelText { visible: !!root.status.error; text: root.status.error || ""; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.red }
     }
     Repeater {
@@ -63,7 +63,7 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Before sleep"
-        PreferenceSwitch { title: "Lock before suspend"; detail: "Wait for swaylock to confirm a locked session before automatic or shell-requested suspend."; preference: "idleLockBeforeSleep" }
+        PreferenceSwitch { title: "Lock before suspend"; detail: "Wait for the session lock to confirm before automatic or shell-requested suspend."; preference: "idleLockBeforeSleep" }
         LabelText { text: "Stay awake pauses these timeouts. Displays turn back on after input or resume. Disable other swayidle autostarts to avoid competing timers."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
     }
 }

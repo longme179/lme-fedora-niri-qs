@@ -22,6 +22,8 @@ Item {
     readonly property bool batteryLow: PowerState.battery.available && !PowerState.battery.charging
         && PowerState.battery.percent !== null && PowerState.battery.percent <= 15
     readonly property bool weatherReady: typeof WeatherState.data.temperature === "number"
+    // The widget preference (Phase 3 PR2, config/lock.json) gates the readout.
+    readonly property bool weatherEnabled: weatherReady && ShellState.preferences.lockWeather !== false
     readonly property bool bluetoothOn: BluetoothState.nativeAdapters.some(adapter => adapter.enabled)
     // Read-only surface state (engine cases pin the service gates through these).
     readonly property alias weatherVisible: weatherRow.visible
@@ -104,7 +106,7 @@ Item {
     Row {
         id: weatherRow
         spacing: 12
-        visible: root.weatherReady
+        visible: root.weatherEnabled
         anchors { left: parent.left; leftMargin: 40; bottom: parent.bottom; bottomMargin: 40 }
 
         ShellIcon {

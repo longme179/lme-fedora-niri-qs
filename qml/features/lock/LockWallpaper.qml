@@ -20,6 +20,9 @@ Item {
     // asset is the same fallback the desktop preview uses when none is set.
     readonly property string source: WallpaperState.current("") || "../../../assets/wallpapers/liquid-dracula.png"
     readonly property color tint: Theme.background
+    // The blur preference (Phase 3 PR2, config/lock.json) with the battery-saver
+    // override; without blur the wallpaper renders dim-only.
+    readonly property bool blurEnabled: ShellState.preferences.lockBlur !== false && !Theme.batterySaver
 
     Image {
         id: wallpaper
@@ -35,12 +38,14 @@ Item {
         id: blur
         anchors.fill: wallpaper
         source: wallpaper
-        blurEnabled: true
+        // D2 policy: MultiEffect blur, user-toggleable, automatically off while
+        // battery saver is active (Theme.batterySaver mirrors the saver state).
+        blurEnabled: root.blurEnabled
         blur: 0.8
         blurMax: 64
         blurMultiplier: 1.0
         // Slight zoom hides the blurred edge sampling at the screen border.
-        scale: 1.1
+        scale: root.blurEnabled ? 1.1 : 1
     }
 
     // A dark tint plus a flat dim keep text readable over any wallpaper.

@@ -65,7 +65,7 @@ if [[ -n "$qs_binary" ]] && command -v python3 >/dev/null 2>&1; then
     fi
 fi
 optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-ppd'
-optional swaylock 'lock screen'
+optional swaylock 'emergency lock fallback — the native session lock is primary (Settings > Lock screen)'
 optional swayidle 'laptop idle profiles; enable in Settings > Idle and sleep'
 optional wlsunset 'Night Light gamma control; Settings > Night Light'
 optional tesseract 'Screenshot studio OCR; install tesseract-langpack-eng (and optionally -vie)'

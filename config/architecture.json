@@ -55,7 +55,7 @@
     "qml/panels/EqualizerPanel.qml": 257,
     "qml/settings/BehaviorPage.qml": 253,
     "qml/settings/TopBarPage.qml": 342,
-    "qml/services/LockState.qml": 216,
+    "qml/services/LockState.qml": 220,
     "qml/theme/Theme.qml": 253,
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
@@ -83,7 +83,7 @@
     "tests/test_shell_update.py": 268,
     "tests/test_glass_controls.py": 248,
     "tests/test_native_session.py": 496,
-    "tests/test_native_lock.py": 302,
+    "tests/test_native_lock.py": 337,
     "tests/test_native_display_idle.py": 695,
     "tests/test_native_clipboard.py": 379
   }

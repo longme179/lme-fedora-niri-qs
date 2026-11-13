@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Single-instance clipboard watcher supervisor (the CaptureService spawn port).
 
-Flocks the capture lock, arms PR_SET_PDEATHSIG against the shell pid, then execs
-wl-paste --watch so the native ClipboardState owns capture without orphan risk:
+Flocks the per-kind capture lock, arms PR_SET_PDEATHSIG against the shell pid, then
+execs wl-paste --watch so the native ClipboardState owns capture without orphan risk:
 quickshell SIGKILLs its children on normal exit, and the kernel SIGTERMs this
 one if the shell dies any other way (probed on quickshell 0.3.2, 2026-11-13 —
 a plain child orphaned on shell crash; the PDEATHSIG wrapper died clean).
@@ -37,7 +37,11 @@ def main():
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     # The lock fd MUST survive execvp (Python opens fds close-on-exec by default, and the
     # flock evaporates with the fd) — the exec'd wl-paste holds it for its whole lifetime.
-    lock_fd = os.open(directory / "capture.lock", os.O_WRONLY | os.O_CREAT, 0o600)
+    # The lock is PER KIND: ClipboardState starts the text and image watchers together,
+    # and one shared lock made them race at shell start — the loser exited as a "duplicate"
+    # and its kind never captured again (the 2026-11-13 live bug). A second watcher of the
+    # SAME kind (another shell instance) is still what the lock rejects.
+    lock_fd = os.open(directory / f"capture-{args.kind}.lock", os.O_WRONLY | os.O_CREAT, 0o600)
     os.set_inheritable(lock_fd, True)
     try:
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)

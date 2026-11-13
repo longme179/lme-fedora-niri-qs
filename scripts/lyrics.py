@@ -5,7 +5,7 @@ Callers: qml/components/LyricsSession.qml::command spawns this worker; MPRIS/pla
 Touches: XDG cache `lme-shell/lyrics`, local LRC files, optional LRCLIB HTTP (bounded); storage.write_json.
 GOTCHA: network/cache/parsing are bounded; failures return no-lyrics results rather than crashing the UI worker.
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import hashlib
 import json
 import math

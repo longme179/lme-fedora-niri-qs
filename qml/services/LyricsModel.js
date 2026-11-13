@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: LyricsModel.js (lyrics layer, fan-in 1) — pure LRC contracts for the Q5 native lyrics.
 // REL: scripts/lyrics.py::parse/track/result – DEPRECATED(Q5->Q6); bounds (512 KiB, 4000 lines/
 // cues), the offset tag, equal-time grouping and every status are frozen by

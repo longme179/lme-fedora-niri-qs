@@ -6,7 +6,7 @@ service stages its document on stdin and this helper persists it exactly like
 storage.write_json: a 0o600 temp file, fsync, atomic os.replace.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: equalizer; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # REL: qml/services/EqualizerState.qml (the eq_state document writes); scripts/storage.py::write_json.
 import argparse
 import json

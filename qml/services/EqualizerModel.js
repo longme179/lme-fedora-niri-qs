@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: EqualizerModel.js (equalizer layer, fan-in 1) — pure contracts for the Q5 native
 // equalizer: the staging math, the daemon report parsing and the set argv.
 // REL: scripts/equalizer_actions.py (PRESETS/normalize/state_from_daemon_line/preset_for_gains/

@@ -5,7 +5,7 @@ L 660 Hz, R 880 Hz, then both 770 Hz with 15 ms fades — the equalizer.sh test 
 native eqTest ships this file instead of synthesizing it (quickshell 0.3.2 cannot write
 files); regeneration is deterministic, so the asset never drifts.
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import math
 import wave
 from pathlib import Path

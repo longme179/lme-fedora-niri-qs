@@ -1,7 +1,7 @@
 """Normalize BlueZ and kernel device batteries without extra hardware probes.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: peripherals; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 from peripheral_values import percentage, identity, kind, bluetooth_device
 
 

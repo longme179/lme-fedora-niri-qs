@@ -563,12 +563,12 @@ Inspired by [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland),
 geometry and recording workflow adaptations are modified for LME; copyright,
 licenses and the iNiR notice are retained.
 
-LME's original code is **GPL-3.0-or-later**, with retained GPL-3.0-only terms in
-adapted upstream components. The optional Liquid renderer and local launch-score decay adapt
-[Serpantinum](https://github.com/ilyamiro/serpantinum) by Illia Miroshnichenko,
-under **AGPL-3.0-or-later**. GPLv3 section 13 permits this combination; the
-combined work follows AGPLv3's interaction requirements while individual files
-retain their licenses. See [LICENSE](LICENSE), [THIRD_PARTY.md](THIRD_PARTY.md)
+LME is licensed under **AGPL-3.0-or-later** (the owner authorized the 2026-11-13
+relicense from GPL-3.0-or-later so upstream AGPL adaptations, e.g. Serpantinum's
+Liquid renderer and launch-score decay by Illia Miroshnichenko, and GPL-3.0-family
+references can be combined under one license; GPLv3 §13 permits the combination).
+Adapted upstream components retain their original copyright, licenses and notices;
+see [LICENSE](LICENSE), [THIRD_PARTY.md](THIRD_PARTY.md)
 and `third_party/` for attribution and licensing. Purchased Dracula Pro assets
 and fonts are not bundled. Demo wallpaper and artwork belong to their respective
 creators.

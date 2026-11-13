@@ -4,7 +4,7 @@
 The main backend retains power/connect controls. This process owns its discovery
 session and Pair calls; it never replaces another application's default agent.
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import json
 import os
 import re

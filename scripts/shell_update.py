@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """User-triggered Git updates, detached from Quickshell's hot-reload lifetime.
 
 Consumed by backend/action providers and/or QML surfaces; keep contracts stable. (update layer, fan-in 3)

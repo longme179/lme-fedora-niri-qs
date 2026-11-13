@@ -5,10 +5,12 @@ interaction patterns of [end-4/dots-hyprland](https://github.com/end-4/dots-hypr
 The upstream reference inspected during development was commit
 `c4f0582cbf4ad29607dbf3c20337815de8690b34`. Its root license is GNU GPL version 3.
 No upstream wallpapers, bundled fonts, icons or installation scripts have been
-copied into this project. Source adaptations are credited below. Original project
-source is distributed under GPL-3.0-or-later; motion and lyric scheduling
-adaptations retain GPL-3.0-only.
-The full GNU GPL version 3 license is in [LICENSE](LICENSE).
+copied into this project. Source adaptations are credited below. The project is
+distributed under AGPL-3.0-or-later (relicensed from GPL-3.0-or-later on
+2026-11-13 with the owner's authorization, so AGPL and GPL-3.0-family
+adaptations combine under one license); motion and lyric scheduling
+adaptations retain their upstream GPL-3.0-only terms.
+The full GNU Affero General Public License version 3 is in [LICENSE](LICENSE).
 
 Quickshell, Qt, niri, and the desktop utilities are external runtime dependencies
 with their own licenses. Installing this project does not redistribute them.

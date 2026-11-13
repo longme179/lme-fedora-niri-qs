@@ -4,7 +4,7 @@ Callers: scripts/desktop_backend.py/launchpad_actions.py; QML Launchpad panels v
 Touches: detached_log.py for job logs, XDG state launchpad dir, user command/bash entries.
 INVARIANT: execution is explicit (no shell for argv commands; bash only when kind=bash); literal argv/cwd validated.
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import os
 from pathlib import Path
 import re

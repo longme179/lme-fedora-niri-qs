@@ -2,7 +2,7 @@
 """One-shot Linux memory inventory; read-only, stdlib, no runtime integration.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: host; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import argparse
 from collections import defaultdict, deque
 import json

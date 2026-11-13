@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: FileSearchState.qml (launcher layer, fan-in 1) — Q5 native file search owner
 // and the fileOpen entry validation.
 // REL: scripts/file_search.py + file_search_actions.py + window_actions.py::file_open –

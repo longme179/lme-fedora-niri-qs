@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: WeatherState.qml (weather layer, fan-in 1) — Q5 native weather client; Q6 leg 1: select.
 // REL: scripts/weather.py::WeatherClient – DEPRECATED(Q5->Q6); the section shape (available/
 // configured/automatic/location/loading/stale/error/search) and the scheduling constants

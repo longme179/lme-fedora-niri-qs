@@ -1,7 +1,7 @@
 """Bounded name search in explicit local roots; no indexer or hidden traversal.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # DEPRECATED(Q5->Q6): the action ownership moved to FileSearchState.qml; this module stays
 # the bounded scandir helper (quickshell 0.3.2 cannot list directories) and the A/B source.
 import os

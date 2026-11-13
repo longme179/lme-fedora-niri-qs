@@ -8,7 +8,7 @@ the lock, the per-key merge, the schema validation and the 0o600 temp + fsync +
 atomic replace. Leg 2 re-homes these semantics out of desktop_backend.py together
 with this helper; leg 3 retires the backend itself.
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # REL: qml/services/StorageState.qml (the apply surface); scripts/desktop_backend.py::Preferences.
 import argparse
 import json

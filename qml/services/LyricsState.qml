@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: LyricsState.qml (lyrics layer, fan-in 1) — Q5 native lyric lookup.
 // REL: scripts/lyrics.py::lookup – DEPRECATED(Q5->Q6); the chain (embedded → local LRC sidecar
 // → metadata check → disk cache → offline check → LRCLIB) and the result shapes are frozen by

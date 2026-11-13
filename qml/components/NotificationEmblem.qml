@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: NotificationEmblem.qml (shared layer, fan-in 1).
 // Shared component/helper; keep API stable for wide QML reuse.
 // Rotation lifecycle inspired by iNiR's MaterialLoadingIndicator; see THIRD_PARTY.md.

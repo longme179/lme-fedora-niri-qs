@@ -1,5 +1,30 @@
 # Migration summaries
 
+## Q5 leg 3b — the equalizer native (PR #134, stacked on #133) — 2026-11-13
+
+- EqualizerModel.js + the EqualizerState perform layer port equalizer_actions.py exactly:
+  the staging machine (band edits persist with pending, apply pushes and commits, live
+  balance/mono/swap/dyneq/dynamics push without committing bands, the revert restores
+  committed bands with live values), the daemon runner (a queued one-shot Process with a
+  watchdog — every push retries once after an auto-start), and the 17-token ctl get seed.
+- The eq_state document reads through a FileView and writes through scripts/json_store.py
+  (the lyrics --store pattern: 0o600 temp, fsync, atomic replace); the shell is its only
+  writer, so the in-memory copy is authoritative after the first load. The test tone ships
+  as assets/equalizer-test.wav (the ChannelTestTone synthesis, verbatim; regenerable via
+  scripts/regen_equalizer_test_tone.py) and plays through pw-play with pw-dump targeting.
+- The panel's optimistic machine is untouched: send() still rides ShellState.run, which
+  routes the sixteen eq* actions to the native owner; failures still re-read via eqGet.
+- Deviations documented in the source: available() checks become spawn failures (a binary
+  that never started reads as 'unavailable'; a pw-play that cannot start self-heals through
+  audioTestRunning); the tone stop is a plain SIGTERM (pw-play is a single process).
+- Also in this stack: the qml/services/qmldir merge-marker fix (the stack merge left
+  markers in the only conflicted file without a known extension — every QML directory
+  import failed until it was resolved; a contract guard now sweeps the whole directory).
+- Verification: sandbox G0 1278/0-fail; engine cases on the owner's machine 18 passed
+  twice (the model corpus, the fake-transport action flows — seed, staging, apply, live
+  balance, revert, preset, validation errors, the failed-quit stop). Ratchets:
+  EqualizerState 442, ShellState 371, equalizer_actions 374.
+
 ## Q5 leg 3 part 1 — file search, fileOpen and the cava visualizer native (PR #132, stacked) — 2026-11-13
 
 - FileSearchState.qml owns the search: file_search.py stays the bounded scandir helper

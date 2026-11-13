@@ -187,7 +187,7 @@ class WeatherLyricsStateCase(LocalQmlCase):
     Component.onCompleted: {
         WeatherState.loader = (url, onDone, onFail) => {
             fixture.urls.push(url);
-            if (url.indexOf("ipwho.is") >= 0) { if (fixture.geoFail) onFail("unreachable"); else onDone(fixture.geo); return; }
+            if (url.indexOf("ipwho.is") >= 0) { if (fixture.geoFail) onDone({success: false, message: "unreachable"}); else onDone(fixture.geo); return; }
             if (url.indexOf("geocoding-api") >= 0) { onDone({results: [{name: "Da Nang", country: "Vietnam", latitude: 16.05, longitude: 108.2}]}); return; }
             if (fixture.forecastFail) { onFail("unreachable"); return; }
             onDone(JSON.parse(JSON.stringify(fixture.forecast)));

@@ -33,7 +33,10 @@ QtObject {
     property bool forecastPending: false
     property var searchState: ({query: "", loading: false, results: [], error: ""})
     property var lastPreferences: ({})
-    readonly property var section: inert || !prepared ? null : built
+    // A plain assigned property, not a binding: consumers read it immediately after sync()
+    // returns, and a queued binding evaluation would hand them the previous section (seen
+    // as a read race on the real machine).
+    property var section: null
 
     // The default transport: bounded GET with the Python client's User-Agent and timeout.
     readonly property var xhrLoader: (url, onDone, onFail) => {
@@ -106,6 +109,7 @@ QtObject {
             location: spot || {}, loading: geoPending || forecastPending,
             stale: !!error || (automatic && !!geoError), error: automatic && geoError ? geoError : error,
             search: searchState});
+        section = inert || !prepared ? null : built;
     }
 
     // ---- Q5 action surface (weatherSelect stays backend: it writes preferences, Q6 scope) ----

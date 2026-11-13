@@ -58,8 +58,9 @@ class WallpaperModelCase(LocalQmlCase):
         try { Wallpaper.outputName("bad name"); } catch (error) { thrown = error.message; }
         checks.outputName = thrown === "Choose a valid display name" && Wallpaper.outputName("", true) === ""
             && Wallpaper.outputName("DP-1.a_2") === "DP-1.a_2";
-        const query = "eDP-1: 1920x1080 (currently displaying: image: /home/z/w1.png)\\n" +
-            "some-namespace: DP-1: 2560x1440 (currently displaying: image: /home/z/w2.png)\\n" +
+        const query = "eDP-1: 1920x1080, scale: 1, currently displaying: image: /home/z/w1.png\\n" +
+            "some-namespace: DP-1: 2560x1440, scale: 1, currently displaying: image: /home/z/w2.png\\n" +
+            "HDMI-A-1: 1920x1080, scale: 1, currently displaying: color: 000000\\n" +
             "ignored line";
         const outputs = Wallpaper.queryOutputs(query);
         checks.queryOutputs = outputs.has("eDP-1") && outputs.has("DP-1") && outputs.size === 2;
@@ -147,7 +148,8 @@ class WallpaperModelCase(LocalQmlCase):
         fixture.prefs.wallpaperPlaylist = ["/only.png"];
         checks.single = Wallpaper.advanceChoices(fixture.prefs, "eDP-1", null, "/only.png", false).note
             === "The only playlist image is already active";
-        checks.empty = Wallpaper.advanceChoices({wallpaperPlaylist: []}, "eDP-1", null, "", false).note === "The playlist has no available images";
+        try { Wallpaper.advanceChoices({wallpaperPlaylist: []}, "eDP-1", null, "", false); checks.empty = false; }
+        catch (failure) { checks.empty = failure.message === "The playlist has no available images"; }
         done.start();
     }
     Timer { id: done; interval: 100; onTriggered: fixture.finish(checks) }
@@ -163,7 +165,7 @@ class WallpaperModelCase(LocalQmlCase):
     property var applied: []
     property var writes: []
     property var actions: []
-    property var queryText: "eDP-1: 1920x1080 (currently displaying: image: /stale.png)\\nDP-1: 2560x1440 (currently displaying: image: /fixed.png)"
+    property var queryText: "eDP-1: 1920x1080, scale: 1, currently displaying: image: /stale.png\\nDP-1: 2560x1440, scale: 1, currently displaying: image: /fixed.png"
     property var statusDone: null
     Component.onCompleted: {
         WallpaperState.clock = () => 5000;
@@ -182,6 +184,7 @@ class WallpaperModelCase(LocalQmlCase):
             wallpaperPlaylistPaused: false, wallpaperPlaylistShuffle: false, wallpaperPlaylistInterval: 300,
             wallpaperPlaylistOutput: "eDP-1", wallpaper: "/shared.png", wallpaperOutputs: {}};
         // A due advance: applies the next image natively and persists the per-output token.
+        WallpaperState.lastPreferences = prefs;
         WallpaperState.machine = {connected: ["eDP-1", "DP-1"], applied: {"eDP-1": "/shared.png", "DP-1": "/fixed.png"},
             signature: null, cursor: null, deadline: 5000, remaining: null, wasPaused: false, retryAt: 0};
         let manual = null;

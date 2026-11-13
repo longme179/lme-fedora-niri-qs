@@ -148,6 +148,11 @@ QtObject {
         return WeatherState.section || backendSection || {};  // Q5: native weather; backend stays the A/B window
     }
 
+    function fileSearch(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {query: "", entries: [], truncated: false};
+        return FileSearchState.section || backendSection || {};  // Q5 leg 3: native search results
+    }
+
     function idle(backendSection) {
         if (backendDemo || settingsApp) return backendSection || {};
         return IdleState.section || backendSection || {};

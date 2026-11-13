@@ -1,5 +1,26 @@
 # Migration summaries
 
+## Q5 leg 3 part 1 — file search, fileOpen and the cava visualizer native (PR #132, stacked) — 2026-11-13
+
+- FileSearchState.qml owns the search: file_search.py stays the bounded scandir helper
+  (quickshell 0.3.2 cannot list directories) and gains a lean --worker mode (one request
+  line in, one result line out); the state spawns and kills the worker — a new search
+  replaces the previous, the cancel Event's native half. The section composes through
+  NativeState.fileSearch and the Launcher reads ShellState.fileSearch.
+- fileOpen validates against the live entries and spawns gio. Deviation: the Python
+  re-stat of the target (resolve + is_file) has no QML equivalent — a file moved after
+  the search degrades to gio failing silently (documented in the source).
+- VisualizerState.qml spawns cava directly with the in-repo config/cava-visualizer.config
+  (the bridge's temp config, verbatim) and parses the raw ascii frames in JS; the python
+  bridge retires. A binary that never started surfaces the 'install cava' message.
+- The equalizer moves as its own leg: the QML state machine already exists
+  (EqualizerState.qml); what stays backend is the serpantinum daemon runner with the
+  autostart retry and the persisted eq_state document (the storage-helper pattern).
+- Verification: sandbox G0 1260/0-fail; engine cases on the owner's machine 18 passed
+  twice (the worker round trip over a temp tree, the search flow with validation and the
+  disabled/entry guards, the frame() corpus). Ratchets: ShellState 368→370, NativeState
+  253→257.
+
 ## Q5 leg 2 — the wallpaper scheduler native (PR #131, stacked on #130) — 2026-11-13
 
 - WallpaperState.qml + WallpaperModel.js port the awww daemon ownership (query → spawn

@@ -63,7 +63,7 @@
     "scripts/desktop_backend.py": 1633,
     "scripts/idle_control.py": 272,
     "scripts/equalizer_actions.py": 374,
-    "tests/fixtures/catalog-legacy.json": 342,
+    "tests/fixtures/catalog-legacy.json": 349,
     "tests/test_backend.py": 486,
     "tests/test_equalizer_actions.py": 278,
     "tests/test_battery_saver.py": 359,

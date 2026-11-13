@@ -1,4 +1,5 @@
-# DEPRECATED(Q5->Q6): weatherSearch/weatherDetect/weatherRefresh route to WeatherState.qml; weatherSelect stays backend until Q6 (it writes preferences).
+# DEPRECATED(Q5->Q6): weatherSearch/weatherDetect/weatherRefresh route to WeatherState.qml; weatherSelect
+# routes natively since Q6 leg 1 (WeatherState + StorageState + scripts/prefs_store.py). Sweep-only now (leg 3).
 """Entry calls are synchronous; WeatherClient retains its asynchronous controller.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: weather; Phase 3 graph).
 """

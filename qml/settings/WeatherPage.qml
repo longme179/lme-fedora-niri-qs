@@ -64,7 +64,7 @@ ColumnLayout {
                 required property var modelData
                 Layout.fillWidth: true
                 text: modelData.name + (modelData.country ? ", " + modelData.country : "")
-                enabled: ShellState.backendReady && !ShellState.pendingActions.weatherSelect
+                enabled: !ShellState.pendingActions.weatherSelect
                 onClicked: ShellState.run("weatherSelect", {location: modelData})
             }
         }

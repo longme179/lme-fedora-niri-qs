@@ -31,6 +31,15 @@ with the compatible motion adaptations described below. No iNiR shaders, bundled
 fonts, wallpapers or installation scripts are redistributed.
 See [docs/INIR_PORT.md](docs/INIR_PORT.md) for the settings/bar mapping.
 
+The native lock screen (Phase 0 skeleton in `qml/services/LockState.qml`, with
+the PAM and keyring helpers `config/pam/fprintd.conf` and
+`scripts/keyring_unlock.sh`) is a port of iNiR's `modules/shared/lock/`,
+inspected at commit `edca6cc` (root license: GNU GPL version 3). The env-gate
+design, the planned IPC surface (activate/prepareSleep/deactivate/status/focus)
+and the keyring unlock flow follow iNiR's `Lock.qml` and `scripts/keyring/`
+with attribution kept here and in each file header;
+`scripts/keyring_unlock.sh` retains its upstream GPL-3.0-only terms.
+
 Roboto is installed through Fedora's `google-roboto-fonts` package. The project
 references it by family name and does not distribute the font files. Small shell
 icons are original Canvas drawings; Material Symbols font assets are not bundled.

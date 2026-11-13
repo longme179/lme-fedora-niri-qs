@@ -1453,3 +1453,11 @@ not a quality retreat.
 - Uses only the published `ctl` command protocol; no DSP/daemon code is vendored.
 - AGPL notice documented in THIRD_PARTY.md and third_party/Serpantinum-NOTICE.
 - G0 unit slices pass; native GUI still needs a Wayland G1/G2 check.
+
+## Native lock screen · Phase 0 groundwork (2026-11-13)
+- Branch `feat/native-lock-screen`: the approved port of iNiR's lock module begins (plan in the owner's agent-collab).
+- Inert env-gated `LockState` singleton: demo off or `LME_SHELL_LOCK_ENABLED=0` disables every entry point; no session-lock/auth code before Phase 1. Planned IPC contract as stubs.
+- Vendored `config/pam/fprintd.conf` (dormant — no reader on this machine) and `scripts/keyring_unlock.sh` (GPL-3.0-only, no caller until Phase 3); iNiR lock-module credit in THIRD_PARTY.md.
+- Engine cases in the local tests set (`tests/test_native_lock.py`): real-Quickshell PAM proof (pam_permit → Success, pam_unix wrong password → Failed) plus inertness under demo/env gates.
+- Real machine: lock cases 9/9; full G0 1333 tests OK (skipped=188); G1 6/3/0 with the 3 audio-headset failures reproducing identically on clean main (disposable-session audio stack), so not a branch regression.
+- Phase 1 (session-lock surface, `lock.*` IPC, keybind switch, swaylock fallback) starts after review.

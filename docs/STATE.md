@@ -16,6 +16,7 @@ Do not read archive/ unless answering a specific historical question.
 
 ## In progress
 
+- Native lock screen port (ext-session-lock + PAM, replacing swaylock; plan in the owner's agent-collab). Phase 0 branch `feat/native-lock-screen`: inert env-gated `LockState` skeleton + vendored `config/pam/fprintd.conf`/`scripts/keyring_unlock.sh` (uncalled) + PAM engine cases in `tests/test_native_lock.py`. Phase 1 (WlSessionLock surface, IPC `lock.*`, keybind switch) awaits owner review of Phase 0.
 - M4 (P-13…P-15) on fix/m4-runtime-efficiency: backend snapshots carry per-section revisions and QML reuses unchanged apps/niri/preferences/launcher usage objects (stringify fallback and drag pin kept); niri workspace/window state is cached from the already-running event stream and falls back to `niri msg` whenever the stream is unavailable or an event is unknown/malformed/out of order; P-15 attributed the idle CPU to the MediaAmbient drift loop without changing the 12 shapes or motion.
 - M4 verification: G0 851 passed / 0 failed / 184 skipped with qmllint 153 files 0 errors/warnings; G1 9/0/0; G6 polling 1/0/0. G2/G3/G4 reproduce the identical 4/4/4 baseline failures on clean main (missing `wtype`, Sway/portal window checks), so they are not branch regressions. Ten cold launches: preview 1.001→0.993 s, Settings 0.991→1.010 s; PSS at 10 s stayed within +1.2% (preview QS 255,863→258,798 KiB, backend 24,274→24,263 KiB; Settings QS 201,285→202,749 KiB, backend 24,232→24,255 KiB). Real niri/Radeon idle soak remains a hardware check.
 

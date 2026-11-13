@@ -1461,3 +1461,9 @@ not a quality retreat.
 - Engine cases in the local tests set (`tests/test_native_lock.py`): real-Quickshell PAM proof (pam_permit → Success, pam_unix wrong password → Failed) plus inertness under demo/env gates.
 - Real machine: lock cases 9/9; full G0 1333 tests OK (skipped=188); G1 6/3/0 with the 3 audio-headset failures reproducing identically on clean main (disposable-session audio stack), so not a branch regression.
 - Phase 1 (session-lock surface, `lock.*` IPC, keybind switch, swaylock fallback) starts after review.
+
+## Native lock screen · Phase 1 core (2026-11-13)
+- Branch `feat/native-lock-core`: LockState becomes the mechanism (150ms debounce, `secure/locked/activating/unlocked` status, v2 recovery file surviving shell restarts inside one compositor session, keyring unlock, focus heartbeat, `lock` IPC target, native-router ownership of the PowerMenu `lock` action; `lock_actions.py` stays the A/B fallback until Phase 4).
+- `qml/features/lock/` (auto-owned feature folder): `LockMechanism` (the WlSessionLock object, hosted by shell.qml so qml/services stays feature-free), `LockSurface` (clock/login views, any-key capture, Esc, Ctrl+Enter, focus machinery), `LockWallpaper` (blurred session wallpaper, cache:false), `LockLoginView` (password card + shake + power buttons riding targetAction).
+- Super+L flips from `swaylock --color 22212c` to `quickshell -c lme-shell ipc call lock activate` (config/niri/media-keys.kdl).
+- Engine cases split into tests/test_native_lock{,_state,_ipc}.py (contracts, PAM seam incl. LockContext auth, gated state machine + recovery, IPC round-trip via the real CLI, opt-in live-compositor case under disposable Sway). Phase 0 assertions updated to the iNiR IPC contract (gated sessions report `unlocked`); one shell.qml comment condensed (ceiling ratchet 305→304).

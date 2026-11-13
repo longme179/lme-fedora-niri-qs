@@ -21,7 +21,7 @@ Item {
     property bool calculating: false
     readonly property string mode: query.startsWith("/") && ShellState.preferences.fileSearchEnabled !== false ? "files" : query.startsWith(":") ? "emoji" : query.startsWith("@") ? "windows" : query.startsWith("=") || /^[\d\s().+*/%^-]+$/.test(query.trim()) && /[+*/%^-]/.test(query) ? "calculator" : "apps"
     readonly property string fileQuery: query.slice(1).trim()
-    readonly property var files: ShellState.snapshot.fileSearch || {query:"",entries:[]}
+    readonly property var files: ShellState.fileSearch || {query:"",entries:[]}  // Q5 leg 3: the native search section
     readonly property string expression: query.replace(/^=/, "").trim()
     readonly property var results: {
         const text = query.replace(/^[:@]/, "").trim().toLowerCase();

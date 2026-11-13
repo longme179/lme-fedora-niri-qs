@@ -526,11 +526,12 @@ class DesktopBackend:
     def __init__(self, runner: CommandRunner | None = None, preferences: Preferences | None = None,
                  apps: Applications | None = None, proc: Path = Path("/proc"), sysfs: Path = Path("/sys"),
                  demo: bool = False, settings_only: bool = False, weather: WeatherClient | None = None,
-                 weather_fetch: bool = True, manage_idle: bool = False, session_daemons: bool = True) -> None:
+                 weather_fetch: bool = True, manage_idle: bool = False, session_daemons: bool = True, no_wallpaper: bool = False) -> None:
         self.demo = demo
         self.settings_only = settings_only
         self.shell_entry = os.environ.get('LME_SHELL_ENTRY') or str(Path(__file__).resolve().parents[1] / 'shell.qml')
         self.manage_idle = manage_idle
+        self.no_wallpaper = no_wallpaper
         self.session_daemons = session_daemons
         self.runner = runner or CommandRunner()
         self.preferences = preferences or Preferences()
@@ -1114,7 +1115,7 @@ class DesktopBackend:
             self.last_app_scan = time.monotonic()
         self.niri = self.niri_cache.snapshot() or self.niri_state()  # DEPRECATED(Q4->Q6): native NiriState serves; A/B window
         if not self.niri_cache.valid: self.niri_cache.seed(self.niri)
-        if self.manage_idle and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
+        if self.manage_idle and not self.no_wallpaper and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
             job=self.wallpapers.due(item.get('output') for item in self.niri['workspaces'] if item.get('output'))
             if job: self.start_feature('wallpaperCycle',job)
         # Window/focus event bursts must not cause expensive hardware probes.
@@ -1566,13 +1567,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
     parser.add_argument("--no-session-daemons", action="store_true", help="The native QML services own wlsunset/swayidle; this backend stays read-only for them")
     parser.add_argument("--no-weather", action="store_true", help="The native QML service (WeatherState.qml) owns weather; this backend stays fetch-idle for the A/B window")
+    parser.add_argument("--no-wallpaper", action="store_true", help="The native QML service (WallpaperState.qml) owns the playlist scheduler; this backend keeps user saves (A/B window)")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
     initialize_catalog()
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not (args.once or args.no_weather), manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons)
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not (args.once or args.no_weather), manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons, no_wallpaper=not (args.once or args.no_wallpaper or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
     if args.restore_displays:
         if backend.saver_snapshot()['active']:
             print('Displays: Battery saver is active; keeping current modes', file=sys.stderr)

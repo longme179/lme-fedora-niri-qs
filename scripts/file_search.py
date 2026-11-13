@@ -2,9 +2,23 @@
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: launcher; Phase 3 graph).
 """
 # SPDX-License-Identifier: GPL-3.0-or-later
+# DEPRECATED(Q5->Q6): the action ownership moved to FileSearchState.qml; this module stays
+# the bounded scandir helper (quickshell 0.3.2 cannot list directories) and the A/B source.
 import os
+import json
+import sys
 from pathlib import Path
 import time
+
+
+def main():
+    """Q5 worker mode: one JSON request line in, one result line out (bounded like lyrics.py)."""
+    raw = sys.stdin.buffer.readline(65536)
+    if len(raw) >= 65536: raise ValueError('File search request is too large')
+    request = json.loads(raw)
+    from threading import Event
+    print(json.dumps(search(request['query'], request['folders'], Event()), ensure_ascii=False), flush=True)
+
 
 
 def roots(value):
@@ -39,3 +53,6 @@ def search(query, folders, cancel, limit=100, max_paths=10000, seconds=1.5):
         if truncated: break
     entries.sort(key=lambda e:(not e['directory'],e['name'].casefold(),e['path']))
     return {'query':query,'entries':entries,'truncated':truncated}
+
+if __name__ == '__main__':
+    if '--worker' in sys.argv: main()

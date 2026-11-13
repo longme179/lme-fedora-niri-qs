@@ -1,3 +1,5 @@
+# DEPRECATED(Q5->Q6): real sessions run the native scheduler (qml/services/WallpaperState.qml);
+# this module keeps the user-initiated saves and the fixture modes (A/B window).
 """Bounded wallpaper playlists and per-output awww images; no rendering daemon.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
 """

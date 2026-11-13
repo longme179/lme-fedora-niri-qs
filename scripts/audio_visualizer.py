@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# DEPRECATED(Q5->Q6): VisualizerState.qml spawns cava directly with the in-repo
+# config/cava-visualizer.config and parses the raw frames in JS; this bridge is retired.
 """Owned Cava bridge, emitting bounded real spectrum frames as JSON lines.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: audio; Phase 3 graph).
 """

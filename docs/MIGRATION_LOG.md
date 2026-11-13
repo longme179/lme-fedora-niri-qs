@@ -1,5 +1,29 @@
 # Migration summaries
 
+## Q5 leg 1 — weather and lyrics native (branch qml/q5-weather-lyrics) — 2026-11-13
+
+- WeatherState.qml + WeatherModel.js port WeatherClient to XMLHttpRequest: same endpoints
+  (ipwho.is / open-meteo forecast + geocoding), same scheduling (geo 3600/120, forecast
+  900/120, keep-last-good), same section shape and error strings; loader/clock/wallClock
+  stay injectable (the opener-injection pattern) for the engine cases. The Q4 owner registry
+  routes weatherSearch/weatherDetect/weatherRefresh; weatherSelect stays backend until Q6
+  (it writes preferences). Night Light follows the native resolved place.
+- LyricsState.qml + LyricsModel.js port the lyrics worker chain (embedded → local LRC sidecar
+  via FileView → metadata check → disk cache → offline check → LRCLIB). The cache key becomes
+  an encodeURIComponent slug with the TTL inside the JSON (storedAt — FileView has no mtime,
+  QML has no sha256); old sha256 entries expire unread. Cache writes go through a bounded
+  `lyrics.py --store` helper (quickshell 0.3.2 has no file-write API) with the 128-entry
+  maintenance; the LyricsSession Process worker protocol is retired.
+- The backend gains `--no-weather` (real sessions spawn fetch-idle; the Python sections stay
+  the A/B window) and DEPRECATED(Q5->Q6) markers on weather.py/weather_actions.py/lyrics.py.
+- Verification: sandbox G0 identical to clean main (1222 collected, 0 failures, the 3 known
+  quickshell-absent errors; architecture green; qmllint 0/0). The engine cases
+  (tests/test_native_weather_lyrics.py — WeatherState machine, lyrics chain with the --store
+  round trip) and the live checks are PENDING: the OpenCode gateway rejected the stored
+  credential (401 — password rotated); they run on the owner's machine as soon as access is
+  restored. Ratchets: ShellState 355→358, NativeState 249/250→253, desktop_backend
+  1624→1625, the new test file 275.
+
 ## Q4 close-out — capture/recording backend-fed, the banded strength compare, the live drift day — 2026-11-12
 
 - The owner advanced the project past Q4 ("Tiếp tục hoàn thành cho đến khi trước khi chuyển sang

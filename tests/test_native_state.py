@@ -74,6 +74,16 @@ class NativeSectionContractCase(unittest.TestCase):
                 self.assertTrue((ROOT/path).is_file(), path)
                 self.assertLessEqual(nonblank(path), caps.get(path, 250))
 
+    def test_service_directory_carries_no_merge_markers(self):
+        # The stack merge once left qmldir markers (the only conflicted file without a known
+        # extension) and every QML directory import failed with quickshell's cryptic
+        # 'a component declaration requires two or three arguments'.
+        for path in sorted((ROOT / "qml" / "services").iterdir()):
+            if path.is_file():
+                text = path.read_text()
+                for marker in ("<<<<<<< HEAD", ">>>>>>> origin/"):
+                    self.assertNotIn(marker, text, f"{path.name} carries {marker!r}")
+
     def test_qmldir_registers_the_new_singletons(self):
         qmldir = (ROOT/"qml/services/qmldir").read_text()
         for name in ("AudioState", "PowerState", "NetworkState", "NativeState"):

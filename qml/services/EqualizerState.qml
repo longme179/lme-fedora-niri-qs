@@ -2,6 +2,8 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
+import "EqualizerModel.js" as Equalizer
 import "../services"
 
 Singleton {
@@ -14,49 +16,10 @@ Singleton {
     property bool audioTestRunning: false
     property real lastLocalUpdate: 0
 
-    readonly property var presets: ({
-        "Flat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        "Bass": [5, 7, 5, 2, 1, 0, 0, 0, 1, 2],
-        "Treble": [-2, -1, 0, 1, 2, 3, 4, 5, 6, 6],
-        "Vocal": [-2, -1, 1, 3, 5, 5, 4, 2, 1, 0],
-        "Pop": [2, 4, 2, 0, 1, 2, 4, 2, 1, 2],
-        "Rock": [5, 4, 2, -1, -2, -1, 2, 4, 5, 6],
-        "Jazz": [3, 3, 1, 1, 1, 1, 2, 1, 2, 3],
-        "Classic": [0, 1, 2, 2, 2, 2, 1, 2, 3, 4]
-    })
+    readonly property var presets: Equalizer.PRESETS
 
-    function defaultState() {
-        return {b1: 0, b2: 0, b3: 0, b4: 0, b5: 0, b6: 0, b7: 0, b8: 0, b9: 0, b10: 0,
-                preset: "Flat", pending: false, balance: 0, mono: false, swap: false,
-                dynamics: "off", dyneq: false};
-    }
-
-    function validState(value) {
-        if (!value || typeof value !== "object")
-            return null;
-        const state = {};
-        for (let index = 1; index <= 10; index++) {
-            const gain = Number(value["b" + index]);
-            if (!Number.isFinite(gain) || gain < -12 || gain > 12)
-                return null;
-            state["b" + index] = gain;
-        }
-        const balance = Number(value.balance);
-        if (!Number.isFinite(balance) || balance < -1 || balance > 1)
-            return null;
-        state.balance = balance;
-        for (const key of ["mono", "swap", "dyneq"]) {
-            if (typeof value[key] !== "boolean")
-                return null;
-            state[key] = value[key];
-        }
-        if (!["off", "balanced", "night"].includes(value.dynamics))
-            return null;
-        state.dynamics = value.dynamics;
-        state.pending = value.pending === true;
-        state.preset = typeof value.preset === "string" && value.preset.length > 0 ? value.preset : "Flat";
-        return state;
-    }
+    function validState(value) { return Equalizer.normalize(value); }  // the normalize port
+    function defaultState() { return Equalizer.defaultState(); }
 
     function hydrate(message) {
         let parsed = null;
@@ -243,5 +206,270 @@ Singleton {
                 loadStatus = "";
             }
         }
+    }
+
+    // ---- Q5 leg 3b: the native action surface -----------------------------------------
+    // REL: scripts/equalizer_actions.py::provide – DEPRECATED(Q5->Q6); the staging semantics
+    // (pending/committed views, push's commit_bands rule, the revert view) and the messages
+    // are frozen by tests/test_native_equalizer.py. The eq_state document reads through a
+    // FileView and writes through scripts/json_store.py (quickshell 0.3.2 has no file-write
+    // API); the daemon runner is the WallpaperState tool pattern (one-shot Process, watchdog,
+    // queue); the test tone ships as assets/equalizer-test.wav (synthesis needs file writes;
+    // regenerate deterministically with scripts/regen_equalizer_test_tone.py).
+    // GOTCHA: the shell is the document's only writer (the settings app has no eq actions),
+    // so the in-memory stateDocument is authoritative after the first load. available()
+    // checks become spawn failures: a binary that never started reads as 'unavailable', and
+    // a pw-play that cannot start surfaces through the tone process exiting immediately
+    // (audioTestRunning self-heals) instead of a synchronous error.
+
+    readonly property var dynamicsModes: Equalizer.DYNAMICS
+    readonly property var handledActions: ["eqStart", "eqStop", "eqStatus", "eqGet", "eqSetBand", "eqApply",
+        "eqRevert", "eqPreset", "eqBalance", "eqMono", "eqSwap", "eqDyneq", "eqDynamics",
+        "eqReset", "eqTest", "eqTestStop"]
+    function handles(action) { return handledActions.includes(action); }
+    function canRoute(action, payload, context) { return true; }
+
+    property var runner        // (argv, seconds, done) => void — done(ok, stdout); tests inject
+    property var storeWriter   // (document, done) => void — done(ok); tests inject
+    property var stateDocument: null
+    property bool documentSeen: false
+    property var committed: null  // push's committed bands view — the revert target
+    readonly property string documentPath: (Quickshell.env("XDG_STATE_HOME")
+        || (Quickshell.env("HOME") + "/.local/state")) + "/lme-shell/equalizer.json"
+
+    property FileView documentReader: FileView {
+        path: root.documentPath
+        printErrors: false
+        onLoaded: {
+            let parsed = null;
+            try { parsed = root.validState(JSON.parse(String(text))); } catch (error) { parsed = null; }
+            root.stateDocument = parsed || root.defaultState();
+            root.documentSeen = true;
+        }
+    }
+
+    // ---- the daemon transport (queued one-shot Process + watchdog) --------------------
+    property var toolQueue: []
+    property bool toolBusy: false
+    property Process tool: Process {
+        id: serp
+        stdinEnabled: false
+        property var reply: null
+        property string collected: ""
+        property bool startedOnce: false
+        property bool timedOut: false
+        stdout: SplitParser { onRead: line => { serp.collected += line + "\n"; } }
+        stderr: SplitParser { onRead: line => { } }
+        onStarted: startedOnce = true
+        onExited: (code, status) => {
+            toolWatchdog.stop();
+            const done = serp.reply;
+            serp.reply = null;
+            const ok = code === 0 && serp.startedOnce && !serp.timedOut;
+            root.toolBusy = false;
+            if (done) done(ok, serp.collected, serp.timedOut);
+            root.pumpTool();
+        }
+    }
+    property Timer toolWatchdog: Timer { onTriggered: { tool.timedOut = true; tool.reply = null; tool.running = false; root.toolBusy = false; root.pumpTool(); } }
+    function runTool(argv, seconds, done) {
+        if (runner) return runner(argv, seconds, done);
+        if (toolBusy) { toolQueue.push([argv, seconds, done]); return; }
+        toolBusy = true;
+        tool.reply = done;
+        tool.collected = "";
+        tool.startedOnce = false;
+        tool.timedOut = false;
+        tool.command = argv;
+        tool.running = true;
+        toolWatchdog.interval = seconds * 1000;
+        toolWatchdog.restart();
+    }
+    function pumpTool() {
+        if (toolBusy || !toolQueue.length) return;
+        const next = toolQueue.shift();
+        runTool(next[0], next[1], next[2]);
+    }
+
+    // ---- the document store (json_store.py helper, serialized) ------------------------
+    property var storeQueue: []
+    property bool storeBusy: false
+    property Process storeTool: Process {
+        id: storer
+        stdinEnabled: true
+        property var document: null
+        property var reply: null
+        command: ["python3", "-u", Quickshell.shellPath("scripts/json_store.py"), "--path", root.documentPath]
+        stdout: SplitParser { onRead: line => { } }
+        stderr: SplitParser { onRead: line => console.warn("[eq-store]", line) }
+        onStarted: { write(JSON.stringify(document) + "\n"); }
+        onExited: (code, status) => {
+            storeBusy = false;
+            const done = storer.reply;
+            storer.reply = null;
+            if (done) done(code === 0);
+            pumpStore();
+        }
+    }
+    function persist(state, done) {
+        stateDocument = state;
+        documentSeen = true;
+        if (storeWriter) return storeWriter(state, done);
+        storeQueue.push([state, done]);
+        pumpStore();
+    }
+    function pumpStore() {
+        if (storeBusy || !storeQueue.length) return;
+        const next = storeQueue.shift();
+        storeBusy = true;
+        storeTool.document = next[0];
+        storeTool.reply = next[1] || null;
+        storeTool.running = true;
+    }
+
+    function ensureDocument(done) {
+        if (documentSeen) return done(stateDocument);
+        // First-use hydration: prefer the daemon's own report (seed_from_daemon).
+        runTool(["serpantinum-audio", "ctl", "get"], 10, (ok, text) => {
+            const seeded = ok ? Equalizer.stateFromDaemonLine(text) : null;
+            const state = seeded || Equalizer.defaultState();
+            persist(state, () => done(state));
+        });
+    }
+
+    function daemonSet(state, done) {
+        const args = Equalizer.daemonSetArgs(state);
+        runTool(args, 10, ok => {
+            if (ok) return done(true);
+            // Every push retries once after an auto-start so a stopped daemon never blocks the UI.
+            runTool(["serpantinum-audio", "start"], 10, () => runTool(args, 10, ok2 => done(ok2)));
+        });
+    }
+
+    function push(state, commitBands, then) {
+        daemonSet(state, ok => {
+            if (!ok) return then(false);
+            persist(state, () => {
+                if (commitBands || committed === null)
+                    committed = Object.assign({}, state, {pending: false});
+                else
+                    for (const key of ["balance", "mono", "swap", "dynamics", "dyneq"])
+                        committed[key] = state[key];
+                then(true);
+            });
+        });
+    }
+
+    function toneStop() { if (tone.running) tone.running = false; }
+    property Process tone: Process {
+        stdinEnabled: false
+        onExited: (code, status) => { root.audioTestRunning = false; }
+    }
+    readonly property string toneProperties: JSON.stringify(
+        {"application.id": "lme-shell-audio-test", "application.name": "LME Shell audio test", "media.role": "music"})
+    function startTone(done) {
+        runTool(["serpantinum-audio", "start"], 10, () => {
+            runTool(["pw-dump", "-n", "Node"], 4, (ok, text) => {
+                const target = ok && String(text).indexOf("serpantinum_sink") >= 0 ? ["--target=serpantinum_sink"] : [];
+                tone.command = ["pw-play"].concat(target)
+                    .concat(["-P", toneProperties, Quickshell.shellPath("assets/equalizer-test.wav")]);
+                tone.running = true;
+                done(true);
+            });
+        });
+    }
+
+    function perform(action, request, done, context) {
+        request = request || {};
+        if (action === "eqGet")
+            return ensureDocument(state => done(true, JSON.stringify(state)));
+        if (action === "eqStart")
+            return runTool(["serpantinum-audio", "start"], 10, (ok, text) =>
+                ok ? done(true, String(text).trim()) : done(false, "serpantinum-audio is unavailable"));
+        if (action === "eqStop") {
+            toneStop();
+            return runTool(["serpantinum-audio", "ctl", "quit"], 10, (ok, text, timedOut) => {
+                if (ok) return done(true, String(text).trim());
+                if (timedOut) return done(false, "serpantinum-audio ctl quit timed out");
+                return done(true, "Equalizer stopped");  // already-gone daemons are a stop, not an error
+            });
+        }
+        if (action === "eqStatus")
+            return runTool(["serpantinum-audio", "ctl", "ping"], 10, (ok, ping) =>
+                runTool(["serpantinum-audio", "ctl", "status"], 10, (ok2, status) =>
+                    ok && ok2 ? done(true, String(ping).trim() + "\n" + String(status).trim())
+                              : done(false, "serpantinum-audio is unavailable")));
+        if (action === "eqSetBand") {
+            const band = Equalizer.bandError(request.band), gain = Equalizer.gainError(request.value);
+            if (band) return done(false, band);
+            if (gain) return done(false, gain);
+            return ensureDocument(state => {
+                const next = Object.assign({}, state);
+                next["b" + request.band] = request.value;
+                next.preset = "Custom";
+                next.pending = true;
+                persist(next, () => done(true, ""));  // staging persists without a daemon push
+            });
+        }
+        if (action === "eqApply")
+            return ensureDocument(state => {
+                const next = Object.assign({}, state, {pending: false});
+                push(next, true, ok => done(ok, ""));
+            });
+        if (action === "eqRevert")
+            return ensureDocument(state => {
+                push(Equalizer.savedView(committed, state), true, ok => done(ok, ""));
+            });
+        if (action === "eqPreset") {
+            const values = presets[request.name];
+            if (!values) return done(false, "Unknown equalizer preset");
+            return ensureDocument(state => {
+                const next = Object.assign({}, state);
+                for (let index = 0; index < 10; index++) next["b" + (index + 1)] = values[index];
+                next.preset = request.name;
+                next.pending = false;
+                push(next, true, ok => done(ok, ""));
+            });
+        }
+        if (action === "eqBalance") {
+            const message = Equalizer.balanceError(request.value);
+            if (message) return done(false, message);
+            return ensureDocument(state => {
+                const next = Object.assign({}, state, {balance: Math.round(request.value * 100) / 100});
+                push(next, false, ok => done(ok, ""));
+            });
+        }
+        if (action === "eqMono" || action === "eqSwap" || action === "eqDyneq") {
+            const message = Equalizer.flagError(request.value);
+            if (message) return done(false, message);
+            const key = action.slice(2).toLowerCase();
+            return ensureDocument(state => {
+                const next = Object.assign({}, state);
+                next[key] = request.value;
+                push(next, false, ok => done(ok, ""));
+            });
+        }
+        if (action === "eqDynamics") {
+            const message = Equalizer.dynamicsError(request.value);
+            if (message) return done(false, message);
+            return ensureDocument(state => {
+                const next = Object.assign({}, state, {dynamics: request.value});
+                push(next, false, ok => done(ok, ""));
+            });
+        }
+        if (action === "eqReset") {
+            toneStop();
+            return ensureDocument(state => {
+                const next = Object.assign({}, state, {balance: 0, mono: false, swap: false, dynamics: "off"});
+                push(next, false, ok => done(ok, ""));
+            });
+        }
+        if (action === "eqTest")
+            return startTone(() => done(true, "Channel test playing"));
+        if (action === "eqTestStop") {
+            toneStop();
+            return done(true, "Channel test stopped");
+        }
+        return done(false, "Unknown equalizer action: " + action);
     }
 }

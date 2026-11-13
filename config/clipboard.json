@@ -2,7 +2,8 @@
   "id": "clipboard",
   "sources": [
     "qml/services/ClipboardState.qml",
-    "scripts/clipboard.py"
+    "scripts/clipboard.py",
+    "scripts/clipboard_watch.py"
   ],
   "bar": {
     "id": "clipboard",

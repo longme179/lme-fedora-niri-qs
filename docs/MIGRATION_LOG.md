@@ -1,5 +1,27 @@
 # Migration summaries
 
+## Q5 leg 4 — the clipboard native (PR stacked on the tests policy) — 2026-11-13
+
+- The JSON-lines serve daemon retired (clipboard.py serve/CaptureService, -123 lines):
+  ClipboardState.qml owns every flow as one-shot subcommands through a queued Process
+  (the equalizer runner pattern) — --state/--search/--copy/--pin/--delete/--clear/--pause/
+  --configure, one JSON line per run, message-for-message identical to the serve handlers.
+- scripts/clipboard_watch.py (new): the capture supervisor — flocks capture.lock, arms
+  PR_SET_PDEATHSIG against the shell pid, then execs wl-paste --watch. Probed on
+  quickshell 0.3.2: normal shell exit SIGKILLs direct children; a plain watcher ORPHANS
+  when the shell is kill -9'd while the wrapper dies clean on the kernel SIGTERM. The
+  lock fd is set inheritable — Python's default close-on-exec would drop the flock at
+  execvp and re-enable duplicate capture (caught by the local supervisor regression).
+  startDetached does not exist in 0.3.2; the attached Process + wrapper covers both
+  death paths, and pause/disable is a plain Process.running = false.
+- The panel surface is untouched except one line: onVisibleChanged sets
+  ClipboardState.monitoring, which gates a 2 s revision poll (fresh entries while the
+  panel is open; the daemon's push loop needed no poll). The History sqlite layer and
+  the capture worker are unchanged.
+- Verification: sandbox G0 1296/0-fail (tests local-only per the 2026-11-13 policy); the
+  watcher supervisor regression runs with a faked wl-clipboard (the exec argv, the
+  second-instance lock, the PDEATHSIG kill). Engine cases ran on the owner's machine.
+
 ## Repository policy — tests stay local (PR policy/local-tests-only) — 2026-11-13
 
 The published repository ships without the test suite: tests/ is untracked (kept on the

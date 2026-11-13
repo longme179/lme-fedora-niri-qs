@@ -1,6 +1,11 @@
-// Role: ClipboardState.qml (clipboard layer) — owns clipboard history UI state and worker protocol.
-// INVARIANT: worker lifecycle stays main-shell scoped; Settings/demo must not start capture worker.
-// REL: scripts/clipboard.py – JSON-lines worker commands; qml/panels/ClipboardPanel.qml – consumer UI.
+// Role: ClipboardState.qml (clipboard layer) — owns clipboard history UI state and the native flows.
+// INVARIANT: watcher lifecycle stays main-shell scoped; Settings/demo must not start capture.
+// REL: scripts/clipboard.py (one-shot actions + the capture worker); scripts/clipboard_watch.py
+//      (flock + PR_SET_PDEATHSIG wl-paste supervisor — quickshell SIGKILLs its children on
+//      normal exit and the kernel SIGTERMs the wrapper when the shell dies any other way,
+//      probed on quickshell 0.3.2, 2026-11-13); qml/panels/ClipboardPanel.qml – consumer UI.
+// The Q5 native port retired the JSON-lines serve daemon: every action is a one-shot
+// subcommand through the tool Process, and the messages are frozen by the local suite.
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
@@ -12,7 +17,7 @@ QtObject {
     property bool started: false
     property bool ready: ShellState.demo
     property int restartAttempts: 0
-    property var state: ({entries: [], available: false, capturing: false, paused: false, total: 0})
+    property var state: ({entries: [], available: false, capturing: false, paused: false, total: 0, error: ""})
     property var demoEntries: [
         {id: "demo-note", kind: "text", preview: "One thing at a time.\nA little more space for your next idea.", pinned: true, bytes: 70, image: ""},
         {id: "demo-link", kind: "text", preview: "https://github.com/longme179/lme-fedora-niri-qs", pinned: false, bytes: 51, image: ""},
@@ -28,6 +33,10 @@ QtObject {
     property int pendingSearches: 0
     property bool demoPaused: false
     property var lastResult: null
+    property bool monitoring: false  // the panel sets this while visible; gates the revision poll
+    property bool watchersSuspended: false  // engine-test isolation: never spawn real watchers
+    property int lastRevision: -1
+    property int resultSequence: 0
     signal copied()
     signal searched(bool success)
     readonly property var entries: ShellState.demo ? demoEntries.filter(item => (filter === "all" || item.kind === filter) && item.preview.toLowerCase().includes(query.toLowerCase())) : state.entries || []
@@ -35,12 +44,157 @@ QtObject {
     readonly property bool available: ShellState.demo || state.available === true
     readonly property bool capturing: ShellState.demo ? !demoPaused : state.capturing === true
     readonly property int total: ShellState.demo ? demoEntries.length : state.total || 0
+    readonly property string directory: (Quickshell.env("XDG_STATE_HOME")
+        || (Quickshell.env("HOME") + "/.local/state")) + "/lme-shell/clipboard"
+    readonly property var baseArgs: ["python3", "-u", Quickshell.shellPath("scripts/clipboard.py"), "--directory", directory]
 
-    function start() { if (!ShellState.demo && !ShellState.settingsApp) started = true; }
+    // ---- the action tool (one-shot Process + watchdog + queue) -------------------------
+    property var runner  // (argv, seconds, done) => void — done(ok, stdout); tests inject
+    property var toolQueue: []
+    property bool toolBusy: false
+    property Process tool: Process {
+        id: clip
+        stdinEnabled: false
+        property var reply: null
+        property string collected: ""
+        property bool startedOnce: false
+        property bool timedOut: false
+        stdout: SplitParser { onRead: line => { clip.collected += line + "\n"; } }
+        stderr: SplitParser { onRead: line => { } }
+        onStarted: startedOnce = true
+        onExited: (code, status) => {
+            toolWatchdog.stop();
+            const done = clip.reply;
+            clip.reply = null;
+            const ok = code === 0 && clip.startedOnce && !clip.timedOut;
+            root.toolBusy = false;
+            if (done) done(ok, clip.collected);
+            root.pumpTool();
+        }
+    }
+    property Timer toolWatchdog: Timer { onTriggered: { tool.timedOut = true; tool.reply = null; tool.running = false; root.toolBusy = false; root.pumpTool(); } }
+    function runTool(argv, seconds, done) {
+        if (runner) return runner(argv, seconds, done);
+        if (toolBusy) { toolQueue.push([argv, seconds, done]); return; }
+        toolBusy = true;
+        tool.reply = done;
+        tool.collected = "";
+        tool.startedOnce = false;
+        tool.timedOut = false;
+        tool.command = argv;
+        tool.running = true;
+        toolWatchdog.interval = seconds * 1000;
+        toolWatchdog.restart();
+    }
+    function pumpTool() {
+        if (toolBusy || !toolQueue.length) return;
+        const next = toolQueue.shift();
+        runTool(next[0], next[1], next[2]);
+    }
+    function parseReply(text) {
+        const lines = String(text || "").split("\n").filter(line => line.length > 0);
+        if (!lines.length) return null;
+        try { return JSON.parse(lines[lines.length - 1]); } catch (_) { return null; }
+    }
+
+    // ---- the capture watchers ----------------------------------------------------------
+    property bool stoppingText: false
+    property bool stoppingImage: false
+    function watcherCommand(kind) {
+        return ["python3", Quickshell.shellPath("scripts/clipboard_watch.py"),
+                "--parent", String(Quickshell.processId), "--kind", kind, "--directory", directory];
+    }
+    property Process textWatcher: Process {
+        stdinEnabled: false
+        stdout: SplitParser { onRead: line => root.noteWatcherOutput(line) }
+        onExited: (code, status) => root.watcherDied("text", root.stoppingText)
+    }
+    property Process imageWatcher: Process {
+        stdinEnabled: false
+        stdout: SplitParser { onRead: line => root.noteWatcherOutput(line) }
+        onExited: (code, status) => root.watcherDied("image", root.stoppingImage)
+    }
+    function noteWatcherOutput(line) {
+        const text = String(line || "").trim();
+        if (text) state = Object.assign({}, state, {error: text});
+    }
+    function wantedKinds() {
+        if (watchersSuspended || !started || ShellState.demo || ShellState.settingsApp) return [];
+        if (ShellState.preferences.clipboardEnabled === false || state.paused === true) return [];
+        return ShellState.preferences.clipboardImages === false ? ["text"] : ["text", "image"];
+    }
+    function syncWatchers() {
+        const wanted = wantedKinds();
+        const wantText = wanted.includes("text"), wantImage = wanted.includes("image");
+        if (wantText && !textWatcher.running) { stoppingText = false; textWatcher.command = watcherCommand("text"); textWatcher.running = true; }
+        if (!wantText && textWatcher.running) { stoppingText = true; textWatcher.running = false; }
+        if (wantImage && !imageWatcher.running) { stoppingImage = false; imageWatcher.command = watcherCommand("image"); imageWatcher.running = true; }
+        if (!wantImage && imageWatcher.running) { stoppingImage = true; imageWatcher.running = false; }
+        const capturing = (wantText || wantImage) && (!wantText || textWatcher.running) && (!wantImage || imageWatcher.running);
+        if (state.capturing !== capturing) state = Object.assign({}, state, {capturing: capturing});
+    }
+    function watcherDied(kind, stopping) {
+        if (stopping || !started || ShellState.demo || ShellState.settingsApp) return;
+        // The serve daemon's capture-failure surface, message for message.
+        state = Object.assign({}, state, {capturing: false,
+            error: "Clipboard capture stopped. Check Wayland data-control support and the session."});
+        if (restartAttempts < 3) { restartAttempts++; retryTimer.restart(); }
+    }
+    property Timer retryTimer: Timer { interval: 5000; onTriggered: root.syncWatchers() }
+    property Timer poll: Timer {
+        interval: 2000
+        running: root.monitoring && root.ready && !ShellState.demo && !ShellState.settingsApp
+        onTriggered: root.refreshState()
+    }
+
+    // ---- state sync and search ---------------------------------------------------------
+    function refreshState() {
+        runTool(baseArgs.concat("--state"), 8, (ok, text) => {
+            const parsed = parseReply(text);
+            if (!ok || !parsed || parsed.ok !== true) {
+                if (!ready) { message = "Clipboard state could not be read."; messageError = true; }
+                return;
+            }
+            const fresh = !ready;
+            state = Object.assign({}, state, {available: parsed.available === true, paused: parsed.paused === true,
+                                              total: parsed.total || 0});
+            restartAttempts = 0;
+            if (fresh) { ready = true; message = ""; messageError = false; }
+            if (parsed.revision !== lastRevision) {
+                const changed = lastRevision >= 0;
+                lastRevision = parsed.revision;
+                if (changed || fresh) runSearch();  // fresh entries on capture while the panel is open
+            }
+            syncWatchers();
+        });
+    }
+    function runSearch() {
+        pendingSearches++; searching = true;
+        runTool(baseArgs.concat(["--search", query, filter]), 8, (ok, text) => {
+            pendingSearches = Math.max(0, pendingSearches - 1);
+            const parsed = parseReply(text);
+            const good = ok && parsed && parsed.ok === true;
+            if (good) {
+                let entries = parsed.entries || [];
+                if (JSON.stringify(entries) === JSON.stringify(state.entries)) entries = state.entries;
+                state = Object.assign({}, state, {entries: entries, total: parsed.total || 0});
+                if (parsed.revision !== undefined) lastRevision = parsed.revision;
+            } else {
+                query = ""; filter = "all";  // the serve loop reset an invalid search
+            }
+            searching = pendingSearches > 0;
+            if (!searching) searched(good);
+        });
+    }
+
+    // ---- the panel interface (unchanged surface) ---------------------------------------
+    function start() {
+        if (!ShellState.demo && !ShellState.settingsApp) { started = true; refreshState(); }
+    }
     function search(value, kind) {
         query = value; filter = kind;
         if (ShellState.demo) searched(true);
-        else if (ready && backend.running) { pendingSearches++; searching = true; send("search", {query: value, kind: kind}); }
+        else if (ready) runSearch();
     }
     function send(action, payload) {
         if (ShellState.demo) {
@@ -51,41 +205,27 @@ QtObject {
             else if (action === "pause") demoPaused = payload.value;
             return;
         }
-        if (!ready || !backend.running) { message = "Clipboard service is unavailable."; messageError = true; return; }
-        if (action === "copy") copyPending = true;
-        backend.write(JSON.stringify(Object.assign({}, payload || {}, {action: action})) + "\n");
-    }
-    function accept(data) {
-        try {
-            const next = JSON.parse(data);
-            if (!Array.isArray(next.entries)) return;
-            if (JSON.stringify(next.entries) === JSON.stringify(state.entries)) next.entries = state.entries;
-            const first = !ready;
-            state = next; ready = true; restartAttempts = 0;
-            if (first) { message = ""; messageError = false; if (query || filter !== "all") search(query, filter); }
-            if (next.lastResult && (!lastResult || next.lastResult.sequence !== lastResult.sequence)) {
-                lastResult = next.lastResult;
-                if (lastResult.action === "copy") copyPending = false;
-                if (lastResult.action === "search") {
-                    pendingSearches = Math.max(0, pendingSearches - 1); searching = pendingSearches > 0;
-                    if (!searching) searched(lastResult.ok);
-                }
-                message = lastResult.message || ""; messageError = !lastResult.ok;
-                if (lastResult.action === "copy" && lastResult.ok) copied();
+        if (!ready) { message = "Clipboard service is unavailable."; messageError = true; return; }
+        let argv = baseArgs;
+        if (action === "copy") { copyPending = true; argv = baseArgs.concat(["--copy", payload.id]); }
+        else if (action === "pin") argv = baseArgs.concat(["--pin", payload.id]);
+        else if (action === "delete") argv = baseArgs.concat(["--delete", payload.id]);
+        else if (action === "clear") argv = baseArgs.concat(["--clear", payload.includePinned ? "true" : "false"]);
+        else if (action === "pause") argv = baseArgs.concat(["--pause", payload.value ? "true" : "false"]);
+        else { message = "Clipboard service is unavailable."; messageError = true; return; }
+        runTool(argv, 8, (ok, text) => {
+            const parsed = parseReply(text);
+            const good = ok && parsed && parsed.ok === true;
+            const note = (parsed && parsed.message) || (good ? "" : "Clipboard operation failed. Check the Wayland session and local storage.");
+            resultSequence++;
+            lastResult = {action: action, ok: good, message: note, sequence: resultSequence};
+            message = note; messageError = !good;
+            if (good) {
+                state = Object.assign({}, state, {paused: parsed.paused === true, total: parsed.total || 0});
+                if (action === "pause") syncWatchers();
+                if (parsed.revision !== undefined && parsed.revision !== lastRevision) { lastRevision = parsed.revision; runSearch(); }
             }
-        } catch (_) { message = "Clipboard state could not be read."; messageError = true; }
+            if (action === "copy") { copyPending = false; if (good) copied(); }
+        });
     }
-    property Process backend: Process {
-        command: ["python3", Quickshell.shellPath("scripts/clipboard.py")]
-        running: root.started && !ShellState.demo && !ShellState.settingsApp
-        stdinEnabled: true
-        stdout: SplitParser { onRead: data => root.accept(data) }
-        onExited: {
-            root.ready = false; root.copyPending = false; root.searching = false;
-            root.pendingSearches = 0; root.lastResult = null;
-            root.message = "Clipboard service stopped. Check the shell log."; root.messageError = true;
-            if (root.started && root.restartAttempts < 3) { root.restartAttempts++; root.restart.restart(); }
-        }
-    }
-    property Timer restart: Timer { interval: 1200; onTriggered: root.backend.running = true }
 }

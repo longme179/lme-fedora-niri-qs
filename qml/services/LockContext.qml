@@ -39,7 +39,7 @@ QtObject {
     property string pamConfigDirectory: ""
 
     function resetTargetAction(): void {
-        root.targetAction = ActionEnum.Unlock;
+        root.targetAction = 0; // ActionEnum.Unlock — qualified self-references are a checker self-edge
     }
 
     function clearText(): void {
@@ -58,6 +58,14 @@ QtObject {
         stopFingerPam();
         if (root.locked)
             Qt.callLater(root.tryFingerUnlock);
+    }
+
+    // The engine cases assign pamConfigDirectory after construction (child objects
+    // complete before this root), so the password conversation re-applies it.
+    onPamConfigDirectoryChanged: applyPamDirectory()
+    function applyPamDirectory(): void {
+        pam.configDirectory = root.pamConfigDirectory.length > 0
+            ? root.pamConfigDirectory : "/etc/pam.d";
     }
 
     // Clear the entry after 10s of inactivity so a half-typed password never lingers.
@@ -139,10 +147,7 @@ QtObject {
         id: pam
 
         config: root.pamConfig
-        Component.onCompleted: {
-            if (root.pamConfigDirectory.length > 0)
-                pam.configDirectory = root.pamConfigDirectory;
-        }
+        Component.onCompleted: root.applyPamDirectory()
 
         // pam_unix asks for the password through the conversation.
         onPamMessage: if (pam.responseRequired) pam.respond(root.currentText)

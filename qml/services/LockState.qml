@@ -116,7 +116,7 @@ QtObject {
         running: root.screenLocked
         onTriggered: lockContext.shouldReFocus()
     }
-    Connections {
+    property Connections screensWatch: Connections {
         target: Quickshell
         function onScreensChanged() {
             if (root.screenLocked)

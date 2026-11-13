@@ -23,7 +23,7 @@ QtObject {
         sourceComponent: lockComponent
     }
 
-    Component {
+    property Component lockComponent: Component {
         id: lockComponent
         WlSessionLock {
             id: lock
@@ -82,7 +82,7 @@ QtObject {
 
     // When the lock object goes away (gate off, session end), the compositor
     // ack must not linger from a previous engagement.
-    Connections {
+    property Connections loaderWatch: Connections {
         target: lockLoader
         function onItemChanged() { if (!lockLoader.item) LockState.secure = false; }
         function onActiveChanged() { if (!lockLoader.active) LockState.secure = false; }
@@ -90,7 +90,7 @@ QtObject {
 
     // Poweroff/Reboot after a locked authentication ride the regular backend
     // actions (this side may reference ShellState; LockState itself may not).
-    Connections {
+    property Connections powerWatch: Connections {
         target: LockState
         function onPowerActionRequested(action) { ShellState.run(action); }
     }

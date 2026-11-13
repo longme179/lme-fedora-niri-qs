@@ -61,8 +61,7 @@ QtObject {
     }
 
     // Clear the entry after 10s of inactivity so a half-typed password never lingers.
-    Timer {
-        id: passwordClearTimer
+    property Timer passwordClearTimer: Timer {
         interval: 10000
         onTriggered: root.reset()
     }
@@ -84,8 +83,7 @@ QtObject {
     }
 
     // Safety timeout: if PAM never answers, surface the failure and re-arm input.
-    Timer {
-        id: pamTimeoutTimer
+    property Timer pamTimeoutTimer: Timer {
         interval: 10000
         onTriggered: {
             if (root.unlockInProgress) {
@@ -111,8 +109,7 @@ QtObject {
             fingerPam.abort();
     }
 
-    Timer {
-        id: fingerprintRetryTimer
+    property Timer fingerprintRetryTimer: Timer {
         interval: 750
         repeat: false
         onTriggered: root.tryFingerUnlock()
@@ -120,8 +117,7 @@ QtObject {
 
     // Fingerprint enrollment probe: fprintd-list's enrolled-print rows are stable
     // machine-readable identifiers, independent of localized headings (iNiR lesson).
-    Process {
-        id: fingerprintCheckProc
+    property Process fingerprintCheckProc: Process {
         running: true
         command: ["bash", "-c", "command -v fprintd-list >/dev/null && fprintd-list $(whoami) 2>/dev/null || exit 1"]
         stdout: StdioCollector {
@@ -139,7 +135,7 @@ QtObject {
     }
 
     // The password conversation (system `login` stack; test overrides above).
-    PamContext {
+    property PamContext pam: PamContext {
         id: pam
 
         config: root.pamConfig
@@ -168,8 +164,7 @@ QtObject {
     }
 
     // The fingerprint conversation; dormant unless prints are enrolled.
-    PamContext {
-        id: fingerPam
+    property PamContext fingerPam: PamContext {
 
         configDirectory: Quickshell.shellPath("config/pam")
         config: "fprintd.conf"

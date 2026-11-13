@@ -167,9 +167,8 @@ QtObject {
     }
     // Q3 native router — the write families (plan §5 Q3). Real sessions route a family's
     // action names to the owning service's native calls (Pending sequencing unchanged so
-    // busy/status UX is identical); fixture modes always keep the backend round-trip (the
-    // demo registry owns its state), and real sessions a service cannot serve natively fall
-    // back to the backend registry for its canonical errors while the A/B window is open.
+    // busy/status UX is identical); fixture modes keep the backend round-trip, and real
+    // sessions a service cannot serve natively fall back to the backend registry.
     readonly property var nativeMutationActions: ["wifiConnect", "wifiSaved", "wifiDisconnect", "wifiForget", "wifiToggle", "networkConnect", "networkDisconnect", "networkHotspotStart", "networkEdit"]
     function nativeOwner(action) {
         if (NetworkState.handles(action)) return NetworkState;
@@ -189,6 +188,7 @@ QtObject {
         if (WallpaperState.handles(action)) return WallpaperState; // Q5 leg 2: daemon status/ensure + the playlist advance (user saves stay backend)
         if (FileSearchState.handles(action)) return FileSearchState; // Q5 leg 3: the search worker + fileOpen entry validation
         if (EqualizerState.handles(action)) return EqualizerState; // Q5 leg 3b: the eq staging machine + daemon runner + test tone
+        if (LockState.handles(action)) return LockState; // Phase 1 lock port: the native session lock; lock_actions.py stays the A/B fallback
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
@@ -238,7 +238,7 @@ QtObject {
     // Settle a natively-served action: the backend never sees the request, so its metadata
     // must not be waited for (ActionPending.settled) and the result surfaces like a backend
     // result — routine actions stay toast-silent exactly like accept()'s result path.
-    readonly property var routineActions: ["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose", "ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart", "inputMethod", "eqGet"]
+    readonly property var routineActions: ["calculate", "notificationSave", "displayRefresh", "monitor", "wifiWatch", "controlsRefresh", "audioDevicesRefresh", "networkRefresh", "networkHotspotPlan", "keybindRefresh", "idleRefresh", "idleInhibit", "platformRefresh", "nightLightRefresh", "mirrorRefresh", "captureLanguages", "captureClose", "ready", "volume", "mute", "micVolume", "micMute", "brightness", "bluetoothDevice", "focusWindow", "workspace", "moveWindow", "nativeOverview", "weatherSearch", "weatherDetect", "weatherRefresh", "fileSearch", "notesInit", "recordStart", "inputMethod", "eqGet", "lock"]
     function nativeDone(action, ok, message) {
         pendingState = Pending.settled(pendingState, action);
         pendingActions = pendingState.pending;

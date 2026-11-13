@@ -32,7 +32,7 @@ binds {
         spawn "playerctl" "previous";
     }
     Super+L hotkey-overlay-title="Lock the screen" {
-        spawn "swaylock" "--color" "22212c";
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "lock" "activate";
     }
     Print { screenshot; }
     Ctrl+Print { screenshot-screen; }

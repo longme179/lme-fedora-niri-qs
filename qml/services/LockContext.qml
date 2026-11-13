@@ -30,7 +30,7 @@ QtObject {
     property bool unlockInProgress: false
     property bool showFailure: false
     property bool fingerprintsConfigured: false
-    property var targetAction: ActionEnum.Unlock
+    property int targetAction: 0 // ActionEnum.Unlock — int avoids the self-referential enum binding
     property bool alsoInhibitIdle: false
     property bool locked: false // kept in sync by LockState; drives the finger retry
 

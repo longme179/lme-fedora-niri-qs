@@ -12,7 +12,10 @@ Phase 2 (idle rewiring, iNiR Idle.qml v3.1.0 semantics): the shell's native lock
 (LockState.qml, the `lock` IPC target) is the primary locker; secure_lock()'s swaylock
 stays as the fail-closed fallback for demo sessions, boot windows and a stuck shell.
 `prepare-sleep` is the before-sleep handshake — swayidle holds logind's delay
-inhibitor until it exits 0, so it must not return before the session is protected.
+inhibitor while it runs, but a delay inhibitor can only delay the sleep: logind
+ignores it after InhibitDelayMaxSec (default 5s) and the command continues after
+resume, so the handshake is deadline-budgeted to finish the secure-or-fallback
+decision inside that window.
 `resume` is the after-resume hook: power the displays back on and refocus the lock
 input (niri drops lock-surface focus after resume).
 """
@@ -188,20 +191,27 @@ def quickshell_binary():
     return shutil.which('quickshell')
 
 
-def lock_ipc(function, *args):
+# logind ignores a delay inhibitor after InhibitDelayMaxSec (default 5s) and sleeps
+# anyway — the handshake must decide secure-or-fallback inside that window, leaving
+# roughly a second for the swaylock fallback to engage.
+HANDSHAKE_BUDGET = 4.0
+
+
+def lock_ipc(function, *args, timeout=3.0):
     """Call the shell's lock IPC; None when the shell (or its lock target) is unreachable."""
     binary = quickshell_binary()
     if not binary: return None
     try:
         result = subprocess.run([binary, '-c', 'lme-shell', 'ipc', 'call', 'lock', function, *args],
-                                capture_output=True, text=True, timeout=3)
+                                capture_output=True, text=True, timeout=timeout)
     except (OSError, subprocess.SubprocessError): return None
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def wait_lock_status(states, attempts, delay=0.05):
+def wait_lock_status(states, attempts, delay=0.05, timeout=1.0, deadline=None):
     for _ in range(attempts):
-        if lock_ipc('status') in states: return True
+        if lock_ipc('status', timeout=timeout) in states: return True
+        if deadline is not None and time.monotonic() >= deadline: return False
         time.sleep(delay)
     return False
 
@@ -218,35 +228,41 @@ def native_lock():
 
 
 def prepare_sleep():
-    """The before-sleep handshake: swayidle holds logind's delay inhibitor until this
-    returns, so the session must be protected first (iNiR inir `lock prepareSleep`).
-    Native lock first; swaylock fail-closed fallback; never sleep unprotected."""
+    """The before-sleep handshake (iNiR inir `lock prepareSleep`): swayidle holds
+    logind's delay inhibitor while this runs, but a delay inhibitor cannot cancel the
+    sleep — logind ignores it after InhibitDelayMaxSec (default 5s) and the command
+    keeps running after resume (man swayidle). The shared budget below keeps the
+    secure-or-swaylock decision inside that window; the exit code only reports
+    whether the session got protected — swayidle releases the inhibitor either way."""
+    deadline = time.monotonic() + HANDSHAKE_BUDGET
     if swaylock_engaged(): return
     have_swaylock = shutil.which('swaylock') is not None
-    # Boot window: the lock IPC registers after the first shell frame — retry briefly,
-    # preferring the native lock (a lid close during boot still fails closed below).
-    response = lock_ipc('prepareSleep')
-    attempts = 0
-    while response is None and attempts < (10 if have_swaylock else 20):
-        time.sleep(0.1); attempts += 1
-        response = lock_ipc('prepareSleep')
+    # Boot window: the lock IPC registers after the first shell frame — a fast-failing
+    # call retries for the whole budget (a lid close during boot still fails closed
+    # below); a hung call burns its timeout against the same budget and falls back.
+    response = lock_ipc('prepareSleep', timeout=1.0)
+    while response is None and time.monotonic() < deadline:
+        time.sleep(0.1)
+        response = lock_ipc('prepareSleep', timeout=1.0)
     if response is None:
         if have_swaylock: secure_lock(); return
         raise RuntimeError('Lock IPC was unavailable before sleep and no fallback could secure the session')
     if response == 'secure': return
     # 'unlocked' = the demo/env gates keep the native lock inert → the swaylock path.
-    if response != 'unlocked' and wait_lock_status(('secure',), 20): return
+    if response != 'unlocked' and wait_lock_status(('secure',), 20, deadline=deadline): return
     if have_swaylock:
-        lock_ipc('deactivate')  # do not race a second ext-session-lock client against QS
-        wait_lock_status(('unlocked',), 10)
+        lock_ipc('deactivate', timeout=1.0)  # do not race a second ext-session-lock client against QS
+        wait_lock_status(('unlocked',), 10, deadline=deadline)
         try:
             secure_lock(); return
         except (OSError, RuntimeError):
-            lock_ipc('prepareSleep')  # restore the QS lock request, keep waiting
+            lock_ipc('prepareSleep', timeout=1.0)  # restore the QS lock request, keep waiting
     else:
         # Not inert, not secure, no fallback: raise swaylock's own guidance if absent.
         secure_lock(); return
-    if wait_lock_status(('secure',), 40): return
+    # Past the budget this may already be running post-resume — confirming the
+    # restored request (or failing loud) still beats returning silently.
+    if wait_lock_status(('secure',), 40, deadline=deadline + 2.0): return
     raise RuntimeError('Lock did not become secure before sleep')
 
 

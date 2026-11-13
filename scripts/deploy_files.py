@@ -37,7 +37,8 @@ case "$command" in
     settings) exec "$repo/scripts/settings.sh" "$@" ;;
     doctor) exec "$repo/scripts/doctor.sh" "$@" ;;
     toggle) exec "$LME_QS_BINARY" -c lme-shell ipc call shell toggle "$@" ;;
-    *) printf 'Usage: lme-shell [start|settings|doctor|toggle PANEL] [options]\\n' >&2; exit 2 ;;
+    ipc) exec "$LME_QS_BINARY" -c lme-shell ipc call "$@" ;;
+    *) printf 'Usage: lme-shell [start|settings|doctor|toggle PANEL|ipc TARGET FN ...] [options]\\n' >&2; exit 2 ;;
 esac
 ''').encode()
 

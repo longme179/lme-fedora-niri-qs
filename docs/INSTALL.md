@@ -295,7 +295,7 @@ Shell so that screen reservations and notification ownership are predictable.
 
 ### Optional laptop keys and idle locking
 
-[config/niri/media-keys.kdl](../config/niri/media-keys.kdl) contains volume,
+[config/niri/lme-shell.kdl](../config/niri/lme-shell.kdl) contains volume,
 microphone mute, backlight, media, `Super+L` locking, and niri screenshot bindings.
 Review and merge the desired entries after removing duplicates from your
 current `binds` block. In a normal niri session, `Super+L` conflicts with an

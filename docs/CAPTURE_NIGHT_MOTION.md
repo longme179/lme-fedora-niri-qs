@@ -53,7 +53,7 @@ uses niri's native screenshot UI. Finish its selection to open the independent
 capture remains pending, **Cancel capture** in Control Center clears it so you
 can start again. Unfinished captures expire after two minutes.
 
-For editor shortcuts, merge/include [`capture-keys.kdl`](../config/niri/capture-keys.kdl)
+For editor shortcuts, merge the Print bindings from [`lme-shell.kdl`](../config/niri/lme-shell.kdl)
 instead of existing Print/Ctrl+Print/Alt+Print bindings. Replace `lme-shell` with
 your installed Quickshell configuration name, such as `gpt`, and remove duplicate
 bindings before running `niri validate`. Existing native screenshot bindings
@@ -131,7 +131,7 @@ is required.
 
 ## Popup backdrop
 
-On niri 26.04, include [`popup-blur.kdl`](../config/niri/popup-blur.kdl) and enable
+On niri 26.04, include the blur section of [`lme-shell.kdl`](../config/niri/lme-shell.kdl) and enable
 **Settings → Appearance → Blur behind popups**. The `xray false` layer rule is
 essential: xray blur only samples the wallpaper, hiding application/bar detail
 under a full-screen blur region. The owner confirmed that including this rule

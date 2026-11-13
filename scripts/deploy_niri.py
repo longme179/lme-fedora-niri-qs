@@ -3,7 +3,11 @@
 Callers: scripts/deploy.py. Uses deploy_niri_tree for bounded KDL/include analysis.
 INVARIANT: planning stage is non-executing; applied niri edits require staged validation and rollback safety chain.
 REL: scripts/deploy_niri_tree.py::graph/validate paths; scripts/deploy_state.py – journal/rollback artifacts.
+The managed fragment is RENDERED from config/niri/lme-shell.kdl (the single source):
+deploy swaps the startup line for its wrapper, rewrites shell IPC spawns through the
+wrapper, and trims the blur section per niri version / existing user blur.
 """
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,9 +17,7 @@ import shlex
 from deploy_niri_tree import graph, included, replace
 
 MARKER = '// Managed by LME Shell deploy; edit your main config instead.\n'
-PANELS = {'Mod+Shift+A': 'activity', 'Mod+V': 'clipboard', 'Mod+Shift+Tab': 'overview',
-          'Mod+Space': 'launcher', 'Mod+A': 'control', 'Mod+N': 'notifications',
-          'Mod+Comma': 'settings', 'Mod+Shift+E': 'power'}
+SOURCE = 'config/niri/lme-shell.kdl'
 AGENTS = {'waybar', 'mako', 'dunst', 'swaync', 'lxqt-policykit-agent', 'polkit-gnome-authentication-agent-1',
           'polkit-kde-authentication-agent-1', 'mate-polkit'}
 BASE = '''// Created by LME Shell deploy. Existing user configs are patched instead.
@@ -36,6 +38,15 @@ binds {
     Ctrl+Alt+Delete { quit; }
 }
 '''
+# Byte-exact archives of the removed fragments live in tests/niri_legacy/; a user
+# copy matching its digest is pure legacy (content now managed) and gets disabled.
+LEGACY_DIGESTS = {
+    'lme-shell.kdl': {'582bb1ff98b72b416ab9447aae4c19ab8d6eb48d1fcffd5bf3e0f8c1e44ae77a'},
+    'media-keys.kdl': {'a053a448033cf2833407dd0b6257cfef24ed1a0e5f8b30c8df747bdd26bdcff4'},
+    'capture-keys.kdl': {'b7bbc3bf19db699549c2b687151dbf7c9d7a0b4e0df2710aee5e7c5eab810acb'},
+    'popup-blur.kdl': {'d7fd191a7ab1c820b3c78cf74b417e4798f3f9db7ea9e0cb4b2464d7af0b6b8c'},
+}
+BLUR_SECTION = '// blur-section:'
 
 
 def normalized(key, modifier='super'):
@@ -45,11 +56,13 @@ def normalized(key, modifier='super'):
 
 
 def legacy_include(path, repo):
-    if path.resolve() in {(repo/'config/niri/lme-shell.kdl').resolve(), (repo/'config/niri/popup-blur.kdl').resolve()}: return True
-    if path.name not in ('lme-shell.kdl', 'popup-blur.kdl') or not path.is_file(): return False
-    # Customized copies stay in the graph: preserve their extra binds/blur/options.
-    bundled = repo/'config/niri'/path.name
-    return bundled.is_file() and path.read_bytes() == bundled.read_bytes()
+    if path.resolve() == (repo/SOURCE).resolve(): return True
+    if path.name not in LEGACY_DIGESTS or not path.is_file(): return False
+    # A copy identical to the current source is fully managed; customized copies
+    # stay in the graph: preserve their extra binds/blur/options.
+    if path.name == 'lme-shell.kdl' and path.read_bytes() == (repo/SOURCE).read_bytes(): return True
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return digest in LEGACY_DIGESTS[path.name]
 
 
 def competing(node, repo):
@@ -69,23 +82,55 @@ def competing(node, repo):
 
 
 def fragment(repo, wrapper, config, blur, existing_blur):
+    """Render the managed fragment from config/niri/lme-shell.kdl."""
+    from niri_keybinds import nodes
     quote = lambda value: json.dumps(str(value), ensure_ascii=False)
-    text = MARKER+'// Start once at login; current session is never killed.\n'
-    text += f'spawn-at-startup {quote(wrapper)} "start"\n'
-    text += 'window-rule {\n    match app-id="^lme-shell-settings$"\n'
-    text += '    match title="^(LME Shell Settings( - Demo)?|LME Screenshot)$"\n    open-floating true\n}\n'
-    text += 'binds {\n'
-    for key, panel in PANELS.items(): text += f'    {key} {{ spawn {quote(wrapper)} "toggle" "{panel}"; }}\n'
-    text += '    Mod+Tab { toggle-overview; }\n}\n'
-    if blur:
-        bundled = (repo/'config/niri/popup-blur.kdl').read_text()
-        if existing_blur: bundled = bundled[:bundled.index('\nblur {')]
-        text += bundled
+    text = (repo/SOURCE).read_text()
+    edits = []
+    for node in nodes(text, positions=True):
+        if node['disabled']: continue
+        if node['name'] == 'spawn-sh-at-startup' and node['argument_spans']:
+            end = node['argument_spans'][-1][1]
+            edits.append((node['offset'], end, 'spawn-at-startup '+quote(wrapper)+' "start"'))
+        elif node['name'] == 'binds':
+            for bind in node['children']:
+                if bind['disabled']: continue
+                for action in bind['children']:
+                    if action['disabled'] or action['name'] != 'spawn': continue
+                    args = action['args']
+                    if args[:5] != ['quickshell', '-c', 'lme-shell', 'ipc', 'call'] or not action['argument_spans']:
+                        continue  # media keys spawn wpctl/brightnessctl/playerctl directly
+                    rest = args[5:]
+                    target = [wrapper, 'toggle', rest[2]] if rest[:2] == ['shell', 'toggle'] and len(rest) == 3 \
+                        else [wrapper, 'ipc']+rest
+                    spans = action['argument_spans']
+                    edits.append((spans[0][0], spans[-1][1], ' '.join(quote(a) for a in target)))
+    rendered = replace(text, edits)
+    if not blur:
+        cut = rendered.find(BLUR_SECTION)
+        if cut >= 0: rendered = rendered[:cut].rstrip()+'\n'
+    else:
+        if existing_blur:
+            # The user's own blur block owns the budget; the regions still apply.
+            cut = rendered.find('\nblur {')
+            if cut >= 0: rendered = rendered[:cut].rstrip()+'\n'
         liquid = config/'liquid-blur.kdl'
         if liquid.exists() and (liquid.is_symlink() or not liquid.read_text().startswith('// Generated by LME Shell: liquid glass backdrop blur.\n')):
             raise ValueError(f'Unmanaged liquid blur file; inspect before deployment: {liquid}')
-        text += f'\ninclude {quote(liquid)} optional=true\n'
-    return text
+        rendered += f'\ninclude {quote(liquid)} optional=true\n'
+    return MARKER+'// Start once at login; current session is never killed.\n'+rendered
+
+
+def source_keys(repo, modifier):
+    """Every bind key the source fragment owns (panels, media, lock, captures)."""
+    from niri_keybinds import nodes
+    text = (repo/SOURCE).read_text()
+    keys = set()
+    for node in nodes(text):
+        if node['name'] == 'binds' and not node['disabled']:
+            for bind in node['children']:
+                if not bind['disabled']: keys.add(normalized(bind['name'], modifier))
+    return keys
 
 
 def plan(root, repo, config, wrapper, niri_version):
@@ -104,7 +149,7 @@ def plan(root, repo, config, wrapper, niri_version):
             if not node['disabled'] and node['name'] == 'input':
                 for child in node['children']:
                     if not child['disabled'] and child['name'] == 'mod-key' and child['args']: modifier = child['args'][0].lower()
-    keys = {normalized(k, modifier) for k in (*PANELS, 'Mod+Tab')}
+    keys = source_keys(repo, modifier)
     changes, notes, has_blur, managed_includes = {}, [], False, []
     for actual, (logical, text, document) in documents.items():
         edits = []

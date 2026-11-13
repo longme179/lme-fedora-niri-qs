@@ -203,7 +203,7 @@ LME includes its own notification server and password popup.
 For **live blur behind the bar and popups** on niri 26.04+, also add:
 
 ```kdl
-include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
+include "~/.config/quickshell/lme-shell/config/niri/lme-shell.kdl"
 ```
 
 (The same include-expansion note as above applies.)
@@ -235,8 +235,8 @@ Choose **Appearance → Shell name** to give your desktop a name of your own.
 **Appearance → Surface style → Liquid glass** draws a simple translucent tint
 with procedural grain and an edge highlight. Blur comes only from the niri
 compositor (≥ 26.04): save the blur snippet in **Appearance → Liquid glass
-material** and include `~/.config/lme-shell/liquid-blur.kdl` after
-`popup-blur.kdl` in your niri config. Turn Liquid off to return to your saved
+material** and include `~/.config/lme-shell/liquid-blur.kdl` after the
+`lme-shell.kdl` blur section in your niri config. Turn Liquid off to return to your saved
 colors and opacity.
 
 In **Appearance → Liquid glass material**, choose a tint, adjust panel tint

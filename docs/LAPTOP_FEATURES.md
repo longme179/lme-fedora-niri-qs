@@ -61,15 +61,15 @@ Liquid glass uses local blur beneath rounded panels and popups instead of full-s
 
 This requires **official niri 26.04 or newer**, with `ext-background-effect-v1`, and Quickshell 0.3.2's Wayland background-effect support. Older niri builds retain the existing dim backdrop. This is compositor blur, not a claim that a dimmer blurs applications.
 
-On supported niri, include/merge [config/niri/popup-blur.kdl](../config/niri/popup-blur.kdl). For the default installation, add this to your niri config:
+On supported niri, include [config/niri/lme-shell.kdl](../config/niri/lme-shell.kdl); its blur section carries these rules. For the default installation, add this to your niri config:
 
 ```kdl
-include "~/.config/quickshell/lme-shell/config/niri/popup-blur.kdl"
+include "~/.config/quickshell/lme-shell/config/niri/lme-shell.kdl"
 ```
 
 Use your installed directory instead if your config is named `gpt`. Only add this include on supported niri; older builds cannot parse these directives. If your config already contains a global `blur` block, merge its settings instead of adding another block. Run `niri validate` before applying the edited config.
 
-The fragment sets `xray false` for the shell's bar, overlay, authentication, desktop, notification and OSD layers, plus the Settings window, so application windows participate in blur; xray blur would use the wallpaper. Bar blur follows each glass surface's corners and leaves island gaps clear, independently of the popup-blur switch. If you previously merged the rules manually, merge the updated namespace regex and Settings rule. It starts with two passes, offset 3 and no saturation boost for a moderate integrated-Radeon budget. niri describes non-xray blur as experimental: check its rendering and performance on your actual output. Increase passes only if your machine has room for the additional work. The shell does not change niri config automatically.
+The fragment sets `xray false` for the shell's bar, overlay, authentication, desktop, notification and OSD layers, plus the Settings window, so application windows participate in blur; xray blur would use the wallpaper. Bar blur follows each glass surface's corners and leaves island gaps clear, independently of the popup blur switch. If you previously merged the rules manually, merge the updated namespace regex and Settings rule. It starts with two passes, offset 3 and no saturation boost for a moderate integrated-Radeon budget. niri describes non-xray blur as experimental: check its rendering and performance on your actual output. Increase passes only if your machine has room for the additional work. The shell does not change niri config automatically.
 
 Upstream references: [niri blur configuration](https://github.com/YaLTeR/niri/blob/main/docs/wiki/Configuration%3A-Miscellaneous.md#blur), [layer background effects](https://github.com/YaLTeR/niri/blob/main/docs/wiki/Configuration%3A-Layer-Rules.md#background-effect). iNiR/DMS were workflow references; no implementation source was copied.
 

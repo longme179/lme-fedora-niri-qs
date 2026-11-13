@@ -50,6 +50,22 @@ QtObject {
         screenLocked = false;
     }
 
+    // Suspend handshake: lock immediately (skip the debounce) and report whether
+    // the compositor has confirmed the lock ("secure") or is still engaging.
+    function prepareSleep(): string {
+        if (!enabled)
+            return "unlocked";
+        activateDelay.stop();
+        if (!screenLocked)
+            screenLocked = true;
+        return secure ? "secure" : "locking";
+    }
+
+    function focus(): void {
+        if (enabled)
+            lockContext.shouldReFocus();
+    }
+
     // Fallback chain: release the QS lock, then hand over to the already-tested
     // secure_lock() in idle_control.py (swaylock + ready-fd + its own state file).
     function useFallbackLock(): void {
@@ -190,12 +206,7 @@ QtObject {
 
         /// Suspend handshake: lock immediately; "secure" once the compositor confirms.
         function prepareSleep(): string {
-            if (!root.enabled)
-                return "unlocked";
-            activateDelay.stop();
-            if (!root.screenLocked)
-                root.screenLocked = true;
-            return root.secure ? "secure" : "locking";
+            return root.prepareSleep();
         }
 
         /// Cancel the lock and mark the session unlocked.
@@ -210,8 +221,7 @@ QtObject {
 
         /// Refocus the lock surface input (called after logind resume).
         function focus(): void {
-            if (root.enabled)
-                lockContext.shouldReFocus();
+            root.focus();
         }
     }
 }

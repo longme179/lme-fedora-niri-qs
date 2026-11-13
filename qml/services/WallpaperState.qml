@@ -28,8 +28,8 @@ QtObject {
     readonly property bool inert: Quickshell.env("LME_SHELL_DEMO") === "1" || Quickshell.env("LME_SHELL_PREVIEW") === "1"
         || Quickshell.env("LME_SHELL_BACKEND_DEMO") === "1" || Quickshell.env("LME_SHELL_SETTINGS") === "1"
 
-    property var machine: {connected: null, applied: {}, signature: null, cursor: null,
-                           deadline: null, remaining: null, wasPaused: false, retryAt: 0}
+    property var machine: ({connected: null, applied: {}, signature: null, cursor: null,
+                           deadline: null, remaining: null, wasPaused: false, retryAt: 0})
     property var lastPreferences: ({})
     property bool powerSaving: false
     property bool busy: false

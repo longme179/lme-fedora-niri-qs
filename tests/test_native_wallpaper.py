@@ -56,8 +56,8 @@ class WallpaperModelCase(LocalQmlCase):
     Component.onCompleted: {
         let thrown = "";
         try { Wallpaper.outputName("bad name"); } catch (error) { thrown = error.message; }
-        checks.outputName = thrown === "Choose a valid display name" && Wallpaper.outputName("eDP-1", true) === ""
-            && Wallpaper.outputName("DP-1.a_2");
+        checks.outputName = thrown === "Choose a valid display name" && Wallpaper.outputName("", true) === ""
+            && Wallpaper.outputName("DP-1.a_2") === "DP-1.a_2";
         const query = "eDP-1: 1920x1080 (currently displaying: image: /home/z/w1.png)\\n" +
             "some-namespace: DP-1: 2560x1440 (currently displaying: image: /home/z/w2.png)\\n" +
             "ignored line";
@@ -90,11 +90,11 @@ class WallpaperModelCase(LocalQmlCase):
     def test_plan_deadline_pause_signature_and_restore_priority(self):
         result = self.run_qml('import "qml/services/WallpaperModel.js" as Wallpaper', '''
     property var checks: ({})
-    property var prefs: {wallpaperPlaylist: ["/a.png", "/b.png"], wallpaperPlaylistEnabled: true,
+    property var prefs: ({wallpaperPlaylist: ["/a.png", "/b.png"], wallpaperPlaylistEnabled: true,
         wallpaperPlaylistPaused: false, wallpaperPlaylistShuffle: false, wallpaperPlaylistInterval: 300,
-        wallpaperPlaylistOutput: "eDP-1", wallpaper: "/shared.png", wallpaperOutputs: {"DP-1": "/fixed.png"}}
-    property var state: {connected: null, applied: {}, signature: null, cursor: null, deadline: null,
-        remaining: null, wasPaused: false, retryAt: 0}
+        wallpaperPlaylistOutput: "eDP-1", wallpaper: "/shared.png", wallpaperOutputs: {"DP-1": "/fixed.png"}})
+    property var state: ({connected: null, applied: {}, signature: null, cursor: null, deadline: null,
+        remaining: null, wasPaused: false, retryAt: 0})
     function step(outputs, now, saving, paused, enabled) {
         fixture.prefs.wallpaperPlaylistPaused = paused === true;
         fixture.prefs.wallpaperPlaylistEnabled = enabled !== false;
@@ -182,7 +182,7 @@ class WallpaperModelCase(LocalQmlCase):
             wallpaperPlaylistPaused: false, wallpaperPlaylistShuffle: false, wallpaperPlaylistInterval: 300,
             wallpaperPlaylistOutput: "eDP-1", wallpaper: "/shared.png", wallpaperOutputs: {}};
         // A due advance: applies the next image natively and persists the per-output token.
-        WallpaperState.machine = {connected: ["eDP-1", "DP-1"], applied: {eDP-1: "/shared.png", "DP-1": "/fixed.png"},
+        WallpaperState.machine = {connected: ["eDP-1", "DP-1"], applied: {"eDP-1": "/shared.png", "DP-1": "/fixed.png"},
             signature: null, cursor: null, deadline: 5000, remaining: null, wasPaused: false, retryAt: 0};
         let manual = null;
         WallpaperState.perform("wallpaperNext", {}, (ok, message) => { manual = {ok: ok, message: message}; });

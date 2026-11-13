@@ -6,8 +6,9 @@
 //      probed on quickshell 0.3.2, 2026-11-13); qml/panels/ClipboardPanel.qml – consumer UI.
 // The Q5 native port retired the JSON-lines serve daemon: every action is a one-shot
 // subcommand through the tool Process, and the messages are frozen by the local suite.
-// The Q6 refresh fix: the worker announces each commit via directory/revision.txt and
-// the FileView watch (inotify) drives the open list; the 2 s poll is only the fallback.
+// The Q6 refresh fix: the capture worker announces each commit as one JSON line on the
+// watcher's stdout pipe (noteWatcherOutput → eventDebounce → runSearch); monitoring
+// derives from ShellState's panel routing, and the 2 s repeat poll is the fallback.
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
@@ -35,7 +36,11 @@ QtObject {
     property int pendingSearches: 0
     property bool demoPaused: false
     property var lastResult: null
-    property bool monitoring: false  // the panel sets this while visible; gates the revision poll
+    // The panel host (SlideLoader) parks closed panels off-screen WITHOUT toggling the
+    // item's visible (a visible flip costs ~800 ms on a retained tree), so a panel-side
+    // visible hookup can never fire — derive the open state from the shell's panel
+    // routing instead. Gates the revision poll and the on-open refresh.
+    property bool monitoring: ShellState.catalogPanelOpen && ShellState.panelKind === "clipboard"
     property bool watchersSuspended: false  // engine-test isolation: never spawn real watchers
     property int lastRevision: -1
     property int resultSequence: 0
@@ -118,7 +123,12 @@ QtObject {
     }
     function noteWatcherOutput(line) {
         const text = String(line || "").trim();
-        if (text) state = Object.assign({}, state, {error: text});
+        if (!text) return;
+        // The worker's post-commit announcement rides the same pipe; anything else is
+        // the supervisor's or wl-paste's own error text and keeps the old error surface.
+        const parsed = text.startsWith("{") ? parseReply(text) : null;
+        if (parsed && parsed.revision !== undefined) { eventDebounce.restart(); return; }
+        state = Object.assign({}, state, {error: text});
     }
     function wantedKinds() {
         if (watchersSuspended || !started || ShellState.demo || ShellState.settingsApp) return [];
@@ -150,25 +160,17 @@ QtObject {
         onTriggered: root.refreshState()
     }
 
-    // ---- the capture event (the worker rewrites revision.txt after its commit) ---------
-    // Every clipboard.py mutation publishes its revision to directory/revision.txt;
-    // this FileView watches that file, so an open list refreshes the moment a copy
-    // lands — no poll-tick wait. The poll Timer stays as the healing fallback; while
-    // the panel is hidden the events are skipped (zero spawns, the dirty work happens
-    // on reopen through onMonitoringChanged).
-    property FileView revisionFile: FileView {
-        path: root.directory + "/revision.txt"
-        watchChanges: true
-        printErrors: false
-        onLoaded: root.revisionLoaded(parseInt(String(text)))
+    // ---- the capture event (the worker announces its commit on the watcher pipe) --------
+    // clipboard.py --capture prints {"revision": N} after every store; wl-paste --watch
+    // forwards the worker's stdout (probed live 2026-11-13), so the event rides the pipe
+    // the watchers already own — no polling, no file watching (quickshell 0.3.2's file
+    // watcher never reloads on change), no Wayland focus dependency (the clipboard
+    // signal needs a focused surface). The debounce coalesces copy bursts into one search.
+    property Timer eventDebounce: Timer {
+        interval: 250
+        onTriggered: if (root.ready && !ShellState.demo && !ShellState.settingsApp) root.runSearch()
     }
     onMonitoringChanged: if (monitoring && ready) refreshState()
-    function revisionLoaded(value) {
-        if (!isFinite(value) || !monitoring || !ready) return;
-        if (value === lastRevision) return;
-        lastRevision = value;
-        runSearch();
-    }
 
     // ---- state sync and search ---------------------------------------------------------
     function refreshState() {

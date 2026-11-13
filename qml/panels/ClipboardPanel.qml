@@ -19,7 +19,9 @@ GlassPanel {
     readonly property bool previewOpen: !!previewImage
     readonly property bool searchFocused: search.activeFocus
     focus: true
-    onVisibleChanged: ClipboardState.monitoring = visible  // gates the revision poll (Q5 leg 4)
+    // The host (SlideLoader) parks closed panels off-screen without toggling visible,
+    // so this panel cannot gate refresh on its own visibility — ClipboardState.monitoring
+    // derives from ShellState's panel routing instead (Q6 live-fix round 2).
     function focusSearch() { search.forceActiveFocus(); }
     function activateSelected() {
         const item = ClipboardState.entries[history.currentIndex];

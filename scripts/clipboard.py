@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Bounded local clipboard history and a JSON-lines Wayland capture service."""
+"""Bounded local clipboard history, one-shot native actions and the capture worker.
+
+The Q5 native port retired the JSON-lines serve daemon: ClipboardState.qml owns the
+flows, spawns scripts/clipboard_watch.py for capture and calls these one-shot
+subcommands through a Process (one JSON line on stdout; exit 0 = ok, 1 = failure)."""
 from __future__ import annotations
 
 import argparse
-import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
-import selectors
-import signal
 import sqlite3
 import subprocess
 import sys
@@ -57,6 +58,10 @@ class History:
     @property
     def paused(self) -> bool:
         return bool(self.db.execute("SELECT value FROM meta WHERE key='paused'").fetchone()[0])
+
+    @property
+    def total(self) -> int:
+        return self.db.execute("SELECT count(*) FROM entries").fetchone()[0]
 
     def changed(self):
         self.db.execute("UPDATE meta SET value=value+1 WHERE key='revision'")
@@ -179,127 +184,46 @@ def preferences() -> dict:
     return defaults
 
 
-class CaptureService:
-    def __init__(self, history: History):
-        self.history = history
-        self.watchers = {}
-        self.lock = None
-        self.error = ""
-        self.last_retry = 0
-
-    def stop(self):
-        for watcher in self.watchers.values():
-            if watcher.poll() is None:
-                watcher.terminate()
-                try: watcher.wait(timeout=2)
-                except subprocess.TimeoutExpired: watcher.kill(); watcher.wait()
-        self.watchers = {}
-        if self.lock is not None: self.lock.close(); self.lock = None
-
-    def update(self, config: dict):
-        self.history.configure(config['clipboardLimit'])
-        wanted = ['text', 'image'] if config['clipboardImages'] else ['text']
-        enabled = config['clipboardEnabled'] and not self.history.paused
-        if not enabled:
-            self.stop(); self.error = ""; return
-        if set(self.watchers) == set(wanted) and all(p.poll() is None for p in self.watchers.values()): return
-        if self.watchers and any(p.poll() is not None for p in self.watchers.values()):
-            self.error = "Clipboard capture stopped. Check Wayland data-control support and the session."
-        if time.monotonic() - self.last_retry < 5: return
-        self.last_retry = time.monotonic()
-        self.stop()
-        executable = shutil.which('wl-paste')
-        if not executable or not shutil.which('wl-copy'):
-            self.error = "Install wl-clipboard to capture and copy clipboard items."; return
-        lock = (self.history.directory / "capture.lock").open('a')
-        try: fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            lock.close(); self.error = "Another shell instance owns clipboard capture."; return
-        self.lock = lock
-        try:
-            for kind in wanted:
-                self.watchers[kind] = subprocess.Popen([sys.executable, str(Path(__file__).with_name('idle_control.py').resolve()),
-                    'client', '--parent', str(os.getpid()), executable, '--no-newline', '--type', kind, '--watch',
-                    sys.executable, str(Path(__file__).resolve()), '--capture', kind, '--directory', str(self.history.directory)],
-                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.error = ""
-        except OSError:
-            self.stop(); self.error = "Clipboard capture could not start. Check the Wayland session."
+def reply(ok, **payload):
+    print(json.dumps(dict(ok=ok, **payload), ensure_ascii=False, separators=(',', ':')), flush=True)
+    return 0 if ok else 1
 
 
-def serve(directory: Path):  # GOTCHA: local-only history; respects CLIPBOARD_STATE/XDG paths (see module docstring).
-    history = History(directory)
-    capture_service = CaptureService(history)
-    query, kind, last_result, sequence = "", "all", None, 0
-    running = True
-    def stop(*_):
-        nonlocal running
-        running = False
-    signal.signal(signal.SIGTERM, stop)
-    signal.signal(signal.SIGINT, stop)
-    selector = selectors.DefaultSelector()
-    buffer, last_signature, last_config, available = b"", None, 0, False
-    def publish():
-        nonlocal last_signature
-        capturing = bool(capture_service.watchers) and all(p.poll() is None for p in capture_service.watchers.values())
-        signature = (history.revision, history.paused, capturing, available, capture_service.error, sequence, query, kind)
-        if signature == last_signature: return
-        state = {"entries": history.entries(query, kind), "paused": history.paused, "capturing": capturing, "available": available,
-                 "total": history.db.execute('SELECT count(*) FROM entries').fetchone()[0],
-                 "revision": history.revision, "error": capture_service.error, "lastResult": last_result}
-        print(json.dumps(state, ensure_ascii=False, separators=(',', ':')), flush=True)
-        last_signature = signature
+def run_action(args) -> int:
+    """One native action per process: the serve loop's handlers, message for message."""
+    history = History(args.directory)
     try:
-        try:
-            selector.register(sys.stdin, selectors.EVENT_READ)
-        except PermissionError:
-            # epoll does not accept regular files or /dev/null as stdin.
-            selector.close()
-            selector = selectors.SelectSelector()
-            selector.register(sys.stdin, selectors.EVENT_READ)
-        while running:
-            if time.monotonic() - last_config >= 1:
-                capture_service.update(preferences()); last_config = time.monotonic()
-                available = bool(shutil.which('wl-copy') and shutil.which('wl-paste'))
-            publish()  # Idle revision checks do not serialize unchanged history.
-            if not selector.select(.25): continue
-            chunk = os.read(sys.stdin.fileno(), 8192)
-            if not chunk: break
-            buffer += chunk
-            if len(buffer) > 65536: buffer = b""; continue
-            while b"\n" in buffer:
-                line, buffer = buffer.split(b"\n", 1)
-                action, ok, message = "", True, ""
-                try:
-                    request = json.loads(line)
-                    action = request['action']
-                    if action == 'search':
-                        query, kind = request.get('query', ''), request.get('kind', 'all')
-                        if not isinstance(query, str) or kind not in {'all', 'text', 'image'}: raise ValueError('Invalid search')
-                        query = query[:300]
-                    elif action == 'copy':
-                        item = history.item(request.get('id'))
-                        command = shutil.which('wl-copy')
-                        if not command: raise ValueError('Install wl-clipboard to copy items')
-                        subprocess.run([command, '--type', item['mime']], input=item['data'], check=True,
-                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
-                        message = 'Copied to clipboard'
-                    elif action == 'pin': history.pin(request.get('id'))
-                    elif action == 'delete': history.delete(request.get('id'))
-                    elif action == 'clear': history.clear(request.get('includePinned', False))
-                    elif action == 'pause':
-                        history.pause(request.get('value')); capture_service.last_retry = 0
-                        capture_service.update(preferences())
-                    else: raise ValueError('Unknown clipboard action')
-                except (KeyError, TypeError, ValueError, OSError, sqlite3.Error, subprocess.SubprocessError) as error:
-                    ok = False
-                    message = str(error)[:180] if isinstance(error, ValueError) else 'Clipboard operation failed. Check the Wayland session and local storage.'
-                    if action == 'search': query, kind = '', 'all'
-                sequence += 1
-                last_result = {'action': action, 'ok': ok, 'message': message, 'sequence': sequence}
-                publish()  # Never coalesce operation outcomes, even within one read.
+        if args.state:
+            return reply(True, available=bool(shutil.which('wl-copy') and shutil.which('wl-paste')),
+                         paused=history.paused, total=history.total, revision=history.revision)
+        if args.search is not None:
+            query, kind = args.search
+            if kind not in {'all', 'text', 'image'}: raise ValueError('Invalid search')
+            return reply(True, entries=history.entries(query[:300], kind),
+                         total=history.total, revision=history.revision)
+        if args.copy is not None:
+            item = history.item(args.copy)
+            command = shutil.which('wl-copy')
+            if not command: raise ValueError('Install wl-clipboard to copy items')
+            subprocess.run([command, '--type', item['mime']], input=item['data'], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
+            return reply(True, message='Copied to clipboard', total=history.total, revision=history.revision)
+        if args.pin is not None:
+            history.pin(args.pin)
+        elif args.delete is not None:
+            history.delete(args.delete)
+        elif args.clear is not None:
+            history.clear(args.clear)
+        elif args.pause is not None:
+            history.pause(args.pause)
+        elif args.configure is not None:
+            history.configure(args.configure)
+        return reply(True, paused=history.paused, total=history.total, revision=history.revision)
+    except (KeyError, TypeError, ValueError, OSError, sqlite3.Error, subprocess.SubprocessError) as error:
+        message = str(error)[:180] if isinstance(error, ValueError) else 'Clipboard operation failed. Check the Wayland session and local storage.'
+        return reply(False, message=message)
     finally:
-        capture_service.stop(); selector.close(); history.db.close()
+        history.db.close()
 
 
 def main():
@@ -307,9 +231,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', type=Path, default=history_directory())
     parser.add_argument('--capture', choices=['text', 'image'])
+    parser.add_argument('--state', action='store_true')
+    parser.add_argument('--search', nargs=2, metavar=('QUERY', 'KIND'))
+    parser.add_argument('--copy', metavar='ID')
+    parser.add_argument('--pin', metavar='ID')
+    parser.add_argument('--delete', metavar='ID')
+    parser.add_argument('--clear', type=lambda value: value == 'true', metavar='BOOL')
+    parser.add_argument('--pause', type=lambda value: value == 'true', metavar='BOOL')
+    parser.add_argument('--configure', type=int, metavar='LIMIT')
     args = parser.parse_args()
-    if args.capture: capture(args.capture, args.directory.resolve())
-    else: serve(args.directory.resolve())
+    if args.capture:
+        capture(args.capture, args.directory.resolve())
+        return 0
+    return run_action(args)
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': raise SystemExit(main())

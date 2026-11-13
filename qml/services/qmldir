@@ -39,5 +39,8 @@ singleton NightLightState 1.0 NightLightState.qml
 singleton IdleState 1.0 IdleState.qml
 singleton WeatherState 1.0 WeatherState.qml
 singleton LyricsState 1.0 LyricsState.qml
+<<<<<<< HEAD
 singleton WallpaperState 1.0 WallpaperState.qml
 singleton FileSearchState 1.0 FileSearchState.qml
+=======
+>>>>>>> origin/main

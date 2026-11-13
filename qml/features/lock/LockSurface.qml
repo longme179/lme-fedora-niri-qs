@@ -2,10 +2,13 @@
 // Role: LockSurface.qml (lock layer, fan-in 1 — instantiated per screen inside
 // LockState's WlSessionLockSurface).
 // Ported from the interaction half of iNiR's LockSurface.qml @ edca6cc (GPL-3.0):
-// the clock→login view machine, any-key capture into the password field, Esc
-// semantics, Ctrl+Enter (unlock + keep awake) and the niri focus machinery
-// (focusEnsureTimer 100ms×30; the 2s heartbeat lives in LockState).
-// REL: LockContext (context), LockWallpaper/LockLoginView (own dir), Theme only.
+// the clock→login view machine (Theme-curve transitions + the login smoke overlay),
+// any-key capture into the password field, Esc semantics, Ctrl+Enter (unlock + keep
+// awake), the unlock recede overlay and the niri focus machinery (focusEnsureTimer
+// 100ms×30; the 2s heartbeat lives in LockState). Phase 3 adds the composed views:
+// LockClockView (status row/weather/hint) and LockMediaWidget below the clock.
+// REL: LockContext (context), LockWallpaper/LockClockView/LockMediaWidget/
+// LockLoginView (own dir), ActivityState (player), Theme only.
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../services"
@@ -20,6 +23,12 @@ MouseArea {
     property string currentView: "clock"
     readonly property bool showLoginView: currentView === "login"
     property bool ctrlHeld: false
+    // How long the surfaces recede on unlock before LockState releases the lock
+    // (iNiR recede); the unlock overlay's fade duration matches it.
+    readonly property int recedeDuration: 250
+    // Media only while a track is actually up (iNiR: a title is present).
+    readonly property bool mediaActive: ActivityState.player !== null
+        && !!(ActivityState.display && ActivityState.display.title)
 
     anchors.fill: parent
     hoverEnabled: false
@@ -39,34 +48,49 @@ MouseArea {
 
     LockWallpaper { anchors.fill: parent }
 
-    // ---- clock view (Phase 3 adds weather/battery/status) --------------------
-    Column {
-        anchors.centerIn: parent
-        visible: !root.showLoginView
-        spacing: 6
+    // ---- clock view (status row / weather / hint live in LockClockView) -------
+    Item {
+        id: clockView
+        anchors.fill: parent
+        visible: opacity > 0
+        opacity: root.showLoginView ? 0 : 1
+        scale: root.showLoginView ? 0.94 : 1
 
-        ShellText {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatDateTime(clock.now, "HH:mm")
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Math.min(root.width, root.height) * 0.16
-            font.weight: Font.Light
+        Behavior on opacity {
+            enabled: Theme.animations
+            NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic }
         }
-        ShellText {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatDateTime(clock.now, "dddd, MMMM d")
-            color: Theme.muted
-            font.family: Theme.fontFamily
-            font.pixelSize: 18
+        Behavior on scale {
+            enabled: Theme.animations
+            NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.spatialCurve }
         }
-        ShellText {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "Press any key to unlock"
-            color: Theme.muted
-            font.family: Theme.fontFamily
-            font.pixelSize: 12
-            opacity: 0.7
+
+        LockClockView { anchors.fill: parent }
+    }
+
+    // ---- media card (below the raised clock; iNiR position) --------------------
+    LockMediaWidget {
+        id: mediaWidget
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.verticalCenter
+        anchors.topMargin: 64
+        visible: root.mediaActive && !root.showLoginView
+        player: ActivityState.player
+        title: ActivityState.display ? ActivityState.display.title : ""
+        artist: ActivityState.display ? (ActivityState.display.artist || "") : ""
+        artUrl: ActivityState.artwork
+    }
+
+    // The login view dims everything behind it (iNiR smoke overlay).
+    Rectangle {
+        id: smokeOverlay
+        anchors.fill: parent
+        color: "#59000000"
+        visible: opacity > 0
+        opacity: root.showLoginView ? 1 : 0
+        Behavior on opacity {
+            enabled: Theme.animations
+            NumberAnimation { duration: 350; easing.type: Easing.OutCubic }
         }
     }
 
@@ -75,7 +99,18 @@ MouseArea {
         id: loginView
         anchors.centerIn: parent
         visible: root.showLoginView
+        opacity: root.showLoginView ? 1 : 0
+        scale: root.showLoginView ? 1 : 0.98
         context: root.context
+
+        Behavior on opacity {
+            enabled: Theme.animations
+            NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            enabled: Theme.animations
+            NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.spatialCurve }
+        }
     }
 
     // ---- input handling (iNiR semantics) -------------------------------------
@@ -135,20 +170,6 @@ MouseArea {
         Qt.callLater(() => root.forceActiveFocus());
     }
 
-    // Reset whenever the lock engages.
-    Connections {
-        target: root.context
-        function onLockedChanged() {
-            if (root.context.locked) {
-                root.currentView = "clock";
-                Qt.callLater(() => root.forceActiveFocus());
-            }
-        }
-        function onShouldReFocus() {
-            forceFieldFocus();
-        }
-    }
-
     // Ensure focus on first show (Loader focus workaround, iNiR): 100ms × 30.
     Timer {
         id: focusEnsureTimer
@@ -169,15 +190,36 @@ MouseArea {
         }
     }
 
-    // A live clock for the clock view (re-evaluates every 5s; cheap and battery-kind).
-    property var clock: QtObject {
-        property date now: new Date()
+    // ---- unlock success overlay (fades in while the lock recedes) --------------
+    Rectangle {
+        id: unlockOverlay
+        anchors.fill: parent
+        color: Theme.background
+        opacity: 0
+        z: 100
+
+        NumberAnimation {
+            id: unlockFadeAnim
+            target: unlockOverlay
+            property: "opacity"
+            from: 0; to: 1
+            duration: 300
+            easing.type: Easing.InQuad
+        }
     }
-    Timer {
-        interval: 5000
-        running: root.visible
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.clock.now = new Date()
+    Connections {
+        target: root.context
+        function onLockedChanged() {
+            if (root.context.locked) {
+                root.currentView = "clock";
+                Qt.callLater(() => root.forceActiveFocus());
+            }
+        }
+        function onShouldReFocus() {
+            forceFieldFocus();
+        }
+        function onUnlocked(action) {
+            unlockFadeAnim.restart();
+        }
     }
 }

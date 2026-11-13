@@ -128,8 +128,9 @@ class WeatherLyricsModelCase(LocalQmlCase):
             try { Weather.detectLocation({success: false}); } catch (error) { thrown = error.message; }
             checks.detectFail = thrown === "Automatic location is unavailable. Retry or choose a city in Settings.";
         } catch (error) { ok = error; }
-        fixture.finish(checks);
+        done.start();  // quit during startup is dropped: finish from a Timer tick
     }
+    Timer { id: done; interval: 100; onTriggered: fixture.finish(checks) }
 ''')
         self.assertEqual(result, dict(conditions=True, location=True, rejects=True, forecast=True, noTemperature=True,
                                       badForecast=True, unknown=True, search=True, badSearch=True, detect=True, detectFail=True))
@@ -158,8 +159,9 @@ class WeatherLyricsModelCase(LocalQmlCase):
             && Lyrics.result("", "LRCLIB").status === "none"
             && Lyrics.result("", "LRCLIB", true).status === "instrumental";
         checks.slug = Lyrics.cacheSlug({title: "a b", artist: "c/d", album: "", duration: 0}) === "a%20b~c%2Fd~0~0";
-        fixture.finish(checks);
+        done.start();  // quit during startup is dropped: finish from a Timer tick
     }
+    Timer { id: done; interval: 100; onTriggered: fixture.finish(checks) }
 ''')
         self.assertEqual(result, dict(tooLarge=True, synced=True, offset=True, plain=True, bom=True,
                                       badDuration=True, track=True, result=True, slug=True))
@@ -219,14 +221,16 @@ class WeatherLyricsStateCase(LocalQmlCase):
             && WeatherState.section.search.results.length === 1 && WeatherState.section.search.results[0].name === "Da Nang";
         WeatherState.perform("weatherSearch", {query: "x"}, (ok, message) => { fixture.searchDone = {ok: ok, message: message}; });
         checks.badQuery = fixture.searchDone.ok === false && fixture.searchDone.message === "Enter a city name of 2\\u2013100 characters.";
-        fixture.finish(checks);
+        done.start();  // quit during startup is dropped: finish from a Timer tick
     }
+    Timer { id: done; interval: 100; onTriggered: fixture.finish(checks) }
 ''', {"LME_SHELL_DEMO": "0", "NIRI_SOCKET": "/nonexistent-lme-q5-test"})
         self.assertEqual(result, dict(autoDetect=True, urlParams=True, geoKeepsData=True, geoRetries=True,
                                       manual=True, forecastFailKeepsData=True, search=True, badQuery=True))
 
     def test_lyrics_state_chain_embedded_sidecar_cache_online_store(self):
         import tempfile
+        import time
         import urllib.parse
         with tempfile.TemporaryDirectory() as directory:
             sidecar = Path(directory) / "song.lrc"
@@ -236,7 +240,7 @@ class WeatherLyricsStateCase(LocalQmlCase):
             cache = Path(directory) / "cache" / "lme-shell" / "lyrics"
             cache.mkdir(parents=True)
             (cache / (slug + ".json")).write_text(json.dumps(
-                {"storedAt": 1e12, "raw": "[00:05]Cached line", "status": "ready"}))
+                {"storedAt": time.time() - 60, "raw": "[00:05]Cached line", "status": "ready"}))
             body = '''
     property var checks: ({})
     property int phase: 0

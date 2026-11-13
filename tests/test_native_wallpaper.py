@@ -116,11 +116,11 @@ class WallpaperModelCase(LocalQmlCase):
         // Pause keeps the remaining time; resume restores it.
         fixture.step(["eDP-1", "DP-1"], 400, false, true);
         checks.paused = fixture.state.deadline === null && fixture.state.remaining === 200 && fixture.state.wasPaused;
-        checks.resume = fixture.step(["eDP-1", "DP-1"], 900, false, false).kind === null
+        checks.resume = fixture.step(["eDP-1", "DP-1"], 900, false, false).kind === undefined
             && fixture.state.deadline === 1100;  // 900 + remaining 200, not a fresh interval
         // A preference change resets the signature (cursor/deadline cleared, fresh interval).
         fixture.prefs.wallpaperPlaylist = ["/c.png", "/a.png", "/b.png"];
-        checks.signature = fixture.step(["eDP-1", "DP-1"], 1000).kind === null
+        checks.signature = fixture.step(["eDP-1", "DP-1"], 1000).kind === undefined
             && fixture.state.deadline === 1300 && fixture.state.cursor === null;
         // A changed display (applied vs desired) restores before advancing, with a 30 s retry.
         fixture.state.applied["eDP-1"] = "/stale.png";

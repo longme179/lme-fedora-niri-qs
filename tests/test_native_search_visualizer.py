@@ -121,8 +121,8 @@ class SearchVisualizerEngineCase(LocalQmlCase):
             fixture.checks.frames = JSON.stringify(VisualizerState.frame("0;10;20.5;30;40;50;60;70;80;90;100;0;1;2;3;4;"))
                 === JSON.stringify([0, .1, .205, .3, .4, .5, .6, .7, .8, .9, 1, 0, .01, .02, .03, .04])
                 && VisualizerState.frame("1;2;3") === null && VisualizerState.frame("a;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16") === null
-                && VisualizerState.frame("150;-5;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15")[0] === 1
-                && VisualizerState.frame("150;-5;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15")[1] === 0;
+                && VisualizerState.frame("150;-5;1;2;3;4;5;6;7;8;9;10;11;12;13;14")[0] === 1
+                && VisualizerState.frame("150;-5;1;2;3;4;5;6;7;8;9;10;11;12;13;14")[1] === 0;
             fixture.phase = 5; break;
         case 5:
             fixture.finish(fixture.checks); break;

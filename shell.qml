@@ -9,6 +9,7 @@ import Quickshell.Wayland
 import "qml/services"
 import "qml/theme"
 import "qml/components"
+import "qml/features/lock"
 import "qml/panels"
 import "qml/auth"
 
@@ -17,6 +18,8 @@ ShellRoot {
     readonly property string screenshotPath: Quickshell.env("LME_SHELL_SCREENSHOT") || ""
     readonly property bool preview: Quickshell.env("LME_SHELL_PREVIEW") === "1" // scripts/start.sh --preview
     FeatureBootstrap {} // Feature catalog/bootstrap init before live UI surfaces.
+    // Arm the lock from the first frame (recovery re-lock + `lock` IPC); inert when gated.
+    LockMechanism {}
     LazyLoader {
         id: authentication
         active: !ShellState.demo // Auth agent runs only in live session, not demo/preview.
@@ -65,10 +68,8 @@ ShellRoot {
                 id: barWindow
                 screen: screenScope.modelData
                 anchors { top: !Theme.barBottom; bottom: Theme.barBottom; left: true; right: true }
-                // Shadow flight envelope: reserve the pill shadow padding
-                // inside the layer surface on every side so the surface
-                // bounds cannot clip the drop shadow. Pill screen positions
-                // stay unchanged; the envelope collapses when shadows are off.
+                // Shadow flight envelope: reserve the pill shadow padding inside the layer
+                // surface on every side so the drop shadow is never clipped; collapses when off.
                 margins { left: Theme.barWindowSideMargin; right: Theme.barWindowSideMargin; top: Theme.barWindowTopMargin; bottom: 0 }
                 implicitHeight: Theme.barWindowHeight
                 exclusiveZone: Theme.barHeight
@@ -110,11 +111,9 @@ ShellRoot {
     PanelWindow {
         id: overlay
         screen: ShellState.panelScreen || Quickshell.screens[0]
-        // Keep the layer surface mapped for the whole session. Re-mapping while
-        // a retained panel tree is in the scene re-attaches every item to the
-        // fresh surface (~700ms of synchronous binding churn + canvas context
-        // rebuild), which read as a dead hitch before each reopen. While idle
-        // the surface shrinks to a 1x1 transparent, input-transparent sliver.
+        // Keep the layer surface mapped for the whole session: re-mapping re-attaches
+        // every retained item (~700ms of binding churn before each reopen). While idle it
+        // shrinks to a 1x1 transparent, input-transparent sliver.
         visible: !root.preview && !ShellState.authenticationActive
         readonly property bool surfaceLive: ShellState.panelOpen || (activityIsland.visible && !activityIsland.warmupActive) || (panelLoader.active && !panelLoader.dormant)
         // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.

@@ -43,3 +43,4 @@ singleton WallpaperState 1.0 WallpaperState.qml
 singleton FileSearchState 1.0 FileSearchState.qml
 singleton StorageState 1.0 StorageState.qml
 singleton LockState 1.0 LockState.qml
+LockContext 1.0 LockContext.qml

@@ -39,7 +39,7 @@
     ["qml/services/EqualizerState.qml", "qml/services/ShellState.qml", "Q5 equalizer family: the panel state keeps its existing send/lastResult/batterySaver consumers while the router fans out from ShellState to EqualizerState (perform dispatch); runtime-safe, different properties, no binding loop."],
     ["qml/services/ShellState.qml", "qml/services/EqualizerState.qml", "Q5 equalizer family: the router fans out from ShellState to EqualizerState (perform dispatch); runtime-safe, user-activated calls only, never during binding evaluation."], ["qml/services/ShellState.qml", "qml/services/ImeState.qml", "Q4 session family: the router fans out from ShellState to ImeState (perform dispatch) while the indicator keeps its existing lastResult consumer and OSD surfacing; runtime-safe, different properties, no binding loop."]],
   "largeFiles": {
-    "shell.qml": 305,
+    "shell.qml": 304,
     "qml/services/ShellState.qml": 371,
     "qml/services/NativeState.qml": 257,
     "qml/services/EqualizerState.qml": 442,

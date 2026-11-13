@@ -185,6 +185,7 @@ QtObject {
         if (NightLightState.handles(action)) return NightLightState; // Q4: Night Light retry
         if (IdleState.handles(action)) return IdleState; // Q4: idle refresh + inhibit
         if (WeatherState.handles(action)) return WeatherState; // Q5: weather search/detect/refresh (select stays backend — it writes preferences)
+        if (WallpaperState.handles(action)) return WallpaperState; // Q5 leg 2: daemon status/ensure + the playlist advance (user saves stay backend)
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
@@ -284,6 +285,14 @@ QtObject {
             // resolved weather place and the merged AC state).
             if (!demo && !settingsApp && !backendDemo) {
                 WeatherState.sync(preferences); // Q5: resolves the native weather place (ipwho.is detect) at the poll cadence
+            // Q5 leg 2: the native playlist scheduler (daemon ownership + deadline machine). The
+            // write/run closures keep WallpaperState ShellState-free; the backend stays the A/B
+            // window (spawned with --no-wallpaper) and still owns user-initiated saves.
+            WallpaperState.sync(preferences,
+                Array.from(new Set((next.niri.workspaces || []).map(item => item.output).filter(name => name))),
+                ((next.batterySaver || {}).active === true),
+                (key, value, token) => send("setting", {key: key, value: value, token: token}),
+                (action, payload) => run(action, payload));
             NightLightState.sync(preferences, ((WeatherState.section || {}).location) || ((next.weather || {}).location) || null);
                 IdleState.sync(preferences, (system.battery || {}).acOnline === true);
                 MirrorState.recheck(preferences);
@@ -327,6 +336,7 @@ QtObject {
             .concat(root.backendDemo ? ["--demo"] : []).concat(root.settingsApp ? ["--settings"] : [])
             .concat(!root.backendDemo && !root.settingsApp ? ["--no-session-daemons"] : []) // Q4: the native services own wlsunset/swayidle
             .concat(!root.backendDemo && !root.settingsApp ? ["--no-weather"] : []) // Q5: WeatherState.qml owns weather; the backend section stays fetch-idle (A/B window)
+            .concat(!root.backendDemo && !root.settingsApp ? ["--no-wallpaper"] : []) // Q5 leg 2: WallpaperState.qml owns the scheduler; the backend keeps user saves (A/B window)
         stdinEnabled: true
         running: true
         stdout: SplitParser { onRead: data => root.accept(data) }

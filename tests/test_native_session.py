@@ -233,7 +233,7 @@ class NativeSessionContractCase(unittest.TestCase):
     def test_service_files_stay_within_the_size_cap(self):
         for path in PORT_FILES:
             self.assertLessEqual(nonblank(path), 250, path.name)
-        self.assertLessEqual(nonblank(SHELL_STATE), 370)  # Q5 weather+wallpaper routing  # Q4 legs 2-3 ratchet
+        self.assertLessEqual(nonblank(SHELL_STATE), 371)  # Q5 weather+wallpaper routing  # Q4 legs 2-3 ratchet
         self.assertLessEqual(nonblank(NATIVE_STATE), 257)  # Q4 closeout + Q5 weather/search composer ratchet
 
     def test_es2019plus_apis_stay_banned(self):

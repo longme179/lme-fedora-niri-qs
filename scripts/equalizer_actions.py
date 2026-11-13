@@ -1,3 +1,5 @@
+# DEPRECATED(Q5->Q6): real sessions run the native surface (qml/services/EqualizerState.qml —
+# staging, daemon runner, test tone); this module keeps the fixture demos (A/B window).
 """Serpantinum equalizer state machine (equalizer.sh port); the daemon stays external.
 
 The shell owns a persisted eq_state document (like upstream's eq_state.json):

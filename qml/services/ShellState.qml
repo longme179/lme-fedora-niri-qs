@@ -188,6 +188,7 @@ QtObject {
         if (WeatherState.handles(action)) return WeatherState; // Q5: weather search/detect/refresh (select stays backend — it writes preferences)
         if (WallpaperState.handles(action)) return WallpaperState; // Q5 leg 2: daemon status/ensure + the playlist advance (user saves stay backend)
         if (FileSearchState.handles(action)) return FileSearchState; // Q5 leg 3: the search worker + fileOpen entry validation
+        if (EqualizerState.handles(action)) return EqualizerState; // Q5 leg 3b: the eq staging machine + daemon runner + test tone
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and

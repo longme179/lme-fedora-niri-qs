@@ -1,13 +1,15 @@
 // Role: IdleState.qml (shared layer) — native idle profiles (Q4 night-light/idle
-// families; plan §5 Q4).
+// families; plan §5 Q4) with the Phase 2 native-lock rewiring.
 // REL: scripts/idle_control.py::IdleControl.sync and idle_command – the swayidle
 // ownership this ports: the AC/battery profile selection, the signature that restarts
 // the child only on change, the availability gate over the profile's required tools,
 // the exact swayidle argv (shlex-joined command strings — swayidle runs them through
 // sh -c) and the close-time power-on-monitors restore. scripts/idle_actions.py – the
-// idleRefresh/idleInhibit messages. The lock/sleep/client helpers stay in
-// idle_control.py (flock + ready-fd + PDEATHSIG are outside quickshell 0.3.2's API
-// surface — the same infra-helper pattern as the pkexec charge helper).
+// idleRefresh/idleInhibit messages. The lock/prepare-sleep/resume/client helpers stay
+// in idle_control.py (flock + ready-fd + PDEATHSIG + lock-IPC polling are outside
+// quickshell 0.3.2's API surface — the same infra-helper pattern as the pkexec charge
+// helper). qml/services/LockState.qml – the `lock` IPC target the helper drives
+// (before-sleep prepareSleep handshake, after-resume focus).
 // INVARIANT: the section keeps {enabled, running, paused, source, profile, available,
 // error}; an exited child is never respawned until the signature changes. GOTCHA: the
 // availability probe runs through the helper asynchronously — an enable holds one sync
@@ -106,8 +108,9 @@ QtObject {
     }
 
     function requiredNames(profile, lockBeforeSleep) {
+        // The shell's native lock (LockState, the `lock` IPC target) is the primary
+        // locker; swaylock is only its fail-closed fallback inside idle_control.py.
         const required = ["swayidle", "niri"];
-        if (profile.lock || lockBeforeSleep) required.push("swaylock");
         if (profile.suspend) required.push("systemctl");
         return required;
     }
@@ -120,24 +123,32 @@ QtObject {
         return words.map(word => safe.test(word) ? word : "'" + String(word).replace(/'/g, "'\\''") + "'").join(" ");
     }
 
+    // iNiR Idle.qml: with suspend and lock-before-sleep on, the lock must engage before
+    // the suspend timer fires — pull it 5 seconds earlier when the raw lock timeout is
+    // disabled or would fire later than the suspend timeout.
+    function effectiveLockSeconds(profile, lockBeforeSleep) {
+        if (!profile.lock && !lockBeforeSleep) return 0;
+        if (!profile.suspend || !lockBeforeSleep) return profile.lock * 60;
+        const floor = Math.max(1, profile.suspend * 60 - 5);
+        return (!profile.lock || profile.lock * 60 > floor) ? floor : profile.lock * 60;
+    }
+
     function idleCommand(profile, lockBeforeSleep) {
-        const lock = shellQuote(["python3", helper, "lock"]);
         const argv = ["swayidle", "-w"];
-        if (profile.lock)
-            argv.push("timeout", String(profile.lock * 60), lock);
+        const lockSeconds = effectiveLockSeconds(profile, lockBeforeSleep);
+        if (lockSeconds)
+            argv.push("timeout", String(lockSeconds), shellQuote(["python3", helper, "lock"]));
         if (profile.display) {
             argv.push("timeout", String(profile.display * 60),
                       shellQuote(["niri", "msg", "action", "power-off-monitors"]),
                       "resume",
                       shellQuote(["niri", "msg", "action", "power-on-monitors"]));
         }
-        if (profile.suspend) {
-            const sleep = ["python3", helper, "sleep"];
-            if (lockBeforeSleep) sleep.push("--lock");
-            argv.push("timeout", String(profile.suspend * 60), shellQuote(sleep));
-        }
-        if (lockBeforeSleep) argv.push("before-sleep", lock);
-        argv.push("after-resume", shellQuote(["niri", "msg", "action", "power-on-monitors"]));
+        if (profile.suspend)
+            argv.push("timeout", String(profile.suspend * 60), shellQuote(["python3", helper, "sleep"]));
+        if (lockBeforeSleep)
+            argv.push("before-sleep", shellQuote(["python3", helper, "prepare-sleep"]));
+        argv.push("after-resume", shellQuote(["python3", helper, "resume"]));
         return argv;
     }
 

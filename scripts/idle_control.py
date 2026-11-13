@@ -1,11 +1,23 @@
-"""Own one swayidle child and use swaylock's ready-fd before sleeping.
+"""Own one swayidle child; the native lock owns locking, swaylock is the fallback.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: idle; Phase 3 graph).
 Q4 split: IdleControl (the swayidle ownership/sync) is DEPRECATED(Q4->Q6) — the native
 IdleState.qml serves it — but this file STAYS as the session-infrastructure helper:
-the lock/sleep subcommands (swayidle invokes them; flock + ready-fd + /proc birth checks
-are outside quickshell 0.3.2's API surface, the same infra-helper pattern as the pkexec
-charge helper), the PDEATHSIG client wrapper for both swayidle and wlsunset, and the
-probe subcommand the native services use for availability discovery.
+the lock/prepare-sleep/resume subcommands (swayidle invokes them; flock + ready-fd +
+/proc birth checks + the IPC status polling are outside quickshell 0.3.2's API surface,
+the same infra-helper pattern as the pkexec charge helper), the PDEATHSIG client
+wrapper for both swayidle and wlsunset, and the probe subcommand the native services
+use for availability discovery.
+
+Phase 2 (idle rewiring, iNiR Idle.qml v3.1.0 semantics): the shell's native lock
+(LockState.qml, the `lock` IPC target) is the primary locker; secure_lock()'s swaylock
+stays as the fail-closed fallback for demo sessions, boot windows and a stuck shell.
+`prepare-sleep` is the before-sleep handshake — swayidle holds logind's delay
+inhibitor while it runs, but a delay inhibitor can only delay the sleep: logind
+ignores it after InhibitDelayMaxSec (default 5s) and the command continues after
+resume, so the handshake is deadline-budgeted to finish the secure-or-fallback
+decision inside that window.
+`resume` is the after-resume hook: power the displays back on and refocus the lock
+input (niri drops lock-surface focus after resume).
 """
 import argparse
 import ctypes
@@ -14,13 +26,14 @@ import json
 import os
 from pathlib import Path
 import select
+import shutil
 import signal
 import shlex
-import shutil
 import subprocess
 import sys
 import tempfile
 import threading
+import time
 
 PR_SET_PDEATHSIG = 1
 
@@ -39,19 +52,28 @@ def validate_profiles(value):
     return {key: dict(profile) for key, profile in value.items()}
 
 
+def effective_lock_seconds(profile, lock_before_sleep):
+    """The idle lock timer (iNiR Idle.qml): with suspend and lock-before-sleep on, the
+    lock must engage before the suspend timer fires — pull it 5 seconds earlier when
+    the raw lock timeout is disabled or would fire later than the suspend timeout."""
+    if not profile['lock'] and not lock_before_sleep: return 0
+    if not profile['suspend'] or not lock_before_sleep: return profile['lock']*60
+    floor = max(1, profile['suspend']*60 - 5)
+    return floor if (not profile['lock'] or profile['lock']*60 > floor) else profile['lock']*60
+
+
 def idle_command(profile, lock_before_sleep, runner):
     helper = Path(__file__).resolve()
-    lock = shlex.join([sys.executable, str(helper), 'lock'])
     argv = [runner.executable('swayidle'), '-w']
-    if profile['lock']: argv += ['timeout', str(profile['lock']*60), lock]
+    lock_seconds = effective_lock_seconds(profile, lock_before_sleep)
+    if lock_seconds: argv += ['timeout', str(lock_seconds), shlex.join([sys.executable, str(helper), 'lock'])]
     if profile['display']:
         argv += ['timeout', str(profile['display']*60), shlex.join([runner.executable('niri'), 'msg', 'action', 'power-off-monitors']),
                  'resume', shlex.join([runner.executable('niri'), 'msg', 'action', 'power-on-monitors'])]
     if profile['suspend']:
-        sleep = [sys.executable, str(helper), 'sleep'] + (['--lock'] if lock_before_sleep else [])
-        argv += ['timeout', str(profile['suspend']*60), shlex.join(sleep)]
-    if lock_before_sleep: argv += ['before-sleep', lock]
-    argv += ['after-resume', shlex.join([runner.executable('niri'), 'msg', 'action', 'power-on-monitors'])]
+        argv += ['timeout', str(profile['suspend']*60), shlex.join([sys.executable, str(helper), 'sleep'])]
+    if lock_before_sleep: argv += ['before-sleep', shlex.join([sys.executable, str(helper), 'prepare-sleep'])]
+    argv += ['after-resume', shlex.join([sys.executable, str(helper), 'resume'])]
     return argv
 
 
@@ -84,8 +106,7 @@ class IdleControl:
         source = 'ac' if ac_online else 'battery'
         profile = preferences['idleProfiles'][source]
         signature = (preferences['idleEnabled'], self.paused, source, tuple(profile[k] for k in ("display", "lock", "suspend")), preferences['idleLockBeforeSleep'])
-        required = ['swayidle', 'niri']
-        if profile['lock'] or preferences['idleLockBeforeSleep']: required.append('swaylock')
+        required = ['swayidle', 'niri']  # the native lock is the primary locker; swaylock is only its fallback
         if profile['suspend']: required.append('systemctl')
         missing = [name for name in required if not self.runner.available(name)]
         if signature != self.signature:
@@ -151,11 +172,115 @@ def secure_lock():
             if write_fd >= 0: os.close(write_fd)
 
 
+def swaylock_engaged():
+    """Read-only variant of secure_lock's single-instance guard: is a confirmed
+    swaylock still alive? (The native lock is not tracked here — engaging it over a
+    live swaylock would stack two session-lock clients.)"""
+    runtime = os.environ.get('XDG_RUNTIME_DIR')
+    if not runtime: return False
+    try:
+        saved = json.loads((Path(runtime)/'lme-shell/session-lock.json').read_text())
+        return process_birth(saved['pid']) == saved['born'] and saved['born'] is not None
+    except (OSError, ValueError, KeyError, TypeError): return False
+
+
+def quickshell_binary():
+    # The deploy wrapper exports the deployment's private binary; PATH covers the rest.
+    binary = os.environ.get('LME_QS_BINARY')
+    if binary and Path(binary).exists(): return binary
+    return shutil.which('quickshell')
+
+
+# logind ignores a delay inhibitor after InhibitDelayMaxSec (default 5s) and sleeps
+# anyway — the handshake must decide secure-or-fallback inside that window, leaving
+# roughly a second for the swaylock fallback to engage.
+HANDSHAKE_BUDGET = 4.0
+
+
+def lock_ipc(function, *args, timeout=3.0):
+    """Call the shell's lock IPC; None when the shell (or its lock target) is unreachable."""
+    binary = quickshell_binary()
+    if not binary: return None
+    try:
+        result = subprocess.run([binary, '-c', 'lme-shell', 'ipc', 'call', 'lock', function, *args],
+                                capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError): return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def wait_lock_status(states, attempts, delay=0.05, timeout=1.0, deadline=None):
+    for _ in range(attempts):
+        if lock_ipc('status', timeout=timeout) in states: return True
+        if deadline is not None and time.monotonic() >= deadline: return False
+        time.sleep(delay)
+    return False
+
+
+def native_lock():
+    """The idle-timeout lock: engage the shell's native lock, fall back to swaylock.
+    Mirrors Super+L — no secure handshake needed, nothing downstream waits on it."""
+    if swaylock_engaged(): return
+    response = lock_ipc('activate')
+    if response is not None and wait_lock_status(('locked', 'secure'), 20): return
+    lock_ipc('deactivate')  # do not stack swaylock over a half-engaged native lock
+    wait_lock_status(('unlocked',), 10)
+    secure_lock()  # fail closed: raises when neither locker can take the session
+
+
+def prepare_sleep():
+    """The before-sleep handshake (iNiR inir `lock prepareSleep`): swayidle holds
+    logind's delay inhibitor while this runs, but a delay inhibitor cannot cancel the
+    sleep — logind ignores it after InhibitDelayMaxSec (default 5s) and the command
+    keeps running after resume (man swayidle). The shared budget below keeps the
+    secure-or-swaylock decision inside that window; the exit code only reports
+    whether the session got protected — swayidle releases the inhibitor either way."""
+    deadline = time.monotonic() + HANDSHAKE_BUDGET
+    if swaylock_engaged(): return
+    have_swaylock = shutil.which('swaylock') is not None
+    # Boot window: the lock IPC registers after the first shell frame — a fast-failing
+    # call retries for the whole budget (a lid close during boot still fails closed
+    # below); a hung call burns its timeout against the same budget and falls back.
+    response = lock_ipc('prepareSleep', timeout=1.0)
+    while response is None and time.monotonic() < deadline:
+        time.sleep(0.1)
+        response = lock_ipc('prepareSleep', timeout=1.0)
+    if response is None:
+        if have_swaylock: secure_lock(); return
+        raise RuntimeError('Lock IPC was unavailable before sleep and no fallback could secure the session')
+    if response == 'secure': return
+    # 'unlocked' = the demo/env gates keep the native lock inert → the swaylock path.
+    if response != 'unlocked' and wait_lock_status(('secure',), 20, deadline=deadline): return
+    if have_swaylock:
+        lock_ipc('deactivate', timeout=1.0)  # do not race a second ext-session-lock client against QS
+        wait_lock_status(('unlocked',), 10, deadline=deadline)
+        try:
+            secure_lock(); return
+        except (OSError, RuntimeError):
+            lock_ipc('prepareSleep', timeout=1.0)  # restore the QS lock request, keep waiting
+    else:
+        # Not inert, not secure, no fallback: raise swaylock's own guidance if absent.
+        secure_lock(); return
+    # Past the budget this may already be running post-resume — confirming the
+    # restored request (or failing loud) still beats returning silently.
+    if wait_lock_status(('secure',), 40, deadline=deadline + 2.0): return
+    raise RuntimeError('Lock did not become secure before sleep')
+
+
+def resume():
+    """The after-resume hook: power the displays back on and refocus the lock input
+    (niri drops lock-surface focus after resume). Both steps are best-effort — the
+    2s focus heartbeat inside the shell is the safety net."""
+    try:
+        subprocess.run(['niri', 'msg', 'action', 'power-on-monitors'], timeout=5,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError): pass
+    lock_ipc('focus')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['lock', 'sleep', 'client', 'probe'])
+    parser.add_argument('action', choices=['lock', 'sleep', 'prepare-sleep', 'resume', 'client', 'probe'])
     parser.add_argument('--parent', type=int)
-    parser.add_argument('--lock', action='store_true')
     args, command = parser.parse_known_args()
     if args.action not in ('client', 'probe') and command: parser.error('Unexpected arguments: ' + ' '.join(command))
     try:
@@ -173,7 +298,9 @@ def main():
             # execvp (PATH-resolved): the native services pass plain command names where the
             # backend passed which()-resolved absolute paths — both resolve to the same binary.
             os.execvp(command[0], command)
-        if args.action == 'lock' or args.lock: secure_lock()
+        if args.action == 'lock': native_lock()
+        if args.action == 'prepare-sleep': prepare_sleep()
+        if args.action == 'resume': resume()
         if args.action == 'sleep': subprocess.run(['systemctl', 'suspend'], check=True, timeout=30)
         return 0
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:

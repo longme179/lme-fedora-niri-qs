@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Role: WeatherState.qml (weather layer, fan-in 1) — Q5 native weather client.
+// Role: WeatherState.qml (weather layer, fan-in 1) — Q5 native weather client; Q6 leg 1: select.
 // REL: scripts/weather.py::WeatherClient – DEPRECATED(Q5->Q6); the section shape (available/
 // configured/automatic/location/loading/stale/error/search) and the scheduling constants
 // (geo 3600/120, forecast 900/120, keep-last-good) are frozen by tests/test_native_weather_lyrics.py.
@@ -112,8 +112,16 @@ QtObject {
         section = inert || !prepared ? null : built;
     }
 
-    // ---- Q5 action surface (weatherSelect stays backend: it writes preferences, Q6 scope) ----
-    readonly property var handledActions: ["weatherSearch", "weatherDetect", "weatherRefresh"]
+    // ---- Q5/Q6 action surface (Q6 leg 1: select writes preferences natively through StorageState) ----
+    // Q6 leg 1 persistence seam: demo/preview and the Settings-in-demo contexts stay in-memory
+    // (the backend's demo path); live sessions write through the StorageState single-writer.
+    // Tests inject storageWriter to pin the payload and the failure surface.
+    property var storageWriter  // (values, done) => void — done(ok, message); tests inject
+    function defaultStorageWriter(values, done) {
+        if (inert) { done(true, "Settings updated"); return; }  // inert covers exactly ShellState.demo's env pair
+        StorageState.apply(values, done);
+    }
+    readonly property var handledActions: ["weatherSearch", "weatherDetect", "weatherRefresh", "weatherSelect"]
     function handles(action) { return handledActions.includes(action); }
     function canRoute(action, payload, context) { return true; }
 
@@ -141,6 +149,18 @@ QtObject {
             if (lastPreferences.weatherAutoLocation === undefined || lastPreferences.weatherAutoLocation === true) geoDue = 0;
             sync(lastPreferences);
             return done(true, "Refreshing weather");
+        }
+        if (action === "weatherSelect") {
+            const place = Weather.location(request && request.location);
+            if (!place) return done(false, "Select a city first.");
+            const values = {weatherLocation: place, weatherAutoLocation: false};
+            const write = storageWriter || defaultStorageWriter;
+            write(values, (ok, message) => {
+                if (ok) { lastPreferences = Object.assign({}, lastPreferences, values); sync(lastPreferences); }
+                done(ok, ok ? "Weather location updated"
+                    : (message || "Settings could not be written. Check the session and local storage."));
+            });
+            return;
         }
         return done(false, "Unknown weather action");
     }

@@ -41,3 +41,4 @@ singleton WeatherState 1.0 WeatherState.qml
 singleton LyricsState 1.0 LyricsState.qml
 singleton WallpaperState 1.0 WallpaperState.qml
 singleton FileSearchState 1.0 FileSearchState.qml
+singleton StorageState 1.0 StorageState.qml

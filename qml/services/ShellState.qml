@@ -185,7 +185,7 @@ QtObject {
         if (MirrorState.handles(action)) return MirrorState; // Q4: display mirroring
         if (NightLightState.handles(action)) return NightLightState; // Q4: Night Light retry
         if (IdleState.handles(action)) return IdleState; // Q4: idle refresh + inhibit
-        if (WeatherState.handles(action)) return WeatherState; // Q5: weather search/detect/refresh (select stays backend — it writes preferences)
+        if (WeatherState.handles(action)) return WeatherState; // Q5: search/detect/refresh; Q6 leg 1: select writes preferences through StorageState
         if (WallpaperState.handles(action)) return WallpaperState; // Q5 leg 2: daemon status/ensure + the playlist advance (user saves stay backend)
         if (FileSearchState.handles(action)) return FileSearchState; // Q5 leg 3: the search worker + fileOpen entry validation
         if (EqualizerState.handles(action)) return EqualizerState; // Q5 leg 3b: the eq staging machine + daemon runner + test tone

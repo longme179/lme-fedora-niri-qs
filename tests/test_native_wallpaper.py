@@ -63,7 +63,7 @@ class WallpaperModelCase(LocalQmlCase):
             "HDMI-A-1: 1920x1080, scale: 1, currently displaying: color: 000000\\n" +
             "ignored line";
         const outputs = Wallpaper.queryOutputs(query);
-        checks.queryOutputs = outputs.has("eDP-1") && outputs.has("DP-1") && outputs.size === 2;
+        checks.queryOutputs = outputs.has("eDP-1") && outputs.has("DP-1") && outputs.has("HDMI-A-1") && outputs.size === 3;
         const images = Wallpaper.queryImages(query);
         checks.queryImages = images["eDP-1"] === "/home/z/w1.png" && images["DP-1"] === "/home/z/w2.png";
         const animate = Wallpaper.imageArguments("/w.png", {animations: true, wallpaperTransition: "wave",
@@ -105,17 +105,19 @@ class WallpaperModelCase(LocalQmlCase):
     }
     Component.onCompleted: {
         const checks = fixture.checks;
-        // First connect seeds the shared image on non-overridden outputs and schedules nothing.
-        checks.seed = fixture.step(["eDP-1", "DP-1"], 0).kind === undefined
+        // First connect seeds the shared image on non-overridden outputs; the overridden display
+        // has not been applied by this instance yet, so the first job is its restore.
+        checks.seed = fixture.step(["eDP-1", "DP-1"], 0).kind === "restore"
             && fixture.state.applied["eDP-1"] === "/shared.png" && !fixture.state.applied["DP-1"];
+        fixture.state.applied["DP-1"] = "/fixed.png";  // the restore job executed
         // The deadline arrives → advance for the playlist output.
         checks.advance = fixture.step(["eDP-1", "DP-1"], 300).kind === "advance"
             && fixture.state.deadline === 600;
         // Pause keeps the remaining time; resume restores it.
         fixture.step(["eDP-1", "DP-1"], 400, false, true);
-        checks.paused = fixture.state.deadline === null && fixture.state.remaining === 100 && fixture.state.wasPaused;
+        checks.paused = fixture.state.deadline === null && fixture.state.remaining === 200 && fixture.state.wasPaused;
         checks.resume = fixture.step(["eDP-1", "DP-1"], 900, false, false).kind === null
-            && fixture.state.deadline === 1000;  // 900 + remaining 100, not a fresh interval
+            && fixture.state.deadline === 1100;  // 900 + remaining 200, not a fresh interval
         // A preference change resets the signature (cursor/deadline cleared, fresh interval).
         fixture.prefs.wallpaperPlaylist = ["/c.png", "/a.png", "/b.png"];
         checks.signature = fixture.step(["eDP-1", "DP-1"], 1000).kind === null

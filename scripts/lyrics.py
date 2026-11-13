@@ -124,7 +124,27 @@ def lookup(request, cache=None, opener=fetch, now=time.time):
     return found
 
 
+def store():
+    """Q5 cache-store helper: the native LyricsState.qml hands the write back to this module
+    (quickshell 0.3.2 has no file-write API) — bounded, best-effort, same as the lookup path.
+    DEPRECATED(Q5->Q6): the lookup below retires at Q6; this store stays the cache writer."""
+    try:
+        raw = sys.stdin.buffer.readline(MAX_BYTES + 16384)
+        if len(raw) >= MAX_BYTES + 16384: raise ValueError('Lyrics request is too large')
+        value = json.loads(raw)
+        directory, filename = Path(value['directory']), value['filename']
+        if not isinstance(filename, str) or not 1 <= len(filename) <= 400 or '/' in filename:
+            raise ValueError('Invalid cache filename')
+        write_json(directory / (filename + '.json'), {'storedAt': time.time(), 'raw': value['raw'], 'status': value['status']})
+        entries = sorted(directory.glob('*.json'), key=lambda item: item.stat().st_mtime, reverse=True)
+        for old in entries[128:]: old.unlink(missing_ok=True)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        pass  # Cache writes never fail the lookup.
+
+
 def main():
+    if '--store' in sys.argv:
+        store(); return
     try:
         raw = sys.stdin.buffer.readline(MAX_BYTES + 16384)
         if len(raw) >= MAX_BYTES + 16384: raise ValueError('Lyrics request is too large')

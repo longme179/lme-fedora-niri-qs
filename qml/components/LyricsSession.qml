@@ -4,8 +4,6 @@
 // Cue-boundary scheduling adapted from pctrade/end4-pC LyricsService (8fbb6716).
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Mpris
 import "../services"
 
@@ -16,7 +14,6 @@ QtObject {
     property int readers: 0
     readonly property bool wanted: (active || readers > 0) && ShellState.preferences.lyricsEnabled !== false && !ShellState.settingsApp
     property var lyricData: ({status: "idle", lines: []})
-    property string pending: ""
     property string requestedKey: ""
     property real boundaryAt: 0
     readonly property var song: player ? ({title: player.trackTitle || "", artist: player.trackArtist || "", album: player.trackAlbum || "",
@@ -58,21 +55,24 @@ QtObject {
         schedule();
     }
     function load() {
-        delay.stop(); lookup.active = false;
+        delay.stop();
         if (!wanted || !song) return;
         lyricData = {status: "loading", lines: []}; requestedKey = songKey;
         if (ShellState.demo) { lyricData = {status: "none", lines: []}; return; }
-        pending = JSON.stringify(song); lookup.active = true;
+        LyricsState.lookup(song, value => {  // Q5: the native lookup chain (LyricsState.qml); the lyrics.py worker protocol is retired
+            if (!root.wanted || root.requestedKey !== root.songKey) return;
+            root.lyricData = value && value.lines ? value : {status: "error", error: "Invalid lyrics response", lines: []};
+        });
     }
     function invalidate() {
-        lookup.active = false; lyricData = {status: "idle", lines: []}; requestedKey = "";
+        lyricData = {status: "idle", lines: []}; requestedKey = "";
         if (wanted && song) delay.restart();
     }
     onSongKeyChanged: invalidate()
     onWantedChanged: {
         if (wanted && requestedKey !== songKey) delay.restart();
         else if (!wanted) {
-            delay.stop(); lookup.active = false;
+            delay.stop();
             if (lyricData.status === "loading") requestedKey = "";
         }
         refresh();
@@ -85,23 +85,4 @@ QtObject {
     property Timer delay: Timer { interval: 300; onTriggered: root.load() }
     property Timer boundary: Timer { onTriggered: root.refresh() }
     property Timer drift: Timer { interval: 4000; repeat: true; running: root.ticking; onTriggered: root.refresh() }
-    property Loader lookup: Loader {
-        active: false
-        sourceComponent: Process {
-            id: worker
-            property string requestKey: ""
-            property string requestBody: ""
-            Component.onCompleted: { requestKey = root.requestedKey; requestBody = root.pending; running = true; }
-            command: ["python3", "-u", Quickshell.shellPath("scripts/lyrics.py")]; stdinEnabled: true
-            onStarted: write(requestBody + "\n")
-            stdout: SplitParser { onRead: value => {
-                if (!root.wanted || worker.requestKey !== root.songKey) return;
-                try { root.lyricData = JSON.parse(value); }
-                catch (error) { root.lyricData = {status: "error", error: "Invalid lyrics response", lines: []}; }
-            } }
-            // qmllint disable signal-handler-parameters
-            onExited: if (root.wanted && root.lyricData.status === "loading" && requestKey === root.songKey)
-                root.lyricData = {status: "error", error: "Lyrics lookup stopped. Retry to reconnect.", lines: []}
-        }
-    }
 }

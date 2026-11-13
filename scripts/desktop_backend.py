@@ -536,7 +536,7 @@ class DesktopBackend:
         self.preferences = preferences or Preferences()
         self.applications = apps or Applications()
         self.proc, self.sysfs = proc, sysfs
-        self.weather = weather or WeatherClient()
+        self.weather = weather or WeatherClient()  # DEPRECATED(Q5->Q6): real sessions fetch natively (qml/services/WeatherState.qml); this client stays the A/B window
         self.weather_fetch = weather_fetch
         self.charger = ChargeControl(sysfs)
         self.charge_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="lme-charge")
@@ -1565,13 +1565,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--restore-displays", action="store_true", help="Restore confirmed modes on currently attached displays")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (minimum 0.5)")
     parser.add_argument("--no-session-daemons", action="store_true", help="The native QML services own wlsunset/swayidle; this backend stays read-only for them")
+    parser.add_argument("--no-weather", action="store_true", help="The native QML service (WeatherState.qml) owns weather; this backend stays fetch-idle for the A/B window")
     args = parser.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval < 0.5:
         parser.error("--interval must be at least 0.5 seconds")
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
     initialize_catalog()
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not args.once, manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons)
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not (args.once or args.no_weather), manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons)
     if args.restore_displays:
         if backend.saver_snapshot()['active']:
             print('Displays: Battery saver is active; keeping current modes', file=sys.stderr)

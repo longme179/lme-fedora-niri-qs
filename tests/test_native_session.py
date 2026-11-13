@@ -233,8 +233,8 @@ class NativeSessionContractCase(unittest.TestCase):
     def test_service_files_stay_within_the_size_cap(self):
         for path in PORT_FILES:
             self.assertLessEqual(nonblank(path), 250, path.name)
-        self.assertLessEqual(nonblank(SHELL_STATE), 355)  # Q4 legs 2-3 ratchet
-        self.assertLessEqual(nonblank(NATIVE_STATE), 249)  # Q4 closeout ratchet (banded strength compare)
+        self.assertLessEqual(nonblank(SHELL_STATE), 358)  # Q5 weather routing ratchet  # Q4 legs 2-3 ratchet
+        self.assertLessEqual(nonblank(NATIVE_STATE), 253)  # Q4 closeout + Q5 weather composer ratchet
 
     def test_es2019plus_apis_stay_banned(self):
         # The Q2 real-machine lesson: quickshell 0.3.2's V4 engine lacks Object.fromEntries;

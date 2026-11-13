@@ -156,15 +156,15 @@ class EqualizerModelCase(LocalQmlCase):
         EqualizerState.perform("eqMono", {value: 1}, collect("badFlag"));
         EqualizerState.perform("eqDynamics", {value: "loud"}, collect("badMode"));
         EqualizerState.perform("eqPreset", {name: "Loud"}, collect("badPreset"));
-        checks.errors = fixture.replies[5][2] === "Band must be an integer between 1 and 10"
-            && fixture.replies[6][2] === "Equalizer gain is out of range"
-            && fixture.replies[7][2] === "Equalizer switches must be boolean"
-            && fixture.replies[8][2] === "Unknown dynamics mode"
-            && fixture.replies[9][2] === "Unknown equalizer preset"
+        checks.errors = fixture.replies[6][2] === "Band must be an integer between 1 and 10"
+            && fixture.replies[7][2] === "Equalizer gain is out of range"
+            && fixture.replies[8][2] === "Equalizer switches must be boolean"
+            && fixture.replies[9][2] === "Unknown dynamics mode"
+            && fixture.replies[10][2] === "Unknown equalizer preset"
             && fixture.daemonCalls.length === 5;
         // A quit that fails is still a stop; a timeout is the only error.
         EqualizerState.perform("eqStop", {}, collect("stop"));
-        checks.stop = fixture.replies[10][1] === true && fixture.replies[10][2] === "Equalizer stopped";
+        checks.stop = fixture.replies[11][1] === true && fixture.replies[11][2] === "Equalizer stopped";
         fixture.finish(fixture.checks);
     } }
 ''', {"LME_SHELL_DEMO": "0", "NIRI_SOCKET": "/nonexistent-lme-q5-test"})

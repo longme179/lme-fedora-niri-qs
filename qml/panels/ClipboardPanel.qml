@@ -19,6 +19,7 @@ GlassPanel {
     readonly property bool previewOpen: !!previewImage
     readonly property bool searchFocused: search.activeFocus
     focus: true
+    onVisibleChanged: ClipboardState.monitoring = visible  // gates the revision poll (Q5 leg 4)
     function focusSearch() { search.forceActiveFocus(); }
     function activateSelected() {
         const item = ClipboardState.entries[history.currentIndex];

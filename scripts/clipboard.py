@@ -4,9 +4,9 @@
 The Q5 native port retired the JSON-lines serve daemon: ClipboardState.qml owns the
 flows, spawns scripts/clipboard_watch.py for capture and calls these one-shot
 subcommands through a Process (one JSON line on stdout; exit 0 = ok, 1 = failure).
-The capture worker and every mutation rewrite directory/revision.txt after their
-commit — ClipboardState watches that file (inotify) so the open list refreshes
-immediately, and its poll is only the fallback cadence."""
+The capture worker prints one JSON event line ({"revision": N}) after every committed
+store: wl-paste --watch forwards the worker's stdout, so the shell's watcher pipe
+delivers the event and the open list refreshes immediately."""
 from __future__ import annotations
 
 import argparse
@@ -61,7 +61,6 @@ class History:
                 self.db.execute("VACUUM")
         except sqlite3.Error:
             pass
-        self._pending_revision = False
 
     @property
     def revision(self) -> int:
@@ -77,26 +76,6 @@ class History:
 
     def changed(self):
         self.db.execute("UPDATE meta SET value=value+1 WHERE key='revision'")
-        self._pending_revision = True
-
-    def announce(self) -> None:
-        """Publish the revision after the DB commit (inotify wakes the shell's FileView).
-
-        Only mutations rewrite the file — read-only commands stay silent so the shell
-        never wakes for its own reads. Best-effort: the shell's poll heals a miss."""
-        if not self._pending_revision:
-            return
-        self._pending_revision = False
-        stage = self.directory / ".revision.txt.tmp"
-        try:
-            stage.write_text(str(self.revision), encoding="utf-8")
-            os.replace(stage, self.directory / "revision.txt")
-        except OSError:
-            stage.unlink(missing_ok=True)
-
-    def close(self) -> None:
-        self.announce()
-        self.db.close()
 
     def pause(self, value: bool):
         if type(value) is not bool: raise ValueError("Pause must be true or false")
@@ -199,9 +178,13 @@ def capture(kind: str, directory: Path):  # REL: qml/services/ClipboardState.qml
     config = preferences()
     if not config['clipboardEnabled'] or kind == "image" and not config['clipboardImages']: return
     history = History(directory, config['clipboardLimit'])
-    try: history.store(kind, data)
+    try:
+        ident = history.store(kind, data)
+        # The event line rides the watcher pipe back to the shell (wl-paste --watch
+        # forwards the worker's stdout — probed live 2026-11-13); silent on refusals.
+        if ident: print(json.dumps({"revision": history.revision}), flush=True)
     except ValueError: pass  # Oversized/unsupported selections never print clipboard contents.
-    finally: history.close()
+    finally: history.db.close()
 
 
 def preferences() -> dict:
@@ -255,7 +238,7 @@ def run_action(args) -> int:
         message = str(error)[:180] if isinstance(error, ValueError) else 'Clipboard operation failed. Check the Wayland session and local storage.'
         return reply(False, message=message)
     finally:
-        history.close()
+        history.db.close()
 
 
 def main():

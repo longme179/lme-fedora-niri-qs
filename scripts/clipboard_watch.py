@@ -7,7 +7,7 @@ quickshell SIGKILLs its children on normal exit, and the kernel SIGTERMs this
 one if the shell dies any other way (probed on quickshell 0.3.2, 2026-11-13 —
 a plain child orphaned on shell crash; the PDEATHSIG wrapper died clean).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # REL: qml/services/ClipboardState.qml (the native watchers); scripts/clipboard.py (the
 # capture worker + the lock path); scripts/idle_control.py (the prctl pattern this mirrors).
 import argparse

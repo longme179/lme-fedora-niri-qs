@@ -1,7 +1,7 @@
 """PipeWire capture classification, reviewed against DMS and Noctalia (MIT).
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: privacy; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 
 def flag(value):

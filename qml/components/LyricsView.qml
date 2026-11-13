@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: LyricsView.qml (shared layer, fan-in 3).
 // Shared component/helper; keep API stable for wide QML reuse.
 // Lifecycle/follow behavior references DMS LyricsController/LyricsOverlay (8e690022, MIT).

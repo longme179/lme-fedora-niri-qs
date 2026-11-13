@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: WallpaperState.qml (wallpaper layer, fan-in 1) — Q5 native wallpaper daemon owner
 // and playlist scheduler.
 // REL: scripts/wallpaper.py::Wallpapers – DEPRECATED(Q5->Q6); due()/advance()/restore() semantics

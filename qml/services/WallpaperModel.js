@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: WallpaperModel.js (wallpaper layer, fan-in 1) — pure contracts for the Q5 native wallpaper.
 // REL: scripts/wallpaper.py (TRANSITIONS/output_name/query_outputs/query_images/image_arguments/
 // Wallpapers.due/_advance) – DEPRECATED(Q5->Q6); every message and the deadline semantics are

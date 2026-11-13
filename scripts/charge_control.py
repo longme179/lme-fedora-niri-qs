@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -I
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Read and change kernel charge controls. The privileged CLI accepts modes only.
 
 Consumed by backend/action providers and/or QML surfaces; keep contracts stable. (charging layer, fan-in 3)

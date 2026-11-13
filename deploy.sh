@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Single entry for packages, runtime verification, shell/niri setup and rollback.
 # REL: scripts/deploy.py – implementation; docs/WORKSPACE_MAP.md – deployment flow map (Phase 3).
 set -euo pipefail

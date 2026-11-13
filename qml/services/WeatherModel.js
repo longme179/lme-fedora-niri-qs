@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Role: WeatherModel.js (weather layer, fan-in 1) — pure contracts for the Q5 native weather.
 // REL: scripts/weather.py (CONDITIONS/location/_forecast/_search/_detect) – DEPRECATED(Q5->Q6);
 // the response shapes and every error string are frozen by tests/test_native_weather_lyrics.py.

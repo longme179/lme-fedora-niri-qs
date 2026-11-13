@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 .pragma library
 
 // Generates jelly/popup mesh vertex data consumed by popup-jelly shaders and QML popup motion.

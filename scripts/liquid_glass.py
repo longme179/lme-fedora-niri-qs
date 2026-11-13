@@ -1,7 +1,7 @@
 """Glass material preferences and an explicitly applied niri blur snippet.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: shared; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 import json
 import os
 from pathlib import Path

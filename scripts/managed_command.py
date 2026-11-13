@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Stop an owned tool's process group even if Quickshell kills its backend.
 
 Callers: desktop_backend.py and feature workers needing supervised child/process-group lifetime.

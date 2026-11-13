@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Animated popup shell used by panels/menus; coordinates open/close motion with Theme durations.
 // REL: qml/theme/Theme.qml – motion tokens; popup consumers rely on stable Popup API/visibility lifecycle.
 pragma ComponentBehavior: Bound

@@ -2,7 +2,7 @@
 DEPRECATED(Q4->Q6): native MirrorState.qml owns the child; fallback + demo provider.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: mirroring; Phase 3 graph).
 """
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Fullscreen recipe follows Ferdi265/wl-mirror's wl-present examples (GPL-3.0-or-later).
 import subprocess
 import tempfile

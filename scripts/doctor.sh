@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Role: doctor.sh (unclassified) — orchestration/helper script; see phase1-graph.md.
 set -uo pipefail
 

@@ -4,7 +4,9 @@
 // THIRD_PARTY.md): the gated state machine with a 150ms activate debounce, the v2
 // recovery file (a lock survives shell restarts inside one compositor session),
 // the idle_control fallback hand-off, the 2s focus heartbeat (niri drops focus
-// after resume), keyring unlock, the `lock` IPC target and the native-router
+// after resume), keyring unlock (engine fixtures set LME_SHELL_LOCK_KEYRING=0 so
+// a driven unlock never touches the real session keyring), the 250ms unlock
+// recede, the `lock` IPC target and the native-router
 // hooks for the PowerMenu "lock" action. The WlSessionLock object itself lives in
 // qml/features/lock/LockMechanism.qml (shell.qml host) so this shared service
 // never imports a feature folder.
@@ -47,6 +49,7 @@ QtObject {
         if (!enabled)
             return;
         activateDelay.stop();
+        recedeRelease.stop();
         screenLocked = false;
     }
 
@@ -71,6 +74,7 @@ QtObject {
     function useFallbackLock(): void {
         if (!screenLocked && !activateDelay.running)
             return;
+        recedeRelease.stop();
         screenLocked = false;
         Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/idle_control.py"), "lock"]);
     }
@@ -94,9 +98,10 @@ QtObject {
             root.powerActionRequested("reboot");
             return;
         }
-        // Unlock the keyring with the accepted password before the text clears.
+        // Unlock the keyring with the accepted password before the text clears,
+        // then let the surfaces recede (250ms) before the lock releases (iNiR).
         unlockKeyring();
-        root.finishUnlock();
+        recedeRelease.restart();
     }
 
     function finishUnlock(): void {
@@ -106,6 +111,14 @@ QtObject {
         lockContext.reset();
     }
 
+    // The recede window: the unlock overlay fades while the session stays locked
+    // (iNiR recede; the +40ms grace matches the overlay's 300ms fade).
+    readonly property int recedeDuration: 250
+    property Timer recedeRelease: Timer {
+        interval: root.recedeDuration + 40
+        onTriggered: root.finishUnlock()
+    }
+
     property Process keyringProc: Process {
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0)
@@ -113,6 +126,10 @@ QtObject {
         }
     }
     function unlockKeyring(): void {
+        // Engine fixtures drive handleUnlocked end-to-end; they must not run the
+        // real keyring script (it restarts the session's gnome-keyring-daemon).
+        if (Quickshell.env("LME_SHELL_LOCK_KEYRING") === "0")
+            return;
         keyringProc.exec({
             environment: ({UNLOCK_PASSWORD: lockContext.currentText}),
             command: ["bash", Quickshell.shellPath("scripts/keyring_unlock.sh")]

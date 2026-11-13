@@ -135,9 +135,10 @@ class WallpaperModelCase(LocalQmlCase):
         // display holds its image, so no restore fires first).
         fixture.state.applied["DP-1"] = "/fixed.png";
         checks.outputGone = fixture.step(["DP-1"], 1600).kind === undefined;
-        // Disabled or empty playlists clear the deadline entirely.
-        fixture.prefs.wallpaperPlaylistEnabled = false;
-        checks.disabled = fixture.step(["DP-1"], 1700).kind === undefined && fixture.state.deadline === null;
+        // Disabled or empty playlists clear the deadline entirely (the enabled flag rides the
+        // step helper — a manual pref write would be clobbered before plan() runs).
+        checks.disabled = fixture.step(["DP-1"], 1700, false, false, false).kind === undefined
+            && fixture.state.deadline === null;
         // Sequential rotation follows the cursor and skips the current image.
         fixture.prefs.wallpaperPlaylistEnabled = true;
         fixture.state.cursor = null; fixture.state.deadline = 2000; fixture.state.applied = {};

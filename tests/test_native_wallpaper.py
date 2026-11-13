@@ -100,12 +100,12 @@ class WallpaperModelCase(LocalQmlCase):
         fixture.prefs.wallpaperPlaylistEnabled = enabled !== false;
         const plan = Wallpaper.plan(fixture.state, fixture.prefs, outputs, now, saving === true);
         fixture.state = plan.state;
-        return plan.job;
+        return plan.job || {};  // null jobs read as kind undefined
     }
     Component.onCompleted: {
         const checks = fixture.checks;
         // First connect seeds the shared image on non-overridden outputs and schedules nothing.
-        checks.seed = JSON.stringify(fixture.step(["eDP-1", "DP-1"], 0).kind) === "undefined"
+        checks.seed = fixture.step(["eDP-1", "DP-1"], 0).kind === undefined
             && fixture.state.applied["eDP-1"] === "/shared.png" && !fixture.state.applied["DP-1"];
         // The deadline arrives → advance for the playlist output.
         checks.advance = fixture.step(["eDP-1", "DP-1"], 300).kind === "advance"
@@ -196,7 +196,7 @@ class WallpaperModelCase(LocalQmlCase):
         checks.status = fixture.statusDone.ok === true && fixture.statusDone.message === "Wallpaper daemon checked"
             && WallpaperState.statusResult.running === true && WallpaperState.statusResult.query === fixture.queryText;
         WallpaperState.machine.deadline = 6000;
-        WallpaperState.machine.applied = {eDP-1: "/shared.png"};
+        WallpaperState.machine.applied = {"eDP-1": "/shared.png"};
         prefs.wallpaperPlaylistOutput = "";
         WallpaperState.lastPreferences = prefs;
         WallpaperState.perform("wallpaperNext", {}, (ok, message) => { manual = {ok: ok, message: message}; });
@@ -205,8 +205,8 @@ class WallpaperModelCase(LocalQmlCase):
             && fixture.applied.length === 1;  // no native awww apply for the shared path
         // Restore re-applies only displays whose image drifted, without persisting.
         fixture.applied = [];
-        WallpaperState.machine.applied = {eDP-1: "/shared.png", "DP-1": "/fixed.png"};
-        WallpaperState.lastPreferences = Object.assign({}, prefs, {wallpaperOutputs: {eDP-1: "/wanted.png", "DP-1": "/fixed.png"}, wallpaper: "/shared.png"});
+        WallpaperState.machine.applied = {"eDP-1": "/shared.png", "DP-1": "/fixed.png"};
+        WallpaperState.lastPreferences = Object.assign({}, prefs, {wallpaperOutputs: {"eDP-1": "/wanted.png", "DP-1": "/fixed.png"}, wallpaper: "/shared.png"});
         WallpaperState.executeRestore(["eDP-1", "DP-1"]);
         checks.noSpawn = fixture.checks.spawned === undefined;
         checks.restore = fixture.applied.length === 1 && fixture.applied[0].indexOf("/wanted.png") >= 0

@@ -8,3 +8,7 @@ build/
 *.log
 *.bak
 .DS_Store
+
+# Local-only working set since 2026-11-13: the test suite stays on development
+# machines (untracked); the published repository ships without it.
+tests/

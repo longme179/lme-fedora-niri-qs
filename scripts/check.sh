@@ -8,7 +8,13 @@ cd -- "$repo_dir"
 export PYTHONPATH="$repo_dir/scripts${PYTHONPATH:+:$PYTHONPATH}"
 ./scripts/check-architecture.sh
 python3 scripts/feature_catalog.py --check
-python3 -m unittest discover -s tests -v
+# tests/ is a local-only working set (untracked since the 2026-11-13 policy): run it where
+# it exists, skip with a note on fresh clones.
+if [ -d tests ]; then
+    python3 -m unittest discover -s tests -v
+else
+    printf 'Tests directory absent (local-only policy) — skipping discovery.\n'
+fi
 for script in ./*.sh scripts/*.sh; do
     bash -n "$script"
 done

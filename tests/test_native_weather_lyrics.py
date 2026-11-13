@@ -158,7 +158,7 @@ class WeatherLyricsModelCase(LocalQmlCase):
         checks.result = Lyrics.result("[00:01]Hi", "LRCLIB").status === "ready"
             && Lyrics.result("", "LRCLIB").status === "none"
             && Lyrics.result("", "LRCLIB", true).status === "instrumental";
-        checks.slug = Lyrics.cacheSlug({title: "a b", artist: "c/d", album: "", duration: 0}) === "a%20b~c%2Fd~0~0";
+        checks.slug = Lyrics.cacheSlug({title: "a b", artist: "c/d", album: "", duration: 0}) === "a%20b~c%2Fd~~0";
         done.start();  // quit during startup is dropped: finish from a Timer tick
     }
     Timer { id: done; interval: 100; onTriggered: fixture.finish(checks) }
@@ -183,6 +183,7 @@ class WeatherLyricsStateCase(LocalQmlCase):
     property bool geoFail: false
     property bool forecastFail: false
     property var searchDone: null
+    property var checks: ({})
     Component.onCompleted: {
         WeatherState.loader = (url, onDone, onFail) => {
             fixture.urls.push(url);
@@ -193,7 +194,6 @@ class WeatherLyricsStateCase(LocalQmlCase):
         };
         WeatherState.clock = () => fixture.now[0];
         WeatherState.wallClock = () => 123456;
-        const checks = ({});
         WeatherState.sync({weatherAutoLocation: true, weatherUnit: "celsius"});
         let state = WeatherState.section;
         checks.autoDetect = state.automatic === true && state.available === true && state.location.name === "Da Nang"

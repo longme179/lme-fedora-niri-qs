@@ -45,7 +45,7 @@ from display_control import DisplayControl, validate_layout, apply_layout, curre
 from display_actions import PreviewCapabilities, PlatformCapabilities, provide as provide_display, provide_platform
 from storage import acquire_exclusive, finite_number, fsync_directory, read_json, write_json
 from system_monitor import SystemMonitor
-from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock
+from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, secure_lock, lock_ipc
 from niri_keybinds import read_keybinds
 from niri_events import NiriStateCache, read_niri_state
 from night_light import NightLight, clock_minutes
@@ -1509,6 +1509,12 @@ class DesktopBackend:
         raise ValueError(f"Unknown action: {action}")
 
     def lock_session(self, suspend=False):
+        # Phase 2: when the native lock already holds the session (lock-screen suspend,
+        # an idle lock), spawning swaylock on top would stack two session-lock clients —
+        # swayidle's before-sleep handshake (idle_control prepare-sleep) owns the rest.
+        if suspend and lock_ipc('status') in ('locked', 'secure', 'activating'):
+            self.runner.run("systemctl", "suspend", timeout=30)
+            return "Suspend requested after locking"
         try: secure_lock()
         except RuntimeError as exc: raise CommandError(str(exc)) from exc
         if suspend: self.runner.run("systemctl", "suspend", timeout=30)

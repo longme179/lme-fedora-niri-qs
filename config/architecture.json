@@ -59,7 +59,8 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 230,
-    "scripts/desktop_backend.py": 1627,
+    "scripts/desktop_backend.py": 1633,
+    "scripts/idle_control.py": 258,
     "scripts/equalizer_actions.py": 374,
     "tests/fixtures/catalog-legacy.json": 342,
     "tests/test_backend.py": 486,
@@ -71,7 +72,7 @@
     "tests/test_control_grid.py": 296,
     "tests/test_features.py": 404,
     "tests/test_jelly_v2.py": 296,
-    "tests/test_laptop_features.py": 277,
+    "tests/test_laptop_features.py": 358,
     "tests/test_liquid_style.py": 424,
     "tests/test_native_weather_lyrics.py": 279,
     "tests/test_local_qml.py": 342,
@@ -81,7 +82,7 @@
     "tests/test_shell_update.py": 268,
     "tests/test_glass_controls.py": 248,
     "tests/test_native_session.py": 496,
-    "tests/test_native_display_idle.py": 690,
+    "tests/test_native_display_idle.py": 695,
     "tests/test_native_clipboard.py": 379
   }
 }

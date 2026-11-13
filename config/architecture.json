@@ -43,7 +43,7 @@
     "qml/services/ShellState.qml": 371,
     "qml/services/NativeState.qml": 257,
     "qml/services/EqualizerState.qml": 442,
-    "qml/services/ClipboardState.qml": 226,
+    "qml/services/ClipboardState.qml": 248,
     "qml/services/NetworkInventoryState.qml": 253,
     "tests/test_native_controls.py": 273,
     "tests/test_native_inventory.py": 446,
@@ -58,7 +58,7 @@
     "qml/theme/Theme.qml": 253,
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
-    "scripts/clipboard.py": 215,
+    "scripts/clipboard.py": 244,
     "scripts/desktop_backend.py": 1627,
     "scripts/equalizer_actions.py": 374,
     "tests/fixtures/catalog-legacy.json": 342,
@@ -82,6 +82,6 @@
     "tests/test_glass_controls.py": 248,
     "tests/test_native_session.py": 496,
     "tests/test_native_display_idle.py": 690,
-    "tests/test_native_clipboard.py": 275
+    "tests/test_native_clipboard.py": 347
   }
 }

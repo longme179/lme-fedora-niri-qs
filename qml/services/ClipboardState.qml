@@ -6,6 +6,8 @@
 //      probed on quickshell 0.3.2, 2026-11-13); qml/panels/ClipboardPanel.qml – consumer UI.
 // The Q5 native port retired the JSON-lines serve daemon: every action is a one-shot
 // subcommand through the tool Process, and the messages are frozen by the local suite.
+// The Q6 refresh fix: the worker announces each commit via directory/revision.txt and
+// the FileView watch (inotify) drives the open list; the 2 s poll is only the fallback.
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
@@ -143,8 +145,29 @@ QtObject {
     property Timer retryTimer: Timer { interval: 5000; onTriggered: root.syncWatchers() }
     property Timer poll: Timer {
         interval: 2000
+        repeat: true
         running: root.monitoring && root.ready && !ShellState.demo && !ShellState.settingsApp
         onTriggered: root.refreshState()
+    }
+
+    // ---- the capture event (the worker rewrites revision.txt after its commit) ---------
+    // Every clipboard.py mutation publishes its revision to directory/revision.txt;
+    // this FileView watches that file, so an open list refreshes the moment a copy
+    // lands — no poll-tick wait. The poll Timer stays as the healing fallback; while
+    // the panel is hidden the events are skipped (zero spawns, the dirty work happens
+    // on reopen through onMonitoringChanged).
+    property FileView revisionFile: FileView {
+        path: root.directory + "/revision.txt"
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.revisionLoaded(parseInt(String(text)))
+    }
+    onMonitoringChanged: if (monitoring && ready) refreshState()
+    function revisionLoaded(value) {
+        if (!isFinite(value) || !monitoring || !ready) return;
+        if (value === lastRevision) return;
+        lastRevision = value;
+        runSearch();
     }
 
     // ---- state sync and search ---------------------------------------------------------

@@ -3,7 +3,10 @@
 
 The Q5 native port retired the JSON-lines serve daemon: ClipboardState.qml owns the
 flows, spawns scripts/clipboard_watch.py for capture and calls these one-shot
-subcommands through a Process (one JSON line on stdout; exit 0 = ok, 1 = failure)."""
+subcommands through a Process (one JSON line on stdout; exit 0 = ok, 1 = failure).
+The capture worker and every mutation rewrite directory/revision.txt after their
+commit — ClipboardState watches that file (inotify) so the open list refreshes
+immediately, and its poll is only the fallback cadence."""
 from __future__ import annotations
 
 import argparse
@@ -50,6 +53,15 @@ class History:
             INSERT OR IGNORE INTO meta VALUES ('revision', 0), ('paused', 0);
         """)
         (directory / "history.sqlite3").chmod(0o600)
+        # Self-heal the file size: image churn leaves freelist pages nothing ever
+        # reclaims (the live DB reached 42 MB holding 13 entries), so any opener
+        # reclaims once when the waste passes 2048 pages (~8 MB).
+        try:
+            if self.db.execute("PRAGMA freelist_count").fetchone()[0] > 2048:
+                self.db.execute("VACUUM")
+        except sqlite3.Error:
+            pass
+        self._pending_revision = False
 
     @property
     def revision(self) -> int:
@@ -65,6 +77,26 @@ class History:
 
     def changed(self):
         self.db.execute("UPDATE meta SET value=value+1 WHERE key='revision'")
+        self._pending_revision = True
+
+    def announce(self) -> None:
+        """Publish the revision after the DB commit (inotify wakes the shell's FileView).
+
+        Only mutations rewrite the file — read-only commands stay silent so the shell
+        never wakes for its own reads. Best-effort: the shell's poll heals a miss."""
+        if not self._pending_revision:
+            return
+        self._pending_revision = False
+        stage = self.directory / ".revision.txt.tmp"
+        try:
+            stage.write_text(str(self.revision), encoding="utf-8")
+            os.replace(stage, self.directory / "revision.txt")
+        except OSError:
+            stage.unlink(missing_ok=True)
+
+    def close(self) -> None:
+        self.announce()
+        self.db.close()
 
     def pause(self, value: bool):
         if type(value) is not bool: raise ValueError("Pause must be true or false")
@@ -169,7 +201,7 @@ def capture(kind: str, directory: Path):  # REL: qml/services/ClipboardState.qml
     history = History(directory, config['clipboardLimit'])
     try: history.store(kind, data)
     except ValueError: pass  # Oversized/unsupported selections never print clipboard contents.
-    finally: history.db.close()
+    finally: history.close()
 
 
 def preferences() -> dict:
@@ -223,7 +255,7 @@ def run_action(args) -> int:
         message = str(error)[:180] if isinstance(error, ValueError) else 'Clipboard operation failed. Check the Wayland session and local storage.'
         return reply(False, message=message)
     finally:
-        history.db.close()
+        history.close()
 
 
 def main():

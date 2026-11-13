@@ -24,7 +24,7 @@ QtObject {
     readonly property var nightLight: NativeState.nightLight(snapshot.nightLight) // Q4: native Night Light (NightLightState.qml)
     readonly property var idle: NativeState.idle(snapshot.idle) // Q4: native idle profiles (IdleState.qml)
     readonly property var system: NativeState.merge(snapshot.system || {}) // Q1: native sections merged over the backend's (qml/services/NativeState.qml)
-    readonly property var weather: snapshot.weather || {}
+    readonly property var weather: NativeState.weather(snapshot.weather) // Q5: native weather (WeatherState.qml); backend section stays the A/B window
     readonly property var preferences: snapshot.preferences || {}
     readonly property bool batterySaverActive: (snapshot.batterySaver || {}).active === true; readonly property bool reducedTransparency: preferences.reducedTransparency === true
     readonly property string shellName: preferences.shellName || "LME Shell"
@@ -184,6 +184,7 @@ QtObject {
         if (MirrorState.handles(action)) return MirrorState; // Q4: display mirroring
         if (NightLightState.handles(action)) return NightLightState; // Q4: Night Light retry
         if (IdleState.handles(action)) return IdleState; // Q4: idle refresh + inhibit
+        if (WeatherState.handles(action)) return WeatherState; // Q5: weather search/detect/refresh (select stays backend — it writes preferences)
         return null;
     }
     // The inventory families' pending gates (scripts/audio_device_actions.py::prepare and
@@ -282,7 +283,8 @@ QtObject {
             // the native services now own them, driven from the snapshot hook with the
             // resolved weather place and the merged AC state).
             if (!demo && !settingsApp && !backendDemo) {
-                NightLightState.sync(preferences, ((next.weather || {}).location) || null);
+                WeatherState.sync(preferences); // Q5: resolves the native weather place (ipwho.is detect) at the poll cadence
+            NightLightState.sync(preferences, ((WeatherState.section || {}).location) || ((next.weather || {}).location) || null);
                 IdleState.sync(preferences, (system.battery || {}).acOnline === true);
                 MirrorState.recheck(preferences);
             }
@@ -324,6 +326,7 @@ QtObject {
         command: ["python3", "-u", Quickshell.shellPath("scripts/desktop_backend.py")]
             .concat(root.backendDemo ? ["--demo"] : []).concat(root.settingsApp ? ["--settings"] : [])
             .concat(!root.backendDemo && !root.settingsApp ? ["--no-session-daemons"] : []) // Q4: the native services own wlsunset/swayidle
+            .concat(!root.backendDemo && !root.settingsApp ? ["--no-weather"] : []) // Q5: WeatherState.qml owns weather; the backend section stays fetch-idle (A/B window)
         stdinEnabled: true
         running: true
         stdout: SplitParser { onRead: data => root.accept(data) }

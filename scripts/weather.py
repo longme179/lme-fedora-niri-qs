@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# DEPRECATED(Q5->Q6): real sessions run the native port (qml/services/WeatherModel.js + WeatherState.qml); this module stays the A/B window.
 """Bounded, asynchronous Open-Meteo weather with optional IP geolocation.
 
 Domain helper/action module (weather layer, fan-in 4). Consumed by backend/action providers

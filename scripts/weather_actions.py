@@ -1,3 +1,4 @@
+# DEPRECATED(Q5->Q6): weatherSearch/weatherDetect/weatherRefresh route to WeatherState.qml; weatherSelect stays backend until Q6 (it writes preferences).
 """Entry calls are synchronous; WeatherClient retains its asynchronous controller.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: weather; Phase 3 graph).
 """

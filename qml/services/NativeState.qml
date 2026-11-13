@@ -143,6 +143,11 @@ QtObject {
         return NightLightState.section || backendSection || {};
     }
 
+    function weather(backendSection) {
+        if (backendDemo || settingsApp) return backendSection || {};
+        return WeatherState.section || backendSection || {};  // Q5: native weather; backend stays the A/B window
+    }
+
     function idle(backendSection) {
         if (backendDemo || settingsApp) return backendSection || {};
         return IdleState.section || backendSection || {};

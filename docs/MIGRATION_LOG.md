@@ -1,5 +1,14 @@
 # Migration summaries
 
+## Repository policy — tests stay local (PR policy/local-tests-only) — 2026-11-13
+
+The published repository ships without the test suite: tests/ is untracked (kept on the
+development machines only) so the codebase reads clean for end users. scripts/check.sh
+runs the discovery where tests/ exists and skips with a note on fresh clones; the
+architecture pins for tests/* only apply where those files are present (the checker
+iterates existing files). The suite itself is unchanged — this is a packaging decision,
+not a quality retreat.
+
 ## Q5 leg 3b — the equalizer native (PR #134, stacked on #133) — 2026-11-13
 
 - EqualizerModel.js + the EqualizerState perform layer port equalizer_actions.py exactly:

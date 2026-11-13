@@ -30,7 +30,7 @@ snippet**. The snippet uses `xray false` for the shell's blur regions and sets
 - Choose glass values, then click **Save niri blur snippet**. The shell refuses
   to overwrite a user-owned/non-marker file and refuses to write below 26.04.
 - One-time setup: include `~/.config/lme-shell/liquid-blur.kdl` after
-  `popup-blur.kdl` in your niri config (use your `XDG_CONFIG_HOME` path if
+  the `lme-shell.kdl` blur section in your niri config (use your `XDG_CONFIG_HOME` path if
   customized), then run `niri validate`. Included files reload when applied.
 - The status line shows `unsupported (niri < 26.04, detected <version>)`,
   `applied (niri blur snippet saved)`, or `pending (save snippet)`.
@@ -80,7 +80,7 @@ snippet).
 
 - **No compositor blur.** Compositor blur needs niri ≥ 26.04 and an applied
   snippet. Click **Save niri blur snippet**, include
-  `~/.config/lme-shell/liquid-blur.kdl` after `popup-blur.kdl`, run
+  `~/.config/lme-shell/liquid-blur.kdl` after the `lme-shell.kdl` blur section, run
   `niri validate`, and check `scripts/doctor.sh`.
 - **Background too visible at low tint.** Raise **Panel tint opacity**, or
   increase compositor **Blur passes** / **Blur spread** after saving the niri

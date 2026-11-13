@@ -129,7 +129,7 @@ animates. See [upstream motion attribution](../THIRD_PARTY.md).
 **Blur behind the bar** is independent of popup blur and defaults to enabled
 on supported niri. It follows the bar's actual surface and customized corners;
 three-island layouts leave their gaps clear. Include the updated
-[`config/niri/popup-blur.kdl`](../config/niri/popup-blur.kdl) and run `niri validate`.
+[`config/niri/lme-shell.kdl`](../config/niri/lme-shell.kdl) blur section and run `niri validate`.
 The fragment's layer rule now also matches `lme-bar`; manually merged configs
 need that namespace added. Blur still needs transparency: an opaque fill hides
 it. Unsupported compositors retain the transparent glass without native blur.

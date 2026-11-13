@@ -5,8 +5,8 @@
 The shell draws a simple translucent tint, grain, and edge highlight; it does
 not sample the wallpaper. Blur comes only from the niri compositor. On niri
 26.04+, save the blur snippet in **Appearance → Liquid glass material** and
-include `~/.config/lme-shell/liquid-blur.kdl` after `popup-blur.kdl` in your
-niri config, then run `niri validate`. See [GLASS.md](GLASS.md).
+include `~/.config/lme-shell/liquid-blur.kdl` after the `lme-shell.kdl` blur
+section in your niri config, then run `niri validate`. See [GLASS.md](GLASS.md).
 
 If the background is too visible through glass, raise **Panel tint opacity**, or
 increase compositor **Blur passes** / **Blur spread** after saving the snippet.

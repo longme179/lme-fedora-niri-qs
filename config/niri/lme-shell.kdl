@@ -1,4 +1,6 @@
-// LME Shell integration fragment. Do not replace your niri configuration.
+// LME Shell niri integration — the single source fragment.
+// Deploy renders ~/.config/niri/lme-shell-deploy.kdl from this file (see
+// scripts/deploy_niri.py); manual users may include this file directly.
 // Requires niri >= 25.11 for overview and stable-ID window movement.
 // Remove existing binds with these same keys before merging this fragment.
 // For stationary workspace clicks, leave input/warp-mouse-to-focus disabled.
@@ -17,6 +19,7 @@ window-rule {
 }
 
 binds {
+    // ---- shell panels ------------------------------------------------------
     Mod+Shift+A hotkey-overlay-title="Activity island" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "activity";
     }
@@ -42,4 +45,76 @@ binds {
     Mod+Shift+E hotkey-overlay-title="Open power menu" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "toggle" "power";
     }
+
+    // ---- laptop media keys (usable while the lock screen holds) ------------
+    XF86AudioRaiseVolume allow-when-locked=true {
+        spawn "wpctl" "set-volume" "--limit" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+";
+    }
+    XF86AudioLowerVolume allow-when-locked=true {
+        spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-";
+    }
+    XF86AudioMute allow-when-locked=true {
+        spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle";
+    }
+    XF86AudioMicMute allow-when-locked=true {
+        spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle";
+    }
+    XF86MonBrightnessUp allow-when-locked=true {
+        spawn "brightnessctl" "--class=backlight" "set" "+5%";
+    }
+    XF86MonBrightnessDown allow-when-locked=true {
+        spawn "brightnessctl" "--class=backlight" "set" "5%-";
+    }
+    XF86AudioPlay allow-when-locked=true {
+        spawn "playerctl" "play-pause";
+    }
+    XF86AudioNext allow-when-locked=true {
+        spawn "playerctl" "next";
+    }
+    XF86AudioPrev allow-when-locked=true {
+        spawn "playerctl" "previous";
+    }
+
+    // ---- lock and screenshot studio ----------------------------------------
+    Super+L hotkey-overlay-title="Lock the screen" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "lock" "activate";
+    }
+    Print hotkey-overlay-title="Screenshot studio: area" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "area";
+    }
+    Ctrl+Print hotkey-overlay-title="Screenshot studio: screen" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "screen";
+    }
+    Alt+Print hotkey-overlay-title="Screenshot studio: window" {
+        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "window";
+    }
+}
+
+// blur-section: requires niri >= 26.04; deploy trims this whole section on older builds.
+// The shell requests blur for glass surfaces and optional full-screen popup overlays.
+// xray=false includes application windows in the blur, rather than wallpaper only.
+// Later matching rules win; keep this after generic background-effect rules.
+// Non-xray effects are experimental in niri and may disappear during
+// window open/close animations or while dragging tiled windows.
+layer-rule {
+    match namespace="^lme-(bar|overlay|authentication|desktop|notifications|osd)$"
+    background-effect {
+        xray false
+    }
+}
+window-rule {
+    match app-id="^lme-shell-settings$"
+    // Keep niri's focus-ring backing from filling the transparent window.
+    draw-border-with-background false
+    background-effect {
+        xray false
+    }
+}
+// Compositor-wide blur budget. Deploy drops this block when the user's own
+// blur block already exists (merge by hand there instead).
+blur {
+    passes 2
+    offset 3.0
+    noise 0.02
+    saturation 1.0
 }

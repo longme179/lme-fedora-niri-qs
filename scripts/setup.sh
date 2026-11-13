@@ -76,11 +76,12 @@ printf 'In %s/niri/config.kdl, review/merge these top-level includes:\n' "${XDG_
 cat <<'EOF'
 
     include "../quickshell/lme-shell/config/niri/lme-shell.kdl"
-    include "../quickshell/lme-shell/config/niri/popup-blur.kdl"
 
-The blur include needs niri >=26.04 and goes after generic background-effect rules.
-Merge an existing blur block instead of defining it twice. Resolve duplicate
-keybindings before saving; keep one shell startup and notification/Polkit agent.
+One include carries the whole integration: shell startup, panels, media keys,
+the lock keybind and the blur section (niri >=26.04; trim the marked blur
+section on older builds). Merge an existing blur block instead of defining it
+twice. Resolve duplicate keybindings before saving; keep one shell startup and
+notification/Polkit agent.
 
 Then, inside your niri session:
     niri validate

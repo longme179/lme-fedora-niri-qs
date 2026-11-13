@@ -380,7 +380,7 @@ settings so surviving values are preserved. No settings migration is needed.
 Blur comes only from the niri compositor. Its protocol exposes a region rather
 than per-window blur strength. The passes/spread controls write
 `$XDG_CONFIG_HOME/lme-shell/liquid-blur.kdl` (with `xray false`) only when
-**Save niri blur snippet** is clicked. Include it after `popup-blur.kdl`, then
+**Save niri blur snippet** is clicked. Include it after the `lme-shell.kdl` blur section, then
 run `niri validate`; subsequent saves use niri's normal include reload. This
 changes compositor-wide blur. Existing unmarked files and symlinks are not
 replaced. Reset restores the original passes/spread in preferences, but the
@@ -417,7 +417,7 @@ outside clicks. This reduces niri's intermediate blur texture area without
 lowering blur passes, shader resolution, deformation or motion quality. Smoked
 keeps the full-screen surface and its saved global blur preference.
 
-Include the updated `config/niri/popup-blur.kdl` **after generic background-effect
+Include the updated `config/niri/lme-shell.kdl` blur section **after generic background-effect
 rules**: later matching niri rules take precedence. If you copied its rules manually,
 merge the `notifications`/`osd` namespaces and Settings window rule as well.
 Niri defaults to xray blur if no matching rule explicitly sets `xray false`;

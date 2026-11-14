@@ -8,7 +8,8 @@
 // 100ms×30; the 2s heartbeat lives in LockState). Phase 3 adds the composed views:
 // LockClockView (status row/weather/hint) and LockMediaWidget below the clock.
 // REL: LockContext (context), LockWallpaper/LockClockView/LockMediaWidget/
-// LockLoginView (own dir), ActivityState (player), Theme only.
+// LockCaptureNotice/LockLoginView (own dir), ActivityState (player),
+// ShellState (preferences), Theme.
 pragma ComponentBehavior: Bound
 import QtQuick
 import "../../services"
@@ -31,6 +32,10 @@ MouseArea {
     readonly property bool mediaActive: ShellState.preferences.lockMediaWidget !== false
         && ActivityState.player !== null
         && !!(ActivityState.display && ActivityState.display.title)
+    // The capture policy notice state (composed below) — exposed for engine cases.
+    readonly property alias captureNotice: captureNoticeItem.notice
+    readonly property alias captureNoticeText: captureNoticeItem.noticeText
+    property alias captureNoticeMs: captureNoticeItem.noticeMs
 
     anchors.fill: parent
     hoverEnabled: false
@@ -113,6 +118,15 @@ MouseArea {
             enabled: Theme.animations
             NumberAnimation { duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.spatialCurve }
         }
+    }
+
+    // ---- capture policy notice (owner L3 finding; details in the component) ---
+    LockCaptureNotice {
+        id: captureNoticeItem
+        context: root.context
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 64
     }
 
     // ---- input handling (iNiR semantics) -------------------------------------

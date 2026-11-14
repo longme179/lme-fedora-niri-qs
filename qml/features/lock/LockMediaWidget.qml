@@ -41,13 +41,17 @@ Rectangle {
         id: quantizer
         // Painted but never shown: an offscreen corner inside the clipped card.
         // Immediate strategy paints on request instead of riding the frame loop,
-        // so the dominant colour lands even before the card reaches a screen
-        // (engine fixtures run without a window; a visible:false canvas never
-        // paints at all).
+        // so the dominant colour lands as soon as the cover decodes (engine
+        // fixtures prove it inside a plain Window; a visible:false canvas never
+        // paints at all). The artReady gate keeps the pre-load paint pass from
+        // averaging an empty canvas into the scheme.
         x: -width; y: -height
         width: 8; height: 8
         renderStrategy: Canvas.Immediate
+        property bool artReady: false
         onPaint: {
+            if (!artReady)
+                return
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
             ctx.drawImage(root.artUrl, 0, 0, width, height)
@@ -62,12 +66,14 @@ Rectangle {
                 Theme.primaryContainer, 0.7)
             // Do not pin lock-screen art in memory either (iNiR #163/#164 lesson).
             unloadImage(root.artUrl)
+            artReady = false
         }
         Component.onCompleted: if (root.artUrl !== "") loadImage(root.artUrl)
-        onImageLoaded: requestPaint()
+        onImageLoaded: { artReady = true; requestPaint() }
         Connections {
             target: root
             function onArtUrlChanged() {
+                artReady = false
                 if (root.artUrl !== "")
                     quantizer.loadImage(root.artUrl)
             }

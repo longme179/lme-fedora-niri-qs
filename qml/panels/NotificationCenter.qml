@@ -130,6 +130,7 @@ Item {
                         anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 8
                         LabelText { text: historyEntry.modelData.appName + " · " + (historyEntry.modelData.total || 0); Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight; font.weight: Font.Bold }
                         LiquidButton { text: Notifications.mutedApps.includes(historyEntry.modelData.appName) ? "Allow popups" : "Mute popups"; font.pixelSize: 11; onClicked: Notifications.muteApp(historyEntry.modelData.appName, !Notifications.mutedApps.includes(historyEntry.modelData.appName)) }
+                        LiquidButton { text: "Block"; font.pixelSize: 11; onClicked: Notifications.blockApp(historyEntry.modelData.appName, true) }
                     }
                     NotificationCard {
                         id: cardContent

@@ -40,6 +40,14 @@ and the keyring unlock flow follow iNiR's `Lock.qml` and `scripts/keyring/`
 with attribution kept here and in each file header;
 `scripts/keyring_unlock.sh` retains its upstream GPL-3.0-only terms.
 
+The notification ingress policies in `qml/services/Notifications.qml` — the
+global 20/second rate window with critical-urgency passthrough, the recurring
+quiet-hours window that suppresses popups while history keeps everything, and
+the per-app blocked list that stops a sender at the door — follow the policy
+shape of iNiR's `services/Notifications.qml`, inspected at commit `edca6cc`
+(GNU GPL version 3). They are implemented independently on LME's own
+notification pipeline; no upstream source is redistributed.
+
 The undo-first action pattern (act now, offer the way back through a transient
 toast, settle on the next act or expiry — replacing confirm dialogs) in
 `qml/services/UndoState.qml` and `qml/components/UndoCard.qml` is an independent

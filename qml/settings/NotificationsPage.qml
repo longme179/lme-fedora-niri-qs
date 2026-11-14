@@ -125,4 +125,38 @@ ColumnLayout {
         }
         Binding { target: idleSpeed; property: "value"; value: Theme.notificationIdleSpeed; when: !idleSpeed.pressed; restoreMode: Binding.RestoreNone }
     }
+    SettingsCard {
+        title: "Quiet hours"
+        description: "A daily window when notifications land in history without popups. Manual Do Not Disturb stays a separate act; the shell's own notices follow the window too."
+        PreferenceSwitch { objectName: "quietHoursToggle"; title: "Quiet hours"; detail: "Default 22:00 to 08:00; suppresses popups only"; preference: "notificationQuietHours" }
+        RowLayout {
+            Layout.fillWidth: true; spacing: 12
+            LabelText { text: "From" }
+            ExpressiveField {
+                id: quietStart; objectName: "quietStart"
+                Layout.preferredWidth: 120; text: ShellState.preferences.notificationQuietStart || "22:00"
+                placeholderText: "22:00"; maximumLength: 5; Accessible.name: "Quiet hours start"
+                onAccepted: ShellState.run("setting", {key: "notificationQuietStart", value: text.trim()})
+            }
+            LabelText { text: "To" }
+            ExpressiveField {
+                id: quietEnd; objectName: "quietEnd"
+                Layout.preferredWidth: 120; text: ShellState.preferences.notificationQuietEnd || "08:00"
+                placeholderText: "08:00"; maximumLength: 5; Accessible.name: "Quiet hours end"
+                onAccepted: ShellState.run("setting", {key: "notificationQuietEnd", value: text.trim()})
+            }
+            Item { Layout.fillWidth: true }
+            LabelText { visible: Notifications.quietHoursActive; text: "Active now"; color: Theme.accent }
+        }
+    }
+    SettingsCard {
+        title: "Blocked senders"
+        description: "Blocked applications never reach the history — no popup, no unread mark. Muting from the Notification center keeps their messages in history without popups."
+        RowLayout {
+            Layout.fillWidth: true
+            LiquidComboBox { id: blockedSelector; objectName: "blockedSelector"; Layout.fillWidth: true; model: Notifications.blockedApps; Accessible.name: "Blocked notification application" }
+            LiquidButton { objectName: "blockedAllow"; text: "Unblock"; enabled: blockedSelector.currentIndex >= 0; onClicked: Notifications.blockApp(blockedSelector.currentText, false) }
+        }
+        LabelText { visible: !Notifications.blockedApps.length; text: "No blocked senders yet. Use Block on a notification in the Notification center."; color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+    }
 }

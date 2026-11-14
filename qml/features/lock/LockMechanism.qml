@@ -16,6 +16,14 @@ import "../../services"
 QtObject {
     id: root
 
+    // The keyring opt-out preference (Phase 3 PR2) flows in here: this feature
+    // side may read ShellState, LockState itself may not.
+    property Binding keyringPolicy: Binding {
+        target: LockState
+        property: "keyringEnabled"
+        value: ShellState.preferences.lockKeyringUnlock !== false
+    }
+
     // ext-session-lock exists only under a compositor; engine fixtures blank
     // WAYLAND_DISPLAY so this loader stays inert in every test environment.
     property Loader lockLoader: Loader {

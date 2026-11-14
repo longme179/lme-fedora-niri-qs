@@ -26,8 +26,10 @@ MouseArea {
     // How long the surfaces recede on unlock before LockState releases the lock
     // (iNiR recede); the unlock overlay's fade duration matches it.
     readonly property int recedeDuration: 250
-    // Media only while a track is actually up (iNiR: a title is present).
-    readonly property bool mediaActive: ActivityState.player !== null
+    // Media only while a track is actually up (iNiR: a title is present) and the
+    // widget preference (Phase 3 PR2, config/lock.json) allows the card.
+    readonly property bool mediaActive: ShellState.preferences.lockMediaWidget !== false
+        && ActivityState.player !== null
         && !!(ActivityState.display && ActivityState.display.title)
 
     anchors.fill: parent

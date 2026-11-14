@@ -125,10 +125,15 @@ QtObject {
                 console.warn("[LockState] keyring unlock exited with", exitCode);
         }
     }
+    // The keyring opt-out (D3, Phase 3 PR2): LockMechanism — the feature side,
+    // which may talk to ShellState — binds the preference in; a shared service
+    // must not read ShellState directly (acyclic layering).
+    property bool keyringEnabled: true
+
     function unlockKeyring(): void {
         // Engine fixtures drive handleUnlocked end-to-end; they must not run the
         // real keyring script (it restarts the session's gnome-keyring-daemon).
-        if (Quickshell.env("LME_SHELL_LOCK_KEYRING") === "0")
+        if (!keyringEnabled || Quickshell.env("LME_SHELL_LOCK_KEYRING") === "0")
             return;
         keyringProc.exec({
             environment: ({UNLOCK_PASSWORD: lockContext.currentText}),

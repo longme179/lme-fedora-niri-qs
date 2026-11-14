@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -30,6 +31,29 @@ MAX_PINS = 20
 # Undo-first (the iNiR pattern, rewritten): delete/clear park rows in the trash table
 # under a fresh batch id; --restore takes a batch back, --settle finishes the removal.
 MAX_KEEP_BATCHES = 12
+# Browser markup (the iNiR Cliphist pattern, rewritten): Firefox and Chromium wrap
+# copied rich text in HTML. The two wrappers below are the only reliable sign the
+# payload is markup rather than text that happens to contain tags — anything else
+# passes byte for byte, so plain text with angle brackets and images stay intact.
+MARKUP_META = b'<meta http-equiv="content-type" content="text/html'
+MARKUP_FRAGMENT = b"<!--StartFragment-->"
+# How long a --copy marker suppresses the watcher's echo of our own write.
+SELF_COPY_SECONDS = 5.0
+
+
+def is_browser_markup(data: bytes) -> bool:
+    return data.startswith(MARKUP_META) or MARKUP_FRAGMENT in data
+
+
+def strip_markup(data: bytes) -> bytes:
+    """Decode a browser HTML copy into plain text; non-markup passes through unchanged."""
+    if not is_browser_markup(data): return data
+    text = data.decode("utf-8", errors="replace")
+    text = re.sub(r"<!--[\s\S]*?-->", "", text)   # the CF_HTML fragment markers
+    text = re.sub(r"<[^>]*>", "", text)            # tags
+    text = (text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+                .replace("&quot;", '"').replace("&#39;", "'"))
+    return text.strip().encode("utf-8")
 
 
 def history_directory() -> Path:
@@ -120,6 +144,9 @@ class History:
         if kind not in {"text", "image"}: raise ValueError("Unknown clipboard type")
         if len(data) > (MAX_TEXT if kind == "text" else MAX_IMAGE): raise ValueError("Clipboard item exceeds the size limit")
         if kind == "text":
+            # Rich copies arrive as browser HTML; store the plain text they carry.
+            data = strip_markup(data)
+            if not data: return None
             text = data.decode("utf-8", errors="replace")
             if "\0" in text: return None
             mime, suffix = "text/plain;charset=utf-8", ""
@@ -132,6 +159,16 @@ class History:
             self.db.execute("BEGIN IMMEDIATE")
             # Re-check inside the write lock, after an in-flight pause action.
             if self.paused: return None
+            # Self-copy suppression (the iNiR Cliphist pattern, adapted to this
+            # store): --copy marked the exact content it was about to write; the
+            # watcher's echo of our own write stores nothing. Any other capture
+            # clears the marker, so a failed copy cannot suppress a later one.
+            marked = self.db.execute("SELECT value FROM meta WHERE key='self_copy_id'").fetchone()
+            if marked is not None:
+                stamped = self.db.execute("SELECT value FROM meta WHERE key='self_copy_at'").fetchone()
+                self.db.execute("DELETE FROM meta WHERE key IN ('self_copy_id', 'self_copy_at')")
+                if stamped is not None and marked[0] == ident and time.time() - stamped[0] <= SELF_COPY_SECONDS:
+                    return None
             self.db.execute("""INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
                 ON CONFLICT(id) DO UPDATE SET created=excluded.created""",
                 (ident, kind, mime, data, preview, search, suffix, time.time()))
@@ -158,6 +195,15 @@ class History:
         row = self.db.execute("SELECT * FROM entries WHERE id=?", (ident,)).fetchone()
         if row is None: raise ValueError("This clipboard item is no longer available")
         return row
+
+    def mark_self_copy(self, ident: str) -> None:
+        """--copy arms this before wl-copy: the watcher's echo of our own write
+        then stores nothing (see store). Content ids are hashes, so the marker
+        matches the echo exactly."""
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            self.db.execute("INSERT OR REPLACE INTO meta VALUES ('self_copy_id', ?)", (ident,))
+            self.db.execute("INSERT OR REPLACE INTO meta VALUES ('self_copy_at', ?)", (time.time(),))
 
     def pin(self, ident: str):
         with self.db:
@@ -282,6 +328,7 @@ def run_action(args) -> int:
             item = history.item(args.copy)
             command = shutil.which('wl-copy')
             if not command: raise ValueError('Install wl-clipboard to copy items')
+            history.mark_self_copy(args.copy)  # before the clipboard changes
             subprocess.run([command, '--type', item['mime']], input=item['data'], check=True,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
             return reply(True, message='Copied to clipboard', total=history.total, revision=history.revision)

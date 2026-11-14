@@ -5,8 +5,8 @@
 // walkthrough: the card leaves liquid glass for a Material scheme adapted to
 // the cover art's dominant colour, a 110px art thumb, and grows to 130px to
 // balance the clock. Reshaped onto this shell's stack: the dominant colour is
-// the 1×1 image average (iNiR's ColorQuantizer at depth 0 / rescale 1, done
-// with sourceSize + an offscreen grab), LiquidButton glyphs stand in for
+// the cover averaged into an 8×8 canvas (iNiR's ColorQuantizer at depth 0 /
+// rescale 1, without a C++ plugin), LiquidButton glyphs stand in for
 // MaterialSymbol, and the cava visualizer and seek stay out (no cava here; the
 // bar keeps the read-only MediaProgress lesson).
 // REL: services (FocusTimer time formatting), components (ShellText/LiquidButton), theme.
@@ -32,20 +32,40 @@ Rectangle {
     readonly property real position: root.progressAvailable && Number.isFinite(root.player.position)
         ? Math.max(0, Math.min(root.duration, root.player.position)) : 0
 
-    // The dominant colour of the cover: the 1×1 average, grabbed offscreen once
-    // per artwork (iNiR quantizes the same way and leans the mix toward the
-    // theme's primary container so the art never fully owns the card).
+    // The dominant colour of the cover: the image averaged into an 8×8 canvas
+    // (iNiR quantizes to one sample; eight rows smooth banding without a grab
+    // pass) and leaned toward the theme's primary container so the art never
+    // fully owns the card.
     property color artDominantColor: Theme.mix(Theme.purple, Theme.primaryContainer, 0.7)
-    Image {
+    Canvas {
         id: quantizer
         visible: false
-        source: root.artUrl
-        sourceSize: Qt.size(1, 1)
-        asynchronous: true
-        cache: false // do not pin lock-screen art in QPixmapCache (iNiR #163/#164)
-        onStatusChanged: if (status === Image.Ready)
-            grabToImage(result => root.artDominantColor = Theme.mix(
-                result.image.pixelColor(0, 0), Theme.primaryContainer, 0.7))
+        width: 8; height: 8
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+            ctx.drawImage(root.artUrl, 0, 0, width, height)
+            const data = ctx.getImageData(0, 0, width, height).data
+            let r = 0, g = 0, b = 0
+            const samples = width * height
+            for (let i = 0; i < samples; i++) {
+                r += data[i * 4]; g += data[i * 4 + 1]; b += data[i * 4 + 2]
+            }
+            root.artDominantColor = Theme.mix(
+                Qt.rgba(r / samples / 255, g / samples / 255, b / samples / 255, 1),
+                Theme.primaryContainer, 0.7)
+            // Do not pin lock-screen art in memory either (iNiR #163/#164 lesson).
+            unloadImage(root.artUrl)
+        }
+        Component.onCompleted: if (root.artUrl !== "") loadImage(root.artUrl)
+        onImageLoaded: requestPaint()
+        Connections {
+            target: root
+            function onArtUrlChanged() {
+                if (root.artUrl !== "")
+                    quantizer.loadImage(root.artUrl)
+            }
+        }
     }
 
     // Material scheme adapted to the dominant colour (iNiR AdaptedMaterialScheme):

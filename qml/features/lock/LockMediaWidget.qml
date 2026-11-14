@@ -40,10 +40,13 @@ Rectangle {
     Canvas {
         id: quantizer
         // Painted but never shown: an offscreen corner inside the clipped card.
-        // A visible:false canvas never gets its paint pass, and the dominant
-        // colour would stay on the theme fallback forever.
+        // Immediate strategy paints on request instead of riding the frame loop,
+        // so the dominant colour lands even before the card reaches a screen
+        // (engine fixtures run without a window; a visible:false canvas never
+        // paints at all).
         x: -width; y: -height
         width: 8; height: 8
+        renderStrategy: Canvas.Immediate
         onPaint: {
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)

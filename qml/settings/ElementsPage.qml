@@ -69,7 +69,15 @@ ColumnLayout {
                 Connections { target: ShellState; function onPreferencesChanged() { if (!hex.activeFocus) hex.text = (ShellState.preferences.themeOverrides || {})[row.modelData] || Theme.tokenColor(row.modelData).toString(); } }
             }
         }
-        LiquidButton { text: "Reset all element colors"; onClicked: ShellState.run("setting", {key: "themeOverrides", value: {}}) }
+        LiquidButton {
+            text: "Reset all element colors"
+            onClicked: {
+                const gone = ShellState.preferences.themeOverrides || {};
+                if (!Object.keys(gone).length) return;
+                ShellState.run("setting", {key: "themeOverrides", value: {}});
+                UndoState.offer("Element colors reset", () => ShellState.run("setting", {key: "themeOverrides", value: gone}));
+            }
+        }
     }
     SettingsCard {
         title: "Type that feels like you"
@@ -94,6 +102,14 @@ ColumnLayout {
         LabelText { text: "Body size · " + Math.round(bodySize.value) + " px"; font.weight: Font.Bold }
         LiquidSlider { id: bodySize; Layout.fillWidth: true; from: 12; to: 20; stepSize: 1; Accessible.name: "Body text size"; onMoved: if (!pressed) ShellState.run("setting", {key: "fontSize", value: Math.round(value)}); onPressedChanged: if (!pressed) ShellState.run("setting", {key: "fontSize", value: Math.round(value)}) }
         Binding { target: bodySize; property: "value"; value: Theme.bodySize; when: !bodySize.pressed; restoreMode: Binding.RestoreNone }
-        LiquidButton { text: "Reset font overrides"; onClicked: ShellState.run("setting", {key: "fontOverrides", value: {}}) }
+        LiquidButton {
+            text: "Reset font overrides"
+            onClicked: {
+                const gone = ShellState.preferences.fontOverrides || {};
+                if (!Object.keys(gone).length) return;
+                ShellState.run("setting", {key: "fontOverrides", value: {}});
+                UndoState.offer("Font overrides reset", () => ShellState.run("setting", {key: "fontOverrides", value: gone}));
+            }
+        }
     }
 }

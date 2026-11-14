@@ -27,6 +27,9 @@ from settings_schema import clipboard_schema as PREFERENCE_SCHEMA
 MAX_IMAGE = 8 * 1024 * 1024
 MAX_TOTAL = 64 * 1024 * 1024
 MAX_PINS = 20
+# Undo-first (the iNiR pattern, rewritten): delete/clear park rows in the trash table
+# under a fresh batch id; --restore takes a batch back, --settle finishes the removal.
+MAX_KEEP_BATCHES = 12
 
 
 def history_directory() -> Path:
@@ -49,8 +52,14 @@ class History:
                 data BLOB NOT NULL, preview TEXT NOT NULL, search TEXT NOT NULL,
                 suffix TEXT NOT NULL, created REAL NOT NULL, pinned INTEGER NOT NULL DEFAULT 0
             );
+            CREATE TABLE IF NOT EXISTS trash (
+                batch INTEGER NOT NULL, id TEXT NOT NULL, kind TEXT NOT NULL, mime TEXT NOT NULL,
+                data BLOB NOT NULL, preview TEXT NOT NULL, search TEXT NOT NULL, suffix TEXT NOT NULL,
+                created REAL NOT NULL, pinned INTEGER NOT NULL DEFAULT 0, kept_at REAL NOT NULL,
+                PRIMARY KEY (batch, id)
+            );
             CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value INTEGER NOT NULL);
-            INSERT OR IGNORE INTO meta VALUES ('revision', 0), ('paused', 0);
+            INSERT OR IGNORE INTO meta VALUES ('revision', 0), ('paused', 0), ('trash_batch', 0);
         """)
         (directory / "history.sqlite3").chmod(0o600)
         # Self-heal the file size: image churn leaves freelist pages nothing ever
@@ -159,17 +168,70 @@ class History:
             self.db.execute("UPDATE entries SET pinned=? WHERE id=?", (int(not row['pinned']), ident))
             self.trim(); self.changed()
 
-    def delete(self, ident: str):
+    def delete(self, ident: str) -> int:
+        """Undo-first delete: the row leaves history and parks in trash as one batch."""
         with self.db:
             self.db.execute("BEGIN IMMEDIATE")
-            self.remove_rows([self.item(ident)]); self.changed()
+            rows = [self.item(ident)]
+            batch = self._new_batch()
+            self._park(batch, rows)
+            self.remove_rows(rows)
+            self.changed()
+        return batch
 
-    def clear(self, include_pinned: bool):
+    def clear(self, include_pinned: bool) -> int:
         if type(include_pinned) is not bool: raise ValueError("Clear mode must be true or false")
         with self.db:
             self.db.execute("BEGIN IMMEDIATE")
-            rows = self.db.execute("SELECT id, suffix FROM entries" + ("" if include_pinned else " WHERE pinned=0")).fetchall()
-            self.remove_rows(rows); self.changed()
+            ids = self.db.execute("SELECT id FROM entries" + ("" if include_pinned else " WHERE pinned=0")).fetchall()
+            rows = [self.item(row['id']) for row in ids]
+            batch = self._new_batch()
+            self._park(batch, rows)
+            self.remove_rows(rows)
+            self.changed()
+        return batch
+
+    # ---- the undo-first seam: park rows in trash under one batch, take them back or finish --
+    def _new_batch(self) -> int:
+        batch = self.db.execute("SELECT value FROM meta WHERE key='trash_batch'").fetchone()[0] + 1
+        self.db.execute("UPDATE meta SET value=? WHERE key='trash_batch'", (batch,))
+        return batch
+
+    def _park(self, batch: int, rows) -> None:
+        """Park full rows under the batch; batches older than the window settle for good.
+        The image files go with remove_rows — restore rewrites them from the parked data."""
+        self.db.execute("DELETE FROM trash WHERE batch <= ?", (batch - MAX_KEEP_BATCHES,))
+        for row in rows:
+            self.db.execute("INSERT OR REPLACE INTO trash VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (batch, row['id'], row['kind'], row['mime'], row['data'], row['preview'],
+                 row['search'], row['suffix'], row['created'], row['pinned'], time.time()))
+
+    def restore(self, batch: int) -> int:
+        """Take a trash batch back into history (trim keeps the size invariants)."""
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            rows = self.db.execute("SELECT * FROM trash WHERE batch=?", (batch,)).fetchall()
+            if not rows: raise ValueError("Nothing to restore for this batch")
+            for row in rows:
+                self.db.execute("INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (row['id'], row['kind'], row['mime'], row['data'], row['preview'],
+                     row['search'], row['suffix'], row['created'], row['pinned']))
+                if row['suffix']:
+                    path = self.images / (row['id'] + "." + row['suffix'])
+                    if not path.exists() and row['data']:
+                        with tempfile.NamedTemporaryFile(dir=self.images, delete=False) as handle:
+                            handle.write(row['data']); temporary = Path(handle.name)
+                        os.replace(temporary, path)
+            self.db.execute("DELETE FROM trash WHERE batch=?", (batch,))
+            self.trim(); self.changed()
+            return len(rows)
+
+    def settle(self, batch: int) -> int:
+        """Finish the removal: drop the parked batch. History and revision stay untouched."""
+        with self.db:
+            self.db.execute("BEGIN IMMEDIATE")
+            cursor = self.db.execute("DELETE FROM trash WHERE batch=?", (batch,))
+            return cursor.rowcount
 
 
 def capture(kind: str, directory: Path):  # REL: qml/services/ClipboardState.qml – spawned worker JSON-lines protocol
@@ -223,17 +285,24 @@ def run_action(args) -> int:
             subprocess.run([command, '--type', item['mime']], input=item['data'], check=True,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=4)
             return reply(True, message='Copied to clipboard', total=history.total, revision=history.revision)
+        batch = None
         if args.pin is not None:
             history.pin(args.pin)
         elif args.delete is not None:
-            history.delete(args.delete)
+            batch = history.delete(args.delete)
         elif args.clear is not None:
-            history.clear(args.clear)
+            batch = history.clear(args.clear)
+        elif args.restore is not None:
+            history.restore(args.restore)
+        elif args.settle is not None:
+            history.settle(args.settle)
         elif args.pause is not None:
             history.pause(args.pause)
         elif args.configure is not None:
             history.configure(args.configure)
-        return reply(True, paused=history.paused, total=history.total, revision=history.revision)
+        payload = dict(paused=history.paused, total=history.total, revision=history.revision)
+        if batch is not None: payload['batch'] = batch
+        return reply(True, **payload)
     except (KeyError, TypeError, ValueError, OSError, sqlite3.Error, subprocess.SubprocessError) as error:
         message = str(error)[:180] if isinstance(error, ValueError) else 'Clipboard operation failed. Check the Wayland session and local storage.'
         return reply(False, message=message)
@@ -251,6 +320,8 @@ def main():
     parser.add_argument('--copy', metavar='ID')
     parser.add_argument('--pin', metavar='ID')
     parser.add_argument('--delete', metavar='ID')
+    parser.add_argument('--restore', type=int, metavar='BATCH')
+    parser.add_argument('--settle', type=int, metavar='BATCH')
     parser.add_argument('--clear', type=lambda value: value == 'true', metavar='BOOL')
     parser.add_argument('--pause', type=lambda value: value == 'true', metavar='BOOL')
     parser.add_argument('--configure', type=int, metavar='LIMIT')

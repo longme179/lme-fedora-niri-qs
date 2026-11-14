@@ -225,8 +225,19 @@ QtObject {
         if (ShellState.demo) {
             if (action === "copy") { message = "Demo · clipboard unchanged"; copied(); }
             else if (action === "pin") demoEntries = demoEntries.map(item => item.id === payload.id ? Object.assign({}, item, {pinned: !item.pinned}) : item).sort((a, b) => Number(b.pinned) - Number(a.pinned));
-            else if (action === "delete") demoEntries = demoEntries.filter(item => item.id !== payload.id);
-            else if (action === "clear") demoEntries = payload.includePinned ? [] : demoEntries.filter(item => item.pinned);
+            else if (action === "delete") {
+                const gone = demoEntries.find(item => item.id === payload.id) || null;
+                demoEntries = demoEntries.filter(item => item.id !== payload.id);
+                if (gone) UndoState.offer("Removed from clipboard history",
+                    () => { demoEntries = [gone, ...demoEntries.filter(item => item.id !== gone.id)].sort((a, b) => Number(b.pinned) - Number(a.pinned)); });
+            }
+            else if (action === "clear") {
+                const gone = demoEntries.filter(item => payload.includePinned ? true : !item.pinned);
+                const kept = demoEntries.filter(item => !gone.includes(item));
+                demoEntries = kept;
+                if (gone.length) UndoState.offer("Cleared clipboard history",
+                    () => { demoEntries = [...gone, ...kept].sort((a, b) => Number(b.pinned) - Number(a.pinned)); });
+            }
             else if (action === "pause") demoPaused = payload.value;
             return;
         }
@@ -249,8 +260,26 @@ QtObject {
                 state = Object.assign({}, state, {paused: parsed.paused === true, total: parsed.total || 0});
                 if (action === "pause") syncWatchers();
                 if (parsed.revision !== undefined && parsed.revision !== lastRevision) { lastRevision = parsed.revision; runSearch(); }
+                // The undo-first way back: delete/clear park the rows under a batch id.
+                if ((action === "delete" || action === "clear") && parsed.batch !== undefined) {
+                    const batch = parsed.batch;
+                    UndoState.offer(action === "delete" ? "Removed from clipboard history" : "Cleared clipboard history",
+                        () => restoreBatch(batch), () => settleBatch(batch));
+                }
             }
             if (action === "copy") { copyPending = false; if (good) copied(); }
         });
     }
+
+    // ---- the undo batches (delete/clear park rows; restore takes them back) ------------
+    function restoreBatch(batch) {
+        runTool(baseArgs.concat(["--restore", String(batch)]), 8, (ok, text) => {
+            const parsed = parseReply(text);
+            if (ok && parsed && parsed.ok === true && parsed.revision !== undefined && parsed.revision !== lastRevision) {
+                lastRevision = parsed.revision;
+                runSearch();
+            }
+        });
+    }
+    function settleBatch(batch) { runTool(baseArgs.concat(["--settle", String(batch)]), 8, () => {}); }
 }

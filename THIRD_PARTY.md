@@ -40,6 +40,14 @@ and the keyring unlock flow follow iNiR's `Lock.qml` and `scripts/keyring/`
 with attribution kept here and in each file header;
 `scripts/keyring_unlock.sh` retains its upstream GPL-3.0-only terms.
 
+The undo-first action pattern (act now, offer the way back through a transient
+toast, settle on the next act or expiry — replacing confirm dialogs) in
+`qml/services/UndoState.qml` and `qml/components/UndoCard.qml` is an independent
+rewrite of iNiR's `services/Undo.qml`, inspected at commit `edca6cc` (root
+license: GNU GPL version 3). The registry and the toast card are original LME
+code: no upstream source is redistributed, so no file-level GPL header applies;
+the clipboard trash batches live in `scripts/clipboard.py` alongside it.
+
 Roboto is installed through Fedora's `google-roboto-fonts` package. The project
 references it by family name and does not distribute the font files. Small shell
 icons are original Canvas drawings; Material Symbols font assets are not bundled.

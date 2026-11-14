@@ -57,6 +57,14 @@ ShellRoot {
             asynchronous: true
             sourceComponent: SettingsView { page: root.requestedPage; onCloseRequested: Qt.quit() }
         }
+        // The undo-first offer surface for the standalone Settings process: the
+        // registry is per process, so a reset offered here settles here.
+        UndoCard {
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottomMargin: 24
+            visible: UndoState.pending
+        }
         Timer {
             interval: 1400; repeat: true; running: root.screenshotPath.length > 0
             onTriggered: {

@@ -87,7 +87,14 @@ ColumnLayout {
             LiquidButton { objectName:"launchpadSave"; text:"Save"; enabled:!ShellState.pendingActions.setting; onClicked:root.save() }
             LiquidButton { text:"Cancel"; onClicked:root.editing=false }
             Item { Layout.fillWidth:true }
-            LiquidButton { text:"Delete"; visible:!!root.editingId; enabled:!ShellState.pendingActions.setting; onClicked:{ root.saving=true;ShellState.run("setting",{key:"launchpadEntries",token:root.editingId,value:null}); } }
+            LiquidButton { text:"Delete"; visible:!!root.editingId; enabled:!ShellState.pendingActions.setting; onClicked:{
+                const id = root.editingId;
+                const gone = root.entries[id] || null;
+                root.saving=true;
+                ShellState.run("setting",{key:"launchpadEntries",token:id,value:null});
+                if (gone) UndoState.offer("Removed " + (gone.name || "command"),
+                    () => ShellState.run("setting",{key:"launchpadEntries",token:id,value:gone}));
+            } }
         }
     }
 }

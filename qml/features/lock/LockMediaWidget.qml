@@ -207,14 +207,15 @@ Rectangle {
                 spacing: 8
 
                 ShellText {
+                    // Fixed 44px slot: YouTube drops the start/end mid-song and resizing
+                    // labels slid the pills between their fillWidth spacers.
+                    Layout.preferredWidth: 44; Layout.minimumWidth: 44; Layout.maximumWidth: 44
                     text: root.progressAvailable ? FocusTimer.format(Math.floor(root.position)) : ""
                     color: root.scheme.ink; font.family: Theme.monoFamily; font.pixelSize: 11
                 }
                 Item { Layout.fillWidth: true }
 
-                // Media pills (owner tweak 2026-11-15): wider horizontal pads so the
-                // LiquidButton pill shape reads, and a flat, translucent thumbnail
-                // tint instead of a bright overlay washing the card.
+                // Media pills (owner tweak): wide pads + a flat thumbnail tint, no bright overlay.
                 LiquidButton {
                     text: "⏮"; leftPadding: 20; rightPadding: 20
                     enabled: !!(root.player && root.player.canGoPrevious)
@@ -243,6 +244,8 @@ Rectangle {
 
                 Item { Layout.fillWidth: true }
                 ShellText {
+                    Layout.preferredWidth: 44; Layout.minimumWidth: 44; Layout.maximumWidth: 44
+                    horizontalAlignment: Text.AlignRight
                     text: root.progressAvailable ? FocusTimer.format(Math.floor(root.duration)) : "—"
                     color: root.scheme.ink; font.family: Theme.monoFamily; font.pixelSize: 11
                 }

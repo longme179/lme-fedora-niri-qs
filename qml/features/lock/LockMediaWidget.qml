@@ -39,7 +39,10 @@ Rectangle {
     property color artDominantColor: Theme.mix(Theme.purple, Theme.primaryContainer, 0.7)
     Canvas {
         id: quantizer
-        visible: false
+        // Painted but never shown: an offscreen corner inside the clipped card.
+        // A visible:false canvas never gets its paint pass, and the dominant
+        // colour would stay on the theme fallback forever.
+        x: -width; y: -height
         width: 8; height: 8
         onPaint: {
             const ctx = getContext("2d")

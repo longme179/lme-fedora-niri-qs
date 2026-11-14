@@ -4,11 +4,14 @@
 // re-read at 2836543), Material path only — the owner's L3 decision after the
 // walkthrough: the card leaves liquid glass for a Material scheme adapted to
 // the cover art's dominant colour (LockArtQuantizer, own file), a 110px art
-// thumb, and 130px to balance the clock. The card and the thumb composite
-// through Qt5Compat OpacityMask corner masks — clip cuts bounding boxes, not
-// radii (#158), and MultiEffect's mask blanked the whole layer on the live
-// lock surface (#160's silent regression; OpacityMask is iNiR's own mask for
-// this card, proven on session-lock surfaces). Reshaped on this stack:
+// thumb, and the final 520×150 the owner approved. The card and the thumb
+// composite through Qt5Compat OpacityMask corner masks — clip cuts bounding
+// boxes, not radii (#158), and MultiEffect's mask blanked the whole layer on
+// the live lock surface (#160's silent regression; OpacityMask is iNiR's own
+// mask for this card, proven on session-lock surfaces). The final ground is
+// the blurred cover itself — flat 25% darken + a two-ring feather rim +
+// 1px border per the owner's 2026-11-15 design (the soft-ring dimming
+// mirrors how iNiR grounds its lock media backdrop). Reshaped on this stack:
 // LiquidButton glyphs for MaterialSymbol; cava and seek stay out (no cava
 // here; the bar keeps the read-only MediaProgress lesson).
 // REL: LockArtQuantizer (dominant colour), services (FocusTimer time
@@ -60,10 +63,12 @@ Rectangle {
     readonly property color cardColor: root.scheme.layer0
 
     visible: hasPlayer
-    implicitWidth: 460
-    implicitHeight: 130
+    implicitWidth: 520
+    implicitHeight: 150
     radius: 18
-    color: root.scheme.layer0
+    // With art, the base steps aside: the blurred cover + the flat darken are
+    // the ground (owner: no bright wash over the art).
+    color: "transparent"
     border.width: 1
     border.color: Theme.border
     clip: true
@@ -77,8 +82,15 @@ Rectangle {
         maskSource: Rectangle { width: root.width; height: root.height; radius: root.radius }
     }
 
-    // The blurred cover behind everything, dimmed by a horizontal gradient of
-    // the adapted layer so the controls keep their ink (iNiR art backdrop).
+    // No-art fallback: the adapted base only when there is no cover to blur.
+    Rectangle {
+        anchors.fill: parent
+        visible: root.artUrl === ""
+        color: root.scheme.layer0
+    }
+
+    // The blurred cover behind everything (iNiR art backdrop), kept at 0.6 so
+    // the art reads through the flat darken layered above it.
     Image {
         anchors.fill: parent
         source: root.artUrl
@@ -95,20 +107,26 @@ Rectangle {
             saturation: 0.4
         }
     }
+    // Flat 25% darken over the blurred cover — the owner's dark ground.
     Rectangle {
         anchors.fill: parent
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: Theme.alpha(root.scheme.layer0, 0.7) }
-            GradientStop { position: 0.3; color: Theme.alpha(root.scheme.layer0, 0.4) }
-            GradientStop { position: 1.0; color: Theme.alpha(root.scheme.layer0, 0.2) }
-        }
+        color: Theme.alpha("#000000", 0.25)
+    }
+    // Feather rim: two soft rings instead of a hard edge, fading the darken
+    // toward the 1px border (owner: "feather viền").
+    Rectangle {
+        anchors.fill: parent; radius: root.radius; color: "transparent"
+        border.width: 18; border.color: Theme.alpha("#000000", 0.05)
+    }
+    Rectangle {
+        anchors.fill: parent; radius: root.radius; color: "transparent"
+        border.width: 8; border.color: Theme.alpha("#000000", 0.10)
     }
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 12
+        anchors.margins: 14
+        spacing: 14
 
         // Cover art thumbnail (110px) with the note-glyph fallback.
         Rectangle {
@@ -167,13 +185,13 @@ Rectangle {
             // Compact read-only progress bar (MediaProgress lesson: no polling).
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 4
-                radius: 2
+                implicitHeight: 6
+                radius: 3
                 color: root.scheme.secondaryContainer
                 Rectangle {
                     width: parent.width * (root.duration > 0 ? Math.min(1, root.position / root.duration) : 0)
                     height: parent.height
-                    radius: 2
+                    radius: 3
                     color: root.scheme.primary
                     visible: root.progressAvailable
                 }
@@ -193,7 +211,7 @@ Rectangle {
                 // LiquidButton pill shape reads, and a flat, translucent thumbnail
                 // tint instead of a bright overlay washing the card.
                 LiquidButton {
-                    text: "⏮"; leftPadding: 16; rightPadding: 16
+                    text: "⏮"; leftPadding: 20; rightPadding: 20
                     enabled: !!(root.player && root.player.canGoPrevious)
                     onClicked: if (root.player) root.player.previous()
                     palette.button: Theme.alpha(root.scheme.layer1, 0.3)
@@ -202,7 +220,7 @@ Rectangle {
                 }
                 LiquidButton {
                     text: root.player && root.player.isPlaying ? "⏸" : "▶"
-                    leftPadding: 18; rightPadding: 18
+                    leftPadding: 24; rightPadding: 24
                     enabled: !!(root.player && root.player.canTogglePlaying)
                     onClicked: if (root.player) root.player.togglePlaying()
                     palette.button: Theme.alpha(root.scheme.layer1, 0.3)
@@ -210,7 +228,7 @@ Rectangle {
                     Accessible.name: root.player && root.player.isPlaying ? "Pause" : "Play"
                 }
                 LiquidButton {
-                    text: "⏭"; leftPadding: 16; rightPadding: 16
+                    text: "⏭"; leftPadding: 20; rightPadding: 20
                     enabled: !!(root.player && root.player.canGoNext)
                     onClicked: if (root.player) root.player.next()
                     palette.button: Theme.alpha(root.scheme.layer1, 0.3)

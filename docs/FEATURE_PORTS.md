@@ -95,3 +95,26 @@ Integration review also corrected initial tab-indicator placement and fallback c
 Changed QML was checked with qmllint. The local Quickshell SDK emits known `QProcess::ExitStatus` metadata / generic `PanelWindow` resolution warnings; they are reported separately from actual configuration/load errors. Native configuration loading and the inspected Settings/Control Center/picker screenshots have no new QML runtime errors. Ripple QSB was built with qsb; software Canvas was exercised, while the GPU shader and animation smoothness on the 120 Hz laptop remain unmeasured.
 
 Cloud lacks Cava, Matugen, wf-recorder, pactl, slurp, Swappy and Satty; no new packages were installed. Real audio capture, image generation, screen recording/region/audio and external editor windows remain unverified. Battery telemetry, camera/meeting apps, full NVIDIA NVENC/Radeon VAAPI recording and physical multi-output niri behavior also require the owner's machine. The implementation must not be interpreted as verification of those complete hardware paths. Direct V4L2 camera access outside PipeWire is not detected.
+
+## iNiR capture reference (port candidate — recorded 2026-11-14, not implemented here)
+
+iNiR has no wait-gate for capture. Its `RegionSelection.qml` (inspected at commit
+`edca6cc`) screenshots first and selects on the frozen frame: `grim` runs in
+`Component.onCompleted`, the window draws nothing (`opacity: captured ? 1 : 0`)
+until the shot lands — iNiR itself once leaked the veil into the frozen frame,
+which is why the `captured` flag exists. The selector is a per-screen Overlay-layer
+PanelWindow behind a Loader on `GlobalStates.regionSelectorOpen` with exclusive
+keyboard; `snip()` crops the frozen file with magick, copies it, publishes
+atomically (`.part` → `mv`) and notifies; the pipeline runs detached so it
+survives the window being destroyed. A trigger living inside an overlay only ever
+closes that overlay and relies on spawn latency or a fixed 300 ms — it never
+polls, times out and cancels. Plain Print stays niri-native (`screenshot-path`).
+
+Port candidate for the Screenshot studio later: frozen-frame selector, snap
+targets, OCR, search and pin (iNiR's `SnipAction` enum). The principle to adopt
+immediately: a surface that is mapped but draws nothing cannot leak into a
+screenshot — no need to wait for a clean screen. Related LME history: commit
+`c47a2c7` split "visible" (mapped) from "showing content" (`surfaceLive`) and
+left one stale reader of the old meaning (`shell.qml:61`), which cancelled every
+capture and recording for six days; the fix binds `ShellState.overlayVisible` to
+`overlay.surfaceLive` and `test_capture_gate.py` pins it.

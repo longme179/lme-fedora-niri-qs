@@ -79,13 +79,16 @@ binds {
     Super+L hotkey-overlay-title="Lock the screen" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "lock" "activate";
     }
-    Print hotkey-overlay-title="Screenshot studio: area" {
+    // Print stays bound while the lock holds: niri itself refuses screencopy on
+    // a locked session, and the shell answers the press with the capture-policy
+    // notice on the lock surface instead of staying silent.
+    Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: area" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "area";
     }
-    Ctrl+Print hotkey-overlay-title="Screenshot studio: screen" {
+    Ctrl+Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: screen" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "screen";
     }
-    Alt+Print hotkey-overlay-title="Screenshot studio: window" {
+    Alt+Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: window" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "window";
     }
 }

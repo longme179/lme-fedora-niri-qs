@@ -60,7 +60,7 @@
     "qml/theme/Theme.qml": 253,
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
-    "scripts/clipboard.py": 297,
+    "scripts/clipboard.py": 339,
     "scripts/desktop_backend.py": 1642,
     "tests/fixtures/settings-defaults.json": 638,
     "tests/fixtures/settings-validation.json": 24903,

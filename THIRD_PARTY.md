@@ -56,6 +56,14 @@ license: GNU GPL version 3). The registry and the toast card are original LME
 code: no upstream source is redistributed, so no file-level GPL header applies;
 the clipboard trash batches live in `scripts/clipboard.py` alongside it.
 
+Two clipboard ingest policies in `scripts/clipboard.py` follow the pattern of
+iNiR's `services/deferred/Cliphist.qml`, inspected at commit `edca6cc` (GNU GPL
+version 3), rewritten for LME's own store: browser-markup copies (Firefox's
+content-type meta tag, the CF_HTML fragment markers) store as the plain text
+they carry, and the watcher's echo of the shell's own copy stores nothing (a
+content marker with a short window, adapted from iNiR's self-copy flag to this
+SQLite engine). No upstream source is redistributed.
+
 `qml/components/DankSocket.qml` — the unix-socket reconnect wrapper with
 exponential backoff (400 ms to 15 s) and quarter-base jitter — is vendored
 near-verbatim from iNiR's `services/DankSocket.qml` at commit `edca6cc`

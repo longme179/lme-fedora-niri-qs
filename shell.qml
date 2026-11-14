@@ -58,7 +58,7 @@ ShellRoot {
             return ShellState.demo ? "disabled in demo" : authentication.item && authentication.item.registered ? "registered" : "not registered; check the shell log and other session agents";
         }
     }
-    Binding { target: ShellState; property: "overlayVisible"; value: overlay.visible }
+    Binding { target: ShellState; property: "overlayVisible"; value: overlay.surfaceLive }
     Variants {
         model: root.preview ? [] : Quickshell.screens
         delegate: Scope {

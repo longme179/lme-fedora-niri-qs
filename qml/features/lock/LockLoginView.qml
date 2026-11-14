@@ -17,6 +17,8 @@ ColumnLayout {
     required property var context
     property bool hasAttemptedUnlock: false
     readonly property alias passwordActiveFocus: passwordField.activeFocus
+    // Test seam for the failure-state caret policy below.
+    readonly property alias caretVisible: passwordField.cursorVisible
 
     spacing: 12
 
@@ -80,6 +82,12 @@ ColumnLayout {
                 onTextEdited: root.context.currentText = text
                 onAccepted: root.submit()
                 onActiveFocusChanged: if (activeFocus) cursorPosition = length
+                // A failed attempt clears the field but keeps focus, so the blinking
+                // caret sat at position 0 right beside "Incorrect password" and read
+                // as part of the message (owner L1 walkthrough nit). Hide it while
+                // the failure is up; the first keystroke clears showFailure
+                // (LockContext) and this binding restores the caret.
+                cursorVisible: !root.context.showFailure
             }
 
             LiquidButton {

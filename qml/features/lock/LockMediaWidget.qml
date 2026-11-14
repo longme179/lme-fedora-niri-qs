@@ -189,28 +189,31 @@ Rectangle {
                 }
                 Item { Layout.fillWidth: true }
 
+                // Media pills (owner tweak 2026-11-15): wider horizontal pads so the
+                // LiquidButton pill shape reads, and a flat, translucent thumbnail
+                // tint instead of a bright overlay washing the card.
                 LiquidButton {
-                    text: "⏮"; leftPadding: 10; rightPadding: 10
+                    text: "⏮"; leftPadding: 16; rightPadding: 16
                     enabled: !!(root.player && root.player.canGoPrevious)
                     onClicked: if (root.player) root.player.previous()
-                    palette.button: Theme.alpha(root.scheme.layer1, 0.5)
+                    palette.button: Theme.alpha(root.scheme.layer1, 0.3)
                     palette.buttonText: root.scheme.onLayer0
                     Accessible.name: "Previous track"
                 }
                 LiquidButton {
                     text: root.player && root.player.isPlaying ? "⏸" : "▶"
-                    leftPadding: 12; rightPadding: 12
+                    leftPadding: 18; rightPadding: 18
                     enabled: !!(root.player && root.player.canTogglePlaying)
                     onClicked: if (root.player) root.player.togglePlaying()
-                    palette.button: root.scheme.primary
-                    palette.buttonText: Theme.background
+                    palette.button: Theme.alpha(root.scheme.layer1, 0.3)
+                    palette.buttonText: root.scheme.primary
                     Accessible.name: root.player && root.player.isPlaying ? "Pause" : "Play"
                 }
                 LiquidButton {
-                    text: "⏭"; leftPadding: 10; rightPadding: 10
+                    text: "⏭"; leftPadding: 16; rightPadding: 16
                     enabled: !!(root.player && root.player.canGoNext)
                     onClicked: if (root.player) root.player.next()
-                    palette.button: Theme.alpha(root.scheme.layer1, 0.5)
+                    palette.button: Theme.alpha(root.scheme.layer1, 0.3)
                     palette.buttonText: root.scheme.onLayer0
                     Accessible.name: "Next track"
                 }

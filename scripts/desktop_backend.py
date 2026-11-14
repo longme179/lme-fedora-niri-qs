@@ -352,6 +352,15 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
                and not any(ord(c) < 32 for c in item) for item in value):
             return list(dict.fromkeys(value))
         raise ValueError("Invalid notification rule")
+    if key == "notificationBlockedApps" and isinstance(value, list) and len(value) <= 100:
+        if all(isinstance(item, str) and 0 < len(item) <= 256
+               and not any(ord(c) < 32 for c in item) for item in value):
+            return list(dict.fromkeys(value))
+        raise ValueError("Invalid notification rule")
+    if key == "notificationQuietHours" and type(value) is bool: return value
+    # The quiet-hours window shares night light's clock format (HH:MM, wraps midnight).
+    if key in {"notificationQuietStart", "notificationQuietEnd"}:
+        clock_minutes(value); return value
     if key == "activityEnabled" and type(value) is bool: return value
     if key == "barStyle" and isinstance(value, str) and value in {"islands", "connected"}:
         return value

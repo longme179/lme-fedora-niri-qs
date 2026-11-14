@@ -25,6 +25,27 @@ Singleton {
     readonly property bool dnd: dndUntil === -1 || dndUntil > now
     readonly property bool sharingDnd: ShellState.preferences.dndWhileSharing !== false && PrivacyState.sharing
     readonly property bool effectiveDnd: dnd || sharingDnd
+    // Quiet hours: a recurring daily window that suppresses popups only —
+    // notifications still arrive and land in history. Manual DND stays the
+    // user's explicit act; this is derived policy (the iNiR pattern, rewritten).
+    readonly property bool quietHoursActive: {
+        if (ShellState.preferences.notificationQuietHours !== true) return false
+        const start = parseHourMinute(ShellState.preferences.notificationQuietStart || "22:00")
+        const end = parseHourMinute(ShellState.preferences.notificationQuietEnd || "08:00")
+        if (start < 0 || end < 0 || start === end) return false
+        const clock = new Date(now)
+        const minutes = clock.getHours() * 60 + clock.getMinutes()
+        // A window whose end is before its start wraps past midnight.
+        return start < end ? (minutes >= start && minutes < end) : (minutes >= start || minutes < end)
+    }
+    function parseHourMinute(value): int {
+        const parts = String(value ?? "").match(/^(\d{1,2}):(\d{2})$/)
+        if (!parts) return -1
+        const hours = parseInt(parts[1], 10)
+        const minutes = parseInt(parts[2], 10)
+        if (hours > 23 || minutes > 59) return -1
+        return hours * 60 + minutes
+    }
     property bool historyLoaded: false
     property int historyRevision: 0
     property int savedRevision: 0
@@ -34,11 +55,25 @@ Singleton {
     readonly property bool historyDirty: historyRevision > savedRevision
     readonly property bool saving: submittedRevision >= 0
     readonly property var mutedApps: ShellState.preferences.notificationMutedApps || []
-    readonly property var popups: !enabled || effectiveDnd ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
+    readonly property var blockedApps: ShellState.preferences.notificationBlockedApps || []
+    // Ingress rate limit: one global 20/s window; critical urgency always passes.
+    // Excess never lands in history, unread or popups (the iNiR pattern, rewritten).
+    property double _lastIngressSec: 0
+    property int _ingressCountThisSec: 0
+    readonly property int maxIngressPerSecond: 20
+    function ingressAllowed(urgency): bool {
+        const seconds = Date.now() / 1000
+        if (seconds - _lastIngressSec >= 1.0) { _lastIngressSec = seconds; _ingressCountThisSec = 0 }
+        _ingressCountThisSec += 1
+        if (urgency === NotificationUrgency.Critical) return true
+        return _ingressCountThisSec <= maxIngressPerSecond
+    }
+    readonly property var popups: !enabled || effectiveDnd || quietHoursActive ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
     readonly property int count: history.length
     function setDnd(minutes) { if (!enabled) return; ShellState.run("setting", {key: "dndUntil", value: minutes < 0 ? -1 : minutes === 0 ? 0 : Math.round(Date.now() + minutes * 60000)}); }
     function muteApp(name, mute) { if (!enabled) return; ShellState.run("setting", {key: "notificationMutedApps", value: mute ? [...new Set([...mutedApps, name])] : mutedApps.filter(n => n !== name)}); }
-    Timer { interval: 1000; running: root.dnd && root.dndUntil > 0; repeat: true; onTriggered: root.now = Date.now() }
+    function blockApp(name, block) { if (!enabled) return; ShellState.run("setting", {key: "notificationBlockedApps", value: block ? [...new Set([...blockedApps, name])] : blockedApps.filter(n => n !== name)}); }
+    Timer { interval: 1000; running: (root.dnd && root.dndUntil > 0) || ShellState.preferences.notificationQuietHours === true; repeat: true; onTriggered: root.now = Date.now() }
     Connections {
         target: ShellState
         function onBackendReadyChanged() {
@@ -122,12 +157,16 @@ Singleton {
     }
 
     function receive(notification) {
+        // Ingress policies, in order: a blocked sender never enters history,
+        // unread or popups; then the global rate window (critical passes).
+        if (blockedApps.includes(notification.appName)) return
+        if (!ingressAllowed(notification.urgency)) return
         notification.tracked = true;
         const wrapper = watcherComponent.createObject(root, { notification: notification });
         const next = Object.assign({}, live);
         next[notification.id] = wrapper;
         live = next;
-        history = [snapshot(notification, Date.now(), !effectiveDnd && !mutedApps.includes(notification.appName) && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 200);
+        history = [snapshot(notification, Date.now(), !effectiveDnd && !quietHoursActive && !mutedApps.includes(notification.appName) && !notification.lastGeneration && !ShellState.notificationsOpen), ...history.filter(entry => entry.id !== notification.id)].slice(0, 200);
         if (!notification.lastGeneration && !ShellState.notificationsOpen) unreadCount++;
     }
 
@@ -177,7 +216,7 @@ Singleton {
         if (!enabled) return;
         const timestamp = Date.now();
         history = [{id: "local-" + timestamp + "-" + (++localSequence), appName: ShellState.shellName, appIcon: "", summary: summary, body: body,
-                    timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !effectiveDnd && !ShellState.notificationsOpen,
+                    timestamp: timestamp, urgency: 1, actions: [], active: true, popup: !effectiveDnd && !quietHoursActive && !ShellState.notificationsOpen,
                     transient: false, local: true}, ...history].slice(0, 200);
         if (!ShellState.notificationsOpen) unreadCount++;
     }
@@ -202,6 +241,12 @@ Singleton {
 
     onEffectiveDndChanged: {
         if (effectiveDnd) history = history.map(entry => Object.assign({}, entry, { popup: false }));
+    }
+
+    // Entering the quiet window dismisses popups already on screen; the
+    // notifications stay in history (popups, not history, is what it quiets).
+    onQuietHoursActiveChanged: {
+        if (quietHoursActive) history = history.map(entry => Object.assign({}, entry, { popup: false }));
     }
 
     LazyLoader {

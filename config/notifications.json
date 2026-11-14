@@ -30,6 +30,34 @@
       "appearance": false,
       "default": []
     },
+    "notificationBlockedApps": {
+      "type": "array",
+      "validator": "legacy",
+      "portable": false,
+      "appearance": false,
+      "default": []
+    },
+    "notificationQuietHours": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": false
+    },
+    "notificationQuietStart": {
+      "type": "string",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": "22:00"
+    },
+    "notificationQuietEnd": {
+      "type": "string",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": "08:00"
+    },
     "dndUntil": {
       "type": "integer",
       "validator": "legacy",

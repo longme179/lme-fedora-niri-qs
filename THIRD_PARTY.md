@@ -48,6 +48,16 @@ license: GNU GPL version 3). The registry and the toast card are original LME
 code: no upstream source is redistributed, so no file-level GPL header applies;
 the clipboard trash batches live in `scripts/clipboard.py` alongside it.
 
+`qml/components/DankSocket.qml` — the unix-socket reconnect wrapper with
+exponential backoff (400 ms to 15 s) and quarter-base jitter — is vendored
+near-verbatim from iNiR's `services/DankSocket.qml` at commit `edca6cc`
+(GPL-3.0-only). The snowarch copyright header stays at the file level and
+third_party/iNiR-{LICENSE,NOTICE} apply. Beyond the attribution header, one
+compat adaptation is documented in the file header: on quickshell 0.3.2 a
+refused connect attempt fires no `connectionStateChanged`, so the retry chain
+also arms from `onError` (deduped by a pending flag) — probed live 2026-11-14;
+everything else is upstream unchanged.
+
 Roboto is installed through Fedora's `google-roboto-fonts` package. The project
 references it by family name and does not distribute the font files. Small shell
 icons are original Canvas drawings; Material Symbols font assets are not bundled.

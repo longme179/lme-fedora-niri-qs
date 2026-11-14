@@ -34,9 +34,10 @@ Rectangle {
         ? Math.max(0, Math.min(root.duration, root.player.position)) : 0
 
     // The dominant colour of the cover (the pipeline and its lessons live in
-    // LockArtQuantizer); no art means the theme fallback.
-    readonly property color artDominantColor: quantizer.dominant
+    // LockArtQuantizer); no art means the theme fallback. Declared after the
+    // quantizer: bindings evaluate in document order, before later ids exist.
     LockArtQuantizer { id: quantizer; artUrl: root.artUrl }
+    readonly property color artDominantColor: quantizer.dominant
 
     // Material scheme adapted to the dominant colour (iNiR AdaptedMaterialScheme):
     // the art lends its hue while every role keeps its tone, so the text/track
@@ -54,8 +55,6 @@ Rectangle {
         readonly property color secondaryContainer: adapted(Theme.secondaryContainer, 0.3)
     }
     readonly property color cardColor: root.scheme.layer0
-    // Engine seam: both corner masks must actually be armed.
-    readonly property bool maskArmed: cardMaskEffect.maskEnabled && thumbMaskEffect.maskEnabled
 
     visible: hasPlayer
     implicitWidth: 460
@@ -224,6 +223,10 @@ Rectangle {
             }
         }
     }
+
+    // Engine seam: both corner masks must actually be armed. Declared last —
+    // bindings evaluate in document order, so the effects must exist first.
+    readonly property bool maskArmed: cardMaskEffect.maskEnabled && thumbMaskEffect.maskEnabled
 
     // The 1s position tick: Quickshell's getter advances its local clock; this
     // does not poll D-Bus (the MediaProgress lesson).

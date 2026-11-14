@@ -70,7 +70,6 @@ Rectangle {
     // like itself — iNiR's own approach for this card.
     layer.enabled: true
     layer.effect: MultiEffect {
-        id: cardMaskEffect
         maskEnabled: true
         maskSource: Rectangle { width: root.width; height: root.height; radius: root.radius }
     }
@@ -119,7 +118,6 @@ Rectangle {
             clip: true
             layer.enabled: true
             layer.effect: MultiEffect {
-                id: thumbMaskEffect
                 maskEnabled: true
                 maskSource: Rectangle { width: artThumb.width; height: artThumb.height; radius: artThumb.radius }
             }
@@ -224,9 +222,11 @@ Rectangle {
         }
     }
 
-    // Engine seam: both corner masks must actually be armed. Declared last —
-    // bindings evaluate in document order, so the effects must exist first.
-    readonly property bool maskArmed: cardMaskEffect.maskEnabled && thumbMaskEffect.maskEnabled
+    // Engine seam: both corner masks must actually be armed. Reached through
+    // the layer property chains — ids declared inside layer.effect values do
+    // not join the file scope other bindings can see.
+    readonly property bool maskArmed: root.layer.enabled && root.layer.effect !== null
+        && artThumb.layer.enabled && artThumb.layer.effect !== null
 
     // The 1s position tick: Quickshell's getter advances its local clock; this
     // does not poll D-Bus (the MediaProgress lesson).

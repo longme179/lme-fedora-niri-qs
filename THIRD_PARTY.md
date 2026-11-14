@@ -74,6 +74,15 @@ refused connect attempt fires no `connectionStateChanged`, so the retry chain
 also arms from `onError` (deduped by a pending flag) — probed live 2026-11-14;
 everything else is upstream unchanged.
 
+The motion-token layer in `qml/theme/Motion.qml` (the pill family's durations,
+the `fast`/`standard`/`morph`/`shapeshift`/`glide`/`heat`/`pulse` ladder, the
+`Easing.OutCubic` / `Easing.BezierSpline` pair, the `[0.16, 1, 0.3, 1, 1, 1]`
+morph curve and the small/tile radii) follows the token set of iNiR's
+`modules/common/pill/PillMotion.qml`, inspected at commit `edca6cc`
+(GNU GPL version 3). It is an independent rewrite on LME's own animation gate
+(`Theme.animations` plus the `motionSpeed` divisor); no upstream source is
+redistributed and no file-level GPL header applies.
+
 Roboto is installed through Fedora's `google-roboto-fonts` package. The project
 references it by family name and does not distribute the font files. Small shell
 icons are original Canvas drawings; Material Symbols font assets are not bundled.

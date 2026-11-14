@@ -5,16 +5,19 @@
 // walkthrough: the card leaves liquid glass for a Material scheme adapted to
 // the cover art's dominant colour (LockArtQuantizer, own file), a 110px art
 // thumb, and 130px to balance the clock. The card and the thumb composite
-// through corner masks — clip cuts bounding boxes, not radii (the owner's live
-// review of #158 found square corners). Reshaped on this stack: LiquidButton
-// glyphs for MaterialSymbol; cava and seek stay out (no cava here; the bar
-// keeps the read-only MediaProgress lesson).
+// through Qt5Compat OpacityMask corner masks — clip cuts bounding boxes, not
+// radii (#158), and MultiEffect's mask blanked the whole layer on the live
+// lock surface (#160's silent regression; OpacityMask is iNiR's own mask for
+// this card, proven on session-lock surfaces). Reshaped on this stack:
+// LiquidButton glyphs for MaterialSymbol; cava and seek stay out (no cava
+// here; the bar keeps the read-only MediaProgress lesson).
 // REL: LockArtQuantizer (dominant colour), services (FocusTimer time
 // formatting), components (ShellText/LiquidButton), theme.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import Qt5Compat.GraphicalEffects as GE
 import "../../services"
 import "../../theme"
 import "../../components"
@@ -64,13 +67,13 @@ Rectangle {
     border.width: 1
     border.color: Theme.border
     clip: true
-    // Real rounded corners: clip only cuts the bounding box, so the blurred
-    // backdrop and the gradient ran to square corners past the radius (the
-    // owner's live review of #158). The card composites through a mask shaped
-    // like itself — iNiR's own approach for this card.
+    // Real rounded corners: clip only cuts the bounding box, and MultiEffect's
+    // mask blanked the whole layer on the live lock surface — the #160 silent
+    // render regression, not one log line. iNiR's own mask for this card is
+    // Qt5Compat's OpacityMask, proven on session-lock surfaces; the card keeps
+    // MultiEffect only for the backdrop blur (which renders fine).
     layer.enabled: true
-    layer.effect: MultiEffect {
-        maskEnabled: true
+    layer.effect: GE.OpacityMask {
         maskSource: Rectangle { width: root.width; height: root.height; radius: root.radius }
     }
 
@@ -117,8 +120,7 @@ Rectangle {
             color: root.scheme.layer1
             clip: true
             layer.enabled: true
-            layer.effect: MultiEffect {
-                maskEnabled: true
+            layer.effect: GE.OpacityMask {
                 maskSource: Rectangle { width: artThumb.width; height: artThumb.height; radius: artThumb.radius }
             }
 

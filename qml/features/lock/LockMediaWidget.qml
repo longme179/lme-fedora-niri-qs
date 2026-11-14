@@ -48,6 +48,11 @@ Rectangle {
     // Material scheme adapted to the dominant colour (iNiR AdaptedMaterialScheme):
     // the art lends its hue while every role keeps its tone, so the text/track
     // pairs keep their contrast instead of washing to the art's mid grey.
+    // The text ink is `ink`, NOT `onLayer0`: a property whose name is on+Cap
+    // on an object owning a `layer0` property is swallowed as layer0's change
+    // handler — the binding never ran, the ink stayed invalid (black) since
+    // #158, hidden by the bright-wash ground. #163's dark ground (and the
+    // render-PNG review it feeds) exposed it.
     readonly property QtObject scheme: QtObject {
         function adapted(base: color, amount: real): color {
             const mixed = Theme.mix(base, root.artDominantColor, amount)
@@ -55,7 +60,7 @@ Rectangle {
         }
         readonly property color layer0: adapted(Theme.panel, 0.5)
         readonly property color layer1: adapted(Theme.surfaceContainer, 0.5)
-        readonly property color onLayer0: adapted(Theme.text, 0.5)
+        readonly property color ink: adapted(Theme.text, 0.5)
         readonly property color subtext: adapted(Theme.muted, 0.5)
         readonly property color primary: Qt.hsla(root.artDominantColor.hslHue, Theme.accent.hslSaturation, Theme.accent.hslLightness, 1)
         readonly property color secondaryContainer: adapted(Theme.secondaryContainer, 0.3)
@@ -168,7 +173,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.title
                 elide: Text.ElideRight
-                color: root.scheme.onLayer0
+                color: root.scheme.ink
                 font.family: Theme.fontFamily; font.pixelSize: 15; font.weight: Font.Medium
             }
             ShellText {
@@ -203,7 +208,7 @@ Rectangle {
 
                 ShellText {
                     text: root.progressAvailable ? FocusTimer.format(Math.floor(root.position)) : ""
-                    color: root.scheme.onLayer0; font.family: Theme.monoFamily; font.pixelSize: 11
+                    color: root.scheme.ink; font.family: Theme.monoFamily; font.pixelSize: 11
                 }
                 Item { Layout.fillWidth: true }
 
@@ -215,7 +220,7 @@ Rectangle {
                     enabled: !!(root.player && root.player.canGoPrevious)
                     onClicked: if (root.player) root.player.previous()
                     palette.button: Theme.alpha(root.scheme.layer1, 0.3)
-                    palette.buttonText: root.scheme.onLayer0
+                    palette.buttonText: root.scheme.ink
                     Accessible.name: "Previous track"
                 }
                 LiquidButton {
@@ -232,14 +237,14 @@ Rectangle {
                     enabled: !!(root.player && root.player.canGoNext)
                     onClicked: if (root.player) root.player.next()
                     palette.button: Theme.alpha(root.scheme.layer1, 0.3)
-                    palette.buttonText: root.scheme.onLayer0
+                    palette.buttonText: root.scheme.ink
                     Accessible.name: "Next track"
                 }
 
                 Item { Layout.fillWidth: true }
                 ShellText {
                     text: root.progressAvailable ? FocusTimer.format(Math.floor(root.duration)) : "—"
-                    color: root.scheme.onLayer0; font.family: Theme.monoFamily; font.pixelSize: 11
+                    color: root.scheme.ink; font.family: Theme.monoFamily; font.pixelSize: 11
                 }
             }
         }

@@ -269,6 +269,7 @@ ShellRoot {
     }
     Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
     StatusWindow { preview: root.preview }
+    UndoToast {} // the undo-first toast host (UndoState offers surface here)
     LazyLoader {
         active: root.preview
         component: FloatingWindow {

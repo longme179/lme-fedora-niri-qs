@@ -73,7 +73,12 @@ ColumnLayout {
             IconButton {
                 objectName: "shellNameReset"; glyph: "↺"; tooltip: "Reset shell name"
                 enabled: ShellState.backendReady && ShellState.shellName !== "LME Shell"
-                onClicked: { shellName.text = "LME Shell"; ShellState.run("setting", {key: "shellName", value: "LME Shell"}); }
+                onClicked: {
+                    const gone = ShellState.shellName;
+                    shellName.text = "LME Shell";
+                    ShellState.run("setting", {key: "shellName", value: "LME Shell"});
+                    UndoState.offer("Shell name reset", () => ShellState.run("setting", {key: "shellName", value: gone}));
+                }
             }
         }
         Connections { target: ShellState; function onPreferencesChanged() { if (!shellName.activeFocus) shellName.text = ShellState.shellName; } }

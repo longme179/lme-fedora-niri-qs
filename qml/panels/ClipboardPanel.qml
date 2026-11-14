@@ -14,7 +14,6 @@ GlassPanel {
     implicitHeight: 710
     property string selectedId: ""
     property string previewImage: ""
-    property bool clearConfirmation: false
     property bool activateAfterSearch: false
     readonly property bool previewOpen: !!previewImage
     readonly property bool searchFocused: search.activeFocus
@@ -49,7 +48,7 @@ GlassPanel {
             if (success) Qt.callLater(root.activateSelected);
         }
     }
-    Keys.onEscapePressed: { if (previewImage) previewImage = ""; else if (clearConfirmation) clearConfirmation = false; else ShellState.closePanels(); }
+    Keys.onEscapePressed: { if (previewImage) previewImage = ""; else ShellState.closePanels(); }
     ColumnLayout {
         anchors.fill: parent; anchors.margins: 22; spacing: 14
         RowLayout {
@@ -91,7 +90,7 @@ GlassPanel {
             }
             Item { Layout.fillWidth: true }
             LabelText { text: ClipboardState.entries.length + " / " + ClipboardState.total; color: Theme.muted; font.pixelSize: 12 }
-            LiquidButton { objectName: "clipboardClear"; text: "Clear…"; enabled: ClipboardState.ready && ClipboardState.total > 0; onClicked: root.clearConfirmation = true }
+            LiquidButton { objectName: "clipboardClear"; text: "Clear"; enabled: ClipboardState.ready && ClipboardState.total > 0; onClicked: ClipboardState.send("clear", {includePinned: false}) }
         }
         LabelText {
             visible: !!text
@@ -158,21 +157,16 @@ GlassPanel {
         LabelText { text: "↑ ↓ select    Enter copy text / annotate image    Escape close"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
     }
     Rectangle {
-        visible: root.clearConfirmation || !!root.previewImage
+        visible: !!root.previewImage
         anchors.fill: parent; radius: parent.radius; color: Theme.alpha(Theme.background, 0.96)
         MouseArea { anchors.fill: parent }
         ColumnLayout {
             anchors.fill: parent; anchors.margins: 28; spacing: 18
-            LabelText { text: root.previewImage ? "Image preview" : "Clear clipboard history?"; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
-            Image { visible: !!root.previewImage; Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; sourceSize.width: 1000; sourceSize.height: 1000; asynchronous: true; fillMode: Image.PreserveAspectFit }
-            LabelText { visible: !root.previewImage; text: "Choose whether to keep your pinned items."; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap }
-            Item { visible: !root.previewImage; Layout.fillHeight: true }
+            LabelText { text: "Image preview"; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
+            Image { Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; sourceSize.width: 1000; sourceSize.height: 1000; asynchronous: true; fillMode: Image.PreserveAspectFit }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidButton { id: previewClose; objectName: "clipboardPreviewBack"; text: root.previewImage ? "Back" : "Cancel"; onClicked: { root.previewImage = ""; root.clearConfirmation = false; root.focusSearch(); } }
-                Item { Layout.fillWidth: true }
-                LiquidButton { objectName: "clipboardKeepPins"; visible: !root.previewImage; text: "Keep pins"; onClicked: { ClipboardState.send("clear", {includePinned: false}); root.clearConfirmation = false; } }
-                LiquidButton { visible: !root.previewImage; text: "Clear all"; palette.button: Theme.red; palette.buttonText: Theme.onPrimary; onClicked: { ClipboardState.send("clear", {includePinned: true}); root.clearConfirmation = false; } }
+                LiquidButton { objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
             }
         }
     }

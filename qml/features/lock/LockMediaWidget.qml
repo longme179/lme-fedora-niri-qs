@@ -3,13 +3,14 @@
 // Ported from iNiR's LockMediaWidget.qml @ edca6cc (GPL-3.0; design reference
 // re-read at 2836543), Material path only — the owner's L3 decision after the
 // walkthrough: the card leaves liquid glass for a Material scheme adapted to
-// the cover art's dominant colour, a 110px art thumb, and grows to 130px to
-// balance the clock. Reshaped onto this shell's stack: the dominant colour is
-// the cover averaged into an 8×8 canvas (iNiR's ColorQuantizer at depth 0 /
-// rescale 1, without a C++ plugin), LiquidButton glyphs stand in for
-// MaterialSymbol, and the cava visualizer and seek stay out (no cava here; the
-// bar keeps the read-only MediaProgress lesson).
-// REL: services (FocusTimer time formatting), components (ShellText/LiquidButton), theme.
+// the cover art's dominant colour (LockArtQuantizer, own file), a 110px art
+// thumb, and 130px to balance the clock. The card and the thumb composite
+// through corner masks — clip cuts bounding boxes, not radii (the owner's live
+// review of #158 found square corners). Reshaped on this stack: LiquidButton
+// glyphs for MaterialSymbol; cava and seek stay out (no cava here; the bar
+// keeps the read-only MediaProgress lesson).
+// REL: LockArtQuantizer (dominant colour), services (FocusTimer time
+// formatting), components (ShellText/LiquidButton), theme.
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
@@ -32,53 +33,11 @@ Rectangle {
     readonly property real position: root.progressAvailable && Number.isFinite(root.player.position)
         ? Math.max(0, Math.min(root.duration, root.player.position)) : 0
 
-    // The dominant colour of the cover: the image averaged into an 8×8 canvas
-    // (iNiR quantizes to one sample; eight rows smooth banding without a grab
-    // pass) and leaned toward the theme's primary container so the art never
-    // fully owns the card.
-    property color artDominantColor: Theme.mix(Theme.purple, Theme.primaryContainer, 0.7)
-    Canvas {
-        id: quantizer
-        // Painted but never shown: an offscreen corner inside the clipped card.
-        // Immediate strategy paints on request instead of riding the frame loop,
-        // so the dominant colour lands as soon as the cover decodes (engine
-        // fixtures prove it inside a plain Window; a visible:false canvas never
-        // paints at all). The artReady gate keeps the pre-load paint pass from
-        // averaging an empty canvas into the scheme.
-        x: -width; y: -height
-        width: 8; height: 8
-        renderStrategy: Canvas.Immediate
-        property bool artReady: false
-        onPaint: {
-            if (!artReady)
-                return
-            const ctx = getContext("2d")
-            ctx.clearRect(0, 0, width, height)
-            ctx.drawImage(root.artUrl, 0, 0, width, height)
-            const data = ctx.getImageData(0, 0, width, height).data
-            let r = 0, g = 0, b = 0
-            const samples = width * height
-            for (let i = 0; i < samples; i++) {
-                r += data[i * 4]; g += data[i * 4 + 1]; b += data[i * 4 + 2]
-            }
-            root.artDominantColor = Theme.mix(
-                Qt.rgba(r / samples / 255, g / samples / 255, b / samples / 255, 1),
-                Theme.primaryContainer, 0.7)
-            // Do not pin lock-screen art in memory either (iNiR #163/#164 lesson).
-            unloadImage(root.artUrl)
-            artReady = false
-        }
-        Component.onCompleted: if (root.artUrl !== "") loadImage(root.artUrl)
-        onImageLoaded: { artReady = true; requestPaint() }
-        Connections {
-            target: root
-            function onArtUrlChanged() {
-                artReady = false
-                if (root.artUrl !== "")
-                    quantizer.loadImage(root.artUrl)
-            }
-        }
-    }
+    // The dominant colour of the cover (the pipeline and its lessons live in
+    // LockArtQuantizer); no art means the theme fallback. Declared after the
+    // quantizer: bindings evaluate in document order, before later ids exist.
+    LockArtQuantizer { id: quantizer; artUrl: root.artUrl }
+    readonly property color artDominantColor: quantizer.dominant
 
     // Material scheme adapted to the dominant colour (iNiR AdaptedMaterialScheme):
     // the art lends its hue while every role keeps its tone, so the text/track
@@ -105,6 +64,15 @@ Rectangle {
     border.width: 1
     border.color: Theme.border
     clip: true
+    // Real rounded corners: clip only cuts the bounding box, so the blurred
+    // backdrop and the gradient ran to square corners past the radius (the
+    // owner's live review of #158). The card composites through a mask shaped
+    // like itself — iNiR's own approach for this card.
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        maskEnabled: true
+        maskSource: Rectangle { width: root.width; height: root.height; radius: root.radius }
+    }
 
     // The blurred cover behind everything, dimmed by a horizontal gradient of
     // the adapted layer so the controls keep their ink (iNiR art backdrop).
@@ -136,17 +104,23 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 10
+        anchors.margins: 12
+        spacing: 12
 
-        // Cover art thumbnail (110px, masked corners) with the note-glyph fallback.
+        // Cover art thumbnail (110px) with the note-glyph fallback.
         Rectangle {
+            id: artThumb
             Layout.preferredWidth: 110
             Layout.preferredHeight: 110
             Layout.alignment: Qt.AlignVCenter
             radius: 12
             color: root.scheme.layer1
             clip: true
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: Rectangle { width: artThumb.width; height: artThumb.height; radius: artThumb.radius }
+            }
 
             Image {
                 id: art
@@ -168,14 +142,14 @@ Rectangle {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 2
+            spacing: 3
 
             ShellText {
                 Layout.fillWidth: true
                 text: root.title
                 elide: Text.ElideRight
                 color: root.scheme.onLayer0
-                font.family: Theme.fontFamily; font.pixelSize: 14; font.weight: Font.Medium
+                font.family: Theme.fontFamily; font.pixelSize: 15; font.weight: Font.Medium
             }
             ShellText {
                 Layout.fillWidth: true
@@ -205,7 +179,7 @@ Rectangle {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
                 ShellText {
                     text: root.progressAvailable ? FocusTimer.format(Math.floor(root.position)) : ""
@@ -247,6 +221,12 @@ Rectangle {
             }
         }
     }
+
+    // Engine seam: both corner masks must actually be armed. Reached through
+    // the layer property chains — ids declared inside layer.effect values do
+    // not join the file scope other bindings can see.
+    readonly property bool maskArmed: root.layer.enabled && root.layer.effect !== null
+        && artThumb.layer.enabled && artThumb.layer.effect !== null
 
     // The 1s position tick: Quickshell's getter advances its local clock; this
     // does not poll D-Bus (the MediaProgress lesson).

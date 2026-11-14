@@ -151,11 +151,15 @@ QtObject {
         closePanels();
         nativeOverviewDelay.restart();
     }
+    // A capture attempt while the session is locked parks in the two timers
+    // below: the deadline bump has already raised the lock surface's capture
+    // notice, and niri refuses screencopy on a locked session anyway — so the
+    // backend is never called.
     property bool overlayVisible: false; property real captureDeadline: 0
     property real recordDeadline: 0
     property var recordingRequest: ({}); property bool snapshotWarning: false
     function startRecording(request) { if(demo || authenticationActive) return; closePanels(); captureDelay.stop(); statusMessage=""; recordingRequest=request; recordDeadline=Date.now()+3000; recordDelay.restart(); }
-    property Timer recordDelay: Timer { interval: 80; onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.recordDeadline) restart(); else { root.statusMessage="Recording cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run("recordStart",root.recordingRequest); } }
+    property Timer recordDelay: Timer { interval: 80; onTriggered: { if(LockState.locked) return; if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.recordDeadline) restart(); else { root.statusMessage="Recording cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run("recordStart",root.recordingRequest); } }
     property string captureMode: "screen"
     function takeScreenshot(mode) {
         if (!['screen', 'area', 'window'].includes(mode) || demo || authenticationActive) return;
@@ -163,7 +167,7 @@ QtObject {
     }
     property Timer captureDelay: Timer {
         interval: 250
-        onTriggered: { if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
+        onTriggered: { if(LockState.locked) return; if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.captureDeadline) restart(); else { root.statusMessage="Capture cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run(({screen: 'screenshot', area: 'screenshotArea', window: 'screenshotWindow'})[root.captureMode]); }
     }
     // Q3 native router — the write families (plan §5 Q3). Real sessions route a family's
     // action names to the owning service's native calls (Pending sequencing unchanged so

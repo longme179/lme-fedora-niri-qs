@@ -12,6 +12,7 @@ Canvas {
     property var redoStack: []
     property var draft: null
     property string exportPath: ""
+    property bool exporting: false
     property bool ready: false
     signal exported(string path)
     signal exportFailed()
@@ -21,6 +22,7 @@ Canvas {
     Component.onCompleted: if (source) { loadImage(source); ready = isImageLoaded(source); }
     onImageLoaded: { ready = isImageLoaded(source); requestPaint(); }
     onStrokesChanged: requestPaint()
+    onPainted: if (exportPath && !exporting) finishExport()
     function point(x, y) { return {x: Math.max(0, Math.min(width, x)), y: Math.max(0, Math.min(height, y))}; }
     // shortcut: 200 strokes / 4000 points each, increase when long-form drawing is needed.
     function begin(x, y) { if (!ready || strokes.length >= 200) return; draft = {tool: tool, color: ink.toString(), width: lineWidth, points: [point(x, y)]}; requestPaint(); }
@@ -35,7 +37,15 @@ Canvas {
     function cancel() { draft = null; requestPaint(); }
     function undo() { if (strokes.length) { redoStack = redoStack.concat([strokes[strokes.length - 1]]); strokes = strokes.slice(0, -1); } }
     function redo() { if (redoStack.length) { strokes = strokes.concat([redoStack[redoStack.length - 1]]); redoStack = redoStack.slice(0, -1); } }
-    function exportTo(path) { if (!ready || exportPath) return; exportPath = path; requestPaint(); }
+    // Export only after the frame containing the latest strokes has painted, so the
+    // grabbed image cannot lag the canvas; exporting blocks re-entry during the grab.
+    function exportTo(path) { if (!ready || exportPath || exporting) return; exportPath = path; requestPaint(); }
+    function finishExport() {
+        if (!exportPath || exporting) return;
+        exporting = true;
+        const path = exportPath; exportPath = "";
+        grabToImage(result => { exporting = false; if (result && result.saveToFile(path)) exported(path); else exportFailed(); }, Qt.size(width, height));
+    }
     function paintStroke(ctx, stroke) {
         const a = stroke.points[0], b = stroke.points[stroke.points.length - 1];
         ctx.save(); ctx.globalAlpha = 1; ctx.lineWidth = stroke.width; ctx.lineCap = "round"; ctx.lineJoin = "round";
@@ -64,9 +74,5 @@ Canvas {
         const ctx = getContext("2d"); ctx.reset(); ctx.clearRect(0, 0, width, height); ctx.drawImage(source, 0, 0, width, height);
         for (const stroke of strokes) paintStroke(ctx, stroke);
         if (draft) paintStroke(ctx, draft);
-        if (exportPath) {
-            const path = exportPath; exportPath = "";
-            if (save(path)) exported(path); else exportFailed();
-        }
     }
 }

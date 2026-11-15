@@ -18,21 +18,25 @@ ShellRoot {
     property bool sourceReady: false
     property string ocr: ""
     readonly property ScreenshotEditor editor: view.item as ScreenshotEditor
-    Component.onCompleted: if (Quickshell.env("LME_TEST_CAPTURE") !== "1") Qt.quit()
+    Timer { id: sourceRetry; interval: 250; repeat: false; onTriggered: root.saveSource() }
+    function saveSource() {
+        if (root.sourceReady || !root.session.path) return;
+        original.grabToImage(result => { if (result.saveToFile(root.session.path)) root.sourceReady = true; });
+    }
+    Component.onCompleted: {
+        if (Quickshell.env("LME_TEST_CAPTURE") !== "1") Qt.quit();
+        else if (root.session.path) { Qt.callLater(root.saveSource); sourceRetry.start(); }
+    }
     FloatingWindow {
         id: window
         title: "LME Screenshot Fixture"; implicitWidth: 1280; implicitHeight: 900; fullscreen: true; color: Theme.background
-        Canvas {
+        Item {
             id: original; width: root.session.width || 960; height: root.session.height || 540
-            renderTarget: Canvas.Image; renderStrategy: Canvas.Immediate
-            onPaint: {
-                const ctx = getContext("2d"); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, width, height);
-                ctx.fillStyle = "#111111"; ctx.font = "bold 42px Roboto"; ctx.fillText("LME SCREENSHOT", 48, 74);
-                ctx.font = "24px Roboto"; ctx.fillText("Local OCR and flattened annotations", 48, 116);
-                ctx.fillStyle = "#9580ff"; ctx.fillRect(48, 160, 400, 280);
-                ctx.fillStyle = "#80ffea"; ctx.fillRect(480, 160, 430, 280);
-                if (!root.sourceReady && root.session.path && save(root.session.path)) root.sourceReady = true;
-            }
+            Rectangle { anchors.fill: parent; color: "#ffffff" }
+            Text { x: 48; y: 74; text: "LME SCREENSHOT"; font.pixelSize: 42; font.bold: true; color: "#111111" }
+            Text { x: 48; y: 116; text: "Local OCR and flattened annotations"; font.pixelSize: 24; color: "#111111" }
+            Rectangle { x: 48; y: 160; width: 400; height: 280; color: "#9580ff" }
+            Rectangle { x: 480; y: 160; width: 430; height: 280; color: "#80ffea" }
         }
         Loader {
             id: view; anchors.centerIn: parent; width: 1180; height: 860; active: root.sourceReady

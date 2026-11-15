@@ -17,7 +17,7 @@ GlassPanel {
     property bool activateAfterSearch: false
     readonly property bool previewOpen: !!previewImage
     readonly property bool searchFocused: search.activeFocus
-    focus: true
+    focus: true; property bool escapeFocusPending: false; Connections { target: root.Window.window; function onActiveFocusItemChanged() { if (escapeFocusPending && !root.previewOpen) { escapeFocusPending = false; root.focusSearch(); } } }
     // The host (SlideLoader) parks closed panels off-screen without toggling visible,
     // so this panel cannot gate refresh on its own visibility — ClipboardState.monitoring
     // derives from ShellState's panel routing instead (Q6 live-fix round 2).
@@ -48,7 +48,7 @@ GlassPanel {
             if (success) Qt.callLater(root.activateSelected);
         }
     }
-    Keys.onEscapePressed: { if (previewImage) previewImage = ""; else ShellState.closePanels(); }
+    Keys.onEscapePressed: { if (previewImage) { escapeFocusPending = true; previewImage = ""; } else ShellState.closePanels(); }
     ColumnLayout {
         anchors.fill: parent; anchors.margins: 22; spacing: 14
         RowLayout {

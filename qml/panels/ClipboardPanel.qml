@@ -124,7 +124,7 @@ GlassPanel {
                             visible: entry.modelData.kind === "image"
                             Layout.preferredWidth: 104; Layout.fillHeight: true
                             Image { anchors.fill: parent; source: entry.modelData.image; asynchronous: true; sourceSize.width: 208; sourceSize.height: 208; fillMode: Image.PreserveAspectFit }
-                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewClose.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
+                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
                         }
                         AbstractButton {
                             Layout.fillWidth: true; Layout.fillHeight: true
@@ -166,7 +166,7 @@ GlassPanel {
             Image { Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; sourceSize.width: 1000; sourceSize.height: 1000; asynchronous: true; fillMode: Image.PreserveAspectFit }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidButton { objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
+                LiquidButton { id: previewBack; objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
             }
         }
     }

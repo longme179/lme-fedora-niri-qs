@@ -170,7 +170,7 @@ QtObject {
         interval: 250
         onTriggered: if (root.ready && !ShellState.demo && !ShellState.settingsApp) root.runSearch()
     }
-    onMonitoringChanged: if (monitoring && ready) refreshState()
+    onMonitoringChanged: if (monitoring && ready && !ShellState.demo && !ShellState.settingsApp) refreshState()
 
     // ---- state sync and search ---------------------------------------------------------
     function refreshState() {

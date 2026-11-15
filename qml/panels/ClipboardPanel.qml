@@ -17,7 +17,7 @@ GlassPanel {
     property bool activateAfterSearch: false
     readonly property bool previewOpen: !!previewImage
     readonly property bool searchFocused: search.activeFocus
-    focus: true
+    focus: true; property bool escapeFocusPending: false; Connections { target: root.Window.window; function onActiveFocusItemChanged() { if (escapeFocusPending && !root.previewOpen) { escapeFocusPending = false; root.focusSearch(); } } }
     // The host (SlideLoader) parks closed panels off-screen without toggling visible,
     // so this panel cannot gate refresh on its own visibility — ClipboardState.monitoring
     // derives from ShellState's panel routing instead (Q6 live-fix round 2).
@@ -48,7 +48,7 @@ GlassPanel {
             if (success) Qt.callLater(root.activateSelected);
         }
     }
-    Keys.onEscapePressed: { if (previewImage) previewImage = ""; else ShellState.closePanels(); }
+    Keys.onEscapePressed: { if (previewImage) { escapeFocusPending = true; previewImage = ""; } else ShellState.closePanels(); }
     ColumnLayout {
         anchors.fill: parent; anchors.margins: 22; spacing: 14
         RowLayout {
@@ -124,7 +124,7 @@ GlassPanel {
                             visible: entry.modelData.kind === "image"
                             Layout.preferredWidth: 104; Layout.fillHeight: true
                             Image { anchors.fill: parent; source: entry.modelData.image; asynchronous: true; sourceSize.width: 208; sourceSize.height: 208; fillMode: Image.PreserveAspectFit }
-                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewClose.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
+                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
                         }
                         AbstractButton {
                             Layout.fillWidth: true; Layout.fillHeight: true
@@ -166,7 +166,7 @@ GlassPanel {
             Image { Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; sourceSize.width: 1000; sourceSize.height: 1000; asynchronous: true; fillMode: Image.PreserveAspectFit }
             RowLayout {
                 Layout.fillWidth: true
-                LiquidButton { objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
+                LiquidButton { id: previewBack; objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
             }
         }
     }

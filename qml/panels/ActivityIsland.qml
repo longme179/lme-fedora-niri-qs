@@ -11,6 +11,8 @@ SlideLoader {
     id: root
     property bool expanded: ShellState.activityOpen && !ShellState.authenticationActive
     readonly property real expansion: progress
+    readonly property real compactRadius: 15
+    readonly property real expandedRadius: compactRadius + Motion.rTile
     readonly property real sideInset: parent ? Math.min(14, Math.max(0, parent.width / 2 - 1)) : 14
     readonly property real edgeInset: parent ? Math.min(Theme.barTopMargin + 6, Math.max(0, parent.height / 2 - 1)) : Theme.barTopMargin + 6
     readonly property real compactWidth: Math.min(expandedWidth, Math.max(54, ShellState.activityAnchorWidth))
@@ -34,8 +36,10 @@ SlideLoader {
     // The pill family's motion language (A4b): width rides the morph token, height the long shapeshift tail.
     MotionValue { id: widthSpring; large: true; morphMs: Motion.morph; value: root.compactWidth; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedWidth : root.compactWidth }
     MotionValue { id: heightSpring; large: true; morphMs: Motion.shapeshift; value: 30; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedHeight : 30 }
+    // A4c: the corner radius rides the same morph as the width — one flight, not two clocks.
+    MotionValue { id: radiusSpring; morphMs: Motion.morph; value: root.compactRadius; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedRadius : root.compactRadius }
     // Rewind to the compact size when dormant so the next open re-expands.
-    onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30) }
+    onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30); radiusSpring.snapTo(root.compactRadius) }
     // The size morph must follow the flight, not just the mount state: a close
     // mid-expansion (open + ESC in quick succession) reverses the morph with
     // the exit instead of the island visibly still growing while it leaves.
@@ -43,12 +47,12 @@ SlideLoader {
     // still be mid-expansion during the few forced frames) and rewinds to the
     // compact park size so every real open expands from the pill.
     onWarmupActiveChanged: {
-        if (warmupActive) { widthSpring.snapTo(root.expandedWidth); heightSpring.snapTo(root.expandedHeight); }
-        else { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30); }
+        if (warmupActive) { widthSpring.snapTo(root.expandedWidth); heightSpring.snapTo(root.expandedHeight); radiusSpring.snapTo(root.expandedRadius); }
+        else { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30); radiusSpring.snapTo(root.compactRadius); }
     }
     content: GlassPanel { role: "islandFill";
         implicitHeight: card.implicitHeight + 76
-        anchors.fill: parent; radius: 15 + 13 * root.expansion; clip: true
+        anchors.fill: parent; radius: radiusSpring.value; clip: true
         MouseArea { anchors.fill: parent }
         Row {
             x: 16; y: 8; spacing: 8

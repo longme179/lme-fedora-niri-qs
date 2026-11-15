@@ -11,10 +11,12 @@
 // helper). qml/services/LockState.qml – the `lock` IPC target the helper drives
 // (before-sleep prepareSleep handshake, after-resume focus).
 // INVARIANT: the section keeps {enabled, running, paused, source, profile, available,
-// error}; an exited child is never respawned until the signature changes. GOTCHA: the
-// availability probe runs through the helper asynchronously — an enable holds one sync
-// round while it settles, so the install message stays exact. GOTCHA: the backend
-// surfaces any swayidle stderr as the section error (its own behavior) — ported as-is.
+// error}; a child that exits on its own is reported and not respawned, while a signature
+// change during a run sets restartPending and the exit handler starts the new argv.
+// GOTCHA: the availability probe runs through the helper asynchronously — an enable
+// holds one sync round while it settles; its callback re-enters sync, so the install
+// message stays exact. GOTCHA: the backend surfaces any swayidle stderr as the section
+// error (its own behavior) — ported as-is.
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -83,7 +85,7 @@ QtObject {
         const signature = [lastPreferences.idleEnabled === true, paused, lastAcOnline ? "ac" : "battery",
                            profile.display, profile.lock, profile.suspend, lockBeforeSleep].join("\u0000");
         if (signature !== root.signature && !((lastPreferences.idleEnabled === true) && !paused && !probeSettled)) {
-            // The enable decision holds one sync round while the probe settles.
+            // The first enable holds one sync round while the probe settles; its callback re-enters.
             root.signature = signature;
             error = "";
             if (lastPreferences.idleEnabled !== true || paused) {

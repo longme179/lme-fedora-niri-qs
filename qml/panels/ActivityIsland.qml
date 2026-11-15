@@ -25,14 +25,15 @@ SlideLoader {
     animateResize: false
     direction: Theme.barBottom ? "up" : "down"
     visible: mounted && (!dormant || warmupActive)
-    width: Math.max(1, Math.min(expandedWidth, Theme.springMotion ? widthSpring.value : compactWidth + (expandedWidth - compactWidth) * expansion))
-    height: Math.max(1, Math.min(expandedHeight, Theme.springMotion ? heightSpring.value : 30 + (expandedHeight - 30) * expansion))
+    width: Math.max(1, Math.min(expandedWidth, widthSpring.value))
+    height: Math.max(1, Math.min(expandedHeight, heightSpring.value))
     x: Math.max(sideInset, Math.min((parent ? parent.width : width) - width - sideInset, (ShellState.activityAnchorX >= 0 ? ShellState.activityAnchorX : (parent ? parent.width / 2 : width / 2)) - width / 2))
     y: Theme.barBottom && parent ? parent.height - edgeInset - height : edgeInset
     focus: expanded
     Keys.onEscapePressed: ShellState.closePanels()
-    MotionValue { id: widthSpring; large: true; value: root.compactWidth; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedWidth : root.compactWidth }
-    MotionValue { id: heightSpring; large: true; value: 30; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedHeight : 30 }
+    // The pill family's motion language (A4b): width rides the morph token, height the long shapeshift tail.
+    MotionValue { id: widthSpring; large: true; morphMs: Motion.morph; value: root.compactWidth; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedWidth : root.compactWidth }
+    MotionValue { id: heightSpring; large: true; morphMs: Motion.shapeshift; value: 30; target: root.mounted && (root.shown || root.warmupActive) ? root.expandedHeight : 30 }
     // Rewind to the compact size when dormant so the next open re-expands.
     onDormantChanged: if (dormant) { widthSpring.snapTo(root.compactWidth); heightSpring.snapTo(30) }
     // The size morph must follow the flight, not just the mount state: a close

@@ -35,7 +35,12 @@ Canvas {
     function cancel() { draft = null; requestPaint(); }
     function undo() { if (strokes.length) { redoStack = redoStack.concat([strokes[strokes.length - 1]]); strokes = strokes.slice(0, -1); } }
     function redo() { if (redoStack.length) { strokes = strokes.concat([redoStack[redoStack.length - 1]]); redoStack = redoStack.slice(0, -1); } }
-    function exportTo(path) { if (!ready || exportPath) return; exportPath = path; requestPaint(); }
+    function exportTo(path) { if (!ready || exportPath) return; exportPath = path; requestPaint(); Qt.callLater(root.finishExport); }
+    function finishExport() {
+        if (!exportPath) return;
+        const path = exportPath; exportPath = "";
+        grabToImage(result => { if (result && result.saveToFile(path)) exported(path); else exportFailed(); }, Qt.size(width, height));
+    }
     function paintStroke(ctx, stroke) {
         const a = stroke.points[0], b = stroke.points[stroke.points.length - 1];
         ctx.save(); ctx.globalAlpha = 1; ctx.lineWidth = stroke.width; ctx.lineCap = "round"; ctx.lineJoin = "round";
@@ -64,9 +69,5 @@ Canvas {
         const ctx = getContext("2d"); ctx.reset(); ctx.clearRect(0, 0, width, height); ctx.drawImage(source, 0, 0, width, height);
         for (const stroke of strokes) paintStroke(ctx, stroke);
         if (draft) paintStroke(ctx, draft);
-        if (exportPath) {
-            const path = exportPath; exportPath = "";
-            if (save(path)) exported(path); else exportFailed();
-        }
     }
 }

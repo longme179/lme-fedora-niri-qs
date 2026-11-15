@@ -11,10 +11,12 @@
 // helper). qml/services/LockState.qml – the `lock` IPC target the helper drives
 // (before-sleep prepareSleep handshake, after-resume focus).
 // INVARIANT: the section keeps {enabled, running, paused, source, profile, available,
-// error}; an exited child is never respawned until the signature changes. GOTCHA: the
-// availability probe runs through the helper asynchronously — an enable holds one sync
-// round while it settles, so the install message stays exact. GOTCHA: the backend
-// surfaces any swayidle stderr as the section error (its own behavior) — ported as-is.
+// error}; a child that exits on its own is reported and not respawned, while a signature
+// change during a run sets restartPending and the exit handler starts the new argv.
+// GOTCHA: the availability probe runs through the helper asynchronously — an enable
+// holds one sync round while it settles; its callback re-enters sync, so the install
+// message stays exact. GOTCHA: the backend surfaces any swayidle stderr as the section
+// error (its own behavior) — ported as-is.
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -32,6 +34,7 @@ QtObject {
     property string tail: ""           // the last 400 characters of the child's stderr
     property bool paused: false
     property bool stopping: false
+    property bool restartPending: false
     property bool probeSettled: false
     property var probeMissing: []
     property string probedNames: ""
@@ -82,21 +85,41 @@ QtObject {
         const signature = [lastPreferences.idleEnabled === true, paused, lastAcOnline ? "ac" : "battery",
                            profile.display, profile.lock, profile.suspend, lockBeforeSleep].join("\u0000");
         if (signature !== root.signature && !((lastPreferences.idleEnabled === true) && !paused && !probeSettled)) {
-            // The enable decision holds one sync round while the probe settles.
-            close();
+            // The first enable holds one sync round while the probe settles; its callback re-enters.
             root.signature = signature;
             error = "";
-            if (lastPreferences.idleEnabled === true && !paused) {
-                if (probeMissing.length) {
-                    error = "Install " + probeMissing.join(", ") + " to enable this idle profile.";
-                } else {
-                    swayidle.command = ["python3", helper, "--parent", String(Quickshell.processId), "client"]
-                        .concat(idleCommand(profile, lockBeforeSleep));
-                    stopping = false;
-                    swayidle.running = true;
-                }
+            if (lastPreferences.idleEnabled !== true || paused) {
+                restartPending = false;
+                close();
+            } else if (probeMissing.length) {
+                restartPending = false;
+                close();
+                error = "Install " + probeMissing.join(", ") + " to enable this idle profile.";
+            } else if (swayidle.running || swayidle.command.length || restartPending) {
+                // Serialize the restart behind the old child's exit: a childExited from the
+                // previous command must never clear the command we just installed.
+                restartPending = true;
+                close();
+            } else {
+                startChild(profile, lockBeforeSleep);
             }
         }
+        publish(profile);
+    }
+
+    function startChild(profile, lockBeforeSleep) {
+        swayidle.command = ["python3", helper, "--parent", String(Quickshell.processId), "client"]
+            .concat(idleCommand(profile, lockBeforeSleep));
+        stopping = false;
+        restartPending = false;
+        error = "";
+        swayidle.running = true;
+    }
+
+    function startCurrent() {
+        const profile = preferencesProfile(lastPreferences, lastAcOnline);
+        if (profile && lastPreferences.idleEnabled === true && !paused && !probeMissing.length)
+            startChild(profile, lastPreferences.idleLockBeforeSleep === true);
         publish(profile);
     }
 
@@ -163,7 +186,9 @@ QtObject {
             probeSettled = true;
             const missing = ok ? String(text || "").trim() : "?";
             probeMissing = missing ? missing.split(/\s+/).filter(Boolean) : [];
-            if (section.source)
+            if (preferencesProfile(lastPreferences, lastAcOnline))
+                syncPaused(lastPreferences, lastAcOnline, paused);
+            else if (section.source)
                 publish(preferencesProfile(lastPreferences, lastAcOnline));
         });
     }
@@ -176,12 +201,15 @@ QtObject {
     }
 
     function childExited() {
+        const restart = restartPending;
         if (swayidle.command.length) {
             swayidle.command = [];
-            if (!stopping)
+            if (!restart && !stopping)
                 error = "swayidle stopped: " + tail.trim();
         }
         stopping = false;
+        restartPending = false;
+        if (restart) Qt.callLater(startCurrent);
         publish(preferencesProfile(lastPreferences, lastAcOnline));
     }
 
@@ -190,6 +218,7 @@ QtObject {
     function close() {
         if (swayidle.running) {
             stopping = true;
+            swayidle.command = [];
             swayidle.running = false;
             runner.dispatch("niri", ["niri", "msg", "action", "power-on-monitors"], 3000, 16777216, () => {});
         }
@@ -197,7 +226,7 @@ QtObject {
         tail = "";
     }
 
-    Component.onDestruction: close()
+    Component.onDestruction: { restartPending = false; close() }
 
     function publish(profile) {
         const source = lastAcOnline ? "ac" : "battery";

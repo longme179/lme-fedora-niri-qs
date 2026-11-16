@@ -9,7 +9,7 @@ import "../components"
 import "../services"
 
 Variants {
-    model: !ShellState.batterySaverActive && ShellState.preferences.desktopShapes === true ? Quickshell.screens : []
+    model: AmbientPower.ambientActive && ShellState.preferences.desktopShapes === true ? Quickshell.screens : []
     delegate: PanelWindow {
         required property var modelData
         screen: modelData

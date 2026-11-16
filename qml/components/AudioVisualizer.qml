@@ -6,10 +6,10 @@ import "../services"
 import "../theme"
 Item {
     id: root
-    readonly property bool spectrumEnabled: !ShellState.batterySaverActive && ShellState.preferences.audioVisualizer === true
+    readonly property bool spectrumEnabled: AmbientPower.ambientActive && ShellState.preferences.audioVisualizer === true
     visible: spectrumEnabled
     property bool playing: false
-    readonly property bool wanted: visible && playing && ShellState.preferences.audioVisualizer === true && !ShellState.demo
+    readonly property bool wanted: visible && playing && ShellState.preferences.audioVisualizer === true && !ShellState.demo && AmbientPower.ambientActive
     property bool subscribed: false
     implicitHeight: spectrumEnabled ? 38 : 0
     function sync() { if (wanted===subscribed) return; if(wanted) VisualizerState.addRef(); else VisualizerState.removeRef(); subscribed=wanted; }

@@ -1,4 +1,5 @@
 pragma Singleton
+import QtQuick
 import Quickshell
 
 // PB-31: ambient power predicate. Whether always-on decorative surfaces

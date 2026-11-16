@@ -51,6 +51,7 @@ QtObject {
         activateDelay.stop();
         recedeRelease.stop();
         screenLocked = false;
+        writeRecoveryState(false); // an explicit cancel is a deliberate release
     }
 
     // Suspend handshake: lock immediately (skip the debounce) and report whether
@@ -76,6 +77,7 @@ QtObject {
             return;
         recedeRelease.stop();
         screenLocked = false;
+        writeRecoveryState(false); // the fallback keeps its own state file (the v2 split)
         Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/idle_control.py"), "lock"]);
     }
 
@@ -108,6 +110,7 @@ QtObject {
         // Release before anything else, or the compositor keeps its own fallback
         // lock surface that cannot be interacted with (iNiR lesson).
         screenLocked = false;
+        writeRecoveryState(false); // authenticated: the only unlock that persists
         lockContext.reset();
     }
 
@@ -206,7 +209,12 @@ QtObject {
         }
     }
 
-    onScreenLockedChanged: writeRecoveryState(screenLocked)
+    // A lock persists the moment it engages; an unlock persists only through the
+    // deliberate release paths (finishUnlock, deactivate, useFallbackLock). A hot
+    // reload tears the engine down mid-lock and must never downgrade the file to
+    // "unlocked" on the way out, or the reloaded shell abandons a still-locked
+    // compositor session to niri's dead-locker screen (2026-11-16 deploy incident).
+    onScreenLockedChanged: if (screenLocked) writeRecoveryState(true)
 
     // ---- native router (PowerMenu "lock"; the backend stays the A/B fallback) --
     readonly property var handledActions: ["lock"]

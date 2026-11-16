@@ -242,7 +242,7 @@ Item {
                         radius: 10
                         color: Theme.panel
                         clip: true
-                        Image { anchors.fill: parent; source: root.mediaDisplay ? root.mediaDisplay.artUrl : ""; retainWhileLoading: true; sourceSize.width: 96; sourceSize.height: 96; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                        SmartImage { anchors.fill: parent; source: root.mediaDisplay ? root.mediaDisplay.artUrl : "" }
                         ShellText { anchors.centerIn: parent; visible: !root.mediaDisplay || !root.mediaDisplay.artUrl; text: "♫"; color: Theme.pink; font.pixelSize: 26 }
                     }
                     ColumnLayout {

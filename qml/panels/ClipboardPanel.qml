@@ -123,7 +123,7 @@ GlassPanel {
                         Item {
                             visible: entry.modelData.kind === "image"
                             Layout.preferredWidth: 104; Layout.fillHeight: true
-                            Image { anchors.fill: parent; source: entry.modelData.image; asynchronous: true; sourceSize.width: 208; sourceSize.height: 208; fillMode: Image.PreserveAspectFit }
+                            SmartImage { anchors.fill: parent; source: entry.modelData.image; fillMode: Image.PreserveAspectFit }
                             MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
                         }
                         AbstractButton {
@@ -163,7 +163,7 @@ GlassPanel {
         ColumnLayout {
             anchors.fill: parent; anchors.margins: 28; spacing: 18
             LabelText { text: "Image preview"; font.pixelSize: 22; font.weight: Font.Bold; Layout.fillWidth: true }
-            Image { Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; sourceSize.width: 1000; sourceSize.height: 1000; asynchronous: true; fillMode: Image.PreserveAspectFit }
+            SmartImage { Layout.fillWidth: true; Layout.fillHeight: true; source: root.previewImage; fillMode: Image.PreserveAspectFit }
             RowLayout {
                 Layout.fillWidth: true
                 LiquidButton { id: previewBack; objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }

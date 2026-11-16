@@ -57,12 +57,23 @@ QtObject {
         request(JSON.stringify({Action: action}) + "\n", (ok, value, error) => done(ok, error));
     }
 
+    // niri's raw read reply is {"Ok":{"Workspaces":[...]}} / {"Ok":{"Windows":[...]}};
+    // `niri msg -j` unwraps that envelope before printing. lineRead hands us reply.Ok,
+    // so unwrap the named field here. The array branch keeps older reply shapes and
+    // the test fixture working.
+    function readRows(reply, key) {
+        if (Array.isArray(reply)) return reply;
+        if (reply && Array.isArray(reply[key])) return reply[key];
+        return null;
+    }
+
     // The reseed/validation read pair (backend: refresh_niri over `niri msg --json`), on two
     // separate connections exactly like the backend's two CLI invocations.
     function reads(done) {
         request('"Workspaces"\n', (okWorkspaces, workspaces) => {
             request('"Windows"\n', (okWindows, windows) => {
-                done(okWorkspaces && okWindows ? NiriModel.fromReads(workspaces, windows)
+                done(okWorkspaces && okWindows
+                    ? NiriModel.fromReads(readRows(workspaces, "Workspaces"), readRows(windows, "Windows"))
                     : {available: false, workspaces: [], windows: []});
             });
         });

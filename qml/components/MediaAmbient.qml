@@ -16,7 +16,7 @@ Item {
     property string shapeStyle: "mixed"
     property real motionSpeed: 1
     property bool rotateShapes: true
-    readonly property bool animating: playing && visible && width > 0 && height > 0 && Theme.animations && shapesEnabled && (Window.window?.visible ?? false)
+    readonly property bool animating: playing && visible && width > 0 && height > 0 && Theme.animations && shapesEnabled && (Window.window?.visible ?? false) && AmbientPower.ambientActive
     objectName: "mediaAmbient"
     clip: true
     Loader {

@@ -14,7 +14,7 @@ ColumnLayout {
     function refresh() { if (ShellState.backendReady) ShellState.run("idleRefresh"); }
     Component.onCompleted: refresh()
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.refresh(); } }
-    Timer { interval: 2000; running: ShellState.backendReady; repeat: true; onTriggered: root.refresh() }
+    Timer { interval: 2000; running: root.visible && ShellState.backendReady; repeat: true; onTriggered: root.refresh() }
     function choices(source, key, minutes) {
         const all = durations.includes(minutes) ? durations : durations.concat(minutes).sort((a,b)=>a-b);
         const profile = (ShellState.preferences.idleProfiles || {})[source] || {};

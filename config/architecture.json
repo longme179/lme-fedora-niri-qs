@@ -407,6 +407,7 @@
     "tests/test_native_display_idle.py": 695,
     "tests/test_native_clipboard.py": 388,
     "image_actions.py": 61,
-    "config/architecture.json": 412
+    "config/architecture.json": 413,
+    "tests/test_capture_flameshot.py": 335
   }
 }

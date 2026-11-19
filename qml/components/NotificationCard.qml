@@ -15,7 +15,6 @@ GlassPanel {
     property bool animateIdle: true
     property bool dismissible: true
     signal dismissRequested()
-    signal annotateRequested()
     signal actionRequested(string identifier)
     readonly property real padding: Math.min(Theme.notificationPadding, Math.max(8, (maximumHeight - 60) / 2))
     readonly property bool overflowing: details.contentHeight > details.height + 1
@@ -25,8 +24,6 @@ GlassPanel {
     border.width: Theme.notificationBorderWidth
     border.color: entry.urgency === 2 ? Theme.red : Theme.notificationBorder
     implicitHeight: Math.min(maximumHeight, header.implicitHeight + message.implicitHeight + padding * 2 + 16)
-
-    MouseArea { anchors.fill: parent; enabled: !!root.entry.imagePath; onClicked: root.annotateRequested() }
 
     RowLayout {
         id: header
@@ -50,7 +47,6 @@ GlassPanel {
         clip: true; interactive: root.overflowing; boundsBehavior: Flickable.StopAtBounds
         contentWidth: width; contentHeight: message.implicitHeight + 8
         ScrollBar.vertical: ScrollBar {}
-        MouseArea { anchors.fill: message; enabled: !!root.entry.imagePath; onClicked: root.annotateRequested() }
         Column {
             id: message
             x: 4; y: 4; width: Math.max(0, details.width - 12); spacing: 8
@@ -70,7 +66,6 @@ GlassPanel {
                 id: actions
                 objectName: "notificationActions"
                 width: parent.width; spacing: 8
-                LiquidButton { objectName: "notificationAnnotate-" + root.entry.id; visible: !!root.entry.imagePath; text: "Annotate"; width: Math.min(implicitWidth, actions.width); onClicked: root.annotateRequested() }
                 Repeater {
                     model: root.entry.active === false ? [] : root.entry.actions || []
                     delegate: LiquidButton {

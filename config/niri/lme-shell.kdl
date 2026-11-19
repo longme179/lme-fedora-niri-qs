@@ -121,3 +121,8 @@ blur {
     noise 0.02
     saturation 1.0
 }
+window-rule {
+    match app-id="^flameshot$"
+    match title="^Screenshot (.*)$"
+    open-floating true
+}

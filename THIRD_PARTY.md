@@ -181,7 +181,7 @@ Launcher file search references DMS `DSearchService.qml` (6640a943, MIT). LME us
 
 Recording workflow references iNiR `scripts/videos/record.sh` / `RecordingOsd.qml` (48cdcecb, GPL-3.0 with NOTICE). The LME manager adapts NVIDIA-first → VAAPI → software fallback for owned processes and existing IPC. Encoder probes run only when capture starts; upstream idle NVIDIA polling and global stop logic are not used. iNiR attribution remains in README/About and `third_party/iNiR-NOTICE`.
 
-External screenshot annotation adapts DMS `quickshell/Services/NiriService.qml::handleScreenshotCaptured` at `a1e6f6d6acae5e0688a4f04bd0e584b201ff6f68` (MIT, Copyright ©2025 Avenge Media LLC; full notice in `third_party/DankMaterialShell-LICENSE`). LME saves its flattened PNG before passing an allowlisted Satty/Swappy argv, retaining edits after session cleanup. MIT and iNiR's GPL version 3 with retained section 7 notice can be combined with LME under GPL version 3; this does not relicense upstream material as "or later". Swappy/Satty and wf-recorder are external programs, not bundled source.
+The new screenshot pipeline uses flameshot (Fedora: `sudo dnf install flameshot`) for area/full-screen capture. flameshot is called via the existing allowlist with XDG_CURRENT_DESKTOP=sway. flameshot cannot open existing images; for that, LME uses a private temporary copy opened with xdg-open, following the old Annotation-* plumbing pattern. flameshot is not bundled and is optional; Satty/Swappy are deprecated for screenshot annotation.
 
 
 Display mirroring uses the external [wl-mirror](https://github.com/Ferdi265/wl-mirror)

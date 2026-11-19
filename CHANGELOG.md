@@ -1,6 +1,16 @@
-# Changelog
-
 ## Unreleased
+- Replaced Satty/Swappy screenshot pipeline with flameshot (Fedora: `sudo dnf install flameshot`)
+- Drop "Focused window" capture entirely; area captures use `flameshot gui`, screen captures use `flameshot full`
+- Clipboard images preview in place and can be opened with the default viewer (private temporary copy, mode 0600, xdg-open)
+- Remove the old annotation editor; all screenshot editing is external via flameshot
+- Keep the capture deadline lock notice and no-flameshot-while-locked behavior
+- Add niri window-rule for flameshot app-id (regex: `^flameshot$`)
+- Update the command_runner allowlist (swap satty/swappy for flameshot/xdg-open)
+- Update deployment scripts and documentation (install-fedora.sh, requirements-fedora.txt, doctor.sh, README.md, THIRD_PARTY.md)
+- Regenerate settings fixtures (captureEditor removed)
+- New focused test uses a fake flameshot script in PATH that records argv and exits 0
+
+
 
 - Completed the QML-first migration's Q5 content families: weather and lyrics
   fetch, cache and schedule from the shell itself (same endpoints, same

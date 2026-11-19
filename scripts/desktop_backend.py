@@ -49,14 +49,13 @@ from idle_control import IdleControl, DEFAULT_IDLE_PROFILES, validate_profiles, 
 from niri_keybinds import read_keybinds
 from niri_events import NiriStateCache, read_niri_state
 from night_light import NightLight, clock_minutes
-from screen_capture import ScreenCapture, annotate_image
 from privacy import captures
 from content_types import MAX_TEXT
 from gowall_actions import GowallCapabilities, provide as provide_gowall
 from saver_actions import SaverCapabilities, provide as provide_saver
 from recording_actions import RecordingCapabilities, provide as provide_recording
 from palette_actions import PaletteCapabilities, provide as provide_palette
-from capture_actions import ControlCapabilities, ImageCapabilities, LeaseCapabilities, provide_controls, provide_image, provide_sessions
+from image_actions import ImageCapabilities, open_image, provide_image
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
 from display_mirror import DisplayMirror
@@ -320,7 +319,6 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "recordingCodec" and value in ("auto","h264","hevc","av1","vp9"): return value
     if key == "recordingFps" and type(value) is int and value in (24,30,60,120): return value
     if key == "recordingBitrate" and type(value) is int and 1000 <= value <= 100000: return value
-    if key == "captureEditor" and value in ("auto","satty","swappy"): return value
     if key == "recordingFolder" and isinstance(value,str) and 1<=len(value)<=4096 and not any(ord(c)<32 for c in value): return str(Path(value).expanduser().resolve())
     if key == "motionPreset" and value in ("smooth", "expressive", "jelly", "jelly-v2"): return value
     if key == "motionSpeed" and finite_number(value) and .5 <= value <= 2: return float(value)
@@ -586,11 +584,6 @@ class DesktopBackend:
                 lambda value:self.toggle_battery_saver(value),lambda value:setattr(self,'battery_saver_state',value))),
             (provide_file_search, SearchCapabilities(lambda:self.preferences.values,self.replace_file_search,
                 lambda value:setattr(self,'file_search',value),lambda *args:search_files(*args))),
-            (provide_sessions, LeaseCapabilities(lambda:self.preferences.values,lambda:self.capture.state,
-                lambda *args:self.capture.export(*args),lambda *args:self.capture.annotate(*args),
-                lambda *args:self.capture.ocr(*args),lambda value:self.capture.state.__setitem__('ocrText',value))),
-            (provide_controls, ControlCapabilities(lambda mode:self.capture.start(mode),lambda:self.capture.close(),
-                lambda:self.capture.languages(),lambda:self.capture.state)),
             (BACKEND_FACTORIES['weather'], WeatherCapabilities(lambda:self.preferences.values,lambda query:self.weather.search(query),
                 lambda:self.weather.detect(),lambda automatic:self.weather.refresh(automatic),lambda:self.demo_snapshot(),
                 lambda values:self.preferences.update(values))),
@@ -608,7 +601,7 @@ class DesktopBackend:
             (provide_palette, PaletteCapabilities(self.runner.executable, lambda:self.preferences.values,
                 lambda value:setattr(self,'palette_preview',value), lambda *args:palette_preview(self.runner,*args),
                 lambda:self.palette_preview,lambda values:self.preferences.update(values))),
-            (provide_image, ImageCapabilities(lambda:self.preferences.values,lambda editor,path:annotate_image(self.runner,editor,path))),
+            (provide_image, ImageCapabilities(lambda path:open_image(self.runner,path))),
             (provide_lock, LockCapabilities(self.runner.executable,lambda:self.lock_session)),
             (BACKEND_FACTORIES['wifi'], ConnectionsCapabilities(self._wifi_capabilities, self.runner.available, lambda:tuple(self.feature_jobs), split_nmcli, lambda argv:self.runner.spawn(argv), lambda name:self.runner.executable(name))),
             (provide_wallpaper_scan, WallpaperScanCapabilities(lambda folder: wallpaper_library(folder),
@@ -652,7 +645,6 @@ class DesktopBackend:
         self.idle_state = {}
         self.keybinds = {"path": "", "bindings": [], "errors": []}
         self.night_light = NightLight(self.runner); self.night_state = {}
-        self.capture = ScreenCapture(self.runner)
         self.recorder = Recorder(self.runner,sysfs)
         self.mirror = DisplayMirror(self.runner)
         self.mirror_state = self.mirror.state() if not demo else {'active': False, 'available': True, 'error': ''}
@@ -1108,7 +1100,6 @@ class DesktopBackend:
         if self.manage_idle and self.session_daemons and not self.settings_only:
             place = self.weather.auto_location if self.preferences.values['weatherAutoLocation'] else self.preferences.values['weatherLocation']
             self.night_state = self.night_light.sync(self.preferences.values, place)  # DEPRECATED(Q4->Q6): native NightLightState owns wlsunset; A/B window
-        self.capture.refresh()
         if not self.settings_only:
             self.mirror_state = self.mirror.state(
                 outputs=self.display_control.outputs() if self.mirror.child else None,
@@ -1162,7 +1153,7 @@ class DesktopBackend:
                 "mirror": self.mirror_state, "recorder": self.recorder.state(), "fileSearch": self.file_search,
                 "palettePreview": self.palette_preview, "wallpaperLibrary": self.wallpaper_library, "wallpaperTransitions": WALLPAPER_TRANSITIONS, "wallpaperDaemon": self.wallpaper_daemon, "displays": self.displays,
                 "idle": self.idle_state, "keybinds": self.keybinds, "platform": self.platform,
-                "nightLight": self.night_state, "capture": dict(self.capture.state)}
+                "nightLight": self.night_state}
 
     @staticmethod
     def valid_notifications(value):
@@ -1192,10 +1183,6 @@ class DesktopBackend:
             if not job.done(): continue
             self.result_sequence += 1; spec = self.actions.get(action)  # INVARIANT: one completion published per cycle (sequence)
             try:
-                if getattr(job, 'capture_token', self.capture.state.get('token')) != self.capture.state.get('token'):
-                    self.last_result = {'ok': True, 'action': action, 'message': '', 'sequence': self.result_sequence}
-                    del self.feature_jobs[action]
-                    break
                 value = job.result()
                 if spec is not None and spec.execution == 'worker':
                     spec.complete(value)
@@ -1252,7 +1239,7 @@ class DesktopBackend:
             self._demo_state['imageUtilities']=dict(self.image_utilities.state)
             self._demo_state['wallpaperDaemon']=self.wallpaper_daemon
             self._demo_state.update(mirror=self.mirror_state, wallpaperLibrary=self.wallpaper_library, displays=self.displays, notificationHistory=[],
-                monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state, capture=self.capture.state)
+                monitor=self.monitor.state if self.monitor_enabled else {}, idle=self.idle_state, keybinds=self.keybinds, platform=self.platform, nightLight=self.night_state)
             unit = self.preferences.values["weatherUnit"]
             self._demo_state["weather"].update(automatic=self.preferences.values["weatherAutoLocation"],
                 unit="°F" if unit == "fahrenheit" else "°C", temperature=84 if unit == "fahrenheit" else 29,
@@ -1672,7 +1659,7 @@ def main(argv: list[str] | None = None) -> int:
             deadline = min(next_poll, event_refresh_due) if event_refresh_due is not None else next_poll
             if not args.demo and event_process is None and backend.niri["available"]:
                 deadline = min(deadline, next_event_retry)
-            if backend.capture.state['status'] == 'pending' or backend.feature_jobs: deadline = min(deadline, time.monotonic() + .2)
+            if backend.feature_jobs: deadline = min(deadline, time.monotonic() + .2)
             for key, _mask in selector.select(max(0, deadline - time.monotonic())):
                 data = os.read(key.fd, 65536)
                 if not data:
@@ -1703,9 +1690,6 @@ def main(argv: list[str] | None = None) -> int:
                     next_poll = time.monotonic() + args.interval
                     event_refresh_due = None
             now = time.monotonic()
-            capture_status = backend.capture.state['status']
-            backend.capture.refresh()
-            changed = changed or capture_status != backend.capture.state['status']
             if changed or now >= next_poll or any(job.done() for job in backend.feature_jobs.values()) or (event_refresh_due is not None and now >= event_refresh_due):
                 emit(backend)
                 next_poll = time.monotonic() + args.interval
@@ -1715,7 +1699,6 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         backend.idle_control.close()
         backend.night_light.close()
-        backend.capture.close()
         backend.recorder.close()
         backend.mirror.close()
         backend.wallpapers.close()

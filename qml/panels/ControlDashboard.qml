@@ -101,7 +101,7 @@ Item {
                 editing: root.editing; dragLayer: root; viewport: scroll
                 components: ({wifi: wifiModule, bluetooth: bluetoothModule, microphone: microphoneModule, dnd: ShellState.settingsPageAvailable("notifications") ? dndModule : null,
                     stayAwake: ShellState.settingsPageAvailable("idle") ? stayAwakeModule : null, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
-                    captureScreen: screenModule, captureArea: areaModule, captureWindow: windowModule,
+                    captureScreen: screenModule, captureArea: areaModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
                     batterySaver: batterySaverModule, equalizer: equalizerModule, settings: settingsModule, power: powerModule})
             }
@@ -324,11 +324,7 @@ Item {
     }
     Component {
         id: captureModule
-        ColumnLayout {
-            LabelText { visible: (ShellState.snapshot.capture || {}).status === "pending"; text: "A capture is pending. Escape cancels niri's selector; use Cancel capture to start again."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted }
-            LiquidButton { text: "Cancel capture"; visible: (ShellState.snapshot.capture || {}).status === "pending"; onClicked: ShellState.run("captureClose") }
-            RecorderWidget { Layout.fillWidth: true; visible: ShellState.preferences.recordingEnabled !== false }
-        }
+        RecorderWidget { Layout.fillWidth: true; visible: ShellState.preferences.recordingEnabled !== false }
     }
     Component {
         id: overviewModule
@@ -336,5 +332,4 @@ Item {
     }
     Component { id: screenModule; Tile { label: "Screen capture"; detail: "Capture your display"; iconName: "camera"; onClicked: ShellState.takeScreenshot("screen") } }
     Component { id: areaModule; Tile { label: "Select area"; detail: "Choose a region"; iconName: "camera"; onClicked: ShellState.takeScreenshot("area") } }
-    Component { id: windowModule; Tile { label: "Focused window"; detail: "Capture the active window"; iconName: "overview"; onClicked: ShellState.takeScreenshot("window") } }
 }

@@ -74,6 +74,8 @@ awww
 # Screenshot studio uses niri capture, Qt Canvas annotations and Tesseract OCR.
 # slurp selects regions for screen recording.
 # External annotation: Fedora 44 supplies Swappy; Satty is supported if installed separately.
+# flameshot replaces Satty/Swappy for area/full-screen capture (Fedora: `sudo dnf install flameshot`).
+# Click clipboard images to preview or open with the default viewer (xdg-open).
 swappy
 slurp
 

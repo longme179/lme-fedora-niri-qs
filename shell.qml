@@ -253,20 +253,6 @@ ShellRoot {
     Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
     Component { id: overviewComponent; Overview {} }
     Component { id: wifiComponent; WifiPanel {} }
-    LazyLoader {
-        active: !ShellState.demo && (ShellState.snapshot.capture || {}).status === "ready"
-        component: FloatingWindow {
-            id: captureWindow
-            title: "LME Screenshot"; implicitWidth: 1180; implicitHeight: 860; minimumSize: Qt.size(850, 700)
-            color: Theme.background
-            onClosed: ShellState.run("captureClose")
-            ScreenshotEditor {
-                anchors.fill: parent
-                session: ShellState.snapshot.capture || {}
-                onCloseRequested: if (!busy) ShellState.run("captureClose")
-            }
-        }
-    }
     Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
     StatusWindow { preview: root.preview }
     UndoToast {} // the undo-first toast host (UndoState offers surface here)

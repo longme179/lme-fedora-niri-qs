@@ -90,7 +90,6 @@ PanelWindow {
                     maximumHeight: Math.max(1, (root.availableHeight - (toastModel.count - 1) * toastColumn.spacing) / Math.max(1, toastModel.count))
                     animateIdle: toast.shown
                     onDismissRequested: Notifications.dismiss(toast.entry.id)
-                    onAnnotateRequested: Notifications.openImage(toast.entry.id)
                     onActionRequested: identifier => Notifications.invokeAction(toast.entry.id, identifier)
                 }
             }

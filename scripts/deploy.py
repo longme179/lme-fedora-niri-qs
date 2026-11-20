@@ -128,7 +128,7 @@ def deploy(args):
     with summary.open('a') as stream: stream.write('\n'.join([f'Runtime: {binary}', *notes, 'Status: complete'])+'\n')
     print(f'Deployed; {len(tx.entries)} file changes. Read {report}/changes.diff and report.txt.')
     print('Rollback: '+rollback)
-    missing = [name for name in ('awww', 'awww-daemon', 'gowall', 'satty') if not shutil.which(name)]
+    missing = [name for name in ('awww', 'awww-daemon', 'gowall', 'satty', 'flameshot') if not shutil.which(name)]
     if missing: print('Optional tools not installed: '+', '.join(missing)+'; see docs/INSTALL.md.')
     print(f'Run {command} doctor inside niri. Log out/in to replace existing bars/agents cleanly.')
     if args.start: start_shell(command, binary)

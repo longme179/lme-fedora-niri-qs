@@ -88,9 +88,6 @@ binds {
     Ctrl+Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: screen" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "screen";
     }
-    Alt+Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: window" {
-        spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "window";
-    }
 }
 
 // blur-section: requires niri >= 26.04; deploy trims this whole section on older builds.
@@ -120,4 +117,9 @@ blur {
     offset 3.0
     noise 0.02
     saturation 1.0
+}
+window-rule {
+    match app-id="^flameshot$"
+    match title="^Screenshot (.*)$"
+    open-floating true
 }

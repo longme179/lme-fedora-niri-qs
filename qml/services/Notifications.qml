@@ -132,12 +132,6 @@ Singleton {
         // niri sends its screenshot URI as app_icon, with no native notification action.
         return [hints["image-path"], hints.image_path, notification.appIcon, notification.image].find(value => typeof value === "string" && (value.startsWith("/") || value.startsWith("file://"))) || "";
     }
-    function openImage(id) {
-        const entry = history.find(e => e.id === id);
-        if (!entry || !entry.imagePath) return;
-        ShellState.run("imageAnnotate", {path: entry.imagePath});
-        hidePopup(id);
-    }
 
     function snapshot(notification, timestamp, popup) {
         return {

@@ -42,6 +42,7 @@ packages=(git niri quickshell python3 python3-gobject-base qt6-qtbase qt6-qtdecl
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
         cava matugen wl-mirror wf-recorder ffmpeg-free pulseaudio-utils slurp swappy
+        flameshot
         blueman swaylock swayidle wlsunset tesseract tesseract-langpack-eng tesseract-langpack-vie libnotify playerctl
         xdg-utils xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
         gnome-keyring)

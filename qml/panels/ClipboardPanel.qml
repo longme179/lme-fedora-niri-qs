@@ -25,7 +25,7 @@ GlassPanel {
     function activateSelected() {
         const item = ClipboardState.entries[history.currentIndex];
         if (!item) return;
-        if (item.kind === "image") ShellState.run("imageAnnotate", {path: item.image});
+        if (item.kind === "image") { root.previewImage = item.image; previewBack.forceActiveFocus(); }
         else if (!ClipboardState.copyPending) ClipboardState.send("copy", {id: item.id});
     }
     function moveSelection(delta) {
@@ -124,17 +124,17 @@ GlassPanel {
                             visible: entry.modelData.kind === "image"
                             Layout.preferredWidth: 104; Layout.fillHeight: true
                             SmartImage { anchors.fill: parent; source: entry.modelData.image; fillMode: Image.PreserveAspectFit }
-                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } else ShellState.run("imageAnnotate", {path: entry.modelData.image}); } }
+                            MouseArea { objectName: "clipboardImage" + entry.index; anchors.fill: parent; onClicked: { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } }
                         }
                         AbstractButton {
                             Layout.fillWidth: true; Layout.fillHeight: true
-                            Accessible.name: entry.modelData.kind === "image" ? "Annotate image" : "Copy clipboard text"
-                            enabled: entry.modelData.kind === "image" ? !ShellState.pendingActions.imageAnnotate : ClipboardState.available && !ClipboardState.copyPending
-                            onClicked: { root.selectedId = entry.modelData.id; if (entry.modelData.kind === "image") ShellState.run("imageAnnotate", {path: entry.modelData.image}); else ClipboardState.send("copy", {id: entry.modelData.id}); }
+                            Accessible.name: entry.modelData.kind === "image" ? "Preview image" : "Copy clipboard text"
+                            enabled: entry.modelData.kind === "image" || ClipboardState.available && !ClipboardState.copyPending
+                            onClicked: { root.selectedId = entry.modelData.id; if (entry.modelData.kind === "image") { root.previewImage = entry.modelData.image; previewBack.forceActiveFocus(); } else ClipboardState.send("copy", {id: entry.modelData.id}); }
                             contentItem: ColumnLayout {
                                 spacing: 5
                                 LabelText { text: entry.modelData.preview; Layout.fillWidth: true; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight; font.pixelSize: 14 }
-                                LabelText { text: (entry.modelData.pinned ? "Pinned · " : "") + (entry.modelData.kind === "image" ? "Click to annotate · Right-click to preview" : Math.max(1, Math.round(entry.modelData.bytes / 1024)) + " KB · Text"); color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                                LabelText { text: (entry.modelData.pinned ? "Pinned · " : "") + (entry.modelData.kind === "image" ? "Click to preview" : Math.max(1, Math.round(entry.modelData.bytes / 1024)) + " KB · Text"); color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.Wrap }
                             }
                         }
                         ColumnLayout {
@@ -154,7 +154,7 @@ GlassPanel {
                 LabelText { text: search.text ? "Try another word or filter." : "Copy text or an image from an application. It will appear in this history."; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; horizontalAlignment: Text.AlignHCenter }
             }
         }
-        LabelText { text: "↑ ↓ select    Enter copy text / annotate image    Escape close"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
+        LabelText { text: "↑ ↓ select    Enter copy text / preview image    Escape close"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
     }
     Rectangle {
         visible: !!root.previewImage
@@ -167,6 +167,8 @@ GlassPanel {
             RowLayout {
                 Layout.fillWidth: true
                 LiquidButton { id: previewBack; objectName: "clipboardPreviewBack"; text: "Back"; onClicked: { root.previewImage = ""; root.focusSearch(); } }
+                Item { Layout.fillWidth: true }
+                LiquidButton { objectName: "clipboardOpenImage"; text: "Open with default viewer"; enabled: !ShellState.pendingActions.imageOpen; onClicked: ShellState.run("imageOpen", {path: root.previewImage}) }
             }
         }
     }

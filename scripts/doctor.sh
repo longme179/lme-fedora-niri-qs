@@ -73,6 +73,7 @@ if command -v satty >/dev/null 2>&1; then
     optional satty 'external screenshot annotation'
 else
     optional swappy 'external screenshot annotation: swappy (or separately installed satty)'
+    optional flameshot
 fi
 optional wl-mirror 'external display mirroring: wl-mirror'
 optional wf-recorder 'screen recording: wf-recorder'

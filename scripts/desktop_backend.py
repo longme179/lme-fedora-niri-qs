@@ -63,7 +63,7 @@ from mirror_actions import MirrorCapabilities, provide as provide_mirror
 from file_search_actions import SearchCapabilities, provide as provide_file_search
 from file_search import roots as search_roots, search as search_files
 from threading import Event
-from wallpaper_palette import preview as palette_preview, validate_palette
+from wallpaper_palette import preview as palette_preview, validate_palette, follow_wallpaper_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
 from settings_transfer import export_document, read_document, document, RETIRED_PERSISTENCE
@@ -288,7 +288,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
         if low <= value <= high: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"desktopEnabled", "desktopShapes", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "desktopShapes", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled", "wallpaperPaletteAuto"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value
@@ -1322,7 +1322,7 @@ class DesktopBackend:
     def apply_wallpaper(self, raw: Any, save: bool = True, animate: bool = True, output: str = '') -> str:
         if self.demo:
             raise ValueError("Wallpaper commands are disabled in demo mode")
-        return self.wallpapers.apply(raw,output,save=save,animate=animate)
+        return follow_wallpaper_palette(self, self.wallpapers.apply(raw,output,save=save,animate=animate), raw)
 
     @staticmethod
     def percentage(value: Any, minimum: int = 0) -> int:
@@ -1343,7 +1343,7 @@ class DesktopBackend:
             if not isinstance(request, dict) or not isinstance(action, str) or not action: raise ValueError("Input must be an object with an action")
             spec, context = self.actions.get(action), 'settings' if self.settings_only else 'shell'
             if spec is not None: self.actions.check_context(action, context)
-            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "desktopEdit","palettePreview", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect"}: raise ValueError("This action is unavailable in the settings app")
+            elif self.settings_only and action not in {"batterySaver", "gowallThemes", "gowallGenerate", "gowallSave", "gowallApply", "desktopEdit","palettePreview","paletteSync", "setting", "wallpaper", "wallpaperNext", "wallpaperResetOutput", "launcherHistoryClear", "refresh", "weatherSearch", "weatherDetect"}: raise ValueError("This action is unavailable in the settings app")
             if self.demo:
                 if spec is not None: self.demo_snapshot(); self.actions.dispatch(action, request, context=context, demo=True)
                 else: self.perform_demo(action, request)

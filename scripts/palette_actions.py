@@ -34,6 +34,21 @@ def provide(cap):
             raise ValueError('Generate a preview for this image first')
         cap.update({'wallpaperPalette':colors,'paletteSource':'wallpaper','accent':colors['accent']})
         return 'Wallpaper palette applied; element overrides preserved'
+    def sync(request):
+        path=request.get('path')
+        cap.executable('matugen')
+        options={key:cap.preferences().get(key,default) for key,default in
+            (('paletteScheme','tonal-spot'),('paletteMode','dark'),('paletteContrast',0))}
+        return PreparedWork(lambda:cap.preview(path,options['paletteScheme'],options['paletteMode'],options['paletteContrast']))
+    def sync_complete(value):
+        if not isinstance(value,dict): return
+        try: colors=validate_palette(value.get('colors'))
+        except ValueError: return
+        if not colors: return
+        cap.install(value)
+        cap.update({'wallpaperPalette':colors,'paletteSource':'wallpaper','accent':colors['accent']})
     return ((ActionSpec('palettePreview',{'shell','settings'},lambda request:None,lambda request:None,
         execution='worker',complete=complete,presentation='Wallpaper palette preview ready',prepare=prepare),
-        ActionSpec('paletteApply',{'shell','settings'},apply,lambda request:None)),lambda:{})
+        ActionSpec('paletteApply',{'shell','settings'},apply,lambda request:None),
+        ActionSpec('paletteSync',{'shell','settings'},lambda request:None,lambda request:None,
+            execution='worker',complete=sync_complete,presentation='Wallpaper palette updated',prepare=sync)),lambda:{})

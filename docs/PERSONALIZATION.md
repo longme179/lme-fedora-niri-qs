@@ -199,3 +199,11 @@ no templates, external app themes, wallpaper commands or user hooks are run.
 Matugen 4 uses its highest-ranked source color automatically, so generation
 works from Settings without a terminal or a color-selection prompt. Matugen 3
 keeps its existing command format.
+
+Turn on **Follow wallpaper changes** in the same card to make the palette
+track the wallpaper automatically: every wallpaper change (manual apply or
+playlist advance) regenerates and applies the palette in the background. The
+follow applies only while Material-from-wallpaper is the active palette
+source; Dracula and preset palettes are never replaced. A missing Matugen or
+an unreadable image leaves the previous palette untouched and reports why in
+the action result.

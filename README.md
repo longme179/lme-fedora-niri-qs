@@ -261,7 +261,7 @@ only softens the refractive rim; higher backdrop blur values cost more GPU time.
 | **Elements and fonts** | Individual color roles, hex input, HSV/alpha picker, installed fonts and text size |
 | **Top bar / Control center** | Module/card order, visibility, sizes, bar position/margins and panel width |
 | **Displays / Idle and sleep** | Resolution, refresh, scale and output placement; AC/battery timeouts, locking and suspend |
-| **Wallpaper / Weather** | Image library, playlists, transitions, per-display images, palette preview, automatic/manual location and units |
+| **Wallpaper / Weather** | Image library, playlists, transitions, per-display images, palette preview, automatic Material palettes from the current wallpaper, automatic/manual location and units |
 | **Desktop widgets** | Add clock/notes/media, choose an output, enable click-through and arrange widgets in Edit mode |
 | **Behavior** | Battery saver, lyrics and online lookup, Bluetooth pairing, privacy, OSD layout, notes, file search, recording, external editor and settings transfer |
 | **Keyboard shortcuts / Clipboard** | Search niri bindings; configure history and image capture |

@@ -110,6 +110,7 @@ ColumnLayout {
         enabled: !Theme.liquidGlass
         description: Theme.liquidGlass ? "Liquid glass uses neutral colors. Switch it off in Appearance to preview and apply Material palettes; your saved palette is preserved."
             : "Choose a Material scheme, dark/light mode and contrast, then preview before applying. Dracula remains the default. Glass opacity and manual element overrides are preserved; no external app themes are changed. Requires matugen."
+        PreferenceSwitch { title: "Follow wallpaper changes"; detail: "Regenerate and apply the Material palette whenever the wallpaper changes"; preference: "wallpaperPaletteAuto" }
         RowLayout {
             Layout.fillWidth: true
             LiquidComboBox { objectName: "paletteScheme"; Layout.fillWidth: true; model: root.schemes.map(s => Theme.tokenTitle(s.replace(/-/g, " "))); currentIndex: root.schemes.indexOf(ShellState.preferences.paletteScheme || "tonal-spot"); Accessible.name: "Material color scheme"; onActivated: ShellState.run("setting", {key:"paletteScheme",value:root.schemes[currentIndex]}) }

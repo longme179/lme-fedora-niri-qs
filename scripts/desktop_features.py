@@ -17,7 +17,7 @@ PALETTE_DOCUMENT = json.loads((Path(__file__).resolve().parents[1] / 'config/pal
 PALETTE_CATALOG = PALETTE_DOCUMENT['palettes']
 PALETTE_IDS = {p['id'] for p in PALETTE_CATALOG}
 PALETTE_SCHEMES = tuple(PALETTE_DOCUMENT['schemes'])
-PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", "paletteScheme": "tonal-spot", "paletteMode": "dark", "paletteContrast": 0.0, "wallpaperPalette": {}}
+PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", "paletteScheme": "tonal-spot", "paletteMode": "dark", "paletteContrast": 0.0, "wallpaperPalette": {}, "wallpaperPaletteAuto": False}
 from settings_schema import appearance_keys
 APPEARANCE_KEYS = appearance_keys()
 DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,

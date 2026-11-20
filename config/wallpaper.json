@@ -164,6 +164,13 @@
       "portable": true,
       "appearance": true,
       "defaultResolver": "palette"
+    },
+    "wallpaperPaletteAuto": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": true,
+      "defaultResolver": "palette"
     }
   }
 }

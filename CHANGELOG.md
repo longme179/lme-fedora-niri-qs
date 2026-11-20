@@ -1,4 +1,5 @@
 ## Unreleased
+- Follow wallpaper changes now switches the palette source to Material-from-wallpaper and applies the current wallpaper immediately when turned on (before, the follow stayed inert until a manual palette Preview/Apply)
 - Replaced Satty/Swappy screenshot pipeline with flameshot (Fedora: `sudo dnf install flameshot`)
 - Drop "Focused window" capture entirely; area captures use `flameshot gui`, screen captures use `flameshot full`
 - Clipboard images preview in place and can be opened with the default viewer (private temporary copy, mode 0600, xdg-open)

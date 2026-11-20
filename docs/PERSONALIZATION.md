@@ -203,7 +203,9 @@ keeps its existing command format.
 Turn on **Follow wallpaper changes** in the same card to make the palette
 track the wallpaper automatically: every wallpaper change (manual apply or
 playlist advance) regenerates and applies the palette in the background. The
-follow applies only while Material-from-wallpaper is the active palette
-source; Dracula and preset palettes are never replaced. A missing Matugen or
+toggle turns on wallpaper-sourced theming itself: it switches the palette
+source to Material-from-wallpaper and applies the current image immediately,
+so the theme follows before the next wallpaper change. Dracula and preset
+palettes are only replaced by that explicit choice. A missing Matugen or
 an unreadable image leaves the previous palette untouched and reports why in
 the action result.

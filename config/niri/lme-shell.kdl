@@ -75,17 +75,17 @@ binds {
         spawn "playerctl" "previous";
     }
 
-    // ---- lock and screenshot studio ----------------------------------------
+    // ---- lock and screenshots ----------------------------------------------
     Super+L hotkey-overlay-title="Lock the screen" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "lock" "activate";
     }
     // Print stays bound while the lock holds: niri itself refuses screencopy on
     // a locked session, and the shell answers the press with the capture-policy
     // notice on the lock surface instead of staying silent.
-    Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: area" {
+    Print allow-when-locked=true hotkey-overlay-title="Capture an area with flameshot" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "area";
     }
-    Ctrl+Print allow-when-locked=true hotkey-overlay-title="Screenshot studio: screen" {
+    Ctrl+Print allow-when-locked=true hotkey-overlay-title="Capture the screen with flameshot" {
         spawn "quickshell" "-c" "lme-shell" "ipc" "call" "shell" "capture" "screen";
     }
 }

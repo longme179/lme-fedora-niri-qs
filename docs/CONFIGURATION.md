@@ -303,7 +303,7 @@ uses the same validation/migration path.
 
 | Tab | Controls |
 | --- | --- |
-| Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, Night Light, motion presets, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, Screenshot studio (screen/area/window, annotations and OCR), lock, settings, power menu and workspace board |
+| Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, Night Light, motion presets, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, screen capture (flameshot area/screen), lock, settings, power menu and workspace board |
 | Audio | Default output/input selection, each device's volume/mute, application stream volume/mute and advanced audio settings |
 | Devices | Bluetooth adapter selection, nearby-device scan, pairing/PIN/passkey confirmation, connect/disconnect, block/error information, Wi-Fi scanning/password entry and saved profiles |
 | Agenda | English calendar, local to-do list, 25-minute focus/5-minute short break/15-minute long break, and stopwatch |

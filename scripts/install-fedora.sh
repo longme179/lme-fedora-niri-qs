@@ -38,12 +38,11 @@ done
 packages=(git niri quickshell python3 python3-gobject-base qt6-qtbase qt6-qtdeclarative qt6-qtwayland
     qt6-qtsvg qt6-qtimageformats google-roboto-fonts google-noto-sans-fonts google-noto-color-emoji-fonts
     adwaita-icon-theme NetworkManager pipewire pipewire-utils pipewire-pulseaudio
-    wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard)
+    wireplumber brightnessctl bluez systemd util-linux polkit wl-clipboard flameshot)
 if "$optional"; then
     packages+=(kitty nautilus firefox pavucontrol network-manager-applet
-        cava matugen wl-mirror wf-recorder ffmpeg-free pulseaudio-utils slurp swappy
-        flameshot
-        blueman swaylock swayidle wlsunset tesseract tesseract-langpack-eng tesseract-langpack-vie libnotify playerctl
+        cava matugen wl-mirror wf-recorder ffmpeg-free pulseaudio-utils slurp
+        blueman swaylock swayidle wlsunset libnotify playerctl
         xdg-utils xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
         gnome-keyring)
 fi

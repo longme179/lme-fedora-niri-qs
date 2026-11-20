@@ -9,6 +9,7 @@
 - Update deployment scripts and documentation (install-fedora.sh, requirements-fedora.txt, doctor.sh, README.md, THIRD_PARTY.md)
 - Regenerate settings fixtures (captureEditor removed)
 - New focused test uses a fake flameshot script in PATH that records argv and exits 0
+- Sync the remaining docs, labels and package lists with the flameshot pipeline: README features/requirements rows, CAPTURE_NIGHT_MOTION, TROUBLESHOOTING, CONFIGURATION and DEPLOYMENT describe Print/Ctrl+Print with flameshot; drop the unused tesseract/Swappy install and doctor entries; rename the niri hotkey-overlay titles
 
 
 

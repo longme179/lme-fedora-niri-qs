@@ -24,13 +24,9 @@ Copy/search results are delivered individually during rapid input. Enter waits
 for the latest outstanding search; restarting the clipboard worker resets its
 pending operations so reused result sequence numbers cannot leave Copy stuck.
 
-Choose Auto, Satty or Swappy in **Settings → Behavior → Image annotation**.
-Auto prefers installed Satty, then Swappy. Annotation opens a separate copy in
-your Pictures/Screenshots directory, preserving the clipboard history image.
-Screenshot notifications with an attached local image also open the editor when
-clicked, or through their Annotate button. niri's screenshot notification is
-supported even though it provides no native action. Ordinary app icons do not
-trigger annotation.
+Click an image preview to open a private temporary copy in your default image
+viewer (mode 0600); the clipboard history image itself is preserved. Ordinary
+app icons do not trigger the viewer.
 
 **Settings → Clipboard** controls capture, image capture and history size
 (20–500 items; default 100). Pause/Resume in the history panel persists across

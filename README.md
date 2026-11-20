@@ -76,7 +76,7 @@ Previews are rendered from this repository's QML with sample data — see [docs/
 | **Equalizer** | Optional Serpantinum 10-band equalizer from the top-bar module, Control Center tile, Audio mixer or Settings: band gains, balance, mono, channel swap, dynamics, bypass and dynamic EQ, with presets. Requires the external `serpantinum-audio` daemon; disabling it routes audio directly again. |
 | **IME indicator** | Default-off top-bar module showing the active fcitx5 input method with a change OSD. Uses `fcitx5-remote`; no polling while disabled. |
 | **Network connections** | Wi-Fi/Devices → VPN, Ethernet & hotspot: saved VPN/WireGuard and Ethernet profiles, exact-adapter activation/disconnection, system IP/DNS editor and confirmed secure hotspot activation. [Network guide](docs/NETWORK_CONNECTIONS.md). |
-| **Screen capture and Night Light** | Record a screen or selected region; annotate/redact screenshots with built-in tools or Satty/Swappy; extract text with local OCR; schedule Night Light. |
+| **Screen capture and Night Light** | Record a screen or selected region; capture an area with flameshot (Print) or the whole screen (Ctrl+Print) and edit in flameshot; schedule Night Light. |
 | **Liquid glass** | Simple transparent glass (tint + grain + edge highlight) with blur provided only by the niri compositor (≥ 26.04, opt-in snippet). Clear/Frosted/Vivid material presets and compositor blur passes/spread. See [GLASS.md](docs/GLASS.md). |
 | **Top bar styling** | Style the connected bar or each island separately. Adjust corners, borders, colors and transparency — with optional soft drop shadows under bar pills — live from Settings. Popups slide from the nearest screen edge with spring momentum and return through the same edge. |
 | **Themes and fonts** | Smoked glass by default, optional Liquid glass, per-element colors and fonts, searchable font menus, HSV/alpha color picker, appearance profiles, 35 Gowall palette presets plus LME Dracula, and Material wallpaper palettes. |
@@ -143,8 +143,8 @@ Run as your normal desktop user, **without `sudo` in front of the script**:
 
 The installer uses DNF and asks for your administrator password when needed.
 It includes core and recommended tools: fonts, clipboard history, locking,
-Night Light, OCR/annotation, recording, audio visualization, Material palettes
-and display mirroring. It installs `awww` when available from your enabled
+Night Light, screen capture, recording, audio visualization, Material
+palettes and display mirroring. It installs `awww` when available from your enabled
 repositories; otherwise it points to the [wallpaper setup steps](docs/INSTALL.md#wallpaper-and-charging).
 Keep your working TuneD/tuned-ppd or power-profiles-daemon provider.
 
@@ -373,7 +373,7 @@ the supplied title/artist; a YouTube channel or video title may not identify a s
 | **Equalizer** | The external `serpantinum-audio` daemon ([upstream](https://github.com/ilyamiro/serpantinum-audio)); build/install it yourself, then enable it in Settings → Equalizer. The feature reports "serpantinum-audio is unavailable" until the binary is on `PATH`. |
 | **IME indicator** | `fcitx5` with `fcitx5-remote` (Fedora: `sudo dnf install fcitx5`). Enable it in Settings → Behavior; it stays off and does not poll until then. |
 | **Network connections** | Existing NetworkManager/`nmcli`, systemd `busctl` and `nm-connection-editor`; saved VPN profiles additionally need their NetworkManager plugin and session credentials/agent. [Guide and hotspot requirements](docs/NETWORK_CONNECTIONS.md). |
-| **External image preview / OCR** | Fedora `swappy`, or separately installed Satty; `tesseract` and language packs for local OCR. Click clipboard images or screenshot notifications to open a saved copy in your chosen editor. Screenshot studio exports flattened PNGs including redactions. |
+| **Screen capture / image preview** | `flameshot` (Fedora: `sudo dnf install flameshot`) for area and full-screen capture with external editing. Clipboard images preview in place and open in the default viewer (private temporary copy, mode 0600). |
 | **Night Light / Idle** | `wlsunset` with working gamma control; `swayidle` and `swaylock` for idle profiles. Enable these in Settings. |
 | **Lyrics** | No extra package. Optional LRCLIB lookup needs internet access; player metadata/local LRC and cached lyrics work offline. |
 | **Weather** | Internet access for Open-Meteo and approximate IP location; no API key needed. Manual location is available. |
@@ -479,7 +479,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Installation](docs/INSTALL.md) | Fedora packages, sources, niri setup, custom paths and services |
 | [Configuration](docs/CONFIGURATION.md) / [Personalization](docs/PERSONALIZATION.md) | Preferences, profiles, colors, typography, geometry and expressive feedback |
 | [Selected feature ports](docs/FEATURE_PORTS.md) | Detailed controls, dependencies, tests and hardware limits |
-| [Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md) | Screenshot drawing/redaction/OCR, external annotation, schedules and animations |
+| [Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md) | Flameshot capture and editing, schedules and animations |
 | [Laptop features](docs/LAPTOP_FEATURES.md) | System monitor, idle profiles, keybindings and native blur |
 | [Liquid glass](docs/GLASS.md) | Hybrid lens/compositor model, presets, niri requirements and troubleshooting |
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |

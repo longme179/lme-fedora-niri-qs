@@ -110,7 +110,30 @@ ColumnLayout {
         enabled: !Theme.liquidGlass
         description: Theme.liquidGlass ? "Liquid glass uses neutral colors. Switch it off in Appearance to preview and apply Material palettes; your saved palette is preserved."
             : "Choose a Material scheme, dark/light mode and contrast, then preview before applying. Dracula remains the default. Glass opacity and manual element overrides are preserved; no external app themes are changed. Requires matugen."
-        PreferenceSwitch { title: "Follow wallpaper changes"; detail: "Regenerate and apply the Material palette whenever the wallpaper changes"; preference: "wallpaperPaletteAuto" }
+        RowLayout {
+            Layout.fillWidth: true; spacing: 20
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 5
+                LabelText { text: "Follow wallpaper changes"; font.weight: Font.Medium; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                LabelText { text: "The palette tracks every wallpaper change; turning it on switches to Material-from-wallpaper and applies the current image"; color: Theme.muted; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            }
+            ExpressiveSwitch {
+                checked: ShellState.preferences.wallpaperPaletteAuto === true
+                enabled: ShellState.backendReady && !ShellState.pendingActions.setting && !ShellState.pendingActions.paletteSync
+                Accessible.name: "Follow wallpaper changes"
+                onToggled: {
+                    // Turning the follow on IS the choice of wallpaper-sourced theming:
+                    // switch the source and apply the current image immediately, so the
+                    // theme follows before the next wallpaper change (fix: previously the
+                    // follow stayed inert until a manual Preview/Apply set the source).
+                    ShellState.run("setting", {key: "wallpaperPaletteAuto", value: checked});
+                    if (checked) {
+                        ShellState.run("setting", {key: "paletteSource", value: "wallpaper"});
+                        if (!ShellState.demo && root.palettePath) ShellState.run("paletteSync", {path: root.palettePath});
+                    }
+                }
+            }
+        }
         RowLayout {
             Layout.fillWidth: true
             LiquidComboBox { objectName: "paletteScheme"; Layout.fillWidth: true; model: root.schemes.map(s => Theme.tokenTitle(s.replace(/-/g, " "))); currentIndex: root.schemes.indexOf(ShellState.preferences.paletteScheme || "tonal-spot"); Accessible.name: "Material color scheme"; onActivated: ShellState.run("setting", {key:"paletteScheme",value:root.schemes[currentIndex]}) }

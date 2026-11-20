@@ -10,6 +10,7 @@
 - Regenerate settings fixtures (captureEditor removed)
 - New focused test uses a fake flameshot script in PATH that records argv and exits 0
 - Sync the remaining docs, labels and package lists with the flameshot pipeline: README features/requirements rows, CAPTURE_NIGHT_MOTION, TROUBLESHOOTING, CONFIGURATION and DEPLOYMENT describe Print/Ctrl+Print with flameshot; drop the unused tesseract/Swappy install and doctor entries; rename the niri hotkey-overlay titles
+- Motion factory: Motion.qml owns the shared curve set and the role-to-curve/duration mapping (curveFor/durationFor) plus fade/fadeExit/pop tokens; MotionAnimation gains role and ms factory parameters (legacy pairing preserved); new OpacityMotion fade factory; the popup backdrop fade and the toast move transition are born from the factory; new docs/MOTION.md documents the token set and the new-animation rule
 
 
 

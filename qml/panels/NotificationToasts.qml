@@ -65,7 +65,7 @@ PanelWindow {
     Column {
         id: toastColumn
         width: root.implicitWidth; spacing: 10
-        move: Transition { NumberAnimation { properties: "x,y"; duration: Theme.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve } }
+        move: Transition { MotionAnimation { properties: "x,y"; role: "effects" } }
         Repeater {
             id: toastRepeater
             model: toastModel

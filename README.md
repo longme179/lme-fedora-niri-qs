@@ -480,6 +480,7 @@ To restart this instance, use `quickshell -c gpt kill` and
 | [Configuration](docs/CONFIGURATION.md) / [Personalization](docs/PERSONALIZATION.md) | Preferences, profiles, colors, typography, geometry and expressive feedback |
 | [Selected feature ports](docs/FEATURE_PORTS.md) | Detailed controls, dependencies, tests and hardware limits |
 | [Capture, Night Light and motion](docs/CAPTURE_NIGHT_MOTION.md) | Flameshot capture and editing, schedules and animations |
+| [Motion tokens](docs/MOTION.md) | The animation factory: duration tokens, curve roles and the rule for new animations |
 | [Laptop features](docs/LAPTOP_FEATURES.md) | System monitor, idle profiles, keybindings and native blur |
 | [Liquid glass](docs/GLASS.md) | Hybrid lens/compositor model, presets, niri requirements and troubleshooting |
 | [Clipboard and Activity](docs/CLIPBOARD_ACTIVITY.md) | History, pins, timers, media and recording status |

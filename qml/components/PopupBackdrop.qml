@@ -19,6 +19,6 @@ Rectangle {
     onShownChanged: update()
     onStrengthChanged: if (shown) update()
     Component.onCompleted: update()
-    NumberAnimation { id: fade; target: root; property: "amount"; duration: Math.round((root.shown ? 220 : 150) / Theme.motionSpeed); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.effectsCurve }
+    OpacityMotion { id: fade; target: root; property: "amount"; ms: root.shown ? 220 : 150 }
     Connections { target: Theme; function onAnimationsChanged() { root.update(); } }
 }

@@ -49,3 +49,21 @@ def preview(runner, raw, scheme="tonal-spot", mode="dark", contrast=0):
         if int(match[1])>=4: args+=['--source-color-index=0','--old-json-output']
         output=runner.run('matugen',*args,timeout=35)
     return {'colors':colors_from_json(output,mode),'path':str(path),'paletteScheme':scheme,'paletteMode':mode,'paletteContrast':contrast}
+
+
+def follow_wallpaper_palette(host, message, raw):
+    """P1-1: after a successful wallpaper apply, regenerate the Material palette
+    when the user enabled wallpaper-following theming. Never fails the apply;
+    appends the outcome to the wallpaper action's message instead."""
+    prefs = host.preferences.values
+    if prefs.get('wallpaperPaletteAuto') is not True or prefs.get('paletteSource') != 'wallpaper': return message
+    if not isinstance(raw, str) or not raw: return message
+    try:
+        result = preview(host.runner, raw, prefs.get('paletteScheme','tonal-spot'),
+                         prefs.get('paletteMode','dark'), prefs.get('paletteContrast',0))
+        colors = validate_palette(result.get('colors'))
+        host.palette_preview = result
+        host.preferences.update({'wallpaperPalette': colors, 'paletteSource': 'wallpaper', 'accent': colors['accent']})
+        return message + ' (palette updated)'
+    except Exception as error:
+        return message + ' (palette unchanged: ' + str(error)[:120] + ')'

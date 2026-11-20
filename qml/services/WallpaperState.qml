@@ -11,6 +11,8 @@
 // GOTCHA: ShellState injects writeSetting/runAction at each sync (services stay ShellState-free;
 // composition stays acyclic). The shared playlist rotation (output '') rides the backend action
 // end to end; per-output rotations apply natively and persist through the setting token write.
+// Per-output advances also fire the paletteSync action when wallpaper-following Material palettes
+// are on; the shared rotation is covered inside the backend wallpaper apply itself (P1-1).
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -187,6 +189,7 @@ QtObject {
                     if (!ok2) return attempt();
                     machine.applied[spot] = path;
                     if (writeSetting) writeSetting("wallpaperOutputs", path, spot);
+                    if (lastPreferences.wallpaperPaletteAuto === true && lastPreferences.paletteSource === "wallpaper" && runAction) runAction("paletteSync", {path: path});
                     busy = false;
                     if (done) done(true, "Wallpaper updated");
                 });

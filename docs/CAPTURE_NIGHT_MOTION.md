@@ -1,17 +1,16 @@
-# Night Light, Screenshot studio and motion
+# Night Light, Screenshots and motion
 
 The interface and all processing remain local. These features use the existing
-shell backend, Qt Quick and native niri capture; there is no separate screen
-recording daemon.
+shell backend, Qt Quick and flameshot; there is no separate screen recording
+daemon.
 
 ## Fedora requirements
 
 ```sh
-sudo dnf install wlsunset tesseract tesseract-langpack-eng tesseract-langpack-vie
+sudo dnf install wlsunset flameshot
 ```
 
-Vietnamese recognition is optional; the interface stays in English. Missing
-commands are rediscovered on demand after installation.
+Missing commands are rediscovered on demand after installation.
 `scripts/install-fedora.sh --optional --install` includes these packages.
 `scripts/doctor.sh` reports missing commands. Use niri 26.04 for the complete
 desktop configuration, including the native full-screen popup blur fragment.
@@ -44,66 +43,33 @@ reported as an active filter. Headless/nested outputs commonly cannot apply
 hardware gamma. This feature does not implement ICC calibration or HDR tone
 mapping.
 
-## Screenshot studio
+## Screenshots
 
-Use **Control Center → Capture & actions** for screen, selected area or focused
-window capture. The shell closes its panels before niri captures. Area selection
-uses niri's native screenshot UI. Finish its selection to open the independent
-**LME Screenshot** window; press Escape to cancel the native selector. If a
-capture remains pending, **Cancel capture** in Control Center clears it so you
-can start again. Unfinished captures expire after two minutes.
+Press **Print** to capture an area or **Ctrl+Print** to capture the whole
+screen. The shell closes its panels first, then launches `flameshot gui` or
+`flameshot full`; selection and editing happen entirely in flameshot. Saved
+files land in `~/Pictures/Screenshots` and are created private (mode 0600).
+There is no in-shell editor or OCR; use flameshot's annotation tools and your
+own OCR workflow if needed. Escape cancels an area selection, and new capture
+requests are ignored while a flameshot process is still running.
 
-For editor shortcuts, merge the Print bindings from [`lme-shell.kdl`](../config/niri/lme-shell.kdl)
+For keybindings, merge the Print bindings from [`lme-shell.kdl`](../config/niri/lme-shell.kdl)
 instead of existing Print/Ctrl+Print/Alt+Print bindings. Replace `lme-shell` with
 your installed Quickshell configuration name, such as `gpt`, and remove duplicate
 bindings before running `niri validate`. Existing native screenshot bindings
-continue to take plain screenshots; the new studio is available through the
-Control Center or its IPC:
+continue to take plain screenshots. The **Control Center → Capture & actions**
+tiles trigger the same two captures, and the IPC surface stays available for
+scripts:
 
 ```sh
 quickshell -c lme-shell ipc call shell capture area
 quickshell -c lme-shell ipc call shell capture screen
-quickshell -c lme-shell ipc call shell capture window
 ```
 
-The editor supports Pen, Highlight, Rectangle, Arrow, solid-black Redact,
-color/stroke choices, Undo/Redo and zoom with Pan. Ctrl+Z undoes, Ctrl+Shift+Z
-redoes, Ctrl+S saves and Ctrl+C copies the edited image. Text fields keep their
-normal copy/undo shortcuts while focused. PNGs keep their original pixel
-dimensions. A session allows 200 strokes with up to 4000 points each; images are bounded to 32 megapixels,
-16384 pixels per side and 64 MiB.
-
-**Save PNG** creates a private file in the chosen folder, defaulting to your
-XDG Pictures/Screenshots directory. Filenames are unique and existing files are
-never overwritten. A failed save removes its partial new file. **Copy image**
-copies the rendered PNG using `wl-clipboard`. The exported image is flattened:
-redacted pixels are solid black, with no hidden annotation layer or original
-image embedded in the PNG.
-
-**Annotate externally** first renders and saves that same flattened PNG, then
-opens Satty or Swappy with its file path. Choose the app in
-**Settings → Behavior → Image annotation**. Auto prefers installed Satty,
-then Swappy. Fedora 44 has `swappy`: `sudo dnf install swappy`. Satty is supported
-when installed separately; neither app is installed automatically by the shell.
-Save further edits inside the external app. External changes are not imported
-back into Screenshot studio. The private saved PNG survives closing the studio
-or shell; runtime originals are not passed to the external app. If launch fails,
-the saved PNG remains available for recovery. Missing editors produce a visible
-install/selection message without creating a new export.
-
-**Niri also puts the original capture in the clipboard.** Redacting in the
-editor does not erase that earlier clipboard item or other clipboard managers'
-history. Copy the edited image before sharing; delete the original history item
-if it contains sensitive content. Session originals/working PNGs live in a
-private runtime directory and are removed when the session closes normally;
-saved PNGs remain in the chosen folder.
-
-**Extract text** runs local Tesseract on the rendered image, including its
-redactions. Choose an installed language or `eng+vie` when both are installed;
-then select/copy the recognized text or use **Copy text**. No image is uploaded.
-OCR is bounded to 45 seconds and 256 KiB of text. Closing a session discards
-late results so they cannot appear in a newer screenshot. Tiny text, complex
-layouts and handwriting can require a tighter capture or different language.
+While the session is locked, niri itself refuses screencopy; the shell answers
+the keypress with the capture notice on the lock surface and never spawns
+flameshot locked. A capture whose overlays cannot close within three seconds
+expires with a status message instead of hanging.
 
 ## Motion presets
 

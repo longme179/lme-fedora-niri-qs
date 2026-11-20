@@ -135,8 +135,8 @@ The ports reuse LME's preferences, controls and panel loader. No upstream binary
 plugin, font or wallpaper is bundled. Native blur remains implemented through
 Quickshell/niri's existing compositor protocol.
 
-Night Light also references iNiR's niri/wlsunset workflow. `wlsunset` and
-`tesseract` are external runtime tools, not bundled binaries. Sunrise/sunset
+Night Light also references iNiR's niri/wlsunset workflow. `wlsunset` is an
+external runtime tool, not a bundled binary. Sunrise/sunset
 calculation uses the approximate algorithm from *Almanac for Computers* (1990),
 described in Ed Williams' [Sunrise/Sunset Algorithm](https://edwilliams.org/sunrise_sunset_algorithm.htm).
 The Python implementation is original; it is not an astronomical ephemeris or
@@ -181,7 +181,7 @@ Launcher file search references DMS `DSearchService.qml` (6640a943, MIT). LME us
 
 Recording workflow references iNiR `scripts/videos/record.sh` / `RecordingOsd.qml` (48cdcecb, GPL-3.0 with NOTICE). The LME manager adapts NVIDIA-first → VAAPI → software fallback for owned processes and existing IPC. Encoder probes run only when capture starts; upstream idle NVIDIA polling and global stop logic are not used. iNiR attribution remains in README/About and `third_party/iNiR-NOTICE`.
 
-The new screenshot pipeline uses flameshot (Fedora: `sudo dnf install flameshot`) for area/full-screen capture. flameshot is called via the existing allowlist with XDG_CURRENT_DESKTOP=sway. flameshot cannot open existing images; for that, LME uses a private temporary copy opened with xdg-open, following the old Annotation-* plumbing pattern. flameshot is not bundled and is optional; Satty/Swappy are deprecated for screenshot annotation.
+The new screenshot pipeline uses flameshot (Fedora: `sudo dnf install flameshot`) for area/full-screen capture. flameshot is called via the existing allowlist with XDG_CURRENT_DESKTOP=sway. flameshot cannot open existing images; for that, LME uses a private temporary copy opened with xdg-open, following the old Annotation-* plumbing pattern. flameshot is not bundled; it belongs to the core Fedora install list, and Satty/Swappy are no longer used.
 
 
 Display mirroring uses the external [wl-mirror](https://github.com/Ferdi265/wl-mirror)

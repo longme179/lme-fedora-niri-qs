@@ -68,13 +68,7 @@ optional powerprofilesctl 'power-profile CLI; busctl also supports Fedora tuned-
 optional swaylock 'emergency lock fallback — the native session lock is primary (Settings > Lock screen)'
 optional swayidle 'laptop idle profiles; enable in Settings > Idle and sleep'
 optional wlsunset 'Night Light gamma control; Settings > Night Light'
-optional tesseract 'Screenshot studio OCR; install tesseract-langpack-eng (and optionally -vie)'
-if command -v satty >/dev/null 2>&1; then
-    optional satty 'external screenshot annotation'
-else
-    optional swappy 'external screenshot annotation: swappy (or separately installed satty)'
-    optional flameshot
-fi
+optional flameshot 'screenshot capture and editing: area (Print) and full screen (Ctrl+Print)'
 optional wl-mirror 'external display mirroring: wl-mirror'
 optional wf-recorder 'screen recording: wf-recorder'
 optional ffmpeg 'recording encoder checks and container conversion: ffmpeg-free or a compatible full build'

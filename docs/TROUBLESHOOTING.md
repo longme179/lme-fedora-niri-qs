@@ -200,9 +200,9 @@ shell if the optional wallpaper tool is unavailable.
 Prefer niri's built-in screenshot actions and bindings; they follow the
 compositor's screenshot path configuration. Third-party tools can depend on
 Wayland capture protocols that your installed niri version does not expose.
-The shell uses native niri capture, then opens Screenshot studio for annotations
-and OCR. Studio captures use private session files, and **Save PNG** exports to
-the chosen folder. See [requirements, shortcuts and clipboard/redaction behavior](CAPTURE_NIGHT_MOTION.md).
+The shell closes its panels and launches flameshot: **Print** captures an area,
+**Ctrl+Print** the whole screen. Saved files are private and land in
+`~/Pictures/Screenshots`. See [requirements and behavior](CAPTURE_NIGHT_MOTION.md).
 
 If Night Light stays neutral, open **Settings → Night Light** for gamma errors.
 Install `wlsunset`, restart the shell, and stop other gamma controllers. Nested

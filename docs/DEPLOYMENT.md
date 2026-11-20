@@ -70,7 +70,7 @@ commands are retained. Ambiguous shell pipelines/chains stop deployment.
 External desktop autostarts are reported for review, not rewritten. Keep only one
 notification server and Polkit agent in the eventual session.
 
-Shell settings/history/widget data are untouched. Optional awww/Gowall/Satty
+Shell settings/history/widget data are untouched. Optional awww/Gowall
 availability is printed; unavailable packages/models/codecs are not claimed to
 be installed. No GPU driver, power provider or service policy is replaced.
 

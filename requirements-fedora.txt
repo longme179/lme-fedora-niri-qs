@@ -55,11 +55,9 @@ blueman
 # Required for session locking and enabled laptop idle profiles:
 swaylock
 swayidle
-# Needed for Night Light and local screenshot OCR respectively:
+# Needed for Night Light and the flameshot screenshot pipeline:
 wlsunset
-tesseract
-tesseract-langpack-eng
-tesseract-langpack-vie
+flameshot
 libnotify
 playerctl
 xdg-utils
@@ -70,13 +68,9 @@ gnome-keyring
 # Optional wallpaper daemon; --optional installs it when available from enabled repositories.
 # Upstream: https://codeberg.org/LGFae/awww.git (client and awww-daemon).
 awww
-# Optional screenshot annotation and recording-region selection.
-# Screenshot studio uses niri capture, Qt Canvas annotations and Tesseract OCR.
+# Optional recording-region selection.
 # slurp selects regions for screen recording.
-# External annotation: Fedora 44 supplies Swappy; Satty is supported if installed separately.
-# flameshot replaces Satty/Swappy for area/full-screen capture (Fedora: `sudo dnf install flameshot`).
 # Click clipboard images to preview or open with the default viewer (xdg-open).
-swappy
 slurp
 
 # System monitor and keybind viewer use Python stdlib only.

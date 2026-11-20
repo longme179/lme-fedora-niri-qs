@@ -68,7 +68,7 @@ from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
 from settings_transfer import export_document, read_document, document, RETIRED_PERSISTENCE
 from liquid_glass import DEFAULTS as GLASS_DEFAULTS, validate as validate_glass, provide_blur
-from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, validate as validate_wallpaper
+from wallpaper import Wallpapers, DEFAULTS as WALLPAPER_DEFAULTS, TRANSITIONS as WALLPAPER_TRANSITIONS, output_name as wallpaper_output_name, validate as validate_wallpaper
 from launcher_history import LauncherHistory
 from launchpad import Launchpad, entries as launchpad_entries
 from local_content_actions import LocalContentCapabilities, provide as provide_local_content
@@ -591,8 +591,8 @@ class DesktopBackend:
                 lambda value:setattr(self,'charge_job',self.charge_executor.submit(self.set_charge,value)),
                 lambda:setattr(self,'system_cache',None),lambda:self.demo_snapshot()['system']['charging'])),
             (provide_wallpaper_changes, WallpaperChangeCapabilities(lambda:tuple(self.feature_jobs),
-                lambda *args,**kwargs:self.apply_wallpaper(*args,**kwargs),lambda output:self.wallpapers.advance(output),
-                lambda output:self.wallpapers.reset_output(output),lambda:self.preferences.values,
+                lambda *args,**kwargs:self.apply_wallpaper(*args,**kwargs),lambda output:self.advance_wallpaper(output),
+                lambda output:self.reset_wallpaper_output(output),lambda:self.preferences.values,
                 lambda path:validate_preference('wallpaper',path),lambda value:validate_wallpaper('wallpaperOutputs',value))),
             (Recorder.provide_stop, lambda: self.recorder.stop()),
             (provide_recording, RecordingCapabilities(lambda:self.preferences.values, lambda:tuple(self.feature_jobs),
@@ -1323,6 +1323,20 @@ class DesktopBackend:
         if self.demo:
             raise ValueError("Wallpaper commands are disabled in demo mode")
         return follow_wallpaper_palette(self, self.wallpapers.apply(raw,output,save=save,animate=animate), raw)
+
+    def advance_wallpaper(self, output: Any = None) -> str:
+        if self.demo:
+            raise ValueError("Wallpaper commands are disabled in demo mode")
+        # A playlist advance is a wallpaper change: follow with a palette regeneration like apply_wallpaper.
+        message = self.wallpapers.advance(output)
+        return follow_wallpaper_palette(self, message, self.wallpapers.current(
+            wallpaper_output_name(self.preferences.values['wallpaperPlaylistOutput'] if output is None else output, shared=True)))
+
+    def reset_wallpaper_output(self, output: Any = '') -> str:
+        if self.demo:
+            raise ValueError("Wallpaper commands are disabled in demo mode")
+        # Resetting an output to the shared wallpaper changes what it shows: follow too.
+        return follow_wallpaper_palette(self, self.wallpapers.reset_output(output), self.wallpapers.current(''))
 
     @staticmethod
     def percentage(value: Any, minimum: int = 0) -> int:

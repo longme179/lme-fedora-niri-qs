@@ -23,7 +23,7 @@ GlassPanel {
         anchors.fill: parent; anchors.margins: 14; spacing: 8
         RowLayout {
             Layout.fillWidth: true
-            LabelText { text: root.record.type === "notes" ? "Notes" : root.record.type === "media" ? "Media" : "Clock"; font.weight: Font.Bold; Layout.fillWidth: true }
+            LabelText { text: ({clock: "Clock", notes: "Notes", media: "Media", weather: "Weather", calendar: "Calendar", user: "Account"})[root.record.type] || "Clock"; font.weight: Font.Bold; Layout.fillWidth: true }
             LabelText { visible: root.editing; text: "Drag header"; color: Theme.muted; font.pixelSize: 11 }
             MouseArea {
                 id: grip; objectName: "desktopDrag-" + root.widgetId
@@ -49,7 +49,7 @@ GlassPanel {
         ScrollView {
             id: scroll; Layout.fillWidth: true; Layout.fillHeight: true; clip: true
             contentWidth: availableWidth
-            Loader { width: scroll.availableWidth; sourceComponent: root.record.type === "clock" ? clockCard : root.record.type === "notes" ? notesCard : mediaCard }
+            Loader { objectName: "desktopCardBody"; width: scroll.availableWidth; sourceComponent: ({clock: clockCard, notes: notesCard, media: mediaCard, weather: weatherCard, calendar: calendarCard, user: userCard})[root.record.type] || clockCard }
         }
     }
     MouseArea {
@@ -83,6 +83,71 @@ GlassPanel {
             MediaProgress { player: ActivityState.player; playing: ActivityState.playing; Layout.fillWidth: true }
             MediaActions { player: ActivityState.player; Layout.fillWidth: true }
             LyricsView { player: ActivityState.player; Layout.fillWidth: true }
+        }
+    }
+    Component { id: weatherCard; WeatherWidget { objectName: "weatherCardBody" } }
+    Component {
+        id: calendarCard
+        ColumnLayout {
+            id: cal
+            spacing: 6
+            property int offset: 0
+            SystemClock { id: calClock; precision: SystemClock.Minutes; enabled: root.visible }
+            readonly property date today: calClock.date
+            readonly property date anchor: new Date(cal.today.getFullYear(), cal.today.getMonth() + cal.offset, 1)
+            readonly property int days: new Date(cal.anchor.getFullYear(), cal.anchor.getMonth() + 1, 0).getDate()
+            readonly property int lead: (cal.anchor.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
+            RowLayout {
+                Layout.fillWidth: true
+                IconButton { glyph: "‹"; text: "Previous month"; onClicked: cal.offset-- }
+                LabelText { text: Qt.formatDateTime(cal.anchor, "MMMM yyyy"); font.weight: Font.Bold; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                IconButton { glyph: "›"; text: "Next month"; onClicked: cal.offset++ }
+            }
+            Grid {
+                id: month; objectName: "calendarGrid"; columns: 7; Layout.fillWidth: true; spacing: 2
+                Repeater {
+                    model: 7
+                    delegate: LabelText {
+                        required property int index
+                        text: Qt.formatDateTime(new Date(cal.anchor.getFullYear(), cal.anchor.getMonth(), 1 - cal.lead + index), "ddd")
+                        color: Theme.muted; font.pixelSize: 10; horizontalAlignment: Text.AlignHCenter
+                        width: month.width / 7 - 2
+                    }
+                }
+                Repeater {
+                    model: cal.lead + cal.days
+                    delegate: Rectangle {
+                        required property int index
+                        readonly property int day: index - cal.lead + 1
+                        readonly property bool now: cal.offset === 0 && index >= cal.lead && day === cal.today.getDate()
+                        width: month.width / 7 - 2; height: width; radius: 10
+                        color: now ? Theme.alpha(Theme.accent, .8) : "transparent"
+                        visible: index >= cal.lead
+                        LabelText { anchors.centerIn: parent; text: String(parent.day); color: parent.now ? "#ffffff" : Theme.muted; font.pixelSize: 11 }
+                    }
+                }
+            }
+        }
+    }
+    Component {
+        id: userCard
+        ColumnLayout {
+            id: account
+            spacing: 10
+            readonly property string name: Quickshell.env("USER") || "user"
+            RowLayout {
+                spacing: 12
+                Rectangle {
+                    objectName: "userAvatar"; Layout.preferredWidth: 64; Layout.preferredHeight: 64; radius: 32
+                    color: Theme.alpha(Theme.accent, .3)
+                    LabelText { anchors.centerIn: parent; text: account.name.charAt(0).toUpperCase(); font.pixelSize: 26; font.weight: Font.Bold }
+                }
+                ColumnLayout {
+                    spacing: 2
+                    LabelText { text: account.name; font.weight: Font.Bold; font.pixelSize: 16 }
+                    LabelText { text: "Signed in"; color: Theme.muted; font.pixelSize: 12 }
+                }
+            }
         }
     }
 }

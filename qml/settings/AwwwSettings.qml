@@ -12,6 +12,13 @@ SettingsCard {
     description:"Fine-tune image scaling and transition motion. All wallpaper changes use these options, including playlists and Gowall outputs."
     readonly property var daemon:ShellState.snapshot.wallpaperDaemon || ({})
     readonly property bool ready:ShellState.backendReady && !ShellState.pendingActions.setting
+    // P2: curated effect shortlist on the awww engine; any other stored awww type
+    // (simple, directional, random) stays visible and selectable when already set.
+    readonly property var transitionChoices: {
+        const curated = ["fade","grow","outer","wipe","wave","none"];
+        const current = ShellState.preferences.wallpaperTransition;
+        return !current || curated.indexOf(current) >= 0 ? curated : curated.concat([current]);
+    }
     Flow {
         Layout.fillWidth:true; spacing:8
         LiquidButton { text:"Check daemon"; enabled:!ShellState.pendingActions.wallpaperStatus; onClicked:ShellState.run("wallpaperStatus") }
@@ -19,21 +26,21 @@ SettingsCard {
     }
     LabelText { text:root.daemon.error || root.daemon.query || "Check the daemon to see its current displays and images."; textFormat:Text.PlainText; Layout.fillWidth:true; wrapMode:Text.Wrap; color:root.daemon.error ? Theme.yellow : Theme.muted; font.pixelSize:12 }
     Repeater {
-        model:[{key:"wallpaperTransitionFps",title:"Transition frame rate",min:10,max:240}, {key:"wallpaperTransitionStep",title:"Simple fade step (smaller is smoother)",min:1,max:255}, {key:"wallpaperTransitionAngle",title:"Wipe / wave angle",min:0,max:360}]
+        model:[{key:"wallpaperTransitionDuration",title:"Transition duration (s)",min:0.5,max:8,step:0.25,prec:2}, {key:"wallpaperTransitionFps",title:"Transition frame rate",min:10,max:240}, {key:"wallpaperTransitionStep",title:"Simple fade step (smaller is smoother)",min:1,max:255}, {key:"wallpaperTransitionAngle",title:"Wipe / wave angle",min:0,max:360}]
         delegate: ColumnLayout {
             id:control; required property var modelData; Layout.fillWidth:true
-            LabelText { text:control.modelData.title+" · "+Math.round(slider.value); font.weight:Font.Bold }
+            LabelText { text:control.modelData.title+" · "+(control.modelData.prec?slider.value.toFixed(control.modelData.prec):Math.round(slider.value)); font.weight:Font.Bold }
             LiquidSlider {
-                id:slider; objectName:control.modelData.key; Layout.fillWidth:true; from:control.modelData.min; to:control.modelData.max; stepSize:1; enabled:root.ready
+                id:slider; objectName:control.modelData.key; Layout.fillWidth:true; from:control.modelData.min; to:control.modelData.max; stepSize:control.modelData.step||1; enabled:root.ready
                 Accessible.name:control.modelData.title
-                onMoved:if(!pressed) ShellState.run("setting",{key:control.modelData.key,value:Math.round(value)})
-                onPressedChanged:if(!pressed) ShellState.run("setting",{key:control.modelData.key,value:Math.round(value)})
+                onMoved:if(!pressed) ShellState.run("setting",{key:control.modelData.key,value:Number(value.toFixed(control.modelData.prec||0))})
+                onPressedChanged:if(!pressed) ShellState.run("setting",{key:control.modelData.key,value:Number(value.toFixed(control.modelData.prec||0))})
             }
             Binding { target:slider; property:"value"; value:ShellState.preferences[control.modelData.key]; when:!slider.pressed; restoreMode:Binding.RestoreNone }
         }
     }
     Repeater {
-        model:[{key:"wallpaperResize",title:"Image sizing",values:["crop","fit","stretch","no"]}, {key:"wallpaperFilter",title:"Resampling filter",values:["Nearest","Bilinear","CatmullRom","Mitchell","Lanczos3"]}, {key:"wallpaperTransitionPosition",title:"Circle origin",values:["center","top","bottom","left","right","top-left","top-right","bottom-left","bottom-right"]}]
+        model:[{key:"wallpaperTransition",title:"Transition effect",values:root.transitionChoices}, {key:"wallpaperResize",title:"Image sizing",values:["crop","fit","stretch","no"]}, {key:"wallpaperFilter",title:"Resampling filter",values:["Nearest","Bilinear","CatmullRom","Mitchell","Lanczos3"]}, {key:"wallpaperTransitionPosition",title:"Circle origin",values:["center","top","bottom","left","right","top-left","top-right","bottom-left","bottom-right"]}]
         delegate: RowLayout {
             id:choice; required property var modelData; Layout.fillWidth:true
             LabelText { text:choice.modelData.title; Layout.fillWidth:true; wrapMode:Text.Wrap }
@@ -48,5 +55,5 @@ SettingsCard {
             ExpressiveField { Layout.fillWidth:true; text:ShellState.preferences[field.modelData.key] || field.modelData.hint; maximumLength:80; placeholderText:field.modelData.hint; Accessible.name:field.modelData.title; onEditingFinished:if(root.ready && text!==ShellState.preferences[field.modelData.key]) ShellState.run("setting",{key:field.modelData.key,value:text}) }
         }
     }
-    LabelText { text:"Simple ignores duration and uses its step. None and disabled shell animations apply immediately. Bezier values are 0–1; wave values are 1–500. A matching image already on screen has no visible transition."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted; font.pixelSize:12 }
+    LabelText { text:"Simple ignores duration and uses its step. None and disabled shell animations apply immediately. The effect list curates five of awww's transitions; presets and manual edits can still choose the rest. Bezier values are 0–1; wave values are 1–500. A matching image already on screen has no visible transition."; Layout.fillWidth:true; wrapMode:Text.Wrap; color:Theme.muted; font.pixelSize:12 }
 }

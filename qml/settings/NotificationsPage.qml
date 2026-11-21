@@ -37,7 +37,8 @@ ColumnLayout {
     }
     SettingsCard {
         title: "Placement and shape"
-        description: "Applies to popup notifications. Shell status messages stay at the bottom center."
+        description: "Popup notifications from apps. The shell's own status messages have their own card below."
+        PreferenceSwitch { objectName: "notificationPopupsToggle"; title: "Popup notifications"; detail: "Show notification cards on screen; history and the Notification center keep everything."; preference: "notificationPopups" }
         RowLayout {
             Layout.fillWidth: true
             LabelText { text: "Popup position"; Layout.fillWidth: true; wrapMode: Text.Wrap }
@@ -77,6 +78,23 @@ ColumnLayout {
                     onPressedChanged: if (!pressed) row.save()
                 }
                 Binding { target: slider; property: "value"; value: (ShellState.preferences[row.modelData.key] ?? Theme[row.modelData.key]) * row.factor; when: !slider.pressed; restoreMode: Binding.RestoreNone }
+            }
+        }
+    }
+    SettingsCard {
+        title: "Shell status messages"
+        description: "The shell's own confirmations — screenshot results, action feedback — show as a small card at the status position."
+        PreferenceSwitch { objectName: "statusToastsToggle"; title: "Show status messages"; detail: "Confirmations and errors from shell actions"; preference: "statusToasts" }
+        RowLayout {
+            Layout.fillWidth: true
+            LabelText { text: "Status position"; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            LiquidComboBox {
+                objectName: "statusToastPosition"
+                readonly property var positions: ["bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"]
+                model: ["Follow the bar", "Top left", "Top center", "Top right", "Bottom left", "Bottom center", "Bottom right"]
+                currentIndex: positions.indexOf(ShellState.preferences.statusToastPosition || "bottom-center")
+                Accessible.name: "Status message position"
+                onActivated: ShellState.run("setting", {key: "statusToastPosition", value: positions[currentIndex]})
             }
         }
     }

@@ -299,6 +299,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
     if key == "lyricsMode" and value in ("scroll", "line"): return value
     if key == "notificationIdleAnimation" and type(value) is bool: return value
     if key == "notificationPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
+    if key == "statusToastPosition" and value in ("bar", "top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"): return value
     if key == "notificationOpacity" and finite_number(value) and .6 <= value <= 1: return float(value)
     if key in {"notificationWidth", "notificationMargin", "notificationRadius", "notificationPadding", "notificationBorderWidth", "notificationTitleSize", "notificationBodySize", "notificationIdleSpeed"} and type(value) is int:
         low, high = {"notificationWidth": (300, 640), "notificationMargin": (0, 64), "notificationRadius": (0, 48),
@@ -356,7 +357,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
                and not any(ord(c) < 32 for c in item) for item in value):
             return list(dict.fromkeys(value))
         raise ValueError("Invalid notification rule")
-    if key == "notificationQuietHours" and type(value) is bool: return value
+    if key in {"notificationQuietHours", "notificationPopups", "statusToasts"} and type(value) is bool: return value
     # The quiet-hours window shares night light's clock format (HH:MM, wraps midnight).
     if key in {"notificationQuietStart", "notificationQuietEnd"}:
         clock_minutes(value); return value

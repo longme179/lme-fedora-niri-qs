@@ -68,7 +68,7 @@ Singleton {
         if (urgency === NotificationUrgency.Critical) return true
         return _ingressCountThisSec <= maxIngressPerSecond
     }
-    readonly property var popups: !enabled || effectiveDnd || quietHoursActive ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
+    readonly property var popups: !enabled || ShellState.preferences.notificationPopups === false || effectiveDnd || quietHoursActive ? [] : history.filter(entry => entry.popup && entry.active && !mutedApps.includes(entry.appName)).slice(0, 3)
     readonly property int count: history.length
     function setDnd(minutes) { if (!enabled) return; ShellState.run("setting", {key: "dndUntil", value: minutes < 0 ? -1 : minutes === 0 ? 0 : Math.round(Date.now() + minutes * 60000)}); }
     function muteApp(name, mute) { if (!enabled) return; ShellState.run("setting", {key: "notificationMutedApps", value: mute ? [...new Set([...mutedApps, name])] : mutedApps.filter(n => n !== name)}); }

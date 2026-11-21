@@ -141,6 +141,27 @@
       "portable": true,
       "appearance": false,
       "default": 16
+    },
+    "notificationPopups": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "statusToasts": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": true
+    },
+    "statusToastPosition": {
+      "type": "string",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": false,
+      "default": "bottom-center"
     }
   },
   "controlTab": {

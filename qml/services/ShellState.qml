@@ -160,6 +160,8 @@ QtObject {
     function startRecording(request) { if(demo || authenticationActive) return; closePanels(); captureDelay.stop(); statusMessage=""; recordingRequest=request; recordDeadline=Date.now()+3000; recordDelay.restart(); }
     property Timer recordDelay: Timer { interval: 80; onTriggered: { if(LockState.locked) return; if(root.authenticationActive) return; if(root.panelOpen) return; if(root.overlayVisible) { if(Date.now()<root.recordDeadline) restart(); else { root.statusMessage="Recording cancelled: the overlay did not close"; root.statusTimer.restart(); } return; } root.run("recordStart",root.recordingRequest); } }
     property string captureMode: "screen"
+    property real captureStartedAt: 0
+    signal captureSaved(real startedAt)
     function takeScreenshot(mode) {
         if (!['screen', 'area'].includes(mode) || demo || authenticationActive || shooter.running) return;
         closePanels(); recordDelay.stop(); statusMessage=""; captureMode = mode; captureDeadline=Date.now()+3000; captureDelay.restart();
@@ -168,6 +170,7 @@ QtObject {
         if (LockState.locked || demo || authenticationActive || shooter.running) return;
         const mode = captureMode === "area" ? "gui" : "full";
         captureDeadline = Date.now() + 3000;
+        captureStartedAt = Date.now();
         shooter.command = ["sh", "-c", "umask 077; mkdir -p \"$HOME/Pictures/Screenshots\"; exec env XDG_CURRENT_DESKTOP=sway flameshot " + mode + " -p \"$HOME/Pictures/Screenshots\""];
         shooter.running = true;
     }
@@ -184,7 +187,9 @@ QtObject {
             if (exitCode !== 0) {
                 root.statusMessage = "Screenshot failed. Install Flameshot or check the shell log.";
                 root.statusError = true; root.statusTimer.restart();
+                return;
             }
+            captureSaved(captureStartedAt);
         }
     }
     // Q3 native router — the write families (plan §5 Q3). Real sessions route a family's

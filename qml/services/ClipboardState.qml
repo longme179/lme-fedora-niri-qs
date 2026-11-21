@@ -103,6 +103,24 @@ QtObject {
         if (!lines.length) return null;
         try { return JSON.parse(lines[lines.length - 1]); } catch (_) { return null; }
     }
+    // ---- capture-to-clipboard (the screenshot copier) ----------------------
+    // ShellState signals a clean flameshot exit with the capture's start
+    // time; the newest PNG of THAT capture goes onto the Wayland clipboard
+    // so Ctrl+V and this service's wl-paste watcher both pick it up.
+    // Outcome via the tool's stdout: "copied" / "failed" / "none" (an
+    // escaped gui round-trip — silent by design).
+    property Connections captureLink: Connections {
+        target: ShellState
+        function onCaptureSaved(startedAt) { root.copyCapture(startedAt) }
+    }
+    function copyCapture(startedAtMs) {
+        const since = Math.floor((startedAtMs - 1500) / 1000);
+        runTool(["sh", "-c", "f=$(find \"$HOME/Pictures/Screenshots\" -maxdepth 1 -name \"*.png\" -newermt @" + since + " -printf \"%T@ %p\\n\" 2>/dev/null | sort -n | tail -1 | cut -d\" \" -f2-); if [ -n \"$f\" ]; then wl-copy -t image/png < \"$f\" && printf \"copied\\n\" || printf \"failed\\n\"; else printf \"none\\n\"; fi"], 15, (ok, text) => {
+            if (!ok) { ShellState.statusMessage = "Screenshot saved, but the clipboard copy failed."; ShellState.statusError = true; ShellState.statusTimer.restart(); return; }
+            const outcome = String(text || "").split("\n").filter(line => line.length > 0).pop() || "";
+            if (outcome === "copied") { ShellState.statusMessage = "Screenshot saved and copied to the clipboard."; ShellState.statusError = false; ShellState.statusTimer.restart(); }
+        });
+    }
 
     // ---- the capture watchers ----------------------------------------------------------
     property bool stoppingText: false

@@ -358,10 +358,10 @@
   ],
   "largeFiles": {
     "shell.qml": 291,
-    "qml/services/ShellState.qml": 393,
+    "qml/services/ShellState.qml": 398,
     "qml/services/NativeState.qml": 257,
     "qml/services/EqualizerState.qml": 442,
-    "qml/services/ClipboardState.qml": 278,
+    "qml/services/ClipboardState.qml": 296,
     "qml/services/Notifications.qml": 278,
     "qml/services/NetworkInventoryState.qml": 253,
     "tests/test_native_controls.py": 273,
@@ -409,6 +409,6 @@
     "tests/test_native_clipboard.py": 388,
     "image_actions.py": 61,
     "config/architecture.json": 414,
-    "tests/test_capture_flameshot.py": 107
+    "tests/test_capture_flameshot.py": 209
   }
 }

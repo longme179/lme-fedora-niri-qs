@@ -135,6 +135,7 @@
   ],
   "sharedFiles": [
     "scripts/action_pending.py",
+    "scripts/prefs_watcher.py",
     "scripts/catalog_metadata.py",
     "scripts/backend_actions.py",
     "scripts/backend_providers.py",
@@ -378,7 +379,7 @@
     "scripts/battery_saver.py": 273,
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 339,
-    "scripts/desktop_backend.py": 1637,
+    "scripts/desktop_backend.py": 1649,
     "tests/fixtures/settings-defaults.json": 638,
     "tests/fixtures/settings-validation.json": 24880,
     "scripts/idle_control.py": 272,
@@ -407,7 +408,7 @@
     "tests/test_native_display_idle.py": 695,
     "tests/test_native_clipboard.py": 388,
     "image_actions.py": 61,
-    "config/architecture.json": 413,
+    "config/architecture.json": 414,
     "tests/test_capture_flameshot.py": 107
   }
 }

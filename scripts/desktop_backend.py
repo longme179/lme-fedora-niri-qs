@@ -63,6 +63,7 @@ from mirror_actions import MirrorCapabilities, provide as provide_mirror
 from file_search_actions import SearchCapabilities, provide as provide_file_search
 from file_search import roots as search_roots, search as search_files
 from threading import Event
+from prefs_watcher import PrefsWatcher
 from wallpaper_palette import preview as palette_preview, validate_palette, follow_wallpaper_palette
 from battery_info import battery_details, aggregate as aggregate_batteries
 from peripheral_battery import bluetooth_device, kernel_batteries, merge_batteries
@@ -1646,6 +1647,11 @@ def main(argv: list[str] | None = None) -> int:
                 event_process.kill()
                 event_process.wait(timeout=1)
         event_process = None
+    watcher = None
+    wake = os.pipe() if not args.demo else None
+    if wake is not None:
+        watcher = PrefsWatcher(backend.preferences.path, backend.preferences, lambda: os.write(wake[1], b"1")).start()
+        selector.register(wake[0], selectors.EVENT_READ, "prefs")
     try:
         signal.signal(signal.SIGTERM, stop_backend)
         emit(backend)
@@ -1688,6 +1694,10 @@ def main(argv: list[str] | None = None) -> int:
                     if event_refresh_due is None:
                         event_refresh_due = time.monotonic() + 0.1
                     continue
+                if key.data == "prefs":
+                    # The watcher thread saw an external settings-file edit.
+                    changed = True
+                    continue
                 input_buffer += data
                 if len(input_buffer) > 8 * 1024 * 1024:
                     backend.last_result = {"ok": False, "action": "", "message": "Input exceeds 8 MiB limit"}
@@ -1722,6 +1732,8 @@ def main(argv: list[str] | None = None) -> int:
         backend.charge_executor.shutdown(wait=False, cancel_futures=True)
         backend.feature_executor.shutdown(wait=False, cancel_futures=True)
         close_event_stream()
+        if watcher is not None: watcher.stop()
+        if wake is not None: os.close(wake[0]); os.close(wake[1])
         selector.close()
 
 

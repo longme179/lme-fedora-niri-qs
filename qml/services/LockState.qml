@@ -26,7 +26,7 @@ QtObject {
         Quickshell.env("LME_SHELL_DEMO") !== "1"
         && Quickshell.env("LME_SHELL_LOCK_ENABLED") !== "0"
     // ext-session-lock exists only under a compositor; fixtures blank WAYLAND_DISPLAY.
-    readonly property bool wayland: Quickshell.env("WAYLAND_DISPLAY").length > 0
+    readonly property bool wayland: (Quickshell.env("WAYLAND_DISPLAY") || "").length > 0
 
     property bool screenLocked: false
     readonly property bool locked: screenLocked

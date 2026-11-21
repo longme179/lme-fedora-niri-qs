@@ -118,8 +118,14 @@ blur {
     noise 0.02
     saturation 1.0
 }
+// The capture overlay (App ID "flameshot", title "flameshot") opens as a
+// screen-covering FLOATING window over the current layout; open-fullscreen
+// false blocks its map-time fullscreen request so tiled apps stay put.
 window-rule {
     match app-id="^flameshot$"
+    match title="^flameshot$"
     match title="^Screenshot (.*)$"
     open-floating true
+    open-fullscreen false
+    open-maximized false
 }

@@ -15,7 +15,7 @@ def widgets(value, partial=False):
         if not isinstance(key,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}',key): raise ValueError('Invalid widget identifier')
         if not isinstance(record,dict) or set(record)-FIELDS or not partial and set(record)!=FIELDS: raise ValueError('Invalid desktop widget fields')
         for field, item in record.items():
-            if field == 'type' and item not in ('clock','notes','media'): raise ValueError('Unknown desktop widget')
+            if field == 'type' and item not in ('clock','notes','media','weather','calendar','user'): raise ValueError('Unknown desktop widget')
             if field == 'output' and (not isinstance(item,str) or not 1 <= len(item) <= 128 or any(ord(c)<32 for c in item)): raise ValueError('Choose a display')
             if field in ('enabled','interactive') and type(item) is not bool: raise ValueError('Widget switches must be boolean')
             if field in ('x','y') and (type(item) not in (int,float) or not math.isfinite(item) or not 0 <= item <= 1): raise ValueError('Widget positions must be normalized')

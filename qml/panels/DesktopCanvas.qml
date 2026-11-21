@@ -39,7 +39,7 @@ Scope {
             }
             Flow {
                 Layout.fillWidth: true; spacing: 8
-                Repeater { model: ["clock","notes","media"]; delegate: LiquidButton { required property string modelData; text: "Add " + modelData; enabled: Object.keys(DesktopState.widgets).length<12; onClicked: DesktopState.add(modelData) } }
+                Repeater { model: ["clock","notes","media","weather","calendar","user"]; delegate: LiquidButton { required property string modelData; text: "Add " + modelData; enabled: Object.keys(DesktopState.widgets).length<12; onClicked: DesktopState.add(modelData, screen ? screen.name : "primary", screen) } }
                 LiquidButton { text: "Widget settings"; onClicked: ShellState.openSettingsPage("desktop") }
             }
             LabelText { text: "Drag a header or resize its corner. Widgets stay below apps outside Edit."; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 12 }

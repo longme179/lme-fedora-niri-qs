@@ -1,4 +1,5 @@
 ## Unreleased
+- Desktop widgets grow weather, calendar and account cards on the existing canvas (WeatherWidget reused as-is, a pure QML month grid with in-memory month navigation, a USER-env identity card); new widgets are placed by a simple empty-region scan of the target screen, with the old cascade as the crowded-screen fallback
 - LockState's compositor check tolerates an unset WAYLAND_DISPLAY (Quickshell.env returns null for missing variables; the engine battery hit the resulting TypeError once the runner environment lost the variable)
 - Settings exposes the wallpaper transition effect (curated fade/grow/outer/wipe/wave + none; any other stored awww type stays selectable) and a transition duration slider
 - Playlist "Next image" and per-output reset now regenerate the wallpaper-following palette too (the follow was composed only into the direct apply action, so backend playlist advances changed the wallpaper without the palette)

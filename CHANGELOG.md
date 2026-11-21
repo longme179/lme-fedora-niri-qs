@@ -1,4 +1,5 @@
 ## Unreleased
+- Settings exposes the wallpaper transition effect (curated fade/grow/outer/wipe/wave + none; any other stored awww type stays selectable) and a transition duration slider
 - Playlist "Next image" and per-output reset now regenerate the wallpaper-following palette too (the follow was composed only into the direct apply action, so backend playlist advances changed the wallpaper without the palette)
 - Follow wallpaper changes now switches the palette source to Material-from-wallpaper and applies the current wallpaper immediately when turned on (before, the follow stayed inert until a manual palette Preview/Apply)
 - Replaced Satty/Swappy screenshot pipeline with flameshot (Fedora: `sudo dnf install flameshot`)

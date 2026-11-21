@@ -85,7 +85,28 @@ GlassPanel {
             LyricsView { player: ActivityState.player; Layout.fillWidth: true }
         }
     }
-    Component { id: weatherCard; WeatherWidget { objectName: "weatherCardBody" } }
+    Component {
+        id: weatherCard
+        ColumnLayout {
+            id: conditions
+            objectName: "weatherCardBody"
+            spacing: 8
+            readonly property var weather: ShellState.weather
+            function number(value, suffix) { return value === null || value === undefined ? "—" : Math.round(value) + (suffix || ""); }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 12
+                ShellIcon { name: conditions.weather.icon || "weather-cloud"; color: Theme.yellow; Layout.preferredWidth: 40; Layout.preferredHeight: 40 }
+                LabelText { text: conditions.number(conditions.weather.temperature, conditions.weather.unit || "°C"); font.pixelSize: 34; font.weight: Font.Bold }
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 3
+                    LabelText { text: conditions.weather.condition || (conditions.weather.available === true ? "" : "Weather unavailable"); Layout.fillWidth: true; wrapMode: Text.Wrap; font.weight: Font.Medium }
+                    LabelText { text: "Feels like " + conditions.number(conditions.weather.feelsLike, conditions.weather.unit || "°C"); color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                }
+            }
+            LabelText { text: "Humidity " + conditions.number(conditions.weather.humidity, "%") + "  ·  Wind " + conditions.number(conditions.weather.wind, " " + (conditions.weather.windUnit || "km/h")); color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            LabelText { text: (conditions.weather.location || {}).name || "Local weather"; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
+        }
+    }
     Component {
         id: calendarCard
         ColumnLayout {

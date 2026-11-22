@@ -13,6 +13,7 @@ ColumnLayout {
     id: root
     spacing: 20
     readonly property var palette: ShellState.snapshot.palettePreview || {colors:{},path:""}
+    readonly property var paletteSinks: ShellState.snapshot.paletteSinks || {}
     readonly property string targetOutput: ShellState.preferences.wallpaperPlaylistOutput || ""
     readonly property var outputs: ["",...new Set([...Quickshell.screens.map(s=>s.name),...Object.keys(ShellState.preferences.wallpaperOutputs || {}),...(targetOutput ? [targetOutput] : [])])]
     readonly property string currentWallpaper: (ShellState.preferences.wallpaperOutputs || {})[targetOutput] || ShellState.preferences.wallpaper || ""
@@ -160,6 +161,71 @@ ColumnLayout {
             }
         }
         LabelText { text: "Current source: " + (ShellState.preferences.paletteSource || "dracula"); color: Theme.muted }
+    }
+    SettingsCard {
+        id: sinkCard
+        title: "External app colors"
+        description: "Write the live palette to the kitty terminal. Adds one marked include line to kitty.conf; nothing else on your system is changed."
+        readonly property var kitty: root.paletteSinks.kitty || ({})
+        readonly property bool sinkOn: ShellState.preferences.paletteSinkKitty === true
+        readonly property bool includeActive: kitty.include === "present" || kitty.include === "inserted"
+        readonly property bool sinkBusy: !!ShellState.pendingActions.setting || !!ShellState.pendingActions.paletteSinkSync
+        readonly property string includeText: kitty.include === "present" ? "include line active"
+            : kitty.include === "declined" ? "include not allowed yet"
+            : kitty.include === "drifted" ? "kitty.conf markers drifted - resolve manually"
+            : kitty.include === "inserted" ? "include line added to kitty.conf"
+            : "include line missing from kitty.conf"
+        readonly property string statusText: kitty.enabled !== true ? "status unavailable"
+            : [includeText, "palette file: " + (kitty.file || "unknown"),
+               kitty.lastApply ? "last apply: " + kitty.lastApply.digest + " · " + kitty.lastApply.pids + " kitty window(s) reloaded" : "",
+               kitty.error ? "error: " + kitty.error : ""].filter(part => part.length > 0).join("\n")
+        RowLayout {
+            Layout.fillWidth: true; spacing: 20
+            ColumnLayout {
+                Layout.fillWidth: true; spacing: 5
+                LabelText { text: "Terminal colors (kitty)"; font.weight: Font.Medium; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                LabelText { text: "Renders lme-palette.conf next to kitty.conf and reloads running kitty windows; font zoom resets once per palette change."; color: Theme.muted; font.pixelSize: 13; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            }
+            ExpressiveSwitch {
+                checked: sinkCard.sinkOn
+                enabled: ShellState.backendReady && !sinkCard.sinkBusy
+                Accessible.name: "Terminal colors (kitty)"
+                onToggled: {
+                    ShellState.run("setting", {key: "paletteSinkKitty", value: checked});
+                    if (checked && !ShellState.demo) ShellState.run("paletteSinkSync", {});
+                }
+            }
+        }
+        LabelText {
+            visible: sinkCard.sinkOn
+            text: sinkCard.statusText
+            color: Theme.muted; font.pixelSize: 13
+            Layout.fillWidth: true; wrapMode: Text.Wrap
+        }
+        RowLayout {
+            LiquidButton {
+                text: "Add include to kitty.conf"
+                visible: sinkCard.sinkOn && !sinkCard.includeActive
+                enabled: !ShellState.demo && !sinkCard.sinkBusy
+                Accessible.name: "Add include to kitty.conf"
+                onClicked: {
+                    ShellState.run("setting", {key: "paletteSinkKittyInclude", value: true});
+                    ShellState.run("paletteSinkSync", {});
+                }
+            }
+            LiquidButton {
+                text: ShellState.pendingActions.paletteSinkSync ? "Applying…" : "Apply now"
+                enabled: sinkCard.sinkOn && !ShellState.demo && !sinkCard.sinkBusy
+                Accessible.name: "Apply kitty colors now"
+                onClicked: ShellState.run("paletteSinkSync", {})
+            }
+            LiquidButton {
+                text: "Undo"
+                enabled: sinkCard.sinkOn && !ShellState.demo && !sinkCard.sinkBusy
+                Accessible.name: "Undo kitty colors"
+                onClicked: ShellState.run("paletteSinkUndo")
+            }
+        }
     }
     SettingsCard {
         title: "Your backdrop"

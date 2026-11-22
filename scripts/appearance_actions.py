@@ -8,6 +8,7 @@ from typing import Callable
 from backend_actions import ActionSpec
 from desktop_features import DRACULA_PROFILE, PALETTE_CATALOG
 from settings_transfer import export_document, read_document
+import palette_sinks
 
 
 @dataclass(frozen=True)
@@ -25,10 +26,12 @@ def provide(capabilities):
         ident = capabilities.validate('palettePreset', request.get('id'))
         selected = next(p for p in PALETTE_CATALOG if p['id'] == ident)
         capabilities.update({'palettePreset': ident, 'paletteSource': 'preset', 'accent': selected['colors']['accent']})
+        palette_sinks.request_sync()
         return selected['name'] + ' palette applied; manual overrides preserved'
 
     def reset(request):
         capabilities.update({'paletteSource': 'dracula', 'accent': DRACULA_PROFILE['accent']})
+        palette_sinks.request_sync()
         return 'Dracula palette restored; element overrides preserved'
 
     def export(request):

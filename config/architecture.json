@@ -134,6 +134,9 @@
     "qml/services/"
   ],
   "sharedFiles": [
+    "scripts/sink_files.py",
+    "scripts/palette_render.py",
+    "scripts/palette_sinks.py",
     "scripts/action_pending.py",
     "scripts/prefs_watcher.py",
     "scripts/catalog_metadata.py",
@@ -380,8 +383,8 @@
     "scripts/bluetooth_agent.py": 254,
     "scripts/clipboard.py": 339,
     "scripts/desktop_backend.py": 1650,
-    "tests/fixtures/settings-defaults.json": 650,
-    "tests/fixtures/settings-validation.json": 25344,
+    "tests/fixtures/settings-defaults.json": 658,
+    "tests/fixtures/settings-validation.json": 25550,
     "scripts/idle_control.py": 272,
     "scripts/equalizer_actions.py": 374,
     "tests/fixtures/catalog-legacy.json": 349,
@@ -408,7 +411,7 @@
     "tests/test_native_display_idle.py": 695,
     "tests/test_native_clipboard.py": 388,
     "image_actions.py": 61,
-    "config/architecture.json": 414,
+    "config/architecture.json": 417,
     "tests/test_capture_flameshot.py": 209
   }
 }

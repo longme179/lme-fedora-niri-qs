@@ -68,6 +68,7 @@ Previews are rendered from this repository's QML with sample data — see [docs/
 | **Lyrics** | Choose a scrolling transcript or current line, follow playback by default, and show synchronized lines on Activity Island. Embedded/local LRC and cache work offline; LRCLIB lookup is optional. |
 | **Desktop canvas** | Place clock, notes and media widgets per display. Drag and resize in Edit mode, then keep them below apps or make them click-through. |
 | **Wallpaper playback** | Build an ordered or shuffled playlist, pause/resume, set an interval and choose awww transitions. Use a shared image or independent images per display; keep assignments for disconnected displays. |
+| **Kitty palette sink** | The wallpaper palette is rendered to kitty's config and live-reloaded into running windows, with a managed include line and undo. |
 | **Everyday tools** | Clipboard text/images with search, pins and image annotation; grouped, persistent notifications with [appearance controls](docs/NOTIFICATIONS.md) and a rotating Material emblem; timed DND; calendar, tasks and autosaved notes. |
 | **Laptop controls** | Weather with automatic or manual location, supported Lenovo charging modes, AC/battery idle profiles, system monitoring and display settings with automatic revert. |
 | **Battery saver** | A reversible Control Center toggle for opaque Material surfaces, reduced motion, supported display modes up to 1080p/60 Hz, a starting brightness cap and the system's power-saving profile. |

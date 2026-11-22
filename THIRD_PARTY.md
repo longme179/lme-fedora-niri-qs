@@ -15,6 +15,13 @@ The full GNU Affero General Public License version 3 is in [LICENSE](LICENSE).
 Quickshell, Qt, niri, and the desktop utilities are external runtime dependencies
 with their own licenses. Installing this project does not redistribute them.
 
+The kitty palette sink design is inspired by [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)
+and [pctrade/end4-pC](https://github.com/pctrade/end4-pC) (both GPL-3.0); no code
+was copied - the implementation here is original, written from the written
+design specification. The include-line and managed-block mechanism follows
+kitty's documented SIGUSR1 config reload
+([sw.kovidgoyal.net/kitty/conf](https://sw.kovidgoyal.net/kitty/conf)).
+
 The color system follows Dracula Pro's dark, purple-led visual direction. It does
 not include purchased Dracula Pro files, wallpapers, fonts, or branding assets.
 Palette values are editable locally; users who own a preferred Pro variant can

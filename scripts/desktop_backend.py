@@ -55,6 +55,7 @@ from gowall_actions import GowallCapabilities, provide as provide_gowall
 from saver_actions import SaverCapabilities, provide as provide_saver
 from recording_actions import RecordingCapabilities, provide as provide_recording
 from palette_actions import PaletteCapabilities, provide as provide_palette
+import palette_sinks
 from image_actions import ImageCapabilities, open_image, provide_image
 from lock_actions import LockCapabilities, provide as provide_lock
 from screen_recording import Recorder
@@ -99,8 +100,7 @@ PREFERENCE_SCHEMA = PreferenceSchema(
     resolvers={
         "glass": lambda key: GLASS_DEFAULTS, "profiles": lambda key: [DRACULA_PROFILE],
         "controlLayout": lambda key: DEFAULT_CONTROL_LAYOUT, "controlGrid": lambda key: DEFAULT_CONTROL_GRID,
-        "idleProfiles": lambda key: DEFAULT_IDLE_PROFILES,
-        "motion": lambda key: MOTION_DEFAULTS[key], "theme": lambda key: THEME_DEFAULTS[key],
+        "idleProfiles": lambda key: DEFAULT_IDLE_PROFILES, "motion": lambda key: MOTION_DEFAULTS[key], "theme": lambda key: THEME_DEFAULTS[key],
         "palette": lambda key: PALETTE_DEFAULTS[key], "wallpaper": lambda key: WALLPAPER_DEFAULTS[key],
     })
 DEFAULT_PREFERENCES = PREFERENCE_SCHEMA.defaults()
@@ -261,8 +261,7 @@ class Applications:
                     continue
         return sorted(
             [{key: value for key, value in entry.items() if key != "argv"} for entry in self.entries.values()],
-            key=lambda app: (app["name"].casefold(), app["id"]),
-        )
+            key=lambda app: (app["name"].casefold(), app["id"]))
 
 
 def validate_preference(key: str, value: Any) -> Any:
@@ -289,7 +288,7 @@ def _validate_legacy_preference(key: str, value: Any) -> Any:
         if low <= value <= high: return value
     if key == "nightLightMode" and value in ("manual", "schedule", "sunset"): return value
     if key in {"nightLightStart", "nightLightEnd"}: clock_minutes(value); return value
-    if key in {"desktopEnabled", "desktopShapes", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled", "wallpaperPaletteAuto"} and type(value) is bool: return value
+    if key in {"desktopEnabled", "desktopShapes", "mediaShapes", "mediaStability", "mediaControls", "springMotion", "shapeMorph", "animatedTabs", "mediaWave", "fontPicker", "pointerRipple", "colorPicker", "privacyIndicators", "dndWhileSharing", "batteryDetails", "audioVisualizer", "quickNotes", "recordingEnabled", "wallpaperPaletteAuto", "paletteSinkKitty", "paletteSinkKittyInclude"} and type(value) is bool: return value
     if key == "desktopShapeRotation" and type(value) is bool: return value
     if key == "desktopShapeCount" and type(value) is int and 1 <= value <= 12: return value
     if key == "desktopShapeStyle" and value in ("mixed", "flower", "circle", "square"): return value
@@ -562,6 +561,7 @@ class DesktopBackend:
         self._wifi_capabilities = WifiCapabilities(lambda **kwargs: self.network(**kwargs),
             lambda *args, **kwargs: self.runner.run(*args, **kwargs), lambda: self.demo_snapshot()['system']['network'])
         self.actions = ActionRegistry(start_feature=lambda action, operation, **options: self.start_feature(action, operation, **options))  # REL: scripts/backend_actions.py::ActionRegistry
+        palette_sinks.configure(lambda: self.preferences.values, self.runner, proc_root=self.proc)
         self.action_state = self.actions.provide([  # REL: scripts/backend_providers.py::provide (factories) – narrow capabilities per provider
             (lambda cap:provide_blur(*cap), (lambda:self.preferences.path.parent,lambda:self.preferences.values['liquidGlass'])),
             (BACKEND_FACTORIES['mirroring'], MirrorCapabilities(settings_only=lambda:self.settings_only,

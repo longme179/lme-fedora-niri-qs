@@ -6,19 +6,12 @@ import json
 from pathlib import Path
 import re
 import tempfile
-from desktop_features import IMAGE_SUFFIXES, THEME_SCHEMA, PALETTE_SCHEMES
+from desktop_features import IMAGE_SUFFIXES, THEME_SCHEMA, PALETTE_SCHEMES, validate_palette
+import palette_sinks
 
 ROLES={'background':'background','panel':'surface_container','surface':'surface_container_high','text':'on_surface','muted':'on_surface_variant','border':'outline',
        'green':'tertiary','yellow':'secondary','purple':'primary','pink':'secondary','cyan':'tertiary','red':'error','primaryContainer':'primary_container','secondaryContainer':'secondary_container',
        'tertiaryContainer':'tertiary_container','surfaceContainer':'surface_container','surfaceContainerHigh':'surface_container_high','onPrimary':'on_primary','accent':'primary'}
-ALLOWED={k for group in THEME_SCHEMA['colors'] for k in group['tokens']} | {'accent'}
-
-
-def validate_palette(value):
-    if not isinstance(value,dict) or not set(value)<=ALLOWED or not all(isinstance(c,str) and re.fullmatch(r'#[0-9a-fA-F]{6}',c) for c in value.values()):
-        raise ValueError('Invalid wallpaper palette')
-    return {k:c.lower() for k,c in value.items()}
-
 
 def colors_from_json(raw, mode="dark"):
     start=raw.find('{')
@@ -64,6 +57,7 @@ def follow_wallpaper_palette(host, message, raw):
         colors = validate_palette(result.get('colors'))
         host.palette_preview = result
         host.preferences.update({'wallpaperPalette': colors, 'paletteSource': 'wallpaper', 'accent': colors['accent']})
+        palette_sinks.request_sync()
         return message + ' (palette updated)'
     except Exception as error:
         return message + ' (palette unchanged: ' + str(error)[:120] + ')'

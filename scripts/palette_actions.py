@@ -1,11 +1,12 @@
 """Request-time palette options, followed by the existing preview state install.
 Callers/callees: see config/architecture.json and docs/WORKSPACE_MAP.md (owner: wallpaper; Phase 3 graph).
 """
-# REL: qml/settings/AppearancePage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host.
+# REL: qml/settings/AppearancePage.qml – ActionSpec dispatch via scripts/backend_actions.py::ActionRegistry; scripts/desktop_backend.py host; scripts/palette_sinks.py (sink actions + sync hooks).
 from dataclasses import dataclass
 from typing import Callable
 from backend_actions import ActionSpec, PreparedWork
 from wallpaper_palette import validate_palette
+import palette_sinks
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ def provide(cap):
                 or any(preview.get(key) != cap.preferences()[key] for key in ('paletteScheme','paletteMode','paletteContrast'))):
             raise ValueError('Generate a preview for this image first')
         cap.update({'wallpaperPalette':colors,'paletteSource':'wallpaper','accent':colors['accent']})
+        palette_sinks.request_sync()
         return 'Wallpaper palette applied; element overrides preserved'
     def sync(request):
         path=request.get('path')
@@ -47,8 +49,14 @@ def provide(cap):
         if not colors: return
         cap.install(value)
         cap.update({'wallpaperPalette':colors,'paletteSource':'wallpaper','accent':colors['accent']})
+        palette_sinks.request_sync()
     return ((ActionSpec('palettePreview',{'shell','settings'},lambda request:None,lambda request:None,
         execution='worker',complete=complete,presentation='Wallpaper palette preview ready',prepare=prepare),
         ActionSpec('paletteApply',{'shell','settings'},apply,lambda request:None),
         ActionSpec('paletteSync',{'shell','settings'},lambda request:None,lambda request:None,
-            execution='worker',complete=sync_complete,presentation='Wallpaper palette updated',prepare=sync)),lambda:{})
+            execution='worker',complete=sync_complete,presentation='Wallpaper palette updated',prepare=sync),
+        ActionSpec('paletteSinkSync',{'shell','settings'},lambda request:None,lambda request:None,
+            execution='worker',complete=lambda value:None,presentation='Kitty palette sync finished',
+            prepare=lambda request:PreparedWork(lambda:palette_sinks.run_apply_now())),
+        ActionSpec('paletteSinkUndo',{'shell','settings'},
+            lambda request:palette_sinks.run_undo(lambda values:cap.update(values)),lambda request:None)),lambda:{'paletteSinks':palette_sinks.status()})

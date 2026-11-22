@@ -6,14 +6,17 @@
     "scripts/wallpaper.py",
     "scripts/wallpaper_actions.py",
     "scripts/wallpaper_palette.py",
-    "scripts/palette_actions.py"
+    "scripts/palette_actions.py",
+    "scripts/sink_files.py",
+    "scripts/palette_render.py",
+    "scripts/palette_sinks.py"
   ],
   "settingsPage": {
     "key": "wallpaper",
     "title": "Wallpaper",
     "icon": "applications",
     "description": "A backdrop that feels like you",
-    "keywords": "playlist shuffle pause interval transition display output background image picture folder library thumbnail matugen material scheme contrast palette light dark",
+    "keywords": "playlist shuffle pause interval transition display output background image picture folder library thumbnail matugen material scheme contrast palette light dark kitty terminal sink external apps colors",
     "entry": "qml/settings/WallpaperPage.qml",
     "after": "desktop"
   },
@@ -166,6 +169,20 @@
       "defaultResolver": "palette"
     },
     "wallpaperPaletteAuto": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": true,
+      "defaultResolver": "palette"
+    },
+    "paletteSinkKitty": {
+      "type": "boolean",
+      "validator": "legacy",
+      "portable": true,
+      "appearance": true,
+      "defaultResolver": "palette"
+    },
+    "paletteSinkKittyInclude": {
       "type": "boolean",
       "validator": "legacy",
       "portable": true,

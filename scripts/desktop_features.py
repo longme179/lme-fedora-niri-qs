@@ -17,7 +17,7 @@ PALETTE_DOCUMENT = json.loads((Path(__file__).resolve().parents[1] / 'config/pal
 PALETTE_CATALOG = PALETTE_DOCUMENT['palettes']
 PALETTE_IDS = {p['id'] for p in PALETTE_CATALOG}
 PALETTE_SCHEMES = tuple(PALETTE_DOCUMENT['schemes'])
-PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", "paletteScheme": "tonal-spot", "paletteMode": "dark", "paletteContrast": 0.0, "wallpaperPalette": {}, "wallpaperPaletteAuto": False}
+PALETTE_DEFAULTS = {"paletteSource": "dracula", "palettePreset": "lme-dracula", "paletteScheme": "tonal-spot", "paletteMode": "dark", "paletteContrast": 0.0, "wallpaperPalette": {}, "wallpaperPaletteAuto": False, "paletteSinkKitty": False, "paletteSinkKittyInclude": False}
 from settings_schema import appearance_keys
 APPEARANCE_KEYS = appearance_keys()
 DRACULA_PROFILE = {"name": "Dracula", "accent": "#9580ff", "opacity": .90,
@@ -33,6 +33,15 @@ LEGACY_CONTROL_MODULES = {'weather', 'charging', 'wifi', 'bluetooth', 'microphon
                           'sliders', 'powerProfile', 'media', 'resources', 'capture', 'overview'}
 LEGACY_GRID_IDS = set(CONTROL_SPANS) - {'volume', 'micLevel', 'brightness', 'powerProfile', 'settings', 'power', 'batterySaver', 'equalizer'}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+
+
+ALLOWED={k for group in THEME_SCHEMA['colors'] for k in group['tokens']} | {'accent'}
+
+
+def validate_palette(value):
+    if not isinstance(value,dict) or not set(value)<=ALLOWED or not all(isinstance(c,str) and re.fullmatch(r'#[0-9a-fA-F]{6}',c) for c in value.values()):
+        raise ValueError('Invalid wallpaper palette')
+    return {k:c.lower() for k,c in value.items()}
 
 
 def appearance_profile(value, validate):

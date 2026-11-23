@@ -61,6 +61,11 @@ Item {
                     ctx.beginPath(); ctx.roundedRect(x, 4, 8, 16, 2, 2); ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(x + 2, 9); ctx.lineTo(x + 6, 9); ctx.stroke();
                 }
+            } else if (root.name === "image") {
+                // Picture-frame glyph: frame, sun corner and mountain fold.
+                ctx.beginPath(); ctx.roundedRect(3,4,18,16,2,2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(8,9,2,0,Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(5,18); ctx.lineTo(11,12); ctx.lineTo(14,15); ctx.lineTo(17,11); ctx.lineTo(20,14); ctx.stroke();
             } else if (root.name === "tray") {
                 for (const x of [5, 11, 17]) {
                     for (const y of [5, 11]) {

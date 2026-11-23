@@ -178,6 +178,14 @@
       "cols": 1,
       "col": 1,
       "row": 8
+    },
+    {
+      "id": "wallpaper",
+      "title": "Next wallpaper",
+      "icon": "image",
+      "cols": 1,
+      "col": 3,
+      "row": 8
     }
   ],
   "tabs": [

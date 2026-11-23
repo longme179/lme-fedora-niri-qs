@@ -292,7 +292,7 @@ bounded update rate and final release update. Power profile cycles through the
 service's advertised profiles, skipping Performance if it is absent. The normal
 command-error path remains available if a provider cannot advertise its list.
 Power opens the existing confirmation menu. To add its optional topbar shortcut,
-enable **Power** in Settings → Top bar; existing bar layouts remain unchanged.
+enable **Power** in Settings → Top bar; existing bar layouts remain unchanged. The optional **Next wallpaper** bar module and Control Center tile advance the wallpaper playlist with one click.
 
 Saved layouts migrate automatically. New controls are placed in free cells;
 additional rows are appended when necessary, up to 32, without moving saved tiles.
@@ -303,7 +303,7 @@ uses the same validation/migration path.
 
 | Tab | Controls |
 | --- | --- |
-| Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, Night Light, motion presets, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, screen capture (flameshot area/screen), lock, settings, power menu and workspace board |
+| Controls | Local weather, battery charge modes, Wi-Fi/Bluetooth power, microphone mute, DND, stay awake, Night Light, motion presets, speaker/microphone sliders, brightness, power profile, MPRIS, system stats, screen capture (flameshot area/screen), lock, settings, power menu, workspace board and next wallpaper |
 | Audio | Default output/input selection, each device's volume/mute, application stream volume/mute and advanced audio settings |
 | Devices | Bluetooth adapter selection, nearby-device scan, pairing/PIN/passkey confirmation, connect/disconnect, block/error information, Wi-Fi scanning/password entry and saved profiles |
 | Agenda | English calendar, local to-do list, 25-minute focus/5-minute short break/15-minute long break, and stopwatch |

@@ -103,7 +103,7 @@ Item {
                     stayAwake: ShellState.settingsPageAvailable("idle") ? stayAwakeModule : null, motion: motionModule, nightLight: ShellState.settingsPageAvailable("nightLight") ? nightLightModule : null, overview: overviewModule,
                     captureScreen: screenModule, captureArea: areaModule,
                     volume: volumeModule, micLevel: micLevelModule, brightness: brightnessModule, powerProfile: powerProfileModule,
-                    batterySaver: batterySaverModule, equalizer: equalizerModule, settings: settingsModule, power: powerModule})
+                    batterySaver: batterySaverModule, equalizer: equalizerModule, wallpaper: wallpaperModule, settings: settingsModule, power: powerModule})
             }
             LiquidButton { visible: root.editing; text: "Reset grid"; enabled: quickGrid.ready; onClicked: quickGrid.reset() }
             GridLayout {
@@ -218,6 +218,16 @@ Item {
         }
     }
     Component { id: equalizerModule; Tile { label: "Equalizer"; detail: "Serpantinum bands"; iconName: "audio"; accent: Theme.pink; active: ShellState.isPanelOpen("equalizer"); onClicked: ShellState.togglePanel("equalizer") } }
+    Component {
+        id: wallpaperModule
+        Tile {
+            label: "Wallpaper"; iconName: "image"; accent: Theme.cyan
+            readonly property var playlist: ShellState.preferences.wallpaperPlaylist || []
+            detail: playlist.length === 0 ? "Playlist empty" : ShellState.preferences.wallpaperPlaylistPaused ? "Playlist paused" : ShellState.pendingActions.wallpaperNext ? "Changing\u2026" : playlist.length + " image" + (playlist.length === 1 ? "" : "s") + " \u00b7 next"
+            enabled: playlist.length > 0 && !ShellState.pendingActions.wallpaperNext
+            onClicked: ShellState.run("wallpaperNext", {output: ShellState.preferences.wallpaperPlaylistOutput || ""})
+        }
+    }
     Component { id: settingsModule; Tile { label: "Settings"; detail: "Shell preferences"; iconName: "settings"; onClicked: ShellState.togglePanel("settings") } }
     Component { id: powerModule; Tile { label: "Power"; detail: "Lock, sleep or shut down"; iconName: "power"; accent: Theme.pink; onClicked: ShellState.togglePanel("power") } }
     Component {

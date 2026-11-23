@@ -1119,7 +1119,9 @@ class DesktopBackend:
         if not self.niri_cache.valid: self.niri_cache.seed(self.niri)
         if self.manage_idle and not self.no_wallpaper and os.environ.get('LME_NO_WALLPAPER') != '1' and not any(key.startswith('wallpaper') for key in self.feature_jobs):
             job=self.wallpapers.due(item.get('output') for item in self.niri['workspaces'] if item.get('output'))
-            if job: self.start_feature('wallpaperCycle',job)
+            # A scheduler advance changes the wallpaper: follow with a palette regeneration
+            # like apply_wallpaper, so even a backend that still schedules never strands the palette.
+            if job: self.start_feature('wallpaperCycle', lambda: follow_wallpaper_palette(self, job(), self.wallpapers.current(self.preferences.values['wallpaperPlaylistOutput'] or '')))
         # Window/focus event bursts must not cause expensive hardware probes.
         if self.system_cache is None or time.monotonic() - self.last_system_sample >= 1.5:
             system = self.cpu_memory()
@@ -1592,7 +1594,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.demo and (args.restore_wallpaper or args.restore_displays):
         parser.error("Wallpaper restoration is disabled in demo mode")
     initialize_catalog()
-    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not (args.once or args.no_weather), manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons, no_wallpaper=not (args.once or args.no_wallpaper or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
+    backend = DesktopBackend(demo=args.demo, settings_only=args.settings or bool(args.restore_wallpaper) or args.restore_displays, weather_fetch=not (args.once or args.no_weather), manage_idle=not (args.once or args.settings or args.demo or args.restore_wallpaper or args.restore_displays), session_daemons=not args.no_session_daemons, no_wallpaper=bool(args.once or args.no_wallpaper or args.settings or args.demo or args.restore_wallpaper or args.restore_displays))
     if args.restore_displays:
         if backend.saver_snapshot()['active']:
             print('Displays: Battery saver is active; keeping current modes', file=sys.stderr)

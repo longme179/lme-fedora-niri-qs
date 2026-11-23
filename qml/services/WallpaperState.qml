@@ -127,7 +127,6 @@ QtObject {
     }
 
     function executeRestore(names) {
-        busy = true;
         ready((ok, text) => {
             if (!ok) { busy = false; return; }
             // Another agent may have just started a transition; don't cancel it.
@@ -155,7 +154,6 @@ QtObject {
         if (automatic && (powerSaving || preferences.wallpaperPlaylistEnabled !== true
                 || preferences.wallpaperPlaylistPaused === true || preferences.wallpaperPlaylistOutput !== output))
             return done ? done(true, "") : undefined;
-        busy = true;
         ready((ok, text) => {
             if (!ok) {
                 if (done) done(false, "awww-daemon did not become ready. Check your Wayland session.");
@@ -206,7 +204,6 @@ QtObject {
     function perform(action, request, done, context) {
         if (busy) return done(false, "A wallpaper change is already running");
         if (action === "wallpaperStatus") {
-            busy = true;
             ready((ok, text) => {
                 busy = false;
                 statusResult = {available: true, running: ok, query: ok ? text : "", error: ok ? "" : text};
@@ -215,7 +212,6 @@ QtObject {
             return;
         }
         if (action === "wallpaperEnsure") {
-            busy = true;
             ready(ok => { busy = false; done(ok, ok ? "Wallpaper daemon ready" : "awww-daemon did not become ready. Check your Wayland session."); });
             return;
         }

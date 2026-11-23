@@ -1,3 +1,17 @@
+## 2026-11-23 — wallpaper palette follow repaired; Next wallpaper widget
+
+- `--no-wallpaper` polarity fixed in `desktop_backend.py::main` (the flag used to
+  ENABLE the backend playlist scheduler in the main shell, starving the native
+  WallpaperState scheduler that carries the palette follow).
+- `WallpaperState.qml` no longer sets `busy` before `ready()`; the premature
+  flags wedged the native scheduler on its first job (runTool queued forever).
+- The backend `wallpaperCycle` job now composes `follow_wallpaper_palette`,
+  so any backend-side rotation also regenerates the palette.
+- New **Next wallpaper** bar module (`config/wallpaper.json` bar entry,
+  `qml/bar/WallpaperButton.qml`) and Control Center tile (`config/control-grid.json`,
+  `ControlDashboard.qml`, layout migrations in `desktop_features.py`); new
+  `image` ShellIcon glyph.
+
 # Migration summaries
 
 ## Q6 leg 1 — the preferences single-writer, step 1: StorageState, prefs_store, the native weatherSelect — 2026-11-13

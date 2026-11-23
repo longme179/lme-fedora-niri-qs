@@ -189,5 +189,13 @@
       "appearance": true,
       "defaultResolver": "palette"
     }
+  },
+  "bar": {
+    "id": "wallpaper",
+    "title": "Next wallpaper",
+    "detail": "Advance the wallpaper playlist",
+    "icon": "image",
+    "entry": "qml/bar/WallpaperButton.qml",
+    "after": "battery"
   }
 }

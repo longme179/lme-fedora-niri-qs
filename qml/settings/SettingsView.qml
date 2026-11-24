@@ -12,6 +12,8 @@ import "../theme"
 Item {
     id: root
     property string page: "appearance"
+    // false parks the shown page (a hidden Settings window keeps no page timers running).
+    property bool active: true
     signal closeRequested()
     property var history: []
     readonly property var currentPage: SettingsRegistry.page(page)
@@ -143,20 +145,15 @@ Item {
                     id: pageLoader
                     x: 6; y: 6
                     width: pageScroll.width - 12
-                    content: root.currentPage.entry ? catalogPage : root.page === "topbar" ? barPage
-                                   : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
-                                   : root.page === "behavior" ? behaviorPage : appearancePage
+                    active: root.active
+                    firstAsync: true
+                    key: root.currentPage.key
+                    readonly property var legacy: ({topbar: barPage, display: displayPage, controlLayout: controlPage, elements: elementsPage, behavior: behaviorPage, appearance: appearancePage})
+                    resolve: key => { const entry = SettingsRegistry.page(key).entry; return entry ? FeatureCatalog.component(entry) : legacy[key] || appearancePage; }
+                    // Keep the recently visited pages built; the LRU bounds memory.
+                    maxPages: 6
                 }
             }
-        }
-    }
-    Component {
-        id: catalogPage
-        Loader {
-            id: catalogLoader
-            asynchronous: true
-            source: FeatureCatalog.url(root.currentPage.entry)
-            PageNavigation { target: catalogLoader.item; onRequested: pageId => root.navigate(pageId) }
         }
     }
     Component { id: appearancePage; AppearancePage {} }

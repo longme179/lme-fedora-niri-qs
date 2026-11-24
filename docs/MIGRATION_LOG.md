@@ -14,6 +14,28 @@
 
 # Migration summaries
 
+## 2026-11-24 — instant panels and Settings pages (branch)
+
+- `qml/components/PageHost.qml` rewritten as a keyed retained-page host: one synchronous
+  Loader per visited key, `resolve(key)`, `active`, `pageLoaded`, off-screen parking
+  (no per-page `Item.visible`), LRU `maxPages` (default 6). The old two-loader swap
+  destroyed the previous page on every switch.
+- New `qml/panels/PanelStage.qml`: one PageHost keyed by `ShellState.panelKind` (LRU 4) is
+  the permanent `SlideLoader` content, so every built panel stays alive. `shell.qml` uses
+  it and loads the stage synchronously; the 4 s prewarm now actually finishes (async
+  incubation only advances on rendered frames and an idle scene swaps none).
+- `qml/settings/SettingsView.qml` uses the keyed host (LRU 6); `ControlCenter.qml` drops
+  the removed warm list. `qml/settings/SettingsApplication.qml` hides instead of
+  `Qt.quit()` and exits after `LME_SETTINGS_LINGER_MS` (default 60 s); IPC `openPage`
+  re-shows the same instance without clobbering the visibility binding.
+- Measurements (harness `tools/lme-latency/measure.py`, private headless Sway/gles2,
+  demo, relative only): first Control Center open 986→102 ms, panel switch back
+  888→84–98 ms, Control Center tab revisits 200–730→0–16 ms, retained Settings page
+  revisits 21–27 ms. First visits remain build-bound and are retained after.
+- Gates: `check-architecture` green (shell.qml ratcheted 291→289; PanelStage declared a
+  host). `check.sh`/G0-G3 results recorded on the PR. Real-session checks owed: prewarm
+  hitch duration, Settings re-show through niri rules, aggregate PSS vs 400/500 MB.
+
 ## Q6 leg 1 — the preferences single-writer, step 1: StorageState, prefs_store, the native weatherSelect — 2026-11-13
 
 - Q6 was authorized ("phê duyệt q6", 2026-11-13) on the #139 proposal — D1(a) the IpcHandler single-writer, D2(a) one-shot helpers, D3 per-domain at each leg's review stop.

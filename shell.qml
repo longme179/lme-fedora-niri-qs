@@ -161,7 +161,7 @@ ShellRoot {
         BackgroundEffect.blurRegion: !visible || !surfaceLive ? null : (ShellState.liquidBlurEnabled || ShellState.popupBlurEnabled) ? glassPopupBlur : null
         Region { id: glassPopupBlur; regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }
         SurfaceBlurRegion { id: islandBlur; surface: activityIsland.panel }
-        SurfaceBlurRegion { id: panelBlur; surface: panelLoader.item as Item }
+        SurfaceBlurRegion { id: panelBlur; surface: panelLoader.item ? (panelLoader.item as PageHost).item as Item : null }
         // Closing visuals must not block another bar click or the application beneath.
         mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
         WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -191,8 +191,13 @@ ShellRoot {
                 readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview"].includes(ShellState.panelKind)
                 direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
                 shown: ShellState.panelOpen && !ShellState.activityOpen
-                content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
-                               : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
+                // One retained stage; the stack inside keeps every built panel (see PageHost).
+                // Load it synchronously: Quickshell only grants asynchronous incubation time
+                // on rendered frames, and an idle scene swaps none, so an async prewarm never
+                // finishes until the first open pays it. The stage is built once, off the
+                // critical path (prewarm timer) or on first click at worst.
+                asynchronous: false
+                content: PanelStage { windowInfo: overlay }
                 width: item ? Math.min(item.implicitWidth, parent.width - 32) : rememberedWidth || 400
                 height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : rememberedHeight || 500
                 x: centered ? (parent.width - width) / 2
@@ -205,6 +210,7 @@ ShellRoot {
                     function onPanelSwapChanged() { activityIsland.snapOut(); panelLoader.snapOut(); }
                     function onPanelOpenChanged() {
                         if (ShellState.panelOpen) {
+                            if (panelLoader.item) (panelLoader.item as Item).forceActiveFocus();
                             if (panelLoader.warmupActive) panelLoader.finishControlWarmup();
                             if (activityIsland.warmupActive) activityIsland.finishControlWarmup();
                         } else {
@@ -224,10 +230,10 @@ ShellRoot {
             Timer {
                 interval: 4000
                 repeat: false
-                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !panelLoader.controlWarmupDone
+                running: !root.preview && (!ShellState.demo || Quickshell.env("LME_SHELL_PREWARM") === "1") && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !panelLoader.controlWarmupDone
                 onTriggered: if (!panelLoader.mounted && !panelLoader.item && !ShellState.panelOpen && !ShellState.activityOpen) {
                     panelLoader.controlWarmupPending = true;
-                    panelLoader.dormant = true; panelLoader.retainedContent = controlComponent; panelLoader.mounted = true;
+                    panelLoader.dormant = true; panelLoader.retainedContent = panelLoader.content; panelLoader.mounted = true;
                 }
             }
             // Prewarm the retained activity island after the control center settles:
@@ -237,7 +243,7 @@ ShellRoot {
             Timer {
                 interval: 6500
                 repeat: false
-                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !activityIsland.controlWarmupDone
+                running: !root.preview && (!ShellState.demo || Quickshell.env("LME_SHELL_PREWARM") === "1") && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !activityIsland.controlWarmupDone
                 onTriggered: if (!activityIsland.mounted && !activityIsland.item && !ShellState.panelOpen && !ShellState.activityOpen) {
                     activityIsland.controlWarmupPending = true;
                     activityIsland.dormant = true; activityIsland.retainedContent = activityIsland.content; activityIsland.mounted = true;
@@ -245,14 +251,6 @@ ShellRoot {
             }
         }
     }
-    Component { id: launchpadComponent; LaunchpadPanel {} }
-    Component { id: launcherComponent; Launcher {} }
-    Component { id: controlComponent; ControlCenter {} }
-    Component { id: settingsComponent; SettingsPanel {} }
-    Component { id: powerComponent; PowerMenu {} }
-    Component { id: trayComponent; TrayMenu { windowInfo: overlay } }
-    Component { id: overviewComponent; Overview {} }
-    Component { id: wifiComponent; WifiPanel {} }
     Variants { model: root.preview ? [] : Quickshell.screens; delegate: OSDWindow { required property var modelData; screenInfo: modelData } }
     StatusWindow { preview: root.preview }
     UndoToast {} // the undo-first toast host (UndoState offers surface here)

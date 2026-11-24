@@ -1,4 +1,6 @@
 ## Unreleased
+- Panels open instantly after the first build: every visited overlay panel is retained in one keyed stack (LRU 4) and the stage is prewarmed synchronously, so Control Center opens in ~0.1 s instead of ~1 s and switching back to it no longer rebuilds the tree
+- Settings pages are retained per key (LRU 6): switching back to a visited page is immediate; the standalone Settings window hides on close and quits after `LME_SETTINGS_LINGER_MS` (default 60 s) so reopening reuses the warm process
 - Two-way settings hot-reload: a background watcher in the backend serve loop picks up external edits of settings.json and republishes the snapshot within the 0.25 s poll interval (the UI used to wait for the ~2 s snapshot poll), while UI writes keep updating the file atomically on every committed change
 - Desktop widgets grow weather, calendar and account cards on the existing canvas (WeatherWidget reused as-is, a pure QML month grid with in-memory month navigation, a USER-env identity card); new widgets are placed by a simple empty-region scan of the target screen, with the old cascade as the crowded-screen fallback
 - LockState's compositor check tolerates an unset WAYLAND_DISPLAY (Quickshell.env returns null for missing variables; the engine battery hit the resulting TypeError once the runner environment lost the variable)

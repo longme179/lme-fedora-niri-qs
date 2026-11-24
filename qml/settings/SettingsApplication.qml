@@ -15,6 +15,17 @@ ShellRoot {
     property bool initialized: false
     property bool startupFailed: false
     property string requestedPage: Quickshell.env("LME_SETTINGS_PAGE") || "appearance"
+    // Hidden-not-quit: a reopen within the linger window reuses the warm engine and backend
+    // instead of paying the ~1 s cold start again.
+    // Shown from the start: the window may appear before the backend is ready (the
+    // startup-failure screen depends on it); close() only hides it.
+    property bool shown: true
+    property int lingerMs: Number(Quickshell.env("LME_SETTINGS_LINGER_MS") || 60000)
+    function close() {
+        shown = false;
+        if (screenshotPath.length > 0 || lingerMs <= 0) Qt.quit();
+        else linger.restart();
+    }
     readonly property bool prepared: (FeatureCatalog.ready && Theme.ready && ShellState.backendReady) || startupFailed
     onPreparedChanged: if (prepared) { requestedPage = SettingsRegistry.page(requestedPage).key; initialized = true; }
     readonly property string screenshotPath: Quickshell.env("LME_SETTINGS_SCREENSHOT") || ""
@@ -24,7 +35,8 @@ ShellRoot {
             if (page) root.requestedPage = FeatureCatalog.settled ? SettingsRegistry.page(page).key : page;
             if (view.item) (view.item as SettingsView).navigate(root.requestedPage);
             window.minimized = false;
-            if (view.status === Loader.Ready) window.visible = true;
+            shown = true;
+            linger.stop();
             return window.visible && !window.minimized;
         }
         function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }
@@ -40,7 +52,7 @@ ShellRoot {
     }
     FloatingWindow {
         id: window
-        visible: view.status === Loader.Ready
+        visible: root.shown && view.status === Loader.Ready
         title: ShellState.shellName + " Settings" + (ShellState.demo ? " - Demo" : "")
         implicitWidth: 1100; implicitHeight: 780
         minimumSize: Qt.size(800, 600)
@@ -49,13 +61,13 @@ ShellRoot {
         Region { id: glassBlur; regions: [bodyBlur, ...GlassState.popupsFor(window)] }
         SurfaceBlurRegion { id: bodyBlur; surface: view; radius: 28 }
         // Keep native window-manager close consistent with Escape and the close button.
-        onClosed: Qt.quit()
+        onClosed: root.close()
         Loader {
             id: view
             anchors.fill: parent
             active: root.initialized
             asynchronous: true
-            sourceComponent: SettingsView { page: root.requestedPage; onCloseRequested: Qt.quit() }
+            sourceComponent: SettingsView { page: root.requestedPage; active: root.shown; onCloseRequested: root.close() }
         }
         // The undo-first offer surface for the standalone Settings process: the
         // registry is per process, so a reset offered here settles here.
@@ -64,6 +76,11 @@ ShellRoot {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: 24
             visible: UndoState.pending
+        }
+        Timer {
+            id: linger
+            interval: root.lingerMs
+            onTriggered: if (!root.shown) Qt.quit()
         }
         Timer {
             interval: 1400; repeat: true; running: root.screenshotPath.length > 0

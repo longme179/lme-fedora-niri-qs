@@ -19,11 +19,14 @@ GlassPanel {
     readonly property var tabComponents: ({ControlDashboard: controls, AudioMixer: audio, DeviceControls: devices, Agenda: agenda, SystemMonitor: monitor})
     property bool editing: false
     property bool initialized: false
+    property bool panelActive: true
     // Integer properties remain compatibility boundaries for existing fixtures/imports.
     property int currentTab: Quickshell.env("LME_SHELL_CONTROL_TAB") ? ControlRegistry.indexForId(Quickshell.env("LME_SHELL_CONTROL_TAB")) : ShellState.controlTab
     readonly property var selectedTab: ControlRegistry.tabForIndex(currentTab)
     readonly property int tabIndex: ControlRegistry.positionForIndex(currentTab)
     function selectTab(id) { currentTab = ControlRegistry.indexForId(id); }
+    function componentFor(tab) { return tab ? root.tabComponents[tab.entry] || null : null; }
+    function urlFor(tab) { return tab && !root.tabComponents[tab.entry] ? FeatureCatalog.url(tab.entry) : ""; }
     function refreshControls() { if (initialized && visible && ControlRegistry.tabForIndex(currentTab).refresh && ShellState.backendReady) ShellState.run("controlsRefresh"); }
     function markTabRead() { if (ControlRegistry.tabForIndex(currentTab).markRead) Notifications.markRead(); }
     onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; markTabRead(); refreshControls(); }
@@ -134,6 +137,7 @@ GlassPanel {
                     palette.button: current && !Theme.animatedTabs ? Theme.liquidGlass ? Theme.buttonSelected : Theme.accent : Theme.surface
                     palette.buttonText: current ? (Theme.liquidGlass ? Theme.onPrimary : Theme.background) : Theme.text
                     onClicked: root.selectTab(modelData.id)
+                    onHoveredChanged: if (hovered) dashboard.anticipate(modelData.id, root.componentFor(modelData), root.urlFor(modelData))
                 }
             }
         }
@@ -141,10 +145,13 @@ GlassPanel {
         PageHost {
             id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
-            content: root.tabComponents[root.selectedTab.entry] || catalogTab
+            contentKey: root.selectedTab.id
+            panelActive: root.panelActive
+            content: root.componentFor(root.selectedTab)
+            contentUrl: root.urlFor(root.selectedTab)
+            embedded: !root.componentFor(root.selectedTab)
         }
     }
-    Component { id: catalogTab; Loader { asynchronous: true; source: FeatureCatalog.url(root.selectedTab.entry); onLoaded: if (item && "embedded" in item) item.embedded = true } }
     Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }

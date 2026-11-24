@@ -16,6 +16,7 @@ ColumnLayout {
     property var drafts: []
     property bool dirty: false
     property string selectedName: ""
+    property bool pageActive: true
     property real now: Date.now()
     readonly property bool testing: ["applying", "pending", "reverting"].includes(preview.status)
     readonly property var selected: drafts.find(d => d.name === selectedName) || drafts[0] || null
@@ -34,16 +35,17 @@ ColumnLayout {
         drafts = drafts.map(d => d.name === selected.name ? Object.assign({}, d, values) : d);
         dirty = true;
     }
-    Component.onCompleted: if (ShellState.backendReady) ShellState.run("displayRefresh")
+    Component.onCompleted: if (ShellState.backendReady && root.pageActive) ShellState.run("displayRefresh")
+    onPageActiveChanged: if (root.pageActive && ShellState.backendReady) ShellState.run("displayRefresh")
     Connections {
         target: ShellState
-        function onBackendReadyChanged() { if (ShellState.backendReady) ShellState.run("displayRefresh"); }
+        function onBackendReadyChanged() { if (ShellState.backendReady && root.pageActive) ShellState.run("displayRefresh"); }
         function onSnapshotChanged() { if (!root.dirty && root.outputs.length) root.resetDrafts(); }
         function onLastResultChanged() {
             if (ShellState.lastResult && ShellState.lastResult.ok && ShellState.lastResult.action === "displayConfirm") root.dirty = false;
         }
     }
-    Timer { interval: 3000; repeat: true; running: root.visible; onTriggered: { root.now = Date.now(); if (ShellState.backendReady && !ShellState.pendingActions.displayRefresh) ShellState.run("displayRefresh"); } }
+    Timer { interval: 3000; repeat: true; running: root.visible && root.pageActive && (Window.window ? Window.window.visible : true); onTriggered: { root.now = Date.now(); if (ShellState.backendReady && !ShellState.pendingActions.displayRefresh) ShellState.run("displayRefresh"); } }
     SettingsCard {
         visible: ShellState.batterySaverActive
         title: "Battery saver controls display modes"

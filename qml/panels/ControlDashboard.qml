@@ -22,10 +22,10 @@ Item {
     readonly property var players: ShellState.demo ? [] : Mpris.players.values
     property string selectedPlayerName: ""
     readonly property var player: players.find(item => item.dbusName === selectedPlayerName) || players.find(item => item.isPlaying) || players[0] || null
-    MediaPresentation { id: mediaPresentation; player: root.player; enabled: ShellState.preferences.mediaStability !== false }
+    MediaPresentation { id: mediaPresentation; player: root.player; enabled: ShellState.preferences.mediaStability !== false && root.pageActive }
     readonly property var mediaDisplay: mediaPresentation.current
     readonly property date now: clock.date
-    property bool editing: false
+    property bool editing: false; property bool pageActive: true
     property alias grid: quickGrid
     readonly property var cards: (ShellState.preferences.controlLayout || []).filter(item => ControlRegistry.cardIds.includes(item.id))
     readonly property var cardComponents: ({weather: ShellState.settingsPageAvailable("weather") ? weatherModule : null, charging: chargingModule, media: mediaModule, resources: resourcesModule, capture: captureModule})
@@ -34,7 +34,7 @@ Item {
         return value === null || value === undefined ? "—" : Math.round(value) + (suffix || "");
     }
 
-    SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.visible }
+    SystemClock { id: clock; precision: SystemClock.Minutes; enabled: root.visible && root.pageActive }
     Keys.onEscapePressed: event => { if (root.editing) event.accepted = false; else ShellState.closePanels(); }
 
     component Tile: LiquidButton {
@@ -235,7 +235,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: media.implicitHeight + 28
-            MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: ShellState.demo ? ActivityState.demoPlaying : !!root.player && root.player.isPlaying }
+            MediaAmbient { anchors.fill: parent; anchors.margins: 12; playing: (ShellState.demo ? ActivityState.demoPlaying : !!root.player && root.player.isPlaying) && root.pageActive }
             radius: Theme.smallRadius
             color: Theme.surface
             GlassMaterial { anchors.fill: parent; radius: parent.radius }
@@ -263,7 +263,7 @@ Item {
                     }
                 }
                 MediaActions { Layout.fillWidth: true; player: root.player; prefix: "control" }
-                AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying }
+                AudioVisualizer { Layout.fillWidth: true; playing: !!root.player && root.player.isPlaying && root.pageActive }
                 MediaProgress { objectName: "controlMediaProgress"; Layout.fillWidth: true; player: root.player }
                 LyricsView { Layout.fillWidth: true; player: root.player }
                 LiquidComboBox {

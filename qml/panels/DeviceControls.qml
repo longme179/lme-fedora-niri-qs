@@ -12,12 +12,15 @@ Flickable {
     id: root
     readonly property var bluetooth: ShellState.system.bluetooth || {}
     readonly property var network: ShellState.system.network || {}
+    property bool pageActive: true
+    readonly property bool watching: pageActive
     readonly property bool nativePairing: !ShellState.demo && ShellState.preferences.bluetoothPairing !== false
     readonly property var devices: nativePairing && BluetoothState.state.ready ? BluetoothState.state.devices || [] : bluetooth.devices || []
-    function watch() { BluetoothState.watch(root, visible && nativePairing); }
+    function watch() { BluetoothState.watch(root, root.visible && root.watching && nativePairing); }
     Component.onCompleted: watch()
     Component.onDestruction: BluetoothState.watch(root, false)
     onVisibleChanged: watch()
+    onWatchingChanged: watch()
     onNativePairingChanged: watch()
     readonly property var adapters: bluetooth.adapters || []
     contentWidth: width; contentHeight: content.implicitHeight + 16

@@ -16,12 +16,11 @@ service APIs and stdlib helpers. Preserve attribution for third-party code.
 Use Balanced Coupling to choose boundaries and Ponytail to keep changes small.
 Read the local Modularity adapter first; upstream templates add no approval gates,
 full audits or HTML reports unless the task calls for them. Keep stable legacy seams.
-Target total shell memory <=400 MB steady state / <=500 MB in ordinary active use:
-main QS, Python backend, owned workers and Settings/backends while open. Prefer
-aggregate PSS; label summed RSS double-counting and report heavy temporary job peaks
-separately. Reuse existing samples; do not claim a whole-shell total from one PID.
-Reuse shared services/pools/textures; no backend, daemon or timer per widget.
-Memory targets imply no behavior/visual/polling/cache/power changes. Owner-authorized fixes/QoLs may improve behavior; characterize and report the changes.
+Memory policy (hard caps lifted by owner order 2026-11-24): retained pages and
+panels are preferred over rebuilds; monitor with memory_report.py and report
+aggregate PSS with PID ownership instead of enforcing numeric targets. Reuse shared
+services/pools/textures; no backend, daemon or timer per widget. Owner-authorized
+fixes/QoLs may improve behavior; characterize and report the changes.
 
 ## Layout and dependency rule
 
@@ -39,11 +38,11 @@ A feature implementation imports only its own files and shared/service APIs,
 never another feature implementation. Composition hosts may load feature entries.
 `scripts/check-architecture.sh` resolves local Python AST imports, literal QML/JS
 imports and entry URLs. `config/architecture.json` records legacy ownership,
-exact exceptions with reasons, existing cyclic edges and source-size ceilings.
+exact exceptions with reasons and existing cyclic edges.
 Computed imports/URLs need manual review; the guard resolves static literals.
 Remove exceptions when their edge disappears; never widen them to pass a check.
-New source files have a 250-nonblank-line cap. Existing large files may not grow;
-ratchet their recorded ceiling down when shrinking them. No tree reorganization.
+Source-size ceilings were removed by owner order (2026-11-24): files may grow as
+needed; keep new code in its own files where practical. No tree reorganization.
 
 ## Add a feature
 

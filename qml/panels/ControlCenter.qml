@@ -141,6 +141,22 @@ GlassPanel {
         PageHost {
             id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
+            // First visits used to build synchronously on the click (a visible stall
+            // while the user cycles tabs quickly); the warm-up timer below builds every
+            // unvisited tab shortly after the panel opens, so clicks only switch.
+            property var pending: []
+            property double warmedAt: 0
+            function warmNext() {
+                if (Date.now() - warmedAt < 350) return;
+                warmedAt = Date.now();
+                if (pending.length) dashboard.preload([pending.shift().id]);
+            }
+            Timer {
+                interval: 350; repeat: true
+                running: root.initialized && root.visible
+                onTriggered: dashboard.warmNext()
+                onRunningChanged: if (running) dashboard.pending = root.tabEntries.filter(tab => tab.id !== root.selectedTab.id)
+            }
             key: root.selectedTab.id || ""
             resolve: id => { const entry = ControlRegistry.tabs.find(tab => tab.id === id)?.entry; return root.tabComponents[entry] || FeatureCatalog.component(entry); }
             onPageLoaded: item => { if (item && "embedded" in item) item.embedded = true; }

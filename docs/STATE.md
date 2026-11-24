@@ -41,8 +41,8 @@ Do not read archive/ unless answering a specific historical question.
   facades; retain public names until explicit owner-approved compatibility changes.
 - Legacy fragment (68 keys), validator/default bindings, inventory, bar-layout resolver
   and bundled-fragment fallback retire at their last consumer/fault contract. Worker policy is separate.
-- Architecture exceptions/size ceilings: remove vanished edges, lower shrunken
-  large-file ceilings; no new cross-feature edges or cycles.
+- Architecture exceptions: remove vanished edges; no new cross-feature edges or cycles.
+  Source-size ceilings were removed by owner order (2026-11-24).
 
 ## Gates and working rules
 

@@ -154,12 +154,7 @@ def check(root):
         for edge, reason in recorded.items():
             if not reason.strip(): errors.append('Missing '+label+' reason: '+' -> '.join(edge))
             if edge not in current: errors.append('Stale '+label+' exception (remove it): '+' -> '.join(edge))
-    for path in files(root):
-        if path.suffix not in SOURCE: continue
-        relative = path.relative_to(root).as_posix(); count = sum(bool(line.strip()) for line in path.read_text().splitlines())
-        limit = policy['largeFiles'].get(relative, 250)
-        if count > limit: errors.append(f'Size cap: {relative}: {count} > {limit} nonblank lines')
-        if relative in policy['largeFiles'] and count < limit: errors.append(f'Ratchet size ceiling to {count}: {relative}')
+    # Source-size ceilings were removed by owner order (2026-11-24); no size gates here.
     return errors
 
 

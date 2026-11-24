@@ -14,8 +14,7 @@ ColumnLayout {
     function refresh(retry) { if (ShellState.backendReady) ShellState.run("nightLightRefresh", {retry: !!retry}); }
     Component.onCompleted: refresh()
     Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.refresh(); } }
-    property bool pageActive: true
-    Timer { interval: 2500; running: root.visible && root.pageActive && ShellState.settingsApp && (Window.window ? Window.window.visible : true); repeat: true; onTriggered: root.refresh() }
+    Timer { interval: 2500; running: root.visible && ShellState.settingsApp; repeat: true; onTriggered: root.refresh() }
     SettingsCard {
         title: "Warmer evenings"
         description: "Reduce blue light with display gamma control. Stop other gamma controllers before enabling."

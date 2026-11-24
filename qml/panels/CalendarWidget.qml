@@ -14,8 +14,7 @@ ColumnLayout {
     readonly property int dayCount: new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
     property var months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     spacing: 16
-    property bool pageActive: true
-    Timer { interval: 60000; running: root.visible && root.pageActive; repeat: true; onTriggered: root.today = new Date() }
+    Timer { interval: 60000; running: root.visible; repeat: true; onTriggered: root.today = new Date() }
     RowLayout {
         Layout.fillWidth: true
         IconButton { glyph: "‹"; tooltip: "Previous month"; onClicked: root.month = new Date(root.month.getFullYear(), root.month.getMonth() - 1, 1) }

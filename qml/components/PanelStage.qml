@@ -60,6 +60,7 @@ Item {
             const loader = loaders[id];
             if (loader.mounted && !loader.dormant) live = true;
             if (loader.item && "panelActive" in loader.item) loader.item.panelActive = root.open && root.activeId === id;
+            if (loader.item && "pageActive" in loader.item) loader.item.pageActive = root.open && root.activeId === id;
             if (loader.warmupActive) { live = true; warm = loader; }
         }
         surfaceLive = live;

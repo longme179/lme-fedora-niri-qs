@@ -145,13 +145,16 @@ Item {
                     id: pageLoader
                     x: 6; y: 6
                     width: pageScroll.width - 12
+                    // The host clips, so it must be as tall as the page content (or the
+                    // viewport while the page is still loading), never zero.
+                    height: item ? (item as Item).implicitHeight : pageScroll.height
                     active: root.active
                     firstAsync: true
                     key: root.currentPage.key
                     readonly property var legacy: ({topbar: barPage, display: displayPage, controlLayout: controlPage, elements: elementsPage, behavior: behaviorPage, appearance: appearancePage})
                     resolve: key => { const entry = SettingsRegistry.page(key).entry; return entry ? FeatureCatalog.component(entry) : legacy[key] || appearancePage; }
-                    // Keep the recently visited pages built; the LRU bounds memory.
-                    maxPages: 6
+                    // Keep every visited page built (RAM cap lifted 2026-11-24).
+                    maxPages: 0
                 }
             }
         }

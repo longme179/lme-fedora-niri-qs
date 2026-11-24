@@ -185,14 +185,14 @@ flowchart LR
 | Jelly/popup mesh coupling | `qml/components/JellyGeometry.js::vertex`, `qml/components/shaders/popup-jelly.vert/.frag` (+ `.qsb` generated, do not edit) | Vertex layout/mesh size must match shader inputs | `[verified]` `JellyGeometry.js`, `popup-jelly.vert:3-4` |
 | Atomic write/lock/fsync semantics | `scripts/storage.py::write_json/locked/fsync_directory` and all persistence callers | AGENTS owner constraint; corruption/loss prevention for settings/state files | `[verified]` `storage.py` module INVARIANT |
 | Deploy/niri safety chain | `deploy.py` → `deploy_runtime/files/niri/niri_tree/state` | Apply requires backup, staged validation, diff, rollback path; planning is non-executing | `[verified]` `deploy_niri.py:4`; `deploy_state.py:4`; `deploy_niri_tree.py` header |
-| Source-size ratchet (`largeFiles` ceilings) | `config/architecture.json::largeFiles`, `scripts/check_architecture.py:158-161` | Nonblank count includes comments; headroom-0 files cannot gain lines | `[verified]` `check_architecture.py:6,158-161` |
+| Source-size ratchet (`size caps (removed 2026-11-24; largeFiles block deleted from config/architecture.json)` ceilings) | `config/architecture.json::size caps (removed 2026-11-24; largeFiles block deleted from config/architecture.json)`, `scripts/check_architecture.py:158-161` | Nonblank count includes comments; headroom-0 files cannot gain lines | `[verified]` `check_architecture.py:6,158-161` |
 | External tool whitelist / availability contracts | `scripts/command_runner.py` TOOLS, domain modules, doctor checks, descriptor/tool expectations | Missing/renamed CLIs affect feature availability and error handling; no shell interpolation | `[verified]` `command_runner.py` header; Phase 1 service table |
 
 ## 8. Config & env (important subset)
 | Name | Defined in | Used by | Default / fallback | Purpose | Evidence |
 |---|---|---|---|---|---|
 | `config/features.json` | repo config | `feature_catalog.py`, `FeatureCatalog.qml`, `check_architecture.py`, schema/catalog flows | bundled file | Canonical feature index/descriptors/registrations | `[verified]` |
-| `config/architecture.json` | repo config | `check_architecture.py`, policy tooling | bundled file | Ownership/shared/hosts, dependency/cycle exceptions, `largeFiles` ceilings, `toolingFiles` line classification (Q0 language mix) | `[verified]` |
+| `config/architecture.json` | repo config | `check_architecture.py`, policy tooling | bundled file | Ownership/shared/hosts, dependency/cycle exceptions, `size caps (removed 2026-11-24; largeFiles block deleted from config/architecture.json)` ceilings, `toolingFiles` line classification (Q0 language mix) | `[verified]` |
 | `config/control-grid.json` | repo config | `ControlRegistry.qml`, `feature_catalog.py` | bundled file | Control cards/tabs/layout metadata, legacyIndex-compatible projections | `[verified]` |
 | `config/preferences-legacy.json` + descriptor `"preferences"` | repo config | `settings_schema.py`, backend validation/defaults | bundled fragments | Legacy/default preference metadata bridge (Python-bound validators/resolvers) | `[verified]` |
 | `config/{theme-tokens,palettes,liquid-glass,wallpaper,...}.json` | repo config | theme/services/actions/domain modules | bundled files | Visual tokens, palettes, glass, feature/domain settings metadata | `[inferred]` exact per-file consumer map varies; static json edges exist |
@@ -219,7 +219,7 @@ flowchart LR
 | keepAlive | Loader/surface retention hint preventing premature teardown during active/animated use | `[inferred]` common pattern; verify per component when changing loaders |
 | Prewarm/warm-render | Early render/setup pass to reduce first-open jank; candidate flow, not fully step-mapped here | `[inferred]` |
 | Gates G0–G6 | Isolated migration/native checks (`run-gates.sh`/`tests/migration_checks.py`); G0 is fast isolated baseline in this pass | `[verified]` `run-gates.sh`, `AGENTS.md` |
-| Ratchet / `largeFiles` ceiling | Architecture policy: nonblank source lines (including comments) must not exceed recorded caps; shrink-only ratchet when lowering | `[verified]` `check_architecture.py:158-161` |
+| Ratchet / `size caps (removed 2026-11-24; largeFiles block deleted from config/architecture.json)` ceiling | Architecture policy: nonblank source lines (including comments) must not exceed recorded caps; shrink-only ratchet when lowering | `[verified]` `check_architecture.py:158-161` |
 | Hosts | Composition roots allowed to load/coordinate feature entries across boundaries | `[verified]` `config/architecture.json::hosts` concept |
 | Shared prefix/file rule | Shared `qml/components,theme,services`/declared shared files are cross-cutting dependencies; feature implementations must not import other feature implementations | `[verified]` `AGENTS.md:34-36`, `architecture.json` |
 

@@ -25,8 +25,8 @@ Item {
     readonly property var item: shown ? shown.item : null
     property Loader shown: null
     property var entries: ({})
-    // Least recently shown first. 0 keeps every page (demo/diagnostics only).
-    property int maxPages: 6
+    // Least recently shown first. 0 keeps every page (owner lifted the RAM cap 2026-11-24).
+    property int maxPages: 0
     property var order: []
     property real enter: 1
     signal pageLoaded(var item)
@@ -58,6 +58,14 @@ Item {
         page.sourceComponent = content;
         trim();
         return page;
+    }
+    // Start a first visit before the click; it builds synchronously here, so callers
+    // stagger calls (see ControlCenter's warm-up timer).
+    function preload(keys) {
+        for (const pageKey of keys) {
+            if (pageKey === key || entries[pageKey]) continue;
+            entry(pageKey);
+        }
     }
     function present(page) {
         if (shown === page) return;

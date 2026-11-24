@@ -11,8 +11,8 @@ PageHost {
     id: root
     property var windowInfo: null
     animate: false
-    // Keep the last four panels built; switching back is the next frame.
-    maxPages: 4
+    // Keep every visited panel built; switching back is the next frame (RAM cap lifted 2026-11-24).
+    maxPages: 0
     implicitWidth: item ? (item as Item).implicitWidth : 0
     implicitHeight: item ? (item as Item).implicitHeight : 0
     key: ShellState.panelKind

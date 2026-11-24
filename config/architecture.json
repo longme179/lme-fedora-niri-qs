@@ -360,7 +360,7 @@
   ]
  ],
  "largeFiles": {
-  "shell.qml": 285,
+  "shell.qml": 291,
   "qml/services/ShellState.qml": 398,
   "qml/services/NativeState.qml": 257,
   "qml/services/EqualizerState.qml": 442,

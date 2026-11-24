@@ -15,29 +15,20 @@ ShellRoot {
     property bool initialized: false
     property bool startupFailed: false
     property string requestedPage: Quickshell.env("LME_SETTINGS_PAGE") || "appearance"
-    property bool shown: true
-    property int lingerMs: Math.max(0, Number(Quickshell.env("LME_SETTINGS_LINGER_MS") || 90000))
     readonly property bool prepared: (FeatureCatalog.ready && Theme.ready && ShellState.backendReady) || startupFailed
     onPreparedChanged: if (prepared) { requestedPage = SettingsRegistry.page(requestedPage).key; initialized = true; }
     readonly property string screenshotPath: Quickshell.env("LME_SETTINGS_SCREENSHOT") || ""
-    function hideWindow() {
-        if (root.lingerMs <= 0 || !root.initialized) { Qt.quit(); return; }
-        root.shown = false;
-        lingerTimer.restart();
-    }
     IpcHandler {
         target: "settings"
         function openPage(page: string): bool {
             if (page) root.requestedPage = FeatureCatalog.settled ? SettingsRegistry.page(page).key : page;
             if (view.item) (view.item as SettingsView).navigate(root.requestedPage);
             window.minimized = false;
-            lingerTimer.stop();
-            root.shown = true;
+            if (view.status === Loader.Ready) window.visible = true;
             return window.visible && !window.minimized;
         }
         function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }
     }
-    Timer { id: lingerTimer; interval: root.lingerMs; onTriggered: Qt.quit() }
     Timer {
         id: startupDeadline
         interval: 15000; running: !root.initialized && !root.startupFailed
@@ -49,7 +40,7 @@ ShellRoot {
     }
     FloatingWindow {
         id: window
-        visible: root.shown && view.status === Loader.Ready
+        visible: view.status === Loader.Ready
         title: ShellState.shellName + " Settings" + (ShellState.demo ? " - Demo" : "")
         implicitWidth: 1100; implicitHeight: 780
         minimumSize: Qt.size(800, 600)
@@ -58,13 +49,13 @@ ShellRoot {
         Region { id: glassBlur; regions: [bodyBlur, ...GlassState.popupsFor(window)] }
         SurfaceBlurRegion { id: bodyBlur; surface: view; radius: 28 }
         // Keep native window-manager close consistent with Escape and the close button.
-        onClosed: root.hideWindow()
+        onClosed: Qt.quit()
         Loader {
             id: view
             anchors.fill: parent
             active: root.initialized
             asynchronous: true
-            sourceComponent: SettingsView { page: root.requestedPage; onCloseRequested: root.hideWindow() }
+            sourceComponent: SettingsView { page: root.requestedPage; onCloseRequested: Qt.quit() }
         }
         // The undo-first offer surface for the standalone Settings process: the
         // registry is per process, so a reset offered here settles here.

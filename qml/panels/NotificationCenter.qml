@@ -27,8 +27,7 @@ Item {
         }
         return result;
     }
-    property bool pageActive: true
-    Timer { interval: 60000; running: root.visible && root.pageActive; repeat: true; onTriggered: root.now = new Date() }
+    Timer { interval: 60000; running: root.visible; repeat: true; onTriggered: root.now = new Date() }
 
     function timeText(timestamp) {
         const elapsed = Math.max(0, Math.floor((root.now.getTime() - timestamp) / 60000));

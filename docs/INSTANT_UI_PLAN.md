@@ -45,8 +45,19 @@ ratified; see section 4):
 | Idle cost | no continuous frame callbacks; CPU delta <= 1% of one core | visible repaint or timer at rest |
 | Memory | aggregate PSS stays within 400 MB steady / 500 MB active | cache pushes the shell over budget |
 
+The `33 ms` retained-open row is a two-frame interaction budget, not a
+restatement of PR #107. #107's body table separately reports the first Control
+Center open after login dropping 460 -> 33 ms, while its prose and commit
+`c66dda7` describe 460 ms cold arrival vs ~70 ms retained reopen. Both #107
+numbers are real but measure different conditions. The 400/500 MB cap is from
+AGENTS.md; #107 measured +132 MB RSS (148 -> 280 MB) for retaining only the
+Control Center tree, so the cache limits below are starting points, not
+promises.
+
 These are interaction targets, not a return to D1 startup profiling. D1 remains
 closed; this plan does not reopen bootstrap measurement or general profiling.
+Phase 0 instrumentation and its 10-run p50/p95 method still need the explicit
+owner decision in section 7.
 
 ## 1. Root causes in the current code
 
@@ -62,9 +73,11 @@ panel assigns a different `content`, and `retainedContent = content` replaces
 the built item ([SlideLoader.qml:187-189](../qml/components/SlideLoader.qml#L187-L189)).
 Only the most recently opened panel stays warm. Control Center -> Wi-Fi ->
 Control Center makes Control Center cold again. Baseline: 460 ms cold arrival
-(commit `c66dda7` body), ~70 ms retained reopen ([shell.qml:220-223](../shell.qml#L220-L223)).
-The activity island has its own retained loader and is not affected; the plan
-must not merge the two.
+and ~70 ms retained reopen (PR #107 body; commit `c66dda7`). The same PR table
+reports 460 -> 33 ms for the first open after login, while its prose calls the
+retained path ~70 ms; both are real but measure different conditions, and the
+2-frame target in section 0 is an independent budget. The activity island has
+its own retained loader and is not affected; the plan must not merge the two.
 
 ### F2. The page host is a two-slot staging area, not a cache
 
@@ -72,8 +85,11 @@ must not merge the two.
 the retired page (`active = false; sourceComponent = null`)
 ([PageHost.qml:20-33](../qml/components/PageHost.qml#L20-L33)). An immediately
 following page that is already incubating is reused
-([PageHost.qml:35-46](../qml/components/PageHost.qml#L35-L46)), but once a
-third page arrives the first is gone. Control Center has five tab components
+([PageHost.qml:35-46](../qml/components/PageHost.qml#L35-L46)), but
+`activate()` nulls the retired page immediately (`active = false;
+sourceComponent = null`), so even A -> B -> A rebuilds A. There is no two-page
+retention; the two-slot path only helps a switch to a page that is already
+incubating. Control Center has five tab components
 ([ControlCenter.qml:19](../qml/panels/ControlCenter.qml#L19)) and Settings has
 six built-in pages plus catalog pages
 ([SettingsView.qml:142-167](../qml/settings/SettingsView.qml#L142-L167)). A
@@ -107,12 +123,16 @@ prewarmed. There is no pointer anticipation.
 
 Quickshell 0.3.2 rejects the `DiskCache` and `RenderControl` pragmas and its
 launch code disables the disk-cache environment path for `qsintercept` files
-(`quickshell/src/launch/launch.cpp:91-129,233-242` at commit `9b0f339`). A
-probe with `QML_DISK_CACHE=1`, `QML_FORCE_DISK_CACHE=1` and an explicit cache
-path produced no `.qmlc` files; the live cache contains one 688-byte file. A
-new Quickshell process recompiles user QML. Inside one process, destroying and
-re-instantiating a page does not recompile its QML, so this is a Settings
-process-start problem, not the tab-switch bottleneck.
+(`quickshell/src/launch/launch.cpp:91-129,233-242` at commit `9b0f339`). The
+pin `9b0f339` is 11 commits after the `v0.3.2` tag; `launch.cpp` differs only
+by moving `setDesktopFileName`, `lazyloader.hpp` is unchanged, and the
+disk-cache block at lines 235-240 is commented-out code, so the relevant
+behavior is the 0.3.2 behavior. A probe with `QML_DISK_CACHE=1`,
+`QML_FORCE_DISK_CACHE=1` and an explicit cache path produced no `.qmlc` files;
+the live cache contained one 688-byte file at probe time. A new Quickshell
+process recompiles user QML. Inside one process, destroying and re-instantiating
+a page does not recompile its QML, so this is a Settings process-start problem,
+not the tab-switch bottleneck.
 
 ### F6. On-open data work is not the dead interval
 
@@ -191,12 +211,24 @@ Retention policy:
 | `wifi`, `tray`, `power` | light | retain for the session after first build |
 | catalog panels | medium | LRU with the heavy budget; unbounded kinds are not allowed |
 
-`heavyLimit = 2` is a starting point, not a promise. Phase 2 measures the PSS
-delta per kind and the owner ratifies the final table. Eviction is asynchronous
+`heavyLimit = 2`, the page cache of 6 and the 90 s linger are starting points,
+not promises. They are bounded by the #107 +132 MB RSS prior (one retained
+Control Center tree, 148 -> 280 MB) and AGENTS.md's 400 MB steady / 500 MB
+active aggregate PSS cap (section 0); Phase 0 captures the PSS baseline and
+Phase 2/3 ratchet the limits down if the cap is hit. Eviction is asynchronous
 (one loader per 50 ms while the stage is quiet), so a cache miss never tears
 down the panel the user is opening. A never-used warm (hover anticipation or
 startup prewarm) expires after a short idle window to avoid retaining a panel
 the user only hovered.
+
+Per-kind geometry is mandatory. Today `shell.qml:190-201` derives `centered`,
+`direction`, `x`, `y`, `width`, `height` and the tray anchor from
+`ShellState.panelKind` / `trayAnchorX`. A pool with one loader per kind must
+freeze each loader's geometry from its own kind (and screen) at creation and
+update only the active loader; otherwise changing `activeId` recomputes every
+parked loader's geometry and its park offset. The stage owns `centered`,
+`direction`, `travelEdge`, `width`/`height` and the x/y bindings per loader,
+and passes live screen/tray changes only to the loader for the current kind.
 
 Warm path (the existing `SlideLoader` contract):
 
@@ -263,7 +295,12 @@ Overlay integration (the risky part):
 
 Do not grow `shell.qml` beyond its 291-nonblank ceiling. The stage logic lives
 in the new component; `shell.qml` only passes state, the component factory and
-the viewport/blur bindings.
+the viewport/blur bindings. `qml/services/ShellState.qml` is also at its
+398-nonblank ceiling (`config/architecture.json:largeFiles`). Do not add
+`openSettingsPage`, `anticipatePanel`, Settings-window flags or any other new
+field/function to it; put the new state in dedicated components/singletons and
+let ShellState call them. A ceiling ratchet is an explicit owner decision
+(section 7.8), not an implementation detail.
 
 ### 2.3 PageHost v2: a keyed page cache with anticipation
 
@@ -280,9 +317,11 @@ Structure:
 - Hosts are keyed by a stable string, not by the `Component` object. Two
   catalog pages can share the same wrapper `Component`; keying by component
   would collide.
-- Cached hosts are parked at `x = stage.width` (past the clip) and
-  `visible = false` after their warm pass. The visible page is `x = 0`,
-  `visible = true`.
+- Cached hosts are parked at `x = stage.width` (past the clip) with `visible`
+  left `true`; the stage clip prevents rendering. `visible = false` is a later,
+  page-specific optimization only after a measurement, because the ~800 ms
+  visibility-propagation cost in principle 2 applies to large trees. The
+  visible page is `x = 0`, `visible = true`.
 - Switching to a cached host is a parking swap, not a new loader. Switching to
   a loading host keeps the previous page visible until `Loader.Ready`, then
   swaps; the click is acknowledged immediately by the navigation state.
@@ -319,7 +358,7 @@ Item {
             property Component pageComponent
             property bool warmDone: false
             width: stage.width; height: stage.height
-            visible: false
+            visible: true             // parked past the clip
             property bool warming: false
             Loader {
                 id: loader
@@ -335,7 +374,7 @@ Item {
                     frames++;
                     if (frames >= 3) {
                         host.warming = false; host.warmDone = true;
-                        host.visible = false; host.layer.enabled = false;
+                        host.layer.enabled = false;
                         host.opacity = 1; host.x = stage.width; host.z = 0;
                     }
                 }
@@ -347,14 +386,14 @@ Item {
         if (hosts[key]) return hosts[key];
         const host = hostComponent.createObject(stage, Object.assign({
             pageKey: key, pageComponent: component,
-            x: stage.width, y: 0, visible: false
+            x: stage.width, y: 0, visible: true
         }, properties || {}));
         hosts[key] = host;
         return host;
     }
 
     function warm(host) {
-        if (host.warmDone || host.visible) return;
+        if (host.warmDone || host.warming) return;
         // Draw once behind the current page, transparent, then park.
         host.x = 0; host.z = -1;
         host.opacity = 0; host.layer.enabled = true;
@@ -381,11 +420,12 @@ Consumer changes:
   keeps its Flickable position; re-entering does not jump to the top unless the
   navigation contract says so.
 
-Hidden-page hygiene: a cached page is `visible = false`, which stops timers
-bound to `visible` but not timers bound to global services. Audit the six
-built-in pages and the catalog pages for unconditional timers/animations and
-gate them on `visible`/`pageActive`. The display page already gates its timer
-on `root.visible`; keep that pattern.
+Hidden-page hygiene: a cached page is parked past the clip with `visible`
+left `true` by default; do not rely on `visible` to stop its work. Timers bound
+to global services keep running, so audit the six built-in pages and the
+catalog pages for unconditional timers/animations and gate them on a new
+`pageActive` property. The display page already gates its timer on
+`root.visible`; keep that pattern.
 
 Scope boundary: this page cache lives inside the owning `PageHost`. It
 survives tab switches but not a Control Center teardown or a Settings process
@@ -437,8 +477,9 @@ D implementation (prototype only):
 
 - Add a `SettingsWindow.qml` `FloatingWindow` to the main shell, hidden by
   default, hosting the same `SettingsView` and `FeatureBootstrap` services.
-  `ShellState.openSettingsPage` toggles it in-process when the env flag is 1;
-  `settings.sh` remains the standalone path when the shell is not running.
+  A new `SettingsWindowController` (not `ShellState.qml`, which is at 398/398)
+  toggles it in-process when the env flag is 1; `settings.sh` remains the
+  standalone path when the shell is not running.
 - Prewarm the window's `SettingsView` in idle and cache pages as in section
   2.3. This removes the second QML engine, second backend and cold process.
 - Risks: a shell reload closes Settings; a shell crash takes Settings with it;
@@ -460,10 +501,13 @@ Replace the two fixed timers with `qml/components/PrewarmScheduler.qml`:
 - Defer or cancel if a panel opens, the island opens, or the compositor is
   under load. `SlideLoader.startControlWarmup` already defers; the scheduler
   must not spin.
-- Respect battery saver: keep the Control Center warm (the owner's primary
-  complaint) and skip secondary prewarms when `ShellState.batterySaverActive`.
+- Battery-saver gating is proposed, not authorized: AGENTS.md keeps A6
+  (polling/cache/power policy) out of scope. Keep the Control Center warm; let
+  section 7.6 decide whether secondary prewarm is skipped when
+  `ShellState.batterySaverActive` is true.
 - Hover anticipation on the bar: `BarModule`, `ActionBarButton` and the
-  network/audio widgets call `ShellState.anticipatePanel(id)`. Level 1 only
+  network/audio widgets call the new prewarm policy's `anticipatePanel(id)` (not
+  `ShellState.qml`, which is at 398/398). Level 1 only
   compiles the component (`FeatureCatalog.component`), which is cheap. Level 2
   (optional, measured) warms the panel instance after 150 ms of hover and
   expires it after 30 s if never opened. DMS prewarms the type on hover
@@ -504,8 +548,9 @@ Implement an explicit activity property:
 - For catalog panels, pass the same property through the component wrapper;
   do not assume every descriptor root has it (guard with
   `"panelActive" in item` / `item.setProperty`).
-- Do the same for page hosts: a cached page is `visible = false`; timers that
-  do not follow visibility must be gated on a `pageActive` property.
+- Do the same for page hosts: a cached page is parked past the clip and stays
+  `visible`; timers that do not follow the park must be gated on a `pageActive`
+  property.
 
 Audit list for Phase 1/2: `ControlDashboard` (`SystemClock`, `MediaAmbient`,
 `AudioVisualizer`), `SystemMonitor` (monitor process/timer),
@@ -520,20 +565,28 @@ plan itself is docs-only and needs only G0.
 
 ### Phase 0: latency instrumentation and baseline (no behavior change)
 
+- This phase is proposed only. D1 startup profiling is closed; do not commit a
+  latency probe or a 10-run p50/p95 methodology to a runtime branch until the
+  owner approves section 7.7. A local, non-committed baseline may be measured
+  first.
 - Add `qml/components/LatencyProbe.qml` or a tiny shared JS helper behind
   `LME_SHELL_LATENCY_TRACE=1`. Record monotonic `Date.now()` timestamps for:
   input/state change, page-host creation, `Loader.Ready`, first frame after
   present, panel creation, first frame after open.
-- Add `tests/test_latency_probe.py` using the `run_qml` harness
-  (`tests/test_local_qml.py:13-56`) to assert the probe emits one well-formed
-  record per transition and stays silent when the env flag is off.
-- Add a headless-Sway render measurement modeled on
+- Add `tests/test_latency_probe.py` using the local, untracked `run_qml`
+  harness (`tests/test_local_qml.py:13-56`; `tests/` is gitignored, commit
+  `022ad7a`, so it is not in the published repo) to assert the probe emits one
+  well-formed record per transition and stays silent when the env flag is off.
+- Add a headless-Sway render measurement modeled on the local, untracked
   `tests/test_island_motion_render.py`: open and close panels and pages, parse
   the probe logs, report p50/p95. Do not commit raw CSV/log directories.
-- Measure the current baseline on this machine: first CC open at 1 s and 10 s
-  after shell start, CC reopen after Wi-Fi, page A->B->A in Settings and
+- Capture the aggregate PSS baseline before any cache is enabled; #107's
+  +132 MB RSS prior (148 -> 280 MB for one retained CC tree) and the 400/500 MB
+  cap are the bounds. Measure the latency baseline: first CC open at 1 s and
+  10 s after shell start, CC reopen after Wi-Fi, page A->B->A in Settings and
   Control Center, Settings open/close/reopen, idle CPU with a panel parked.
-- Gate: G0 + G1 + the new focused tests. No runtime behavior change.
+- Gate: G0 + G1 + the new focused tests, if the owner approves this phase. No
+  runtime behavior change.
 
 ### Phase 1: PageHost v2 and page anticipation
 
@@ -561,9 +614,10 @@ plan itself is docs-only and needs only G0.
   already has its own visible guard), and the heavy panels in the retention
   table.
 - Tests: `tests/test_panel_stage.py` (open A, open B, reopen A; identity
-  preserved; inactive parked; viewport excludes parked loaders; eviction does
-  not evict the active loader), a headless render case for CC->Wi-Fi->CC, and
-  memory/idle checks.
+  preserved; inactive parked; per-kind geometry/direction unchanged across
+  active changes; viewport excludes parked loaders; eviction does not evict the
+  active loader), a headless render case for CC->Wi-Fi->CC, and memory/idle
+  checks.
 - Metrics: retained panel open p95, cold first open after prewarm, PSS delta
   per retained panel, idle CPU with all retained panels parked.
 
@@ -571,6 +625,10 @@ plan itself is docs-only and needs only G0.
 
 - Implement option B (hide + linger) with `LME_SETTINGS_LINGER_MS` and a test
   override; keep `settings.sh` IPC reuse.
+- Route the hide/linger state through `SettingsApplication` or a new
+  `SettingsWindowController`; do not add fields to
+  `qml/services/ShellState.qml` (398/398). The in-process option D follows the
+  same rule.
 - Add `tests/test_settings_linger.py`: open, close, reopen via IPC; assert the
   same PID, a visible window and a latency budget; set a short linger and
   assert the process exits; cover WM close, Escape and the close button.
@@ -582,7 +640,11 @@ plan itself is docs-only and needs only G0.
 
 - Replace the 4 s/6.5 s timers with the readiness-driven scheduler; add bar
   hover type warm and optional instance warm.
-- Respect battery saver and the existing deferral in `startControlWarmup`.
+- Put `anticipatePanel` in the new prewarm policy object, not
+  `qml/services/ShellState.qml` (398/398).
+- Respect the section 7.6 decision (battery-saver gating is A6 power policy
+  and is not authorized by this plan) and the existing deferral in
+  `startControlWarmup`.
 - Tests: first CC open at the earliest readiness point, prewarm cancellation
   when a panel opens, hover-driven component load, no repeated warm loops.
 - Metrics: first-open latency at 1 s/10 s after login; login CPU/memory burst;
@@ -594,23 +656,31 @@ plan itself is docs-only and needs only G0.
   idle unload; verify the aggregate PSS target and idle CPU.
 - Update STATE, ROADMAP, README and the relevant REL/INVARIANT tags. Add one
   MIGRATION_LOG entry. Do not claim a memory saving; report the measured delta.
-- Final gates: G0-G4 + G6 once, plus the 10 cold launches for preview and
-  Settings only if the branch changes runtime startup behavior (the owner's
-  standing rule). The docs-only PR for this plan does not run those.
+- Final gates: G0-G4 + G6 once. Before any runtime merge (Phases 1-4), the
+  owner's standing rule applies regardless of whether the branch targets
+  startup: 10 cold launches each of preview and Settings, main vs head, medians
+  only, and Quickshell/backend RSS at 10 s. The docs-only PR does not run
+  those.
 
 ## 4. Measurement methodology
 
-- Use the existing `run_qml` harness for object/identity/eviction contracts
-  (offscreen, software renderer, no desktop session).
+- Use the existing local, untracked `run_qml` harness for object/identity/
+  eviction contracts (offscreen, software renderer, no desktop session;
+  `tests/` is gitignored, commit `022ad7a`).
 - Use the headless-Sway render harness for first-frame and pixel checks; keep
   the existing retry-once policy for compositor timing. Software rendering is
   slower than the Radeon session; use it for relative before/after, then run
   the final acceptance on the real niri session.
-- Measure 10 runs per scenario; report p50/p95 and the run count. Do not
-  commit raw logs/CSV; commit only the summary numbers in the phase report.
+- Measure 10 runs per scenario; report p50/p95 and the run count. This is a
+  proposed methodology: D1 startup profiling is closed, so the committed
+  10-run probe requires the section 7.7 owner decision. If it is not approved,
+  keep the measurement local and out of the branch. Do not commit raw logs/CSV;
+  commit only the summary numbers in the phase report.
 - Memory: `python3 scripts/memory_report.py --label <label>` with aggregate
-  PSS; sample after 10 s of quiet with the cache warm. Report the baseline and
-  the delta, and label transient warmup peaks separately.
+  PSS; sample after 10 s of quiet with the cache warm. Start from PR #107's
+  +132 MB RSS prior (148 -> 280 MB for one retained Control Center tree) and
+  the 400 MB steady / 500 MB active cap. Report the baseline and the delta,
+  and label transient warmup peaks separately.
 - Idle: one minute with all retained panels/pages parked; require no continuous
   `FrameAnimation` and a CPU delta <=1% of one core. A parked tree that still
   runs a clock or a visualizer fails the phase.
@@ -624,7 +694,7 @@ plan itself is docs-only and needs only G0.
 | --- | --- | --- |
 | Memory growth | Retained panels/pages plus hidden trees | Heavy limit 2, page limit 6, per-kind table, idle unload, PSS gate |
 | Idle CPU | Parked trees keep timers/animations | `panelActive`/`pageActive` contract; audit; idle test |
-| Visibility propagation | LME measured ~800 ms on a large panel | Panels stay parked off-screen, never `visible=false`; pages use visibility only after measurement |
+| Visibility propagation | LME measured ~800 ms on a large panel | Panels and pages stay parked off-screen; `visible=false` only after a page-specific measurement |
 | Input/focus regressions | Multiple loaders in one overlay | Only the active loader is enabled; mask/backdrop unchanged; focus active item on open |
 | Blur/viewport wrong | Multiple mounted rectangles | Union only non-dormant loaders; active item for the panel blur region |
 | Settings linger memory | A full Settings process stays alive | 90 s default, measured; option C/D if it breaks the budget |
@@ -662,6 +732,16 @@ plan itself is docs-only and needs only G0.
    configured `LME_SHELL_PREWARM_PANELS` list and hover instance warm.
 5. **Quickshell upgrade**: decide separately whether to evaluate a newer
    Quickshell with `@pragma DiskCache`; this plan does not change the package.
+6. **Battery-saver prewarm (A6)**: authorize skipping secondary prewarm when
+   `ShellState.batterySaverActive`, or keep prewarm independent of power
+   policy. A6 power policy is currently out of scope.
+7. **Phase 0 profiling (D1)**: authorize a committed latency probe and the
+   10-run p50/p95 methodology, or keep Phase 0 local-only. D1 startup profiling
+   is closed; this plan does not reopen it by default.
+8. **Size-ceiling integration**: keep `shell.qml` at 291 and
+   `qml/services/ShellState.qml` at 398 nonblank lines by routing new state
+   through new components, or approve a specific ratchet. The plan assumes the
+   former.
 
 ## 8. File and test map
 
@@ -669,15 +749,17 @@ plan itself is docs-only and needs only G0.
 | --- | --- |
 | Panel pool | `qml/components/PanelStage.qml` (new), `qml/components/PanelCachePolicy.qml` (new), `shell.qml`, `qml/components/SlideLoader.qml` (hooks only) |
 | Page cache | `qml/components/PageHost.qml`, `qml/components/PageCachePolicy.qml` (new), `qml/panels/ControlCenter.qml`, `qml/settings/SettingsView.qml` |
-| Settings session | `qml/settings/SettingsApplication.qml`, `qml/settings/SettingsView.qml`, `qml/services/ShellState.qml`, `scripts/settings.sh` (only if IPC changes) |
+| Settings session | `qml/settings/SettingsApplication.qml`, `qml/settings/SettingsView.qml`, a new Settings-window controller, `scripts/settings.sh` (only if IPC changes). Do not grow `qml/services/ShellState.qml` (398/398). |
 | Prewarm | `qml/components/PrewarmScheduler.qml` (new), `shell.qml`, `qml/bar/BarModule.qml`, `qml/bar/ActionBarButton.qml` |
 | Activity contract | panel/page roots with timers: `ControlDashboard.qml`, `SystemMonitor.qml`, settings pages with timers/processes |
-| Tests | `tests/test_latency_probe.py`, `tests/test_page_host_cache.py`, `tests/test_panel_stage.py`, `tests/test_settings_linger.py`, render cases modeled on `test_island_motion_render.py` |
+| Tests | `tests/test_latency_probe.py`, `tests/test_page_host_cache.py`, `tests/test_panel_stage.py`, `tests/test_settings_linger.py`, render cases modeled on `tests/test_island_motion_render.py`. All of `tests/` is local and untracked (`.gitignore:14`, commit `022ad7a`). |
 | Docs | this plan, `INSTANT_UI_RESEARCH.md`, STATE/ROADMAP/README after measurement |
 
-New source files must stay under the 250-nonblank-line cap; `shell.qml` must
-not grow past its 291-nonblank ceiling. Move logic into the new components
-rather than expanding the host files.
+New source files must stay under the 250-nonblank-line cap. `shell.qml` must
+not grow past its 291-nonblank ceiling, and `qml/services/ShellState.qml` must
+not grow past its 398-nonblank ceiling (`config/architecture.json:largeFiles`).
+Move logic into the new components; a ceiling ratchet is an explicit owner
+decision (section 7.8).
 
 ## 9. References
 
@@ -691,6 +773,8 @@ rather than expanding the host files.
   `panelFamilies/PanelLoader.qml`, `panelFamilies/IllogicalImpulseFamily.qml`,
   `modules/common/widgets/FadeLoader.qml`.
 - Serpantinum `6e18148`: `src/quickshell/Main.qml`.
-- Quickshell `9b0f339`: `src/core/lazyloader.hpp`,
+- Quickshell `9b0f339` (11 commits after `v0.3.2`; relevant disk-cache and
+  `lazyloader.hpp` code unchanged): `src/core/lazyloader.hpp`,
   `src/launch/launch.cpp`.
-- Noctalia `b912cad`: C++/Luau, no `.qml`; used only as a counter-example.
+- Noctalia `b912cad`: compiled C++, no `.qml`/`.luau` in the tree; used only
+  as a counter-example.

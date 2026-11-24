@@ -39,9 +39,10 @@ next Control Center open cold again.
 
 Documented LME values:
 
-- first Control Center open: 460 ms arrival, per the body of commit `c66dda7`
-  (PR #107); the same commit's subject says 460 -> 33 ms, but the body
-  describes the retained reopen as ~70 ms. Treat 33 ms as unsupported.
+- PR #107 body: the table reports the first Control Center open after login
+  460 -> 33 ms, while the prose and commit `c66dda7` describe 460 ms cold
+  dim->arrival vs ~70 ms retained reopen. Both are in the same PR but measure
+  different conditions; 33 ms is not a retained-reopen baseline.
 - current source comment: 300-450 ms asynchronous incubation, ~70 ms on the
   retained path ([shell.qml:220-223](../shell.qml#L220-L223)).
 - the invisible warm pass is #109 (`3074262`); the island warm pass is #110
@@ -54,8 +55,9 @@ previous page, sets `active = false` and `sourceComponent = null`
 ([PageHost.qml:20-33](../qml/components/PageHost.qml#L20-L33)). `dispatch()`
 does reuse an already-current or already-incubating component
 ([PageHost.qml:35-46](../qml/components/PageHost.qml#L35-L46)). The host is
-useful for an immediate A -> B switch; it is not a cache: after C arrives, A
-and B are gone. A later A -> B -> A cycle re-instantiates A.
+useful only for an immediate A -> B switch where B is already incubating; it is
+not a cache. `activate()` nulls the retired page immediately, so A -> B -> A
+already re-instantiates A.
 
 Both page consumers use it:
 
@@ -95,10 +97,14 @@ A direct probe printed `Unrecognized pragma "DiskCache"` and
 `Unrecognized pragma "RenderControl"`. The launch code comments out the
 disk-cache environment path because the engine refuses to cache
 `qsintercept` paths ([quickshell/src/launch/launch.cpp:91-129,233-242](https://github.com/quickshell-mirror/quickshell/blob/9b0f339b19057f4731bf3b48293307d7ef241671/src/launch/launch.cpp#L91-L129)).
+The source pin `9b0f339` is 11 commits after the `v0.3.2` tag; `launch.cpp`
+differs only by moving `setDesktopFileName`, `lazyloader.hpp` is unchanged, and
+the disk-cache block at lines 235-240 is commented-out code. The relevant
+behavior is the 0.3.2 behavior.
 A probe with a local component and `QML_DISK_CACHE=1`,
 `QML_FORCE_DISK_CACHE=1` and an explicit `QML_DISK_CACHE_PATH` produced zero
-`.qmlc` files. The live cache directory currently holds one 688-byte `.qmlc`;
-the Qt pipeline cache is present and about 160 KB.
+`.qmlc` files. The live cache directory held one 688-byte `.qmlc` at probe
+time; the Qt pipeline cache is present and about 160 KB.
 
 Consequence: on this binary, a new Quickshell process recompiles its user QML.
 Inside one process, compiled types and components stay in the QML engine;
@@ -151,8 +157,9 @@ DMS is the closest analogue to the Settings problem.
   room ([SettingsContent.qml:379-437](https://github.com/AvengeMedia/DankMaterialShell/blob/291f4c58786a4fa38832a3267e66b889748c7c40/quickshell/Modals/Settings/SettingsContent.qml#L379-L437)).
   The reference constants are 6 cached pages, 90 ms anticipation and 50 ms
   teardown ([SettingsMetrics.qml:90-97](https://github.com/AvengeMedia/DankMaterialShell/blob/291f4c58786a4fa38832a3267e66b889748c7c40/quickshell/Modules/Settings/Widgets/SettingsMetrics.qml#L90-L97)).
-- The host is a `StackView`; each page is a host item with its own `Loader`
-  and `StackView.onRemoved: _release(host)`
+- The host is a `StackView` declared at `SettingsContent.qml:881`; each page
+  is a host item with its own `Loader` and
+  `StackView.onRemoved: _release(host)`
   ([SettingsContent.qml:559-604](https://github.com/AvengeMedia/DankMaterialShell/blob/291f4c58786a4fa38832a3267e66b889748c7c40/quickshell/Modals/Settings/SettingsContent.qml#L559-L604)).
 
 DMS is on a different Quickshell build and its `@pragma DiskCache` and
@@ -209,12 +216,14 @@ the object in the hidden container, marks it invisible and caches it
 other cached items invisible (`Main.qml:673-750,797-804`). The tree is built
 once and reused; the stack only changes which item is presented.
 
-### 2.5 Noctalia: compiled C++/Luau, not a QML reference
+### 2.5 Noctalia: compiled C++, not a QML reference
 
-Noctalia has no `.qml` files; its UI is C++ and Luau under `src/shell`
-(645 headers/576 C++ files at the pinned commit). It is useful only as a
-counter-example: a shell can remove runtime QML compilation entirely, but that
-is an architecture change, not a retention tweak.
+Noctalia has no `.qml` and no `.luau` files in the tree at the pinned commit.
+Its shell is C++ under `src/shell` (311 `.h` / 294 `.cpp`); the 645/576 totals
+are for all of `src/`. The Luau runtime is vendored under `third_party/luau`
+(125 files). It is useful only as a counter-example: a shell can remove runtime
+QML compilation entirely, but that is an architecture change, not a retention
+tweak.
 
 ### 2.6 Quickshell `LazyLoader` semantics
 
@@ -264,7 +273,8 @@ async teardown, settings page cache, settings process reuse.
 5. Never toggle `Item.visible` on a large retained panel: LME measured about
    800 ms for that visibility propagation and parks off-screen instead
    ([SlideLoader.qml:39-42](../qml/components/SlideLoader.qml#L39-L42)). Use
-   visibility toggling for page-sized trees only after measuring it.
+   off-screen parking for page-sized trees too; visibility toggling only after
+   measuring it.
 6. Do not copy reference constants blindly. DMS's 6 pages, 90 ms and 50 ms are
    reference values; LME must measure its own page sizes, memory and frame
    budget.
@@ -272,4 +282,6 @@ async teardown, settings page cache, settings process reuse.
 ## References
 
 Reference links are pinned to the commits in the table at the top. LME links
-are relative to this checkout at `f234268`.
+are relative to this checkout at `f234268`. `9b0f339` is 11 commits after the
+`v0.3.2` tag; the disk-cache and `lazyloader.hpp` code is unchanged (only
+`setDesktopFileName` moved).

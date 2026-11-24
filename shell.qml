@@ -115,7 +115,7 @@ ShellRoot {
         // every retained item (~700ms of binding churn before each reopen). While idle it
         // shrinks to a 1x1 transparent, input-transparent sliver.
         visible: !root.preview && !ShellState.authenticationActive
-        readonly property bool surfaceLive: ShellState.panelOpen || (activityIsland.visible && !activityIsland.warmupActive) || (panelLoader.active && !panelLoader.dormant)
+        readonly property bool surfaceLive: ShellState.panelOpen || (activityIsland.visible && !activityIsland.warmupActive) || panelStage.surfaceLive
         // Non-xray blur captures the native surface; reserve the flight envelope, not the whole output.
         readonly property rect viewport: {
             const w = screen ? screen.width : 1920, h = screen ? screen.height : 1080;
@@ -134,9 +134,13 @@ ShellRoot {
                 reserve(x, Theme.barBottom ? h - activityIsland.edgeInset - height : activityIsland.edgeInset,
                     width, height, Theme.barBottom ? 3 : 2);
             }
-            if (panelLoader.mounted && !panelLoader.dormant) reserve(panelLoader.x, panelLoader.y, panelLoader.width, panelLoader.height, panelLoader.travelEdge);
-            if (panelLoader.warmupActive && panelLoader.mounted && panelLoader.item) {
-                const cw = Math.min(panelLoader.item.implicitWidth || panelLoader.rememberedWidth || 400, w - 32), ch = Math.min(panelLoader.item.implicitHeight || panelLoader.rememberedHeight || 500, h - Theme.panelTopMargin - 16);
+            if (panelStage.activeLoader && panelStage.activeLoader.mounted && !panelStage.activeLoader.dormant) {
+                const active = panelStage.activeLoader;
+                reserve(active.x, active.y, active.width, active.height, active.travelEdge);
+            }
+            if (panelStage.warmupLoader && panelStage.warmupLoader.warmupActive && panelStage.warmupLoader.mounted && panelStage.warmupLoader.item) {
+                const warm = panelStage.warmupLoader;
+                const cw = Math.min(warm.item.implicitWidth || warm.rememberedWidth || 400, w - 32), ch = Math.min(warm.item.implicitHeight || warm.rememberedHeight || 500, h - Theme.panelTopMargin - 16);
                 reserve(w - cw - 14, Theme.barBottom ? h - ch - Theme.panelTopMargin : Theme.panelTopMargin, cw, ch, 1);
             }
             if (!frames.length) return Qt.rect(0, 0, 1, 1);
@@ -161,7 +165,7 @@ ShellRoot {
         BackgroundEffect.blurRegion: !visible || !surfaceLive ? null : (ShellState.liquidBlurEnabled || ShellState.popupBlurEnabled) ? glassPopupBlur : null
         Region { id: glassPopupBlur; regions: [islandBlur, panelBlur, ...GlassState.popupsFor(overlay)] }
         SurfaceBlurRegion { id: islandBlur; surface: activityIsland.panel }
-        SurfaceBlurRegion { id: panelBlur; surface: panelLoader.item as Item }
+        SurfaceBlurRegion { id: panelBlur; surface: panelStage.activeItem }
         // Closing visuals must not block another bar click or the application beneath.
         mask: Region { item: ShellState.panelOpen ? overlay.contentItem : null }
         WlrLayershell.keyboardFocus: ShellState.panelOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -184,38 +188,31 @@ ShellRoot {
                     function onDormantChanged() { if (activityIsland.dormant) Qt.callLater(() => activityIsland.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); }
                 }
             }
-            SlideLoader {
-                id: panelLoader
-                exitToEdge: true
-                keepAlive: true
-                readonly property bool centered: FeatureCatalog.panel(ShellState.panelKind)?.centered === true || ["launchpad", "launcher", "power", "overview"].includes(ShellState.panelKind)
-                direction: centered ? "up" : ShellState.panelKind === "tray" ? Theme.barBottom ? "up" : "down" : "right"
-                shown: ShellState.panelOpen && !ShellState.activityOpen
-                content: FeatureCatalog.panel(ShellState.panelKind) ? FeatureCatalog.component(FeatureCatalog.panel(ShellState.panelKind).entry) : ShellState.panelKind === "launchpad" ? launchpadComponent : ShellState.panelKind === "launcher" ? launcherComponent : ShellState.panelKind === "control" ? controlComponent
-                               : ShellState.panelKind === "wifi" ? wifiComponent : ShellState.panelKind === "settings" ? settingsComponent : ShellState.panelKind === "tray" ? trayComponent : ShellState.panelKind === "overview" ? overviewComponent : powerComponent
-                width: item ? Math.min(item.implicitWidth, parent.width - 32) : rememberedWidth || 400
-                height: item ? Math.min(item.implicitHeight, parent.height - Theme.panelTopMargin - 16) : rememberedHeight || 500
-                x: centered ? (parent.width - width) / 2
-                   : ShellState.panelKind === "tray" && ShellState.trayAnchorX >= 0 ? Math.max(14, Math.min(parent.width - width - 14, ShellState.trayAnchorX - width))
-                   : parent.width - width - 14
-                y: centered ? (parent.height - height) / 2 : Theme.barBottom ? parent.height - height - Theme.panelTopMargin : Theme.panelTopMargin
-                MouseArea { anchors.fill: parent; z: -1; onClicked: mouse => mouse.accepted = true }
-                Connections {
-                    target: ShellState
-                    function onPanelSwapChanged() { activityIsland.snapOut(); panelLoader.snapOut(); }
-                    function onPanelOpenChanged() {
-                        if (ShellState.panelOpen) {
-                            if (panelLoader.warmupActive) panelLoader.finishControlWarmup();
-                            if (activityIsland.warmupActive) activityIsland.finishControlWarmup();
-                        } else {
-                            // The stage went quiet: any warm-up deferred by an open
-                            // panel may run now (loaders mid-exit retry at their park).
-                            panelLoader.startControlWarmup(false, false);
-                            activityIsland.startControlWarmup(false, false);
-                        }
+            PanelStage {
+                id: panelStage
+                anchors.fill: parent
+                activeId: ShellState.panelKind
+                open: ShellState.panelOpen && !ShellState.activityOpen
+                componentFor: function(id) {
+                    const entry = FeatureCatalog.panel(id);
+                    return entry ? FeatureCatalog.component(entry.entry)
+                         : id === "launchpad" ? launchpadComponent : id === "launcher" ? launcherComponent : id === "control" ? controlComponent
+                         : id === "settings" ? settingsComponent : id === "wifi" ? wifiComponent : id === "tray" ? trayComponent
+                         : id === "overview" ? overviewComponent : powerComponent;
+                }
+            }
+            Connections {
+                target: ShellState
+                function onPanelSwapChanged() { activityIsland.snapOut(); panelStage.snapOut(); }
+                function onPanelOpenChanged() {
+                    if (ShellState.panelOpen) {
+                        panelStage.finishWarmups();
+                        if (activityIsland.warmupActive) activityIsland.finishControlWarmup();
+                    } else {
+                        panelStage.retryWarmups();
+                        activityIsland.startControlWarmup(false, false);
                     }
                 }
-                Connections { target: panelLoader; function onLoaded() { Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } function onDormantChanged() { if (panelLoader.dormant) Qt.callLater(() => panelLoader.startControlWarmup(ShellState.panelOpen, ShellState.activityOpen)); } }
             }
             // Prewarm the heaviest retained panel shortly after startup: the
             // first Control Center open otherwise pays the asynchronous
@@ -224,11 +221,8 @@ ShellRoot {
             Timer {
                 interval: 4000
                 repeat: false
-                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM") && !panelLoader.controlWarmupDone
-                onTriggered: if (!panelLoader.mounted && !panelLoader.item && !ShellState.panelOpen && !ShellState.activityOpen) {
-                    panelLoader.controlWarmupPending = true;
-                    panelLoader.dormant = true; panelLoader.retainedContent = controlComponent; panelLoader.mounted = true;
-                }
+                running: !root.preview && !ShellState.demo && !ShellState.authenticationActive && !Quickshell.env("LME_SHELL_NO_PREWARM")
+                onTriggered: panelStage.warm("control")
             }
             // Prewarm the retained activity island after the control center settles:
             // its first open otherwise pays the async incubation dead window plus a

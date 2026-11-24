@@ -141,10 +141,11 @@ GlassPanel {
         PageHost {
             id: dashboard
             Layout.fillWidth: true; Layout.fillHeight: true
-            content: root.tabComponents[root.selectedTab.entry] || catalogTab
+            key: root.selectedTab.id || ""
+            resolve: id => { const entry = ControlRegistry.tabs.find(tab => tab.id === id)?.entry; return root.tabComponents[entry] || FeatureCatalog.component(entry); }
+            onPageLoaded: item => { if (item && "embedded" in item) item.embedded = true; }
         }
     }
-    Component { id: catalogTab; Loader { asynchronous: true; source: FeatureCatalog.url(root.selectedTab.entry); onLoaded: if (item && "embedded" in item) item.embedded = true } }
     Component { id: monitor; SystemMonitor {} }
     Component { id: controls; ControlDashboard { editing: root.editing } }
     Component { id: audio; AudioMixer {} }

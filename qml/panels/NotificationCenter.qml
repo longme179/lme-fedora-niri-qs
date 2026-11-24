@@ -141,7 +141,6 @@ Item {
                         timeText: historyEntry.modelData.group ? "" : root.timeText(historyEntry.modelData.timestamp)
                         animateIdle: false
                         onDismissRequested: Notifications.dismiss(historyEntry.modelData.id)
-                        onAnnotateRequested: Notifications.openImage(historyEntry.modelData.id)
                         onActionRequested: identifier => Notifications.invokeAction(historyEntry.modelData.id, identifier)
                     }
                 }

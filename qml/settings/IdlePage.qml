@@ -9,12 +9,14 @@ import "../theme"
 ColumnLayout {
     id: root
     spacing: 20
+    property bool pageActive: true
     readonly property var status: ShellState.idle || {}
     readonly property var durations: [0,1,2,3,5,10,15,20,30,60,120,240]
     function refresh() { if (ShellState.backendReady) ShellState.run("idleRefresh"); }
-    Component.onCompleted: refresh()
-    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.refresh(); } }
-    Timer { interval: 2000; running: root.visible && ShellState.backendReady; repeat: true; onTriggered: root.refresh() }
+    Component.onCompleted: if (root.pageActive) refresh()
+    onPageActiveChanged: if (root.pageActive) refresh()
+    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady && root.pageActive) root.refresh(); } }
+    Timer { interval: 2000; running: root.visible && root.pageActive && ShellState.backendReady && (Window.window ? Window.window.visible : true); repeat: true; onTriggered: root.refresh() }
     function choices(source, key, minutes) {
         const all = durations.includes(minutes) ? durations : durations.concat(minutes).sort((a,b)=>a-b);
         const profile = (ShellState.preferences.idleProfiles || {})[source] || {};

@@ -10,6 +10,7 @@ import "../services"
 ColumnLayout {
     id: root
     property int tab: 0
+    property bool pageActive: true
     readonly property var tabs: ControlRegistry.visibleAgendaTabs(ShellState.preferences.quickNotes)
     readonly property var pages: ({CalendarWidget: calendar, TasksWidget: tasks, TimerWidget: timer, QuickNotes: notes})
     function selectTab(id) { tab = ControlRegistry.indexForId(id, true); }
@@ -32,7 +33,9 @@ ColumnLayout {
             }
         }
     }
-    Loader { Layout.fillWidth: true; Layout.fillHeight: true; sourceComponent: root.pages[ControlRegistry.tabForIndex(root.tab, true).entry] || FeatureCatalog.component(ControlRegistry.tabForIndex(root.tab, true).entry) }
+    Loader { id: pageLoader; Layout.fillWidth: true; Layout.fillHeight: true; sourceComponent: root.pages[ControlRegistry.tabForIndex(root.tab, true).entry] || FeatureCatalog.component(ControlRegistry.tabForIndex(root.tab, true).entry)
+        onLoaded: if (item && "pageActive" in item) item.pageActive = root.pageActive }
+    onPageActiveChanged: if (pageLoader.item && "pageActive" in pageLoader.item) pageLoader.item.pageActive = root.pageActive
     Component { id: calendar; CalendarWidget {} }
     Component { id: tasks; TasksWidget {} }
     Component { id: notes; QuickNotes {} }

@@ -24,8 +24,15 @@ Item {
         history = history.concat(page); page = SettingsRegistry.page(key).key;
         search.clear(); pageScroll.contentY = 0;
     }
-    PageNavigation { target: pageLoader.item; onRequested: pageId => root.navigate(pageId) }
     function goBack() { if (history.length) { page = history[history.length - 1]; history = history.slice(0, -1); pageScroll.contentY = 0; } }
+    function pageComponent(key) {
+        return key === "topbar" ? barPage : key === "display" ? displayPage : key === "controlLayout" ? controlPage
+             : key === "elements" ? elementsPage : key === "behavior" ? behaviorPage : key === "appearance" ? appearancePage : null;
+    }
+    function pageUrl(key) {
+        const current = SettingsRegistry.page(key);
+        return current.entry ? FeatureCatalog.url(current.entry) : "";
+    }
     Shortcut { sequence: "Ctrl+F"; onActivated: search.forceActiveFocus() }
     Shortcut { sequence: "Alt+Left"; onActivated: root.goBack() }
     Shortcut { sequence: "Escape"; onActivated: { if (search.text) search.clear(); else root.closeRequested(); } }
@@ -87,6 +94,7 @@ Item {
                                 checkable: false
                                 Accessible.name: modelData.title + " settings"
                                 onClicked: root.navigate(modelData.key)
+                                onHoveredChanged: if (hovered) pageLoader.anticipate(modelData.key, root.pageComponent(modelData.key), root.pageUrl(modelData.key))
                                 onActiveFocusChanged: if (activeFocus) {
                                     const top = mapToItem(navigationScroll.contentItem, 0, 0).y - 4;
                                     if (top < navigationScroll.contentY) navigationScroll.contentY = top;
@@ -143,20 +151,12 @@ Item {
                     id: pageLoader
                     x: 6; y: 6
                     width: pageScroll.width - 12
-                    content: root.currentPage.entry ? catalogPage : root.page === "topbar" ? barPage
-                                   : root.page === "display" ? displayPage : root.page === "controlLayout" ? controlPage : root.page === "elements" ? elementsPage
-                                   : root.page === "behavior" ? behaviorPage : appearancePage
+                    contentKey: root.page
+                    content: root.pageComponent(root.page)
+                    contentUrl: root.pageUrl(root.page)
+                    onNavigateRequested: pageId => root.navigate(pageId)
                 }
             }
-        }
-    }
-    Component {
-        id: catalogPage
-        Loader {
-            id: catalogLoader
-            asynchronous: true
-            source: FeatureCatalog.url(root.currentPage.entry)
-            PageNavigation { target: catalogLoader.item; onRequested: pageId => root.navigate(pageId) }
         }
     }
     Component { id: appearancePage; AppearancePage {} }

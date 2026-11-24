@@ -10,8 +10,6 @@ import "../theme"
 Item {
     id: root
     objectName: "systemMonitor"
-    property bool pageActive: true
-    readonly property bool monitorActive: pageActive
     readonly property var state: NativeState.monitor(ShellState.snapshot.monitor) || {} // Q2: native cores/interfaces/history over the backend process table
     readonly property var samples: state.history || []
     property string query: ""
@@ -23,12 +21,10 @@ Item {
     }
     function percent(value) { return value === null || value === undefined ? "—" : Number(value).toFixed(1)+"%"; }
     function bytes(value) { if (value === null || value === undefined) return "—"; return value >= 1048576 ? (value/1048576).toFixed(1)+" MiB" : (value/1024).toFixed(1)+" KiB"; }
-    function subscribe() { if (!root.monitorActive) return; MonitorState.enabled = true; if (ShellState.backendReady) ShellState.run("monitor", {enabled: true}); }
-    function unsubscribe() { MonitorState.enabled = false; if (ShellState.backendReady) ShellState.run("monitor", {enabled: false}); }
-    Component.onCompleted: if (root.monitorActive) subscribe()
-    Component.onDestruction: if (MonitorState.enabled) unsubscribe()
-    onMonitorActiveChanged: if (root.monitorActive) root.subscribe(); else root.unsubscribe()
-    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady && root.monitorActive) root.subscribe(); } }
+    function subscribe() { MonitorState.enabled = true; if (ShellState.backendReady) ShellState.run("monitor", {enabled: true}); }
+    Component.onCompleted: subscribe()
+    Component.onDestruction: { MonitorState.enabled = false; if (ShellState.backendReady) ShellState.run("monitor", {enabled: false}); }
+    Connections { target: ShellState; function onBackendReadyChanged() { if (ShellState.backendReady) root.subscribe(); } }
     Flickable {
         id: scroll; anchors.fill: parent; clip: true
         contentWidth: width; contentHeight: body.implicitHeight + 16; boundsBehavior: Flickable.StopAtBounds

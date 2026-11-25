@@ -28,7 +28,11 @@ PageHost {
     // catalog feature that publishes after startup is still included.
     Timer {
         interval: 6000; repeat: false
-        running: root.entries["control"] !== undefined
+        // Binding on the entries object never re-evaluated (var-object assignment
+        // emits no change signal), so this prewarm never fired after login: every
+        // panel built synchronously on first open (wifi 282 ms, control 199 ms...).
+        // pageCount is a plain int property and notifies normally.
+        running: root.pageCount > 0
         onTriggered: root.prewarm(() => {
             const kinds = ["launchpad", "launcher", "power", "overview", "tray", "wifi"]
                 .concat((FeatureCatalog.data.panel || []).map(entry => entry.id));

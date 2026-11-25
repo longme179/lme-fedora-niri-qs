@@ -112,6 +112,13 @@ Loader {
     }
     function finishControlWarmup() { if (!warmupActive) return; warmupFrames.frames = 0; warmupPark(); opacity = 1; layer.enabled = false; warmupActive = false; controlWarmupPending = false; controlWarmupDone = true; }
     FrameAnimation { id: warmupFrames; running: root.warmupActive; property int frames: 0; onTriggered: { frames++; if (frames >= 3) root.finishControlWarmup(); } }
+    // Idle-scene incubation pump: Quickshell only advances asynchronous incubation
+    // on rendered frames, and a quiet shell renders none — so a dormant prewarm
+    // mount (shell.qml's startup timers) would sit in Loader.Loading forever and
+    // the first real open would still pay the whole build. Rendering cheap frames
+    // while the load is pending gives the incubator its time slices; it stops
+    // itself the moment the item lands (running binds to status).
+    FrameAnimation { id: incubationPump; running: root.mounted && root.status === Loader.Loading }
     function edgeOffset() {
         let dx = 0, dy = 0;
         if (exitToEdge && parent) {

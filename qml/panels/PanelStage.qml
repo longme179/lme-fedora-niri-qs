@@ -20,6 +20,22 @@ PageHost {
         settings: settingsComponent, tray: trayComponent, overview: overviewComponent, power: powerComponent})
     resolve: kind => FeatureCatalog.panel(kind) ? FeatureCatalog.component(FeatureCatalog.panel(kind).entry) : legacy[kind] || powerComponent
 
+    // Startup prewarm: after the first real panel settles (shell.qml's stage timer
+    // mounts `control` shortly after login), build every other openable panel in the
+    // background — one per 350 ms tick, paused whenever a panel or the island is
+    // open — so the first click on any panel is a warm switch, not a cold build.
+    // The queue is snapshotted late (gate settles before the walk starts) so a
+    // catalog feature that publishes after startup is still included.
+    Timer {
+        interval: 6000; repeat: false
+        running: root.entries["control"] !== undefined
+        onTriggered: root.prewarm(() => {
+            const kinds = ["launchpad", "launcher", "power", "overview", "tray", "wifi"]
+                .concat((FeatureCatalog.data.panel || []).map(entry => entry.id));
+            return kinds.filter((kind, index) => kinds.indexOf(kind) === index);
+        }, () => !ShellState.panelOpen && !ShellState.activityOpen)
+    }
+
     Component { id: launchpadComponent; LaunchpadPanel {} }
     Component { id: launcherComponent; Launcher {} }
     Component { id: controlComponent; ControlCenter {} }

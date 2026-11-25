@@ -67,6 +67,30 @@ Item {
             entry(pageKey);
         }
     }
+    // Background walk over every page this host can resolve. One synchronous build
+    // per tick keeps each slice short; `gate` (false while the surface is open)
+    // pauses the walk so a live panel never shares its frame budget with a build.
+    property var prewarmQueue: []
+    property var prewarmSource: null // () => array of keys
+    property var prewarmGate: null // () => bool, true = quiet enough to build
+    Timer {
+        id: prewarmTimer
+        interval: 350; repeat: true
+        running: root.prewarmQueue.length > 0
+        onTriggered: {
+            if (root.prewarmGate && !root.prewarmGate()) return;
+            while (root.prewarmQueue.length) {
+                const next = root.prewarmQueue.shift();
+                if (next === root.key || root.entries[next]) continue;
+                if (!root.entry(next)) continue; // unresolvable keys drop silently
+                break; // one build per tick
+            }
+        }
+    }
+    function prewarm(source, gate) {
+        prewarmSource = source; prewarmGate = gate;
+        prewarmQueue = source ? source() : [];
+    }
     function present(page) {
         if (shown === page) return;
         touch(page.pageKey);

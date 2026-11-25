@@ -153,7 +153,10 @@ GlassPanel {
             }
             Timer {
                 interval: 350; repeat: true
-                running: root.initialized && root.visible
+                // Runs while the panel is open and — once the stage prewarm builds
+                // this tree in the background — also while it sits retained, so
+                // the tab walk completes before the first open ever happens.
+                running: root.initialized && (root.visible || dashboard.entries && Object.keys(dashboard.entries).length > 0)
                 onTriggered: dashboard.warmNext()
                 onRunningChanged: if (running) dashboard.pending = root.tabEntries.filter(tab => tab.id !== root.selectedTab.id)
             }

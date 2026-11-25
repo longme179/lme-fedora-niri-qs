@@ -155,6 +155,16 @@ Item {
                     resolve: key => { const entry = SettingsRegistry.page(key).entry; return entry ? FeatureCatalog.component(entry) : legacy[key] || appearancePage; }
                     // Keep every visited page built (RAM cap lifted 2026-11-24).
                     maxPages: 0
+                    // After the first page paints, walk the remaining settings pages
+                    // in the background (one build per 350 ms, paused while the
+                    // window is hidden) so every later navigation is a warm switch.
+                    property bool pagesWarmupArmed: true
+                    onPageLoaded: {
+                        if (!pagesWarmupArmed) return;
+                        pagesWarmupArmed = false;
+                        prewarm(() => SettingsRegistry.pages.map(p => p.key).filter(k => k !== root.currentPage.key),
+                                () => root.active);
+                    }
                 }
             }
         }

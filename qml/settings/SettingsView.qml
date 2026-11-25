@@ -3,6 +3,7 @@
 // INVARIANT: page IDs/legacyIndex routes remain compatible with CLI/catalog (implicit coupling #3/#5).
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
@@ -21,16 +22,58 @@ Item {
     property real now: Date.now()
     onDisplayPreviewChanged: now = Date.now()
     Timer { interval: 1000; repeat: true; running: ["applying", "pending", "reverting"].includes(root.displayPreview.status); onTriggered: { root.now = Date.now(); if (ShellState.backendReady) ShellState.run("displayRefresh"); } }
+    // One filter pass per keystroke, shared by the list, the indicator and the empty label.
+    // The navigation Repeater keeps a constant model and hides the non-matches (layouts skip
+    // invisible items): replacing the model tore every delegate down and up again, which cost
+    // up to ~200 ms on a single keystroke.
+    readonly property var results: SettingsRegistry.search(search.text)
+    // Background builds (pageLoader.prewarm) start only while the window is quiet and
+    // visible: the pointer still, nothing typed or clicked, neither list moving and the last
+    // page change finished entering, for quietMs. A function, not a binding: it reads the clock.
+    readonly property int quietMs: 600
+    property real lastActivity: 0
+    property point pointerSample: Qt.point(-1, -1)
+    property bool pointerInside: false
+    property int framesRendered: 0
+    onFramesRenderedChanged: if (framesRendered) activity()
+    function activity() { lastActivity = Date.now(); }
+    function quiet() {
+        const p = pointerWatch.point.position;
+        if (p.x !== pointerSample.x || p.y !== pointerSample.y || pointerWatch.hovered !== pointerInside) {
+            pointerSample = p; pointerInside = pointerWatch.hovered;
+            activity();
+        }
+        return active && !pageScroll.moving && !navigationScroll.moving && !pageLoader.entering
+               && Date.now() - lastActivity >= quietMs;
+    }
     function navigate(key) {
         if (key === page) return;
         history = history.concat(page); page = SettingsRegistry.page(key).key;
         search.clear(); pageScroll.contentY = 0;
+        activity();
     }
     PageNavigation { target: pageLoader.item; onRequested: pageId => root.navigate(pageId) }
-    function goBack() { if (history.length) { page = history[history.length - 1]; history = history.slice(0, -1); pageScroll.contentY = 0; } }
+    function goBack() {
+        if (!history.length) return;
+        page = history[history.length - 1]; history = history.slice(0, -1); pageScroll.contentY = 0;
+        activity();
+    }
     Shortcut { sequence: "Ctrl+F"; onActivated: search.forceActiveFocus() }
     Shortcut { sequence: "Alt+Left"; onActivated: root.goBack() }
     Shortcut { sequence: "Escape"; onActivated: { if (search.text) search.clear(); else root.closeRequested(); } }
+    // Pointer motion anywhere in the window counts as activity. Qt delivers hover to the
+    // topmost hover-accepting item only, so a MouseArea under the controls would miss the
+    // pointer over every button and field; a non-blocking HoverHandler on this item keeps
+    // following it. Its point has no change signals, hence the sampling in quiet().
+    HoverHandler { id: pointerWatch }
+    // Rendered-frame counter for the host surfaces: the Quickshell window type carries no
+    // frame signal, but the attached Window.window resolves to the QQuickWindow, which has
+    // frameSwapped. Counting here (not in the panel) keeps production free of probe code.
+    readonly property var hostWindow: Window.window
+    Connections {
+        target: hostWindow
+        function onFrameSwapped() { root.framesRendered++ }
+    }
     GlassPanel { anchors.fill: parent; radius: 28; role: "settingsFill" }
     RowLayout {
         anchors.fill: parent; anchors.margins: 20; spacing: 24
@@ -50,30 +93,35 @@ Item {
                     Layout.fillWidth: true
                     placeholderText: "Search settings"
                     Accessible.name: "Search settings"
-                    onAccepted: { const results = SettingsRegistry.search(text); if (results.length) root.navigate(results[0].key); }
+                    onAccepted: { if (root.results.length) root.navigate(root.results[0].key); }
+                    onTextChanged: root.activity()
                 }
                 Flickable {
                     id: navigationScroll
                     Layout.fillWidth: true; Layout.fillHeight: true
                     contentWidth: width; contentHeight: navigationColumn.implicitHeight + 8
                     clip: true; boundsBehavior: Flickable.StopAtBounds
+                    onContentYChanged: root.activity()
                     ScrollBar.vertical: ScrollBar {}
                     StretchIndicator {
                         parent: navigationScroll.contentItem; vertical: true
                         // itemAt() is not notifiable: async incubation can leave the
                         // count stable before delegates exist, latching the indicator
-                        // to null. Re-evaluate on every population change.
+                        // to null. Re-evaluate on every population change. The model is
+                        // constant, so the index is the page's place in SettingsRegistry.pages;
+                        // a page filtered out of the list gets no indicator.
                         targetItem: {
                             navRepeater.population;
-                            const idx = SettingsRegistry.search(search.text).findIndex(p => p.key === root.page);
-                            return idx >= 0 ? navRepeater.itemAt(idx) : null;
+                            const idx = SettingsRegistry.pages.findIndex(p => p.key === root.page);
+                            const target = idx >= 0 ? navRepeater.itemAt(idx) : null;
+                            return target && target.visible ? target : null;
                         }
                     }
                     ColumnLayout {
                         id: navigationColumn; z: 1; x: 4; y: 4
                         width: navigationScroll.width - 16; spacing: 6
                         Repeater {
-                            id: navRepeater; model: SettingsRegistry.search(search.text)
+                            id: navRepeater; model: SettingsRegistry.pages
                             // Notifiable revision: itemAt() bindings latch null when count
                             // settles before async delegates are instantiated.
                             property int population: 0
@@ -82,6 +130,8 @@ Item {
                             delegate: LiquidButton {
                                 id: nav
                                 required property var modelData
+                                // Hidden delegates drop out of the layout.
+                                visible: root.results.indexOf(modelData) >= 0
                                 Layout.fillWidth: true; Layout.preferredHeight: Math.max(48, contentItem.implicitHeight + 14)
                                 selectionFill: !Theme.animatedTabs
                                 selectionColor: Theme.primaryContainer
@@ -102,7 +152,7 @@ Item {
                                 }
                             }
                         }
-                        LabelText { visible: SettingsRegistry.search(search.text).length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
+                        LabelText { visible: root.results.length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
                     }
                 }
                 LabelText { text: ShellState.demo ? "Demo · changes stay in memory" : !ShellState.backendReady ? "Connecting…" : ShellState.pendingActions.setting ? "Saving changes…" : "Changes save automatically"; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: 12 }
@@ -140,6 +190,7 @@ Item {
                 Layout.fillWidth: true; Layout.fillHeight: true
                 contentWidth: width; contentHeight: pageLoader.item ? (pageLoader.item as Item).implicitHeight + 12 : 0
                 clip: true; boundsBehavior: Flickable.StopAtBounds
+                onContentYChanged: root.activity()
                 ScrollBar.vertical: ScrollBar {}
                 PageHost {
                     id: pageLoader
@@ -149,21 +200,24 @@ Item {
                     // viewport while the page is still loading), never zero.
                     height: item ? (item as Item).implicitHeight : pageScroll.height
                     active: root.active
-                    firstAsync: true
                     key: root.currentPage.key
                     readonly property var legacy: ({topbar: barPage, display: displayPage, controlLayout: controlPage, elements: elementsPage, behavior: behaviorPage, appearance: appearancePage})
                     resolve: key => { const entry = SettingsRegistry.page(key).entry; return entry ? FeatureCatalog.component(entry) : legacy[key] || appearancePage; }
                     // Keep every visited page built (RAM cap lifted 2026-11-24).
                     maxPages: 0
-                    // After the first page paints, walk the remaining settings pages
-                    // in the background (one build per 350 ms, paused while the
-                    // window is hidden) so every later navigation is a warm switch.
+                    // No page build may freeze this window: a cold page the user asks for and
+                    // every page of the background walk are incubated. The walk only runs while
+                    // the window is shown, and starts once the
+                    // first page is up and only starts a page while the window is quiet (see
+                    // quiet()), so no build lands on a scroll, a keystroke or a page change,
+                    // and every later navigation is a warm switch.
+                    asyncPages: true
                     property bool pagesWarmupArmed: true
                     onPageLoaded: {
                         if (!pagesWarmupArmed) return;
                         pagesWarmupArmed = false;
                         prewarm(() => SettingsRegistry.pages.map(p => p.key).filter(k => k !== root.currentPage.key),
-                                () => root.active);
+                                () => root.quiet());
                     }
                 }
             }

@@ -5,8 +5,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../theme"
 
-// A page the user asks for builds synchronously: Quickshell incubates asynchronous work for
-// ~1/3 frame per frame while anything animates, several times slower than the raw build.
+// By default a page the user asks for builds synchronously: Quickshell incubates asynchronous
+// work for ~1/3 frame per frame while anything animates, several times slower than the raw
+// build. asyncPages trades that latency for a surface that never blocks.
 // Every built page stays built (hidden pages park past the right edge, and root.active stops
 // their visible-bound timers), so a revisit is the next frame. maxPages bounds the retained
 // set; the least recently shown page is destroyed first.
@@ -17,9 +18,6 @@ Item {
     // key => Component; a null result leaves the shown page in place.
     property var resolve: null
     property bool animate: true
-    // Let the first page of a fresh host incubate so the host's window can paint its
-    // shell first; every page the user asks for after that builds synchronously.
-    property bool firstAsync: false
     // false hides the shown page as well (a closed window keeps no page timers alive).
     property bool active: true
     readonly property var item: shown ? shown.item : null
@@ -29,6 +27,8 @@ Item {
     property int maxPages: 0
     property var order: []
     property real enter: 1
+    // True while the shown page slides in (prewarm() gates use it to stay out of the way).
+    readonly property bool entering: enterMotion.running
     signal pageLoaded(var item)
 
     function touch(pageKey) {
@@ -41,18 +41,19 @@ Item {
         for (let i = 0; order.length > maxPages && i < order.length;) {
             const victim = order[i];
             const page = entries[victim];
-            if (!page || page === shown || victim === key) { i++; continue; }
+            if (!page || page === shown || page === prewarming || page === pending || victim === key) { i++; continue; }
             order.splice(i, 1);
             delete entries[victim];
             page.destroy();
         }
     }
-    function entry(pageKey) {
+    // `incubate` hands the build to Quickshell's incubator instead of running it here.
+    function entry(pageKey, incubate) {
         let page = entries[pageKey];
         if (page) { touch(pageKey); return page; }
         const content = pageKey && resolve ? resolve(pageKey) : null;
         if (!content) return null;
-        page = pageLoader.createObject(root, {pageKey: pageKey, asynchronous: firstAsync && order.length === 0});
+        page = pageLoader.createObject(root, {pageKey: pageKey, asynchronous: incubate === true});
         entries[pageKey] = page;
         touch(pageKey);
         page.sourceComponent = content;
@@ -67,23 +68,33 @@ Item {
             entry(pageKey);
         }
     }
-    // Background walk over every page this host can resolve. One synchronous build
-    // per tick keeps each slice short; `gate` (false while the surface is open)
-    // pauses the walk so a live panel never shares its frame budget with a build.
+    // Background walk over every page this host can resolve, one page at a time.
+    // asyncPages off (default): one synchronous build per tick; `gate` (false while the
+    // surface is in use) is checked on every tick so a live panel never shares its frame
+    // budget with a build.
+    // asyncPages on: a page is only STARTED while `gate` reports the surface quiet, because
+    // an incubation in flight cannot be paused; the next one waits for it (or for a requested
+    // page) to finish.
+    property bool asyncPages: false
     property var prewarmQueue: []
     property var prewarmSource: null // () => array of keys
     property var prewarmGate: null // () => bool, true = quiet enough to build
+    property Loader prewarming: null // page of the background walk still incubating
+    property Loader pending: null // requested page still incubating
     Timer {
         id: prewarmTimer
-        interval: 350; repeat: true
-        running: root.prewarmQueue.length > 0
+        interval: root.asyncPages ? 100 : 350; repeat: true
+        running: root.prewarmQueue.length > 0 && !root.prewarming && !root.pending
         onTriggered: {
             if (root.prewarmGate && !root.prewarmGate()) return;
             while (root.prewarmQueue.length) {
-                const next = root.prewarmQueue.shift();
+                const next = root.prewarmQueue[0];
+                root.prewarmQueue = root.prewarmQueue.slice(1); // new array: the `running` binding sees it
                 if (next === root.key || root.entries[next]) continue;
-                if (!root.entry(next)) continue; // unresolvable keys drop silently
-                break; // one build per tick
+                if (!root.entry(next, root.asyncPages)) continue; // unresolvable keys drop silently
+                const page = root.entries[next];
+                root.prewarming = root.asyncPages && page.status === Loader.Loading ? page : null;
+                break; // one build at a time
             }
         }
     }
@@ -92,6 +103,7 @@ Item {
         prewarmQueue = source ? source() : [];
     }
     function present(page) {
+        leaving = 0;
         if (shown === page) return;
         touch(page.pageKey);
         const hadFocus = !!shown && shown.activeFocus;
@@ -101,10 +113,29 @@ Item {
         if (animate && Theme.animations) { enter = 0; enterMotion.restart(); }
         else enter = 1;
     }
+    // Cancels an incubating page and forgets it; a background page goes back to the queue.
+    function drop(page) {
+        if (!page || page.status !== Loader.Loading) return;
+        if (prewarming === page) { prewarming = null; prewarmQueue = [page.pageKey].concat(prewarmQueue); }
+        if (pending === page) pending = null;
+        delete entries[page.pageKey];
+        const i = order.indexOf(page.pageKey);
+        if (i >= 0) order.splice(i, 1);
+        page.destroy();
+    }
     function show() {
         if (shown && shown.pageKey === key) return;
-        const page = entry(key);
+        // A request gets the incubator to itself: a superseded request is dropped and a
+        // background build steps aside (back to the front of the queue).
+        drop(pending);
+        if (asyncPages && !entries[key]) drop(prewarming);
+        const page = entry(key, asyncPages);
         if (page && page.status === Loader.Ready) present(page);
+        else if (asyncPages && page && page.status === Loader.Loading) { pending = page; recede(); }
+    }
+    function recede() {
+        if (animate && Theme.animations) { leaving = 0; leaveMotion.restart(); }
+        else leaving = 1;
     }
     onKeyChanged: show()
     onActiveFocusChanged: if (activeFocus && shown) shown.forceActiveFocus()
@@ -124,6 +155,12 @@ Item {
             // large built tree costs ~0.5 s in LME, while an offset change is free.
             visible: root.active
             x: root.shown === page ? 0 : root.width + 8
+            onStatusChanged: {
+                if (status === Loader.Loading) return;
+                // The walk resumes / the request settles once an incubated page is ready or has failed.
+                if (root.prewarming === page) root.prewarming = null;
+                if (root.pending === page) { root.pending = null; if (status === Loader.Error) root.leaving = 0; }
+            }
             onLoaded: {
                 root.pageLoaded(item);
                 if (pageKey === root.key) root.present(page);
@@ -132,6 +169,10 @@ Item {
     }
 
     transform: Translate { y: (1 - root.enter) * 28 }
-    opacity: .35 + .65 * root.enter
+    // leaving runs to 1 while a requested page is still incubating, so the outgoing page
+    // recedes under the new title instead of sitting there as if the click had missed.
+    property real leaving: 0
+    opacity: (.35 + .65 * root.enter) * (1 - .55 * root.leaving)
     MotionAnimation { id: enterMotion; target: root; property: "enter"; to: 1; easing.bezierCurve: Theme.effectsCurve }
+    MotionAnimation { id: leaveMotion; target: root; property: "leaving"; to: 1; easing.bezierCurve: Theme.effectsCurve }
 }

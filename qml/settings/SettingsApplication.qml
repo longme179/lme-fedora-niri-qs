@@ -66,7 +66,12 @@ ShellRoot {
             id: view
             anchors.fill: parent
             active: root.initialized
-            asynchronous: true
+            // Synchronous on purpose: the window stays hidden until the view (and with it the
+            // first settings page, built by PageHost) is complete, so this build lands on
+            // nothing the user can see. Incubating the view instead opened a window with an
+            // empty content pane for about a second, because the incubator paces itself to a
+            // third of a frame while anything animates.
+            asynchronous: false
             sourceComponent: SettingsView { page: root.requestedPage; active: root.shown; onCloseRequested: root.close() }
         }
         // The undo-first offer surface for the standalone Settings process: the

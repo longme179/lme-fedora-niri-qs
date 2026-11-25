@@ -26,7 +26,13 @@ Item {
     // The navigation Repeater keeps a constant model and hides the non-matches (layouts skip
     // invisible items): replacing the model tore every delegate down and up again, which cost
     // up to ~200 ms on a single keystroke.
-    readonly property var results: SettingsRegistry.search(search.text)
+    // FeatureCatalog.ready is read DIRECTLY so the binding re-runs when the catalog settles:
+    // SettingsRegistry.pages is a plain function call whose result a binding latches at
+    // creation, and the model and this list could latch on different sides of the settle
+    // (deployed regression: catalog entries in results, legacy entries in the model, every
+    // comparison by reference failed and the sidebar went blank). Before the catalog settles
+    // both fall back to the SAME legacy list, and delegates match by key, never by reference.
+    readonly property var results: FeatureCatalog.ready ? SettingsRegistry.search(search.text) : SettingsRegistry.legacyPages
     // Background builds (pageLoader.prewarm) start only while the window is quiet and
     // visible: the pointer still, nothing typed or clicked, neither list moving and the last
     // page change finished entering, for quietMs. A function, not a binding: it reads the clock.
@@ -107,12 +113,11 @@ Item {
                         parent: navigationScroll.contentItem; vertical: true
                         // itemAt() is not notifiable: async incubation can leave the
                         // count stable before delegates exist, latching the indicator
-                        // to null. Re-evaluate on every population change. The model is
-                        // constant, so the index is the page's place in SettingsRegistry.pages;
-                        // a page filtered out of the list gets no indicator.
+                        // to null. Re-evaluate on every population change; the index is a
+                        // place in the filtered results, which is what the Repeater shows.
                         targetItem: {
                             navRepeater.population;
-                            const idx = SettingsRegistry.pages.findIndex(p => p.key === root.page);
+                            const idx = root.results.findIndex(p => p.key === root.page);
                             const target = idx >= 0 ? navRepeater.itemAt(idx) : null;
                             return target && target.visible ? target : null;
                         }
@@ -121,7 +126,10 @@ Item {
                         id: navigationColumn; z: 1; x: 4; y: 4
                         width: navigationScroll.width - 16; spacing: 6
                         Repeater {
-                            id: navRepeater; model: SettingsRegistry.pages
+                            // Gated like `results` (see there): both sides of the catalog
+                            // settle must swap in the same re-evaluation, or the delegates
+                            // and the filter compare different objects for the same page.
+                            id: navRepeater; model: FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages
                             // Notifiable revision: itemAt() bindings latch null when count
                             // settles before async delegates are instantiated.
                             property int population: 0
@@ -130,8 +138,10 @@ Item {
                             delegate: LiquidButton {
                                 id: nav
                                 required property var modelData
-                                // Hidden delegates drop out of the layout.
-                                visible: root.results.indexOf(modelData) >= 0
+                                // Hidden delegates drop out of the layout. Match by key:
+                                // around a catalog settle, results and the model can hold
+                                // different objects for the same page.
+                                visible: root.results.some(p => p.key === modelData.key)
                                 Layout.fillWidth: true; Layout.preferredHeight: Math.max(48, contentItem.implicitHeight + 14)
                                 selectionFill: !Theme.animatedTabs
                                 selectionColor: Theme.primaryContainer
@@ -152,7 +162,7 @@ Item {
                                 }
                             }
                         }
-                        LabelText { visible: root.results.length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
+                        LabelText { visible: FeatureCatalog.ready && root.results.length === 0; text: "No matching settings"; Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 13 }
                     }
                 }
                 LabelText { text: ShellState.demo ? "Demo · changes stay in memory" : !ShellState.backendReady ? "Connecting…" : ShellState.pendingActions.setting ? "Saving changes…" : "Changes save automatically"; color: Theme.muted; Layout.fillWidth: true; wrapMode: Text.Wrap; font.pixelSize: 12 }

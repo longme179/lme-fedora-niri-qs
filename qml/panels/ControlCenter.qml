@@ -14,6 +14,7 @@ GlassPanel {
     implicitWidth: Math.max(ShellState.preferences.controlWidth || 600, (ShellState.preferences.controlGrid || {}).columns === 8 ? 900 : 480)
     implicitHeight: 900
     focus: true
+    property real lastTabChange: 0
     readonly property var tabEntries: ControlRegistry.tabs
     property var tabs: tabEntries.map(tab => tab.title)
     readonly property var tabComponents: ({ControlDashboard: controls, AudioMixer: audio, DeviceControls: devices, Agenda: agenda, SystemMonitor: monitor})
@@ -151,6 +152,11 @@ GlassPanel {
                 warmedAt = Date.now();
                 if (pending.length) dashboard.preload([pending.shift().id]);
             }
+            // Tab builds incubate (asyncPages): the walk only STARTS builds in quiet
+            // windows, and a clicked tab preempts an in-flight incubation. The sync
+            // walk used to block the open panel's frames for up to ~1.2 s (devices).
+            asyncPages: true
+            prewarmGate: () => !root.entering && Date.now() - root.lastTabChange > 600
             Timer {
                 interval: 350; repeat: true
                 // Runs while the panel is open and — once the stage prewarm builds
@@ -163,6 +169,7 @@ GlassPanel {
             key: root.selectedTab.id || ""
             resolve: id => { const entry = ControlRegistry.tabs.find(tab => tab.id === id)?.entry; return root.tabComponents[entry] || FeatureCatalog.component(entry); }
             onPageLoaded: item => { if (item && "embedded" in item) item.embedded = true; }
+            onKeyChanged: root.lastTabChange = Date.now()
         }
     }
     Component { id: monitor; SystemMonitor {} }

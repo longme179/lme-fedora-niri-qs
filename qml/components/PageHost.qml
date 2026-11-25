@@ -61,11 +61,13 @@ Item {
         return page;
     }
     // Start a first visit before the click; it builds synchronously here, so callers
-    // stagger calls (see ControlCenter's warm-up timer).
+    // stagger calls (see ControlCenter's warm-up timer). With asyncPages on, preload
+    // incubates instead (the walk may only START builds, never block a frame for one).
     function preload(keys) {
         for (const pageKey of keys) {
             if (pageKey === key || entries[pageKey]) continue;
-            entry(pageKey);
+            const page = entry(pageKey, root.asyncPages);
+            if (root.asyncPages && page && page.status === Loader.Loading) prewarming = page;
         }
     }
     // Background walk over every page this host can resolve, one page at a time.

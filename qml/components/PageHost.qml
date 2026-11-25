@@ -23,6 +23,10 @@ Item {
     readonly property var item: shown ? shown.item : null
     property Loader shown: null
     property var entries: ({})
+    // Number of built pages. `entries` is a var object: element assignment emits no
+    // change signal, so bindings cannot watch it (PanelStage's prewarm timer used to
+    // bind on `entries["control"] !== undefined` and never re-evaluated -> dead timer).
+    property int pageCount: 0
     // Least recently shown first. 0 keeps every page (owner lifted the RAM cap 2026-11-24).
     property int maxPages: 0
     property var order: []
@@ -44,6 +48,7 @@ Item {
             if (!page || page === shown || page === prewarming || page === pending || victim === key) { i++; continue; }
             order.splice(i, 1);
             delete entries[victim];
+            pageCount--;
             page.destroy();
         }
     }
@@ -55,17 +60,20 @@ Item {
         if (!content) return null;
         page = pageLoader.createObject(root, {pageKey: pageKey, asynchronous: incubate === true});
         entries[pageKey] = page;
+        pageCount++;
         touch(pageKey);
         page.sourceComponent = content;
         trim();
         return page;
     }
     // Start a first visit before the click; it builds synchronously here, so callers
-    // stagger calls (see ControlCenter's warm-up timer).
+    // stagger calls (see ControlCenter's warm-up timer). With asyncPages on, preload
+    // incubates instead (the walk may only START builds, never block a frame for one).
     function preload(keys) {
         for (const pageKey of keys) {
             if (pageKey === key || entries[pageKey]) continue;
-            entry(pageKey);
+            const page = entry(pageKey, root.asyncPages);
+            if (root.asyncPages && page && page.status === Loader.Loading) prewarming = page;
         }
     }
     // Background walk over every page this host can resolve, one page at a time.
@@ -119,6 +127,7 @@ Item {
         if (prewarming === page) { prewarming = null; prewarmQueue.unshift(page.pageKey); }
         if (pending === page) pending = null;
         delete entries[page.pageKey];
+        pageCount--;
         const i = order.indexOf(page.pageKey);
         if (i >= 0) order.splice(i, 1);
         page.destroy();

@@ -74,7 +74,7 @@ Item {
     // budget with a build.
     // asyncPages on: a page is only STARTED while `gate` reports the surface quiet, because
     // an incubation in flight cannot be paused; the next one waits for it (or for a requested
-    // page) to finish.
+    // page) to finish. The walk also stops while the host is hidden (root.active false).
     property bool asyncPages: false
     property var prewarmQueue: []
     property var prewarmSource: null // () => array of keys
@@ -86,10 +86,10 @@ Item {
         interval: root.asyncPages ? 100 : 350; repeat: true
         running: root.prewarmQueue.length > 0 && !root.prewarming && !root.pending
         onTriggered: {
+            if (!root.active) return; // a hidden window shows nothing new by building
             if (root.prewarmGate && !root.prewarmGate()) return;
             while (root.prewarmQueue.length) {
-                const next = root.prewarmQueue[0];
-                root.prewarmQueue = root.prewarmQueue.slice(1); // new array: the `running` binding sees it
+                const next = root.prewarmQueue.shift();
                 if (next === root.key || root.entries[next]) continue;
                 if (!root.entry(next, root.asyncPages)) continue; // unresolvable keys drop silently
                 const page = root.entries[next];
@@ -116,7 +116,7 @@ Item {
     // Cancels an incubating page and forgets it; a background page goes back to the queue.
     function drop(page) {
         if (!page || page.status !== Loader.Loading) return;
-        if (prewarming === page) { prewarming = null; prewarmQueue = [page.pageKey].concat(prewarmQueue); }
+        if (prewarming === page) { prewarming = null; prewarmQueue.unshift(page.pageKey); }
         if (pending === page) pending = null;
         delete entries[page.pageKey];
         const i = order.indexOf(page.pageKey);
@@ -126,10 +126,13 @@ Item {
     function show() {
         if (shown && shown.pageKey === key) return;
         // A request gets the incubator to itself: a superseded request is dropped and a
-        // background build steps aside (back to the front of the queue).
+        // background build steps aside (back to the front of the queue). The FIRST page is
+        // synchronous on purpose: it builds while the host window is still hidden, and the
+        // incubator would pace it to a fraction of a frame per frame, showing an empty
+        // window for seconds instead.
         drop(pending);
         if (asyncPages && !entries[key]) drop(prewarming);
-        const page = entry(key, asyncPages);
+        const page = entry(key, asyncPages && order.length > 0);
         if (page && page.status === Loader.Ready) present(page);
         else if (asyncPages && page && page.status === Loader.Loading) { pending = page; recede(); }
     }

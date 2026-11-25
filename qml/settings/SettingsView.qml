@@ -3,6 +3,7 @@
 // INVARIANT: page IDs/legacyIndex routes remain compatible with CLI/catalog (implicit coupling #3/#5).
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
@@ -26,13 +27,15 @@ Item {
     // invisible items): replacing the model tore every delegate down and up again, which cost
     // up to ~200 ms on a single keystroke.
     readonly property var results: SettingsRegistry.search(search.text)
-    // Background builds (pageLoader.prewarm) start only while the window is quiet: hidden, or
-    // the pointer still, nothing typed or clicked, neither list moving and the last page
-    // change finished entering, for quietMs. A function, not a binding: it reads the clock.
+    // Background builds (pageLoader.prewarm) start only while the window is quiet and
+    // visible: the pointer still, nothing typed or clicked, neither list moving and the last
+    // page change finished entering, for quietMs. A function, not a binding: it reads the clock.
     readonly property int quietMs: 600
     property real lastActivity: 0
     property point pointerSample: Qt.point(-1, -1)
     property bool pointerInside: false
+    property int framesRendered: 0
+    onFramesRenderedChanged: if (framesRendered) activity()
     function activity() { lastActivity = Date.now(); }
     function quiet() {
         const p = pointerWatch.point.position;
@@ -40,8 +43,8 @@ Item {
             pointerSample = p; pointerInside = pointerWatch.hovered;
             activity();
         }
-        return !active || (!pageScroll.moving && !navigationScroll.moving && !pageLoader.entering
-                           && Date.now() - lastActivity >= quietMs);
+        return active && !pageScroll.moving && !navigationScroll.moving && !pageLoader.entering
+               && Date.now() - lastActivity >= quietMs;
     }
     function navigate(key) {
         if (key === page) return;
@@ -63,6 +66,14 @@ Item {
     // pointer over every button and field; a non-blocking HoverHandler on this item keeps
     // following it. Its point has no change signals, hence the sampling in quiet().
     HoverHandler { id: pointerWatch }
+    // Rendered-frame counter for the host surfaces: the Quickshell window type carries no
+    // frame signal, but the attached Window.window resolves to the QQuickWindow, which has
+    // frameSwapped. Counting here (not in the panel) keeps production free of probe code.
+    readonly property var hostWindow: Window.window
+    Connections {
+        target: hostWindow
+        function onFrameSwapped() { root.framesRendered++ }
+    }
     GlassPanel { anchors.fill: parent; radius: 28; role: "settingsFill" }
     RowLayout {
         anchors.fill: parent; anchors.margins: 20; spacing: 24
@@ -195,7 +206,8 @@ Item {
                     // Keep every visited page built (RAM cap lifted 2026-11-24).
                     maxPages: 0
                     // No page build may freeze this window: a cold page the user asks for and
-                    // every page of the background walk are incubated. The walk starts once the
+                    // every page of the background walk are incubated. The walk only runs while
+                    // the window is shown, and starts once the
                     // first page is up and only starts a page while the window is quiet (see
                     // quiet()), so no build lands on a scroll, a keystroke or a page change,
                     // and every later navigation is a warm switch.

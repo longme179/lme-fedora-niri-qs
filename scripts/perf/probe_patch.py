@@ -313,6 +313,20 @@ edit("qml/settings/SettingsApplication.qml",
 line("qml/settings/SettingsView.qml", "HoverHandler { id: pointerWatch }", after=[
     "Component.onCompleted: Probe.settingsHover = this"], note="Settings window pointer position (aiming real clicks)")
 line("qml/settings/SettingsView.qml", "id: pageLoader", after=['probeName: "settings"'], note="name the Settings page host")
+# The Settings window is a separate process: the shell never sets settingsOpen. What the user
+# sees is the window, so its coming and going are marked where they happen, and the close
+# button gets a name (the way a user closes a window that has no keyboard focus).
+line("qml/settings/SettingsApplication.qml",
+     "onPreparedChanged: if (prepared) { requestedPage = SettingsRegistry.page(requestedPage).key; initialized = true; }",
+     old_sub="initialized = true; }", new_sub='initialized = true; Probe.mark("settings.ready"); }',
+     note="cold start: the window is mapped")
+line("qml/settings/SettingsApplication.qml", "            shown = true;", after=[
+    'Probe.mark("settings.open " + root.requestedPage)'], note="warm reopen through the IPC")
+line("qml/settings/SettingsApplication.qml", "    function close() {", after=[
+    'Probe.mark("settings.close")'], note="the window is hidden (the linger starts)")
+line("qml/settings/SettingsView.qml", 'tooltip: "Close settings"; onClicked: root.closeRequested() }',
+     old_sub='IconButton { glyph:', new_sub='IconButton { objectName: "perfCloseSettings"; glyph:',
+     note="the close button of the Settings window")
 
 # ---- other Escape consumers (a swallowed Escape is the S4 signature) --------------
 for _path, _count in ESC_SITES.items():

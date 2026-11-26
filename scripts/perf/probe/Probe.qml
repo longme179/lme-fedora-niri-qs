@@ -163,7 +163,8 @@ QtObject {
             if (cc) o.cc = {tab: cc.selectedTab ? cc.selectedTab.id : "?", tabs: cc.tabEntries.map(t => t.id), editing: cc.editing};
         } catch (error) { o.ccError = "" + error; }
         try {
-            if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0};
+            if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0,
+                toastText: s.statusMessage, pages: SettingsRegistry.pages.map(p => p.key)};
         } catch (error) { o.settingsError = "" + error; }
         // Window-relative, and only while the pointer is over the window that reports it.
         try {
@@ -171,12 +172,15 @@ QtObject {
             if (watched) o.pointer = [watched.point.position.x, watched.point.position.y, watched.hovered];
         } catch (error) { o.pointerError = "" + error; }
         try {
+            if (isSettings && windows.settings) o.window = [windows.settings.visible, windows.settings.width, windows.settings.height];
+        } catch (error) { o.windowError = "" + error; }
+        try {
             if (island) o.island = {shown: island.shown, mounted: island.mounted, dormant: island.dormant,
                 warmup: island.warmupActive, moving: island.transitioning};
         } catch (error) { o.islandError = "" + error; }
         try {
-            if (loader) o.stage = [loader.item ? 1 : 0, loader.shown, loader.dormant, loader.warmupActive];
-        } catch (error) { o.stageError = "" + error; }
+            if (loader) o.panel = [loader.item ? 1 : 0, loader.shown, loader.dormant, loader.warmupActive];
+        } catch (error) { o.panelError = "" + error; }
         try {
             if (overlay) o.overlay = [overlay.visible, overlay.width, overlay.height, overlay.viewport.x, overlay.viewport.y];
         } catch (error) { o.overlayError = "" + error; }

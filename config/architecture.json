@@ -201,7 +201,17 @@
   "scripts/perf/probe/Probe.qml",
   "scripts/perf/standin.py",
   "scripts/perf/idlegate.py",
-  "scripts/perf/drill_standin.py"
+  "scripts/perf/drill_standin.py",
+  "scripts/perf/inject.py",
+  "scripts/perf/probe.py",
+  "scripts/perf/sampler.py",
+  "scripts/perf/refclient.qml",
+  "scripts/perf/preflight.qml",
+  "scripts/perf/scenarios.py",
+  "scripts/perf/sim.py",
+  "scripts/perf/analyze.py",
+  "scripts/perf/run.py",
+  "scripts/perf/selftest.py"
  ],
  "toolingFiles": [
   "scripts/catalog_metadata.py",
@@ -220,7 +230,17 @@
   "scripts/perf/standin.py",
   "scripts/perf/idlegate.py",
   "scripts/perf/drill_standin.py",
-  "scripts/settings_schema.py"
+  "scripts/settings_schema.py",
+  "scripts/perf/inject.py",
+  "scripts/perf/probe.py",
+  "scripts/perf/sampler.py",
+  "scripts/perf/refclient.qml",
+  "scripts/perf/preflight.qml",
+  "scripts/perf/scenarios.py",
+  "scripts/perf/sim.py",
+  "scripts/perf/analyze.py",
+  "scripts/perf/run.py",
+  "scripts/perf/selftest.py"
  ],
  "legacyEdges": [
   [

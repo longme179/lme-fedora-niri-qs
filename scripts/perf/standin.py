@@ -491,8 +491,10 @@ def extend(args) -> int:
     if not 30 <= args.max_seconds <= MAX_SECONDS:
         raise Fail(f"--max-seconds must be within 30..{MAX_SECONDS}")
     values = read_env(state)
-    disarm_timer(values.get("TIMER", ""))
+    previous = values.get("TIMER", "")
+    # The new timer comes first, the old one goes last: no moment without one.
     values["TIMER"] = arm_timer(state, args.max_seconds)
+    disarm_timer(previous)
     write_env(state, values)
     log(state, f"dead-man timer re-armed as {values['TIMER']} for {args.max_seconds}s")
     return 0

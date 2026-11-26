@@ -205,6 +205,7 @@ def live(args) -> int:
             f"`standin.py restore --state {state}` first")
         return 2
     out.mkdir(parents=True, exist_ok=True)
+    (out / "probe").mkdir(exist_ok=True)   # the stand-in's Probe sink writes here from its first breath
     say(f"run directory {out}")
     try:
         env = standin.session_env()

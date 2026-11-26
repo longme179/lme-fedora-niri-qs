@@ -433,6 +433,20 @@ class Ctx:
             return (entry.get("found") and entry.get("shown")
                     and 0 <= entry["y"] <= self.box_size[1] and 0 <= entry["x"] <= self.box_size[0])
 
+        def settled_point(entry):
+            """The entry's point once its rect stops moving. A press on a delegate that is
+            still gliding ends outside it, and Quickshell hands the scene a flick, not a
+            click - the page never navigates and the detector sees react=None."""
+            for _ in range(10):
+                time.sleep(0.12)
+                again = self.probe.rect(f"perfNav_{key}")
+                if not visible(again):
+                    return None
+                if again.get("x") == entry.get("x") and again.get("y") == entry.get("y"):
+                    return self.box[0] + entry["x"], self.box[1] + entry["y"]
+                entry = again
+            return None
+
         # Scroll in steps towards the entry, in whichever direction it lies: compare the
         # rect before and after a notch - when the list stops moving the end is reached.
         # Every notch is recorded as an injection of ours (shot), or the idle watcher
@@ -444,7 +458,7 @@ class Ctx:
             self.sleep(90)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):
-                return self.box[0] + rect["x"], self.box[1] + rect["y"]
+                return settled_point(rect)
             if rect.get("y") == last_y:
                 break
             last_y = rect.get("y")
@@ -454,7 +468,7 @@ class Ctx:
             self.sleep(90)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):
-                return self.box[0] + rect["x"], self.box[1] + rect["y"]
+                return settled_point(rect)
             if rect.get("y") == last_y:
                 break
             last_y = rect.get("y")

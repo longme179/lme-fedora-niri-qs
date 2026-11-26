@@ -66,9 +66,9 @@ def ipc_handler():
         function state(): string { return Probe.stateJson() }
         function rect(name: string): string { return Probe.rectJson(name) }
         function ping(): string { return "" + Probe.ms() }
-        function stage(name: string): void { Probe.setStage(name) }
-        function watch(on: bool): void { Probe.watch = on; if (on) Probe.sample() }
-        function quit(): void { Probe.mark("quit"); Qt.quit() }
+        function stage(name: string): string { Probe.setStage(name); return "ok" }
+        function watch(on: bool): string { Probe.watch = on; if (on) Probe.sample(); return "ok" }
+        function quit(): string { Probe.mark("quit"); Qt.quit(); return "ok" }
     }
 '''
 

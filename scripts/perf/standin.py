@@ -49,6 +49,10 @@ LAUNCHER = HOME / ".local/bin/lme-shell"
 STATE_ROOT = HOME / ".cache/lme-perf/rv2/state"
 SNAPSHOT_DIRS = [(".config/lme-shell", (".json", ".kdl")), (".config/niri", (".kdl",))]
 SNAPSHOT_FILES = [".local/bin/lme-shell"]
+# Written by the shell while it runs (the notification center appends every toast), so it is
+# expected to differ from any snapshot taken minutes earlier; the restore copies it back but
+# a difference alone must not make a successful session "NOT VERIFIED".
+RUNTIME_FILES = {".config/lme-shell/notification-history.json"}
 SESSION_KEYS = ("XDG_RUNTIME_DIR", "WAYLAND_DISPLAY", "NIRI_SOCKET", "DBUS_SESSION_BUS_ADDRESS")
 MAX_SECONDS = 1200
 QUIET_SECONDS = 3  # the owner waived the long idle wait: a few quiet seconds are the gate
@@ -411,11 +415,14 @@ def verify(state: Path, env: dict) -> dict:
     info = json.loads((state / "swap.json").read_text()) if (state / "swap.json").exists() else {}
     original = info.get("original", "")
     differing = config_diff(state) if (state / "files").exists() else {}
+    runtime = sorted(name for name in differing if name in RUNTIME_FILES)
+    differing = {name: kind for name, kind in differing.items() if name not in RUNTIME_FILES}
     live_shells = shells(info.get("tree", ""))
     summary = {
         "symlink": os.path.realpath(LINK) if LINK.is_symlink() else "NOT A SYMLINK",
         "symlink_ok": original == "" or os.path.realpath(LINK) == original,
         "config_files_differing": sorted(differing),
+        "runtime_files_differing": runtime,
         "shells": [{"pid": entry["pid"], "kind": entry["kind"], "unit": entry["unit"]} for entry in live_shells],
         "shell_running": any(entry["kind"] == "main" for entry in live_shells),
         "bar_layer": any(layer.get("namespace") == "lme-bar" for layer in layers(env)),

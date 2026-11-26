@@ -425,8 +425,8 @@ class Ctx:
         reads = []
 
         def note_read(tag, entry):
-            reads.append({"tag": tag, "x": entry.get("x"), "y": entry.get("y"),
-                          "found": entry.get("found"), "shown": entry.get("shown")})
+            reads.append({"tag": tag, "x": entry.get("x"), "y": entry.get("y"), "w": entry.get("w"),
+                          "h": entry.get("h"), "found": entry.get("found"), "shown": entry.get("shown")})
 
         rect = self.probe.rect(f"perfNav_{key}")
         note_read("first", rect)
@@ -453,9 +453,11 @@ class Ctx:
                 if not visible(again):
                     return None
                 # A kinetic coast covers its last pixels in ever smaller steps: the exact
-                # equality of two reads never comes. Within half a pixel it has stopped.
+                # equality of two reads never comes. Within half a pixel it has stopped -
+                # and a dead beat after that lets the gesture fully end before the press.
                 if abs(again.get("y", 0) - entry.get("y", 0)) < 0.5 \
                         and abs(again.get("x", 0) - entry.get("x", 0)) < 0.5:
+                    time.sleep(0.25)
                     return self.box[0] + again["x"], self.box[1] + again["y"]
                 entry = again
             return None
@@ -876,6 +878,16 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         # (navigate() returns early, no mark): "already there" is the
                         # reaction. The entry's ok comes from final_state anyway.
                         already = ((ctx.ask("settings") or {}).get("settings") or {}).get("page") == key
+                        if not already:
+                            # A press that never reaches the delegate leaves the timeline
+                            # without a navigate mark. Press once more, flagged: the retry
+                            # is a harness fact (kept out of the latency numbers), and a
+                            # second hit that navigates proves the page itself is fine.
+                            if timeline.wait(navigate_mark(key), at, 400) is None:
+                                time.sleep(0.3)
+                                retry = ctx.click_at(*point)
+                                entry["retry_after_ms"] = round(retry - at, 1)
+                                at = retry
                         entry["react_ms"] = 0.0 if already else latency(timeline, at, navigate_mark(key), 5000)
                         entry["frame_ms"] = latency(timeline, at, frame("settings"), 300)
                         entry["page_ms"] = latency(timeline, at, page_ready("settings", key), SETTLE_WAIT_MS)

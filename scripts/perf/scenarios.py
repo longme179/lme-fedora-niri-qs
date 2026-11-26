@@ -487,11 +487,27 @@ class Ctx:
         self.box_size = (float(info.get("w") or 0), float(info.get("h") or 0))
         self.meta["settings_window"] = info
         # Park the pointer mid-output; the window's HoverHandler then reports the same
-        # point window-relative (and hovered=true) exactly when the box is right.
+        # point window-relative (and hovered=true) exactly when the box is right. The
+        # floating window is not always where niri last left it, so if the mid-output
+        # park misses, sweep a coarse grid until the window is under the pointer.
         park_x, park_y = self.width / 2, self.height / 2
         self.move(park_x, park_y)
         time.sleep(0.08)
         pointer = (self.ask("settings") or {}).get("pointer")
+        if not (pointer and pointer[2]):
+            for gy in range(1, 6):
+                for gx in range(1, 6):
+                    if gx == 3 and gy == 3:
+                        continue        # the mid-output park, already tried
+                    probe_x, probe_y = self.width * gx / 6, self.height * gy / 6
+                    self.move(probe_x, probe_y)
+                    time.sleep(0.05)
+                    pointer = (self.ask("settings") or {}).get("pointer")
+                    if pointer and pointer[2]:
+                        park_x, park_y = probe_x, probe_y
+                        break
+                if pointer and pointer[2]:
+                    break
         self.meta["settings_pointer"] = pointer
         if pointer and pointer[2]:
             self.box = [park_x - pointer[0], park_y - pointer[1]]

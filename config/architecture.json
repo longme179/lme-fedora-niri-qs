@@ -195,7 +195,10 @@
   "scripts/deploy_runtime.py",
   "scripts/deploy_state.py",
   "scripts/deploy_niri.py",
-  "scripts/deploy_niri_tree.py"
+  "scripts/deploy_niri_tree.py",
+  "scripts/perf/prepare.py",
+  "scripts/perf/probe_patch.py",
+  "scripts/perf/probe/Probe.qml"
  ],
  "toolingFiles": [
   "scripts/catalog_metadata.py",
@@ -209,6 +212,8 @@
   "scripts/feature_catalog.py",
   "scripts/memory_report.py",
   "scripts/niri_keybinds.py",
+  "scripts/perf/prepare.py",
+  "scripts/perf/probe_patch.py",
   "scripts/settings_schema.py"
  ],
  "legacyEdges": [

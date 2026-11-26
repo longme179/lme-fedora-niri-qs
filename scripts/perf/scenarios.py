@@ -422,7 +422,14 @@ class Ctx:
         is where the entry really is now."""
         if not self.box:
             return None
+        reads = []
+
+        def note_read(tag, entry):
+            reads.append({"tag": tag, "x": entry.get("x"), "y": entry.get("y"),
+                          "found": entry.get("found"), "shown": entry.get("shown")})
+
         rect = self.probe.rect(f"perfNav_{key}")
+        note_read("first", rect)
 
         def visible(entry):
             return (entry.get("found") and entry.get("shown")
@@ -435,6 +442,7 @@ class Ctx:
             for _ in range(12):
                 time.sleep(0.15)
                 again = self.probe.rect(f"perfNav_{key}")
+                note_read("settle", again)
                 if not visible(again):
                     return None
                 if again.get("x") == entry.get("x") and again.get("y") == entry.get("y"):
@@ -442,12 +450,18 @@ class Ctx:
                 entry = again
             return None
 
+        def finish(point):
+            self.meta.setdefault("nav_trace", []).append(
+                {"key": key, "point": point and [round(point[0], 1), round(point[1], 1)],
+                 "box": [round(self.box[0], 1), round(self.box[1], 1)], "reads": reads})
+            return point
+
         # The no-scroll path must settle too: the previous page's scroll can still be
         # gliding when this page is clicked (this path used to read the rect only once).
         if visible(rect):
-            return settled_point(rect)
+            return finish(settled_point(rect))
         if not scroll_for:
-            return None
+            return finish(None)
 
         # Scroll in steps towards the entry, in whichever direction it lies: compare the
         # rect before and after a notch - when the list stops moving the end is reached.
@@ -459,8 +473,9 @@ class Ctx:
             self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2))
             self.sleep(120)
             rect = self.probe.rect(f"perfNav_{key}")
+            note_read("up", rect)
             if visible(rect):
-                return settled_point(rect)
+                return finish(settled_point(rect))
             if rect.get("y") == last_y:
                 break
             last_y = rect.get("y")
@@ -469,12 +484,13 @@ class Ctx:
             self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2))
             self.sleep(120)
             rect = self.probe.rect(f"perfNav_{key}")
+            note_read("down", rect)
             if visible(rect):
-                return settled_point(rect)
+                return finish(settled_point(rect))
             if rect.get("y") == last_y:
                 break
             last_y = rect.get("y")
-        return None
+        return finish(None)
 
     def focus_settings(self):
         """Give the Settings window the keyboard by clicking the entry of the page it already shows."""

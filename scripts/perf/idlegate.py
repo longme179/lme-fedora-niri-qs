@@ -46,13 +46,17 @@ UNITS = ("lme-perf-idle-long", "lme-perf-idle-short")
 # Watchers stop by themselves after a day, so a crashed run cannot leave them behind for good.
 MAX_RUNTIME = "20h"
 
-STAMPER = "import sys,time\nfor line in sys.stdin: print(f'{time.time():.3f} {line.strip()}', flush=True)\n"
+STAMPER = ("import sys,time\n"
+           "for line in sys.stdin: print('%.3f %s' % (time.time(), line.strip()), flush=True)\n")
 
 
 def watch_command(seconds: int, log: Path) -> str:
+    # The stamper runs as `python3 -c <code>` inside a systemd ExecStart: the code is
+    # shell-quoted once more (systemd keeps backslash escapes literal), and it uses no
+    # f-string braces that the surrounding shell could touch.
     return (f'echo "# timeout={seconds} started=$(date +%s.%N)"; '
             f"exec /usr/bin/swayidle -w timeout {seconds} 'echo I' resume 'echo R' "
-            f"| python3 -c {json.dumps(STAMPER)} >> {json.dumps(str(log))} 2>&1")
+            f"| python3 -c {json.dumps(json.dumps(STAMPER))} >> {json.dumps(str(log))} 2>&1")
 
 
 def running(name: str) -> bool:

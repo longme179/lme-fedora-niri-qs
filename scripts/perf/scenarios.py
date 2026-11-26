@@ -433,7 +433,15 @@ class Ctx:
         self.click_at(*point)
 
     def calibrate_settings(self, pages):
-        """Where the Settings window sits on the output, from niri's layout, proven with the pointer."""
+        """Where the Settings window sits on the output, from the window's own Qt coordinates.
+
+        niri's pos_in_window_layout is a coordinate of the WORKSPACE, not of the output: a
+        window opened away from the workspace origin is reported at (0,0) while it sits in
+        the middle of the screen. The probe's window state ([visible, width, height] from
+        hostWindow) says nothing about position either, so the anchor is the pointer: the
+        HoverHandler of the window reports where the output pointer is, window-relative,
+        whenever the pointer is inside. Park the pointer, read the relative position, and
+        the box follows: box = pointer_output - pointer_window."""
         deadline = time.monotonic() + 10
         info = self.probe.settings_origin()
         while not info.get("found") and time.monotonic() < deadline:
@@ -444,20 +452,29 @@ class Ctx:
         self.box = [float(info["x"]), float(info["y"])]
         self.box_size = (float(info.get("w") or 0), float(info.get("h") or 0))
         self.meta["settings_window"] = info
+        # Park the pointer mid-output; the window's HoverHandler then reports the same
+        # point window-relative (and hovered=true) exactly when the box is right.
+        park_x, park_y = self.width / 2, self.height / 2
+        self.move(park_x, park_y)
+        time.sleep(0.08)
+        pointer = (self.ask("settings") or {}).get("pointer")
+        self.meta["settings_pointer"] = pointer
+        if pointer and pointer[2]:
+            self.box = [park_x - pointer[0], park_y - pointer[1]]
+            self.meta["settings_box"] = [round(self.box[0], 1), round(self.box[1], 1)]
         rect = self.probe.rect(f"perfNav_{pages[0]}")
         if rect.get("found") and rect.get("shown"):
-            # Second opinion: put the pointer on the first nav entry and read back where the
-            # window says it is. Any difference is an error of the layout coordinates.
+            # Prove the box with the first nav entry before anything is clicked.
             self.note(f"calibrate {rect['x']},{rect['y']}")
             self.move(self.box[0] + rect["x"], self.box[1] + rect["y"])
             time.sleep(0.08)
             pointer = (self.ask("settings") or {}).get("pointer")
             self.meta["settings_pointer"] = pointer
             if not (pointer and pointer[2]):
-                # The window does not see the pointer where niri said it sits: clicking
+                # The window does not see the pointer where we placed it: clicking
                 # anything now would go to whatever is really there (a window of the
                 # owner). No blind clicking - the run stops with the evidence attached.
-                raise Skip("the Settings window does not see the pointer at its reported "
+                raise Skip("the Settings window does not see the pointer at its computed "
                            f"position (pointer={pointer}, box={self.box}, niri says {info})")
             shift = [rect["x"] - pointer[0], rect["y"] - pointer[1]]
             self.meta["settings_offset"] = [round(shift[0], 1), round(shift[1], 1)]

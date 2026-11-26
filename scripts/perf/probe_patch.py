@@ -332,7 +332,7 @@ edit("qml/settings/SettingsView.qml",
      "                            delegate: LiquidButton {\n"
      "                                id: nav\n"
      '                                objectName: "perfNav_" + modelData.key\n'
-     "                                Component.onCompleted: Probe.nav[modelData.key] = this\n"
+     '                                Component.onCompleted: { Probe.nav[modelData.key] = this; Probe.mark("settings.nav " + modelData.key) }\n'
      "                                required property var modelData\n")
 edit("qml/settings/SettingsView.qml",
      "        function onFrameSwapped() { root.framesRendered++ }\n",
@@ -340,8 +340,8 @@ edit("qml/settings/SettingsView.qml",
 edit("qml/settings/SettingsView.qml",
      "    property int framesRendered: 0\n",
      "    property int framesRendered: 0\n"
-     '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = pointerWatch; '
-     'Probe.watchWindow("settings", hostWindow) }\n'
+     '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = pointerWatch }\n'
+     '    onHostWindowChanged: { Probe.mark("settings.window " + (hostWindow ? "up" : "down")); Probe.watchWindow("settings", hostWindow) }\n'
      "    function searchText() { return search.text }\n"
      '    function probePages() { return (FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages).map(p => p.key) }\n')
 edit("qml/settings/SettingsApplication.qml",

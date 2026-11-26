@@ -215,11 +215,18 @@ def read_env(state: Path) -> dict:
 
 def arm_timer(state: Path, seconds: int) -> str:
     unit = f"lme-perf-restore-{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid() % 1000}"
-    result = sh(["systemd-run", "--user", f"--on-active={seconds}", f"--unit={unit}", "--timer-property=AccuracySec=1s",
+    result = sh(["systemd-run", "--user", f"--on-active={seconds}", f"--unit={unit}",
+                 "--timer-property=AccuracySec=1s",
                  "/bin/bash", str(state / "restore_shell.sh"), str(state)], check=True)
-    if f"{unit}.timer" not in result.stdout:
-        raise Fail(f"systemd-run did not confirm the dead-man timer: {result.stdout.strip()}")
-    return unit
+    # systemd-run prints its confirmation to stderr on some versions and to stdout on
+    # others, and `--quiet` variants print nothing at all: ask systemd instead.
+    if any(f"{unit}.timer" in line for line in (result.stdout, result.stderr)):
+        return unit
+    check = sh(["systemctl", "--user", "is-active", f"{unit}.timer"])
+    if check.stdout.strip() == "active":
+        return unit
+    raise Fail(f"systemd-run did not confirm the dead-man timer: "
+               f"{(result.stdout + ' ' + result.stderr).strip()[:300]}")
 
 
 def disarm_timer(unit: str) -> None:

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Hosts settings/control pages and the overlay panels with one retained Loader per key.
-// REL: qml/settings/SettingsView.qml, qml/panels/ControlCenter.qml, shell.qml – keys/resolve.
+// REL: qml/settings/SettingsView.qml, qml/panels/ControlCenter.qml, shell.qml – keys/resolve; qml/services/Heartbeat.qml – build marks.
 pragma ComponentBehavior: Bound
 import QtQuick
+import "../services"
 import "../theme"
 
 // By default a page the user asks for builds synchronously: Quickshell incubates asynchronous
@@ -62,7 +63,10 @@ Item {
         entries[pageKey] = page;
         pageCount++;
         touch(pageKey);
+        const started = Heartbeat.enabled ? Heartbeat.now() : 0;
         page.sourceComponent = content;
+        // A synchronous build completes inside the assignment above; an incubated one has only started.
+        if (Heartbeat.enabled) Heartbeat.mark("build " + pageKey + (incubate === true ? " start" : " " + (Heartbeat.now() - started).toFixed(1) + "ms"));
         trim();
         return page;
     }

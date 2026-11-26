@@ -327,7 +327,7 @@ def sampler_summary(path, since_ms):
     path = Path(path)
     if not path.is_file():
         return summary
-    pings, niri, rss, gpu = [], [], {}, []
+    pings, niri, rss, gpu, amd_busy = [], [], {}, [], []
     for line in path.read_text().splitlines():
         try:
             record = json.loads(line)
@@ -345,10 +345,12 @@ def sampler_summary(path, since_ms):
             for name, proc in (record.get("procs") or {}).items():
                 rss.setdefault(name, []).append((record["t"], proc.get("rss_kb", 0)))
         elif kind == "gpu":
-            values = (record.get("nvidia") or [None] * 6)[0]
-            amd = [card[1] for card in (record.get("amdgpu") or []) if card[1] is not None]
-            if values is not None:
-                gpu.append([values] + amd)
+            # The six nvidia-smi fields in query order, or nothing when the call failed;
+            # the amdgpu counters are read independently and keep counting either way.
+            nvidia = [value for value in (record.get("nvidia") or []) if value is not None]
+            if len(nvidia) == 6:
+                gpu.append(nvidia)
+            amd_busy += [card[1] for card in (record.get("amdgpu") or []) if card[1] is not None]
     summary["ping_ms"], summary["niri_ms"] = stats(pings), stats(niri)
     for name, series in rss.items():
         first = next((kb for t, kb in series if t >= since_ms), None)
@@ -356,8 +358,11 @@ def sampler_summary(path, since_ms):
         summary["rss"][name] = {"first_mb": round(first / 1024, 1) if first else None, "max_mb": round(top / 1024, 1),
                                 "delta_mb": round((top - first) / 1024, 1) if first else None, "samples": len(series)}
     if gpu:
-        summary["gpu"] = {"nvidia_util_max": max(row[0] for row in gpu), "nvidia_mem_used_max_mb": max(row[2] for row in gpu),
-                          "nvidia_power_max_w": max(row[3] for row in gpu), "amdgpu_busy_max": max([row[6] for row in gpu] or [0])}
+        # Columns of the six nvidia-smi fields in query order.
+        columns = [[row[i] for row in gpu] for i in range(6)]
+        summary["gpu"] = {"nvidia_util_max": max(columns[0]), "nvidia_mem_used_max_mb": max(columns[2]),
+                          "nvidia_power_max_w": max(columns[3]),
+                          "amdgpu_busy_max": max(amd_busy, default=0)}
     return summary
 
 

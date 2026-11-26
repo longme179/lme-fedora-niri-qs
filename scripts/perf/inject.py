@@ -130,7 +130,7 @@ class Injector:
                     except ValueError:
                         continue
                     self.before = []
-                    slot = self.pending.pop(seq, None)
+                    slot = self.pending.get(seq)
                     if slot is not None:
                         slot.append(reply)
                         self.condition.notify_all()

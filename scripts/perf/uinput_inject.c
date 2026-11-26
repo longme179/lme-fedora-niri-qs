@@ -10,7 +10,7 @@
 // per line on stdin and answers one `ok` line per command, stamped CLOCK_MONOTONIC and
 // CLOCK_REALTIME right after the last event was written.
 //
-//   key NAME down|up        press / release (ESC, Tab, LeftCtrl, LeftMeta, a..z, 1..9, or a number)
+//   key NAME down|up        press / release (ESC, Tab, LeftCtrl, LeftMeta, comma, a..z, 1..9, or a number)
 //   tap NAME... [hold=MS]   press in order, release in reverse order (modifiers first)
 //   move X Y                absolute pointer position in output pixels
 //   click left|right        press + release a button
@@ -128,7 +128,7 @@ static int open_uinput(void) {
 }
 
 // Finalizes a device whose capability bits are already set on `fd`.
-static int create_device_on(int fd, const char *name, int product) {
+static int create_device_on(int fd, const char *name, int product, int abs_max) {
     struct uinput_user_dev user;
     memset(&user, 0, sizeof user);
     snprintf(user.name, UINPUT_MAX_NAME_SIZE, "%s", name);
@@ -136,6 +136,12 @@ static int create_device_on(int fd, const char *name, int product) {
     user.id.vendor = 0x1;
     user.id.product = (__u16)product;
     user.id.version = 1;
+    // The range of an absolute axis is part of this struct, read for every ABS bit that is
+    // already set. Left at 0 the axis is [0, 0], libinput drops it and the pointer never moves.
+    user.absmin[ABS_X] = 0;
+    user.absmax[ABS_X] = abs_max;
+    user.absmin[ABS_Y] = 0;
+    user.absmax[ABS_Y] = abs_max;
     if (write(fd, &user, sizeof user) != (ssize_t)sizeof user) {
         out_line("err uinput setup write: %s", strerror(errno));
         exit(1);
@@ -155,7 +161,7 @@ static int setup_kbd(void) {
     ioctl(fd, UI_SET_EVBIT, EV_REP);
     // 1..0xff: every key code and no button code, so the device is a pure keyboard.
     for (int code = 1; code < 0x100; ++code) ioctl(fd, UI_SET_KEYBIT, (unsigned long)code);
-    return create_device_on(fd, "LME Perf Harness Keyboard", 1);
+    return create_device_on(fd, "LME Perf Harness Keyboard", 1, 0);
 }
 
 static int setup_ptr(void) {
@@ -168,7 +174,7 @@ static int setup_ptr(void) {
     ioctl(fd, UI_SET_ABSBIT, ABS_X);
     ioctl(fd, UI_SET_ABSBIT, ABS_Y);
     ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_POINTER);
-    return create_device_on(fd, "LME Perf Harness Pointer", 2);
+    return create_device_on(fd, "LME Perf Harness Pointer", 2, ABS_RANGE);
 }
 
 static const struct { const char *name; int code; } KEYS[] = {
@@ -178,6 +184,12 @@ static const struct { const char *name; int code; } KEYS[] = {
     {"minus", KEY_MINUS}, {"equal", KEY_EQUAL}, {"backspace", KEY_BACKSPACE},
     {"tab", KEY_TAB}, {"enter", KEY_ENTER}, {"return", KEY_ENTER}, {"kpenter", KEY_KPENTER},
     {"space", KEY_SPACE},
+    // Punctuation, for the shell's own binds (Settings is Mod+Comma on niri).
+    {"comma", KEY_COMMA}, {"period", KEY_DOT}, {"dot", KEY_DOT}, {"slash", KEY_SLASH},
+    {"semicolon", KEY_SEMICOLON}, {"apostrophe", KEY_APOSTROPHE}, {"grave", KEY_GRAVE},
+    {"leftbrace", KEY_LEFTBRACE}, {"rightbrace", KEY_RIGHTBRACE}, {"backslash", KEY_BACKSLASH},
+    {"kpcomma", KEY_KPCOMMA}, {"kpdot", KEY_KPDOT}, {"kpslash", KEY_KPSLASH},
+    {"kpasterisk", KEY_KPASTERISK}, {"kpplus", KEY_KPPLUS}, {"kpminus", KEY_KPMINUS},
     {"a", KEY_A}, {"b", KEY_B}, {"c", KEY_C}, {"d", KEY_D}, {"e", KEY_E}, {"f", KEY_F},
     {"g", KEY_G}, {"h", KEY_H}, {"i", KEY_I}, {"j", KEY_J}, {"k", KEY_K}, {"l", KEY_L},
     {"m", KEY_M}, {"n", KEY_N}, {"o", KEY_O}, {"p", KEY_P}, {"q", KEY_Q}, {"r", KEY_R},

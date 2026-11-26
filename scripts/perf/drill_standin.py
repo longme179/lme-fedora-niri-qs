@@ -224,9 +224,17 @@ def link_target(world):
     return Path(os.path.realpath(world["home"] / ".config/quickshell/lme-shell"))
 
 
-def idle(world, gone_seconds=200):
+def idle(world, quiet=3.5, timeout=3):
+    """The long watcher reports IDLE, so the seat has been quiet for `quiet` seconds (its own
+    `timeout` of silence before the IDLE line, recorded in the header like idlegate.py does)."""
     with open(world["idle"] / "long.log", "a") as handle:
-        handle.write(f"{time.time() - gone_seconds + 180:.3f} I\n")
+        handle.write(f"# timeout={timeout} started=0\n{time.time() - (quiet - timeout):.3f} I\n")
+
+
+def busy(world):
+    """The owner touched the seat half a second ago: a RESUME follows the last IDLE."""
+    with open(world["idle"] / "long.log", "a") as handle:
+        handle.write(f"# timeout=3 started=0\n{time.time() - 10:.3f} I\n{time.time() - 0.5:.3f} R\n")
 
 
 def timers(world):
@@ -256,10 +264,38 @@ def kill_fakes():
 def case_gate(w):
     check("sandbox clean: no fake shell before the case", not mains(), str(mains()))
     d = start_deployed(w)
-    proc = standin(w, "swap", "--tree", w["tree"], "--state", w["state"], "--max-seconds", "60")
-    check("not idle: swap refused", proc.returncode == 1 and "has not been idle" in proc.stderr, proc.stderr[-200:])
-    check("not idle: deployed shell untouched", d and live_main(w) == d)
-    check("not idle: symlink untouched", link_target(w) == w["deployed"])
+    flags = ["swap", "--tree", w["tree"], "--state", w["state"], "--max-seconds", "120"]
+    proc = standin(w, *flags)
+    check("no watcher record: swap refused", proc.returncode == 1 and "not been quiet" in proc.stderr, proc.stderr[-200:])
+    busy(w)
+    proc = standin(w, *flags)
+    check("owner active: swap refused", proc.returncode == 1 and "not been quiet" in proc.stderr, proc.stderr[-200:])
+    idle(w, quiet=1.2, timeout=1)
+    proc = standin(w, *flags)
+    check("1.2s quiet, 3s asked: refused (the header timeout is honoured)",
+          proc.returncode == 1 and "not been quiet" in proc.stderr, proc.stderr[-200:])
+    idle(w, quiet=3.5, timeout=3)
+    proc = standin(w, *flags, "--quiet-seconds", "10")
+    check("3.5s quiet, 10s asked: refused", proc.returncode == 1 and "not been quiet" in proc.stderr, proc.stderr[-200:])
+    check("refused swaps: nothing touched", live_main(w) == d and link_target(w) == w["deployed"] and not timers(w))
+    proc = standin(w, *flags)
+    check("3.5s quiet, 3s asked: swap goes through", proc.returncode == 0, proc.stderr[-300:])
+    check("quiet gate recorded", "quiet gate" in (w["state"] / "events.log").read_text())
+    s = live_main(w)
+    proc = standin(w, "restore", "--state", w["state"])
+    check("after the gate case: restored", proc.returncode == 0 and len(live_main(w)) == 1
+          and not alive(s) and not alive(d) and link_target(w) == w["deployed"])
+
+
+def case_nogate(w):
+    start_deployed(w)
+    busy(w)
+    proc = standin(w, "swap", "--tree", w["tree"], "--state", w["state"], "--max-seconds", "120", "--no-quiet-gate")
+    check("no gate: swap goes through while the owner is active", proc.returncode == 0, proc.stderr[-300:])
+    s = live_main(w)
+    proc = standin(w, "restore", "--state", w["state"])
+    verify = json.loads((w["state"] / "verify.json").read_text())
+    check("no gate: restored", proc.returncode == 0 and verify["ok"] and not alive(s))
 
 
 def case_dry(w):
@@ -453,7 +489,8 @@ def case_nodeployed(w):
     check("no deployed shell: restore starts it", proc.returncode == 0 and verify["ok"] and len(live_main(w)) == 1 and not alive(s), json.dumps(verify))
 
 
-CASES = {"gate": case_gate, "dry": case_dry, "normal": case_normal, "deadman": case_deadman, "foreign": case_foreign,
+CASES = {"gate": case_gate, "nogate": case_nogate, "dry": case_dry, "normal": case_normal,
+         "deadman": case_deadman, "foreign": case_foreign,
          "locked": case_locked, "frozen": case_frozen, "unfinished": case_unfinished, "extend": case_extend,
          "failstart": case_failstart, "dupfail": case_dupfail, "pidclass": case_pidclass,
          "ageclass": case_ageclass, "nodeployed": case_nodeployed}

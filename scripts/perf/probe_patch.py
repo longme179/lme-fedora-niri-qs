@@ -310,6 +310,8 @@ edit("qml/settings/SettingsApplication.qml",
      "    }\n",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n" + ipc_handler())
+line("qml/settings/SettingsView.qml", "HoverHandler { id: pointerWatch }", after=[
+    "Component.onCompleted: Probe.settingsHover = this"], note="Settings window pointer position (aiming real clicks)")
 line("qml/settings/SettingsView.qml", "id: pageLoader", after=['probeName: "settings"'], note="name the Settings page host")
 
 # ---- other Escape consumers (a swallowed Escape is the S4 signature) --------------

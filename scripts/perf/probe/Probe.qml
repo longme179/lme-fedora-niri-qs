@@ -2,7 +2,8 @@
 // PERF HARNESS — SCRATCH TREE ONLY. scripts/perf/probe_patch.py copies this file into a
 // throwaway copy of the tree as qml/services/Probe.qml; a normal shell never loads it.
 // It never changes behaviour: it only writes one "@@PROBE <kind> <ms> ..." line per event.
-//   sink ...                clock alignment (epoch ms <-> probe clock), first line
+//   sink epoch=<ms> clock=<ms> t0=<ms>   clock alignment, first line: a probe time `t` is
+//                        epoch `t0 + t + (epoch - clock)`, so it lines up with the injector
 //   m <ms> <name> [<extra>] a mark on the GUI thread
 //   F <ms> <window>         frameSwapped of bar / overlay / settings
 //   S <ms> <json>           state sampler, every 40 ms while Probe.watch is on
@@ -43,6 +44,8 @@ QtObject {
     property var island: null
     property var loader: null
     property var hover: null
+    // Settings runs in its own window and its own process: its pointer position is read here.
+    property var settingsHover: null
 
     function now() { return hires ? performance.now() : Date.now() }
     function ms() { return now() - t0 }
@@ -74,7 +77,7 @@ QtObject {
         running: sinkPath !== ""
         onStarted: {
             sinkReady = true;
-            root.out("sink epoch=" + Date.now() + " clock=" + root.now() + " hires=" + root.hires);
+            root.out("sink epoch=" + Date.now() + " clock=" + root.now() + " t0=" + root.t0 + " hires=" + root.hires);
             const lines = root.held;
             root.held = [];
             for (let i = 0; i < lines.length; i++) root.out(lines[i]);
@@ -150,7 +153,7 @@ QtObject {
     function stateJson() {
         const s = ShellState;
         const overlay = windows.overlay;
-        const o = {ms: Math.round(ms() * 100) / 100, stage: stage,
+        const o = {ms: Math.round(ms() * 100) / 100, proc: isSettings ? "settings" : "shell", stage: stage,
             panelOpen: s.panelOpen, activityOpen: s.activityOpen, controlOpen: s.controlOpen,
             settingsOpen: s.settingsOpen, kind: s.panelKind, backendReady: s.backendReady,
             status: s.statusMessage, auth: s.authenticationActive, locked: LockState.locked,
@@ -162,7 +165,11 @@ QtObject {
         try {
             if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0};
         } catch (error) { o.settingsError = "" + error; }
-        try { if (hover) o.pointer = [hover.point.position.x, hover.point.position.y, hover.hovered]; } catch (error) { o.pointerError = "" + error; }
+        // Window-relative, and only while the pointer is over the window that reports it.
+        try {
+            const watched = isSettings ? settingsHover : hover;
+            if (watched) o.pointer = [watched.point.position.x, watched.point.position.y, watched.hovered];
+        } catch (error) { o.pointerError = "" + error; }
         try {
             if (island) o.island = {shown: island.shown, mounted: island.mounted, dormant: island.dormant,
                 warmup: island.warmupActive, moving: island.transitioning};

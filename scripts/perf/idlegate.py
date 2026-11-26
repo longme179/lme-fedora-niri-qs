@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Know when the owner is away, and notice the moment they come back.
+"""Know when the owner's hands are off the seat, and notice the moment they come back.
 
-  idlegate.py watch  [--dir DIR]                      start the two idle watchers (idempotent)
-  idlegate.py wait   --seconds 180 --max-wait 3600     block until the owner has been idle that long
+  idlegate.py watch  [--dir DIR] [--seconds 3]       start the two idle watchers (idempotent)
+  idlegate.py wait   [--seconds 3] [--max-wait 120]  block until the owner has been quiet that long
+  idlegate.py stop                                     stop both watchers
   idlegate.py events [--dir DIR] [--since T]          print what the watchers recorded
 
 Two swayidle clients watch the seat through ext-idle-notify (niri implements it; the shell's
 own idle locker is a separate thing and is not involved):
 
-  long   timeout 180 s   IDLE means: no input from anyone for the whole timeout before it.
-                        This is the gate before a stand-in may touch the session.
+  long   timeout QUIET_SECONDS (3 s)   IDLE means: no input from anyone for the whole timeout
+                        before it. This is the gate before a stand-in may touch the session.
+                        The owner asked for no long idle wait: the harness announces itself
+                        (standin.py --notice) and starts once the seat has been quiet for a
+                        few seconds. The timeout in force is recorded in the log header, so a
+                        reader never has to guess the number swayidle was started with.
   short  timeout 1 s     RESUME lines that the harness did not cause itself are the owner.
                         The harness injects through uinput, which counts as real input, so its
                         own bursts are recognisable: a RESUME follows an injection within
@@ -32,34 +37,45 @@ import time
 from pathlib import Path
 
 DEFAULT_DIR = Path.home() / ".cache/lme-perf/rv2/idle"
-LONG_SECONDS = 180
+QUIET_SECONDS = 3
 SHORT_SECONDS = 1
 RESUME_BEFORE = 0.25   # s: an injection this recently before a RESUME explains it
 RESUME_AFTER = 0.05    # s: ... or this soon after it (command spawn latency)
 QUIET_MARGIN = 0.6     # s: extra time for the IDLE after a pause
+UNITS = ("lme-perf-idle-long", "lme-perf-idle-short")
+# Watchers stop by themselves after a day, so a crashed run cannot leave them behind for good.
+MAX_RUNTIME = "20h"
 
 STAMPER = "import sys,time\nfor line in sys.stdin: print(f'{time.time():.3f} {line.strip()}', flush=True)\n"
 
 
 def watch_command(seconds: int, log: Path) -> str:
-    return (f"exec /usr/bin/swayidle -w timeout {seconds} 'echo I' resume 'echo R' "
+    return (f'echo "# timeout={seconds} started=$(date +%s.%N)"; '
+            f"exec /usr/bin/swayidle -w timeout {seconds} 'echo I' resume 'echo R' "
             f"| python3 -c {json.dumps(STAMPER)} >> {json.dumps(str(log))} 2>&1")
+
+
+def running(name: str) -> bool:
+    result = subprocess.run(["systemctl", "--user", "is-active", f"lme-perf-idle-{name}"],
+                            stdout=subprocess.PIPE, text=True)
+    return result.stdout.strip() == "active"
 
 
 def watch(args) -> int:
     base = args.dir
     base.mkdir(parents=True, exist_ok=True)
-    for name, seconds in (("long", LONG_SECONDS), ("short", SHORT_SECONDS)):
+    for name, seconds in (("long", args.seconds), ("short", SHORT_SECONDS)):
         unit = f"lme-perf-idle-{name}"
-        active = subprocess.run(["systemctl", "--user", "is-active", unit], stdout=subprocess.PIPE, text=True)
-        if active.stdout.strip() == "active":
+        if running(name):
             print(f"{name} watcher already running")
             continue
         log = base / f"{name}.log"
         if log.exists():
             log.rename(base / f"{name}.{int(log.stat().st_mtime)}.log")
         result = subprocess.run(["systemd-run", "--user", f"--unit={unit}", "--collect", "--quiet",
-                                 "/bin/bash", "-c", watch_command(seconds, log)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                                 f"--property=RuntimeMaxSec={MAX_RUNTIME}",
+                                 "/bin/bash", "-c", watch_command(seconds, log)],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode != 0:
             print(f"IDLEGATE FAILED: cannot start the {name} watcher: {result.stderr.strip()}", file=sys.stderr)
             return 1
@@ -86,13 +102,38 @@ def events(path: Path, since: float = 0.0) -> list:
     return sorted(found)
 
 
-def idle_since(long_log: Path, seconds: int, now: float):
-    """Epoch time since which nobody touched the seat, or None. The last recorded event must be
-    IDLE (no RESUME after it), which by itself guarantees `seconds` of silence before it."""
-    history = events(long_log)
-    if not history or history[-1][1] != "I":
+def quiet_since(long_log: Path):
+    """Epoch time since which nobody touched the seat, or None when input is more recent than
+    the watcher's timeout (or nothing was recorded). An IDLE event proves that the whole
+    timeout before it was silent; a RESUME after it ends that at once."""
+    timeout, since = QUIET_SECONDS, None
+    try:
+        for line in long_log.read_text().splitlines():
+            if line.startswith("# timeout="):
+                try:
+                    timeout = int(line.split()[1].split("=", 1)[1])
+                except (IndexError, ValueError):
+                    pass
+                continue
+            parts = line.split()
+            if len(parts) != 2 or parts[1] not in ("I", "R"):
+                continue
+            try:
+                stamp = float(parts[0])
+            except ValueError:
+                continue
+            since = stamp - timeout if parts[1] == "I" else None
+    except OSError:
         return None
-    return history[-1][0] - seconds
+    return since
+
+
+def is_quiet(long_log: Path, seconds: int, now: float):
+    """`quiet_since` when the silence has lasted at least `seconds`, else None."""
+    since = quiet_since(long_log)
+    if since is not None and now - since >= seconds:
+        return since
+    return None
 
 
 def foreign_resume(short_log: Path, since: float, injections: list) -> float:
@@ -117,18 +158,25 @@ def wait(args) -> int:
     started = time.time()
     while True:
         now = time.time()
-        gone = idle_since(long_log, args.seconds, now)
-        if gone is not None and now - gone >= args.seconds:
-            print(json.dumps({"idle": True, "since": round(gone, 3), "waited": round(now - started, 1)}))
+        quiet = is_quiet(long_log, args.seconds, now)
+        if quiet is not None:
+            print(json.dumps({"quiet": True, "since": round(quiet, 3), "waited": round(now - started, 1)}))
             return 0
         if not long_log.exists():
             print("IDLEGATE: the long watcher is not running (idlegate.py watch)", file=sys.stderr)
             return 2
         if now - started >= args.max_wait:
-            print(json.dumps({"idle": False, "waited": round(now - started, 1),
+            print(json.dumps({"quiet": False, "waited": round(now - started, 1),
                               "last": events(long_log)[-1] if events(long_log) else None}))
             return 3
-        time.sleep(min(5, max(0.5, args.max_wait - (now - started))))
+        time.sleep(min(1, max(0.1, args.max_wait - (now - started))))
+
+
+def stop(args) -> int:
+    result = subprocess.run(["systemctl", "--user", "stop", *UNITS], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        print(f"IDLEGATE: stop: {result.stderr.strip()}", file=sys.stderr)
+    return result.returncode
 
 
 def show(args) -> int:
@@ -145,13 +193,17 @@ def main() -> int:
     for name in ("watch", "wait", "events"):
         command = sub.add_parser(name)
         command.add_argument("--dir", type=Path, default=DEFAULT_DIR)
+        if name == "watch":
+            command.add_argument("--seconds", type=int, default=QUIET_SECONDS,
+                                 help="quiet time the long watcher needs before it reports IDLE")
         if name == "wait":
-            command.add_argument("--seconds", type=int, default=LONG_SECONDS, help="idle time required")
-            command.add_argument("--max-wait", type=int, default=3600, help="give up after this many seconds")
+            command.add_argument("--seconds", type=int, default=QUIET_SECONDS, help="quiet time required")
+            command.add_argument("--max-wait", type=int, default=120, help="give up after this many seconds")
         if name == "events":
             command.add_argument("--since", type=float, default=0.0)
+    sub.add_parser("stop")
     args = ap.parse_args()
-    return {"watch": watch, "wait": wait, "events": show}[args.command](args)
+    return {"watch": watch, "wait": wait, "events": show, "stop": stop}[args.command](args)
 
 
 if __name__ == "__main__":

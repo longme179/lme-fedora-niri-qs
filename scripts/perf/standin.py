@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Run an instrumented shell in place of the deployed one (a stand-in), then put everything back.
 
-  standin.py swap    --tree DIR --state DIR [--max-seconds S] [--env KEY=VALUE ...] [--dry-run]
+  standin.py swap    --tree DIR --state DIR [--max-seconds S] [--quiet-seconds S] [--env KEY=VALUE ...]
+                               [--no-quiet-gate] [--no-notice] [--dry-run]
   standin.py extend  --state DIR --max-seconds S
   standin.py status  --state DIR
   standin.py restore --state DIR
@@ -22,8 +23,9 @@ Guarantees:
   - config files are snapshotted before the swap and compared again after the restore
   - only Quickshell main/Settings processes of this config are ever stopped; `quickshell ...
     ipc call` clients and anything else are left alone
-  - the owner must have touched nothing for --idle-seconds (idlegate.py watch has to run);
-    input that arrives while the stand-in starts restores the deployed shell at once
+  - the seat must have been quiet for --quiet-seconds (idlegate.py watch has to run), the
+    owner is told by a desktop notification just before the swap, and input that arrives
+    while the stand-in starts restores the deployed shell at once
 Nothing here injects input; scenarios do that through inject.py.
 """
 import argparse
@@ -49,7 +51,9 @@ SNAPSHOT_DIRS = [(".config/lme-shell", (".json", ".kdl")), (".config/niri", (".k
 SNAPSHOT_FILES = [".local/bin/lme-shell"]
 SESSION_KEYS = ("XDG_RUNTIME_DIR", "WAYLAND_DISPLAY", "NIRI_SOCKET", "DBUS_SESSION_BUS_ADDRESS")
 MAX_SECONDS = 1200
-IDLE_SECONDS = 180
+QUIET_SECONDS = 3  # the owner waived the long idle wait: a few quiet seconds are the gate
+NOTICE_APP = "LME perf harness"
+NOTICE_MS = "12000"
 START_REPO_LINE = 'repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"\n'
 START_LOG_LINE = 'log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/lme-shell/log"\n'
 
@@ -223,15 +227,23 @@ def disarm_timer(unit: str) -> None:
         sh(["systemctl", "--user", "stop", unit + ".timer"])
 
 
-def idle_gate(seconds: int, skip: bool) -> dict:
-    """The owner has touched nothing for `seconds` (long watcher of idlegate.py), or no swap."""
+def quiet_gate(seconds: int, skip: bool) -> dict:
+    """The seat has been quiet for `seconds` (long watcher of idlegate.py), or no swap."""
     if skip:
         return {"gate": "skipped"}
-    gone = idlegate.idle_since(idlegate.DEFAULT_DIR / "long.log", seconds, time.time())
-    if gone is None:
-        raise Fail(f"the owner has not been idle for {seconds}s; run `idlegate.py watch` and "
-                   f"`idlegate.py wait --seconds {seconds}` first (not touching the session)")
-    return {"gate": "idle", "since": round(gone, 3)}
+    since = idlegate.is_quiet(idlegate.DEFAULT_DIR / "long.log", seconds, time.time())
+    if since is None:
+        raise Fail(f"the owner has not been quiet for {seconds}s; run `idlegate.py watch` and "
+                   f"`idlegate.py wait --seconds {seconds}` first")
+    return {"gate": "quiet", "since": round(since, 3)}
+
+
+def notify(env: dict, text: str) -> None:
+    """One desktop notification for the owner (the shell runs the notification daemon; with
+    none running nothing is shown and nothing fails)."""
+    tool = shutil.which("notify-send")
+    if tool:
+        sh([tool, "-a", NOTICE_APP, "-t", NOTICE_MS, NOTICE_APP, text], env=env, timeout=10)
 
 
 def unfinished_swaps(current: Path) -> list:
@@ -340,10 +352,13 @@ def swap(args) -> int:
     others = unfinished_swaps(state)
     if others:
         raise Fail(f"unfinished swap(s) {others}: restore them first, a stand-in of theirs may be running")
-    info["idle"] = idle_gate(args.idle_seconds, args.no_idle_gate)
-    log(state, f"idle gate: {info['idle']}")
+    info["quiet"] = quiet_gate(args.quiet_seconds, args.no_quiet_gate)
+    log(state, f"quiet gate: {info['quiet']}")
     if any(entry["kind"] == "main" for entry in before) and lock_status(env, QS) != "unlocked":
         raise Fail("the lock screen is active (or its state is unknown); not touching the session")
+    if not args.no_notice:
+        notify(env, f"Measuring the shell for up to {args.max_seconds}s; it comes back by itself. "
+                    "Keyboard or mouse input hands it back at once.")
 
     for stale in ("restored", "swapped", "standin.pid", "standin.json"):
         (state / stale).unlink(missing_ok=True)
@@ -379,6 +394,9 @@ def swap(args) -> int:
         restore_state(state, env)
         raise
     log(state, f"stand-in ready: {ready}")
+    if not args.no_notice:
+        notify(env, f"Instrumented shell running (up in {ready['seconds']}s). "
+                    f"The normal shell is back in at most {args.max_seconds}s.")
     return 0
 
 
@@ -491,9 +509,11 @@ def main() -> int:
         if name == "swap":
             command.add_argument("--tree", required=True, type=Path, help="probe tree from prepare.py")
             command.add_argument("--env", action="append", default=[], metavar="KEY=VALUE", help="exported into the stand-in")
-            command.add_argument("--idle-seconds", type=int, default=IDLE_SECONDS, help="idle time required first")
-            command.add_argument("--no-idle-gate", action="store_true",
-                                 help="skip the idle gate (disposable sessions only; there is then no foreign-input abort either)")
+            command.add_argument("--quiet-seconds", type=int, default=QUIET_SECONDS,
+                                 help="quiet time required before the swap (needs idlegate.py watch)")
+            command.add_argument("--no-quiet-gate", action="store_true",
+                                 help="skip the quiet gate (disposable sessions only; there is then no foreign-input abort either)")
+            command.add_argument("--no-notice", action="store_true", help="no desktop notification")
             command.add_argument("--dry-run", action="store_true", help="check and snapshot only")
         if name == "restore":
             command.add_argument("--force", action="store_true",

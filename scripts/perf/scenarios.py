@@ -432,8 +432,15 @@ class Ctx:
         note_read("first", rect)
 
         def visible(entry):
-            return (entry.get("found") and entry.get("shown")
-                    and 0 <= entry["y"] <= self.box_size[1] and 0 <= entry["x"] <= self.box_size[0])
+            # The whole delegate must be inside the window, not just its centre: the
+            # Flickable clips its content, a centre that maps inside the window while the
+            # half of the button hangs below the fold takes the press through to nothing.
+            if not (entry.get("found") and entry.get("shown")):
+                return False
+            half_h = (entry.get("h") or 0) / 2.0
+            half_w = (entry.get("w") or 0) / 2.0
+            return (half_h <= entry["y"] <= self.box_size[1] - half_h
+                    and half_w <= entry["x"] <= self.box_size[0] - half_w)
 
         def settled_point(entry):
             """The entry's point once its rect stops moving. A press on a delegate that is
@@ -445,8 +452,11 @@ class Ctx:
                 note_read("settle", again)
                 if not visible(again):
                     return None
-                if again.get("x") == entry.get("x") and again.get("y") == entry.get("y"):
-                    return self.box[0] + entry["x"], self.box[1] + entry["y"]
+                # A kinetic coast covers its last pixels in ever smaller steps: the exact
+                # equality of two reads never comes. Within half a pixel it has stopped.
+                if abs(again.get("y", 0) - entry.get("y", 0)) < 0.5 \
+                        and abs(again.get("x", 0) - entry.get("x", 0)) < 0.5:
+                    return self.box[0] + again["x"], self.box[1] + again["y"]
                 entry = again
             return None
 
@@ -467,29 +477,23 @@ class Ctx:
         # rect before and after a notch - when the list stops moving the end is reached.
         # Every notch is recorded as an injection of ours (shot), or the idle watcher
         # reports the wheel as input of the owner and aborts the batch.
-        last_y = rect.get("y")
-        for _ in range(14):
-            # The list's own y tells the direction: entries above the viewport scroll up.
-            self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2))
-            self.sleep(120)
-            rect = self.probe.rect(f"perfNav_{key}")
-            note_read("up", rect)
-            if visible(rect):
-                return finish(settled_point(rect))
-            if rect.get("y") == last_y:
-                break
-            last_y = rect.get("y")
-        last_y = None
-        for _ in range(14):
-            self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2))
-            self.sleep(120)
-            rect = self.probe.rect(f"perfNav_{key}")
-            note_read("down", rect)
-            if visible(rect):
-                return finish(settled_point(rect))
-            if rect.get("y") == last_y:
-                break
-            last_y = rect.get("y")
+        # Direction first, distance then: a positive notch moves the content DOWN (the
+        # entry's y grows), so an entry below the viewport needs negative notches. The
+        # rect decides after each notch; when it stops changing the list end is reached
+        # and the other direction is tried (bounded by both loops).
+        first_dir = 2 if (rect.get("y") or 0) < 0 else -2
+        for direction in (first_dir, -first_dir):
+            last_y = None
+            for _ in range(14):
+                self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, direction))
+                self.sleep(120)
+                rect = self.probe.rect(f"perfNav_{key}")
+                note_read("scroll", rect)
+                if visible(rect):
+                    return finish(settled_point(rect))
+                if rect.get("y") == last_y:
+                    break
+                last_y = rect.get("y")
         return finish(None)
 
     def focus_settings(self):

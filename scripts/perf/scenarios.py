@@ -1053,7 +1053,12 @@ def parse(spec):
         elif isinstance(default, float):
             options[key] = float(value)
         elif isinstance(default, tuple):
-            options[key] = tuple(part for part in value.split("+") if part)
+            # Tuple options (routes, delays, pairs, ...) keep the type of their parts:
+            # a delays list of strings compares against no number.
+            parts = tuple(part for part in value.split("+") if part)
+            if default and isinstance(default[0], int) and all(part.lstrip("-").isdigit() for part in parts):
+                parts = tuple(int(part) for part in parts)
+            options[key] = parts
         else:
             options[key] = value
     return function, options

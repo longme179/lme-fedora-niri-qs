@@ -109,16 +109,22 @@ QtObject {
     // Center of a named item in output coordinates. The overlay is a small surface parked
     // at `viewport`, so items inside it get that offset; the bar sits at the output origin.
     function centreOf(item) {
-        // Since Qt 6.7 a Quick Controls type (LiquidButton, ...) is not an Item:
-        // mapToScene is visible in the metaobject but calling it throws. Its
-        // contentItem is the Item; the control's own geometry is still readable.
+        // Since Qt 6.7 many Quick types (Controls, Layouts) are not Items: their mapping
+        // methods exist in the metaobject but calling them throws. A real Item (most of
+        // the shell's own items) maps exactly; anything else falls back to adding the
+        // readable x/y up the parent chain - exact for the untransformed trees the
+        // harness clicks (Settings sidebar, CC tabs).
         try {
             return item.mapToScene(Qt.point(item.width / 2, item.height / 2));
         } catch (error) {
-            const inner = item.contentItem;
-            const at = inner.parent ? inner.parent.mapToItem(item, inner.x, inner.y)
-                                    : Qt.point(inner.x, inner.y);
-            return inner.mapToScene(Qt.point(at.x + item.width / 2, at.y + item.height / 2));
+            let x = item.width / 2, y = item.height / 2, node = item, guard = 0;
+            while (node && guard++ < 64) {
+                x += node.x || 0;
+                y += node.y || 0;
+                if (!node.parent) break;
+                node = node.parent;
+            }
+            return Qt.point(x, y);
         }
     }
     function rectJson(name) {

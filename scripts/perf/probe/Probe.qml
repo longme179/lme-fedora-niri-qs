@@ -110,13 +110,16 @@ QtObject {
     // at `viewport`, so items inside it get that offset; the bar sits at the output origin.
     function centreOf(item) {
         // Since Qt 6.7 a Quick Controls type (LiquidButton, ...) is not an Item:
-        // mapToScene is not callable on it. Its contentItem is the Item; the control's
-        // own geometry is still readable, so map the control's centre through it.
-        if (item.mapToScene) return item.mapToScene(Qt.point(item.width / 2, item.height / 2));
-        const inner = item.contentItem;
-        const at = inner.parent ? inner.parent.mapToItem(item, inner.x, inner.y)
-                                : Qt.point(inner.x, inner.y);
-        return inner.mapToScene(Qt.point(at.x + item.width / 2, at.y + item.height / 2));
+        // mapToScene is visible in the metaobject but calling it throws. Its
+        // contentItem is the Item; the control's own geometry is still readable.
+        try {
+            return item.mapToScene(Qt.point(item.width / 2, item.height / 2));
+        } catch (error) {
+            const inner = item.contentItem;
+            const at = inner.parent ? inner.parent.mapToItem(item, inner.x, inner.y)
+                                    : Qt.point(inner.x, inner.y);
+            return inner.mapToScene(Qt.point(at.x + item.width / 2, at.y + item.height / 2));
+        }
     }
     function rectJson(name) {
         try {

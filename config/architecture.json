@@ -198,7 +198,10 @@
   "scripts/deploy_niri_tree.py",
   "scripts/perf/prepare.py",
   "scripts/perf/probe_patch.py",
-  "scripts/perf/probe/Probe.qml"
+  "scripts/perf/probe/Probe.qml",
+  "scripts/perf/standin.py",
+  "scripts/perf/idlegate.py",
+  "scripts/perf/drill_standin.py"
  ],
  "toolingFiles": [
   "scripts/catalog_metadata.py",
@@ -214,6 +217,9 @@
   "scripts/niri_keybinds.py",
   "scripts/perf/prepare.py",
   "scripts/perf/probe_patch.py",
+  "scripts/perf/standin.py",
+  "scripts/perf/idlegate.py",
+  "scripts/perf/drill_standin.py",
   "scripts/settings_schema.py"
  ],
  "legacyEdges": [

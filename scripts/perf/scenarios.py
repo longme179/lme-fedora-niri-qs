@@ -435,10 +435,12 @@ class Ctx:
 
         # Scroll in steps towards the entry, in whichever direction it lies: compare the
         # rect before and after a notch - when the list stops moving the end is reached.
+        # Every notch is recorded as an injection of ours (shot), or the idle watcher
+        # reports the wheel as input of the owner and aborts the batch.
         last_y = rect.get("y")
         for _ in range(14):
             # The list's own y tells the direction: entries above the viewport scroll up.
-            self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2)
+            self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2))
             self.sleep(90)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):
@@ -448,7 +450,7 @@ class Ctx:
             last_y = rect.get("y")
         last_y = None
         for _ in range(14):
-            self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2)
+            self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2))
             self.sleep(90)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):

@@ -700,13 +700,17 @@ def final_state(ctx, last, end):
     settled = timeline.wait(sample("settings", host_settled("settings", last)), end - 1.0, 6000)
     state = ctx.ask("settings") or {}
     host = host_of(state, "settings")
-    checks = {"shown_is_page": host.get("shown") == (state.get("settings") or {}).get("page") == last,
+    # `host` is the page host itself, the authority on what is shown; the view's `page`
+    # is read a moment later and may already name the next click's target. Never let
+    # this dict overwrite the caller's own "page" key either (that cost a false
+    # "weather failed" in every rep: the entry's page was replaced by the NEXT page).
+    checks = {"shown_is_page": host.get("shown") == last,
               "built": host.get("status") == 1, "opaque": host.get("opacity", 0) >= 0.999,
               "not_receding": not host.get("leaving"), "no_pending": not host.get("pending"),
               "no_animation": not host.get("enterRun") and not host.get("leaveRun")}
     return {"settle_ms": round(settled.epoch - end, 2) if settled else None, "ok": settled is not None,
             "failed_checks": [name for name, passed in checks.items() if not passed], "host": host,
-            "page": (state.get("settings") or {}).get("page"),
+            "state_page": (state.get("settings") or {}).get("page"),
             "toast": (state.get("settings") or {}).get("toastText", "")}
 
 
@@ -780,7 +784,11 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         ctx.note(f"page {key}")
                         at = ctx.click_at(*point)
                         entry = {"page": key, "t": round(at, 3)}
-                        entry["react_ms"] = latency(timeline, at, navigate_mark(key), 5000)
+                        # A click on the page that is already shown navigates nowhere
+                        # (navigate() returns early, no mark): "already there" is the
+                        # reaction. The entry's ok comes from final_state anyway.
+                        already = ((ctx.ask("settings") or {}).get("settings") or {}).get("page") == key
+                        entry["react_ms"] = 0.0 if already else latency(timeline, at, navigate_mark(key), 5000)
                         entry["frame_ms"] = latency(timeline, at, frame("settings"), 300)
                         entry["page_ms"] = latency(timeline, at, page_ready("settings", key), SETTLE_WAIT_MS)
                         entry.update(final_state(ctx, key, at))

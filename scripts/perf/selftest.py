@@ -20,7 +20,7 @@ Cases (each is one simulated run under <out>/<name>):
   late      s4:late@5,ms=400           one island cycle `late`
   frozen    s4:frozen@6,ms=1800        one island cycle `frozen`
   ghost     s2:ghost@2                 one burst whose page host is not opaque, receding, animating
-  stall     s1:stall@5,ms=400          two freezes in the Control Center (the devices build and the fault)
+  stall     s1:stall@12,ms=400         two freezes in the Control Center (the devices build and the fault)
 """
 import argparse
 import json
@@ -111,7 +111,10 @@ def expect_devices(summary, records):
     if not devices or not devices["page_ms"] or devices["page_ms"]["median"] < 1000:
         bad.append(f"the devices tab must be the slow one: {devices}")
     others = {tab: value["page_ms"].get("median") for tab, value in entry["per_tab"].items() if tab != "devices"}
-    if any(value is None or value > 200 for value in others.values()):
+    # The tab that is shown when the panel opens never builds again: no marks, no page_ms.
+    if sum(1 for value in others.values() if value is None) > 1:
+        bad.append(f"more than one tab without a page_ms: {others}")
+    if any(value is not None and value > 200 for value in others.values()):
         bad.append(f"every other tab should be quick: {others}")
     return bad
 
@@ -147,14 +150,24 @@ def expect_ghost(summary, records):
 
 
 def expect_stall(summary, records):
+    """`s1:variants=fast`: the burst hits the devices build; a stall fault firing inside the
+    same frozen window merges with it (the queued handlers run back to back at the thaw), so
+    what the heartbeat reports is ONE gap of about 1.3-1.8 s, not two."""
     entry = next((item for item in summary["s1"] if item["variant"] == "fast"), None)
     if entry is None:
         return ["no `fast` entry for S1"]
+    rec = next((r for r in records if r.get("scenario") == "s1" and r.get("variant") == "fast"), None)
     bad = []
-    if entry["stalls"]["over_100"] != 2:
-        bad.append(f"expected two freezes (devices build and the fault), got {entry['stalls']['over_100']}")
+    if entry["stalls"]["over_300"] != 1:
+        bad.append(f"expected one long freeze, got over_300={entry['stalls']['over_300']}")
+    if not 1200 <= entry["stalls"]["max"] <= 2200:
+        bad.append(f"expected one merged stall of about 1.3-1.8 s, got {entry['stalls']['max']}")
     if entry["failures"] != 1 or entry["failed_reps"] != [0]:
         bad.append(f"failed reps {entry['failed_reps']} (expected [0])")
+    if entry["final_ok"] != entry["reps"]:
+        bad.append(f"the burst itself must end settled on the last tab: final_ok={entry['final_ok']}/{entry['reps']}")
+    if rec is not None and rec.get("final_settle_ms") is None:
+        bad.append("the last tab never settled after the stall")
     return bad
 
 

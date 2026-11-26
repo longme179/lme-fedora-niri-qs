@@ -211,6 +211,7 @@
   "scripts/perf/sim.py",
   "scripts/perf/analyze.py",
   "scripts/perf/run.py",
+  "scripts/perf/README.md",
   "scripts/perf/selftest.py"
  ],
  "toolingFiles": [
@@ -240,6 +241,7 @@
   "scripts/perf/sim.py",
   "scripts/perf/analyze.py",
   "scripts/perf/run.py",
+  "scripts/perf/README.md",
   "scripts/perf/selftest.py"
  ],
  "legacyEdges": [

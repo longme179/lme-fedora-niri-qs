@@ -31,6 +31,7 @@ Faults (`tag:name@n,key=value`; tag = s1 / s2 / s4 / *, n = the n-th occurrence)
 """
 import heapq
 import json
+import math
 import threading
 import time
 from pathlib import Path
@@ -69,13 +70,19 @@ class Reply:
 
 
 def parse_faults(faults):
+    """`tag:name@n,key=value` — the n-th occurrence of the fault, with parameters.
+
+    The number is everything up to the first character that is not a digit, so both
+    `s4:late@5,ms=400` and `s4:late@5 ms=400` name the 5th occurrence."""
     parsed = []
     for text in faults:
-        head, _, number = text.partition("@")
-        tag, _, rest = head.partition(":")
-        name, _, options = rest.partition(",")
-        parsed.append({"tag": tag, "name": name, "n": int(number or 1),
-                       "params": dict(part.split("=", 1) for part in options.split(",") if "=" in part)})
+        head, _, tail = text.partition("@")
+        tag, _, name = head.partition(":")
+        digits = ""
+        while tail[:1].isdigit():
+            digits, tail = digits + tail[0], tail[1:]
+        parsed.append({"tag": tag, "name": name, "n": int(digits or 1),
+                       "params": dict(part.split("=", 1) for part in tail.replace(",", " ").split() if "=" in part)})
     return parsed
 
 
@@ -94,6 +101,8 @@ class SimShell:
         self.captured = None          # marks written while a freeze thaws
         self.late = False             # set while the tasks that were due inside a freeze are run
         self.last = {}                # window -> probe ms of its last frame (the refresh grid)
+        self.grid = {}                # window -> probe ms of its first frame (the vblank anchor)
+        self.closing = {}             # window -> probe ms until which its close animation renders
         self.beats = 0
         self.frames = {"bar": 0, "overlay": 0, "settings": 0}
         self.key_events = 0
@@ -108,6 +117,7 @@ class SimShell:
         self.s.update({"panelOpen": False, "kind": "control", "island": False, "tab": TABS[0]})
         self.hosts = {"cc": fresh_host(TABS[0]), "settings": fresh_host("")}
         self.built = {"cc": {TABS[0]}, "settings": set()}
+        self.building = {"cc": set(), "settings": set()}
         self.settings = {"alive": False, "shown": False, "page": FIRST_PAGE}    # the other process
         self.handles = {name: open(path, "a", buffering=1) for name, path in self.paths.items()}
         self.write("shell", f"@@PROBE sink epoch={self.origin + 5:.0f} clock=5 t0=0 hires=true")
@@ -142,27 +152,85 @@ class SimShell:
         self.handles[name].write(line + "\n")
 
     def mark(self, name, text):
-        if self.captured is not None:
+        if self.captured is not None and self.freeze is not None:
             self.captured.append(text.split(" ", 1)[0] + f"+{self.now() - self.freeze[0]:.1f}")
         self.write(name, f"@@PROBE m {self.ms():.2f} {text}")
 
     def frame(self, window, due_ms=0.0):
-        """One frame of `window` at its due time on the refresh grid (the Python thread that
-        runs the model jitters; the frame times must not). Frames that were due while the GUI
-        thread was frozen carry the time it came back, like the real ones."""
+        """One frame of `window`, on the refresh grid of that window. A compositor swaps at
+        vblank: a frame that is late does not land between two refreshes, it waits for the
+        next one, so the gaps stay multiples of the refresh even when the Python thread that
+        runs the model jitters. The task that writes the line may run a few ms late (the loop
+        wakes every 4 ms); the frame itself was rendered at its due slot, so the time written
+        is the slot, never `now`. Frames due while the GUI thread was frozen are presented
+        when it came back — one per window per thaw: the compositor shows the newest frame,
+        the skipped ones were never presented."""
         if self.late:
+            if window in self.thawed:
+                return                      # this window already presented its catch-up frame
+            self.thawed.add(window)
             at = self.now()
         else:
-            at = max(due_ms, self.last.get(window, 0.0) + FRAME_MS, self.now() - 5.0)
+            # The frame is presented at its due slot of the window's vblank grid — never at
+            # `now`: the Python thread that runs the model delivers tasks with milliseconds
+            # of jitter, and that jitter is not time of the modelled shell.
+            anchor = self.grid.setdefault(window, due_ms)
+            steps = max(1, math.ceil((due_ms - anchor) / FRAME_MS))
+            at = anchor + steps * FRAME_MS
+            last = self.last.get(window)
+            if last is not None and at <= last:      # never two frames in one slot
+                at = last + FRAME_MS                                 # the next vblank after it
         self.last[window] = at
         self.frames[window] += 1
         self.write("settings" if window == "settings" else "shell", f"@@PROBE F {at - self.origin:.2f} {window}")
 
     def render_frames(self, window, count):
-        """`count` frames of `window` from now on, one per refresh."""
-        due = max(self.now(), self.last.get(window, 0.0) + FRAME_MS)
-        for index in range(count):
-            self.at(due + FRAME_MS * index - self.now(), self.frame, window, due + FRAME_MS * index)
+        """Start the render loop of `window`: one frame per refresh while it is on screen,
+        beginning with `count` frames of this animation. One scheduler per window — the
+        bursts of open/close/page-show only make sure the loop is running, they never run
+        their own frame tasks next to it (two writers on one vblank grid is what makes
+        gaps that no compositor produces). The loop continues on the window's grid from
+        its last frame, so a panel swap (close mark, then open mark) leaves no hole."""
+        last = self.last.get(window)
+        # Continue the window's grid when the last frame is at most a couple of refreshes
+        # away (a panel swap: close mark, then open mark, no hole between them); after a
+        # longer idle the window was hidden, so the animation starts at the next vblank.
+        floor = self.now() - 2 * FRAME_MS
+        due = max(last + FRAME_MS, floor) if last is not None else self.now()
+        slot = self.grid.get(window)
+        if slot is not None and last is not None:
+            # Snap to the grid slot at or after `due`: continuing on anchor + k*refresh.
+            step = math.ceil((due - slot) / FRAME_MS)
+            due = slot + step * FRAME_MS
+        self.at(max(0.0, due - self.now()), self.render_while_shown, window, due, count)
+
+    def render_while_shown(self, window, due_ms, burst=0):
+        """The render loop of an open window: one frame per refresh until it is hidden.
+
+        `due_ms` is the grid slot of THIS frame (render_frames snaps it to the window's
+        vblank anchor); the next slot is anchor + (k+1) * refresh with the integer step
+        taken from the grid — a chain of float additions drifts a fraction of a millisecond
+        per frame until ceil() reads it as a whole skipped refresh."""
+        anchor = self.grid.setdefault(window, due_ms)
+        self.frame(window, due_ms)
+        step = math.floor((due_ms - anchor) / FRAME_MS + 1e-6) + 1
+        nxt = anchor + step * FRAME_MS
+        if burst > 1:
+            self.at(max(0.0, nxt - self.now()), self.render_while_shown, window, nxt, burst - 1)
+            return
+        if not self.window_shown(window):
+            return
+        self.at(max(0.0, nxt - self.now()), self.render_while_shown, window, nxt)
+
+    def window_shown(self, window):
+        """Whether `window` has anything on screen. A closing panel still animates out for
+        a few frames (the recede cue); the render loop must not stop at the flag itself or
+        the last frames of every close leave a hole in the frame series."""
+        if window == "settings":
+            return self.settings["shown"] or self.now() < self.closing.get("settings", 0)
+        if window == "bar":
+            return True
+        return self.s["panelOpen"] or self.s["island"] or self.now() < self.closing.get("overlay", 0)
 
     def at(self, delay_ms, function, *args):
         with self.mutex:
@@ -196,6 +264,7 @@ class SimShell:
         self.freeze = None  # cleared first: whatever freezes inside the catch-up is a new freeze
         captured = []
         self.captured = captured
+        self.thawed = set()
         self.late = True
         self.run_due(end)
         self.late = False
@@ -352,6 +421,7 @@ class SimShell:
             self.mark("shell", "island.shown false")
         if was_open:
             self.mark("shell", f"shell.panelOpen state=false activity=false kind={self.s['kind']} stage=retained")
+            self.closing["overlay"] = self.now() + 3 * FRAME_MS    # the recede animation
             self.render_frames("overlay", 3)
 
     def close_later(self, delay):
@@ -397,6 +467,7 @@ class SimShell:
             settings["page"] = FIRST_PAGE
             self.hosts["settings"] = fresh_host("")
             self.built["settings"] = set()
+            self.building["settings"] = set()
             self.write("settings", f"@@PROBE sink epoch={self.origin + self.ms():.0f} clock={self.ms():.0f} t0=0 hires=true")
             self.show_page("settings", FIRST_PAGE)
             self.mark("settings", "settings.ready")
@@ -410,6 +481,8 @@ class SimShell:
         """SettingsApplication.close(): hidden, not quit; the linger starts."""
         self.mark("settings", "settings.close")
         self.settings["shown"] = False
+        self.closing["settings"] = self.now() + 3 * FRAME_MS       # the window fades out
+        self.render_frames("settings", 3)
         self.at(SETTINGS_LINGER_MS, self.settings_quit)
 
     def settings_quit(self):
@@ -417,35 +490,58 @@ class SimShell:
 
     # ---- pages -------------------------------------------------------------------------------------
     def enter(self, host, duration):
-        """The enter transition: opacity from 0.35 to 1 while enterRun is set."""
+        """The enter transition: opacity from 0.35 to 1 while enterRun is set. A new show()
+        cancels the one before it (PageHost.stopAll): an old step firing into the new
+        transition would fake `enterRun=false` on a page that never settled."""
         state = self.hosts[host]
         state.update(enter=0.0, leaving=0.0, opacity=0.35, enterRun=True, leaveRun=False, stuck=False)
+        generation = state.get("generation", 0) + 1
+        state["generation"] = generation
 
-        def step(part):
-            if state["stuck"]:
-                return          # the transition stopped half way: nothing brings it to an end
+        def step(part, my=generation):
+            if state["generation"] != my or state["stuck"]:
+                return          # superseded by a newer show(), or the transition stopped half way
             state["enter"] = part
             state["opacity"] = round(0.35 + 0.65 * part, 3)
             state["enterRun"] = part < 1.0
         for part in (0.33, 0.66, 1.0):
-            self.at(duration * part, step, part)
+            self.at(duration * part, step, part, generation)
 
     def show_page(self, host_name, key):
-        """Marks of a PageHost showing `key`, in the order the real one makes them."""
+        """Marks of a PageHost showing `key`, in the order the real one makes them. A slow build
+        freezes the GUI thread: the marks of the finished page only exist once it thaws. A page
+        that is already building is not built again (PageHost `pending`): a burst of clicks on
+        it waits for the one build, it does not queue a freeze per click."""
         process = "settings" if host_name == "settings" else "shell"
         host = self.hosts[host_name]
         self.mark(process, f"host.show {host_name} {key} pending=- prewarm=-")
         if host["shown"] == key and key in self.built[host_name]:
             return                                       # PageHost.show(): that page is already shown
-        built = key not in self.built[host_name]
-        if built:
-            self.built[host_name].add(key)
+        if key not in self.built[host_name] and key not in self.building[host_name]:
             build = BUILD_MS.get(key, 60)
             if build > 500:
+                self.building[host_name].add(key)
                 self.freeze_for(build)
-            self.mark(process, f"host.build {host_name} {key} {build - 1.5:.2f}ms")
-            self.mark(process, f"host.status {host_name} {key} 1")
-            self.mark(process, f"host.loaded {host_name} {key}")
+                self.at(build + 1, self.finish_build, host_name, key, build)
+                return
+            self.build_page(host_name, key, build)
+        self.present_page(host_name, key)
+
+    def build_page(self, host_name, key, build):
+        process = "settings" if host_name == "settings" else "shell"
+        self.built[host_name].add(key)
+        self.building[host_name].discard(key)
+        self.mark(process, f"host.build {host_name} {key} {build - 1.5:.2f}ms")
+        self.mark(process, f"host.status {host_name} {key} 1")
+        self.mark(process, f"host.loaded {host_name} {key}")
+
+    def finish_build(self, host_name, key, build):
+        self.build_page(host_name, key, build)
+        self.present_page(host_name, key)
+
+    def present_page(self, host_name, key):
+        process = "settings" if host_name == "settings" else "shell"
+        host = self.hosts[host_name]
         self.mark(process, f"host.present {host_name} {key} from={host['shown']}")
         host.update(key=key, shown=key, status=1)
         self.enter(host_name, 250)
@@ -489,25 +585,36 @@ class SimShell:
 
 
 class FakeInjector:
-    """The injector protocol as far as scenarios.py uses it, driving the model instead of uinput."""
+    """The injector protocol as far as scenarios.py uses it, driving the model instead of uinput.
+
+    The real injector costs ~8 ms per command (the uinput write, the wait for the reply); the
+    model answers in microseconds, which turns every time-boxed burst into one machine-gun
+    instant. Each command here takes a comparable moment, so a 3 s "as fast as possible" burst
+    is a few hundred clicks in the model too."""
+
+    COST_MS = 6.0
 
     def __init__(self, sim: SimShell):
         self.sim = sim
         self.log = open(sim.out / "inject.log", "a", buffering=1)
 
+    def _spend(self):
+        time.sleep(self.COST_MS / 1000.0)
+        return SimShell.now()
+
     def tap(self, *keys, hold=None):
         self.log.write(f"{time.time_ns()} tap {' '.join(keys)}\n")
-        at = SimShell.now()
+        at = self._spend()
         self.sim.key(keys)
         return Reply(at)
 
     def move(self, x, y):
         self.sim.pointer = (float(x), float(y))
-        return Reply(SimShell.now())
+        return Reply(self._spend())
 
     def click_at(self, x, y):
         self.log.write(f"{time.time_ns()} click {x:g} {y:g}\n")
-        at = SimShell.now()
+        at = self._spend()
         self.sim.pointer = (float(x), float(y))
         self.sim.click(float(x), float(y))
         return Reply(at)
@@ -522,7 +629,7 @@ class FakeInjector:
             elif parts[0] == "click" and index and words[index - 1][0] == "move":
                 replies.append(self.click_at(words[index - 1][1], words[index - 1][2]))
             else:
-                replies.append(Reply(SimShell.now()))
+                replies.append(Reply(self._spend()))
         return replies
 
     def note(self, text):

@@ -144,18 +144,27 @@ class Timeline:
         return [event for event in self.events[at:] if kinds is None or event.kind in kinds]
 
     def first(self, t_ms, test):
+        """The first event at or after t_ms that passes `test`, reading what arrived since.
+
+        `wait` pumps while it polls; a bare `first` after a sleep would otherwise search a
+        timeline that stopped at the last pump and miss a mark that is hours old in the log."""
+        self.pump()
         for event in self.after(t_ms):
             if test(event):
                 return event
         return None
 
     def wait(self, test, t_from, timeout_ms, poll_ms=3.0):
-        """The first event at or after t_from that passes `test`, or None at the end of the timeout."""
+        """The first event at or after t_from that passes `test`, but never one later than
+        t_from + timeout_ms — an event that shows up after the deadline belongs to a later
+        interaction, not to this one (a blocked caller would otherwise read a frame of the
+        next cycle as the answer to this one)."""
+        end = t_from + timeout_ms
         deadline = time.monotonic() + timeout_ms / 1000.0
         while True:
             hit = self.first(t_from, test)
             if hit is not None:
-                return hit
+                return hit if hit.epoch <= end else None
             left = deadline - time.monotonic()
             if left <= 0:
                 return None
@@ -809,7 +818,8 @@ def reaction_times(timeline, clicks, limit_of):
     return out
 
 
-def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, seconds=3.0, seed=1):
+def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, seconds=3.0, seed=1,
+               max_clicks=400):
     """S1: switching tabs freezes the shell. A rep is one pass, one random walk or one burst."""
     rng = random.Random(seed)
     tabs = ctx.open_control()
@@ -832,25 +842,31 @@ def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, 
                     end = cc_clicks(ctx, tabs, rects, rec)
                     clicks_ = rec["clicks"]
                 else:
-                    order = []
                     if variant == "random":
                         current = host_of(ctx.ask("shell") or {}, "cc").get("shown") or tabs[0]
                         for _ in range(clicks):
                             current = rng.choice([tab for tab in tabs if tab != current])
-                            order.append(current)
-                    else:
-                        stop = started + seconds * 1000.0
-                        while ctx.now() < stop:
-                            order.append(tabs[len(order) % len(tabs)])
-                    for tab in order:
-                        at = ctx.click_at(*rects[tab])
-                        clicks_.append({"tab": tab, "t": round(at, 3)})
-                        if variant == "random":
+                            at = ctx.click_at(*rects[current])
+                            clicks_.append({"tab": current, "t": round(at, 3)})
                             ctx.sleep(rng.uniform(20, 300))
+                    else:      # fast: as many clicks as fit into `seconds`, capped for fast models
+                        stop = started + seconds * 1000.0
+                        index = 0
+                        while index < max_clicks and ctx.now() < stop:
+                            tab = tabs[index % len(tabs)]
+                            at = ctx.click_at(*rects[tab])
+                            clicks_.append({"tab": tab, "t": round(at, 3)})
+                            index += 1
                     rec["clicks"] = clicks_
-                    gaps = [clicks_[index + 1]["t"] - click["t"] for index, click in enumerate(clicks_)]
+                    if not clicks_:                 # a rep can end before its first click
+                        ctx.records.append(rec)
+                        continue
+                    gaps = [clicks_[index + 1]["t"] - click["t"] for index, click in enumerate(clicks_[:-1])]
                     rec["react_ms"] = reaction_times(timeline, clicks_, lambda index: gaps[index] if index < len(gaps) else 5000.0)
                     end = clicks_[-1]["t"]
+                if not clicks_:                     # a fast rep can end before its first click
+                    ctx.records.append(rec)
+                    continue
                 last = clicks_[-1]["tab"]
                 rec["duration_ms"] = round(end - clicks_[0]["t"], 1)
                 final = timeline.wait(sample("shell", host_settled("cc", last)), end - 1.0, SETTLE_WAIT_MS)
@@ -1012,7 +1028,8 @@ DEFAULTS = {
     "warmup": (warmup, {"rounds": 2}),
     "s4": (s4_island, {"routes": ("key", "click", "ipc"), "delays": (5, 60, 150, 400), "reps": 10, "prior": "", "load": 0}),
     "s2": (s2_settings, {"variants": ("all", "aba", "toast"), "reps": 10, "burst": 6, "gap_ms": 60, "pairs": ""}),
-    "s1": (s1_control, {"variants": ("ordered", "random", "fast"), "reps": 10, "clicks": 12, "seconds": 3.0, "seed": 1}),
+    "s1": (s1_control, {"variants": ("ordered", "random", "fast"), "reps": 10, "clicks": 12, "seconds": 3.0, "seed": 1,
+                        "max_clicks": 400}),
     "s3": (s3_mixed, {"reps": 2, "seed": 1, "load": 0, "dwell": "150-900", "script": "", "workspaces": True}),
 }
 

@@ -273,7 +273,13 @@ def culprit(marks):
 
 
 def frame_gaps(events, since_ms):
-    """Per window: the gaps between two frame swaps, as long as they are frames of an animation."""
+    """Per window: the gaps between two frame swaps, as long as they are frames of an animation.
+
+    A gap is a frame of an animation only up to two refreshes (16.7 ms at 120 Hz): one
+    refresh is a frame, two is one dropped frame, and anything longer between two frame
+    marks is more likely the pause between two animations (the window closed and opened
+    again) than one very late frame — the log cannot tell the two apart, so the criterion
+    counts only what is certainly a frame. Longer gaps are listed as hitches and pauses."""
     per_window = {}
     for event in events:
         if event.kind == "F" and event.epoch >= since_ms:
@@ -282,10 +288,10 @@ def frame_gaps(events, since_ms):
     for window, times in per_window.items():
         times.sort()
         gaps = [b - a for a, b in zip(times, times[1:])]
-        frames = [gap for gap in gaps if gap <= FRAME_HITCH_MS]
+        frames = [gap for gap in gaps if gap <= 2 * FRAME_BUDGET_MS + FRAME_TOLERANCE_MS]
         out[window] = {"frames": len(frames), "frame_ms": stats(frames), "max_ms": round(max(frames), 2) if frames else None,
                        "over_16.6": sum(1 for gap in frames if gap > 2 * FRAME_BUDGET_MS),
-                       "hitches_50_250": sum(1 for gap in gaps if FRAME_HITCH_MS < gap <= 250),
+                       "hitches_50_250": sum(1 for gap in gaps if 2 * FRAME_BUDGET_MS < gap <= 250),
                        "pauses_over_250": sum(1 for gap in gaps if gap > 250)}
     return out
 

@@ -46,17 +46,59 @@ UNITS = ("lme-perf-idle-long", "lme-perf-idle-short")
 # Watchers stop by themselves after a day, so a crashed run cannot leave them behind for good.
 MAX_RUNTIME = "20h"
 
-STAMPER = ("import sys,time\n"
-           "for line in sys.stdin: print('%.3f %s' % (time.time(), line.strip()), flush=True)\n")
+STAMP_MODE = 0o755
+# Written to <dir>/stamp.sh and called by swayidle as `stamp.sh I` / `stamp.sh R`.
+# A real file instead of `python3 -c <code>`: every quoting layer between here and
+# systemd (json, bash -c, ExecStart) ate one escaping level too many, and the stamper
+# ended up receiving a *string literal* that parsed fine and did nothing - the log stayed
+# empty and every quiet gate timed out while the seat was in fact idle.
+STAMP_SH = ('#!/bin/sh\n'
+            '# one line per idle/resume event: "<epoch seconds> I|R"  (written by idlegate.py)\n'
+            'printf \'%s %s\\n\' "$(date +%s.%N)" "$1"\n')
 
 
-def watch_command(seconds: int, log: Path) -> str:
-    # The stamper runs as `python3 -c <code>` inside a systemd ExecStart: the code is
-    # shell-quoted once more (systemd keeps backslash escapes literal), and it uses no
-    # f-string braces that the surrounding shell could touch.
-    return (f'echo "# timeout={seconds} started=$(date +%s.%N)"; '
-            f"exec /usr/bin/swayidle -w timeout {seconds} 'echo I' resume 'echo R' "
-            f"| python3 -c {json.dumps(json.dumps(STAMPER))} >> {json.dumps(str(log))} 2>&1")
+def write_stamp(dir_path: Path) -> Path:
+    stamp = dir_path / "stamp.sh"
+    stamp.write_text(STAMP_SH)
+    stamp.chmod(STAMP_MODE)
+    return stamp
+
+
+def watch_command(seconds: int, log: Path, stamp: Path) -> str:
+    # Plain words only: no pipes, no $(), no backslashes - nothing the systemd ExecStart
+    # serialization could mangle. swayidle runs each command through `sh -c`, so the
+    # quoted single words stay single words. The log header (timeout) is written by
+    # watch() itself, from Python, not through systemd.
+    return (f"exec /usr/bin/swayidle -w timeout {seconds} "
+            f"{json.dumps(str(stamp) + ' I')} resume {json.dumps(str(stamp) + ' R')} "
+            f">> {json.dumps(str(log))} 2>&1")
+
+
+def unit_command(unit: str) -> str:
+    """The ExecStart line systemd actually runs for `unit` ('' when it cannot be read)."""
+    result = subprocess.run(["systemctl", "--user", "show", unit, "-p", "ExecStart", "--value"],
+                            stdout=subprocess.PIPE, text=True)
+    return result.stdout.strip()
+
+
+def start_unit(unit: str, command: str, stamp: Path) -> bool:
+    result = subprocess.run(["systemd-run", "--user", f"--unit={unit}", "--collect", "--quiet",
+                             f"--property=RuntimeMaxSec={MAX_RUNTIME}",
+                             "/bin/bash", "-c", command],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        print(f"IDLEGATE FAILED: cannot start {unit}: {result.stderr.strip()}", file=sys.stderr)
+        return False
+    # Read the command back: a transient unit that does not run what we built (quoting
+    # eaten, wrong path, an older generation still in place) must fail here, not 240 s
+    # later at the gate. systemd re-escapes the argv[] display, so compare on the paths
+    # that must appear, not on the exact bytes.
+    shown = unit_command(unit)
+    for needed in (str(stamp), str(stamp.parents[1]), "swayidle"):
+        if needed not in shown:
+            print(f"IDLEGATE FAILED: {unit} does not run the built command:\n  {shown}", file=sys.stderr)
+            return False
+    return True
 
 
 def running(name: str) -> bool:
@@ -68,20 +110,25 @@ def running(name: str) -> bool:
 def watch(args) -> int:
     base = args.dir
     base.mkdir(parents=True, exist_ok=True)
+    stamp = write_stamp(base)
     for name, seconds in (("long", args.seconds), ("short", SHORT_SECONDS)):
         unit = f"lme-perf-idle-{name}"
+        command = watch_command(seconds, base / f"{name}.log", stamp)
         if running(name):
-            print(f"{name} watcher already running")
-            continue
+            # A watcher of an older generation (before stamp.sh) keeps a seat that is in
+            # fact idle looking busy: its log never grows, and the gate times out.
+            if "stamp.sh" not in unit_command(unit):
+                subprocess.run(["systemctl", "--user", "stop", unit],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                print(f"{name} watcher restarted (old generation, no stamp.sh)")
+            else:
+                print(f"{name} watcher already running")
+                continue
         log = base / f"{name}.log"
         if log.exists():
             log.rename(base / f"{name}.{int(log.stat().st_mtime)}.log")
-        result = subprocess.run(["systemd-run", "--user", f"--unit={unit}", "--collect", "--quiet",
-                                 f"--property=RuntimeMaxSec={MAX_RUNTIME}",
-                                 "/bin/bash", "-c", watch_command(seconds, log)],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.returncode != 0:
-            print(f"IDLEGATE FAILED: cannot start the {name} watcher: {result.stderr.strip()}", file=sys.stderr)
+        log.write_text(f"# timeout={seconds} started={time.time():.9f}\n")
+        if not start_unit(unit, command, stamp):
             return 1
         print(f"{name} watcher started ({unit}, timeout {seconds}s, log {log})")
     return 0

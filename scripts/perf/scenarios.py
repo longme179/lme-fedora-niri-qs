@@ -467,27 +467,15 @@ class Ctx:
             # Prove the box with the first nav entry before anything is clicked.
             self.note(f"calibrate {rect['x']},{rect['y']}")
             self.move(self.box[0] + rect["x"], self.box[1] + rect["y"])
-            time.sleep(0.08)
+            time.sleep(0.12)
             pointer = (self.ask("settings") or {}).get("pointer")
-            self.meta["settings_pointer"] = pointer
+            self.meta["settings_pointer_nav"] = pointer
             if not (pointer and pointer[2]):
                 # The window does not see the pointer where we placed it: clicking
                 # anything now would go to whatever is really there (a window of the
                 # owner). No blind clicking - the run stops with the evidence attached.
                 raise Skip("the Settings window does not see the pointer at its computed "
                            f"position (pointer={pointer}, box={self.box}, niri says {info})")
-            shift = [rect["x"] - pointer[0], rect["y"] - pointer[1]]
-            self.meta["settings_offset"] = [round(shift[0], 1), round(shift[1], 1)]
-            if abs(shift[0]) > 2 or abs(shift[1]) > 2:
-                self.box = [self.box[0] + shift[0], self.box[1] + shift[1]]
-                # Prove the corrected box before anything is clicked through it.
-                self.move(self.box[0] + rect["x"], self.box[1] + rect["y"])
-                time.sleep(0.08)
-                pointer = (self.ask("settings") or {}).get("pointer")
-                self.meta["settings_pointer_after_shift"] = pointer
-                if not (pointer and pointer[2]):
-                    raise Skip("the corrected Settings box still does not see the pointer "
-                               f"(pointer={pointer}, box={self.box})")
 
     def settings_ready(self, timeout_ms):
         """The Settings process answers its probe and its window is located. False at the timeout."""

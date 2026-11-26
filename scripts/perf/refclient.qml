@@ -11,6 +11,7 @@
 import QtQuick
 import QtQuick.Window
 import Quickshell
+import Quickshell.Wayland
 
 ShellRoot {
     id: root
@@ -30,7 +31,8 @@ ShellRoot {
         anchors { bottom: true; right: true }
         implicitWidth: 132
         implicitHeight: 40
-        exclusiveZone: ExclusionMode.Ignore
+        exclusionMode: ExclusionMode.Ignore
+        exclusiveZone: 0
         color: "transparent"
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "lme-perf-ref"

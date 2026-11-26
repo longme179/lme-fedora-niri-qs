@@ -26,6 +26,7 @@ ShellRoot {
     }
 
     Process {
+        running: true
         command: ["find", root.tree, "-name", "*.qml", "-not", "-path", "*/.git/*"]
         stdout: SplitParser { onRead: data => root.check(data) }
         onExited: root.settle.restart()

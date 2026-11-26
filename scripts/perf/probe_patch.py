@@ -303,15 +303,16 @@ edit("qml/settings/SettingsView.qml",
 edit("qml/settings/SettingsView.qml",
      "    property int framesRendered: 0\n",
      "    property int framesRendered: 0\n"
-     '    Component.onCompleted: { Probe.settings = this; Probe.watchWindow("settings", hostWindow) }\n'
+     '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = this; '
+     'Probe.watchWindow("settings", hostWindow) }\n'
      "    function searchText() { return search.text }\n")
 edit("qml/settings/SettingsApplication.qml",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n" + ipc_handler())
-line("qml/settings/SettingsView.qml", "HoverHandler { id: pointerWatch }", after=[
-    "Component.onCompleted: Probe.settingsHover = this"], note="Settings window pointer position (aiming real clicks)")
+# One Component.onCompleted per object root: the pointer watch joins the existing registration
+# (a second handler on the same root is a parse error that takes the whole Settings app down).
 line("qml/settings/SettingsView.qml", "id: pageLoader", after=['probeName: "settings"'], note="name the Settings page host")
 # The Settings window is a separate process: the shell never sets settingsOpen. What the user
 # sees is the window, so its coming and going are marked where they happen, and the close

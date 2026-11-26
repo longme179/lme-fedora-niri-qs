@@ -423,11 +423,6 @@ class Ctx:
         if not self.box:
             return None
         rect = self.probe.rect(f"perfNav_{key}")
-        if rect.get("found") and rect.get("shown") and 0 <= rect["y"] <= self.box_size[1] \
-                and 0 <= rect["x"] <= self.box_size[0]:
-            return self.box[0] + rect["x"], self.box[1] + rect["y"]
-        if not scroll_for:
-            return None
 
         def visible(entry):
             return (entry.get("found") and entry.get("shown")
@@ -437,14 +432,21 @@ class Ctx:
             """The entry's point once its rect stops moving. A press on a delegate that is
             still gliding ends outside it, and Quickshell hands the scene a flick, not a
             click - the page never navigates and the detector sees react=None."""
-            for _ in range(10):
-                time.sleep(0.12)
+            for _ in range(12):
+                time.sleep(0.15)
                 again = self.probe.rect(f"perfNav_{key}")
                 if not visible(again):
                     return None
                 if again.get("x") == entry.get("x") and again.get("y") == entry.get("y"):
                     return self.box[0] + entry["x"], self.box[1] + entry["y"]
                 entry = again
+            return None
+
+        # The no-scroll path must settle too: the previous page's scroll can still be
+        # gliding when this page is clicked (this path used to read the rect only once).
+        if visible(rect):
+            return settled_point(rect)
+        if not scroll_for:
             return None
 
         # Scroll in steps towards the entry, in whichever direction it lies: compare the
@@ -455,7 +457,7 @@ class Ctx:
         for _ in range(14):
             # The list's own y tells the direction: entries above the viewport scroll up.
             self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2))
-            self.sleep(90)
+            self.sleep(120)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):
                 return settled_point(rect)
@@ -465,7 +467,7 @@ class Ctx:
         last_y = None
         for _ in range(14):
             self.shot(self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2))
-            self.sleep(90)
+            self.sleep(120)
             rect = self.probe.rect(f"perfNav_{key}")
             if visible(rect):
                 return settled_point(rect)

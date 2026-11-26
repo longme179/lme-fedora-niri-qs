@@ -46,8 +46,8 @@ ShellRoot {
 
     function finish() {
         for (let i = 0; i < failures.length; i++)
-            console.log("PREFLIGHT ERROR " + failures[i])
-        console.log((failures.length ? "PREFLIGHT ERROR " : "PREFLIGHT OK ") + total + " files")
+            console.warn("PREFLIGHT ERROR " + failures[i])
+        console.warn((failures.length ? "PREFLIGHT ERROR " : "PREFLIGHT OK ") + total + " files")
         Qt.quit()
     }
 }

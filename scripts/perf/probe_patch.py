@@ -294,10 +294,18 @@ edit_any("shell.qml", [
      "baseline (pre-fix) panel-open focus"),
     ("                    function onPanelOpenChanged() {\n"
      "                        if (ShellState.panelOpen) {\n"
+     "                            // The panel stage is hidden while the activity island is the\n"
+     "                            // open surface (shown: panelOpen && !activityOpen). Focusing a\n"
+     "                            // hidden item clears the window's activeFocusItem, so no Keys\n"
+     "                            // handler sees Escape any more and the island stops closing.\n"
      "                            if (panelLoader.item && !ShellState.activityOpen) (panelLoader.item as Item).forceActiveFocus();\n",
      "                    function onPanelOpenChanged() {\n"
      "                        Probe.mark(\"shell.panelOpen\" + \" state=\" + ShellState.panelOpen + \" activity=\" + ShellState.activityOpen + \" kind=\" + ShellState.panelKind + \" stage=\" + (panelLoader.item ? \"retained\" : \"none\"));\n"
      "                        if (ShellState.panelOpen) {\n"
+     "                            // The panel stage is hidden while the activity island is the\n"
+     "                            // open surface (shown: panelOpen && !activityOpen). Focusing a\n"
+     "                            // hidden item clears the window's activeFocusItem, so no Keys\n"
+     "                            // handler sees Escape any more and the island stops closing.\n"
      "                            if (panelLoader.item && !ShellState.activityOpen) (panelLoader.item as Item).forceActiveFocus();\n"
      "                            Qt.callLater(() => Probe.mark(\"shell.focusAfterOpen \" + Probe.focusOf(\"overlay\")));\n",
      "branch (post-fix) panel-open focus"),

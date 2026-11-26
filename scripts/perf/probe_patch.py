@@ -38,6 +38,18 @@ class Edit:
 
 
 @dataclass
+class EditAny:
+    """One edit with alternative anchors: the first whose `old` occurs exactly `count`
+    times wins. Used where the product itself changed shape between the baseline tree
+    (pre-fix) and the branch tree (post-fix): the probe must instrument both, and a
+    drifted anchor must still fail loudly when none of the variants matches."""
+    path: str
+    variants: list            # [(old, new, note), ...]
+    count: int = 1
+    note: str = ""
+
+
+@dataclass
 class LineEdit:
     """Edit one line: the needle must occur on exactly `count` lines."""
     path: str
@@ -54,6 +66,10 @@ LINE_EDITS = []
 
 def edit(path, old, new, count=1, note=""):
     EDITS.append(Edit(path, old, new, count, note))
+
+
+def edit_any(path, variants, count=1, note=""):
+    EDITS.append(EditAny(path, variants, count, note))
 
 
 def line(path, needle, old_sub="", new_sub="", after=None, note=""):
@@ -264,15 +280,28 @@ edit("shell.qml",
      "            Connections { target: probeWindow; function onFrameSwapped() { Probe.frame(\"overlay\") } }\n"
      "            ActivityIsland {\n"
      "                id: activityIsland; z: 2\n")
-edit("shell.qml",
-     "                    function onPanelOpenChanged() {\n"
+# shell.qml: the panel-open focus line has two shapes - the baseline (main, pre-fix) and
+# the branch (post-fix). Both trees must be instrumentable: A-side and B-side of an A/B.
+edit_any("shell.qml", [
+    ("                    function onPanelOpenChanged() {\n"
      "                        if (ShellState.panelOpen) {\n"
      "                            if (panelLoader.item) (panelLoader.item as Item).forceActiveFocus();\n",
      "                    function onPanelOpenChanged() {\n"
      "                        Probe.mark(\"shell.panelOpen\" + \" state=\" + ShellState.panelOpen + \" activity=\" + ShellState.activityOpen + \" kind=\" + ShellState.panelKind + \" stage=\" + (panelLoader.item ? \"retained\" : \"none\"));\n"
      "                        if (ShellState.panelOpen) {\n"
      "                            if (panelLoader.item) (panelLoader.item as Item).forceActiveFocus();\n"
-     "                            Qt.callLater(() => Probe.mark(\"shell.focusAfterOpen \" + Probe.focusOf(\"overlay\")));\n")
+     "                            Qt.callLater(() => Probe.mark(\"shell.focusAfterOpen \" + Probe.focusOf(\"overlay\")));\n",
+     "baseline (pre-fix) panel-open focus"),
+    ("                    function onPanelOpenChanged() {\n"
+     "                        if (ShellState.panelOpen) {\n"
+     "                            if (panelLoader.item && !ShellState.activityOpen) (panelLoader.item as Item).forceActiveFocus();\n",
+     "                    function onPanelOpenChanged() {\n"
+     "                        Probe.mark(\"shell.panelOpen\" + \" state=\" + ShellState.panelOpen + \" activity=\" + ShellState.activityOpen + \" kind=\" + ShellState.panelKind + \" stage=\" + (panelLoader.item ? \"retained\" : \"none\"));\n"
+     "                        if (ShellState.panelOpen) {\n"
+     "                            if (panelLoader.item && !ShellState.activityOpen) (panelLoader.item as Item).forceActiveFocus();\n"
+     "                            Qt.callLater(() => Probe.mark(\"shell.focusAfterOpen \" + Probe.focusOf(\"overlay\")));\n",
+     "branch (post-fix) panel-open focus"),
+], note="panel-open focus + marks")
 
 # ---- Settings --------------------------------------------------------------------
 edit("qml/settings/SettingsView.qml",
@@ -364,6 +393,20 @@ def apply(tree: Path, check_only: bool) -> list:
     if already and not check_only:
         sys.exit("PROBE PATCH REFUSED: the tree already carries probe code (patch a pristine copy)")
     for e in ALL:
+        if isinstance(e, EditAny):
+            if check_only:
+                # A checked tree carries one of the substituted variants.
+                if not any(files[e.path].count(new) == e.count for _, new, _ in e.variants):
+                    sys.exit(f"PROBE PATCH CHECK FAILED: {e.path}: no applied variant found ({e.note})")
+                continue
+            for old, new, note in e.variants:
+                if files[e.path].count(old) == e.count:
+                    files[e.path] = files[e.path].replace(old, new)
+                    break
+            else:
+                shapes = "; ".join(f"{note}: {old.count('forceActiveFocus') and 'focus line' or '?'}" for old, _, note in e.variants)
+                sys.exit(f"PROBE PATCH: {e.path}: no variant anchor matched ({e.note}; tried {shapes})")
+            continue
         if isinstance(e, Edit):
             if check_only:
                 if files[e.path].count(e.new) != e.count:

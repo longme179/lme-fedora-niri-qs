@@ -210,7 +210,11 @@ ShellRoot {
                     function onPanelSwapChanged() { activityIsland.snapOut(); panelLoader.snapOut(); }
                     function onPanelOpenChanged() {
                         if (ShellState.panelOpen) {
-                            if (panelLoader.item) (panelLoader.item as Item).forceActiveFocus();
+                            // The panel stage is hidden while the activity island is the
+                            // open surface (shown: panelOpen && !activityOpen). Focusing a
+                            // hidden item clears the window's activeFocusItem, so no Keys
+                            // handler sees Escape any more and the island stops closing.
+                            if (panelLoader.item && !ShellState.activityOpen) (panelLoader.item as Item).forceActiveFocus();
                             if (panelLoader.warmupActive) panelLoader.finishControlWarmup();
                             if (activityIsland.warmupActive) activityIsland.finishControlWarmup();
                         } else {

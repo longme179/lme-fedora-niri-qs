@@ -579,7 +579,13 @@ def island_cycle(ctx, rep, route, delay, prior, cold=False):
         rec["exclusive"] = ctx.holds_keyboard()
         if cold or rec["exclusive"] is not None:
             ctx.meta["island_keyboard"] = rec["exclusive"]
-    if rec.get("exclusive") is False or (delay < 300 and not ctx.meta.get("island_keyboard_early")):
+    if delay < 300 and not cold:
+        # Measure at the actual moment of the press, every cycle: the cold-cycle answer
+        # says nothing about a keyboard grant that races a previous panel's close
+        # animation, and a missing meta must never stand in for a measurement.
+        ctx.sleep(base + delay - ctx.now())
+        rec["exclusive"] = ctx.holds_keyboard()
+    if rec.get("exclusive") is False:
         # The keyboard is not on the shell: an Escape now would go to whichever window of the
         # owner has the focus. It is not pressed, and that is the finding of the cycle.
         rec["class"] = "no_keyboard_focus"

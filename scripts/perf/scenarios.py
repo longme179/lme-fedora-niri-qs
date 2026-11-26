@@ -35,6 +35,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import idlegate  # noqa: E402  (sibling module of the harness)
 from probe import ProbeError  # noqa: E402
+import eyes  # noqa: E402  (screenshot eyes; off unless ctx.eyes is set)
 
 SHORT_LOG = idlegate.DEFAULT_DIR / "short.log"
 TAILS = ("shell", "settings", "shelllog", "settingslog")
@@ -213,6 +214,7 @@ class Ctx:
         self.width, self.height = width, height
         self.load = Load()
         self.box = None             # top-left of the Settings window on the output
+        self.eyes = None            # eyes.Eyes when a run wants a screenshot per click
         self.box_size = (0, 0)
 
     @staticmethod
@@ -245,7 +247,13 @@ class Ctx:
         return self.shot(self.inj.move(x, y))
 
     def click_at(self, x, y):
-        return self.shot(self.inj.click_at(x, y))
+        at = self.shot(self.inj.click_at(x, y))
+        if self.eyes is not None:
+            try:
+                self.eyes.look((x, y), tag=f"click-{x:.0f}-{y:.0f}")
+            except Exception:  # noqa: BLE001  (the eyes never fail a run)
+                pass
+        return at
 
     def sleep(self, ms):
         if ms > 0:

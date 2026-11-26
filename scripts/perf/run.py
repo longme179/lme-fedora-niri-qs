@@ -43,6 +43,7 @@ import analyze  # noqa: E402  (sibling modules of the harness)
 import idlegate  # noqa: E402
 import inject  # noqa: E402
 import scenarios  # noqa: E402
+import eyes  # noqa: E402  (screenshot eyes, active only with --eyes)
 import standin  # noqa: E402
 from probe import QS, Probe  # noqa: E402
 
@@ -270,6 +271,8 @@ def live(args) -> int:
                                    stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.DEVNULL)
         ctx = scenarios.Ctx(inj, probe, deadline_ms=time.time() * 1000.0 + args.budget * 1000.0,
                             width=screen["width"], height=screen["height"])
+        if args.eyes:
+            ctx.eyes = eyes.Eyes(out, screen["width"], screen["height"])
         ctx.meta.update(screen=screen, pid=pid, units=sorted({entry["unit"] for entry in entries}),
                         settings_tree=str(tree), ping_ms=round(probe.ping(), 2))
         say(f"stand-in pid {pid}; output {screen['name']} {screen['width']}x{screen['height']} "
@@ -290,6 +293,8 @@ def live(args) -> int:
             say(failure)
         if ctx is not None:
             ctx.meta["ended"] = failure or "finished"
+            if ctx.eyes is not None:
+                ctx.meta["eyes"] = len(ctx.eyes.dump())
             ctx.meta["warmup_end_ms"] = scenarios.warmup_end(ctx) or ctx.now()
             scenarios.dump(ctx, out / "records.json")
         workspace_after = probe.focused_workspace() if probe is not None else {}
@@ -429,6 +434,7 @@ def main() -> int:
     ap.add_argument("--max-wait", type=int, default=240, help="longest wait for a quiet seat, seconds")
     ap.add_argument("--settle-ms", type=int, default=600, help="wait after the injector created its devices")
     ap.add_argument("--no-notice", action="store_true", help="no desktop notification at the swap")
+    ap.add_argument("--eyes", action="store_true", help="screenshot the screen around every click (eyes/ under the run dir)")
     ap.add_argument("--dry-run", action="store_true", help="checks, preflight, standin.py swap --dry-run: no swap")
     ap.add_argument("--simulate", action="store_true", help="run against sim.py instead of the desktop")
     ap.add_argument("--faults", action="append", default=[], metavar="TAG:NAME@N,KEY=V", help="simulated: a fault of sim.py")

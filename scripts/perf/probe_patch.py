@@ -340,9 +340,10 @@ edit("qml/settings/SettingsView.qml",
 edit("qml/settings/SettingsView.qml",
      "    property int framesRendered: 0\n",
      "    property int framesRendered: 0\n"
-     '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = this; '
+     '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = pointerWatch; '
      'Probe.watchWindow("settings", hostWindow) }\n'
-     "    function searchText() { return search.text }\n")
+     "    function searchText() { return search.text }\n"
+     '    function probePages() { return (FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages).map(p => p.key) }\n')
 edit("qml/settings/SettingsApplication.qml",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n",

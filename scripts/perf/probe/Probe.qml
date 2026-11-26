@@ -164,7 +164,7 @@ QtObject {
         } catch (error) { o.ccError = "" + error; }
         try {
             if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0,
-                toastText: s.statusMessage, pages: SettingsRegistry.pages.map(p => p.key)};
+                pages: settings.probePages ? settings.probePages() : []};
         } catch (error) { o.settingsError = "" + error; }
         // Window-relative, and only while the pointer is over the window that reports it.
         try {

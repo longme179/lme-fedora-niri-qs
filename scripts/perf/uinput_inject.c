@@ -169,10 +169,12 @@ static int setup_ptr(void) {
     ioctl(fd, UI_SET_EVBIT, EV_SYN);
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
+    ioctl(fd, UI_SET_EVBIT, EV_REL);      // the wheel: REL_WHEEL clicks (see "wheel")
     ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
     ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT);
     ioctl(fd, UI_SET_ABSBIT, ABS_X);
     ioctl(fd, UI_SET_ABSBIT, ABS_Y);
+    ioctl(fd, UI_SET_RELBIT, REL_WHEEL);
     ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_POINTER);
     return create_device_on(fd, "LME Perf Harness Pointer", 2, ABS_RANGE);
 }
@@ -293,6 +295,18 @@ static int handle_line(char *original) {
             emit(ptr_fd, EV_KEY, (__u16)code, 1); btn_down[code] = true; flush();
             msleep(ms);
             emit(ptr_fd, EV_KEY, (__u16)code, 0); btn_down[code] = false; flush();
+        }
+    } else if (!strcmp(cmd, "wheel")) {
+        // A notch of the wheel: REL_WHEEL with a click count (positive = up, away from
+        // the user). Sent on the pointer device, like a real mouse wheel.
+        char *deltas = strtok_r(NULL, " \t", &save);
+        if (!deltas) bad = 1;
+        else {
+            long steps = atol(deltas);
+            if (steps < -20 || steps > 20) bad = 1;
+            else {
+                emit(ptr_fd, EV_REL, REL_WHEEL, (__s32)steps); flush();
+            }
         }
     } else if (!strcmp(cmd, "sleep")) {
         char *ms = strtok_r(NULL, " \t", &save);

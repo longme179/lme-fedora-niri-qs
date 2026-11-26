@@ -215,6 +215,14 @@ class Injector:
     def click(self, button="left", hold=None):
         return self.send(f"click {button}" + (f" {int(hold)}" if hold is not None else ""))[0]
 
+    def wheel(self, steps):
+        """Wheel notches: positive scrolls up (away from the user), negative down."""
+        return self.send(f"wheel {int(steps)}")[0]
+
+    def wheel_at(self, x, y, steps):
+        """Pointer to (x, y) and scroll, in one write so nothing slips in between."""
+        return self.send(f"move {int(round(x))} {int(round(y))}", f"wheel {int(steps)}")[1]
+
     def click_at(self, x, y, button="left", hold=None):
         """Pointer to (x, y) and click, written in one go so no other event can slip in between."""
         return self.send(f"move {int(round(x))} {int(round(y))}", f"click {button}" + (f" {int(hold)}" if hold is not None else ""))[1]

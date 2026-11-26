@@ -413,16 +413,50 @@ class Ctx:
             return None
         return rect["x"], rect["y"]
 
-    def nav_point(self, key):
-        """Output coordinates of a Settings nav entry; it has to lie inside the window."""
+    def nav_point(self, key, scroll_for=True):
+        """Output coordinates of a Settings nav entry; it has to lie inside the window.
+
+        An entry outside the visible part of the sidebar is scrolled into view first
+        (wheel notches over the sidebar): 18 entries do not fit the 780 px of the
+        floating window. The rect is read again after the scroll, so what is returned
+        is where the entry really is now."""
         if not self.box:
             return None
         rect = self.probe.rect(f"perfNav_{key}")
-        if not rect.get("found") or not rect.get("shown"):
+        if rect.get("found") and rect.get("shown") and 0 <= rect["y"] <= self.box_size[1] \
+                and 0 <= rect["x"] <= self.box_size[0]:
+            return self.box[0] + rect["x"], self.box[1] + rect["y"]
+        if not scroll_for:
             return None
-        if not (0 <= rect["x"] <= self.box_size[0] and 0 <= rect["y"] <= self.box_size[1]):
-            return None
-        return self.box[0] + rect["x"], self.box[1] + rect["y"]
+
+        def visible(entry):
+            return (entry.get("found") and entry.get("shown")
+                    and 0 <= entry["y"] <= self.box_size[1] and 0 <= entry["x"] <= self.box_size[0])
+
+        # Scroll in steps towards the entry, in whichever direction it lies: compare the
+        # rect before and after a notch - when the list stops moving the end is reached.
+        last_y = rect.get("y")
+        for _ in range(14):
+            # The list's own y tells the direction: entries above the viewport scroll up.
+            self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, 2)
+            self.sleep(90)
+            rect = self.probe.rect(f"perfNav_{key}")
+            if visible(rect):
+                return self.box[0] + rect["x"], self.box[1] + rect["y"]
+            if rect.get("y") == last_y:
+                break
+            last_y = rect.get("y")
+        last_y = None
+        for _ in range(14):
+            self.inj.wheel_at(self.box[0] + 60, self.box[1] + self.box_size[1] / 2, -2)
+            self.sleep(90)
+            rect = self.probe.rect(f"perfNav_{key}")
+            if visible(rect):
+                return self.box[0] + rect["x"], self.box[1] + rect["y"]
+            if rect.get("y") == last_y:
+                break
+            last_y = rect.get("y")
+        return None
 
     def focus_settings(self):
         """Give the Settings window the keyboard by clicking the entry of the page it already shows."""

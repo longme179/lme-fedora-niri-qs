@@ -1,13 +1,41 @@
-# perf/responsive-v2 — STATUS (hand-off, 2026-11-27 rạng sáng, phiên 3)
+# perf/responsive-v2 — STATUS (hand-off, 2026-11-27 ~02:50, phiên 4)
 
-Tiếng Việt (tóm tắt): phiên 3 — Phase D xong (fix S4 khớp thực hành của dux-shell/DMS
-và caelestia, có dẫn chứng), injector có lệnh `wheel` + nav scroll cho S2, calibration
-grid-sweep: **rep 0 đủ click cả 18 trang (unreachable=0)**. Nhưng user active liên tục
-00:33-01:02 (mỗi ~20 s một event) → mọi run live dài đều bị abort đúng luật "input of the
-owner". Đã đặt cron 05:30 (job 550738) tự chạy tiếp khi máy idle. Còn: S2 A/B đầy đủ,
-S1, S3, PR.
+Tiếng Việt (tóm tắt): phiên 4 (user xác nhận KHÔNG chạm máy → 3 abort "input of the
+owner" tối sớm đều là GIẢ). Đã sửa 4 bug harness S2 rồi đo trọn vẹn trên p-head:
+**ok 11-13/18 ổn định qua 8 reps, và các click "nuốt" là hành vi THẬT của shell**
+(delegate w=182 h=50 đầy đủ, rect đứng yên, click tâm chuẩn, retry click cũng bị
+nuốt). Còn: S2 A-side (p-main), S1, S3, PR. Máy sạch, shell deployed chạy lại bình
+thường sau mọi run (restore OK).
 
-## Nhánh `origin/perf/responsive-v2` = `1d0c2d6`
+## Nhánh `origin/perf/responsive-v2` = `fffc66a`
+
+Fix harness phiên 4 (lần lượt theo chẩn đoán):
+- `3931e6b` — **wheel không qua shot()** → idle watcher đọc wheel là input của user
+  → 3 abort giả 00:33/00:48/00:58. Mọi notch giờ được ghi là injection của harness.
+- `e9bc079` — click vào delegate khi list còn trôi = flick (press/release khác item);
+  settled_point áp cho MỌI đường (kể cả không cần scroll).
+- `1cfc93c` — visible() yêu cầu CẢ delegate trong fold (tâm trong window nhưng nửa
+  ngoài viewport bị Flickable clip → click xuyên xuống nền); coast <0.5px coi như
+  dừng; hướng scroll đầu theo phía entry (dưới fold → wheel âm).
+- `fffc66a` — dead-beat 250ms sau coast; trace w/h; **retry click có cờ** khi
+  navigate mark không đến trong 400ms.
+
+## Kết quả S2 B-side (p-head, nhánh có fix S4) — đêm 20261127
+
+| run | kết quả |
+|---|---|
+| s2-full5-b (3 reps) | unreachable=0; ok 10-11/18; settle median 545ms (lần build đầu mỗi trang) |
+| s2-full6-b (6 reps) | ok 10/18 (rep0) → 12/18 (rep1-5); fails lặp: 3 trang đầu + keybinds/equalizer/behavior |
+| s2-diag2/3/4-b | nav_trace: rect delegate ổn định (w=182 h=50), click tâm chính xác; **click retry sau 0.8s cũng bị nuốt** → không phải coast/clip của harness |
+
+**Kết luận S2 B-side (đủ tin cậy để vào báo cáo):** p-head nuốt ~5-7/18 click sidebar
+lần đầu (chỉ số `retry_after_ms` trong records); khi navigate xảy ra, click→navigate
+nhanh (phiên 2: 21,7ms median, settle 21,4ms warm). Các trang bị nuốt thay đổi vị trí
+giữa các rep → không phải page-specific mà là **trạng thái đèn xanh/đỏ theo transition
+của PageHost** (ghi nhận `leaving:1, opacity:0.45` lúc click `elements` fail).
+**Cần A-side (p-main) để biết đây là regression của nhánh fix hay đã có từ main.**
+
+Dữ liệu stall phong phú: mỗi run 22-34 stack samples (QQmlIncubator + QQSGThreadedRenderLoop).
 
 Fix sản phẩm: `33b204d` (S4). Harness phiên 3: `33c687c` (wheel trên injector +
 nav_point scroll 2 chiều vào view), `1d0c2d6` (grid sweep 5×5 khi cửa sổ Settings

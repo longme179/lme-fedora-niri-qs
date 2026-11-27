@@ -962,16 +962,30 @@ def settings_burst(ctx, rec, sequence, gap_ms):
         replies = ctx.inj.send(*commands)
         stamps = [ctx.shot(replies[index]) for index in range(1, len(replies), 2)]
     else:
+        moved_during = {}
         for key in sequence:
             if aimed:
-                # No look of the eyes in here: a capture costs more than the gap.
-                stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))
+                # One rect read before the press: the aimed-once position goes stale while
+                # the burst runs (live 2026-11-27: click 2 landed on the search field while
+                # the after-burst read saw the entry back within 4 px). An entry that moved
+                # is re-aimed; a click then presses where the entry really is.
+                offset = ctx.nav_offset({key: (aimed[key][0] - ctx.box[0], aimed[key][1] - ctx.box[1])})
+                moved = offset.get(key)
+                moved_during[key] = moved
+                if moved is None or moved >= 1.5:
+                    point = ctx.nav_point(key)
+                    if point is None:
+                        raise Skip(f"perfNav_{key} is not inside the Settings window")
+                    stamps.append(ctx.click_at(*point))
+                else:
+                    stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))
             else:
                 point = ctx.nav_point(key)
                 if point is None:
                     raise Skip(f"perfNav_{key} is not inside the Settings window")
                 stamps.append(ctx.click_at(*point))
             ctx.sleep(gap_ms)
+        rec.setdefault("aim", {})["moved_during"] = moved_during if aimed else {}
     rec["clicks"] = [[key, round(stamp, 3)] for key, stamp in zip(sequence, stamps)]
     rec["react_ms"] = [latency(timeline, at, navigate_mark(key), 5000) for key, at in zip(sequence, stamps)]
     rec["first_frame_ms"] = latency(timeline, stamps[0], frame("settings"), 400)
@@ -983,7 +997,8 @@ def settings_burst(ctx, rec, sequence, gap_ms):
     # Were the entries still where the clicks went? Read after the last click, never in between.
     after = ctx.nav_offset(points) if aimed else {}
     rec["aim"] = {"how": how, "moved_after": after,
-                  "moved": any(value is None or value >= 0.5 for value in after.values())}
+                  "moved": any(value is None or value >= 0.5 for value in after.values()),
+                  "moved_during": rec.pop("moved_during_pending", {})}
     for key, point in (aimed or {}).items():
         ctx.look(point, f"burst-{key}", f"aimed once; {after.get(key)} px from the entry after the burst")
     ctx.park()

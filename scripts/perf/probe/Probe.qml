@@ -154,10 +154,20 @@ QtObject {
             for (let clipper = item.parent; clipper; clipper = clipper.parent) {
                 if (!clipper.clip) continue;
                 try {
-                    const local = clipper.mapFromScene(point);
-                    if (local.x < item.width / 2 || local.y < item.height / 2
-                        || local.x > clipper.width - item.width / 2
-                        || local.y > clipper.height - item.height / 2) {
+                    // mapFromScene/mapFromItem are not callable on many Quick types
+                    // since 6.7 (the metaobject lists them, calling throws). The shell's
+                    // clipped trees carry no transforms, so plain x/y addition reaches
+                    // the clipper's viewport: a Flickable's contentItem sits at
+                    // (-contentX, -contentY) inside it, which the sum picks up by itself.
+                    let cx = item.width / 2, cy = item.height / 2, walk = item;
+                    while (walk && walk !== clipper) {
+                        cx += walk.x || 0; cy += walk.y || 0;
+                        walk = walk.parent;
+                    }
+                    if (walk !== clipper) continue;   // the clipper is not an ancestor
+                    if (cx < item.width / 2 || cy < item.height / 2
+                        || cx > clipper.width - item.width / 2
+                        || cy > clipper.height - item.height / 2) {
                         shown = false;
                         break;
                     }

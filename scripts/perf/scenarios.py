@@ -976,6 +976,10 @@ def settings_burst(ctx, rec, sequence, gap_ms):
                     point = ctx.nav_point(key)
                     if point is None:
                         raise Skip(f"perfNav_{key} is not inside the Settings window")
+                    # nav_point settles on two identical reads, but a Flickable easing
+                    # its last notch still eats a press that comes right after (live:
+                    # 3 of 4 burst presses lost; the eyes run's slower pacing lost 0).
+                    ctx.sleep(400)
                     stamps.append(ctx.click_at(*point))
                 else:
                     stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))

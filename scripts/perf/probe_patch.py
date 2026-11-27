@@ -350,6 +350,10 @@ edit("qml/settings/SettingsView.qml",
 
      '    function probeNavY() { return Math.round((navigationScroll ? navigationScroll.contentY : -1) * 10) / 10 }\n'
      '    function probeNavShown() { const out = {}; for (const k in Probe.nav) { const it = Probe.nav[k]; out[k] = !!(it && it.visible && it.width > 0); } return out }\n')
+edit("qml/settings/WallpaperPage.qml",
+     "            LiquidButton { text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa",
+     '            LiquidButton { objectName: "perfScanButton"; text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa')
+
 edit("qml/settings/SettingsApplication.qml",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n",

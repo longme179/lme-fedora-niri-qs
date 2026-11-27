@@ -1075,13 +1075,22 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                     rec["stalls"] = ctx.stalls(reached[0]["t"], ctx.now()) if reached else []
                 else:
                     if variant == "toast" and "wallpaper" in names and names.get("about"):
+                        # The wallpaper toast is the completion of a wallpaperScan run.
+                        # A warm Settings process has already initialized the page, so the
+                        # scan no longer reruns on a plain visit: the Scan button of the
+                        # wallpaper page is how a user brings the toast up, and the burst
+                        # then measures switching while that toast is still shown.
                         point = ctx.nav_point(names["wallpaper"])
                         if point is not None:
                             at = ctx.click_at(*point)
-                            hit = timeline.wait(sample("settings", lambda d: TOAST_TEXT in (d.get("settings") or {}).get("toastText", "")),
-                                                at - 1.0, 30000)
-                            rec["toast_seen"] = hit is not None
-                            rec["toast_ms"] = round(hit.epoch - at, 2) if hit else None
+                            timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
+                            scan = ctx.item_point("perfScanButton")
+                            if scan is not None:
+                                at = ctx.click_at(*scan)
+                                hit = timeline.wait(sample("settings", lambda d: TOAST_TEXT in (d.get("settings") or {}).get("toastText", "")),
+                                                    at - 1.0, 30000)
+                                rec["toast_seen"] = hit is not None
+                                rec["toast_ms"] = round(hit.epoch - at, 2) if hit else None
                         pair = (names["wallpaper"], names["about"])
                     settings_burst(ctx, rec, [pair[index % 2] for index in range(burst)], gap_ms)
                 rec["ping_ms"] = ctx.ping()

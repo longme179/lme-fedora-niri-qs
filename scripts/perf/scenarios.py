@@ -1099,6 +1099,20 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                                 ctx.shot(ctx.inj.wheel_at(ctx.box[0] + ctx.box_size[0] - 120,
                                                           ctx.box[1] + ctx.box_size[1] / 2, -2))
                                 ctx.sleep(120)
+                            if scan is not None:
+                                # The page Flickable eases like the sidebar's: a press
+                                # right after the last notch gets eaten (live: the
+                                # closing burst click lost). Wait for the button's rect
+                                # to stop moving, then a small tail.
+                                last = None
+                                for _ in range(20):
+                                    again = ctx.probe.rect("perfWallpaperScan")
+                                    y = round(again.get("y") or -1, 1)
+                                    if y == last:
+                                        break
+                                    last = y
+                                    ctx.sleep(100)
+                                ctx.sleep(150)
                             rec["toast_stage"] = "scan_aim" if scan else "scan_none"
                             if scan is not None:
                                 at = ctx.click_at(*scan)

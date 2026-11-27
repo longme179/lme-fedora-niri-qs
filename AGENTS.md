@@ -84,12 +84,6 @@ needed; keep new code in its own files where practical. No tree reorganization.
   responsible commit rather than fixing forward. Never call skips/failures passed.
 - Never touch real niri/Quickshell config or the running session. Use disposable
   XDG/Sway/D-Bus. Hardware-only checks must say "needs real-session check".
-  TEMPORARY EXCEPTION (branch perf/responsive-v2, 2026-11-26, owner-approved; remove
-  again before merge): scripts/perf/ may run its instrumented stand-in shell in the
-  owner's real session. Only while the owner is idle, only after `lock status` answers
-  "unlocked", and it must leave the deployed shell, the `~/.config/quickshell/lme-shell`
-  symlink and the shell settings exactly as it found them (dead-man restore). Nothing
-  else may touch the real session.
 - During work: Python changes use G0 + relevant units; QML changes use G0 + G1
   + relevant native cases. Run G0-G4 and G6 polling ONCE before requesting merge.
   An explicit milestone gate scope takes precedence. Docs/skills-only: G0 only; no GUI gates or launch/RSS sanity.

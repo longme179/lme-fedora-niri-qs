@@ -212,6 +212,8 @@
   "scripts/perf/analyze.py",
   "scripts/perf/run.py",
   "scripts/perf/README.md",
+  "scripts/perf/eyes.py",
+  "scripts/perf/eyes_patch_repo.py",
   "scripts/perf/selftest.py"
  ],
  "toolingFiles": [
@@ -242,6 +244,8 @@
   "scripts/perf/analyze.py",
   "scripts/perf/run.py",
   "scripts/perf/README.md",
+  "scripts/perf/eyes.py",
+  "scripts/perf/eyes_patch_repo.py",
   "scripts/perf/selftest.py"
  ],
  "legacyEdges": [

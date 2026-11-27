@@ -231,6 +231,7 @@ class Ctx:
         self.width, self.height = width, height
         self.load = Load()
         self.box = None             # top-left of the Settings window on the output
+        self.last_still_rect = None  # the rect still_item_point last settled on
         self.eyes = None            # eyes.Eyes when a run wants a screenshot per click
         self.box_size = (0, 0)
 
@@ -463,6 +464,7 @@ class Ctx:
                 moved = ((rect["x"] - first["x"]) ** 2 + (rect["y"] - first["y"]) ** 2) ** 0.5
                 self.meta.setdefault("still_reads", []).append(
                     {"t": round(self.now(), 3), "item": name, "reads": reads, "moved_px": round(moved, 2)})
+                self.last_still_rect = dict(rect)
                 return rect["x"], rect["y"]
             last = rect
             self.sleep(step_ms)
@@ -1012,13 +1014,15 @@ def cc_clicks(ctx, order, rects, rec):
 def tab_points(ctx, tabs):
     """Where the tab buttons are now, read for every rep: the panel was reopened and has to
     be at rest before the first click of the rep (see Ctx.still_item_point)."""
-    rects = {}
+    rects, seen = {}, {}
     for tab in tabs:
         point = ctx.still_item_point(f"perfTab_{tab}")
         if point is None:
             ctx.escape("s1: the tab rects cannot be read")
             raise Skip(f"perfTab_{tab} is not on screen or does not come to rest")
         rects[tab] = point
+        seen[tab] = ctx.last_still_rect
+    ctx.meta.setdefault("s1_tab_rects", []).append({"t": round(ctx.now(), 3), "rects": seen})
     return rects
 
 

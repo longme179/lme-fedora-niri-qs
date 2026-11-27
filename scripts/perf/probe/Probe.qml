@@ -191,7 +191,9 @@ QtObject {
         } catch (error) { o.ccError = "" + error; }
         try {
             if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0,
-                pages: settings.probePages ? settings.probePages() : []};
+                pages: settings.probePages ? settings.probePages() : [],
+                navY: settings.probeNavY ? settings.probeNavY() : -1,
+                navShown: settings.probeNavShown ? settings.probeNavShown() : {}};
         } catch (error) { o.settingsError = "" + error; }
         // Window-relative, and only while the pointer is over the window that reports it.
         try {

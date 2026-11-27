@@ -346,7 +346,10 @@ edit("qml/settings/SettingsView.qml",
      '    Component.onCompleted: { Probe.settings = this; Probe.settingsHover = pointerWatch }\n'
      '    onHostWindowChanged: { Probe.mark("settings.window " + (hostWindow ? "up" : "down")); Probe.watchWindow("settings", hostWindow) }\n'
      "    function searchText() { return search.text }\n"
-     '    function probePages() { return (FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages).map(p => p.key) }\n')
+     '    function probePages() { return (FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages).map(p => p.key) }\n'
+
+     '    function probeNavY() { return Math.round((navigationScroll ? navigationScroll.contentY : -1) * 10) / 10 }\n'
+     '    function probeNavShown() { const out = {}; for (const k in Probe.nav) { const it = Probe.nav[k]; out[k] = !!(it && it.visible && it.width > 0); } return out }\n')
 edit("qml/settings/SettingsApplication.qml",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n",

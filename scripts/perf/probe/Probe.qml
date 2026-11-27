@@ -146,6 +146,23 @@ QtObject {
                 if (overlay && p === overlay.contentItem) win = "overlay";
             }
             const point = centreOf(item);
+            // A clipped ancestor (the Settings sidebar's Flickable) hides everything it
+            // does not cover: a delegate above its fold still maps inside the window and
+            // reports geometry, but paints and takes input nowhere. mapFromScene on each
+            // clipping ancestor turns the centre into that viewport's coordinates; an
+            // entry the ancestor does not fully cover is not shown.
+            for (let clipper = item.parent; clipper; clipper = clipper.parent) {
+                if (!clipper.clip) continue;
+                try {
+                    const local = clipper.mapFromScene(point);
+                    if (local.x < item.width / 2 || local.y < item.height / 2
+                        || local.x > clipper.width - item.width / 2
+                        || local.y > clipper.height - item.height / 2) {
+                        shown = false;
+                        break;
+                    }
+                } catch (error) { /* not an Item: nothing clips through it */ }
+            }
             const live = win === "overlay" ? overlay.visible : true;
             return JSON.stringify({item: name, found: true, win: isSettings ? "settings" : win, shown: shown && live,
                 x: point.x + (win === "overlay" ? overlay.viewport.x : 0),

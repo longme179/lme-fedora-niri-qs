@@ -985,7 +985,7 @@ def settings_burst(ctx, rec, sequence, gap_ms):
                     raise Skip(f"perfNav_{key} is not inside the Settings window")
                 stamps.append(ctx.click_at(*point))
             ctx.sleep(gap_ms)
-        rec.setdefault("aim", {})["moved_during"] = moved_during if aimed else {}
+        rec["moved_during_pending"] = moved_during if aimed else {}
     rec["clicks"] = [[key, round(stamp, 3)] for key, stamp in zip(sequence, stamps)]
     rec["react_ms"] = [latency(timeline, at, navigate_mark(key), 5000) for key, at in zip(sequence, stamps)]
     rec["first_frame_ms"] = latency(timeline, stamps[0], frame("settings"), 400)

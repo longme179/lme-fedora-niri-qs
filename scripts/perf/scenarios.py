@@ -634,7 +634,7 @@ class Ctx:
         park_x, park_y = self.width / 2, self.height / 2
         self.move(park_x, park_y)
         time.sleep(0.08)
-        pointer = (self.ask("settings") or {}).get("pointer")
+        pointer = self.pointer_in_settings()
         if not (pointer and pointer[2]):
             for gy in range(1, 6):
                 for gx in range(1, 6):
@@ -659,7 +659,7 @@ class Ctx:
             self.note(f"calibrate {rect['x']},{rect['y']}")
             self.move(self.box[0] + rect["x"], self.box[1] + rect["y"])
             time.sleep(0.12)
-            pointer = (self.ask("settings") or {}).get("pointer")
+            pointer = self.pointer_in_settings()
             self.meta["settings_pointer_nav"] = pointer
             if not (pointer and pointer[2]):
                 # The window does not see the pointer where we placed it: clicking
@@ -667,6 +667,24 @@ class Ctx:
                 # owner). No blind clicking - the run stops with the evidence attached.
                 raise Skip("the Settings window does not see the pointer at its computed "
                            f"position (pointer={pointer}, box={self.box}, niri says {info})")
+
+    def pointer_in_settings(self, wait_ms=12000.0, step_ms=0.15):
+        """[x, y, hovered]: the pointer as the Settings window reports it, or None when the
+        processes did not answer for `wait_ms`.
+
+        `ask` gives up after 3 s without an answer, and None was read as "the pointer is not
+        in the window": one busy moment of the shell's GUI thread skipped a whole scenario
+        (live, 2026-11-27, S3 on main, 0.9 s after Settings opened). A probe that does not
+        answer is a stalled shell - the thing S3 is about - so it is asked again until it
+        answers; only a pointer the window really does not see stops the run."""
+        deadline = time.monotonic() + wait_ms / 1000.0
+        while True:
+            state = self.ask("settings")
+            if state is not None:
+                return state.get("pointer")
+            if time.monotonic() > deadline:
+                return None
+            time.sleep(step_ms)
 
     def settings_ready(self, timeout_ms):
         """The Settings process answers its probe and its window is located. False at the timeout."""

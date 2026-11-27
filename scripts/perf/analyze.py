@@ -155,21 +155,30 @@ def summarize_s2(records):
             entry["failed_reps"] = sorted({rec["rep"] for rec in recs if not rec.get("ok") or froze(rec.get("stalls", []))
                                            or rec.get("close_recovery")})
         else:
-            bad = [rec for rec in recs if not rec.get("ok")]
+            # A burst whose sidebar moved under its clicks may have pressed other pages: it is
+            # a fact about the aim, not about the page host, so it stays out of every number
+            # of the shell and is listed on its own.
+            moved = [rec for rec in recs if (rec.get("aim") or {}).get("moved")]
+            kept = [rec for rec in recs if not (rec.get("aim") or {}).get("moved")]
+            bad = [rec for rec in kept if not rec.get("ok")]
             checks = {}
             for rec in bad:
                 for name in rec.get("failed_checks", []):
                     checks[name] = checks.get(name, 0) + 1
-            react = [value for rec in recs for value in rec.get("react_ms", [])]
+            react = [value for rec in kept for value in rec.get("react_ms", [])]
             entry.update({
                 "bursts": len(recs), "violations": len(bad), "failure_rate": round(len(bad) / len(recs), 4) if recs else 0,
+                "aimed_once": sum(1 for rec in kept if (rec.get("aim") or {}).get("how") == "once"),
+                "off_aim": [[rec["rep"], rec["aim"]["moved_after"]] for rec in moved],
+                "gap_ms": stats(second[1] - first[1] for rec in recs
+                                 for first, second in zip(rec.get("clicks", []), rec.get("clicks", [])[1:])),
                 "violation_checks": checks,
                 "violations_detail": [[rec["rep"], [click[0] for click in rec.get("clicks", [])], (rec.get("host") or {}).get("opacity"),
                                        rec.get("failed_checks")] for rec in bad],
                 "ghosted": sum(1 for rec in recs if (rec.get("host") or {}).get("opacity", 1) < 0.999),
-                "settle_ms": stats(rec.get("settle_ms") for rec in recs), "react_ms": stats(react),
+                "settle_ms": stats(rec.get("settle_ms") for rec in kept), "react_ms": stats(react),
                 "react_missed": sum(1 for value in react if value is None),
-                "first_frame_ms": stats(rec.get("first_frame_ms") for rec in recs),
+                "first_frame_ms": stats(rec.get("first_frame_ms") for rec in kept),
                 "toast_seen": sum(1 for rec in recs if rec.get("toast_seen")),
             })
             entry["failed_reps"] = sorted({rec["rep"] for rec in bad} | {rec["rep"] for rec in recs if froze(rec.get("stalls", []))}
@@ -470,6 +479,10 @@ def metrics(summary, records):
         out[prefix + ".settle_ms.p95"] = entry["settle_ms"].get("p95")
         out[prefix + ".settle_ms.max"] = entry["settle_ms"].get("max")
         out[prefix + ".react_ms.p95"] = entry["react_ms"].get("p95")
+        if entry.get("gap_ms"):
+            out[prefix + ".gap_ms.median"] = entry["gap_ms"].get("median")
+            out[prefix + ".aimed_once"] = entry["aimed_once"]
+            out[prefix + ".off_aim"] = len(entry["off_aim"])
     for entry in summary["s1"]:
         prefix = f"s1.{entry['variant']}"
         out[prefix + ".reps"] = entry["reps"]
@@ -611,23 +624,29 @@ def to_markdown(summary):
         lines += ["## S2 - Settings page switching", "",
                   "Violation = after the burst the page host is not in the settled state (wanted page shown, built, opacity "
                   "1, no transition running, nothing pending) within 6 s. A rep fails on a violation, on a GUI-thread "
-                  "stall of 100 ms or more, or when Escape did not close Settings.", ""]
+                  "stall of 100 ms or more, or when Escape did not close Settings. A burst aims its nav entries once,\n"
+                  "before the first click, when they lie still where they were aimed at (`aimed once`); otherwise it\n"
+                  "aims again before every click. `click gap` is the time between two clicks of a burst.", ""]
         rows = []
         for entry in summary["s2"]:
             if entry["variant"] == "all":
                 rows.append(["all", entry["reps"], f"{entry['violations']}/{entry['pages']} pages", "–", fmt(entry["react_ms"]),
-                             fmt(entry["frame_ms"]), fmt(entry["settle_ms"]), f"{entry['failures']}", entry["stalls"]["over_100"]])
+                             fmt(entry["frame_ms"]), fmt(entry["settle_ms"]), f"{entry['failures']}", entry["stalls"]["over_100"],
+                             "–", "–"])
             else:
                 rows.append([entry["variant"], entry["reps"], f"{entry['violations']}/{entry['bursts']}", entry["ghosted"],
                              fmt(entry["react_ms"]), fmt(entry["first_frame_ms"]), fmt(entry["settle_ms"]), entry["failures"],
-                             entry["stalls"]["over_100"]])
+                             entry["stalls"]["over_100"] or "–", f"{entry['aimed_once']}/{entry['bursts']}", fmt(entry["gap_ms"])])
         lines += table(["variant", "reps", "violations", "ghosted", "click->navigate mark", "input->first frame",
-                        "last click->settled", "failed reps", "stalls>100"], rows) + [""]
+                        "last click->settled", "failed reps", "stalls>100", "aimed once", "click gap"], rows) + [""]
         for entry in summary["s2"]:
             for item in entry.get("violations_detail", []):
                 rep, sequence, opacity, failed = (list(item) + ["", "", "", ""])[:4]
                 where = f"rep {rep}, clicks {'+'.join(sequence)}" if entry["variant"] != "all" else f"page {rep}"
                 lines.append(f"- {entry['variant']}: {where}; opacity {opacity}; failed {failed}")
+            for rep, moved in entry.get("off_aim", []):
+                lines.append(f"- {entry['variant']}: rep {rep}: the sidebar moved while the clicks went out ({moved} px "
+                             "from the entries after the burst); kept out of the latency columns")
         per_page = next((entry["per_page"] for entry in summary["s2"] if entry["variant"] == "all"), {})
         if per_page:
             lines += ["", "Per page (variant `all`):", ""] + table(

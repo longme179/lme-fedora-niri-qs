@@ -266,12 +266,17 @@ class Ctx:
 
     def click_at(self, x, y):
         at = self.shot(self.inj.click_at(x, y))
+        self.look((x, y), f"click-{x:.0f}-{y:.0f}")
+        return at
+
+    def look(self, point, tag, note=""):
+        """One screenshot of the eyes with `point` marked. A capture is a whole grim round trip,
+        so it never runs between two clicks of a burst: there it would be the gap."""
         if self.eyes is not None:
             try:
-                self.eyes.look((x, y), tag=f"click-{x:.0f}-{y:.0f}")
+                self.eyes.look(point, tag=tag, note=note)
             except Exception:  # noqa: BLE001  (the eyes never fail a run)
                 pass
-        return at
 
     def sleep(self, ms):
         if ms > 0:
@@ -560,6 +565,39 @@ class Ctx:
                     break
                 last_y = rect.get("y")
         return finish(None)
+
+    def nav_offset(self, points):
+        """How far each of these window-relative nav points is from the centre of its entry
+        right now, in px (None when the entry is not shown): 0 while the sidebar has not
+        moved since the points were aimed."""
+        out = {}
+        for key, (x, y) in points.items():
+            entry = self.probe.rect(f"perfNav_{key}")
+            if not (entry.get("found") and entry.get("shown")):
+                out[key] = None
+            else:
+                out[key] = round(((entry.get("x", 1e9) - x) ** 2 + (entry.get("y", 1e9) - y) ** 2) ** 0.5, 1)
+        return out
+
+    def nav_points(self, keys):
+        """Output coordinates of several nav entries, ALL aimed before the first click is
+        pressed: ({key: (x, y)}, {key: how many px it lies from its entry now}). Skips like
+        nav_point when an entry cannot be reached.
+
+        nav_point waits ~400 ms for an entry to come to rest, and aiming before every click
+        of a burst made the clicks 466 ms apart where 60 ms were asked for. Here the entries
+        are aimed one after the other, as before, and each is then read once more: the list
+        was at rest after the last wait, so an entry that still lies within half a pixel of
+        where it was aimed at can be pressed right away. One that does not (the other entry
+        of a pair was off screen, and the scroll that brought it in carried this one away)
+        keeps its distance, and the caller aims again before every click."""
+        points = {}
+        for key in keys:
+            point = self.nav_point(key)
+            if point is None:
+                raise Skip(f"perfNav_{key} is not inside the Settings window")
+            points[key] = (point[0] - self.box[0], point[1] - self.box[1])
+        return points, self.nav_offset(points)
 
     def focus_settings(self):
         """Give the Settings window the keyboard by clicking the entry of the page it already shows."""
@@ -880,14 +918,26 @@ def latency(timeline, t_ms, test, timeout_ms):
 
 
 def settings_burst(ctx, rec, sequence, gap_ms):
-    """Click the pages of `sequence`, then assert the state machine of the page host."""
+    """Click the pages of `sequence`, then assert the state machine of the page host.
+
+    The entries are aimed once, before the first click (Ctx.nav_points), when they all still
+    lie where they were aimed at after the last wait: the clicks then really follow at
+    `gap_ms`. Otherwise every click aims first, as before: slower than the gap asked for,
+    but only what was just aimed at is pressed. `rec["aim"]` says which of the two ran and
+    whether the sidebar moved while the clicks went out."""
     timeline = ctx.timeline
     ctx.inj.note("burst " + "+".join(sequence) + f" gap={gap_ms}")
+    points, before = ctx.nav_points(list(dict.fromkeys(sequence)))
+    if all(value is not None and value < 0.5 for value in before.values()):
+        aimed = {key: (ctx.box[0] + x, ctx.box[1] + y) for key, (x, y) in points.items()}
+        how = "once"
+    else:
+        aimed, how = None, "per click"
     stamps = []
     if gap_ms <= 0:
         commands = []
         for key in sequence:
-            point = ctx.nav_point(key)
+            point = aimed[key] if aimed else ctx.nav_point(key)
             if point is None:
                 raise Skip(f"perfNav_{key} is not inside the Settings window")
             commands += [f"move {int(round(point[0]))} {int(round(point[1]))}", "click left"]
@@ -895,12 +945,16 @@ def settings_burst(ctx, rec, sequence, gap_ms):
         stamps = [ctx.shot(replies[index]) for index in range(1, len(replies), 2)]
     else:
         for key in sequence:
-            point = ctx.nav_point(key)
-            if point is None:
-                raise Skip(f"perfNav_{key} is not inside the Settings window")
-            stamps.append(ctx.click_at(*point))
+            if aimed:
+                # No look of the eyes in here: a capture costs more than the gap.
+                stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))
+            else:
+                point = ctx.nav_point(key)
+                if point is None:
+                    raise Skip(f"perfNav_{key} is not inside the Settings window")
+                stamps.append(ctx.click_at(*point))
             ctx.sleep(gap_ms)
-    rec["clicks"] = [[key, round(at, 3)] for key, at in zip(sequence, stamps)]
+    rec["clicks"] = [[key, round(stamp, 3)] for key, stamp in zip(sequence, stamps)]
     rec["react_ms"] = [latency(timeline, at, navigate_mark(key), 5000) for key, at in zip(sequence, stamps)]
     rec["first_frame_ms"] = latency(timeline, stamps[0], frame("settings"), 400)
     rec.update(final_state(ctx, sequence[-1], stamps[-1]))
@@ -908,6 +962,12 @@ def settings_burst(ctx, rec, sequence, gap_ms):
     rec["marks"] = [event.text for event in timeline.after(stamps[0] - 1.0, {"m"})
                     if event.text.startswith(("settings.navigate", "host.")) and event.epoch <= now][:120]
     rec["stalls"] = ctx.stalls(stamps[0], now)
+    # Were the entries still where the clicks went? Read after the last click, never in between.
+    after = ctx.nav_offset(points) if aimed else {}
+    rec["aim"] = {"how": how, "moved_after": after,
+                  "moved": any(value is None or value >= 0.5 for value in after.values())}
+    for key, point in (aimed or {}).items():
+        ctx.look(point, f"burst-{key}", f"aimed once; {after.get(key)} px from the entry after the burst")
     ctx.park()
 
 

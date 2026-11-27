@@ -73,6 +73,12 @@ Scenario options: `s4:reps=3,routes=key+click+ipc,delays=5+60+150+400,prior=cont
 `s1:reps=3,variants=ordered+random+fast,clicks=12,seconds=3,seed=1,max_clicks=400`,
 `s3:reps=1`, `warmup:rounds=1`.
 
+An S2 burst aims its nav entries once, before the first click, whenever they all lie still
+where they were aimed at; the clicks then follow at `gap_ms`. The report's `aimed once` and
+`click gap` columns say how many bursts did and how fast the clicks really went. A sidebar
+that moved in between makes the harness aim again before every click: slower than asked,
+but only what was just aimed at is pressed.
+
 ## Offline first, live second
 
 ```

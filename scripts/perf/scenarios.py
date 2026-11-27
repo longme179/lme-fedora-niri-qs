@@ -1084,7 +1084,7 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         if point is not None:
                             at = ctx.click_at(*point)
                             timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
-                            scan = ctx.item_point("perfScanButton")
+                            scan = ctx.item_point("perfWallpaperScan")
                             if scan is not None:
                                 at = ctx.click_at(*scan)
                                 hit = timeline.wait(sample("settings", lambda d: TOAST_TEXT in (d.get("settings") or {}).get("toastText", "")),

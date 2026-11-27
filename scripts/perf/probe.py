@@ -267,6 +267,11 @@ class Probe:
                 return {"id": space.get("id"), "idx": space.get("idx")}
         return {}
 
+    def workspace_windows(self) -> list:
+        """Ids of the workspaces that hold at least one window, as niri lists them."""
+        return sorted({window.get("workspace_id") for window in niri(["windows"], self.env)
+                       if window.get("workspace_id") is not None})
+
     def layers(self) -> list:
         return niri(["layers"], self.env)
 

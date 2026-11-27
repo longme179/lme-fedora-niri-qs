@@ -191,9 +191,12 @@ line("qml/panels/PanelStage.qml", "    property var windowInfo: null", after=['p
 edit("qml/panels/ControlCenter.qml",
      "    function selectTab(id) { currentTab = ControlRegistry.indexForId(id); }\n",
      '    function selectTab(id) { Probe.mark("cc.select " + id); currentTab = ControlRegistry.indexForId(id); }\n')
+# `selectedTab` is a binding on currentTab; read inside the change handler it still names
+# the tab the panel is LEAVING (the first live S1 run saw every mark one tab behind), so
+# the mark reads the registry with the new index itself.
 edit("qml/panels/ControlCenter.qml",
      "    onCurrentTabChanged: { editing = false; ShellState.controlTab = currentTab; markTabRead(); refreshControls(); }\n",
-     '    onCurrentTabChanged: { Probe.mark("cc.tab " + (root.selectedTab ? root.selectedTab.id : "?")); editing = false; ShellState.controlTab = currentTab; markTabRead(); refreshControls(); }\n')
+     '    onCurrentTabChanged: { Probe.mark("cc.tab " + (ControlRegistry.tabForIndex(currentTab).id || "?")); editing = false; ShellState.controlTab = currentTab; markTabRead(); refreshControls(); }\n')
 edit("qml/panels/ControlCenter.qml",
      "    Component.onCompleted: { initialized = true; markTabRead(); refreshControls(); }\n",
      "    Component.onCompleted: { Probe.cc = this; initialized = true; markTabRead(); refreshControls(); }\n")

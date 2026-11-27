@@ -44,6 +44,7 @@ LATE_MS = 1000.0           # closed, but later than that: a stall, not a dropped
 CLOSE_WAIT_MS = 1500.0     # how long a miss is observed before recovery starts
 OPEN_WAIT_MS = 8000.0
 SETTLE_WAIT_MS = 10000.0
+STAGE_WAIT_MS = 3000.0    # how long the panel stage may take to arrive after the open
 TOAST_TEXT = "Wallpaper library refreshed"
 
 # name -> the niri bind that opens it (config/niri/lme-shell.kdl). Super+L (lock) is never here.
@@ -114,6 +115,13 @@ def is_open(name):
     return sample("shell", test)
 
 
+def panel_at_rest(data):
+    """The panel stage holds its panel and reports that it is not transitioning (the 5th
+    `panel` entry, the SlideLoader's `transitioning`; a probe without it never matches)."""
+    panel = data.get("panel") or []
+    return len(panel) > 4 and bool(panel[0]) and not panel[4]
+
+
 def any_open(data):
     return bool(data.get("panelOpen") or data.get("activityOpen") or data.get("controlOpen")
                 or data.get("settingsOpen"))
@@ -143,6 +151,15 @@ class Timeline:
     def after(self, t_ms, kinds=None):
         at = bisect.bisect_left(self.times, t_ms)
         return [event for event in self.events[at:] if kinds is None or event.kind in kinds]
+
+    def latest(self, proc="shell"):
+        """The newest state sample of `proc` read so far, after reading what arrived; None
+        when there is none yet."""
+        self.pump()
+        for event in reversed(self.events):
+            if event.kind == "S" and (event.data or {}).get("proc") == proc:
+                return event.data
+        return None
 
     def first(self, t_ms, test):
         """The first event at or after t_ms that passes `test`, reading what arrived since.
@@ -421,6 +438,37 @@ class Ctx:
             return None
         return rect["x"], rect["y"]
 
+    def still_item_point(self, name, rounds=12, step_ms=150, rest_ms=250):
+        """Output coordinates of a named item of the bar or the overlay once its rect has
+        stopped moving, or None when it is not on screen or does not come to rest.
+
+        The panel stage glides in (SlideLoader): a press at the place a tab is going to be
+        lands on the backdrop, which closes the panel (`closePanels` 127 ms after the
+        open, in the first live S1 run), and every later click of that rep went to the
+        desktop behind a closed panel."""
+        last = None
+        for _ in range(rounds):
+            try:
+                rect = self.probe.rect(name)
+            except ProbeError as error:
+                self.problems.append({"t": round(self.now(), 3), "probe": f"rect {name}",
+                                      "error": str(error)[:240]})
+                return None
+            if not rect.get("found") or not rect.get("shown"):
+                return None
+            if last is not None and abs(rect["x"] - last["x"]) < 0.5 and abs(rect["y"] - last["y"]) < 0.5:
+                self.sleep(rest_ms)
+                return rect["x"], rect["y"]
+            last = rect
+            self.sleep(step_ms)
+        return None
+
+    def control_open(self):
+        """The newest shell sample says the Control Center is open. Samples come every
+        40 ms, so this can be that much behind the product."""
+        state = self.timeline.latest("shell") or {}
+        return bool(state.get("controlOpen") or (state.get("panelOpen") and state.get("kind") == "control"))
+
     def nav_point(self, key, scroll_for=True):
         """Output coordinates of a Settings nav entry; it has to lie inside the window.
 
@@ -619,7 +667,12 @@ class Ctx:
         return pages
 
     def open_control(self):
-        """Control Center open with its current page settled; returns the tab ids."""
+        """Control Center open, its stage arrived and its current page settled; returns the
+        tab ids.
+
+        The page host of a retained panel is settled the moment the panel opens, while the
+        stage itself is still gliding in: `panel[4]` (the loader's `transitioning`) says when
+        it has arrived. The tab rects are read again after this, one rep at a time."""
         self.ensure_closed()
         at = self.tap(*PANELS["control"])
         if not self.timeline.wait(is_open("control"), at - 1.0, OPEN_WAIT_MS):
@@ -632,6 +685,8 @@ class Ctx:
         tabs = list((state.get("cc") or {}).get("tabs") or [])
         if len(tabs) < 2:
             raise Skip(f"the Control Center lists {len(tabs)} tab(s)")
+        if len(state.get("panel") or []) > 4:
+            self.timeline.wait(sample("shell", panel_at_rest), at - 1.0, STAGE_WAIT_MS)
         return tabs
 
 
@@ -935,10 +990,12 @@ def cc_clicks(ctx, order, rects, rec):
     """Click the tabs of `order`, each waiting for its page to settle: the per-tab latencies."""
     timeline = ctx.timeline
     entries = []
+    rec["clicks"] = entries        # the same list: a stop in the middle keeps what was clicked
     for tab in order:
-        at = ctx.click_at(*rects[tab])
+        at = control_click(ctx, rects[tab], rec)
         entry = {"tab": tab, "t": round(at, 3)}
         entry["react_ms"] = latency(timeline, at, mark(f"cc.tab {tab}"), 5000)
+        entry["select_ms"] = latency(timeline, at, mark(f"cc.select {tab}"), 5000)
         entry["page_ms"] = latency(timeline, at, page_ready("cc", tab), SETTLE_WAIT_MS)
         entry["settle_ms"] = latency(timeline, at, sample("shell", host_settled("cc", tab)), SETTLE_WAIT_MS)
         entry["frame_ms"] = latency(timeline, at, frame("overlay"), 300)
@@ -947,37 +1004,61 @@ def cc_clicks(ctx, order, rects, rec):
     return entries[-1]["t"]
 
 
-def reaction_times(timeline, clicks, limit_of):
-    """For each click the time until the shell switched to that tab; None when the next click
+def tab_points(ctx, tabs):
+    """Where the tab buttons are now, read for every rep: the panel was reopened and has to
+    be at rest before the first click of the rep (see Ctx.still_item_point)."""
+    rects = {}
+    for tab in tabs:
+        point = ctx.still_item_point(f"perfTab_{tab}")
+        if point is None:
+            ctx.escape("s1: the tab rects cannot be read")
+            raise Skip(f"perfTab_{tab} is not on screen or does not come to rest")
+        rects[tab] = point
+    return rects
+
+
+def control_click(ctx, point, rec):
+    """One click on a tab of the Control Center, and only while the newest sample says the
+    panel is open. Otherwise the rep ends here, with the clicks it made, and the session with
+    it: nothing of ours may land on the desktop behind a closed panel."""
+    if not ctx.control_open():
+        rec["stopped"] = "the Control Center is not open any more"
+        ctx.records.append(rec)
+        raise Stuck(rec["stopped"])
+    return ctx.click_at(*point)
+
+
+def reaction_times(timeline, clicks, limit_of, prefix="cc.tab"):
+    """For each click the time until the shell switched to that tab (`cc.tab`), or until the
+    tab's own handler ran (`cc.select`: the click reached the button); None when the next click
     (or `limit_of` ms for the last one) came first, or the mark never showed."""
     out = []
     for index, click in enumerate(clicks):
         limit = click["t"] + limit_of(index)
-        hit = timeline.first(click["t"] - 1.0, mark(f"cc.tab {click['tab']}"))
+        hit = timeline.first(click["t"] - 1.0, mark(f"{prefix} {click['tab']}"))
         out.append(round(hit.epoch - click["t"], 2) if hit and hit.epoch <= limit else None)
     return out
 
 
 def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, seconds=3.0, seed=1,
                max_clicks=400):
-    """S1: switching tabs freezes the shell. A rep is one pass, one random walk or one burst."""
+    """S1: switching tabs freezes the shell. A rep is one pass, one random walk or one burst.
+
+    The tab rects are read again at the start of every rep: the panel is reopened between
+    reps and glides in, a click at a tab's place before it has arrived closes the panel."""
     rng = random.Random(seed)
     tabs = ctx.open_control()
-    rects = {}
-    for tab in tabs:
-        point = ctx.item_point(f"perfTab_{tab}")
-        if point is None:
-            raise Skip(f"perfTab_{tab} is not on screen")
-        rects[tab] = point
     timeline = ctx.timeline
     ctx.park()
     try:
         for variant in variants:
             for rep in range(reps):
+                rects = tab_points(ctx, tabs)
                 ctx.note(f"s1 {variant} rep={rep}")
                 rec = {"scenario": "s1", "variant": variant, "rep": rep, "tabs": tabs}
                 started = ctx.now()
                 clicks_ = []
+                rec["clicks"] = clicks_      # the same list: a stop in the middle keeps what was clicked
                 if variant == "ordered":
                     end = cc_clicks(ctx, tabs, rects, rec)
                     clicks_ = rec["clicks"]
@@ -986,7 +1067,7 @@ def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, 
                         current = host_of(ctx.ask("shell") or {}, "cc").get("shown") or tabs[0]
                         for _ in range(clicks):
                             current = rng.choice([tab for tab in tabs if tab != current])
-                            at = ctx.click_at(*rects[current])
+                            at = control_click(ctx, rects[current], rec)
                             clicks_.append({"tab": current, "t": round(at, 3)})
                             ctx.sleep(rng.uniform(20, 300))
                     else:      # fast: as many clicks as fit into `seconds`, capped for fast models
@@ -994,7 +1075,7 @@ def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, 
                         index = 0
                         while index < max_clicks and ctx.now() < stop:
                             tab = tabs[index % len(tabs)]
-                            at = ctx.click_at(*rects[tab])
+                            at = control_click(ctx, rects[tab], rec)
                             clicks_.append({"tab": tab, "t": round(at, 3)})
                             index += 1
                     rec["clicks"] = clicks_
@@ -1002,7 +1083,11 @@ def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, 
                         ctx.records.append(rec)
                         continue
                     gaps = [clicks_[index + 1]["t"] - click["t"] for index, click in enumerate(clicks_[:-1])]
-                    rec["react_ms"] = reaction_times(timeline, clicks_, lambda index: gaps[index] if index < len(gaps) else 5000.0)
+                    def limit_of(index):
+                        return gaps[index] if index < len(gaps) else 5000.0
+
+                    rec["react_ms"] = reaction_times(timeline, clicks_, limit_of)
+                    rec["select_ms"] = reaction_times(timeline, clicks_, limit_of, "cc.select")
                     end = clicks_[-1]["t"]
                 if not clicks_:                     # a fast rep can end before its first click
                     ctx.records.append(rec)
@@ -1030,7 +1115,8 @@ def s1_control(ctx, variants=("ordered", "random", "fast"), reps=10, clicks=12, 
                 if ctx.out_of_time():
                     ctx.meta["truncated"] = f"s1 {variant} after rep {rep}"
                     return
-                ctx.open_control()
+                if rep < reps - 1 or variant != variants[-1]:
+                    ctx.open_control()          # the next rep starts over; the last one leaves nothing open
     finally:
         ctx.park()
 
@@ -1126,13 +1212,27 @@ def s3_mixed(ctx, reps=2, seed=1, load=0, dwell="150-900", script="", workspaces
 
 
 def workspace_round(ctx):
-    """To the next workspace and back, through niri's own binds (Mod+<index>)."""
+    """To another workspace and back, through niri's own binds (Mod+<index>).
+
+    niri drops an empty workspace the moment it loses the focus, so the round only leaves a
+    workspace that holds a window. From an empty one it traded the owner's workspace for a
+    new one at the same index (live, 2026-11-27: id 4 became id 5). `restored` compares
+    the ids: the same index can be another workspace."""
     rec = {}
     before = ctx.probe.focused_workspace()
     rec["before"] = before
     idx = (before or {}).get("idx")
     if not idx:
         rec["skipped"] = "niri does not say which workspace is focused"
+        return rec
+    try:
+        windows = ctx.probe.workspace_windows()
+    except ProbeError as error:
+        rec["skipped"] = "niri does not list the windows"
+        ctx.problems.append({"t": round(ctx.now(), 3), "probe": "windows", "error": str(error)[:240]})
+        return rec
+    if before.get("id") not in windows:
+        rec["skipped"] = "the focused workspace holds no window: leaving it would remove it"
         return rec
     other = idx + 1 if idx < 9 else idx - 1
     if other < 1:
@@ -1144,11 +1244,14 @@ def workspace_round(ctx):
     ctx.tap("super", str(idx))
     ctx.sleep(700)
     rec["after"] = ctx.probe.focused_workspace()
-    rec["restored"] = (rec["after"] or {}).get("idx") == idx
+    rec["restored"] = (rec["after"] or {}).get("id") == before.get("id")
     if not rec["restored"]:
         ctx.tap("super", str(idx))
         ctx.sleep(700)
         rec["after_retry"] = ctx.probe.focused_workspace()
+        if (rec["after_retry"] or {}).get("id") != before.get("id"):
+            ctx.problems.append({"t": round(ctx.now(), 3), "workspace": "not restored",
+                                 "before": before, "last": rec["after_retry"]})
     return rec
 
 

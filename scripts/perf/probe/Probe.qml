@@ -198,7 +198,7 @@ QtObject {
                 warmup: island.warmupActive, moving: island.transitioning};
         } catch (error) { o.islandError = "" + error; }
         try {
-            if (loader) o.panel = [loader.item ? 1 : 0, loader.shown, loader.dormant, loader.warmupActive];
+            if (loader) o.panel = [loader.item ? 1 : 0, loader.shown, loader.dormant, loader.warmupActive, loader.transitioning];
         } catch (error) { o.panelError = "" + error; }
         try {
             if (overlay) o.overlay = [overlay.visible, overlay.width, overlay.height, overlay.viewport.x, overlay.viewport.y];

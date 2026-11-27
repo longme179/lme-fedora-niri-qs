@@ -354,6 +354,9 @@ class SimShell:
     def focused_workspace(self):
         return {"id": self.workspace, "idx": self.workspace}
 
+    def workspace_windows(self):
+        return [self.workspace]        # the focused workspace holds a window: the round may leave it
+
     def ipc(self, function, args):
         if function == "toggle":
             self.toggle(args[0])
@@ -672,6 +675,9 @@ class FakeProbe:
 
     def focused_workspace(self):
         return self.sim.focused_workspace()
+
+    def workspace_windows(self):
+        return self.sim.workspace_windows()
 
 
 def build(out: Path, faults=()):

@@ -29,16 +29,45 @@ QtObject {
 
     // The backend-independent section set; null in every fixture mode so the native services
     // are never even referenced there (no service connections in demo/tests/Settings).
+    // Identity-stable: every source section is now an object whose binding keeps its reference
+    // while its consumed fields are unchanged (NetworkState since the stall fix; the others via
+    // the sectionCache below), and the container reuses the previous object when every value is
+    // reference-equal. Without this the container was a fresh object on every MonitorState tick,
+    // SystemMerge.sameSections failed by reference, and `system` changed identity — re-running
+    // every ShellState.system-derived binding, including the Repeater models whose VDM rebuilds
+    // were the multi-second GUI stalls of runs s1-n10-b/fix/fix2.
+    property var sectionCache: ({})
+    property var sectionsPrevious: null
     readonly property var baseSections: {
         if (backendDemo || settingsApp) return null;
         const bluetooth = BluetoothState.sectionFor(ShellState.preferences.bluetoothAdapter);
         const fields = MonitorState.systemFields; // Q2: reading it here keys the merge cache to the monitor tick
-        return {audio: AudioState.state, microphone: AudioState.microphone,
-                battery: PowerState.battery, powerProfile: PowerState.profile, powerProfiles: PowerState.profiles,
-                bluetooth: bluetooth, peripheralBatteries: mergePeripherals(bluetooth.batteries),
-                network: NetworkState.state,
+        const next = {audio: stable("audio", AudioState.state), microphone: stable("microphone", AudioState.microphone),
+                battery: stable("battery", PowerState.battery), powerProfile: stable("powerProfile", PowerState.profile),
+                powerProfiles: stable("powerProfiles", PowerState.profiles),
+                bluetooth: stable("bluetooth", bluetooth), peripheralBatteries: stable("peripheralBatteries", mergePeripherals(bluetooth.batteries)),
+                network: stable("network", NetworkState.state),
                 cpu: fields.cpu, memoryPercent: fields.memoryPercent,
                 memoryUsedGiB: fields.memoryUsedGiB, memoryTotalGiB: fields.memoryTotalGiB};
+        const previous = sectionsPrevious;
+        if (previous) {
+            let same = true;
+            for (const key in next) if (next[key] !== previous[key]) { same = false; break; }
+            if (same) return previous;
+        }
+        sectionsPrevious = next;   // stable() self-manages its cache entries; no wipe needed
+        return next;
+    }
+
+    // Keeps the last value per key and returns it while the source value compares equal by
+    // content, so equal-but-fresh section objects (AudioState/PowerState/BluetoothState build
+    // new objects per re-evaluation) don't ripple identity into baseSections. Bounded: the
+    // sections are small summaries; the scan lists ride NetworkState's own identity hold.
+    function stable(key, value) {
+        const previous = sectionCache[key];
+        if (previous !== undefined && JSON.stringify(previous) === JSON.stringify(value)) return previous;
+        sectionCache[key] = value;
+        return value;
     }
 
     function merge(backend) {

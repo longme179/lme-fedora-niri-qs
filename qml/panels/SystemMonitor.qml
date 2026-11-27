@@ -44,18 +44,27 @@ Item {
             GridLayout {
                 Layout.fillWidth: true; columns: root.width >= 500 ? 2 : 1; columnSpacing: 12; rowSpacing: 12
                 Repeater {
-                    model: [{title:"CPU",key:"cpu",value:root.percent(ShellState.system.cpu),color:Theme.cyan}, {title:"Memory",key:"memory",value:root.percent(ShellState.system.memoryPercent),color:Theme.purple}]
+                    // The model is the formatted values, not fresh [{...}] objects: a var-list
+                    // of new objects re-runs setModel on every ShellState.system identity
+                    // change (each Wi-Fi signal tick rebuilds it), and VDM then rebuilds both
+                    // delegates through QMetaObjectBuilder — the multi-second GUI stall
+                    // measured live (s1-n10-b stall stacks). Strings compare by content, so
+                    // delegates rebuild only when a displayed number changes; title/key/color
+                    // are static per index instead of riding the model.
+                    model: [root.percent(ShellState.system.cpu), root.percent(ShellState.system.memoryPercent)]
                     delegate: Rectangle {
-                        id: card; required property var modelData
+                        id: card; required property var modelData; required property int index
+                        readonly property var meta: [{title:"CPU",key:"cpu",color:Theme.cyan},
+                                                    {title:"Memory",key:"memory",color:Theme.purple}][index]
                         Layout.fillWidth: true; implicitHeight: chartBody.implicitHeight+28; radius: 20; color: Theme.surfaceContainer
                         ColumnLayout {
-                            id: chartBody; anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 14; spacing: 8
+                            id: chartBody; anchors.left: card.left; anchors.right: card.right; anchors.top: card.top; anchors.margins: 14; spacing: 8
                             RowLayout {
                                 Layout.fillWidth: true
-                                LabelText { text: card.modelData.title; font.weight: Font.Bold; Layout.fillWidth: true }
-                                LabelText { text: card.modelData.value; color: card.modelData.color; font.pixelSize: 20; font.weight: Font.Bold }
+                                LabelText { text: card.meta.title; font.weight: Font.Bold; Layout.fillWidth: true }
+                                LabelText { text: card.modelData; color: card.meta.color; font.pixelSize: 20; font.weight: Font.Bold }
                             }
-                            HistoryChart { samples: root.samples; series: card.modelData.key; lineColor: card.modelData.color }
+                            HistoryChart { samples: root.samples; series: card.meta.key; lineColor: card.meta.color }
                         }
                     }
                 }

@@ -4,12 +4,17 @@
 // so bar and panel bindings do not re-evaluate on every backend poll (replaces the system Identity.keep line).
 .pragma library
 
-var cache = {raw: null, base: null, merged: null};
+var cache = {backend: null, base: null, merged: null};
 
 function merge(backend, base, compose) {
+    // Reference fast path first: the backend polls on a 2 s cadence and NativeState re-merges
+    // on every native tick, so the cache used to JSON.stringify the whole backend snapshot on
+    // each call (measured hot in run s1-n10-b). Equal references answer before any stringify;
+    // the stringify remains for the poll that delivers a fresh-but-content-equal object.
+    if (cache.merged && cache.backend === backend && sameSections(cache.base, base)) return cache.merged;
     const raw = JSON.stringify(backend);
-    if (cache.merged && cache.raw === raw && sameSections(cache.base, base)) return cache.merged;
-    cache = {raw: raw, base: base, merged: Object.assign({}, backend, compose(backend, base))};
+    if (cache.merged && cache.rawCache === raw && sameSections(cache.base, base)) return cache.merged;
+    cache = {backend: backend, rawCache: raw, base: base, merged: Object.assign({}, backend, compose(backend, base))};
     return cache.merged;
 }
 

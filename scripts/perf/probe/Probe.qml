@@ -111,12 +111,20 @@ QtObject {
     function centreOf(item) {
         // Since Qt 6.7 many Quick types (Controls, Layouts) are not Items: their mapping
         // methods exist in the metaobject but calling them throws. A real Item (most of
-        // the shell's own items) maps exactly; anything else falls back to adding the
-        // readable x/y up the parent chain - exact for the untransformed trees the
-        // harness clicks (Settings sidebar, CC tabs).
+        // the shell's own items) maps exactly; a Control maps through a part that fills
+        // it, which keeps the transforms of its parents (the panel stage glides in by
+        // translating its content: the x/y of a tab never change). Anything else falls
+        // back to adding the readable x/y up the parent chain - exact only where nothing
+        // transforms the tree (the Settings sidebar).
         try {
             return item.mapToScene(Qt.point(item.width / 2, item.height / 2));
         } catch (error) {
+            for (const part of [item.background, item.contentItem]) {
+                try {
+                    if (part && Math.abs(part.width - item.width) < 1 && Math.abs(part.height - item.height) < 1)
+                        return part.mapToScene(Qt.point(part.width / 2, part.height / 2));
+                } catch (ignored) {}
+            }
             let x = item.width / 2, y = item.height / 2, node = item, guard = 0;
             while (node && guard++ < 64) {
                 x += node.x || 0;

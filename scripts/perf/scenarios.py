@@ -446,8 +446,8 @@ class Ctx:
         lands on the backdrop, which closes the panel (`closePanels` 127 ms after the
         open, in the first live S1 run), and every later click of that rep went to the
         desktop behind a closed panel."""
-        last = None
-        for _ in range(rounds):
+        last = first = None
+        for reads in range(1, rounds + 1):
             try:
                 rect = self.probe.rect(name)
             except ProbeError as error:
@@ -456,8 +456,13 @@ class Ctx:
                 return None
             if not rect.get("found") or not rect.get("shown"):
                 return None
+            if first is None:
+                first = rect
             if last is not None and abs(rect["x"] - last["x"]) < 0.5 and abs(rect["y"] - last["y"]) < 0.5:
                 self.sleep(rest_ms)
+                moved = ((rect["x"] - first["x"]) ** 2 + (rect["y"] - first["y"]) ** 2) ** 0.5
+                self.meta.setdefault("still_reads", []).append(
+                    {"t": round(self.now(), 3), "item": name, "reads": reads, "moved_px": round(moved, 2)})
                 return rect["x"], rect["y"]
             last = rect
             self.sleep(step_ms)

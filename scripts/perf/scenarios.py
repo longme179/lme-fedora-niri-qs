@@ -927,7 +927,7 @@ def final_state(ctx, last, end):
     return {"settle_ms": round(settled.epoch - end, 2) if settled else None, "ok": settled is not None,
             "failed_checks": [name for name, passed in checks.items() if not passed], "host": host,
             "state_page": (state.get("settings") or {}).get("page"),
-            "toast": (state.get("settings") or {}).get("toastText", "")}
+            "toast": bool((state.get("settings") or {}).get("toast"))}
 
 
 def latency(timeline, t_ms, test, timeout_ms):
@@ -1081,13 +1081,28 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         # wallpaper page is how a user brings the toast up, and the burst
                         # then measures switching while that toast is still shown.
                         point = ctx.nav_point(names["wallpaper"])
+                        rec["toast_stage"] = "nav" if point else "nav_none"
                         if point is not None:
                             at = ctx.click_at(*point)
                             timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
-                            scan = ctx.item_point("perfWallpaperScan")
+                            # The Scan button sits deep in the wallpaper page's own
+                            # scroll (y~1741 in a 780px window): wheel over the PAGE
+                            # (not the sidebar) until the button's rect is shown.
+                            scan = None
+                            for _ in range(16):
+                                rect = ctx.probe.rect("perfWallpaperScan")
+                                if rect.get("found") and rect.get("shown"):
+                                    scan = (rect["x"], rect["y"])
+                                    break
+                                if not rect.get("found"):
+                                    break
+                                ctx.shot(ctx.inj.wheel_at(ctx.box[0] + ctx.box_size[0] - 120,
+                                                          ctx.box[1] + ctx.box_size[1] / 2, -2))
+                                ctx.sleep(120)
+                            rec["toast_stage"] = "scan_aim" if scan else "scan_none"
                             if scan is not None:
                                 at = ctx.click_at(*scan)
-                                hit = timeline.wait(sample("settings", lambda d: TOAST_TEXT in (d.get("settings") or {}).get("toastText", "")),
+                                hit = timeline.wait(sample("settings", lambda d: (d.get("settings") or {}).get("toast")),
                                                     at - 1.0, 30000)
                                 rec["toast_seen"] = hit is not None
                                 rec["toast_ms"] = round(hit.epoch - at, 2) if hit else None

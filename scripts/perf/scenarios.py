@@ -972,6 +972,7 @@ def settings_burst(ctx, rec, sequence, gap_ms):
                 offset = ctx.nav_offset({key: (aimed[key][0] - ctx.box[0], aimed[key][1] - ctx.box[1])})
                 moved = offset.get(key)
                 moved_during[key] = moved
+                last_navy = None
                 if moved is None or moved >= 1.5:
                     point = ctx.nav_point(key)
                     if point is None:
@@ -979,7 +980,16 @@ def settings_burst(ctx, rec, sequence, gap_ms):
                     # nav_point settles on two identical reads, but a Flickable easing
                     # its last notch still eats a press that comes right after (live:
                     # 3 of 4 burst presses lost; the eyes run's slower pacing lost 0).
-                    ctx.sleep(400)
+                    # Wait on the list itself: the settings state sample carries the
+                    # sidebar's contentY, and a still list is one that reports the same
+                    # navY twice in a row.
+                    for _ in range(20):
+                        navy = ((ctx.ask("settings") or {}).get("settings") or {}).get("navY")
+                        if navy is not None and navy == last_navy:
+                            break
+                        last_navy = navy
+                        ctx.sleep(100)
+                    ctx.sleep(150)
                     stamps.append(ctx.click_at(*point))
                 else:
                     stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))

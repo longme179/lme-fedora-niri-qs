@@ -109,6 +109,7 @@ class SimShell:
         self.faults = parse_faults(faults)
         self.counts = {}
         self.burst = (0, 0)           # (token of the last page click, clicks since the last burst ended)
+        self.burst_plan = 0           # page clicks the scenario announced for the burst in progress
         self.workspace = 1
         self.pointer = (960.0, 540.0)
         self.toast = ""
@@ -386,7 +387,14 @@ class SimShell:
         elif item and item.startswith("perfNav_"):
             self.burst = (self.burst[0] + 1, self.burst[1] + 1)
             self.at(6, self.navigate, item[len("perfNav_"):])
-            self.at(150, self.end_of_burst, self.burst[0])
+            # Without a plan the burst ends once no further click followed within 150 ms. With one
+            # it ends at the plan's last click: the harness takes ~400 ms between two clicks of a
+            # burst (it waits for the nav entry to settle), longer than any such gap.
+            if not self.burst_plan:
+                self.at(150, self.end_of_burst, self.burst[0])
+            elif self.burst[1] >= self.burst_plan:
+                self.burst_plan = 0
+                self.at(150, self.end_of_burst, self.burst[0])
 
     # ---- panels -----------------------------------------------------------------------------------
     def toggle(self, name):
@@ -571,7 +579,7 @@ class SimShell:
         self.at(4500, setattr, self, "toast", "")
 
     def end_of_burst(self, token):
-        """No further page click followed: the burst is over. This is where a page can get stuck:
+        """The burst is over (its last click came, or no further one followed). A page can get stuck
         mid-transition, faded, with the recede cue held (the S2 fault)."""
         if token != self.burst[0]:
             return          # a later click came: the burst is still going
@@ -637,6 +645,9 @@ class FakeInjector:
 
     def note(self, text):
         self.log.write(f"{time.time_ns()} @ {text}\n")
+        if text.startswith("burst "):     # "burst about+wallpaper+about gap=60": the clicks to come
+            self.sim.burst = (self.sim.burst[0], 0)
+            self.sim.burst_plan = len(text.split()[1].split("+"))
 
 
 class FakeProbe:

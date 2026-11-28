@@ -145,10 +145,10 @@ edit("qml/components/PageHost.qml",
      + "\n".join(probe_state_fn("    ")) + "\n")
 edit("qml/components/PageHost.qml",
      "    function present(page) {\n"
-     "        leaving = 0;\n"
+     "        unrecede();\n"
      "        if (shown === page) return;\n",
      "    function present(page) {\n"
-     "        leaving = 0;\n"
+     "        unrecede();\n"
      '        Probe.mark("host.present " + probeName + " " + page.pageKey + (shown === page ? " same" : shown ? " from=" + shown.pageKey : " first"));\n'
      "        if (shown === page) return;\n")
 edit("qml/components/PageHost.qml",
@@ -157,11 +157,11 @@ edit("qml/components/PageHost.qml",
      '        Probe.mark("host.drop " + probeName + " " + page.pageKey + (prewarming === page ? " prewarm" : "") + (pending === page ? " pending" : ""));\n')
 edit("qml/components/PageHost.qml",
      "    function show() {\n"
-     "        if (shown && shown.pageKey === key) return;\n",
+     "        if (shown && shown.pageKey === key) {\n",
      "    function show() {\n"
      '        Probe.mark("host.show " + probeName + " " + key + (shown && shown.pageKey === key ? " same" : "")\n'
      '            + " pending=" + (pending ? pending.pageKey : "-") + " prewarm=" + (prewarming ? prewarming.pageKey : "-"));\n'
-     "        if (shown && shown.pageKey === key) return;\n")
+     "        if (shown && shown.pageKey === key) {\n")
 line("qml/components/PageHost.qml", "function recede() {", after=[
     '    Probe.mark("host.recede " + probeName + " " + key);'])
 edit("qml/components/PageHost.qml",

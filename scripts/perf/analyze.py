@@ -185,6 +185,9 @@ def summarize_s2(records):
                 "already": sum(len(rec.get("already_at", [])) for rec in kept),
                 "first_frame_ms": stats(rec.get("first_frame_ms") for rec in kept),
                 "toast_seen": sum(1 for rec in recs if rec.get("toast_seen")),
+                # Burst clicks that went out while the toast was on screen, and how many went out.
+                "under_toast": [sum(1 for rec in recs for flag in (rec.get("toast_at_click") or []) if flag),
+                                sum(len(rec.get("toast_at_click") or []) for rec in recs)],
             })
             entry["failed_reps"] = sorted({rec["rep"] for rec in bad} | {rec["rep"] for rec in recs if froze(rec.get("stalls", []))}
                                           | {rec["rep"] for rec in recs if rec.get("close_recovery")})
@@ -649,6 +652,11 @@ def to_markdown(summary):
                              fmt(entry["gap_ms"])])
         lines += table(["variant", "reps", "violations", "ghosted", "eaten", "click->navigate mark", "input->first frame",
                         "last click->settled", "failed reps", "stalls>100", "aimed once", "click gap"], rows) + [""]
+        for entry in summary["s2"]:
+            if entry.get("under_toast") and entry["under_toast"][1]:
+                seen, total = entry["under_toast"]
+                lines.append(f"- {entry['variant']}: {seen} of {total} burst clicks went out while the toast was on "
+                             "screen (`toast_at_click` in the record).")
         for entry in summary["s2"]:
             for item in entry.get("violations_detail", []):
                 rep, sequence, opacity, failed = (list(item) + ["", "", "", ""])[:4]

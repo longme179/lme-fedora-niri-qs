@@ -388,8 +388,8 @@ class SimShell:
             self.burst = (self.burst[0] + 1, self.burst[1] + 1)
             self.at(6, self.navigate, item[len("perfNav_"):])
             # Without a plan the burst ends once no further click followed within 150 ms. With one
-            # it ends at the plan's last click: the harness clicks a burst either ~66 ms apart
-            # (its entries aimed once) or ~466 ms apart (aimed again before every click), and
+            # it ends at the plan's last click: the harness clicks a burst either ~68 ms apart
+            # (its entries aimed once) or ~1.5 s apart (aimed again before every click), and
             # the plan is what tells a burst from clicks that simply stopped.
             if not self.burst_plan:
                 self.at(150, self.end_of_burst, self.burst[0])

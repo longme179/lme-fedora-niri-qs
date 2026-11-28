@@ -38,10 +38,23 @@ QtObject {
         if (device) device.scannerEnabled = true;
     }
 
+    // The last published section. `state` is a readonly binding, so every re-evaluation (each
+    // access-point signalStrength tick among them) used to hand QML a brand-new object;
+    // NativeState.baseSections then changed identity, SystemMerge produced a new `system`, and
+    // every Repeater with a ShellState.system-derived model rebuilt its delegates (VDM +
+    // QMetaObjectBuilder — the multi-second GUI stalls of run s1-n10-b). The binding now
+    // returns the previous section unless a *consumed* field moved: strength is banded by 8
+    // (the same tolerance the Q1 A/B compare uses for the same jitter, qml/services/
+    // NativeState.qml), the empty lists share one constant so `!watching` re-evaluations are
+    // reference-stable, and the watching lists compare by content (bounded: 60 rows). No UI
+    // reads strength of the connected network outside WifiWidget's scan rows, which ride
+    // `networks`, not this field (grep-verified).
+    property var published: null
+    readonly property var emptyList: []
     readonly property var state: {
         const section = {available: true, enabled: Networking.wifiEnabled, connected: false,
                          wifiConnected: false, ssid: "", strength: null, device: wifi ? wifi.name : "",
-                         networks: [], saved: []};
+                         networks: emptyList, saved: emptyList};
         for (const device of devices)
             if (device.connected) {
                 section.connected = true;
@@ -57,24 +70,50 @@ QtObject {
             section.networks = networksList();
             section.saved = savedList();
         }
+        const previous = published;
+        if (previous) {
+            const sameStrength = typeof previous.strength !== "number" || typeof section.strength !== "number"
+                ? previous.strength === section.strength
+                : Math.abs(previous.strength - section.strength) <= 8;
+            if (previous.available === section.available && previous.enabled === section.enabled
+                    && previous.connected === section.connected
+                    && previous.wifiConnected === section.wifiConnected
+                    && previous.ssid === section.ssid && previous.device === section.device
+                    && sameStrength
+                    && (previous.networks === section.networks
+                        || JSON.stringify(previous.networks) === JSON.stringify(section.networks))
+                    && (previous.saved === section.saved
+                        || JSON.stringify(previous.saved) === JSON.stringify(section.saved)))
+                return previous;   // nothing a consumer can see moved: keep the old identity
+        }
+        published = section;
         return section;
     }
 
     // Port of the backend's `nmcli device wifi list` mapping: SSID-deduped (quickshell keys the
     // model by SSID like the backend's first-seen dedupe), 0-100 strength, connected first then
-    // descending strength, capped at 60.
+    // descending strength, capped at 60. Per-row strength is banded to steps of 8 before the
+    // sort: the Q1 A/B compare already tolerates this exact jitter (65 vs 71 on the same
+    // network, qml/services/NativeState.qml), and WifiWidget renders whole percentages from
+    // these rows — without banding, one AP tick re-orders/re-builds every scan row through
+    // VDM (the quiet-window stalls of run s1-n10-fix), and QQuickRepeater::setModel's
+    // value-compare early-return never fires.
     function networksList() {
         if (!wifi) return [];
         const rows = [];
         for (const network of wifi.networks.values) {
             if (!network.name) continue;
-            rows.push({ssid: network.name, strength: Math.round(network.signalStrength * 100),
+            rows.push({ssid: network.name, strength: bandStrength(network.signalStrength),
                        connected: network.connected === true,
                        security: securityName(network.security), secured: isSecured(network.security),
                        enterprise: isEnterprise(network.security), bssid: ""});
         }
         rows.sort((a, b) => a.connected === b.connected ? b.strength - a.strength : (a.connected ? -1 : 1));
         return rows.slice(0, 60);
+    }
+
+    function bandStrength(signalStrength) {
+        return Math.round(Math.round(signalStrength * 100) / 8) * 8;
     }
 
     // Port of the backend's saved list (`nmcli connection show`, wifi type): every profile the

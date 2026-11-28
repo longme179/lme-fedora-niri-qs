@@ -68,6 +68,17 @@ Item {
     }
     function updateNest() {
         nestWalks++;
+        // The nesting machinery (ancestor walk, nestWatched, the Instantiator's per-ancestor
+        // Connections) only feeds the glass shader uniforms; with liquid glass off (or the
+        // surface invisible) it is dead weight, and it is not cheap: every LiquidButton and
+        // glass control instantiates a GlassMaterial, so each scan-row or grid rebuild walked
+        // up to 48 ancestors and rebuilt Connections delegates through VDM/QMetaObjectBuilder
+        // even with surfaceStyle "smoked" — the recurring ~370 ms quiet stalls of s1-n10-fix3.
+        if (!root.active) {
+            if (nestWatched.length) nestWatched = [];
+            if (nestLevel !== 0) nestLevel = 0;
+            return;
+        }
         const stop = root.hostWindow ? root.hostWindow.contentItem : null;
         nestLevel = GlassNesting.nestLevel(root, stop);
         const domain = [];
@@ -93,6 +104,9 @@ Item {
     }
     HoverHandler { id: pointer; enabled: root.lightEnabled }
     Instantiator {
+        // Gated like the rest of the nesting machinery: with glass off this built one
+        // Connections delegate per ancestor for nothing (see updateNest).
+        active: root.active
         model: root.nestWatched
         delegate: Connections {
             required property var modelData

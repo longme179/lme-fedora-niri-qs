@@ -79,6 +79,11 @@ where they were aimed at; the clicks then follow at `gap_ms`. The report's `aime
 that moved in between makes the harness aim again before every click: slower than asked,
 but only what was just aimed at is pressed.
 
+Before every aimed press the sidebar also has to report that it is not moving any more: a
+press that lands while its Flickable eases the last wheel notch never reaches the button.
+The report's `eaten` column counts such presses. A click on the page that is already shown
+navigates nowhere: it is `already there` and reads 0.0.
+
 ## Offline first, live second
 
 ```

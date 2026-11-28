@@ -336,6 +336,8 @@ edit("qml/settings/SettingsView.qml",
      "                                id: nav\n"
      '                                objectName: "perfNav_" + modelData.key\n'
      '                                Component.onCompleted: { Probe.nav[modelData.key] = this; Probe.mark("settings.nav " + modelData.key) }\n'
+     '                                onPressedChanged: Probe.mark("settings.press nav " + modelData.key + " down=" + pressed + " navMoving=" + navigationScroll.moving + " navFlicking=" + navigationScroll.flicking)\n'
+     '                                onCanceled: Probe.mark("settings.cancel nav " + modelData.key)\n'
      "                                required property var modelData\n")
 edit("qml/settings/SettingsView.qml",
      "        function onFrameSwapped() { root.framesRendered++ }\n",
@@ -349,7 +351,8 @@ edit("qml/settings/SettingsView.qml",
      '    function probePages() { return (FeatureCatalog.ready ? SettingsRegistry.pages : SettingsRegistry.legacyPages).map(p => p.key) }\n'
 
      '    function probeNavY() { return Math.round((navigationScroll ? navigationScroll.contentY : -1) * 10) / 10 }\n'
-     '    function probeNavShown() { const out = {}; for (const k in Probe.nav) { const it = Probe.nav[k]; out[k] = !!(it && it.visible && it.width > 0); } return out }\n')
+     '    function probeNavShown() { const out = {}; for (const k in Probe.nav) { const it = Probe.nav[k]; out[k] = !!(it && it.visible && it.width > 0); } return out }\n'
+     '    function probeFlick() { return {navMoving: navigationScroll.moving, navFlicking: navigationScroll.flicking, pageMoving: pageScroll.moving, pageFlicking: pageScroll.flicking}; }\n')
 edit("qml/settings/WallpaperPage.qml",
      "            LiquidButton { text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa",
      '            LiquidButton { objectName: "perfWallpaperScan"; text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa')

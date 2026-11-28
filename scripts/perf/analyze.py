@@ -165,7 +165,9 @@ def summarize_s2(records):
             for rec in bad:
                 for name in rec.get("failed_checks", []):
                     checks[name] = checks.get(name, 0) + 1
-            react = [value for rec in kept for value in rec.get("react_ms", [])]
+            # A click on the page already shown reads 0.0 and is no reaction time.
+            react = [value for rec in kept for index, value in enumerate(rec.get("react_ms", []))
+                     if index not in rec.get("already_at", [])]
             entry.update({
                 "bursts": len(recs), "violations": len(bad), "failure_rate": round(len(bad) / len(recs), 4) if recs else 0,
                 "aimed_once": sum(1 for rec in kept if (rec.get("aim") or {}).get("how") == "once"),
@@ -178,6 +180,9 @@ def summarize_s2(records):
                 "ghosted": sum(1 for rec in recs if (rec.get("host") or {}).get("opacity", 1) < 0.999),
                 "settle_ms": stats(rec.get("settle_ms") for rec in kept), "react_ms": stats(react),
                 "react_missed": sum(1 for value in react if value is None),
+                "eaten": sum(len(rec.get("eaten", [])) for rec in kept),
+                "eaten_detail": [[rec["rep"], [key for _, key in rec["eaten"]]] for rec in kept if rec.get("eaten")],
+                "already": sum(len(rec.get("already_at", [])) for rec in kept),
                 "first_frame_ms": stats(rec.get("first_frame_ms") for rec in kept),
                 "toast_seen": sum(1 for rec in recs if rec.get("toast_seen")),
             })
@@ -483,6 +488,8 @@ def metrics(summary, records):
             out[prefix + ".gap_ms.median"] = entry["gap_ms"].get("median")
             out[prefix + ".aimed_once"] = entry["aimed_once"]
             out[prefix + ".off_aim"] = len(entry["off_aim"])
+            out[prefix + ".eaten"] = entry["eaten"]
+            out[prefix + ".already"] = entry["already"]
     for entry in summary["s1"]:
         prefix = f"s1.{entry['variant']}"
         out[prefix + ".reps"] = entry["reps"]
@@ -626,18 +633,21 @@ def to_markdown(summary):
                   "1, no transition running, nothing pending) within 6 s. A rep fails on a violation, on a GUI-thread "
                   "stall of 100 ms or more, or when Escape did not close Settings. A burst aims its nav entries once,\n"
                   "before the first click, when they lie still where they were aimed at (`aimed once`); otherwise it\n"
-                  "aims again before every click. `click gap` is the time between two clicks of a burst.", ""]
+                  "aims again before every click. `click gap` is the time between two clicks of a burst. `eaten` counts\n"
+                  "presses that had a page to go to and never reached the button (the sidebar was still easing): a loss\n"
+                  "of the harness, not of the shell. A click on the page already shown is `already there` and reads 0.0.", ""]
         rows = []
         for entry in summary["s2"]:
             if entry["variant"] == "all":
-                rows.append(["all", entry["reps"], f"{entry['violations']}/{entry['pages']} pages", "–", fmt(entry["react_ms"]),
+                rows.append(["all", entry["reps"], f"{entry['violations']}/{entry['pages']} pages", "–", "–", fmt(entry["react_ms"]),
                              fmt(entry["frame_ms"]), fmt(entry["settle_ms"]), f"{entry['failures']}", entry["stalls"]["over_100"],
                              "–", "–"])
             else:
                 rows.append([entry["variant"], entry["reps"], f"{entry['violations']}/{entry['bursts']}", entry["ghosted"],
-                             fmt(entry["react_ms"]), fmt(entry["first_frame_ms"]), fmt(entry["settle_ms"]), entry["failures"],
-                             entry["stalls"]["over_100"] or "–", f"{entry['aimed_once']}/{entry['bursts']}", fmt(entry["gap_ms"])])
-        lines += table(["variant", "reps", "violations", "ghosted", "click->navigate mark", "input->first frame",
+                             entry["eaten"], fmt(entry["react_ms"]), fmt(entry["first_frame_ms"]), fmt(entry["settle_ms"]),
+                             entry["failures"], entry["stalls"]["over_100"] or "–", f"{entry['aimed_once']}/{entry['bursts']}",
+                             fmt(entry["gap_ms"])])
+        lines += table(["variant", "reps", "violations", "ghosted", "eaten", "click->navigate mark", "input->first frame",
                         "last click->settled", "failed reps", "stalls>100", "aimed once", "click gap"], rows) + [""]
         for entry in summary["s2"]:
             for item in entry.get("violations_detail", []):
@@ -647,6 +657,8 @@ def to_markdown(summary):
             for rep, moved in entry.get("off_aim", []):
                 lines.append(f"- {entry['variant']}: rep {rep}: the sidebar moved while the clicks went out ({moved} px "
                              "from the entries after the burst); kept out of the latency columns")
+            for rep, lost in entry.get("eaten_detail", []):
+                lines.append(f"- {entry['variant']}: rep {rep}: press lost before the button: {'+'.join(lost)}")
         per_page = next((entry["per_page"] for entry in summary["s2"] if entry["variant"] == "all"), {})
         if per_page:
             lines += ["", "Per page (variant `all`):", ""] + table(

@@ -300,10 +300,23 @@ class Ctx:
     def ask(self, proc="shell"):
         """State of one process, or None when its GUI thread did not answer in time."""
         try:
-            return self.probe.state(proc)
+            reply = self.probe.state(proc)
         except ProbeError as error:
             self.problems.append({"t": round(self.now(), 3), "probe": proc, "error": str(error)[:240]})
             return None
+        if proc == "settings":
+            self.settings_state = reply
+        return reply
+
+    def settings_page(self):
+        """The page Settings shows, as of its last state answer."""
+        return ((getattr(self, "settings_state", None) or {}).get("settings") or {}).get("page")
+
+    def flick_flags(self):
+        """What the Settings Flickables say about themselves, as of the last state answer:
+        navMoving / pageMoving while a scroll timeline runs (one wheel notch eases for
+        300 ms), navFlicking / pageFlicking while a deceleration runs."""
+        return ((getattr(self, "settings_state", None) or {}).get("settings") or {}).get("flick") or {}
 
     def ping(self):
         try:
@@ -514,7 +527,7 @@ class Ctx:
             """The entry's point once its rect stops moving. A press on a delegate that is
             still gliding ends outside it, and Quickshell hands the scene a flick, not a
             click - the page never navigates and the detector sees react=None."""
-            for _ in range(12):
+            for _ in range(20):
                 time.sleep(0.15)
                 again = self.probe.rect(f"perfNav_{key}")
                 note_read("settle", again)
@@ -523,10 +536,17 @@ class Ctx:
                 # A kinetic coast covers its last pixels in ever smaller steps: the exact
                 # equality of two reads never comes. Within half a pixel it has stopped -
                 # and a dead beat after that lets the gesture fully end before the press.
+                # Still is not done: two reads half a pixel apart are also what a Flickable
+                # looks like easing its last wheel notch, and the press that lands while its
+                # timeline runs is the one it keeps (live 2026-11-28: 19 of 120 burst
+                # presses lost, every one right after a scroll). So the sidebar itself has
+                # to say that it is not moving. No answer counts as moving.
                 if abs(again.get("y", 0) - entry.get("y", 0)) < 0.5 \
                         and abs(again.get("x", 0) - entry.get("x", 0)) < 0.5:
-                    time.sleep(0.25)
-                    return self.box[0] + again["x"], self.box[1] + again["y"]
+                    if self.ask("settings") is not None and not (
+                            self.flick_flags().get("navMoving") or self.flick_flags().get("navFlicking")):
+                        time.sleep(0.25)
+                        return self.box[0] + again["x"], self.box[1] + again["y"]
                 entry = again
             return None
 
@@ -934,6 +954,49 @@ def latency(timeline, t_ms, test, timeout_ms):
     hit = timeline.wait(test, t_ms - 1.0, timeout_ms)
     return round(hit.epoch - t_ms, 2) if hit else None
 
+def press_window(stamps, index):
+    """How long the press `index` of a burst may take to navigate: until the press two
+    clicks later, the next one that can navigate to the same page (or 5 s for the last two).
+    A lost press has no mark of its own; the mark of that later click is not its answer."""
+    if index + 2 < len(stamps):
+        return min(stamps[index + 2], stamps[index] + 5000.0) - stamps[index]
+    return 5000.0
+
+def pages_shown(timeline, stamps, first):
+    """The page Settings shows when each of these presses goes out. navigate() writes
+    `settings.navigate old>new` before it changes the page, so the marks tell it exactly;
+    `first` is what was shown before the first mark."""
+    timeline.pump()
+    marks = [event for event in timeline.after(stamps[0] - 1.0, {"m"})
+             if event.text.startswith("settings.navigate ")]
+    out = []
+    for at in stamps:
+        while marks and marks[0].epoch <= at:
+            first = marks.pop(0).text.split()[1].split(">")[1]
+        out.append(first)
+    return out
+
+def press_window(stamps, index):
+    """How long the press `index` of a burst may take to navigate: until the press two
+    clicks later, the next one that can navigate to the same page (or 5 s for the last two).
+    A lost press has no mark of its own; the mark of that later click is not its answer."""
+    if index + 2 < len(stamps):
+        return min(stamps[index + 2], stamps[index] + 5000.0) - stamps[index]
+    return 5000.0
+
+def pages_shown(timeline, stamps, first):
+    """The page Settings shows when each of these presses goes out. navigate() writes
+    `settings.navigate old>new` before it changes the page, so the marks tell it exactly;
+    `first` is what was shown before the first mark."""
+    marks = [event for event in timeline.after(stamps[0] - 1.0, {"m"})
+             if event.text.startswith("settings.navigate ")]
+    out = []
+    for at in stamps:
+        while marks and marks[0].epoch <= at:
+            first = marks.pop(0).text.split()[1].split(">")[1]
+        out.append(first)
+    return out
+
 
 def settings_burst(ctx, rec, sequence, gap_ms):
     """Click the pages of `sequence`, then assert the state machine of the page host.
@@ -972,24 +1035,12 @@ def settings_burst(ctx, rec, sequence, gap_ms):
                 offset = ctx.nav_offset({key: (aimed[key][0] - ctx.box[0], aimed[key][1] - ctx.box[1])})
                 moved = offset.get(key)
                 moved_during[key] = moved
-                last_navy = None
                 if moved is None or moved >= 1.5:
+                    # nav_point settles on the entry's rect and on the sidebar's own moving
+                    # flag, the same way before every press that goes through it.
                     point = ctx.nav_point(key)
                     if point is None:
                         raise Skip(f"perfNav_{key} is not inside the Settings window")
-                    # nav_point settles on two identical reads, but a Flickable easing
-                    # its last notch still eats a press that comes right after (live:
-                    # 3 of 4 burst presses lost; the eyes run's slower pacing lost 0).
-                    # Wait on the list itself: the settings state sample carries the
-                    # sidebar's contentY, and a still list is one that reports the same
-                    # navY twice in a row.
-                    for _ in range(20):
-                        navy = ((ctx.ask("settings") or {}).get("settings") or {}).get("navY")
-                        if navy is not None and navy == last_navy:
-                            break
-                        last_navy = navy
-                        ctx.sleep(100)
-                    ctx.sleep(150)
                     stamps.append(ctx.click_at(*point))
                 else:
                     stamps.append(ctx.shot(ctx.inj.click_at(*aimed[key])))
@@ -1001,7 +1052,16 @@ def settings_burst(ctx, rec, sequence, gap_ms):
             ctx.sleep(gap_ms)
         rec["moved_during_pending"] = moved_during if aimed else {}
     rec["clicks"] = [[key, round(stamp, 3)] for key, stamp in zip(sequence, stamps)]
-    rec["react_ms"] = [latency(timeline, at, navigate_mark(key), 5000) for key, at in zip(sequence, stamps)]
+    # A click on the page Settings already shows navigates nowhere (navigate() returns
+    # early, no mark): "already there", and it reads 0.0. It used to read the mark of the
+    # next click on the same page: 2.2 s in every toast burst, taken for a slow page host.
+    shown = pages_shown(timeline, stamps, ctx.settings_page())
+    rec["already_at"] = [index for index, (key, page) in enumerate(zip(sequence, shown)) if page == key]
+    rec["react_ms"] = [0.0 if page == key else latency(timeline, at, navigate_mark(key), max(press_window(stamps, index), 1.0))
+                       for index, (key, at, page) in enumerate(zip(sequence, stamps, shown))]
+    # A press that had a page to go to and never got its mark: lost before the button.
+    rec["eaten"] = [[index, key] for index, (key, page, ms) in enumerate(zip(sequence, shown, rec["react_ms"]))
+                    if page != key and ms is None]
     rec["first_frame_ms"] = latency(timeline, stamps[0], frame("settings"), 400)
     rec.update(final_state(ctx, sequence[-1], stamps[-1]))
     now = ctx.now()
@@ -1103,15 +1163,18 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                                 # The page Flickable eases like the sidebar's: a press
                                 # right after the last notch gets eaten (live: the
                                 # closing burst click lost). Wait for the button's rect
-                                # to stop moving, then a small tail.
-                                last = None
+                                # to stop moving and for the page to say twice that it
+                                # is not moving, then a small tail.
+                                last, quiet = None, 0
                                 for _ in range(20):
+                                    ctx.sleep(100)
                                     again = ctx.probe.rect("perfWallpaperScan")
                                     y = round(again.get("y") or -1, 1)
-                                    if y == last:
-                                        break
+                                    flags = ctx.flick_flags() if ctx.ask("settings") is not None else {"pageMoving": True}
+                                    quiet = quiet + 1 if y == last and not (flags.get("pageMoving") or flags.get("pageFlicking")) else 0
                                     last = y
-                                    ctx.sleep(100)
+                                    if quiet >= 2:
+                                        break
                                 ctx.sleep(150)
                             rec["toast_stage"] = "scan_aim" if scan else "scan_none"
                             if scan is not None:
@@ -1120,7 +1183,9 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                                                     at - 1.0, 30000)
                                 rec["toast_seen"] = hit is not None
                                 rec["toast_ms"] = round(hit.epoch - at, 2) if hit else None
-                        pair = (names["wallpaper"], names["about"])
+                        # Start on `about`: the page is wallpaper after the Scan press, so a
+                        # burst starting on wallpaper opens with a click that navigates nowhere.
+                        pair = (names["about"], names["wallpaper"])
                     settings_burst(ctx, rec, [pair[index % 2] for index in range(burst)], gap_ms)
                 rec["ping_ms"] = ctx.ping()
                 ctx.records.append(rec)

@@ -220,7 +220,8 @@ QtObject {
             if (settings) o.settings = {page: settings.page, search: settings.searchText(), toast: s.statusMessage.length > 0,
                 pages: settings.probePages ? settings.probePages() : [],
                 navY: settings.probeNavY ? settings.probeNavY() : -1,
-                navShown: settings.probeNavShown ? settings.probeNavShown() : {}};
+                navShown: settings.probeNavShown ? settings.probeNavShown() : {},
+                flick: settings.probeFlick ? settings.probeFlick() : {}};
         } catch (error) { o.settingsError = "" + error; }
         // Window-relative, and only while the pointer is over the window that reports it.
         try {

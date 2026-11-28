@@ -1164,12 +1164,18 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         # then measures switching while that toast is still shown.
                         point = ctx.nav_point(names["wallpaper"])
                         rec["toast_stage"] = "nav" if point else "nav_none"
-                        # The aim just renewed the state answer. On the wallpaper page
-                        # already (every rep after the first: the burst ends there) the click
-                        # would navigate nowhere and the wait run into its 10 s timeout.
-                        if point is not None and ctx.settings_page() != names["wallpaper"]:
-                            at = ctx.click_at(*point)
-                            timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
+                        if point is not None:
+                            # The aim just renewed the state answer. On the wallpaper page
+                            # already (every rep after the first: the burst ends there) the
+                            # click would navigate nowhere and the wait run into its 10 s
+                            # timeout. Only the click and its wait are skipped: the scan
+                            # runs either way, so the toast is the rep's own (live
+                            # 2026-11-28, vfy9: with the condition on this `if`, the reps
+                            # after the first pressed nothing and their clicks went out
+                            # under the previous rep's toast, or under none).
+                            if ctx.settings_page() != names["wallpaper"]:
+                                at = ctx.click_at(*point)
+                                timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
                             # The Scan button sits deep in the wallpaper page's own
                             # scroll (y~1741 in a 780px window): wheel over the PAGE
                             # (not the sidebar) until the button's rect is shown.

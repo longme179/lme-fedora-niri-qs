@@ -1181,7 +1181,12 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                             if scan is not None:
                                 # What a press at that point reaches first (paint order, last on top).
                                 rec["scan_hit"] = ctx.probe.call("hit", "perfWallpaperScan", backend="settings")[:4]
-                                at = ctx.click_at(*scan)
+                                # The rect is window-relative; the injector takes output
+                                # coordinates, so the window's origin goes on top. Without it
+                                # the press missed the button by the whole window offset
+                                # (410, 171): no Scan press ever reached its handler, and the
+                                # toasts seen so far were the boot-time one of initialize().
+                                at = ctx.click_at(ctx.box[0] + scan[0], ctx.box[1] + scan[1])
                                 hit = timeline.wait(sample("settings", lambda d: (d.get("settings") or {}).get("toast")),
                                                     at - 1.0, 30000)
                                 rec["toast_seen"] = hit is not None

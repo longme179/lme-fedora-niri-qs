@@ -86,7 +86,9 @@ navigates nowhere: it is `already there` and reads 0.0.
 The press on the wallpaper page's Scan button is aimed the same way: the page scrolls
 until the button lies well inside the viewport, and the press goes where the button's rect
 came to rest, not where it was when it first came into view while the page was still
-easing.
+easing. The rect is window-relative, so the window's origin is added before the press goes
+to the injector: without it every Scan press missed the button by the window offset and no
+toast ever came from the button.
 
 ## Offline first, live second
 

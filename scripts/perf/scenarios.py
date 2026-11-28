@@ -1014,6 +1014,11 @@ def settings_burst(ctx, rec, sequence, gap_ms):
         how = "once"
     else:
         aimed, how = None, "per click"
+    # The page Settings shows before the first press: the state answer is renewed by every
+    # aim, so after the burst it names the page before the last press instead.
+    ctx.ask("settings")
+    start_page = ctx.settings_page()
+    rec["start_page"] = start_page
     stamps = []
     if gap_ms <= 0:
         commands = []
@@ -1055,7 +1060,7 @@ def settings_burst(ctx, rec, sequence, gap_ms):
     # A click on the page Settings already shows navigates nowhere (navigate() returns
     # early, no mark): "already there", and it reads 0.0. It used to read the mark of the
     # next click on the same page: 2.2 s in every toast burst, taken for a slow page host.
-    shown = pages_shown(timeline, stamps, ctx.settings_page())
+    shown = pages_shown(timeline, stamps, start_page)
     rec["already_at"] = [index for index, (key, page) in enumerate(zip(sequence, shown)) if page == key]
     rec["react_ms"] = [0.0 if page == key else latency(timeline, at, navigate_mark(key), max(press_window(stamps, index), 1.0))
                        for index, (key, at, page) in enumerate(zip(sequence, stamps, shown))]
@@ -1148,23 +1153,37 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                             # The Scan button sits deep in the wallpaper page's own
                             # scroll (y~1741 in a 780px window): wheel over the PAGE
                             # (not the sidebar) until the button's rect is shown.
-                            scan = None
+                            # Aim where the button comes to rest, not where it was when it
+                            # first came into view: that rect is read while the page is still
+                            # easing, and the press landed below the button (live 2026-11-28:
+                            # 4 of 4 presses missed, toast never seen). Scroll until the
+                            # button lies well inside the viewport (its centre 60 px and more
+                            # above the page's bottom edge, the row's margin of 20 px above
+                            # the window's) or until the page stops moving, then re-aim on
+                            # every read of the settle.
+                            scan, last_y = None, None
                             for _ in range(16):
                                 rect = ctx.probe.rect("perfWallpaperScan")
+                                y = round(rect.get("y") or -1, 1)
                                 if rect.get("found") and rect.get("shown"):
                                     scan = (rect["x"], rect["y"])
+                                    rec["scan_h"] = rect.get("h")
+                                if scan is not None and y <= ctx.box_size[1] - 80:
                                     break
-                                if not rect.get("found"):
+                                if not rect.get("found") or y == last_y:
                                     break
+                                last_y = y
                                 ctx.shot(ctx.inj.wheel_at(ctx.box[0] + ctx.box_size[0] - 120,
                                                           ctx.box[1] + ctx.box_size[1] / 2, -2))
                                 ctx.sleep(120)
+                            rec["scan_first"] = [round(value, 1) for value in scan] if scan else None
                             if scan is not None:
                                 # The page Flickable eases like the sidebar's: a press
                                 # right after the last notch gets eaten (live: the
                                 # closing burst click lost). Wait for the button's rect
                                 # to stop moving and for the page to say twice that it
-                                # is not moving, then a small tail.
+                                # is not moving, then a small tail; the last rect read is
+                                # where the press goes.
                                 last, quiet = None, 0
                                 for _ in range(20):
                                     ctx.sleep(100)
@@ -1173,9 +1192,12 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                                     flags = ctx.flick_flags() if ctx.ask("settings") is not None else {"pageMoving": True}
                                     quiet = quiet + 1 if y == last and not (flags.get("pageMoving") or flags.get("pageFlicking")) else 0
                                     last = y
+                                    if again.get("found") and again.get("shown"):
+                                        scan = (again["x"], again["y"])
                                     if quiet >= 2:
                                         break
                                 ctx.sleep(150)
+                            rec["scan_rect"] = [round(value, 1) for value in scan] if scan else None
                             rec["toast_stage"] = "scan_aim" if scan else "scan_none"
                             if scan is not None:
                                 at = ctx.click_at(*scan)

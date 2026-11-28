@@ -83,6 +83,10 @@ Before every aimed press the sidebar also has to report that it is not moving an
 press that lands while its Flickable eases the last wheel notch never reaches the button.
 The report's `eaten` column counts such presses. A click on the page that is already shown
 navigates nowhere: it is `already there` and reads 0.0.
+The press on the wallpaper page's Scan button is aimed the same way: the page scrolls
+until the button lies well inside the viewport, and the press goes where the button's rect
+came to rest, not where it was when it first came into view while the page was still
+easing.
 
 ## Offline first, live second
 

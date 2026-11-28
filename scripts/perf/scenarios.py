@@ -976,27 +976,6 @@ def pages_shown(timeline, stamps, first):
         out.append(first)
     return out
 
-def press_window(stamps, index):
-    """How long the press `index` of a burst may take to navigate: until the press two
-    clicks later, the next one that can navigate to the same page (or 5 s for the last two).
-    A lost press has no mark of its own; the mark of that later click is not its answer."""
-    if index + 2 < len(stamps):
-        return min(stamps[index + 2], stamps[index] + 5000.0) - stamps[index]
-    return 5000.0
-
-def pages_shown(timeline, stamps, first):
-    """The page Settings shows when each of these presses goes out. navigate() writes
-    `settings.navigate old>new` before it changes the page, so the marks tell it exactly;
-    `first` is what was shown before the first mark."""
-    marks = [event for event in timeline.after(stamps[0] - 1.0, {"m"})
-             if event.text.startswith("settings.navigate ")]
-    out = []
-    for at in stamps:
-        while marks and marks[0].epoch <= at:
-            first = marks.pop(0).text.split()[1].split(">")[1]
-        out.append(first)
-    return out
-
 
 def settings_burst(ctx, rec, sequence, gap_ms):
     """Click the pages of `sequence`, then assert the state machine of the page host.

@@ -221,7 +221,10 @@ QtObject {
                 pages: settings.probePages ? settings.probePages() : [],
                 navY: settings.probeNavY ? settings.probeNavY() : -1,
                 navShown: settings.probeNavShown ? settings.probeNavShown() : {},
-                flick: settings.probeFlick ? settings.probeFlick() : {}};
+                flick: settings.probeFlick ? settings.probeFlick() : {},
+                scan: s.pendingActions ? !!s.pendingActions.wallpaperScan : null,
+                last: s.lastResult ? [s.lastResult.action, s.lastResult.ok,
+                                      String(s.lastResult.message || "").slice(0, 60)] : null};
         } catch (error) { o.settingsError = "" + error; }
         // Window-relative, and only while the pointer is over the window that reports it.
         try {

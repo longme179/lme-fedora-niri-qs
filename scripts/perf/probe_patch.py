@@ -357,6 +357,11 @@ edit("qml/settings/WallpaperPage.qml",
      "            LiquidButton { text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa",
      '            LiquidButton { objectName: "perfWallpaperScan"; text: ShellState.pendingActions.wallpaperScan ? \"Scanning…\" : \"Scan\"; enabled: !ShellState.pendingActions.wa')
 
+edit("qml/settings/WallpaperPage.qml",
+     "onClicked: root.scan(folder.text) }",
+     'onPressedChanged: Probe.mark("settings.press scan down=" + pressed); onCanceled: Probe.mark("settings.cancel scan"); '
+     'onClicked: { Probe.mark("settings.scan click"); root.scan(folder.text) } }',
+     note="the Scan press, release, cancel and click")
 edit("qml/settings/SettingsApplication.qml",
      "        function startupPending(): bool { return !root.startupFailed && (!root.initialized || view.status === Loader.Loading); }\n"
      "    }\n",

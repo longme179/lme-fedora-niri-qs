@@ -74,10 +74,12 @@ Scenario options: `s4:reps=3,routes=key+click+ipc,delays=5+60+150+400,prior=cont
 `s3:reps=1`, `warmup:rounds=1`.
 
 An S2 burst aims its nav entries once, before the first click, whenever they all lie still
-where they were aimed at; the clicks then follow at `gap_ms`. The report's `aimed once` and
-`click gap` columns say how many bursts did and how fast the clicks really went. A sidebar
-that moved in between makes the harness aim again before every click: slower than asked,
-but only what was just aimed at is pressed.
+where they were aimed at; the clicks then follow at `gap_ms` plus the click's own few
+milliseconds. The report's `aimed once` and `click gap` columns say how many bursts did and
+how fast the clicks really went. Whether the sidebar moved in between is read from the state
+samples (its `contentY`, every 40 ms), not from a rect: a rect read spawns a process and
+made the clicks 108 ms apart where 60 were asked. A sidebar that did move makes the harness
+aim again before every click: slower than asked, but only what was just aimed at is pressed.
 
 Before every aimed press the sidebar also has to report that it is not moving any more: a
 press that lands while its Flickable eases the last wheel notch never reaches the button.
@@ -89,6 +91,11 @@ came to rest, not where it was when it first came into view while the page was s
 easing. The rect is window-relative, so the window's origin is added before the press goes
 to the injector: without it every Scan press missed the button by the window offset and no
 toast ever came from the button.
+The `toast` variant pairs the wallpaper page with its neighbour in the sidebar
+(appearance), so the burst is aimed once and its clicks all go out under the 4.5 s toast;
+the record's `toast_at_click` and a line under the S2 table say how many did. With `about`,
+which sits at the far end of the sidebar, every click aimed again and only one click in
+four went out in time.
 
 ## Offline first, live second
 

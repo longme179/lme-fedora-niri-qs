@@ -599,6 +599,21 @@ class Ctx:
                 out[key] = round(((entry.get("x", 1e9) - x) ** 2 + (entry.get("y", 1e9) - y) ** 2) ** 0.5, 1)
         return out
 
+    def nav_y(self):
+        """The sidebar's contentY as of the last state answer (None when it carries none)."""
+        value = ((getattr(self, "settings_state", None) or {}).get("settings") or {}).get("navY")
+        return value if value is not None and value >= 0 else None
+    def nav_drift(self, base):
+        """How far the sidebar's contentY lies from `base` right now, in px: read from the
+        newest Settings sample, which arrives on its own every 40 ms. None when that sample
+        carries no contentY or the sidebar says it is moving."""
+        if base is None:
+            return None
+        settings = (self.timeline.latest("settings") or {}).get("settings") or {}
+        value, flick = settings.get("navY"), settings.get("flick") or {}
+        if value is None or value < 0 or flick.get("navMoving") or flick.get("navFlicking"):
+            return None
+        return round(abs(value - base), 1)
     def nav_points(self, keys):
         """Output coordinates of several nav entries, ALL aimed before the first click is
         pressed: ({key: (x, y)}, {key: how many px it lies from its entry now}). Skips like
@@ -977,6 +992,20 @@ def pages_shown(timeline, stamps, first):
     return out
 
 
+def toast_at_press(timeline, clicks, look_back_ms=400.0):
+    """Whether the wallpaper toast was on screen when each of these presses went out: the
+    newest Settings sample at or before the press says so (one sample every 40 ms)."""
+    timeline.pump()
+    stamps = [stamp for _, stamp in clicks]
+    samples = [event for event in timeline.after(stamps[0] - look_back_ms, {"S"})
+               if (event.data or {}).get("proc") == "settings"] if stamps else []
+    out, index, shown = [], 0, None
+    for at in stamps:
+        while index < len(samples) and samples[index].epoch <= at:
+            shown = bool(((samples[index].data or {}).get("settings") or {}).get("toast"))
+            index += 1
+        out.append(shown)
+    return out
 def settings_burst(ctx, rec, sequence, gap_ms):
     """Click the pages of `sequence`, then assert the state machine of the page host.
 
@@ -998,6 +1027,9 @@ def settings_burst(ctx, rec, sequence, gap_ms):
     ctx.ask("settings")
     start_page = ctx.settings_page()
     rec["start_page"] = start_page
+    # Where the sidebar's contentY was once the aim was confirmed: an aimed-once click is
+    # pressed only while the sampled contentY is still there (see nav_drift).
+    base_nav = ctx.nav_y()
     stamps = []
     if gap_ms <= 0:
         commands = []
@@ -1012,14 +1044,20 @@ def settings_burst(ctx, rec, sequence, gap_ms):
         moved_during = {}
         for key in sequence:
             if aimed:
-                # One rect read before the press: the aimed-once position goes stale while
-                # the burst runs (live 2026-11-27: click 2 landed on the search field while
-                # the after-burst read saw the entry back within 4 px). An entry that moved
-                # is re-aimed; a click then presses where the entry really is.
-                offset = ctx.nav_offset({key: (aimed[key][0] - ctx.box[0], aimed[key][1] - ctx.box[1])})
-                moved = offset.get(key)
+                # The aimed-once position goes stale if the sidebar moves while the burst
+                # runs (live 2026-11-27: click 2 landed on the search field while the
+                # after-burst read saw the entry back within 4 px). An entry that moved
+                # is re-aimed; a click then presses where the entry really is. Whether it
+                # moved is read from the state samples, which cost nothing: the rect read
+                # that stood here spawns a process (about 45 ms) and made the clicks 108
+                # ms apart where gap_ms asked for 60 (live 2026-11-28: 108-118 ms).
+                moved = ctx.nav_drift(base_nav)
+                if moved is None and base_nav is None:
+                    # No contentY in the samples (an older probe): the rect decides after all.
+                    offset = ctx.nav_offset({key: (aimed[key][0] - ctx.box[0], aimed[key][1] - ctx.box[1])})
+                    moved = offset.get(key)
                 moved_during[key] = moved
-                if moved is None or moved >= 1.5:
+                if moved is None or moved >= 0.5:
                     # nav_point settles on the entry's rect and on the sidebar's own moving
                     # flag, the same way before every press that goes through it.
                     point = ctx.nav_point(key)
@@ -1118,7 +1156,7 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                     rec["ok"] = bool(reached) and all(page["ok"] for page in reached)
                     rec["stalls"] = ctx.stalls(reached[0]["t"], ctx.now()) if reached else []
                 else:
-                    if variant == "toast" and "wallpaper" in names and names.get("about"):
+                    if variant == "toast" and "wallpaper" in names and (names.get("appearance") or names.get("about")):
                         # The wallpaper toast is the completion of a wallpaperScan run.
                         # A warm Settings process has already initialized the page, so the
                         # scan no longer reruns on a plain visit: the Scan button of the
@@ -1126,7 +1164,10 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                         # then measures switching while that toast is still shown.
                         point = ctx.nav_point(names["wallpaper"])
                         rec["toast_stage"] = "nav" if point else "nav_none"
-                        if point is not None:
+                        # The aim just renewed the state answer. On the wallpaper page
+                        # already (every rep after the first: the burst ends there) the click
+                        # would navigate nowhere and the wait run into its 10 s timeout.
+                        if point is not None and ctx.settings_page() != names["wallpaper"]:
                             at = ctx.click_at(*point)
                             timeline.wait(page_ready("settings", names["wallpaper"]), at, SETTLE_WAIT_MS)
                             # The Scan button sits deep in the wallpaper page's own
@@ -1191,10 +1232,21 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                                                     at - 1.0, 30000)
                                 rec["toast_seen"] = hit is not None
                                 rec["toast_ms"] = round(hit.epoch - at, 2) if hit else None
-                        # Start on `about`: the page is wallpaper after the Scan press, so a
-                        # burst starting on wallpaper opens with a click that navigates nowhere.
-                        pair = (names["about"], names["wallpaper"])
+                        # The burst starts elsewhere: the page is wallpaper after the Scan
+                        # press, so a burst opening on wallpaper clicks a page that navigates
+                        # nowhere. The partner is the entry that fits the sidebar next to
+                        # wallpaper. about sits at the far end of the list: aiming for it
+                        # scrolls wallpaper out of view, every click of the burst then aims
+                        # again (1.5 s apart) and the first goes out 3.9 s after the press,
+                        # so one click in four ran under the 4.5 s toast (live 2026-11-28: 10
+                        # of 40 clicks). appearance is adjacent to wallpaper: both are aimed
+                        # once and the clicks follow at gap_ms, all under the toast.
+                        pair = (names.get("appearance") or names["about"], names["wallpaper"])
                     settings_burst(ctx, rec, [pair[index % 2] for index in range(burst)], gap_ms)
+                    if variant == "toast":
+                        # Which clicks went out under the toast: the record says it, the
+                        # summary counts it.
+                        rec["toast_at_click"] = toast_at_press(timeline, rec["clicks"])
                 rec["ping_ms"] = ctx.ping()
                 ctx.records.append(rec)
                 ctx.guard(ctx.now() - 90000.0)

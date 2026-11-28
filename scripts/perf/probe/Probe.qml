@@ -183,6 +183,52 @@ QtObject {
         }
     }
 
+    function hitJson(name) {
+        // What lies on top of the named item's centre: every item of the Settings window that
+        // contains the point, in paint order (a later sibling and its children paint over an
+        // earlier one), so the last entries are what a press there reaches first.
+        try {
+            const item = lookup(name);
+            if (!item) return JSON.stringify({item: name, found: false});
+            const win = windows.settings;
+            if (!win || !win.contentItem) return JSON.stringify({item: name, found: false, error: "no settings window"});
+            const point = centreOf(item);
+            const under = [], refs = [];
+            const walk = function (node, depth, origin) {
+                const kids = node.children || [];
+                for (let i = 0; i < kids.length; i++) {
+                    const kid = kids[i];
+                    let inside = false, at = null;
+                    try {
+                        const local = kid.mapFromScene(point);
+                        inside = local.x >= 0 && local.y >= 0 && local.x <= kid.width && local.y <= kid.height;
+                        at = kid.mapToScene(Qt.point(0, 0));
+                    } catch (error) { at = null; }
+                    if (!at) {
+                        // not an Item: the plain sum of the parent chain, exact where nothing transforms
+                        at = Qt.point(origin.x + (kid.x || 0), origin.y + (kid.y || 0));
+                        inside = point.x >= at.x && point.y >= at.y && point.x <= at.x + kid.width && point.y <= at.y + kid.height;
+                    }
+                    if (inside) {
+                        under.push([depth, String(kid).split("(")[0], kid.objectName || "", Math.round(kid.width),
+                                    Math.round(kid.height), kid.visible !== false, kid.enabled !== false]);
+                        refs.push(kid);
+                    }
+                    walk(kid, depth + 1, at);
+                }
+            };
+            walk(win.contentItem, 0, Qt.point(0, 0));
+            const part = function (kid) { return kid === item || kid === item.background || kid === item.contentItem; };
+            let last = -1;
+            for (let i = 0; i < refs.length; i++) if (part(refs[i])) last = i;
+            const top = under.slice(-12), from = under.length - top.length;
+            return JSON.stringify({item: name, found: true, point: [Math.round(point.x * 10) / 10, Math.round(point.y * 10) / 10],
+                depth: under.length, target: last, from: from,
+                chain: top.map(function (entry, index) { return [from + index].concat(entry); })});
+        } catch (error) {
+            return JSON.stringify({item: name, found: false, error: "" + error});
+        }
+    }
     // ---- state ---------------------------------------------------------------------
     function chain(item) {
         const parts = [];

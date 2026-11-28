@@ -1179,6 +1179,8 @@ def s2_settings(ctx, variants=("all", "aba", "toast"), reps=10, burst=6, gap_ms=
                             rec["scan_rect"] = [round(value, 1) for value in scan] if scan else None
                             rec["toast_stage"] = "scan_aim" if scan else "scan_none"
                             if scan is not None:
+                                # What a press at that point reaches first (paint order, last on top).
+                                rec["scan_hit"] = ctx.probe.call("hit", "perfWallpaperScan", backend="settings")[:4]
                                 at = ctx.click_at(*scan)
                                 hit = timeline.wait(sample("settings", lambda d: (d.get("settings") or {}).get("toast")),
                                                     at - 1.0, 30000)

@@ -81,6 +81,7 @@ def ipc_handler():
         target: "probe"
         function state(): string { return Probe.stateJson() }
         function rect(name: string): string { return Probe.rectJson(name) }
+        function hit(name: string): string { return Probe.hitJson(name) }
         function ping(): string { return "" + Probe.ms() }
         function stage(name: string): string { Probe.setStage(name); return "ok" }
         function watch(on: bool): string { Probe.watch = on; if (on) Probe.sample(); return "ok" }

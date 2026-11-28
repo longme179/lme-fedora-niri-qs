@@ -115,7 +115,7 @@ Item {
         prewarmQueue = source ? source() : [];
     }
     function present(page) {
-        leaving = 0;
+        unrecede();
         if (shown === page) return;
         touch(page.pageKey);
         const hadFocus = !!shown && shown.activeFocus;
@@ -137,7 +137,16 @@ Item {
         page.destroy();
     }
     function show() {
-        if (shown && shown.pageKey === key) return;
+        if (shown && shown.pageKey === key) {
+            // Back to the page still shown while another was incubating for this host: the
+            // request is dropped like any superseded one and the recede it caused is undone.
+            // Neither used to happen; the page finished building for a key nobody asked for
+            // any more, nothing presented it, and the shown page stayed receded (45%) until
+            // the next click.
+            drop(pending);
+            unrecede();
+            return;
+        }
         // A request gets the incubator to itself: a superseded request is dropped and a
         // background build steps aside (back to the front of the queue). The FIRST page is
         // synchronous on purpose: it builds while the host window is still hidden, and the
@@ -148,10 +157,19 @@ Item {
         const page = entry(key, asyncPages && order.length > 0);
         if (page && page.status === Loader.Ready) present(page);
         else if (asyncPages && page && page.status === Loader.Loading) { pending = page; recede(); }
+        else unrecede(); // nothing to show for this key: the shown page stays, at full strength
     }
     function recede() {
         if (animate && Theme.animations) { leaving = 0; leaveMotion.restart(); }
         else leaving = 1;
+    }
+    // Undoes recede(): the shown page is the one that was asked for. The motion is stopped
+    // before the write: a running animation owns the property and writes its end value over
+    // this one (a page that built faster than the recede lasts was presented, then receded
+    // again and left at 45%).
+    function unrecede() {
+        leaveMotion.stop();
+        leaving = 0;
     }
     onKeyChanged: show()
     onActiveFocusChanged: if (activeFocus && shown) shown.forceActiveFocus()
@@ -175,7 +193,7 @@ Item {
                 if (status === Loader.Loading) return;
                 // The walk resumes / the request settles once an incubated page is ready or has failed.
                 if (root.prewarming === page) root.prewarming = null;
-                if (root.pending === page) { root.pending = null; if (status === Loader.Error) root.leaving = 0; }
+                if (root.pending === page) { root.pending = null; if (status === Loader.Error) root.unrecede(); }
             }
             onLoaded: {
                 root.pageLoaded(item);
